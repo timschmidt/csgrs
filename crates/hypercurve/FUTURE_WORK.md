@@ -610,8 +610,11 @@ line. The recorded scalar and selected-field decisions must succeed exactly;
 unresolved predicates retain their typed blockers. Selected polynomial pairs
 also retain finite contacts and common components in a shared source chart or
 equal rational similarity image. Singular tangent signs may remain unclassified.
-Other algebraic similarities, different pair images, nonlinear maps, selected
-chord carriers and filled polynomial arrangements remain implementation gaps.
+Generated chords additionally retain certified support views and point-based
+parameters for native supports, constant-abscissa charts and proved constant
+selected components. Other algebraic similarities, different pair images,
+nonlinear maps, general unrelated selected chord supports and filled polynomial
+arrangements remain implementation gaps.
 
 **Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
 the original translated quintic fixture reproduced `Unsupported`. Pulling the
@@ -791,6 +794,52 @@ native replay remain open. Counted refinements/promotions and external fixture
 timeouts are not total-work, memory or cancellation bounds. No performance
 improvement is claimed. Full repository pre-push qualification for this
 increment remains pending.
+
+**Generated polynomial-line increment (2026-10-26).** At `fd1313a23a9`,
+three original generated-line queries return `Unsupported` although exact
+native `LineSeg2` controls succeed. The retained cases use rational endpoints,
+selected `+-sqrt(2)` endpoints without represented Cartesian coordinates, and
+a selected common-line component. Generated chords now reuse certified support
+views while retaining their own point-based parameters and finite-domain proof.
+Neither selected coordinates nor an authored-family conversion are required
+when the existing source-chart relation supplies the support.
+
+P15 and P17–P20 govern this extension. A native retained support or a represented
+constant abscissa can certify a line in the world or rational-similarity source
+chart. A polynomial independent of source x proves a constant selected support;
+exact ordinate comparison selects its common or disjoint branch. Matching
+endpoints alone never proves polynomial linearity. Overlaps keep a shared
+source/chord correspondence with original domains, repeated clipping, traversal
+and endpoint-only contacts. An independent public point-location regression
+found a lower-layer omission: chord side refinement bypassed its already
+certified cardinal direction. It now consumes the existing exact coordinate
+predicate before box refinement, preserving uncertain and exhausted outcomes.
+
+Ten witnesses retain the original failures and native controls. They exercise
+both orders and reversals, exact defining equations, finite contacts, tangency,
+negative-range overlap clipping and requery, distinct `2^-80` supports, source
+drop, in-memory point replay, rational rotations/reflections and the oblique
+scale-five map `(3x-4y,4x+3y)`. Transformed contacts satisfy independently expanded
+world equations. A reached zero work allowance remains typed exhaustion; a
+larger retry and STRICT/APPROXIMATE_512/STRICT retain Certified results. Coincident
+endpoints remain a typed invalid construction.
+
+Final checks pass: 2,700 Hypercurve tests (77 suites, 34 existing ignored),
+43 root downstream tests, 3,009 tests across six direct dependent packages
+(0 existing ignored), strict all-target/all-feature MSRV Clippy, formatting,
+16 matrix guards, 56 capability witnesses, typos, repository budget and diff
+checks. Qualification used `f0fa18b7b8` plus frozen polynomial-pair inputs and
+this patch; non-receipt bytes remain identical after advancing the commit
+parent to `00dbdb152a`. Raw baselines and qualification are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-chords`, digest
+`07ec6f93dc278782911c1756d62550e489a493df418ab3efdfdb75193f6cc35d`.
+
+General unrelated selected oblique lines, polynomial/rational and
+polynomial/parallel pairs, broader coefficient/transform domains, filled
+polynomial operations, A2 completion and fresh-process generated native replay
+remain open. Counted refinements/promotions and external fixture timeouts are
+not total-work, memory or cancellation bounds. No performance improvement is
+claimed. Full repository pre-push qualification for this increment is pending.
 
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating

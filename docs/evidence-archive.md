@@ -85,6 +85,22 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-polynomial-chord-evidence-2026-10-26` branch
+ends at `3f85a12099eeab4e6c8af0f14335701637a5d0e9`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-chords` (273 files,
+9,941,360 bytes), SHA-256
+`07ec6f93dc278782911c1756d62550e489a493df418ab3efdfdb75193f6cc35d`.
+It records generated polynomial-line incidence, shared chord predicates and
+retained parameter correspondence: 2,700 Hypercurve tests, 43 root downstream
+tests, 3,009 tests across six dependent packages, strict MSRV Clippy,
+formatting, 16 matrix guards and 56 capability witnesses pass. Original generated
+blockers, independent point-location failure, transformed support failure and
+source snapshots remain archived. Qualification used `f0fa18b7b8` plus frozen
+pair and generated-line inputs, preserved when advancing the parent to
+`00dbdb152a`. General selected supports, broader pair families and polynomial
+regions remain open. The record is local and unpushed; full repository pre-push
+qualification for this increment remains pending.
+
 The separate local `hypercurve-polynomial-pair-evidence-2026-10-26` branch
 ends at `aefddcc9b36a3efee20293d37f39e98606c2d6c2`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-polynomial-pairs` (165 files,

@@ -1923,6 +1923,20 @@ impl BezierAlgebraicChord2 {
         {
             return Ok(Classification::Decided(crate::classify::LineSide::On));
         }
+        if let Some(direction) = self.certified_axis_direction()
+            && let Some(side) = self.axis_oriented_side(point, direction, policy)
+        {
+            // A construction-certified cardinal support needs one exact
+            // coordinate comparison. Independent coordinate boxes cannot
+            // recover equality of a selected constant ordinate.
+            match side {
+                decided @ Classification::Decided(_) => return Ok(decided),
+                exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(exhausted);
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
         let procedural_point = matches!(
             point,
             CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))

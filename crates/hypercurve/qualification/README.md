@@ -93,6 +93,16 @@ Different image transforms, broader coefficient domains and filled polynomial
 regions remain unqualified or explicitly blocked. Point-definition replay
 remains in memory, and the 300-second fixture allowance is external containment.
 
+The generated-line witnesses retain polynomial-fiber endpoints and chord-owned
+point parameters. They exercise finite sections, constant selected components,
+reversal, repeated overlap clipping, exact nearby separation, tangency, rational
+similarities and a reached zero-budget retry. Construction-certified axis
+supports also qualify public point location independently of pair dispatch.
+The original native-line controls and failing generated inputs remain in the
+corpus. General oblique lines with unrelated selected endpoints and broader
+coefficient/transform domains remain unqualified. These checks do not complete
+polynomial filled regions or fresh-process generated archive replay.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

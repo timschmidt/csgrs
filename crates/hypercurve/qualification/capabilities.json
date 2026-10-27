@@ -2074,6 +2074,462 @@
       ],
       "oracle": "Original equations give 2*x^37-1=0 and 1/2<x<1; monotonicity gives uniqueness. The original selected point is replayed on both sources without a mandatory native coordinate projection. This one degree-37 witness is not an arbitrary-degree completion proof.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_rational",
+      "target": "polynomial_generated_lines",
+      "test": "generated_rational_line_reuses_polynomial_sections",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The monotone quintic y^5+5y+5-x=0 versus x=0 with rational endpoints (0,+-2), through native and generated line carriers.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders have one contact satisfying the original quintic and x=0."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both parameter charts evaluate the contact; returned split pieces meet again once without further subdivision."
+        }
+      ],
+      "oracle": "Independent polynomial and line relations, exact contact counts, source evaluations and split/requery topology.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_selected_endpoints",
+      "target": "polynomial_generated_lines",
+      "test": "generated_selected_endpoint_line_reuses_polynomial_sections",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic versus a vertical generated chord whose endpoints retain selected y=+-sqrt(2) fibers with no represented Cartesian coordinates; original endpoint collections are dropped.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Selected endpoint points remain unmaterialized when the generated line is constructed."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders produce one selected quintic contact, also checked through an exact native control."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both original parameters and the split/requery pieces retain the contact."
+        }
+      ],
+      "oracle": "Original quintic and x=0 relations, endpoint representation assertions, independent native control and exact topology counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_component",
+      "target": "polynomial_generated_lines",
+      "test": "generated_selected_line_retains_common_component_overlap",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The selected negative branch of y^2-2=0 and a generated chord through its retained endpoints, with an exact native algebraic-coordinate control.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders produce one common-line overlap and no isolated contacts."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both overlap endpoint correspondences evaluate to the same selected points."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Topology retains one piece per operand."
+        }
+      ],
+      "oracle": "The known constant negative branch, its independently represented native support, endpoint correspondence and exact piece counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_orientation_replay",
+      "target": "polynomial_generated_lines",
+      "test": "generated_polynomial_contacts_keep_orientation_and_replay",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Cold selected-endpoint quintic/vertical-chord contacts with both traversals reversed independently, both operand orders, and original collections dropped.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The one transverse contact has the independently predicted sign under traversal and operand reversal."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Checked in-memory point replay satisfies the original equations and is located on the generated line."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Returned pieces have distinct endpoints."
+        }
+      ],
+      "oracle": "Explicit quintic and x=0 equations, reversal-adjusted cross sign, in-memory point replay and nonzero-piece checks.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_overlap_restrictions",
+      "target": "polynomial_generated_lines",
+      "test": "generated_polynomial_overlaps_keep_restrictions_and_reversal",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected y=-sqrt(2) branch/chord overlaps in both orders and all traversal combinations, clipped with source interval [-3/4,-1/4] and chord points at x=-1/2 and x=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Overlap orientation matches the two traversals."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Clipping yields exactly [-1/2,-1/4], cannot be enlarged by a later request, excludes a zero-length overlap, and remains a one-piece overlap after source restriction/requery."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both correspondence endpoints satisfy y^2=2 with negative y."
+        }
+      ],
+      "oracle": "Independent interval intersection endpoints, selected sign and polynomial relation, both parameter correspondences and repeated restriction behavior.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_distinct_components",
+      "target": "polynomial_generated_lines",
+      "test": "generated_constant_components_remain_distinct_and_clip_endpoints",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected constant branches y=+-sqrt(2), disjoint finite subintervals, endpoint-only contact, and a generated parallel shifted by 2^-80.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Opposite branches, disjoint subintervals and the tiny translated support remain distinct."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Closed adjacent intervals meet at one nontransverse endpoint with zero cross sign."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The singleton contact retains one piece per operand."
+        }
+      ],
+      "oracle": "Exact constant-root selections, interval endpoints, positive dyadic separation and topology counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_point_location",
+      "target": "polynomial_generated_lines",
+      "test": "generated_constant_line_point_locations_use_selected_coordinate_evidence",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generated chord from (-1,-sqrt(2)) to (1,-sqrt(2)) and the selected query at x=-1/2, without invoking polynomial-pair intersection.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The construction-certified horizontal line consumes exact coordinate equality and locates the interior selected point."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The returned chord parameter evaluates to that same point."
+        }
+      ],
+      "oracle": "Independent selected Y equality and strict X bounds are checked before the public point-location call.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_similarities",
+      "target": "polynomial_generated_lines",
+      "test": "generated_polynomial_sections_keep_similarity_charts",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected-endpoint quintic/line contacts and constant-branch overlaps under a quarter rotation/translation, reflection/translation and the oblique scale-five similarity (3x-4y,4x+3y).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Contacts satisfy independently expanded world polynomials and line equations, with determinant-adjusted cross signs."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Transformed contact splits are consumed by another intersection; reversed constant supports keep a one-piece reversed overlap."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both source parameters evaluate the contact; common-line endpoints satisfy the independently transformed constant-branch equation."
+        }
+      ],
+      "oracle": "Explicit substitutions expanded into world quintics and constant-support quadratics, independent affine line equations and determinant signs.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_finite_tangency",
+      "target": "polynomial_generated_lines",
+      "test": "generated_polynomial_sections_clip_finite_contacts_and_tangency",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The graph y=x^2 versus generated horizontal finite segments at y=0, 1/4 and -2^-20, including one- and two-root segments and segments excluding all roots.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The origin is a tangency, while retained roots at x=+-1/2 are transverse and obey the finite line domain."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Negative ordinates and segments outside both candidate roots give complete empty intersections."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Exact split counts agree with the retained interior contacts."
+        }
+      ],
+      "oracle": "The explicit parabola relation, chosen line ordinate, independent contact counts, tangent classification and piece counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_generated_line_retry",
+      "target": "polynomial_generated_lines",
+      "test": "generated_polynomial_sections_retry_and_keep_certainty",
+      "owner": "Hypercurve polynomial sections, retained chord parameters, source-chart correspondences and shared line predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The selected-endpoint quintic/vertical chord under zero counted allowance, a 100000-refinement/100000-promotion retry, and STRICT/APPROXIMATE_512/STRICT after original objects are dropped.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "The polynomial retains its source-abscissa chart and selected fiber; generated lines retain their endpoint definitions and chord-owned point parameters. Support proofs do not replace finite containment. These are named fixtures, not universal generated-line or region closure. Point-definition replay is in memory; counted work does not bound total arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A reached zero allowance yields the public BudgetExhausted reason."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A larger retry completes and its retained endpoint pieces meet again once with Certified certainty under all three policies."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "In-memory point replay remains on the original quintic and line and can be located by the generated line."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "A repeated identical endpoint is rejected as a zero-length generated line."
+        }
+      ],
+      "oracle": "Reached work counters, public failure reason, independent defining equations, retained source parameters, certainty receipts and invalid constructor result.",
+      "timeout_seconds": 300
     }
   ]
 }

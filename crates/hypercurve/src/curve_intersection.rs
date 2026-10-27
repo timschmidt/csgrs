@@ -323,6 +323,7 @@ pub(crate) enum CurveOverlapCorrespondence2 {
         source: Arc<crate::bezier_offset::BezierAlgebraicChordRationalOverlap2>,
         chord_first: bool,
     },
+    PolynomialChord(Arc<polynomial_curve_section::PolynomialChordCorrespondence2>),
     Chords {
         first: crate::BezierAlgebraicChord2,
         second: crate::BezierAlgebraicChord2,
@@ -400,6 +401,7 @@ impl CurveOverlapCorrespondence2 {
                         )))
                     })
             }
+            Self::PolynomialChord(source) => source.map_parameter(parameter, forward, policy),
         }
     }
 
@@ -530,6 +532,9 @@ impl CurveOverlapCorrespondence2 {
                     |p| map(p, second),
                     |p| map(p, first),
                 )
+            }
+            Self::PolynomialChord(source) => {
+                source.clipped_ranges(first_range, second_range, policy)
             }
         }?;
         Ok(ranges.map(|ranges| {

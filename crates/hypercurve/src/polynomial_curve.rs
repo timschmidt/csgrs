@@ -47,6 +47,11 @@ struct PolynomialCurveSource2 {
 /// restrictions, through [`Curve2::intersect_curve`] and
 /// [`Curve2::intersection_topology`]. Scalar and selected-field decisions must
 /// succeed exactly; unresolved predicates retain their typed blockers.
+/// Generated chords keep point-based parameters when a retained native support
+/// or represented constant abscissa certifies the line in either chart.
+/// Equations independent of the source abscissa also certify constant selected
+/// components without materializing their ordinates. Unrelated general
+/// selected-endpoint supports retain their capability blockers.
 /// A common line component keeps its overlap correspondence; other selected
 /// branches keep their finite contacts with that component. Selected
 /// polynomial pairs also intersect in a shared rational similarity chart,
@@ -640,6 +645,20 @@ impl PolynomialCurveBranch2 {
             )
             .map_err(invalid)?,
         )? == Ordering::Equal)
+    }
+
+    /// A selected graph of an equation independent of x has constant y on
+    /// its checked connected slab. This is a support proof, not an endpoint fit.
+    pub(crate) fn has_constant_source_ordinate(
+        &self,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        for row in self.topology().equation().coefficients.iter().skip(1) {
+            if !polynomial_is_zero(row, policy)? {
+                return Ok(false);
+            }
+        }
+        Ok(true)
     }
 
     /// Selects a caller-certified global factor on this original graph arc.

@@ -1,18 +1,23 @@
-//! Sections of retained polynomial graph branches by exact native lines.
+//! Sections of retained polynomial graph branches by exact lines.
 //!
 //! A graph branch is parameterized by the first coordinate of its source
 //! polynomial. The branch's own fiber authority selects every point it shares
 //! with a line of that plane. The line parameter is an affine form of that
 //! correlated point. Except on a horizontal line, where it is the abscissa's
 //! own root, evaluating the line there replays the polynomial point instead of
-//! building independent coordinates. Neither operand is promoted to a Bezier
-//! carrier.
+//! building independent coordinates. Generated chords instead retain their
+//! point-based parameter and finite-domain authority. Neither operand is
+//! replaced by fitted or sampled geometry.
 
 use std::cmp::Ordering;
 
 use super::*;
 use crate::CurveFamily2;
 use crate::curve::PolynomialLineSections2;
+
+#[path = "polynomial_curve_chord.rs"]
+mod polynomial_curve_chord;
+pub(super) use polynomial_curve_chord::PolynomialChordCorrespondence2;
 
 /// An authored native line, or a retained restriction of one, in the source
 /// chart shared by its public parameter.
@@ -283,7 +288,12 @@ pub(super) fn polynomial_line_section(
             _ => return Ok(None),
         };
     let Some(line) = native_line(line_curve) else {
-        return Ok(None);
+        return polynomial_curve_chord::intersect(
+            if branch_first { first } else { second },
+            line_curve,
+            branch_first,
+            policy,
+        );
     };
     let spans = line_curve.source_spans(policy, CurveOperation2::Intersection)?;
     let [span] = &spans[..] else {
