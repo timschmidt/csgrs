@@ -2109,7 +2109,7 @@ pub(super) fn recursive_projective_polynomial_parameters(
 /// uses the chord's certified monotone axis, so this single coordinate
 /// equation is sufficient and avoids constructing independent Cartesian
 /// images for a deep endpoint.
-pub(super) fn recursive_projective_point_rational_axis_parameters(
+pub(crate) fn recursive_projective_point_rational_axis_parameters(
     point: &CurvePoint2,
     source: &RationalBezier2,
     axis: Axis2,

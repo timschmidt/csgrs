@@ -4,6 +4,8 @@
 mod curve_support_intersection;
 #[path = "polynomial_curve_pair.rs"]
 mod polynomial_curve_pair;
+#[path = "polynomial_curve_rational.rs"]
+mod polynomial_curve_rational;
 #[path = "polynomial_curve_section.rs"]
 mod polynomial_curve_section;
 
@@ -324,6 +326,7 @@ pub(crate) enum CurveOverlapCorrespondence2 {
         chord_first: bool,
     },
     PolynomialChord(Arc<polynomial_curve_section::PolynomialChordCorrespondence2>),
+    PolynomialRational(Arc<polynomial_curve_rational::PolynomialRationalCorrespondence2>),
     Chords {
         first: crate::BezierAlgebraicChord2,
         second: crate::BezierAlgebraicChord2,
@@ -402,6 +405,7 @@ impl CurveOverlapCorrespondence2 {
                     })
             }
             Self::PolynomialChord(source) => source.map_parameter(parameter, forward, policy),
+            Self::PolynomialRational(source) => source.map_parameter(parameter, forward, policy),
         }
     }
 
@@ -534,6 +538,9 @@ impl CurveOverlapCorrespondence2 {
                 )
             }
             Self::PolynomialChord(source) => {
+                source.clipped_ranges(first_range, second_range, policy)
+            }
+            Self::PolynomialRational(source) => {
                 source.clipped_ranges(first_range, second_range, policy)
             }
         }?;
@@ -2357,7 +2364,14 @@ impl CurveIntersectionContext {
                     Some(result) => result,
                     None => match polynomial_curve_pair::intersect(first, second, policy)? {
                         Some(result) => result,
-                        None => curve_support_intersection::intersect(first, second, policy, None)?,
+                        None => {
+                            match polynomial_curve_rational::intersect(first, second, policy)? {
+                                Some(result) => result,
+                                None => curve_support_intersection::intersect(
+                                    first, second, policy, None,
+                                )?,
+                            }
+                        }
                     },
                 };
             return Ok(Self {
@@ -3004,11 +3018,24 @@ impl Curve2 {
     /// retained through the owning affine chart, including reversed restrictions
     /// and nonunit NURBS spans. This is a chart conversion, not an incidence or
     /// membership certificate. An invalid span index returns a typed error.
+    /// A polynomial branch has one span in its original abscissa chart,
+    /// including after restriction and supported image maps.
     pub fn parameter_from_span(
         &self,
         span_index: usize,
         local_parameter: &CurveParameter2,
     ) -> ExactCurveResult<CurveParameter2> {
+        if self.polynomial_branch().is_some() {
+            return if span_index == 0 {
+                Ok(local_parameter.clone())
+            } else {
+                Err(ExactCurveError::invalid(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    CurveError::InvalidCurveParameter,
+                ))
+            };
+        }
         let policy = crate::policy::principal_context();
         let spans = self.source_spans(&policy, CurveOperation2::Evaluation)?;
         let span = spans.get(span_index).ok_or_else(|| {

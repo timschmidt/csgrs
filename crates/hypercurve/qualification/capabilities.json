@@ -2941,6 +2941,817 @@
       ],
       "oracle": "Independent parabola equation, original-source equality, exact ordering and noncoincidence.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_polynomial_finite",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_spans_keep_finite_polynomial_contacts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The quintic y^5+5y+5-x=0 against C(t)=(t^2,-t), and the separate positive parabola trace.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders retain one transverse contact with independent quintic/parabola equations and the expected cross sign."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The positive trace is exactly disjoint."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both parameter evaluations, checked point replay and split/requery preserve the contact."
+        }
+      ],
+      "oracle": "Two defining equations, selected signs, exact transverse orientation and split counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_rational_finite",
+      "target": "polynomial_rational_sections",
+      "test": "rational_spans_keep_finite_polynomial_contacts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic versus the lower rational quarter circle (1-t^2,-2t)/(1+t^2).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders retain one transverse selected contact satisfying the quintic and circle."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Original parameters, checked point replay and split/requery keep that contact."
+        }
+      ],
+      "oracle": "Independent quintic and unit-circle equations, signs, cross sign and exact split counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_polynomial_component",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_spans_keep_common_component_correspondence",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The graph y=x^2 and its quadratic source with x=-1+2t.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders produce one overlap and no isolated contacts."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Clipping source x to [-3/4,-1/4] and native t to [1/4,1/2] gives exactly x in [-1/2,-1/4]; restricted outputs requery as one-piece overlaps."
+        }
+      ],
+      "oracle": "Independent interval intersection endpoints, parabola relation and both parameter evaluations.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_rational_component",
+      "target": "polynomial_rational_sections",
+      "test": "rational_spans_keep_common_component_correspondence",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The selected lower unit-circle graph versus its rational quarter circle.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders retain one reversed correspondence with no isolated contacts."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Corresponding endpoints coincide and satisfy the independent circle equation."
+        }
+      ],
+      "oracle": "Selected lower branch, independently known traversal reversal and endpoint equations.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_monotone_visits",
+      "target": "polynomial_rational_sections",
+      "test": "rational_components_keep_monotone_visits_and_algebraic_clips",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=((2t-1)^2,(2t-1)^4) visits the selected parabola twice; clip each visit to x in [1/4,1/2].",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both distinct visits survive as one Same and one Reversed overlap."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Each algebraically clipped correspondence evaluates correctly and reenters intersection as one piece per operand."
+        }
+      ],
+      "oracle": "Independent quartic parameterization, two source visits, exact orientation and retained range equations.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_other_branch_endpoints",
+      "target": "polynomial_rational_sections",
+      "test": "rational_common_support_keeps_other_branch_endpoint_contacts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The upper circle graph versus the lower rational quarter circle, and the negative right node branch of y^2=x^2 versus y=x.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A rejected common-component interior still retains its shared branch endpoint; it is not reported disjoint."
+        },
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The node contact keeps an unclassified tangent sign rather than a false tangency or transverse certificate."
+        }
+      ],
+      "oracle": "Known boundary points (1,0) and (0,0), selected ordinate sign and absent singular tangent proof.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_finite_tangency",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_keep_finite_domains_and_tangency",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The graph y=x^2 against degree-elevated horizontal lines at 0, 1/4 and -2^-20, plus a restricted native source.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The origin is tangent; x=+-1/2 are transverse; a positive source restriction keeps only x=1/2."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The negative line has complete empty intersection."
+        }
+      ],
+      "oracle": "Exact parabola/line equations, independently known roots and their tangent classes.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_native_circle",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_consume_native_circular_charts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic versus an authored native clockwise quarter circle.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Native circular charts retain the same one transverse contact and its original parameter."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Checked point replay and split/requery retain the defining relations."
+        }
+      ],
+      "oracle": "Independent original quintic and circle equations, orientation and topology counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_splines",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_keep_spline_source_charts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Polynomial B-spline and NURBS parabola representations with two spans and public knot domain [-2,2], including a restriction across the seam.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both spans retain separate common-component correspondences."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Public parameter_from_span transports local overlap parameters into the original nonunit source chart."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Restriction across the seam keeps both overlaps and both source pieces."
+        }
+      ],
+      "oracle": "Independent parabola equation, exact public chart conversion and seam counts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_transformed_finite",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_keep_transformed_charts",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic/quadratic contact under a quarter rotation/translation and reflection/translation.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Original source parameters evaluate contacts satisfying independently expanded world quintics, with determinant-adjusted cross signs."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Transformed split pieces are consumed by another intersection."
+        }
+      ],
+      "oracle": "Independent expanded equations, determinant signs and retained-source evaluation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_cusp_overlap",
+      "target": "polynomial_rational_sections",
+      "test": "rational_cusp_component_keeps_one_overlap_without_duplicate_contact",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The two selected cusp branches y^2=x^3 versus C(u)=((2u-1)^2,(2u-1)^3).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Each branch retains one closed overlap; its shared cusp endpoint is not duplicated as an isolated contact."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Endpoint chart conversions retain the original cusp equation and exact point correspondence."
+        }
+      ],
+      "oracle": "Independent cusp parameterization, distinct visits and exact endpoint relation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_transformed_components",
+      "target": "polynomial_rational_sections",
+      "test": "rational_common_components_keep_transforms_and_traversal",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Parabola overlaps under rotation/translation and reflection/translation, both operand orders and every reversal combination.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Both endpoints satisfy independently expanded world parabolas."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Overlap orientation follows the two traversals, with no isolated contacts."
+        }
+      ],
+      "oracle": "Independent world equations and the four traversal combinations.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_span_conversion",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_overlap_parameters_use_original_source_chart",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A selected generic quintic abscissa without an ordinary Bezier parameter view, converted through the polynomial branch span.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Span zero is the original abscissa chart and evaluates to the retained point."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "Any other span index is invalid."
+        }
+      ],
+      "oracle": "Exact selected-parameter equality, source point relation and typed invalid index.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_degree_seven",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_keep_degree_seven_source_relations",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic versus C(t)=(t^7,-t), selecting t^7+t^5+5t-5=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both orders retain the degree-seven source relation and exact transverse contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Point replay and subsequent split intersection preserve both equations."
+        }
+      ],
+      "oracle": "Independent x+y^7=0 and quintic relations, selected signs and transverse orientation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_retry",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_retry_and_replay",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic/quadratic section under zero counted work, a larger retry, source drop and STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A reached zero allowance returns BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A 100000-refinement/100000-promotion retry completes and its retained output pieces requery with Certified certainty."
+        }
+      ],
+      "oracle": "Reached counters, exact quintic/parabola equations, checked point replay and certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_selected_trim",
+      "target": "polynomial_rational_sections",
+      "test": "rational_overlaps_keep_selected_trims_across_policies",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A parabola correspondence clipped at X=t^2 for the generic quintic base t, under STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Selected trim identity survives clipping, attempted enlargement, output restriction and another intersection."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both parameter charts satisfy the parabola and retain Certified results."
+        }
+      ],
+      "oracle": "Original selected-X identity, exact range bounds, independent parabola equation and one-piece requery.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_rational_section_degree_thirty_seven",
+      "target": "polynomial_rational_sections",
+      "test": "polynomial_rational_sections_keep_degree_thirty_seven_source_relations",
+      "owner": "Hypercurve polynomial/rational section dispatch, monotone common-component correspondences and shared source-chart conversion",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic versus C(t)=(t^37,-t), selecting t^37+t^5+5t-5=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "RationalQuadraticBezier",
+        "CircularArc",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Homogeneous substitution proposes rational source parameters; the original polynomial branch selects its fiber. Common supports retain monotone local source charts, exact inverse correspondence and closed endpoint semantics. These are named algebraic fixtures, not complete general coefficients, collapsed traces, arbitrary image maps, normal parallels, filled-region or native archive closure. In-memory point replay is separate from fresh-process native replay. Counted work and external fixture timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The degree-37 source is consumed without a fixed low-degree fallback, retaining its exact transverse contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both original parameters, checked replay and split/requery preserve the defining equations."
+        }
+      ],
+      "oracle": "Independent x+y^37=0 and quintic relations, selected signs, original parameter evaluation and exact topology counts.",
+      "timeout_seconds": 300
     }
   ]
 }

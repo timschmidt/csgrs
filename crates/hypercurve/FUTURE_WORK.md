@@ -888,6 +888,55 @@ timeouts do not bound total arithmetic, coefficient growth, retained memory or
 cooperative cancellation. No performance improvement is claimed. Full repository
 pre-push qualification for this increment remains pending.
 
+**Polynomial/rational section increment (2026-10-26).** Four original
+pair fixtures reproduce typed `Unsupported` on the generated-line prerequisite:
+a generic quintic against a quadratic and a rational circle, and parabola/circle
+common components. An independent retained-abscissa evaluation gap was isolated
+and qualified separately before this pair implementation consumed its output.
+
+P15 and P17–P20 govern the extension. Exact homogeneous substitution isolates
+finite candidates in the rational source parameter. Original denominators,
+active source ranges, selected polynomial branches and exact point equality
+validate each retained contact. Homogeneous gradients establish tangent signs.
+For an identically vanishing substitution, certified monotone source-abscissa
+pieces partition a pole-free rational trace; exact inversion and the source
+slab's branch selection establish retained common components. Correspondences
+keep both original charts and local span ranges through reversal, restriction,
+algebraic clipping and later queries. Rational similarity charts pull back
+through their exact inverse. Polynomial `parameter_from_span` now preserves the
+original selected abscissa for span zero and rejects invalid span indices.
+
+Expanded probes first exposed incorrect spline span ranges, missing polynomial
+span conversion, transformed-chart blockers and a duplicate isolated cusp
+contact already covered by an overlap. These failures remain archived alongside
+the original four cases. Twenty public tests now pass, including three preserved
+abscissa controls. Independent equations and topology assertions cover both
+ordered branches, original selected roots, exchange and reversal, tangent and
+singular contacts, spline/NURBS seams, multiple visits, cusps, rotation and
+reflection, degree-seven and degree-37 sources, selected overlap trims,
+no-enlargement checks and subsequent intersections. Checked in-memory point
+replay, reached zero-budget exhaustion, larger retry and Certified policy
+transitions preserve evidence. The capability catalog adds 17 distinct entries,
+without duplicating the three existing controls.
+
+Final checks pass: 2,730 Hypercurve tests (79 suites, 34 existing ignored), 43
+root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 83 capability witnesses, typos, repository budget
+and diff checks pass. Qualification used `09ce677746` plus frozen abscissa and
+rational-section inputs; non-receipt bytes remain identical after advancing the
+commit parent to `80bcc08ae9`. Raw baselines and qualification are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-rational-sections`, digest
+`c55babd43904c40db014bf6053f8aa1fceaad9a4d2a30fdc1d9f2156a8ab5e48`.
+
+Constant-abscissa or collapsed common traces, nonlinear branch maps,
+polynomial/normal-parallel pairs, general coefficient fields, polynomial regions,
+A2 completion and fresh-process generated native archive replay remain open.
+Counted refinements/promotions and external fixture timeouts do not bound all
+arithmetic, coefficient growth, retained memory or cooperative cancellation.
+Concurrent timings do not establish a performance improvement. Full repository
+pre-push qualification for this increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

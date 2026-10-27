@@ -65,8 +65,13 @@ struct PolynomialCurveSource2 {
 /// polynomial pairs also intersect in a shared rational similarity chart,
 /// retaining common-component correspondences and isolated contacts on the
 /// original source domains. Contact incidence can be complete while a singular
-/// tangent sign remains unclassified. Other images, singular differential
-/// limits, rational Bézier promotion, and filled arrangements retain typed blockers.
+/// tangent sign remains unclassified. Rational-span sections use homogeneous
+/// substitution and original fiber selection, including rational similarities.
+/// Common components retain monotone abscissa correspondences in the original
+/// local span charts. Poles, selected parameters and strict predicates retain
+/// their existing guards and limits. General constant-abscissa/collapsed traces,
+/// other image maps, singular differential limits, rational Bézier promotion
+/// of the polynomial branch, and filled arrangements retain typed blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,

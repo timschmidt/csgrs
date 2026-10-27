@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-rational-section-evidence-2026-10-26` branch
+ends at `a4abd246af4e572dbf62a7c139f127fd84bd085b`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-rational-sections` (442 files,
+15,497,091 bytes), SHA-256
+`c55babd43904c40db014bf6053f8aa1fceaad9a4d2a30fdc1d9f2156a8ab5e48`.
+It records selected polynomial/rational finite sections and common-component
+correspondences: 2,730 Hypercurve tests, 43 root downstream tests, 3,009
+tests across six dependent packages, strict MSRV Clippy, formatting, 16 matrix
+guards and 83 capability witnesses pass. Original Unsupported cases and the
+subsequent spline, transform and cusp findings remain archived. Qualification
+used `09ce677746` plus frozen abscissa and rational-section inputs, preserved
+when advancing the parent to `80bcc08ae9`. Constant-abscissa common traces,
+broader algebraic charts and polynomial regions remain open. This local record
+is unpushed; full repository pre-push qualification remains pending.
+
 The separate local `hypercurve-selected-abscissa-evidence-2026-10-26` branch
 ends at `9008c6b87b51bbb644a9dc4a49d0fadfd52736e2`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas` (213 files,

@@ -112,6 +112,17 @@ nearby values checked separately. Zero counted allowance and a larger retry keep
 explicit outcomes. General dependent-fiber charts, filled-region operations and
 fresh-process generated archive replay remain unqualified.
 
+The rational-section witnesses retain the original quintic/polynomial and
+quintic/rational failures as positive incidence and continuation cases. Common
+components keep distinct monotone visits, exact overlap clipping, local span
+charts, cusp endpoint ownership and other-branch boundary contacts. Native
+circular, polynomial B-spline and NURBS charts, rational similarities and all
+traversal combinations are exercised. Degree-seven and degree-37 sources retain
+their original equations through replay and another intersection. Selected trim
+and retry witnesses test certainty and explicit reached exhaustion separately.
+General coefficient fields, collapsed/vertical common traces, other image maps,
+nonrational parallels and polynomial filled operations remain unqualified.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed
