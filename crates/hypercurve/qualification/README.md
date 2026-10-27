@@ -49,8 +49,9 @@ underconstrained input, undecided predicates and unbounded output. An outcome
 not present in the catalog has no new witness here. The polynomial frontier test now preserves both the original disjoint pair
 and the unchanged H08 boundary as positive incidence/admission witnesses.
 The original authored SVG round trips exercise eight authored families in one
-process. Selected source-restriction replay has separate witnesses below;
-neither set establishes all generated definitions or filled-region replay.
+process. Selected source-restriction and procedural-parallel replay have separate
+witnesses below; these do not establish all generated definitions or filled-region
+replay.
 Point-definition selector rejection is distinct from native archive replay.
 Membership samples are only the finite assertions listed, not a proof of the
 entire represented set.
@@ -66,6 +67,30 @@ The version 3 fixtures remain unchanged. Finite projection consumes the existing
 retained source spans, and its output never replaces authoritative metadata.
 Shared scalar expression DAG serialization, cross-path dependencies, other
 generated carriers, filled-region replay and total resource bounds remain open.
+
+The parallel SVG witnesses retain quadratic, cubic and rational Bezier sources,
+signed distances, selected ranges and traversal in the same version 4 graph.
+The named parabola, nonrational ellipse offset, Pythagorean-hodograph cubic and
+zero-distance stationary source have independently derived midpoint expectations.
+Cusp-split pieces retain one source and one selected boundary; distinct distances
+on one source retain that sharing through a second archive. A separate process
+reloads a closed path with a parallel boundary, admits it through the existing
+region authority, then consumes it in Booleans and a round offset. Its finite
+membership assertions are not an independent proof of the entire offset set.
+Other witnesses cover an algebraic trim followed by a reflected algebraic
+similarity and another archive, exterior source ranges, invalid references and
+singular ranges even with an empty final path, and reached byte limits followed
+by retry. A rational pole outside the retained range does not prevent replay;
+a pole inside it retains the existing typed Boundary blocker.
+
+Finite parallel projection now subdivides inconclusive interval bounds and
+accepts a chord only after obtaining a certified enclosure. Power-basis bounds
+apply to the retained finite range, including ranges outside the unit chart.
+Display points still cannot supply exact incidence or replace the native
+definition. The existing subdivision depth and extension-byte limits are not
+total-work, coefficient-growth, retained-memory or cancellation bounds. These
+witnesses do not qualify selected joint fibers, other generated supports,
+filled-region archives, general offset closure or complete resource control.
 
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line

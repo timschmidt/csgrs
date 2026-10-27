@@ -1320,6 +1320,65 @@ pre-push qualification and published-package delivery remain pending for this
 increment; checks on the earlier publication candidate do not validate these
 source bytes.
 
+**Procedural parallel replay increment (2026-10-27).** Committed
+`8eea456cee` passes the authored-restriction replay control but rejects a
+regular parabola parallel during SVG export. Its qualified unchanged library
+also rejects finite projection of an ellipse parallel and an exterior `[2,3]`
+line-parallel range. All three failures, source attribution, compiler commands
+and the library digest are retained. Hypercurve exact interchange and finite
+parallel projection own these changes; P15, P18–P20 and P28–P30 apply.
+
+Version 4 adds shared source/normal-distance supports and selected finite range
+records. Replay uses existing strict constructors to re-establish roots,
+ascending ranges, denominator and normal guards, and interior cusp exclusions.
+Every finite range is checked even when unused by an empty final path. Existing
+version 3 and version 4 records remain supported. Local immutable allocation
+keys retain sharing but are never serialized or treated as mathematical
+equality. Explicit range order matters: the generic curve-range constructor
+admits traversal in either direction and cannot certify an ascending domain.
+
+Finite projection now evaluates interval bounds on the original retained range,
+including exterior domains, and subdivides inconclusive Ordering enclosures
+under the existing depth bound. Every accepted chord still needs a certified
+box. Other error outcomes remain explicit, and display points never replace the
+native source. A pole inside a retained rational range preserves the existing
+typed Boundary blocker; it is not relabeled as invalid or counted as completion.
+
+Nine curve witnesses cover parabola, nonrational ellipse, PH cubic and stationary
+zero-distance sources with independently derived exact midpoint expectations;
+shared cusp boundaries; separate-process reload before region admission,
+Booleans and round offset; invalid references and singular/nonascending ranges;
+rational pole guards and exterior domains; exact finite line-parallel endpoints;
+reached byte limits and retry; algebraic trim, reflected algebraic similarity
+and another archive; and distinct distances sharing one source. One root SVG
+adapter witness consumes the replayed result in exact point incidence. The cap
+fixture checks specified exact relations and operation consumption; its finite
+membership assertions do not independently prove the entire expanded set.
+
+Final checks pass: 2,799 Hypercurve tests (88 suites, 34 existing ignored),
+61 root tests across eight affected suites, and 3,010 tests across six
+dependent packages, none ignored. Strict Hypercurve/CSGRS all-target/all-feature
+MSRV Clippy, the no-default-feature Hypercurve build, both API documentation
+builds with warnings denied, formatting, 16 matrix guards, 151 capability
+witnesses, typos, repository budget and diff checks pass. Raw failures, exact
+commands and frozen source snapshots are in `docs/evidence/2026-10-27-hypercurve-closure-parallel-replay`,
+SHA-256 `5b0a3f0c28cb0a70f0779f98ab2da108b2078fe5423008e50a92cd37f47f54fe`. All non-receipt source bytes
+remain unchanged after this receipt. Failed compilation attempts, the original
+projection failures and the descending-range replay failure remain available;
+no existing test or hard fixture was weakened. The first downstream build failed
+before tests when ccache attempted read-only storage. Its logs are retained;
+a task-owned cache resolved the environment failure, and the remaining twelve
+groups resumed on unchanged source. The first five passed groups keep their
+original command and environment attribution.
+
+Other generated supports, selected or joint fibers, filled-region archives,
+cross-path sharing and scalar-expression DAG serialization remain open. Existing
+byte, segment and subdivision-depth limits do not bound total arithmetic,
+coefficient growth, temporary/retained memory or cancellation. No performance
+improvement or universal closure is claimed. Full repository pre-push checks
+and published-package delivery remain pending for this increment; the earlier
+pushed candidate does not qualify these source bytes.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload of generated supports and filled regions beyond the authored-source restriction witnesses.",
+    "Native save/reload of generated supports and filled regions beyond the authored-source restriction and named procedural-parallel witnesses.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -6344,6 +6344,408 @@
         }
       ],
       "oracle": "Exact affine line evaluation at two rational endpoints; independently known finite coordinates and traversal.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_families",
+      "target": "svg_parallel_replay",
+      "test": "parallel_sources_replay_without_changing_their_family_or_normal_side",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Parabola C(t)=(t,t^2) at distance -1/4; quarter ellipse (2 cos(theta),sin(theta)) at -1/8; PH cubic C(t)=(t-t^3/3,t^2) at 1/4; stationary C(t)=(t^2,t^2) at zero distance. Each uses [0,1] with both traversals.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Each source family, control definition, signed distance and traversal survives replay; opposite traversals retain one shared support."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "At source parameter 1/2, all four curves agree with independently derived exact normal-offset points."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Opposite traversals yield one complete overlap. Deterministic serialization is checked separately."
+        }
+      ],
+      "oracle": "Exact source definitions plus independent midpoint normal formulas: (1/2+1/(4 sqrt(2)),1/4-1/(4 sqrt(2))), (sqrt(2)+1/(8 sqrt(5)),sqrt(2)/2+1/(4 sqrt(5))), (31/120,2/5), and (1/4,1/4).",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_cusp",
+      "target": "svg_parallel_replay",
+      "test": "cusp_split_replay_keeps_one_support_and_selected_boundary",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "The distance-one left parallel of C(t)=(t,t^2), split at its selected cusp in [0,1].",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Adjacent pieces reload with one shared support and one shared selected-root polynomial, equal source parameters and coincident endpoints."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The two selected ranges remain separate; the unsplit interval is rejected by the existing constructor."
+        }
+      ],
+      "oracle": "Retained source/range/root identities and exact shared-endpoint incidence. The existing singularity solver selects the cusp; this is replay preservation, not an independent oracle for every singularity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_fresh",
+      "target": "svg_parallel_replay",
+      "test": "fresh_process_replays_a_parallel_boundary_before_boolean_and_offset",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A closed path containing the reversed distance-one parallel of quadratic (0,0),(2,2),(4,0) and three native line segments to y=-2; NonZero region admission after a separate-process reload.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The child process imports the parallel source representation, signed distance and reversed traversal, and verifies the exact midpoint (2,2)."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The existing arrangement admits the closed path and classifies (2,0) inside and (2,3) outside."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "The four-operation self-Boolean batch completes and its difference is empty, both before and after offset."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "A round offset by 1/16 completes and its output accepts another Boolean and inside-point classification."
+        }
+      ],
+      "oracle": "Independent normal-offset midpoint, retained support/traversal, closed boundary and regularized self-difference identity. Finite membership and consumption assertions do not independently certify the entire expanded set.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_validation",
+      "target": "svg_parallel_replay",
+      "test": "parallel_replay_rejects_invalid_references_and_changed_singular_ranges",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Hand-encoded graph records with wrong-type, missing, self and forward references; descending or equal ranges; an interior parallel cusp or an undefined source normal, including an empty final path.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Invalid references fail as malformed input; nonascending and singular ranges retain ExactCurveError::Invalid even when unused by the final path."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The regular reversed subrange [0,1/4] of the distance-one parabola parallel remains admissible."
+        }
+      ],
+      "oracle": "Independent prior-reference grammar and strict source-parameter ordering; explicit interior-cusp and stationary-normal counterexamples. The wire is assembled independently of the production writer.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_poles",
+      "target": "svg_parallel_replay",
+      "test": "rational_parallel_replay_checks_only_the_declared_range_for_poles",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Rational C(t)=(t/(1-2t),0) at distances zero and 1/4, restricted to [2,3]; the original denominator vanishes at 1/2 outside this range.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Both distances replay, export and reload on the exterior range, with exact endpoints (-2/3,d) and (-3/5,d)."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "blocked_unspecified",
+          "assertion": "Changing the retained range to [1/4,3/4] preserves the existing typed Boundary blocker; it is not counted as geometric completion or relabeled invalid."
+        }
+      ],
+      "oracle": "Independent rational evaluation and denominator root 1/2. Original denominator guards remain authoritative; no removable-factor or domain-extension claim.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_exterior",
+      "target": "svg_parallel_replay",
+      "test": "exterior_parallel_projection_keeps_the_original_parameter_chart",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "C(t)=(t,0), represented by a quadratic, at left distance 1/4 on [2,3] with both traversals.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Finite projection produces precisely (2,1/4),(3,1/4), or the reverse, and never substitutes the authored unit interval."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Export/import retains the original ascending bounds 2 and 3 in both traversal cases."
+        }
+      ],
+      "oracle": "Independent line normal and affine parameter evaluation; exactly representable finite coordinates verify the display endpoints separately from native domain identity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_limits",
+      "target": "svg_parallel_replay",
+      "test": "parallel_byte_exhaustion_keeps_a_later_replay_available",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "The distance -1/4 parabola parallel with an exact-extension allowance of 64 bytes, followed by the default allowance.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Export and import reach the configured extension bound and return SizeOverflow."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A larger retry succeeds and retains the original signed distance."
+        }
+      ],
+      "oracle": "Actual configured byte-limit outcomes and successful subsequent replay. This does not measure total work or memory.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_similarity",
+      "target": "svg_parallel_replay",
+      "test": "selected_parallel_trim_replays_through_a_reflected_algebraic_similarity",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "C(t)=(t,t^2), distance -1/4, trimmed to [0,beta] with beta the root of 2t^2-1 in (1/2,3/4), reloaded, transformed by x'=1-sqrt(2)x, y'=-1+sqrt(2)y and reloaded again.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The replayed curve accepts the reflected algebraic similarity and keeps beta in the original chart."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A second archive preserves distance sqrt(2)/4 and the independently transformed midpoint (3/4-sqrt(2)/2,-5/4+sqrt(2)/4)."
+        }
+      ],
+      "oracle": "The selected polynomial root and explicit similarity image of the independently derived normal-offset midpoint; orientation reversal changes the signed left distance.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_replay_shared_source",
+      "target": "svg_parallel_replay",
+      "test": "different_parallel_distances_replay_one_shared_source",
+      "owner": "Hypercurve exact SVG interchange and finite parallel projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A hand-encoded rectangular path between distance-1/4 and distance-1/2 parallels of C(t)=(t,0), with native vertical connectors and the upper support reversed.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains quadratic, cubic or rational Bezier source definitions, signed left-normal distance, ascending finite source ranges and separate traversal. Import rechecks selected roots and each range through the existing strict parallel constructor. Shared source/root records preserve dependencies; local pointer reuse is not mathematical equality. Display chords do not replace exact definitions. These named witnesses do not qualify other generated supports, joint selected fibers, filled-region archives, scalar DAG or cross-path sharing, general offset closure, total work, retained memory or cancellation. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Both decoded supports share their source allocation while preserving distinct signed distances, before and after a second archive."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Known exact endpoints (0,1/4) and (1,1/2) survive the original and repeated replay."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Both decoded paths admit through NonZero arrangement semantics and contain (1/2,3/8)."
+        }
+      ],
+      "oracle": "Independently assembled source/distance graph, explicit rectangle endpoint coordinates and inside point. Pointer checks concern retained sharing, not mathematical equality or a general set-equality proof.",
       "timeout_seconds": 300
     }
   ]

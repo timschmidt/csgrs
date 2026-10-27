@@ -488,10 +488,14 @@ exact signatures.
   commands are used where possible; a versioned `data-hypercurve-path`
   attribute preserves curve families and exact values for Hypercurve
   stroke round-trips. Version 3 remains readable and is still emitted for
-  authored paths. Version 4 retains authored-source restrictions, selected
-  Bezier roots, projective parameter charts and traversal in a shared definition
-  graph per path. Import rechecks roots, charts, domains and connectivity under
-  strict predicates; `SvgError::Exact` retains failures from this replay.
+  authored paths. Version 4 retains authored-source restrictions and procedural
+  quadratic, cubic and rational Bezier parallels, including signed distance,
+  selected Bezier roots, projective parameter charts and traversal in a shared
+  definition graph per path. Import rechecks roots, charts, domains, parallel
+  regularity and connectivity under strict predicates; `SvgError::Exact` retains
+  failures from this replay. Parallel ranges keep their original source chart,
+  including finite ranges outside the authored unit interval. Cusp boundaries
+  must remain explicitly split.
   The standard SVG `d` attribute is only a finite display projection.
   Filled-region native replay, other generated supports and sharing across
   separate paths remain open. Byte and segment limits do not bound all scalar

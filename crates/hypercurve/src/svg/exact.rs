@@ -15,7 +15,7 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
     if path
         .curves()
         .iter()
-        .any(|curve| curve.source_restriction().is_some())
+        .any(|curve| curve.source_restriction().is_some() || curve.analytic_parallel().is_some())
     {
         return graph::encode_path(path, max_bytes);
     }

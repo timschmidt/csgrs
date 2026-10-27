@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-parallel-replay-evidence-2026-10-27` branch ends at
+`368840d8c3c4e3ca489870a56f8642c10122ff42`, adding `docs/evidence/2026-10-27-hypercurve-closure-parallel-replay`
+(426 files, 13,660,333 bytes), SHA-256 `5b0a3f0c28cb0a70f0779f98ab2da108b2078fe5423008e50a92cd37f47f54fe`.
+It records native procedural-parallel replay, retained source/range/normal-side
+relations and finite projection on exterior or subdivided intervals.
+All 2,799 Hypercurve tests, 61 root tests, 3,010 dependent-package tests,
+strict MSRV Clippy, the build without optional features, API documentation,
+formatting, 16 matrix guards and 151 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases. Committed-parent export/projection
+failures, failed prototypes, source snapshots and separate-process replay before
+further region operations are retained. This record is local and unpushed.
+Full pre-push checks, broader generated/filled-region replay, general algebraic
+closure and total resource bounds remain open.
+
 The local `hypercurve-native-replay-evidence-2026-10-27` branch ends at
 `e0d8165fae971704511ba1f27fd6286eff408f6b`, adding `docs/evidence/2026-10-27-hypercurve-closure-native-replay`
 (289 files, 8,114,777 bytes), SHA-256 `14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd`.

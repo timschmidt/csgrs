@@ -12,10 +12,12 @@
 //! path also carries a bounded, versioned `data-hypercurve-path` extension so
 //! rational quadratics, arbitrary rational Beziers, polynomial B-splines,
 //! NURBS, periodicity, and non-decimal [`Real`] values round-trip exactly
-//! through Hypercurve. Retained authored-source restrictions also preserve
-//! selected algebraic parameters, their source charts, and traversal. These
-//! guarantees concern stroke paths; filled-region export still uses its finite
-//! projection. Other SVG consumers ignore this `data-*` attribute and
+//! through Hypercurve. Retained authored-source restrictions and procedural
+//! quadratic, cubic and rational Bezier parallels also preserve selected
+//! algebraic parameters, source charts and traversal. Parallel definitions retain
+//! their shared sources and signed distances; replay rechecks each finite range's
+//! regularity. These guarantees concern stroke paths; filled-region export still
+//! uses its finite projection. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;

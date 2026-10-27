@@ -6,10 +6,10 @@
 
 use super::{ExactReader, ExactWriter, encode_bytes, extension_overflow, malformed};
 use crate::{
-    BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, Curve2, CurveContext, CurveGeometry2,
-    CurveOperation2, CurveParameterRange2, CurvePath2, CurveResult, ExactCurveError, SvgError,
-    SvgResult,
+    BezierAlgebraicParameter2, BezierParallel2, BezierParallelSource2, BezierParameter2,
+    BezierParameterInterval, BezierParameterPolynomial, BezierParameterRange2, Classification,
+    Curve2, CurveContext, CurveGeometry2, CurveOperation2, CurveParameterRange2, CurvePath2,
+    CurveResult, ExactCurveError, Real, SvgError, SvgResult,
 };
 use std::collections::HashMap;
 
@@ -20,6 +20,8 @@ const SCALAR_PARAMETER: u8 = 1;
 const SELECTED_ROOT: u8 = 2;
 const PARAMETER_IMAGE: u8 = 3;
 const SOURCE_RESTRICTION: u8 = 4;
+const PARALLEL_SUPPORT: u8 = 5;
+const PARALLEL_RANGE: u8 = 6;
 
 pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
     if path.curves().len() > max_bytes / 4 {
@@ -30,6 +32,8 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
         count: 0,
         sources: HashMap::new(),
         parameters: HashMap::new(),
+        parallel_sources: HashMap::new(),
+        parallels: HashMap::new(),
     };
     graph.writer.bytes.extend_from_slice(MAGIC);
     graph.writer.write_len(0)?;
@@ -53,6 +57,8 @@ struct GraphWriter {
     // and do not merge independently authored definitions by geometric fit.
     sources: HashMap<*const CurveGeometry2, u32>,
     parameters: HashMap<*const BezierParameterPolynomial, u32>,
+    parallel_sources: HashMap<*const BezierParallelSource2, u32>,
+    parallels: HashMap<*const Real, u32>,
 }
 
 impl GraphWriter {
@@ -64,6 +70,22 @@ impl GraphWriter {
     }
 
     fn curve(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        if let Some(view) = curve.analytic_parallel() {
+            let Some((start, end)) = view.range().as_bezier_parameters() else {
+                return Err(SvgError::Unsupported(
+                    "exact SVG parallels require a retained Bezier parameter definition".into(),
+                ));
+            };
+            let parallel = self.parallel(view.parallel())?;
+            let start = self.parameter(start)?;
+            let end = self.parameter(end)?;
+            let index = self.begin(PARALLEL_RANGE)?;
+            self.writer.write_u32(parallel)?;
+            self.writer.write_u32(start)?;
+            self.writer.write_u32(end)?;
+            self.writer.write_bool(view.is_reversed())?;
+            return Ok(index);
+        }
         if let Some((source, range, reversed)) = curve.source_restriction() {
             let Some((start, end)) = range.as_bezier_parameters() else {
                 return Err(SvgError::Unsupported(
@@ -93,6 +115,36 @@ impl GraphWriter {
         let index = self.begin(NATIVE_CURVE)?;
         self.writer.write_curve(curve)?;
         self.sources.insert(key, index);
+        Ok(index)
+    }
+
+    fn parallel(&mut self, parallel: &BezierParallel2) -> SvgResult<u32> {
+        // Distance belongs to the immutable parallel allocation and identifies
+        // that complete support, including its source. Its address stays local.
+        let key = std::ptr::from_ref(parallel.distance());
+        if let Some(index) = self.parallels.get(&key) {
+            return Ok(*index);
+        }
+        let source = parallel.source();
+        let source_key = std::ptr::from_ref(source);
+        let source_index = if let Some(index) = self.parallel_sources.get(&source_key) {
+            *index
+        } else {
+            let native = match source {
+                BezierParallelSource2::Quadratic(curve) => Curve2::from(curve.clone()),
+                BezierParallelSource2::Cubic(curve) => Curve2::from(curve.clone()),
+                BezierParallelSource2::Rational(curve) => Curve2::from(curve.clone()),
+            };
+            let index = self.begin(NATIVE_CURVE)?;
+            // Never memoize the temporary native wrapper's address.
+            self.writer.write_curve(&native)?;
+            self.parallel_sources.insert(source_key, index);
+            index
+        };
+        let index = self.begin(PARALLEL_SUPPORT)?;
+        self.writer.write_u32(source_index)?;
+        self.writer.write_real(parallel.distance())?;
+        self.parallels.insert(key, index);
         Ok(index)
     }
 
@@ -132,6 +184,7 @@ impl GraphWriter {
 enum Definition {
     Curve(Curve2),
     Parameter(BezierParameter2),
+    Parallel(BezierParallel2),
 }
 
 fn curve_reference(definitions: &[Definition], index: usize) -> SvgResult<&Curve2> {
@@ -172,6 +225,9 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
     let count = reader.read_len()?;
     reader.check_collection_len(count, 1)?;
     let mut definitions = Vec::new();
+    // Different distances on one serialized source retain one source owner.
+    // Regularity belongs to each finite range, not to this unbounded recipe.
+    let mut parallel_sources: HashMap<usize, BezierParallel2> = HashMap::new();
     for _ in 0..count {
         let definition = match reader.read_u8()? {
             NATIVE_CURVE => Definition::Curve(reader.read_curve()?),
@@ -223,6 +279,63 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
                     &CurveContext::STRICT,
                 ))?;
                 let curve = source.restrict_source(range).map_err(SvgError::Exact)?;
+                Definition::Curve(if reversed {
+                    curve.reversed().map_err(SvgError::Exact)?
+                } else {
+                    curve
+                })
+            }
+            PARALLEL_SUPPORT => {
+                let source_index = reader.read_len()?;
+                let source = curve_reference(&definitions, source_index)?;
+                let distance = reader.read_real()?;
+                let parallel = if let Some(source) = parallel_sources.get(&source_index) {
+                    source.with_distance(distance)
+                } else {
+                    let source = match source.geometry() {
+                        Some(CurveGeometry2::QuadraticBezier(curve)) => {
+                            BezierParallelSource2::Quadratic(curve.clone())
+                        }
+                        Some(CurveGeometry2::CubicBezier(curve)) => {
+                            BezierParallelSource2::Cubic(curve.clone())
+                        }
+                        Some(CurveGeometry2::RationalBezier(curve)) => {
+                            BezierParallelSource2::Rational(curve.clone())
+                        }
+                        _ => {
+                            return Err(malformed(
+                                "exact parallel must reference a native Bezier source",
+                            ));
+                        }
+                    };
+                    let parallel = BezierParallel2::from_source(source, distance);
+                    parallel_sources.insert(source_index, parallel.clone());
+                    parallel
+                };
+                Definition::Parallel(parallel)
+            }
+            PARALLEL_RANGE => {
+                let parallel = match definitions.get(reader.read_len()?) {
+                    Some(Definition::Parallel(parallel)) => parallel.clone(),
+                    _ => return Err(malformed("exact path has an invalid parallel reference")),
+                };
+                let start = parameter_reference(&definitions, reader.read_len()?)?.clone();
+                let end = parameter_reference(&definitions, reader.read_len()?)?.clone();
+                let reversed = reader.read_bool()?;
+                if certified(start.cmp_by_refinement_with_policy(&end, &CurveContext::STRICT))?
+                    != std::cmp::Ordering::Less
+                {
+                    return Err(SvgError::Exact(ExactCurveError::invalid_unattributed(
+                        CurveOperation2::Construction,
+                        crate::CurveError::InvalidBezierRange,
+                    )));
+                }
+                let range = BezierParameterRange2::new_validated(start, end);
+                let curve = certified(Curve2::try_analytic_parallel_with_policy(
+                    parallel,
+                    range,
+                    &CurveContext::STRICT,
+                ))?;
                 Definition::Curve(if reversed {
                     curve.reversed().map_err(SvgError::Exact)?
                 } else {

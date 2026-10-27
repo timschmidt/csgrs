@@ -1563,39 +1563,45 @@ fn append_parallel_parameter_samples(
         bounds_upper,
         policy,
     ) {
-        Classification::Decided(bounds) => bounds,
+        Classification::Decided(bounds) => Some(bounds),
+        // A wide interval can contain zero in its denominator or speed
+        // enclosure even when the retained branch is regular. Subdivision
+        // tightens that enclosure; it never substitutes samples for a proof.
+        Classification::Uncertain(crate::UncertaintyReason::Ordering) if depth < MAX_DEPTH => None,
         Classification::Uncertain(reason) => {
             return Err(CurveError::Topology(format!(
                 "finite retained-parallel projection could not bound its analytic carrier: {reason:?}"
             )));
         }
     };
-    let corners = [
-        [
-            finite_real(bounds.min().x())?,
-            finite_real(bounds.min().y())?,
-        ],
-        [
-            finite_real(bounds.min().x())?,
-            finite_real(bounds.max().y())?,
-        ],
-        [
-            finite_real(bounds.max().x())?,
-            finite_real(bounds.min().y())?,
-        ],
-        [
-            finite_real(bounds.max().x())?,
-            finite_real(bounds.max().y())?,
-        ],
-    ];
-    if corners
-        .into_iter()
-        .map(|point| point_segment_distance(point, start_point, end_point))
-        .fold(0.0, f64::max)
-        <= chord_error
-    {
-        push_if_new(points, end_point);
-        return Ok(());
+    if let Some(bounds) = bounds {
+        let corners = [
+            [
+                finite_real(bounds.min().x())?,
+                finite_real(bounds.min().y())?,
+            ],
+            [
+                finite_real(bounds.min().x())?,
+                finite_real(bounds.max().y())?,
+            ],
+            [
+                finite_real(bounds.max().x())?,
+                finite_real(bounds.min().y())?,
+            ],
+            [
+                finite_real(bounds.max().x())?,
+                finite_real(bounds.max().y())?,
+            ],
+        ];
+        if corners
+            .into_iter()
+            .map(|point| point_segment_distance(point, start_point, end_point))
+            .fold(0.0, f64::max)
+            <= chord_error
+        {
+            push_if_new(points, end_point);
+            return Ok(());
+        }
     }
     if depth >= MAX_DEPTH {
         return Err(CurveError::Topology(
