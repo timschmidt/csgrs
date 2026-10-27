@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-selected-abscissa-evidence-2026-10-26` branch
+ends at `9008c6b87b51bbb644a9dc4a49d0fadfd52736e2`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas` (213 files,
+7,201,989 bytes), SHA-256
+`1e45871c00e897e88d579812c2bb87e974e9ad9a356f6e36d6cae467992a4014`.
+It records retained rational abscissa pullback and repeated output-coordinate
+use: 1,213 Hypersolve tests, 2,710 Hypercurve tests, 43 root downstream tests,
+3,009 tests across six dependent packages, strict MSRV Clippy for both owners,
+formatting, 16 matrix guards and 66 capability witnesses pass. The original
+generic-quintic evaluation failure and the output-coordinate follow-on failure
+remain archived. Qualification used `00dbdb152a` plus frozen generated-line and
+abscissa inputs, preserved when advancing the parent to `09ce677746`.
+General dependent-fiber charts and polynomial regions remain open. This local
+record is unpushed; full repository pre-push qualification remains pending.
+
 The separate local `hypercurve-polynomial-chord-evidence-2026-10-26` branch
 ends at `3f85a12099eeab4e6c8af0f14335701637a5d0e9`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-polynomial-chords` (273 files,

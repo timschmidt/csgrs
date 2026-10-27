@@ -103,6 +103,15 @@ corpus. General oblique lines with unrelated selected endpoints and broader
 coefficient/transform domains remain unqualified. These checks do not complete
 polynomial filled regions or fresh-process generated archive replay.
 
+The selected-abscissa witnesses require polynomial branches to consume retained
+rational coordinates over one selected algebraic parameter. They preserve the
+generic quintic failure alongside radical and fifth-root controls. Output X
+coordinates are repeatedly consumed, with branch order, both denominator signs,
+original pole guards, restrictions, transforms, distinct selections and exact
+nearby values checked separately. Zero counted allowance and a larger retry keep
+explicit outcomes. General dependent-fiber charts, filled-region operations and
+fresh-process generated archive replay remain unqualified.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

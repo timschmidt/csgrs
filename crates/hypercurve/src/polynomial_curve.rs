@@ -17,6 +17,9 @@ use std::cmp::Ordering;
 #[path = "polynomial_curve_differential.rs"]
 mod differential;
 
+#[path = "polynomial_curve_abscissa.rs"]
+mod abscissa;
+
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
 /// This is a curve collection, not a filled region. Every solver graph arc is
@@ -41,6 +44,11 @@ struct PolynomialCurveSource2 {
 /// The parameter is the first coordinate of the source polynomial, including
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
+/// Interior abscissas can also retain a rational source expression over one
+/// selected algebraic parameter. Fiber pullback preserves that base, the
+/// original denominator guard and the branch's ordered root; subsequent
+/// abscissa queries can reuse the same source without coordinate elimination.
+/// General dependent fibers without such a rational base chart remain blocked.
 /// Regular derivatives and smooth-event tangent directions retain that joint
 /// source. Source branches and their retained rational similarities intersect
 /// authored native lines, including exact algebraic coordinates and selected
@@ -785,16 +793,20 @@ impl PolynomialCurveBranch2 {
         value: &CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePoint2> {
-        let base = value
-            .as_bezier_parameter()
-            .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
-        let root = match base {
+        let (base, equation, map) = if let Some(base) = value.as_bezier_parameter() {
+            (base.clone(), self.topology().equation().clone(), None)
+        } else {
+            let (base, equation, map) =
+                abscissa::pullback(self.topology().equation(), value, policy)?;
+            (base, equation, Some(map))
+        };
+        let root = match &base {
             BezierParameter2::Exact(value) => AlgebraicRootRepresentation::from_exact_value(value),
             BezierParameter2::Algebraic(value) => parameter_representation(value, policy),
         };
         let domain = &self.topology().domain().second;
         let report = isolate_bivariate_fiber_roots_at_algebraic_parameter(
-            self.topology().equation(),
+            &equation,
             CurveResultantParameter::First,
             &root,
             &domain[0],
@@ -822,14 +834,15 @@ impl PolynomialCurveBranch2 {
         if report.intervals.len() != self.topology().slabs()[self.slab].arcs().len() {
             return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
         }
-        let mut points = PolynomialPoint2::from_fiber(
-            self.topology().equation().clone(),
-            base.clone(),
-            &report.intervals[self.root..=self.root],
-        )?;
-        points
+        let mut points =
+            PolynomialPoint2::from_fiber(equation, base, &report.intervals[self.root..=self.root])?;
+        let point = points
             .pop()
-            .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))
+            .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))?;
+        match map {
+            Some(map) => point.rational_image(&map),
+            None => Ok(point),
+        }
     }
 
     fn map_point(

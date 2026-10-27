@@ -77,6 +77,29 @@ pub fn bivariate_homogeneous_compose(
     Some(result)
 }
 
+/// Substitutes `first = numerator(s) / denominator(s)`, retaining the second variable.
+///
+/// Returns `denominator^d * polynomial(numerator/denominator, t)`, where `d`
+/// is the highest first-variable power not known to be zero. The second-variable
+/// degree does not insert extra denominator factors. This exact arithmetic
+/// neither cancels factors nor proves a nonzero denominator; callers must
+/// preserve the original guard, including at removable poles.
+pub fn bivariate_substitute_first_rational(
+    polynomial: &BivariatePolynomial,
+    numerator: &[Real],
+    denominator: &[Real],
+) -> BivariatePolynomial {
+    let degree = bivariate_first_active_degree(polynomial);
+    let numerators = polynomial_powers(numerator, degree);
+    let denominators = polynomial_powers(denominator, degree);
+    let mut result = BivariatePolynomial::new(Vec::new());
+    for (power, row) in polynomial.coefficients.iter().take(degree + 1).enumerate() {
+        let factor = polynomial_multiply(&numerators[power], &denominators[degree - power]);
+        result = bivariate_add(&result, &bivariate_outer_product(&factor, row));
+    }
+    result
+}
+
 /// Highest total power `i + j` of a coefficient not known to be zero.
 ///
 /// Empty and zero polynomials return `Some(0)`. `None` denotes integer
@@ -920,5 +943,31 @@ mod tests {
             bivariate_active_total_degree(&BivariatePolynomial::new(vec![vec![r(0); 7]; 9])),
             Some(0)
         );
+    }
+
+    #[test]
+    fn rational_first_substitution_preserves_degree_and_pole_identity() {
+        // F(x,y)=y^5+5y+5-x, with padded zero rows. X=(1+s^2)/(1-s).
+        let source = BivariatePolynomial::new(vec![
+            vec![r(5), r(5), r(0), r(0), r(0), r(1)],
+            vec![r(-1)],
+            vec![r(0); 8],
+        ]);
+        let image =
+            bivariate_substitute_first_rational(&source, &[r(1), r(0), r(1)], &[r(1), r(-1)]);
+        // Exactly (1-s)(y^5+5y+5)-1-s^2, without an avoidable (1-s)^4.
+        assert_eq!(image.coefficients.len(), 3);
+        for (s, t) in [(-2, 3), (0, -1), (1, 5), (3, -2)] {
+            assert_eq!(
+                evaluate(&image, &r(s), &r(t)),
+                r((1 - s) * (t * t * t * t * t + 5 * t + 5) - 1 - s * s)
+            );
+        }
+        // Cancelled coordinate formulas still retain their authored pole factor.
+        let graph = BivariatePolynomial::new(vec![vec![r(0), r(1)], vec![r(-1)]]);
+        let cancelled =
+            bivariate_substitute_first_rational(&graph, &[r(0), r(-1), r(1)], &[r(-1), r(1)]);
+        assert_eq!(evaluate(&cancelled, &r(1), &r(7)), r(0));
+        assert_eq!(evaluate(&cancelled, &r(2), &r(7)), r(5));
     }
 }

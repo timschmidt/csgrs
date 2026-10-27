@@ -841,6 +841,53 @@ remain open. Counted refinements/promotions and external fixture timeouts are
 not total-work, memory or cancellation bounds. No performance improvement is
 claimed. Full repository pre-push qualification for this increment is pending.
 
+**Selected polynomial-abscissa increment (2026-10-26).** The original
+polynomial/rational intersection probes exposed an independent evaluation gap.
+On `00dbdb152a` plus frozen generated-line inputs, a standalone `point_at`
+witness reproduces `Evaluation/ImplicitPolynomial/Unsupported`: the retained
+X of `C(t)=(t^2,-t)`, selected by `t^5+t^2+5t-5=0`, has no ordinary Bezier
+parameter view. Radical and fifth-root controls already pass and remain intact.
+
+P15 and P18–P20 govern this change. The polynomial fiber is now pulled back
+through an abscissa's exact rational source expression over its original
+selected algebraic base. Hypersolve owns the arithmetic substitution, clearing
+only the active first-coordinate degree and retaining denominator factors.
+Hypercurve certifies the original denominator, checks the source slab's ordered
+fiber census, selects the original Y branch and retains the rational image.
+A subsequent coordinate query can pull point maps back to the same base when
+its numerator and denominator are structurally independent of the selected Y
+fiber. It does not project unrelated dependent roots or approximate coordinates.
+
+The expanded prototype first exposed a second `Unsupported` when consuming its
+own output X. That failure remains alongside the original quintic. Ten public
+witnesses now cover repeated output use, checked in-memory point replay, both
+ordered parabola branches, both signs of rational denominators, rejected
+removable poles, restriction, reversal and an independently expanded transformed
+quintic. A retained zero-distance parallel, changed base selections and an exact
+`2^-80` coordinate shift preserve their identities. A reached zero counted
+allowance permits a larger retry; STRICT/APPROXIMATE_512/STRICT keeps Certified
+results. Hypersolve's independent substitution identity test checks degree and
+original pole factors.
+
+Final checks pass: 1,213 Hypersolve tests (23 suites, none ignored), 2,710
+Hypercurve tests (78 suites, 34 existing ignored), 43 root downstream tests and
+3,009 tests across six dependent packages (0 existing ignored).
+Strict all-target/all-feature MSRV Clippy for both owners, formatting, 16 matrix
+guards, 66 capability witnesses, typos, repository budget and diff checks pass.
+Qualification used `00dbdb152a` plus the frozen generated-line and abscissa
+inputs; non-receipt bytes remain identical after advancing the commit parent to
+`09ce677746`. Raw baselines and qualification are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas`, digest
+`1e45871c00e897e88d579812c2bb87e974e9ad9a356f6e36d6cae467992a4014`.
+
+General nested/dependent-fiber charts, broader coefficient domains, polynomial
+filled operations, A2 completion and fresh-process generated native archive
+replay remain open. The separately tested rational-pair prototype is not
+included in this increment. Counted refinements/promotions and external fixture
+timeouts do not bound total arithmetic, coefficient growth, retained memory or
+cooperative cancellation. No performance improvement is claimed. Full repository
+pre-push qualification for this increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

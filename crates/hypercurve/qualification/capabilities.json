@@ -2530,6 +2530,417 @@
       ],
       "oracle": "Reached work counters, public failure reason, independent defining equations, retained source parameters, certainty receipts and invalid constructor result.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_cubic_control",
+      "target": "polynomial_selected_abscissas",
+      "test": "polynomial_branch_consumes_retained_rational_abscissa",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t^3,t^2), selected at y=1/2, evaluated on the positive polynomial branch y^3=x^2.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The unmaterialized source point and branch evaluation coincide after original sources are dropped; y remains exactly 1/2."
+        }
+      ],
+      "oracle": "Independent cubic relation and selected ordinate.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_fifth_degree_control",
+      "target": "polynomial_selected_abscissas",
+      "test": "polynomial_branch_consumes_fifth_degree_rational_abscissa",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t^2,t^5), selected at y=1/2, evaluated on the positive branch y^2=x^5.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The branch consumes the retained source X, satisfies 4x^5=1 and retains y=1/2 after source drop."
+        }
+      ],
+      "oracle": "Independent fifth-degree equation, exact ordinate and shared-point comparison.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_generic_quintic",
+      "target": "polynomial_selected_abscissas",
+      "test": "polynomial_branch_consumes_generic_quintic_abscissa_without_projection",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t^2,-t), with t selected by t^5+t^2+5t-5=0 on [0,1], and branch y^5+5y+5-x=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The exact source point has no represented coordinates and its X has no ordinary Bezier parameter view."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The polynomial branch evaluates that retained X to the original point after sources are dropped."
+        }
+      ],
+      "oracle": "Original independent quintic and parabola equations plus the representation assertion.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_repeated_coordinate",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_reuses_its_output_coordinate",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic evaluated through four successive extractions of its output X, with checked in-memory point-definition replay in each iteration.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Every new coordinate is consumed without changing the selected point or its quintic relation."
+        }
+      ],
+      "oracle": "Repeated reuse and replay of defining relations; this is not native archive replay.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_denominator_guards",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_preserves_rational_denominators",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A lower circular point with rational coordinates (1-t^2,-2t)/(1+t^2) at the selected generic quintic parameter, under either sign of the common weight.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both denominator signs yield the selected negative circular branch and survive checked point replay."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "A denominator vanishing at the selected parameter remains invalid even with matching removable numerator factors."
+        }
+      ],
+      "oracle": "Independent unit-circle equation, negative Y, same-point comparison and typed pole rejection.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_branch_order",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_keeps_the_ordered_branch",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Both selected branches of y^2=x at the generic source X=t^2.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Ordered negative and positive fibers stay distinct; their ordinates are exactly -t and t."
+        }
+      ],
+      "oracle": "Parabola equation, exact opposite ordinate relation and selected signs.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_restrictions_transforms",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_keeps_restrictions_and_transforms",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic restricted to [1/4,3/4], reversed and mapped by (x,y)->(3-y,4+x).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Restriction and reversal preserve evaluation at the retained abscissa."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The mapped evaluation satisfies an independently expanded world quintic."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "Both represented and retained parameters outside the active interval remain invalid."
+        }
+      ],
+      "oracle": "Independent transformed equation, exact point transformation and explicit interval exclusions.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_retry",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_retries_after_exhaustion",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic retained-X branch query under zero counted work, a 100000-refinement/100000-promotion retry, then STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exhausted",
+          "assertion": "A reached zero allowance returns BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The larger retry succeeds; all policy transitions retain Certified results satisfying the quintic."
+        }
+      ],
+      "oracle": "Reached counters, typed error, defining relation and certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_zero_distance",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_consumes_zero_distance_source_definition",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A retained zero-distance quadratic parallel C(t)=(t^2,-t) at the generic quintic parameter.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The source remains a Parallel point definition with no ordinary X parameter view."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The original quintic branch consumes its exact rational-source coordinate."
+        }
+      ],
+      "oracle": "Representation assertion, quintic and parabola equations and exact point identity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_selected_abscissa_changed_nearby",
+      "target": "polynomial_selected_abscissas",
+      "test": "selected_abscissa_distinguishes_changed_sources_and_nearby_values",
+      "owner": "Hypercurve polynomial branch fibers and retained scalar charts; Hypersolve exact polynomial substitution",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two source selections from t^5+t^2+5t-5 and t^5+t^2+5t-4, plus an exact 2^-80 shift in the first selected X.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A rational abscissa over one selected base is pulled back before fiber isolation. Its original denominator remains guarded and the original slab owns the ordered branch selection. These are named fixtures, not general nested-fiber, filled-region or native archive closure. Counted work and external timeouts do not bound all arithmetic or memory.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The negative parabola branch preserves both distinct base selections and the positive tiny coordinate separation."
+        }
+      ],
+      "oracle": "Independent parabola equation, original-source equality, exact ordering and noncoincidence.",
+      "timeout_seconds": 300
     }
   ]
 }
