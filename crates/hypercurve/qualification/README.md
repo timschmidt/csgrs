@@ -123,6 +123,14 @@ and retry witnesses test certainty and explicit reached exhaustion separately.
 General coefficient fields, collapsed/vertical common traces, other image maps,
 nonrational parallels and polynomial filled operations remain unqualified.
 
+Polynomial point-location witnesses consume native and generated points in
+selected graph charts and invertible rational/algebraic similarities. They
+check exact root selection, closed algebraic trims, shared singular endpoints,
+nearby distinct points, changed transforms, output-to-input intersections and
+recovery after reached exhaustion. General rational image preimages and filled
+polynomial arrangements remain outside this increment. Checked point definitions
+here are in-memory replay, not fresh-process native archive qualification.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed

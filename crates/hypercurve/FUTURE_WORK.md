@@ -937,6 +937,43 @@ arithmetic, coefficient growth, retained memory or cooperative cancellation.
 Concurrent timings do not establish a performance improvement. Full repository
 pre-push qualification for this increment remains pending.
 
+**Polynomial point-location increment (2026-10-26).** Three public
+fixtures reproduce `Intersection/ImplicitPolynomial/Unsupported`: a branch's own
+selected fiber point, independent native parabola points and a generated
+rational contact. These original failures remain alongside the expanded corpus.
+
+P15 and P17–P20 govern the extension. The selected branch recovers a point's
+original source abscissa, pulling an invertible similarity back exactly. It
+checks the closed active domain and equality with the branch's ordered fiber;
+a point on another root of the same polynomial is not incident. A parameter
+proved equal to a boundary reuses that boundary's retained authority. No source
+or ordinate is rounded or independently projected.
+
+Eight public witnesses now cover selected and native points, both ordered
+branches, checked point replay, exact `2^-80` off-support points, shared node
+and cusp endpoints, selected trims, reversal, later intersections and location
+on their split pieces. Quarter rotation/translation, reflection and uniform
+`sqrt(2)` scaling use independently expanded world equations. Reached zero
+counted work returns exhaustion; a larger retry and
+STRICT/APPROXIMATE_512/STRICT transitions preserve Certified results.
+
+Final checks pass: 2,738 Hypercurve tests (80 suites, 34 existing ignored), 43
+root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 91 capability witnesses, typos, repository budget
+and diff checks pass. Qualification used `09ce677746` plus frozen abscissa,
+rational-section and point-location inputs. All non-receipt bytes remain
+identical after advancing the parent to `d7ae8ea218`. Raw evidence is in
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations`, SHA-256
+`18441451082feb7c408e2951a88f80a9b84e2a05eb699cb35de72f0e8d1433d9`.
+
+Nonlinear rational maps may have multiple or continuous preimages and require
+their own inverse/selection contract. Polynomial filled arrangements, A2/A3
+completion, broader dependent fields and fresh-process generated native replay
+remain open. Counted work and external timeouts do not bound all arithmetic,
+coefficient growth, retained memory or cancellation. No performance improvement
+is claimed. Full repository pre-push qualification remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

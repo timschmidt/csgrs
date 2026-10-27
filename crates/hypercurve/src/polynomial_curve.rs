@@ -49,6 +49,11 @@ struct PolynomialCurveSource2 {
 /// original denominator guard and the branch's ordered root; subsequent
 /// abscissa queries can reuse the same source without coordinate elimination.
 /// General dependent fibers without such a rational base chart remain blocked.
+/// [`Curve2::point_locations`] consumes native and retained points in the
+/// original graph chart and its invertible similarities, preserving closed
+/// selected boundaries. Incidence validates the selected branch, so another
+/// root of the same equation is not an incident point. Rational image maps
+/// need a separate inverse/preimage contract for this query.
 /// Regular derivatives and smooth-event tangent directions retain that joint
 /// source. Source branches and their retained rational similarities intersect
 /// authored native lines, including exact algebraic coordinates and selected
@@ -770,6 +775,55 @@ impl PolynomialCurveBranch2 {
                 parameter(&root).map(CurveParameter2::from)
             })
             .collect()
+    }
+
+    /// Locate a point in the original injective graph chart. The inverse
+    /// similarity recovers only the source abscissa; equality with this
+    /// branch's selected fiber proves incidence, not the support equation alone.
+    pub(crate) fn point_parameter(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveParameter2>> {
+        if !self.maps.is_empty() {
+            // A rational image may have multiple or continuous preimages.
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        let form = match &self.transform {
+            Some(image) => {
+                let inverse = image.inverse().map_err(invalid)?;
+                let (a, b, _, _, x, _) = inverse.affine_components();
+                [a.clone(), b.clone(), x.clone()]
+            }
+            None => [Real::one(), Real::zero(), Real::zero()],
+        };
+        let mut parameter = decided(
+            crate::bezier_offset::point_affine_form_parameter(point, &form, policy)
+                .map_err(invalid)?,
+        )?;
+        let first = decided(
+            parameter
+                .cmp_by_refinement(self.range.start(), policy)
+                .map_err(invalid)?,
+        )?;
+        let last = decided(
+            parameter
+                .cmp_by_refinement(self.range.end(), policy)
+                .map_err(invalid)?,
+        )?;
+        if first.is_lt() || last.is_gt() {
+            return Ok(None);
+        }
+        let expected = if first.is_eq() {
+            parameter = self.range.start().clone();
+            self.endpoints[0].clone()
+        } else if last.is_eq() {
+            parameter = self.range.end().clone();
+            self.endpoints[1].clone()
+        } else {
+            self.map_point(self.interior_point(&parameter, policy)?, policy)?
+        };
+        Ok(decided(expected.same_point(point, policy))?.then_some(parameter))
     }
 
     pub(super) fn point_at(

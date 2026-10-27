@@ -2708,6 +2708,10 @@ impl Curve2 {
     /// Each span replays its exact incidence equations; roots remain
     /// represented values or certified isolators, and no parameter is
     /// rounded. Distinct visits of the same point are all reported.
+    /// Selected polynomial graph branches and their invertible similarities
+    /// recover the original source abscissa and validate the selected fiber,
+    /// including closed algebraic trims and retained point inputs. General
+    /// rational images require a separate inverse/preimage authority.
     /// Retained points on generated straight chords reuse the chord's exact
     /// incidence and finite-order proofs. Other retained-point queries without
     /// an applicable incidence authority report an unsupported blocker rather
@@ -2734,6 +2738,23 @@ impl Curve2 {
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePointLocations2> {
+        if let Some(branch) = self.polynomial_branch() {
+            let parameter = branch
+                .point_parameter(point, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Intersection))?;
+            return Ok(CurvePointLocations2::Locations(
+                parameter
+                    .into_iter()
+                    .map(|parameter| {
+                        CurveLocation2::new(
+                            0,
+                            CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+                            parameter,
+                        )
+                    })
+                    .collect(),
+            ));
+        }
         let blocked =
             |reason| ExactCurveError::blocked(CurveOperation2::Intersection, self.family(), reason);
         let Some(point) = point.coordinates() else {

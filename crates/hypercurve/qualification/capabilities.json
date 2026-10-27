@@ -3752,6 +3752,300 @@
       ],
       "oracle": "Independent x+y^37=0 and quintic relations, selected signs, original parameter evaluation and exact topology counts.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_fiber",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_consume_selected_fiber_output",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic branch y^5+5y+5-x=0 at x=0, reversed and replayed as a checked point definition.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The returned point locates at source x=0 in both traversals."
+        }
+      ],
+      "oracle": "Selected fiber identity, exact parameter comparison and reevaluation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_native",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_check_native_points_and_closed_trims",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The parabola y=x^2, independent native points, an off-support point, an on-support point outside the domain, and the closed trim [-1/2,1/2].",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Only the selected closed graph interval admits its incident points."
+        }
+      ],
+      "oracle": "Independent native parabola coordinates and interval endpoints; off-support and out-of-domain points have zero preimages.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_generated",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_consume_generated_rational_contact",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A quintic/quadratic contact evaluated independently on C(t)=(t^2,-t), with t^5+t^2+5t-5=0.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The generated rational point and its checked replay locate at the original polynomial parameter."
+        }
+      ],
+      "oracle": "Original contact parameter, independent rational-source evaluation, and selected point equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_branches",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_distinguish_ordered_branches_and_nearby_points",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Both roots of y^2=x at x=1/2, their common origin, and points at ordinate +-2^-80 off y=x^2.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The other ordered root is absent, the common boundary is retained, and nearby distinct points stay absent."
+        }
+      ],
+      "oracle": "Exact root ordinal, shared endpoint and independent nonzero rational residuals.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_trims",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_keep_selected_boundaries_for_later_operations",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic restricted from selected X=t^2 to 3/4, then cut at x=2/3 in both traversals.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Location reuses the retained boundary parameter; restricted outputs accept further intersection and its endpoint points locate on both resulting pieces."
+        }
+      ],
+      "oracle": "Structural boundary-parameter reuse, exact excluded parameter and independently known vertical-cut abscissa.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_similarities",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_transport_rational_and_algebraic_similarities",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The generic quintic contact under a quarter rotation/translation, reflection and uniform sqrt(2) scaling.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "World points satisfying independently expanded equations locate in the unchanged source chart; the original untransformed point is absent."
+        }
+      ],
+      "oracle": "Expanded quintics, retained source parameter, checked point replay and changed-transform separation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_singular",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_preserve_singular_endpoint_incidence",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Cusp y^2=x^3 and node y^2=x^2+x^3 at their shared origin.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Every incident selected branch retains the singular endpoint in both traversals."
+        }
+      ],
+      "oracle": "Independent origin equation, exact endpoint abscissa and every branch in the decomposed graph.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_point_location_retry",
+      "target": "polynomial_point_locations",
+      "test": "polynomial_locations_retry_after_counted_exhaustion",
+      "owner": "Hypercurve polynomial branch point incidence and original source chart",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "An independent retained generic-quintic rational point under zero allowance, larger retry and STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "An injective graph and its invertible similarity recover at most one original abscissa; closed-domain membership and equality with the selected branch fiber prove incidence. Nonlinear maps and continuous preimages need separate contracts. This does not establish filled-region or fresh-process native replay closure. Counted refinements/promotions and external timeouts do not bound all arithmetic or retained memory.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "Zero counted work is actually reached before publication."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A reached zero allowance returns BudgetExhausted; a 100000-refinement/100000-promotion retry locates the point with Certified policy receipts."
+        }
+      ],
+      "oracle": "Actual reached budget counters, selected parameter equality and certainty receipts.",
+      "timeout_seconds": 300
     }
   ]
 }

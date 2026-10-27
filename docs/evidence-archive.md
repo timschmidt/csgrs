@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
+branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations` (227 files,
+6,750,543 bytes), SHA-256
+`18441451082feb7c408e2951a88f80a9b84e2a05eb699cb35de72f0e8d1433d9`.
+It records selected polynomial point incidence in original charts and invertible
+similarities: 2,738 Hypercurve tests, 43 root downstream tests, 3,009 tests
+across six dependent packages, strict MSRV Clippy, formatting, 16 matrix guards
+and 91 capability witnesses pass. The three original Unsupported fixtures,
+independent transformed equations, selected trims and exhaustion/retry remain
+archived. Qualification used `09ce677746` plus frozen prerequisite and
+point-location bytes, preserved when advancing the parent to `d7ae8ea218`.
+General preimages, polynomial regions and fresh-process replay remain open.
+This local record is unpushed; full repository pre-push qualification is pending.
+
 The separate local `hypercurve-rational-section-evidence-2026-10-26` branch
 ends at `a4abd246af4e572dbf62a7c139f127fd84bd085b`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-rational-sections` (442 files,
