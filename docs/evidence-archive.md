@@ -85,6 +85,23 @@ in this repository.
 
 ## Follow-on records
 
+The combined publication archive ends at `cafb43c3cf6a9ac5577d14fb97c7899b05fd6add` with 350 records.
+Its new record `docs/evidence/2026-10-26-hypercurve-closure-validation-expanded` contains
+14,368 files and 43,715,836 bytes, SHA-256
+`6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3`. It records fresh, source-attributed
+success for all 328 pre-push command groups on `b1c011a070e61970fc7ee15a0c206b2f3b84e5f0`:
+131 locally executable workflow groups, 196 strict Clippy groups and the CI
+security audit. All 13 ASan campaigns include successful mutation evidence.
+Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-27, both release/package checks and the
+hosted-action review are retained. All 350 record digests verify; four historical
+third-party archive exclusions remain unchanged. The three documentation files
+carrying this receipt are checked separately; all other tracked bytes equal the
+qualified revision. This completes the publication candidate's local pre-push
+qualification and supersedes earlier pending status for its included increments.
+Later point-location, polynomial-region, horizontal-boundary, algebraic-similarity
+and integration changes are excluded. Hosted actions and actual
+publication/deployment are not established by local validation.
+
 The combined local `hypercurve-publication-evidence-2026-10-26` archive ends at
 `15af9d0b78ec35c82bf00217eec4dd25c46c5918` and retains 349 records.
 

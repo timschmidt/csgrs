@@ -937,6 +937,37 @@ arithmetic, coefficient growth, retained memory or cooperative cancellation.
 Concurrent timings do not establish a performance improvement. Full repository
 pre-push qualification for this increment remains pending.
 
+**Combined pre-push qualification (2026-10-27).** The source revision
+`b1c011a070e61970fc7ee15a0c206b2f3b84e5f0` combines the qualified closure increments through
+polynomial/rational sections with the unchanged-write voxel test correction.
+All 328 required command groups pass in fresh executions: 131 locally executable
+workflow groups, 196 strict Clippy groups and the CI security audit. The full
+Hypercurve suite, downstream consumers, feature combinations, documentation,
+benchmarks, WASM/demo builds and both release/package checks are included.
+All 13 address-sanitized fuzz campaigns pass with recorded mutation evidence.
+Stable 1.99.1, MSRV 1.95.0 and nightly-2026-10-27 are recorded with the commands.
+The sanitizer launch wrapper was interrupted, while its original workflow child
+continued the unchanged campaigns. That child's actual OS exit status and every
+full-budget campaign outcome are retained separately from the wrapper failure.
+
+The complete inventory, original unsuccessful attempts, source attribution and
+hosted-action review are in `docs/evidence/2026-10-26-hypercurve-closure-validation-expanded`,
+SHA-256 `6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3`.
+No historical command results count toward this run. The four archive exclusion
+receipts are preserved, and all 350 archived records verify. This receipt changes
+only three documentation files; every other tracked byte matches the qualified
+revision. Formatting, typos, repository budget, diff and archive verification
+are rerun after the receipt edit. Earlier statements that this combined code
+still awaited pre-push qualification describe its incremental qualification
+history and are superseded by this record.
+
+Hosted configuration, uploads and deployment actions were inspected rather than
+executed; local packaging does not establish publication or deployment. Timing
+under concurrent load is not a performance claim. Later point-location,
+polynomial-region, horizontal-boundary, algebraic-similarity and integration work
+is excluded from this revision. The full exact-closure plan and the unsupported
+capabilities in the matrix remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

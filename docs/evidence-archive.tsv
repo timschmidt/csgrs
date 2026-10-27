@@ -346,6 +346,7 @@ docs/evidence/2026-10-26-hypercurve-closure-rational-sections	442	15497091	c55ba
 docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas	213	7201989	1e45871c00e897e88d579812c2bb87e974e9ad9a356f6e36d6cae467992a4014
 docs/evidence/2026-10-26-hypercurve-closure-validation	12153	58233737	78c71e823c48c8f104fde6290654f66fa54452b8e50043be7380cb534b9fc137
 docs/evidence/2026-10-26-hypercurve-closure-validation-attempt-904e	12786	36965435	94d4948defd834cd3b4984d64196a6063eab0038b9bde0454341a86c347951a4
+docs/evidence/2026-10-26-hypercurve-closure-validation-expanded	14368	43715836	6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3
 docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle	24	568359	32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a
 docs/evidence/2026-10-26-research-closeout	12763	187318255	ef84e4aed934ad5014ed36b27a41951d58b2200ab82a5cee3e7ac39e2ba005ad
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
