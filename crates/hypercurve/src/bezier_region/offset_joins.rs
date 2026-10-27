@@ -621,6 +621,7 @@ pub(super) fn exact_offset_parallel_endpoint(
             Some((parallel, parameter, fragment.is_reversed()))
         }
         BezierSplitFragment2::Materialized { .. }
+        | BezierSplitFragment2::Polynomial(_)
         | BezierSplitFragment2::RetainedBezier { .. }
         | BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,

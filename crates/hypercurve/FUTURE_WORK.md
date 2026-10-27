@@ -612,9 +612,12 @@ also retain finite contacts and common components in a shared source chart or
 equal rational similarity image. Singular tangent signs may remain unclassified.
 Generated chords additionally retain certified support views and point-based
 parameters for native supports, constant-abscissa charts and proved constant
-selected components. Other algebraic similarities, different pair images,
-nonlinear maps, general unrelated selected chord supports and filled polynomial
-arrangements remain implementation gaps.
+selected components. Selected graph boundaries also retain these supports in
+the shared region arrangement. The bounded region witnesses cover exact
+classification, Booleans, reconstruction, open clipping, rational similarities,
+mixed circular boundaries and cusp/node incidence. Broader algebraic
+similarities, different pair images, nonlinear maps, general unrelated selected
+chord supports and completion of the full algebraic region domain remain gaps.
 
 **Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
 the original translated quintic fixture reproduced `Unsupported`. Pulling the
@@ -937,6 +940,720 @@ arithmetic, coefficient growth, retained memory or cooperative cancellation.
 Concurrent timings do not establish a performance improvement. Full repository
 pre-push qualification for this increment remains pending.
 
+**Polynomial point-location increment (2026-10-26).** Three public
+fixtures reproduce `Intersection/ImplicitPolynomial/Unsupported`: a branch's own
+selected fiber point, independent native parabola points and a generated
+rational contact. These original failures remain alongside the expanded corpus.
+
+P15 and P17–P20 govern the extension. The selected branch recovers a point's
+original source abscissa, pulling an invertible similarity back exactly. It
+checks the closed active domain and equality with the branch's ordered fiber;
+a point on another root of the same polynomial is not incident. A parameter
+proved equal to a boundary reuses that boundary's retained authority. No source
+or ordinate is rounded or independently projected.
+
+Eight public witnesses now cover selected and native points, both ordered
+branches, checked point replay, exact `2^-80` off-support points, shared node
+and cusp endpoints, selected trims, reversal, later intersections and location
+on their split pieces. Quarter rotation/translation, reflection and uniform
+`sqrt(2)` scaling use independently expanded world equations. Reached zero
+counted work returns exhaustion; a larger retry and
+STRICT/APPROXIMATE_512/STRICT transitions preserve Certified results.
+
+Final checks pass: 2,738 Hypercurve tests (80 suites, 34 existing ignored), 43
+root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 91 capability witnesses, typos, repository budget
+and diff checks pass. Qualification used `09ce677746` plus frozen abscissa,
+rational-section and point-location inputs. All non-receipt bytes remain
+identical after advancing the parent to `d7ae8ea218`. Raw evidence is in
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations`, SHA-256
+`18441451082feb7c408e2951a88f80a9b84e2a05eb699cb35de72f0e8d1433d9`.
+
+Nonlinear rational maps may have multiple or continuous preimages and require
+their own inverse/selection contract. Polynomial filled arrangements, A2/A3
+completion, broader dependent fields and fresh-process generated native replay
+remain open. Counted work and external timeouts do not bound all arithmetic,
+coefficient growth, retained memory or cancellation. No performance improvement
+is claimed. Full repository pre-push qualification remains pending.
+
+**Polynomial shared-region increment (2026-10-27).** The unchanged H08
+parabola boundary first reproduced `Construction/ImplicitPolynomial/Unsupported`
+for orientation and admission. Its selected branches now remain supporting
+fragments in the existing `CurveRegion2` arrangement. P12–P13, P15 and P17–P20
+require the original equation, ordered root, exact domain, traversal and contact
+points to survive splitting and publication. A Boolean introduces no new supports.
+No rational fit or alternate region authority is introduced.
+
+**API migration:** `CurveError` gains
+`UnsupportedFiniteCurveProjection { family }`. External exhaustive Rust
+matches must add this arm or an appropriate catch-all, preserving an unsupported
+family outcome and returning no sampled geometry. Exact-operation adapters map
+it to `ExactCurveError::Blocked` with `UncertaintyReason::Unsupported` and the
+affected family. This is a breaking Rust API addition for exhaustive matches
+and requires appropriate package release versioning; package publication is
+not part of this increment.
+
+Initial carrier admission still produced two loops instead of one for a clip.
+The retained original fixture now passes through the existing exact boundary
+probe. Selected point incidence is reused before unrelated probes; polynomial
+fragment classification retains its exact interior point. The same authority
+handles reconstructed path points and open authored/generated clipping. The
+original second quintic cut at `x=3/4` is retained with its correct five-piece
+expectation (`f(3/4)=-461/1024`), followed by a cut at `7/8` yielding four pieces
+(`f(7/8)=21415/32768`). This corrects the test oracle without dropping the case.
+
+Sixteen new public witnesses and the promoted original H08 fixture cover exact
+point and path classification, all four Booleans, holes and reversal under both
+fill rules, disconnected material, rational similarities, regularized empty
+contact, `2^-80` separation, degree-five selected trims, checked point replay,
+reconstruction and further operation, mixed circular supports, open clipping,
+cusp and node incidence, zero offset, and actually reached budget exhaustion
+with a larger retry. STRICT/APPROXIMATE_512/STRICT receipts remain Certified.
+Independent equations, source/root/domain assertions and topology accompany the
+set identities; sampled membership alone is not the oracle.
+
+The first complete suite exposed one existing error-contract regression:
+an unsupported polynomial pair returned a partial result instead of its prior
+typed error after region-carrier admission. The generic support fallback now
+preserves that representation failure. The original assertion remains unchanged,
+and the failed full-suite output is retained with the other attempts.
+
+Final checks on `5de7f0cb05` plus the frozen increment pass: 2,754 Hypercurve
+tests (81 suites, 34 existing ignored), 43 root downstream tests and 3,009
+tests across six dependent packages (0 existing ignored). Strict Hypercurve
+all-target/all-feature MSRV Clippy, formatting, 16 matrix guards, 107 capability
+witnesses, typos, repository budget and diff checks pass. All earlier failed
+attempts, diagnostic sources and the interrupted prototype are retained. Raw
+evidence is in `docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions`, SHA-256
+`6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b`. All non-receipt bytes remain identical after adding this record.
+
+This is bounded A3 progress. Arbitrary coefficient fields, general image maps,
+vertical/repeated components and every singular local sector remain open.
+Nonzero polynomial-support offsets, fillets, chamfers and finite projection
+still return typed Unsupported; those guard tests do not count as geometric
+completion. Checked point definitions do not establish fresh-process native
+replay or full BRep trim support. Counted work and external timeouts do not bound
+all arithmetic, coefficient growth, retained memory or cancellation. No
+performance improvement is claimed. The separate publication candidate through
+`b1c011a070` excludes this increment; full repository pre-push qualification is
+still required before publishing it.
+
+**Horizontal boundary-component increment (2026-10-27).** On committed
+`5de7f0cb05`, the original `y+2=0` graph in `[-2,2]^2` and both components
+of `y^2-4=0` reproduced `BoundaryComponent`. Hypersolve now keeps a horizontal
+boundary factor in the original equation and closed fibers. Such a component
+has no discrete boundary-entry event. Contacts with other branches are already
+zeros of `resultant(F,F_y)`; existing root-free separators and closed strip
+counts establish event incidence. P11, P15 and P17–P20 remain owned there.
+
+Ten solver witnesses cover the original lower/upper cases and the documented
+circle-plus-boundary fixture, tangent parabola/circle contacts, crossings with
+one side outside, algebraic event fibers, `2^-80` distinct components, checked
+source replay, and actual counted exhaustion/retry. Independent rational Sturm
+counts include closed endpoints. Six Hypercurve witnesses consume these graphs
+through degree-five selected trims, finite intersections and overlap, point
+location, singular endpoint incidence, reversal, similarity transport and
+fresh-process diagnostic source replay followed by another operation. The
+original HyperBRep boundary tensor is retained as a positive section witness,
+with both pcurves, whole-image validation, native archive replay and affine
+transport/revalidation; its upper-boundary counterpart also completes.
+
+The stronger spatial fixture also reproduced a directed pcurve correspondence
+mismatch. Matching directed endpoints fixes that error on both the new section
+and an already admitted rational source restriction. A further plane contact
+then exposed a rational-map dispatch gap: exact similarities stored as quotients
+now supply a checked view to the existing line-section algorithm. Original map
+definitions and denominator guards remain, including removable factors. This
+does not complete general rational images or nonuniform affine incidence.
+
+Final checks pass: 1,223 Hypersolve tests (24 suites), 2,744 Hypercurve tests
+(81 suites, 34 existing ignored), 43 root downstream tests and 3,010 tests
+across six dependent packages (0 existing ignored). Strict
+all-target/all-feature MSRV Clippy for Hypersolve, Hypercurve and HyperBRep,
+formatting, 16 matrix guards, 97 capability witnesses, typos, repository budget
+and diff checks pass. All failed attempts remain. Raw evidence is in
+`docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`, SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`. All non-receipt bytes match the qualified
+snapshot after this receipt.
+
+No factor or multiplicity is discarded. Vertical/repeated components, broader
+coefficient fields and general algebraic operations remain open. The diagnostic
+source encoding is not a native Hypercurve archive format. This increment does
+not include the separately qualified polynomial region work. Counted work and
+external timeouts do not bound every arithmetic operation, coefficient growth,
+retained byte or cancellation. No performance improvement is claimed; full
+repository pre-push qualification remains pending.
+
+**Algebraic similarity section increment (2026-10-27).** On committed
+`5de7f0cb05`, native-line queries against the selected quintic scaled by
+`sqrt(2)` or translated by `(sqrt(3),sqrt(2))` reproduce
+`Intersection/ImplicitPolynomial/Unsupported`. Original source-line controls
+already succeed. The polynomial owner now lets the exact inverse similarity
+feed the existing native-line section authority. P15 and P17–P20 require the
+same original source equation, ordered fiber, parameter domain, selected
+endpoints, overlap correspondence and retained image to survive the query.
+
+A nonsingular similarity is bijective: contact and overlap pullbacks preserve
+the original source abscissa, and its determinant transports oriented crossing
+signs. Removing the rational-coefficient restriction adds no geometric carrier
+or elimination path. Exact scalar and selected-field decisions remain required;
+their undecided or exhausted outcomes keep their typed meaning.
+
+Seven public witnesses cover the original failures, a seventh-root scale,
+oblique maps using both `sqrt(2)` and `sqrt(3)`, reflection and all traversal
+orders, tangency, selected trim endpoints, excluded parameters, common line
+components, repeated overlap clipping and distinct `2^-80` source shifts.
+Independent expanded world equations, exact source parameters and topology
+assertions accompany checked in-memory point replay and further intersection.
+Reached zero counted work returns exhaustion; a larger retry succeeds, and
+STRICT/APPROXIMATE_512/STRICT retains Certified receipts after source drop.
+
+Final checks pass: 2,745 Hypercurve tests (81 suites, 34 existing ignored),
+43 root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict Hypercurve all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 98 capability witnesses, typos, repository budget
+and diff checks pass. Raw failures, source snapshots and exact commands are in
+`docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`, SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`. All non-receipt source bytes remain identical
+after this receipt.
+
+General rational images, different-image polynomial pairs, broader topology
+coefficient fields, repeated/vertical components and implicit offset/corner
+closure remain open. Point-definition replay here is in memory, not a native
+fresh-process archive. This branch excludes the separate region and horizontal
+boundary increments. Counted work and external timeouts do not bound total
+arithmetic, coefficient growth, retained memory or cancellation. No performance
+improvement is claimed; full repository pre-push qualification remains pending.
+
+**Selected-branch composition increment (2026-10-27).** This integration
+retains all three qualified parents: polynomial regions (`b6da97710c`), closed
+horizontal boundary components (`e49c24719f`) and algebraic similarity sections
+(`f2d0071114`). Their individual qualification did not establish composition.
+The combined closed-rectangle clip/reconstruct/subtract/intersect witness
+reproduced an Unsupported Boolean face decision. Existing exterior probes now
+also reuse an available exact coordinate while retaining its selected companion
+and original point relations. Complete pair replay and the shared winding
+authority still establish incidence and the retained face.
+
+Three composition witnesses preserve both fill rules and traversal directions,
+exact source and root identities, checked point replay, a selected quintic
+ordinate and its quarter-turn image, disconnected side components, and canonical
+empty results consumed by further union. A retained rational identity with
+denominator guard `3+x`, followed by an algebraic similarity, preserves contact
+coordinates, signs, overlap correspondence and subsequent intersection. The
+original failing cases remain unchanged. Adding boundary-regularization probe
+directions alone did not resolve the rotated case; that experiment was removed
+and its failed results remain archived. The rotated failure occurs in the
+APPROXIMATE_512 iteration: polynomial/chord intersection replaced the caller
+context with its strict counterpart. It now uses the existing strict-predicate
+scope, preserving replay authority while suppressing terminal approximation.
+No construction-policy barrier is removed.
+
+Final checks pass: 1,223 Hypersolve tests (24 suites), 2,770 Hypercurve tests
+(84 suites, 34 existing ignored), 43 root downstream tests and 3,010 tests
+across six dependent packages (0 existing ignored). Strict
+all-target/all-feature MSRV Clippy for Hypersolve, Hypercurve and HyperBRep,
+formatting, 16 matrix guards, 123 capability witnesses, typos, repository budget
+and diff checks pass. Raw attempts and qualification are in `docs/evidence/2026-10-27-hypercurve-closure-selected-composition`,
+SHA-256 `309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499`. All non-receipt bytes remain identical to the qualified
+snapshot after this receipt.
+
+These are bounded composition cases, not general algebraic closure or a new
+native region archive format. Broader selected supports, coefficient fields,
+nonlinear maps, offsets and corner edits retain their recorded gaps. Counted
+work and external fixture timeouts do not establish total arithmetic, expression
+growth, retained-memory or cancellation bounds. No performance improvement is
+claimed. The separate publication candidate is excluded, and full repository
+pre-push qualification of this integration remains pending.
+
+**Selected similarity point policy increment (2026-10-27).** On committed
+`2395ba77d8`, two public witnesses produce Certified selected-quintic points
+or similarity images under APPROXIMATE_512, then reproduce
+`Classification/Unsupported` when the same returned points are queried under
+STRICT. Independent STRICT reference constructions already succeed. P4, P8,
+P9, P15 and P18–P20 require retained evidence to follow the actual consumed
+policy and preserve selected source dependencies through subsequent operations.
+
+The polynomial point and branch similarity construction sites now pass the
+existing `retained_object_policy()` result to `BezierSimilarityPoint2::new`.
+The generic constructor is unchanged. Locally exact images retain strict
+replay authority; incompatible approximate source images remain nested, so a
+new local certificate cannot upgrade inherited evidence. Checked point replay
+continues to validate the original source definition and selected fiber.
+
+Two public witnesses keep the same returned points across the policy boundary,
+verify exact affine relations for the selected root of `y^5+5y+5`, replay point
+definitions in memory, and consume them in generated-chord incidence and branch
+subdivision. A new negative unit witness seeds an observed consumed-policy
+receipt on a parent, constructs a locally Certified child, and verifies that
+strict endpoint queries and replay remain blocked. The original generic
+similarity policy-barrier regression passes unchanged. All four focused
+checks pass; this negative witness tests receipt propagation, not a newly
+rounded geometric construction.
+
+Final checks pass: 2,773 Hypercurve tests (85 suites, 34 existing ignored),
+43 root downstream tests and 3,010 tests across six dependent packages
+(0 ignored). Strict Hypercurve all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 125 capability witnesses, typos, repository budget
+and diff checks pass. Raw failures, source snapshots and exact commands are in
+`docs/evidence/2026-10-27-hypercurve-closure-similarity-policy`, SHA-256 `db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c`. All non-receipt source bytes remain identical
+after this receipt.
+
+This addresses selected polynomial similarity points, not every retained point
+family. General algebraic operation closure and fresh-process native archive
+replay remain open. Existing counted limits and external timeouts do not bound
+total arithmetic, coefficient growth, retained memory or cancellation. No
+performance improvement is claimed. Full repository pre-push qualification
+remains pending; checks on the separate earlier publication candidate do not
+validate this later source revision.
+
+**Shared algebraic image incidence increment (2026-10-27).** On committed
+`4519ec554d`, all eight public pair/chord witnesses reproduce the original
+rational-only image restrictions. The composed seventh-root scale also
+reproduces `Undecided` in the selected common-fiber solver on that revision.
+Earlier prototypes that admitted the common similarity but lacked the solver
+fallback exceeded the unchanged public hard case’s 300-second external allowance;
+those source snapshots and timeouts are retained.
+A mutated root interval is also accepted as field evidence without an actual
+selected root. These are P15 and
+P17–P20 failures at the curve incidence and selected-field admission boundaries.
+
+Polynomial pairs now compare their shared invertible similarity coefficients
+by strict value. Chords admit algebraic inverse coordinate forms and consume
+an already proved source-chart support directly, preserving selected endpoints
+without a forward/inverse expansion. After an undecided common-fiber GCD,
+Hypersolve can reuse its existing projective normalization when every
+coefficient ratio has an exact rational proof. A proved nonzero scalar factor
+preserves roots and multiplicities; parameter factors are retained. Field and
+quotient-ring projection admission recheck point membership or exactly one
+owned root in `(lower, upper]`. Uncached singleton endpoints remain supported,
+and unavailable selection predicates remain undecided.
+
+Eight curve witnesses cover seventh-root scale/reflection, translation,
+independently equal maps, algebraic trims and overlaps, tangent and near-distinct
+branches, changed transforms, actual zero-budget exhaustion and retry, policy
+transitions, both fill rules, reconstruction, further Booleans, and oblique
+chords with selected endpoints. Ten public solver witnesses cover composed
+coefficients, signed/transposed equations, nearby distinct equations, vanishing
+parameter factors, valid and invalid selectors, singleton membership, and
+structural-negation handoff. The first full qualification exposed four valid
+singleton regressions and a structural-negation generator regression. Their
+original tests and minimized seed remain unchanged; selection replay now lives
+at field admission, while structural witness arithmetic keeps its contract.
+
+Final checks pass: 1,233 Hypersolve tests (25 suites, none ignored), 2,781
+Hypercurve tests (86 suites, 34 existing ignored), 43 root downstream tests, and
+3,605 tests across nine dependent packages. The six curve consumers account
+for 3,010 of those tests; additional direct solver consumers are Hyperpath,
+Hyperphysics and the standalone exactCore comparison package. Its 19 existing
+oracle-defect cases remain ignored. ExactCore source hashes are recorded before
+and after execution. Strict Hypersolve/Hypercurve all-target/all-feature MSRV
+Clippy, formatting, 16 matrix guards, 133 capability witnesses, typos, repository
+budget and diff checks pass. Raw failed attempts, source snapshots and commands
+are in `docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair`, SHA-256 `af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d`. Non-receipt source bytes remain unchanged
+after this receipt.
+
+The comparison inventory guard also failed on the unchanged parent because it
+omitted HyperBRep I/O and Hyperspatial. Their domain dispositions are now explicit,
+with historical audit measurements preserved. Earlier kernel checks retain
+their original source attribution: only those two audit metadata files changed.
+The complete comparison suite, matrix and hygiene checks ran after that repair;
+both failed qualification attempts are archived.
+
+This is a shared-image chart extension and optional projective rationalization,
+not a general algorithm for unrelated maps or arbitrary coefficient fields.
+Structural root representation validation is not a complete field certificate.
+Checked point replay is in memory; fresh-process native interchange and general
+algebraic offset/corner closure remain open. Counted limits and external timeouts
+do not bound all arithmetic, coefficient growth, memory or cancellation. No
+performance improvement is claimed. Full repository pre-push qualification
+remains pending for this later increment.
+
+**Selected native source replay increment (2026-10-27).** On committed
+`dca6233549`, an authored quadratic restricted at the selected positive root
+of `2t^2-1` fails native SVG export. The unchanged library also rejects finite
+projection of the retained line range `[1/4,3/4]`, whose independent endpoints
+are `(2,0)` and `(6,0)`. Both failures and the library digest are retained.
+The owning layers are Hypercurve exact interchange and finite path projection;
+the root SVG adapter transports typed failures. P15, P18–P20 and P28–P30 apply.
+
+Version 4 stroke metadata records native sources, selected parameters, original
+domains and traversal in dependency order. Selected roots carry their defining
+polynomials and isolators; projective charts reference the original selected
+root. Replay re-establishes each definition through existing STRICT constructors
+before assembling the path. Invalid, forward, cyclic and wrong-kind references
+are rejected, including invalid definitions followed by an empty path. Local
+allocation keys preserve existing sharing but are never serialized or treated
+as mathematical equality. Authored-only paths still emit version 3, and both
+versions remain readable. Finite projection consumes the existing retained
+source spans through its fragment sampler; display commands never replace the
+authoritative metadata. The existing maximum SVG segment count is checked
+before publication, and exact replay errors retain their kernel category.
+
+Nine curve witnesses include a separate-process reload followed by exact point
+incidence, further restriction, another archive and reversed overlap; shared
+degree-seven roots and projective charts; algebraic coefficients; similarity
+and replay; rational trims of all eight authored families; invalid selectors,
+ranges, references and chart poles; actual byte/segment limits with retry; and
+exact finite-projection endpoints and traversal. Two root adapter witnesses
+exercise public replay and typed invalid geometry paired with an empty path.
+The all-family witness uses rational trims; selected algebraic trim success
+is limited to the named cases.
+
+Final checks pass: 2,790 Hypercurve tests (87 suites, 34 existing ignored),
+60 root tests across seven affected suites, and 3,010 tests across six
+dependent packages, none ignored. Strict Hypercurve/CSGRS all-target/all-feature
+MSRV Clippy, the no-default-feature Hypercurve build, both API documentation
+builds with warnings denied, formatting, 16 matrix guards, 142 capability
+witnesses, typos, repository budget and diff checks pass. Raw failures, exact
+commands and source snapshots are in `docs/evidence/2026-10-27-hypercurve-closure-native-replay`,
+SHA-256 `14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd`. All non-receipt source bytes
+remain unchanged after this receipt. The initial compilation errors, projection
+failures and lint failure are retained; no existing test or hard fixture was
+weakened.
+
+This is a per-path authored-source restriction format. Other generated supports,
+selected or joint fibers, filled-region native replay, cross-path sharing and
+shared scalar-expression DAG serialization remain open. Byte and segment limits
+do not bound total arithmetic, coefficient growth, memory or cancellation. No
+performance improvement or universal closure is claimed. Full repository
+pre-push qualification and published-package delivery remain pending for this
+increment; checks on the earlier publication candidate do not validate these
+source bytes.
+
+**Procedural parallel replay increment (2026-10-27).** Committed
+`8eea456cee` passes the authored-restriction replay control but rejects a
+regular parabola parallel during SVG export. Its qualified unchanged library
+also rejects finite projection of an ellipse parallel and an exterior `[2,3]`
+line-parallel range. All three failures, source attribution, compiler commands
+and the library digest are retained. Hypercurve exact interchange and finite
+parallel projection own these changes; P15, P18–P20 and P28–P30 apply.
+
+Version 4 adds shared source/normal-distance supports and selected finite range
+records. Replay uses existing strict constructors to re-establish roots,
+ascending ranges, denominator and normal guards, and interior cusp exclusions.
+Every finite range is checked even when unused by an empty final path. Existing
+version 3 and version 4 records remain supported. Local immutable allocation
+keys retain sharing but are never serialized or treated as mathematical
+equality. Explicit range order matters: the generic curve-range constructor
+admits traversal in either direction and cannot certify an ascending domain.
+
+Finite projection now evaluates interval bounds on the original retained range,
+including exterior domains, and subdivides inconclusive Ordering enclosures
+under the existing depth bound. Every accepted chord still needs a certified
+box. Other error outcomes remain explicit, and display points never replace the
+native source. A pole inside a retained rational range preserves the existing
+typed Boundary blocker; it is not relabeled as invalid or counted as completion.
+
+Nine curve witnesses cover parabola, nonrational ellipse, PH cubic and stationary
+zero-distance sources with independently derived exact midpoint expectations;
+shared cusp boundaries; separate-process reload before region admission,
+Booleans and round offset; invalid references and singular/nonascending ranges;
+rational pole guards and exterior domains; exact finite line-parallel endpoints;
+reached byte limits and retry; algebraic trim, reflected algebraic similarity
+and another archive; and distinct distances sharing one source. One root SVG
+adapter witness consumes the replayed result in exact point incidence. The cap
+fixture checks specified exact relations and operation consumption; its finite
+membership assertions do not independently prove the entire expanded set.
+
+Final checks pass: 2,799 Hypercurve tests (88 suites, 34 existing ignored),
+61 root tests across eight affected suites, and 3,010 tests across six
+dependent packages, none ignored. Strict Hypercurve/CSGRS all-target/all-feature
+MSRV Clippy, the no-default-feature Hypercurve build, both API documentation
+builds with warnings denied, formatting, 16 matrix guards, 151 capability
+witnesses, typos, repository budget and diff checks pass. Raw failures, exact
+commands and frozen source snapshots are in `docs/evidence/2026-10-27-hypercurve-closure-parallel-replay`,
+SHA-256 `5b0a3f0c28cb0a70f0779f98ab2da108b2078fe5423008e50a92cd37f47f54fe`. All non-receipt source bytes
+remain unchanged after this receipt. Failed compilation attempts, the original
+projection failures and the descending-range replay failure remain available;
+no existing test or hard fixture was weakened. The first downstream build failed
+before tests when ccache attempted read-only storage. Its logs are retained;
+a task-owned cache resolved the environment failure, and the remaining twelve
+groups resumed on unchanged source. The first five passed groups keep their
+original command and environment attribution.
+
+Other generated supports, selected or joint fibers, filled-region archives,
+cross-path sharing and scalar-expression DAG serialization remain open. Existing
+byte, segment and subdivision-depth limits do not bound total arithmetic,
+coefficient growth, temporary/retained memory or cancellation. No performance
+improvement or universal closure is claimed. Full repository pre-push checks
+and published-package delivery remain pending for this increment; the earlier
+pushed candidate does not qualify these source bytes.
+
+**Selected chord replay increment (2026-10-27).** Committed
+`2eb55c5dd5` passes procedural-parallel export but rejects a degree-seven
+selected chord after exact construction, midpoint incidence and split. On its
+unchanged qualified library, exact incidence queries also change the same path's
+finite projection from 82 to 83 points at tolerance 0.01. The original programs,
+commands, library digest and source attribution are retained. Hypercurve chord
+and point definitions, native SVG interchange and finite projection own this
+increment; P15, P18–P20, P27 and P28–P30 apply.
+
+Version 4 adds shared point, supporting-chord, selected-range and curve-endpoint
+records. Replay covers exact coordinates, rational source images, rational
+expressions and native parallel evaluations at Bezier scalar or selected-root
+parameters. The chord owner proves support incidence and strict coordinate
+order, then retains the supplied chart and directed endpoints. Valid exterior
+ranges and alternative charts survive. The original support remains distinct
+from its finite selection; a storage reversal flag alone cannot recover a
+split reversed chord's chart. Invalid unused definitions still fail before an
+empty final path. Local address keys retain their immutable owners and never
+become serialized identities or mathematical equality.
+
+A prior-curve endpoint reference preserves known incidence. Projection uses the
+requested analytic-point refinement independently of stronger cached predicate
+bounds, including through lazy endpoints. Exact predicates retain their existing
+cache. No tolerance, source definition or acceptance assertion was weakened.
+The new graph tags, shared retained-curve records and affected display bytes are
+an explicit serialization migration in `docs/MIGRATIONS.md`; existing version 3
+and version 4 inputs remain supported.
+
+Nine public curve witnesses cover separate-process degree-seven replay before
+incidence, overlap, reversal, split and another archive; algebraic-coordinate
+region construction and round offset; hand-built chart and exterior-range
+records; invalid unused supports and references; correlated rational-expression
+endpoints; mixed parallel/chord source and selector sharing with independent
+exact coordinates; reached byte limits and retry; original denominator poles;
+and mixed native/generated boundaries with a circular hole and disconnected
+material through reconstruction, Boolean identities and offset. A direct unit
+witness retains the original cold/warm projection failure and checks
+coarse/fine/coarse requests. One root SVG adapter test consumes a reloaded
+selected chord in split and a second archive. Finite point expectations alone
+do not prove the entire intended offset set.
+
+All 17 final groups pass: 2,809 Hypercurve tests across 89 suites, retaining 34
+existing ignored cases; 62 root tests across nine affected suites; 3,010 tests
+across six dependent packages; strict all-target/all-feature Hypercurve/CSGRS
+MSRV Clippy; a Hypercurve build without optional features; both API documentation
+builds with warnings denied; formatting; 16 matrix guards; 160 capability
+witnesses; typos, repository budget and diff checks. Evidence is in `docs/evidence/2026-10-27-hypercurve-closure-chord-replay`,
+SHA-256 `79716febf65ec101df08a8ed67ed3d5411e2b003c616c4a02acc5c04575e1d67`. Non-receipt source bytes
+are unchanged after qualification. The initial mistaken point-variant setup
+assertion is retained but not counted as a geometry failure. Failed prototypes
+preserve the original SVG assertion; the curve endpoint reference alone did not
+fix it, and the independent parent probe identified the bounds-cache cause. The initial
+mixed-topology setup mistook the native-circle wire for a missing path; its
+recovery consumes both exact carriers and retains every geometric assertion.
+
+Recursive point definitions, selected joint fibers, auxiliary chord contacts,
+generated circles, filled-region archives, scalar-expression DAGs and cross-path
+sharing remain open. The projection regression qualifies the named analytic
+endpoint domain, not canonical output for every equivalent parameterization.
+Byte, segment and depth limits do not bound all arithmetic, coefficient growth,
+expression size, temporary/retained memory or cancellation. Metadata growth is
+observed only for the named repeated-piece fixture; no general performance or
+closure claim follows. Full repository pre-push checks and published-package
+delivery remain pending for this increment.
+
+**Selected point graph replay increment (2026-10-27).** Committed
+`78c661a8ae` exports a selected chord but rejects both the retained line
+and complete circular fillet from a degree-seven selected corner. The original
+positive assertions, exact cut expectations, commands, qualified-library digest
+and committed-source attribution remain in the evidence. This increment resolves
+the retained line. The unchanged complete-circle assertion still fails with an
+unsupported generated-curve definition. Hypercurve point construction and native
+SVG replay own the geometric work; Hyperbrep owns its planar-point archive and
+record admission. P15, P18–P20, P27 and P28–P30 apply.
+
+Version 4 adds polynomial-fiber, rational-image, exact-similarity and unique
+supporting-line-intersection point definitions, plus shared chord-displacement
+recipes and endpoint selections. Replay retains the correlated base parameter,
+re-proves the selected fiber, checks original denominator guards and reconstructs
+similarities and unique intersections. Chord displacements preserve the directed
+source, signed tangent or left-normal distance, optional origin and exact
+translation. A native line or selected chord supplies the original support;
+independent scalar materialization is unnecessary. The existing owner validates
+the construction, including inherited policy. Invalid unused definitions fail.
+
+The graph writer visits point dependencies iteratively. Local address keys own
+their immutable inputs and do not define mathematical equality. Reusing shared
+map prefixes emits 14, 26 and 50 native records for the named 4, 8 and 16-span
+fixtures; these measurements concern serialization growth, not total memory or
+speed. A new configurable point-definition depth limit is propagated through
+chord and endpoint indirection. Byte and depth exhaustion are typed and permit a
+larger-budget retry. The decoder reuses only prior checked immutable definitions;
+public point reconstruction continues to validate its dependencies.
+
+Hyperbrep's new planar-point variant delegates to the same geometry owner. Its
+resource pass counts the source and optional origin before scalar parsing. It
+retains the existing nested point format. Explicit native-line and selected-chord
+source syntax both replay. The API, SVG tags and archive variant are documented
+in `docs/MIGRATIONS.md`; existing inputs remain supported. The SVG fuzz target
+now exercises both metadata versions under its existing input limits.
+
+Ten public Hypercurve witnesses cover fresh-process replay of the original
+fillet-trimmed line before exact midpoint splitting and another archive;
+correlated fiber/map/algebraic-similarity relations; independent selected
+supporting lines and exterior intersections; invalid references, selectors,
+matrices and original poles; reached depth and byte limits with retry; shared
+map prefixes; signed tangent and normal displacements with source reversal,
+zero distance, arbitrary origin and translation; and shared endpoint recipes.
+A unit witness checks inherited approximate-policy rejection and strict recovery.
+One CSGRS SVG test repeats the trimmed-line composition. Two public Hyperbrep
+archive tests preserve exact displaced points and the original selected fillet
+cut through reload and further split, with deterministic serialization checked
+separately from those geometric expectations.
+
+All 18 final groups pass: 2,820 Hypercurve tests across 90 suites, retaining 34
+existing ignored cases; 63 root tests across ten affected suites; 3,012 tests
+across six dependent packages; strict all-target/all-feature Hypercurve,
+Hyperbrep and CSGRS MSRV Clippy; Hypercurve and Hyperbrep builds without optional
+features; all three API documentation builds with warnings denied; fuzz-target
+Clippy; formatting; 16 matrix guards; 170 capability witnesses; typos, repository
+budget and diff checks. Evidence is in `docs/evidence/2026-10-27-hypercurve-closure-point-replay`, SHA-256
+`e5473caf511936bc1704e8d8ed1251b73bf1e2b17ab078623375a2d8b08f932b`. All non-receipt source bytes remain
+identical after qualification. Failed prototypes and their source snapshots are
+retained. Those records distinguish construction/codec gaps from invalid fixture
+setup, compile failures and filesystem exhaustion. The native-source fixture
+now uses its intended native constructor without dropping its view assertion,
+exact point expectations or budget checks.
+
+Generated circles, auxiliary contact and other cusp-derived definitions,
+general joint parameter charts, broader generated and filled-region archives,
+scalar-expression DAGs and cross-path sharing remain open. The finite corpus is
+not a universal closure proof. Point nesting, bytes and existing archive limits
+do not bound all arithmetic, coefficient growth, native prefix-vector allocation,
+temporary/retained memory or cancellation. Full repository pre-push checks and
+published-package delivery remain pending for this increment.
+
+**Selected circle frame replay increment (2026-10-27).** The preceding
+point-graph increment `83fd8c03b0` can replay the line cut from the original
+degree-seven fillet, while the complete generated circle still fails export.
+The unchanged-source baseline and its original positive assertion are retained.
+A separate baseline also rejects the independent retained circle point before
+serialization. Hypercurve owns circle frames, selected angular domains, exact
+point incidence and retained chord directions; native SVG and the CSGRS adapter
+consume those owners. P15, P18–P20, P27 and P28–P30 apply.
+
+Version 4 now preserves chord-normal circle frames with their exact center,
+directed source chord, nonzero signed radius and orientation. Scalar angular
+parameters, signed normal contacts and independently incident points select
+finite ascending ranges with explicit traversal. The original point and shared
+source definitions remain authoritative; there is no coordinate fitting or
+forced independent scalar materialization. Replay proves the literal signed
+normal relation, radius, incident-point equation and selected half. Every unused
+record is checked, including typed references and cross-circle parameter owners.
+
+Transported oblique chord frames retain a represented unit-direction witness.
+The chord owner proves unit length, perpendicular equality and positive directed
+displacement before retaining it. Supports and finite chord ranges remain
+distinct. Represented endpoint directions already reconstructed by the ordinary
+constructor keep their existing wire form. This restores the construction fact
+needed for deterministic projection after algebraic similarities. Construction
+tangent flags are not serialized; the retained normal relations and existing
+arrangement predicates re-establish applicable contacts. A changed-neighbor
+witness confirms both transverse roots instead of inheriting tangency.
+
+Eleven public curve witnesses cover the complete original fillet in a fresh
+process before exact incidence, splitting, reversal and a second archive;
+algebraic rotation/scaling and reflection; region admission, all four empty-set
+Boolean operations and boundary reconstruction; mixed native/generated boundaries
+with a hole and disconnected material; two changed-neighbor crossings in both
+orders; invalid unit directions and signed contacts; finite-arc clipping and
+`2^-80` separation; malformed frames, selectors and ranges; and reached depth
+and byte limits followed by larger retries. A unit witness checks consumed
+approximate-policy barriers. The CSGRS SVG adapter repeats complete circle
+replay followed by split, reversal and another archive. Exact expectations are
+checked separately from deterministic complete SVG bytes.
+
+All 18 final groups pass: 2,832 Hypercurve tests across 91 suites, with the same
+34 existing ignored cases; 64 root tests across 11 affected suites; 3,012 tests
+across six dependent packages; strict all-target/all-feature Hypercurve,
+Hyperbrep and CSGRS MSRV Clippy; builds without optional features; API docs with
+warnings denied; fuzz Clippy; formatting; 16 matrix guards; 181 capability
+witnesses; typos, repository budget and diff checks. Evidence is in `docs/evidence/2026-10-27-hypercurve-closure-circle-replay`,
+SHA-256 `f0d529e9c2ca5cb332cd43e9ae22f01c48bf6b665b2f5fddc946b2742631413d`. All non-receipt bytes remain
+identical after qualification. A host filesystem quota truncated extraction of
+a required Gerber fixture during the first consumer attempt. Its positive
+coverage assertion failed; the full consumer command was rerun successfully on
+unchanged source after storage recovery. No fixture or assertion was changed.
+Original failures and every prototype source
+snapshot are retained, including the selected angular-record gap, missing unit
+direction evidence, support/range reference distinction, unchanged older chart
+assertion and proved-invalid contact classification. No hard geometry assertion
+was replaced by a blocker expectation.
+
+Other generated circle frames, general mapped contacts, repeated-offset angular
+transport and filled-region native archives remain required work. A separate
+correlated degree-seven/five fiber-center probe imports and evaluates exact
+endpoints, but its independently mapped midpoint returns `Blocked(Ordering)`.
+That preserved positive failure is an implementation gap, not exhausted work or
+completed support. This finite corpus is not a universal algebraic closure proof.
+Frame dependency depth and extension bytes do not bound total solver work,
+coefficient or scalar-expression growth, temporary/retained memory or cooperative
+cancellation. Full pre-push qualification and published-package delivery remain
+pending for this increment.
+
+**Correlated point and circle predicate increment (2026-10-27).** The
+preceding selected-circle increment `32b114ca03` retains a probe whose
+correlated degree-seven/five center imports and evaluates exact endpoints, but
+whose midpoint query returns `Blocked(Ordering)`. A fresh unchanged-source build
+reproduces that original positive assertion. The existing rational-query API
+already proves the radius squared exactly one; oblique affine comparison also
+fails before this change. Hypercurve's common point-field authority, circle
+incidence and half chart, and chord-direction replay own these changes under
+P15, P18–P20, P27, P29 and P30.
+
+Public rational-query arithmetic and geometric predicates now share the same
+checked source pullback and common-field alignment. Both selected coordinates
+retain their base/fiber relation. Oblique projections subtract before independent
+coordinate refinement; circle residuals use nonzero checked denominators and a
+positive squared denominator. Original map and operand guards remain owned.
+When a certified incident point's displacement reduces to exact constants in a
+represented normal frame, the existing rational half-chart inverse consumes
+those displacements directly. Signed radii, traversal, diameter endpoints and
+complementary-half ownership keep their established meaning. This is not an
+algorithm for every independent selected angular field.
+
+A reflected oblique-frame witness also reproduces loss of a compact rational
+unit direction during native replay: geometry, metadata and viewBox agree, while
+one display coordinate changes after reconstruction through an equal radical
+expression. Source/cold/warm probes distinguish this from query mutation. The
+existing checked unit-direction record is now omitted only when the ordinary
+chord owner reconstructs identical scalar definitions. Readers retain validated
+incoming components even when another vector is equal in value. Exact length,
+parallelism and orientation predicates still establish validity; byte identity
+only decides whether an encoding can omit a definition. No new wire tag or
+format version is introduced.
+
+Seven maintained witnesses cover the original selected center without independent
+coordinates; exact oblique dot products in both operand orders; midpoint location
+and evaluation followed by subdivision, reversal and another native archive;
+both signed radii and traversal directions, diameter endpoints, quarter points,
+excluded halves and `2^-80` separation; negative denominator maps and original
+zero-pole rejection; algebraic similarities and reflected complete SVG replay;
+and actually reached zero work budgets followed by successful 512-refinement,
+zero-promotion retries. Strict/approximate/strict requests remain Certified when
+these exact proofs suffice. Exact geometry and deterministic serialization are
+separate assertions. The original external positive program succeeds unchanged,
+and the earlier replay corpus remains intact.
+
+All 18 final groups pass: 2,839 Hypercurve tests across 92 suites with the same
+34 existing ignored cases, 64 affected root tests across 11 suites, 3,012 tests
+across six dependent packages, strict MSRV Clippy for all targets/features of
+Hypercurve/CSGRS/Hyperbrep, builds without optional features, denied-warning API
+docs and fuzz Clippy, formatting, 16 matrix guards, 188 capability witnesses,
+typos, repository budget and diff checks. Raw evidence is `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`,
+SHA-256 `6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a`. The qualification ran on a frozen complete source snapshot
+while the preceding increment completed its independent checks. Afterwards,
+reparenting imported only the three parent receipts and proved all other source
+bytes unchanged. Both the full qualified patch and the final parent-relative
+patch are retained; receipt checks follow the final ledger edits.
+
+A host filesystem quota interrupted one Hypercircuit command and its report.
+The truncated attempt is retained without inferring success. After verified
+storage recovery, the complete command and all remaining groups ran on unchanged
+source; the first nine complete source-attributed records remain intact.
+
+Original failures remain available, including the initial harness search-path
+error, the distinct angular-inversion blocker after incidence was fixed, and
+the reflected display assertion. General independent fields, nonconstant angular
+inversion, other generated circle frames, repeated-offset chart transport and
+filled-region native archives remain open. Counted refinements/promotions do
+not bound total arithmetic, coefficient growth, expression size, heap use or
+cancellation. A finite corpus does not prove universal closure or performance.
+Full repository pre-push qualification and published-package delivery remain
+pending for these bytes.
+
 **Combined pre-push qualification (2026-10-27).** The source revision
 `b1c011a070e61970fc7ee15a0c206b2f3b84e5f0` combines the qualified closure increments through
 polynomial/rational sections with the unchanged-write voxel test correction.
@@ -985,22 +1702,23 @@ capabilities in the matrix remain open.
   point that is proved equal to, not stored as, the branch point. A
   selected-fiber image of the abscissa would keep the replay identity at the
   cost of fiber-field arithmetic.
-- **Selected abscissas and broader maps (H06, milestones 2 and 3).** Rational
-  similarity pullback and the recorded algebraic native lines are admitted
-  above. Selected chord carriers, general algebraic similarities and nonlinear rational images still need
-  their own section and source-domain proof; source-x monotonicity is not
-  world-x monotonicity. Further pair images and selected coefficient fields
-  require their own source-domain and incidence proofs.
+- **Selected abscissas and broader maps (H06, milestones 2 and 3).** Native-line
+  sections now consume retained algebraic similarities and checked rational-map
+  similarities where the original exact source decisions complete. Their
+  composition has a separate witness. General selected chord supports, nonlinear
+  rational images, further pair images and selected coefficient fields still
+  need their own source-domain and incidence proofs; source-x monotonicity is
+  not world-x monotonicity.
 - **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
-- **Filled regions and BRep trims (H08).** `CurveRegion2` construction and
-  `CurvePath2::simple_loop_orientation` with polynomial boundary pieces return
-  `Blocked(Construction, ImplicitPolynomial, Unsupported)`; a test records
-  this. Source-span and boundary ownership, pair incidence, point location,
-  local sectors and BRep consumers must all retain the graph, selector and
-  domain. Compare the chart-qualified views and shared incidence of H01–H04
-  with narrow family services; they are exploratory alternatives, not required
-  predecessors. The 25 October handoff stages actual pair/component capability
-  in R05–R07 and explicitly permits advanced API prototypes.
+- **Complete implicit regions and BRep trims (H08).** The unchanged H08 cap
+  now passes loop orientation and shared `CurveRegion2` admission. The bounded
+  region corpus exercises retained graph supports, holes, disconnected and
+  touching material, mixed circles, exact trims and later operations. This
+  does not complete arbitrary implicit branches, coefficient fields, singular
+  sectors, image maps or BRep trimming. Nonzero polynomial-support offsets,
+  corner edits, finite projection and fresh-process native replay still need
+  their own acceptance work. Source/root/domain and contact evidence must
+  remain available throughout those extensions.
 
 ## 9. Selected-root comparison, fillet centres and tangent events (2026-10-23)
 

@@ -261,13 +261,15 @@ blocks before an algorithm is selected.
   counts. The source equation, domain, event roots and ordered branches remain
   queryable; `rational_fiber` continues exact slice queries without a polyline
   conversion. Singular nodes and cusps need no generic-position assumption.
-  Vertical components, repeated generic fibers and whole horizontal boundary
-  components remain typed blockers. Source/projection degree, fiber depth and
+  Simple horizontal components on either closed rectangle boundary remain in
+  the original equation and graph. Their contacts are projection events and
+  their incidence uses the same closed-fiber counts and separator proofs.
+  Vertical components and repeated generic fibers remain typed blockers. Source/projection degree, fiber depth and
   connection refinement controls are distinct from the shared work budget;
-  none establishes a total scalar-work or heap bound. Hypercurve implicit
-  carriers and HyperBRep spatial/dual-chart integration are still required
-  before this becomes a general surface-intersection workflow. The diagnostic
-  graph records used in tests are not a native BRep archive format.
+  none establishes a total scalar-work or heap bound. This constructor does
+  not itself certify filled regions or general surface intersections; consumers
+  retain their own admission and image requirements. The diagnostic graph
+  records used in tests are not a native BRep archive format.
 - Univariate, typed trivariate/quadrivariate, and rank-independent tensor
   resultants use the requested coefficient-refinement bound as their fast
   path, then continue unresolved exact degree, trimming, zero, normalization,

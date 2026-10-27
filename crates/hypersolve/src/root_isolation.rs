@@ -2279,7 +2279,7 @@ pub fn polynomial_has_one_distinct_root_in_open_interval(
     polynomial_has_one_distinct_root_with_ownership(polynomial, lower, upper, policy, false, false)
 }
 
-fn polynomial_has_one_distinct_root_with_ownership(
+pub(crate) fn polynomial_has_one_distinct_root_with_ownership(
     polynomial: &[Real],
     lower: &Real,
     upper: &Real,

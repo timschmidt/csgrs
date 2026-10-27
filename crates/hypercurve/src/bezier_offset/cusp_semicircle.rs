@@ -10,6 +10,11 @@ mod parallel_kernel;
 mod parameters;
 mod points;
 mod rational_kernel;
+#[cfg(feature = "svg")]
+mod replay;
+
+#[cfg(feature = "svg")]
+pub(crate) use replay::{CircleChordNormalDefinition2, CircleParameterDefinition2};
 
 impl BezierAlgebraicCuspSemicircle2 {
     #[inline]
@@ -2205,6 +2210,22 @@ impl BezierAlgebraicCuspSemicircle2 {
         if matches!(refined, Classification::Decided(_)) {
             return Ok(refined);
         }
+        if let Classification::Decided(center) = self.center_point_evidence(policy)? {
+            match common_point_circle_residual_sign(
+                point,
+                &center,
+                &(self.radial_distance() * self.radial_distance()),
+                policy,
+            )? {
+                Classification::Decided(sign) => return Ok(Classification::Decided(sign)),
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
         if let Classification::Decided(center) = self.center_point_evidence(policy)?
             && let Classification::Decided(Some(sign)) =
                 recursive_projective_point_evidence_circle_residual_sign(
@@ -2254,6 +2275,35 @@ impl BezierAlgebraicCuspSemicircle2 {
                 CurveParameter2::from_algebraic_cusp(parameter)
             }
         };
+        // The existing rational half chart uses normal coordinate n and
+        // oriented tangent coordinate b: u=b/(r+n+b). Keep this inverse shared
+        // by procedural frame points and proved constant displacements.
+        let from_frame_coordinates = |normal: Real,
+                                      tangent: Real|
+         -> CurveResult<Option<(Real, bool)>> {
+            Ok(
+                match real_sign(&(&tangent * self.radial_distance()), &CurveContext::STRICT) {
+                    Some(RealSign::Zero) => {
+                        match real_sign(&(&normal * self.radial_distance()), &CurveContext::STRICT)
+                        {
+                            Some(RealSign::Positive) => Some((Real::zero(), false)),
+                            Some(RealSign::Negative) => Some((Real::one(), false)),
+                            _ => None,
+                        }
+                    }
+                    Some(sign) => {
+                        let complementary = sign == RealSign::Negative;
+                        let radius = if complementary {
+                            -self.radial_distance().clone()
+                        } else {
+                            self.radial_distance().clone()
+                        };
+                        Some(((&tangent / (radius + normal + &tangent))?, complementary))
+                    }
+                    None => None,
+                },
+            )
+        };
         if let CurvePoint2(CurvePointData2::Endpoint(endpoint)) = point
             && let crate::BezierSplitFragment2::AlgebraicCuspSemicircle(source) =
                 endpoint.fragment.as_ref()
@@ -2299,27 +2349,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             // only zero-b cases and keep the base chart's ownership.
             let normal = point.data.parallel.distance() - frame.center_support.distance();
             let tangent = -&point.data.tangent_distance * self.turn_sign();
-            let parameter =
-                match real_sign(&(&tangent * self.radial_distance()), &CurveContext::STRICT) {
-                    Some(RealSign::Zero) => {
-                        match real_sign(&(&normal * self.radial_distance()), &CurveContext::STRICT)
-                        {
-                            Some(RealSign::Positive) => Some((Real::zero(), false)),
-                            Some(RealSign::Negative) => Some((Real::one(), false)),
-                            _ => None,
-                        }
-                    }
-                    Some(sign) => {
-                        let complementary = sign == RealSign::Negative;
-                        let radius = if complementary {
-                            -self.radial_distance().clone()
-                        } else {
-                            self.radial_distance().clone()
-                        };
-                        Some(((&tangent / (radius + normal + &tangent))?, complementary))
-                    }
-                    None => None,
-                };
+            let parameter = from_frame_coordinates(normal, tangent)?;
             if let Some((parameter, complementary)) = parameter {
                 return Ok(Classification::Decided(publish(
                     BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
@@ -2331,6 +2361,41 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
+        let represented_normal = match self.data.frame.chord_normal() {
+            Some(frame) => frame
+                .anchor
+                .certified_unit_tangent()
+                .or_else(|| {
+                    frame
+                        .anchor
+                        .certified_axis_direction()
+                        .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
+                })
+                .map(|(x, y)| (-y, x)),
+            None => self.data.frame.represented_unit_normal()?,
+        };
+        if let Some((normal_x, normal_y)) = represented_normal {
+            match common_point_constant_displacement(point, &center, policy)? {
+                Classification::Decided(Some((x, y))) => {
+                    let normal = Real::dot2_refs([&x, &y], [&normal_x, &normal_y]);
+                    let tangent = self.turn_sign() * (&normal_x * &y - &normal_y * &x);
+                    if let Some((parameter, complementary)) =
+                        from_frame_coordinates(normal, tangent)?
+                    {
+                        return Ok(Classification::Decided(publish(
+                            BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
+                            complementary,
+                        )));
+                    }
+                }
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => {}
+            }
+        }
         let radial = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
             center,
             point.clone(),

@@ -85,6 +85,10 @@ impl CurveTangent2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         let (parallel, range, reversed) = match fragment {
+            BezierSplitFragment2::Polynomial(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 return Ok(Classification::Decided(Self::AlgebraicChord(chord.clone())));
             }
@@ -1404,6 +1408,8 @@ pub(super) enum RetainedParallelOffsetFragmentRef2<'a> {
 impl<'a> RetainedParallelOffsetFragmentRef2<'a> {
     pub(super) fn from_fragment(fragment: &'a BezierSplitFragment2) -> Option<Self> {
         match fragment {
+            BezierSplitFragment2::Polynomial(_) => None,
+
             BezierSplitFragment2::AnalyticParallel(fragment) => Some(Self::Analytic(fragment)),
             BezierSplitFragment2::SelectedFiber(fragment) => Some(Self::Selected(fragment)),
             BezierSplitFragment2::Materialized { .. }
@@ -1727,6 +1733,10 @@ pub(super) enum CornerCarrierEvidence2 {
 impl<'a> CornerCarrierPreparation2<'a> {
     pub(super) fn admit(fragment: &'a BezierSplitFragment2) -> Self {
         let top_level = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => Some(std::borrow::Cow::Owned(
+                Curve2::from_polynomial_branch((**branch).clone()),
+            )),
+
             BezierSplitFragment2::Materialized { curve, .. } => {
                 Some(std::borrow::Cow::Owned(Curve2::from(curve.clone())))
             }
@@ -1803,6 +1813,14 @@ impl<'a> CornerCarrierPreparation2<'a> {
             return Ok(());
         }
         match fragment {
+            BezierSplitFragment2::Polynomial(_) => {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    CurveFamily2::ImplicitPolynomial,
+                    UncertaintyReason::Unsupported,
+                ));
+            }
+
             BezierSplitFragment2::RetainedBezier { .. } => {
                 self.evidence = if let Some(chord) =
                     promoted_endpoint_image_corner_chord(fragment, operation, policy)?
@@ -1871,6 +1889,12 @@ impl<'a> CornerCarrierPreparation2<'a> {
             .fragment
             .expect("a nonnative corner retains its fragment");
         match fragment {
+            BezierSplitFragment2::Polynomial(_) => Err(ExactCurveError::blocked(
+                operation,
+                CurveFamily2::ImplicitPolynomial,
+                UncertaintyReason::Unsupported,
+            )),
+
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 Ok(crate::curve::ExactCornerCarrier2::AlgebraicChord(chord))
             }
@@ -2474,6 +2498,10 @@ pub(super) fn exact_offset_span_from_source_run(
     let fragment = &source_fragments[fragment_index];
     let mut consumed = 1;
     let offset = match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+
         BezierSplitFragment2::Materialized { curve, .. } => {
             exact_offset_spans_from_materialized_curve(curve, distance, policy)
         }
@@ -2618,6 +2646,8 @@ pub(super) fn exact_offset_span_runs_from_boundary_loop(
                         "hypercurve",
                         "curve-region-exact-offset-span-blocker",
                         match &source_fragments[fragment_index] {
+                            BezierSplitFragment2::Polynomial(_) => "polynomial",
+
                             BezierSplitFragment2::Materialized { .. } => "materialized",
                             BezierSplitFragment2::AnalyticParallel(_) => "analytic-parallel",
                             BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",

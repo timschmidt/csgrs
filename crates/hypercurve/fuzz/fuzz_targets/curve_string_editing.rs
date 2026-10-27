@@ -3,8 +3,8 @@
 mod support;
 
 use hypercurve::{
-    BulgeVertex2, Classification, Curve2, PredicatePolicy, CurveCornerMode2, CurvePath2, CurveRegion2,
-    CurveString2, CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, Point2, Real, Segment2,
+    BulgeVertex2, Classification, Curve2, CurveCornerMode2, CurvePath2, CurveRegion2, CurveString2,
+    CurveStringEndpoint2, CurveStringTrimPoint2, FillRule, Point2, PredicatePolicy, Real, Segment2,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -52,11 +52,7 @@ fn rectangle_region(origin: Point2, width: u8, height: u8) -> Option<CurveRegion
         FillRule::NonZero,
     )
     .ok()
-    .and_then(|contour| {
-        CurveRegion2::try_from_native_material_contours(vec![contour])
-            .ok()
-            .map(|outcome| outcome)
-    })
+    .and_then(|contour| CurveRegion2::try_from_native_material_contours(vec![contour]).ok())
 }
 
 fn touch_curve(curve: &CurveString2, policy: &PredicatePolicy, data: &[u8]) {
@@ -86,7 +82,8 @@ fuzz_target!(|data: &[u8]| {
     let points = data
         .chunks(2)
         .take(6)
-        .filter_map(|chunk| (chunk.len() == 2).then(|| point(chunk[0], chunk[1])))
+        .filter(|chunk| chunk.len() == 2)
+        .map(|chunk| point(chunk[0], chunk[1]))
         .collect::<Vec<_>>();
     let Some(curve) = curve_from_points(&points[0..4]) else {
         return;

@@ -11,6 +11,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
         curve: &Curve2,
         range: &CurveParameterRange2,
     ) -> ExactCurveResult<RegionPointLocation> {
+        if let Some(branch) = curve.polynomial_branch() {
+            return self.fragment_location(
+                carrier_index,
+                &BezierSplitFragment2::Polynomial(Box::new(branch.clone())),
+            );
+        }
         if let Some(fragment) = curve.retained_fragment() {
             return self.fragment_location(carrier_index, fragment);
         }
@@ -69,7 +75,26 @@ impl<'a> CurveRegionBooleanContext<'a> {
         if self.carrier_bounds_are_outside_other_region(carrier_index) {
             return Ok(RegionPointLocation::Outside);
         }
-        let classification = if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
+        let classification = if let BezierSplitFragment2::Polynomial(branch) = fragment {
+            // Complete pair replay makes this open fragment one face. Keep
+            // its selected interior point in the original source chart;
+            // requiring two represented coordinates would lose that witness.
+            let range = branch.parameter_range();
+            let parameter = match range
+                .start()
+                .strict_scalar_between_ordered(range.end(), &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(parameter) => CurveParameter2::from(parameter),
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            };
+            let point = Curve2::from_polynomial_branch((**branch).clone())
+                .point_at_with_policy(&parameter, &self.data.policy)?
+                .into_value();
+            self.classify_point_evidence_off_boundary(carrier_index, point, other, other_operand)?
+        } else if let BezierSplitFragment2::AlgebraicChord(chord) = fragment {
             {
                 // Complete pair replay guarantees that an open split fragment
                 // cannot change faces. Its interior support point is the
@@ -164,15 +189,21 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Err(self.blocked(carrier_index, reason));
                 }
             };
-            other
-                .classify_point_raw(&representative, &self.data.policy)
-                .map_err(|cause| self.invalid(carrier_index, cause))?
+            self.classify_point_evidence_off_boundary(
+                carrier_index,
+                representative.into(),
+                other,
+                other_operand,
+            )?
         } else {
             let (parameter, representative) =
                 self.fragment_representative(carrier_index, fragment)?;
-            let classification = other
-                .classify_point_raw(&representative, &self.data.policy)
-                .map_err(|cause| self.invalid(carrier_index, cause))?;
+            let classification = self.classify_point_evidence_off_boundary(
+                carrier_index,
+                representative.into(),
+                other,
+                other_operand,
+            )?;
             if matches!(
                 classification,
                 Classification::Decided(RegionPointLocation::Inside | RegionPointLocation::Outside)
@@ -206,10 +237,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         Classification::Decided(point) => point,
                         Classification::Uncertain(_) => continue,
                     };
-                    match other
-                        .classify_point_raw(&point, &self.data.policy)
-                        .map_err(|cause| self.invalid(carrier_index, cause))?
-                    {
+                    match self.classify_point_evidence_off_boundary(
+                        carrier_index,
+                        point.into(),
+                        other,
+                        other_operand,
+                    )? {
                         Classification::Decided(
                             location @ (RegionPointLocation::Inside | RegionPointLocation::Outside),
                         ) => match decided {
@@ -475,6 +508,29 @@ impl<'a> CurveRegionBooleanContext<'a> {
             return Ok(Classification::Decided(RegionPointLocation::Outside));
         }
 
+        // A selected graph point already retains its source incidence. Reuse
+        // that authority before constructing an unrelated chord to the point.
+        // Failure to prove incidence does not classify the point as outside.
+        for carrier in boundary_carriers {
+            let CurveSupport2::Polynomial(branch) = &carrier.geometry else {
+                continue;
+            };
+            let parameter = match branch.point_parameter(&point, &self.data.policy) {
+                Ok(parameter) => parameter,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Unsupported =>
+                {
+                    continue;
+                }
+                Err(error) => return Err(error.with_operation(CurveOperation2::Classification)),
+            };
+            if let Some(parameter) = parameter
+                && parameter_in_carrier(&parameter, carrier, &self.data.policy)?
+            {
+                return Ok(Classification::Decided(RegionPointLocation::Boundary));
+            }
+        }
+
         let mut last_reason = UncertaintyReason::Unsupported;
         let outer_bounds = match retained_probe_outer_bounds(boundary_carriers, &self.data.policy) {
             Classification::Decided(bounds) => bounds,
@@ -483,9 +539,35 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
-        for candidate_index in 0..fallback_count.saturating_add(4) {
-            let Some(outside) = retained_probe_exterior_candidate(&outer_bounds, candidate_index)
-            else {
+        let ordinary_candidates = fallback_count.saturating_add(4);
+        for candidate_index in 0..ordinary_candidates.saturating_add(4) {
+            // Preserve the existing successful paths and their query costs.
+            // If all oblique probes are blocked, an available exact coordinate
+            // can certify an axis support while its companion stays selected.
+            let outside = if candidate_index < ordinary_candidates {
+                retained_probe_exterior_candidate(&outer_bounds, candidate_index)
+            } else {
+                match retained_probe_axis_candidate(
+                    &point,
+                    &outer_bounds,
+                    candidate_index - ordinary_candidates,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                {
+                    Classification::Decided(candidate) => candidate,
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        return Err(
+                            self.blocked(owner_carrier_index, UncertaintyReason::BudgetExhausted)
+                        );
+                    }
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue;
+                    }
+                }
+            };
+            let Some(outside) = outside else {
                 continue;
             };
             let probe = match crate::BezierAlgebraicChord2::try_new(

@@ -1153,10 +1153,13 @@ impl BezierParallel2 {
         end: &Real,
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
-        if in_closed_unit_interval(start, policy) != Some(true)
-            || in_closed_unit_interval(end, policy) != Some(true)
-            || compare_reals(start, end, policy) == Some(std::cmp::Ordering::Greater)
-        {
+        // The retained fragment owns its finite domain, which may extend
+        // beyond the authored unit chart. Power-basis interval evaluation
+        // remains valid there and checks the denominator and normal enclosure.
+        if !matches!(
+            compare_reals(start, end, policy),
+            Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
+        ) {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         }
         analytic_parallel_point_bounds_over_interval(

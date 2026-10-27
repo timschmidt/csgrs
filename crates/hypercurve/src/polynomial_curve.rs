@@ -49,12 +49,20 @@ struct PolynomialCurveSource2 {
 /// original denominator guard and the branch's ordered root; subsequent
 /// abscissa queries can reuse the same source without coordinate elimination.
 /// General dependent fibers without such a rational base chart remain blocked.
+/// [`Curve2::point_locations`] consumes native and retained points in the
+/// original graph chart and its invertible similarities, preserving closed
+/// selected boundaries. Incidence validates the selected branch, so another
+/// root of the same equation is not an incident point. Rational image maps
+/// need a separate inverse/preimage contract for this query.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. Source branches and their retained rational similarities intersect
-/// authored native lines, including exact algebraic coordinates and selected
+/// source. Source branches and their retained rational or algebraic similarities
+/// intersect authored native lines, including exact algebraic coordinates and selected
 /// restrictions, through [`Curve2::intersect_curve`] and
 /// [`Curve2::intersection_topology`]. Scalar and selected-field decisions must
 /// succeed exactly; unresolved predicates retain their typed blockers.
+/// Native-line sections also consume rational map definitions proved to be
+/// rational-coefficient similarities. These query views keep the original
+/// maps and their denominator guards; they do not complete general image queries.
 /// Generated chords keep point-based parameters when a retained native support
 /// or represented constant abscissa certifies the line in either chart.
 /// Equations independent of the source abscissa also certify constant selected
@@ -70,8 +78,15 @@ struct PolynomialCurveSource2 {
 /// Common components retain monotone abscissa correspondences in the original
 /// local span charts. Poles, selected parameters and strict predicates retain
 /// their existing guards and limits. General constant-abscissa/collapsed traces,
-/// other image maps, singular differential limits, rational Bézier promotion
-/// of the polynomial branch, and filled arrangements retain typed blockers.
+/// other image maps, singular differential limits and rational Bézier promotion
+/// of the polynomial branch retain typed blockers.
+/// Closed graph boundaries also enter [`crate::CurveRegion2`]'s shared
+/// arrangement, retaining these same supports through classification,
+/// Booleans, reconstruction and supported similarities. Those operations
+/// still require complete pair incidence and exact selected-field decisions;
+/// this carrier does not establish general implicit-region closure. Nonzero
+/// offsets, corner edits and finite projection of polynomial supports remain
+/// unsupported.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -278,6 +293,10 @@ impl PolynomialCurveBranch2 {
         self.reversed
     }
 
+    pub(crate) fn parameter_range(&self) -> &CurveParameterRange2 {
+        &self.range
+    }
+
     /// Complete source graph, shared by all restrictions and images.
     pub fn topology(&self) -> &BivariateCurveTopology {
         &self.source.topology
@@ -378,40 +397,84 @@ impl PolynomialCurveBranch2 {
         self.transform.is_none() && self.maps.is_empty()
     }
 
-    /// Uses the source section authority after a rational similarity pullback.
+    /// Uses the source section authority after an exact similarity pullback.
     /// Source abscissas remain the branch parameters; returned points and
-    /// tangent signs belong to the current image. Nonlinear rational images
-    /// and algebraic transform coefficients retain their existing capability gap.
+    /// tangent signs belong to the current image. The native line authority
+    /// decides algebraic coefficients without changing the original source.
+    /// Nonlinear rational images retain their existing capability gap.
     pub(crate) fn line_sections(
         &self,
         line: &crate::LineSeg2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<PolynomialLineSections2>> {
-        if !self.maps.is_empty() {
-            return Ok(None);
-        }
-        let Some(transform) = &self.transform else {
+        // A retained rational definition may encode a similarity, including
+        // a guarded identity. Use its proved affine view only for the query;
+        // returned points still replay every original map and denominator.
+        let transform = if self.maps.is_empty() {
+            self.transform.clone()
+        } else {
+            let mut maps = self.maps.iter();
+            let Some(mut image) = maps
+                .next()
+                .and_then(crate::RationalMap2::rational_similarity)
+            else {
+                return Ok(None);
+            };
+            for map in maps {
+                let Some(next) = map.rational_similarity() else {
+                    return Ok(None);
+                };
+                image = image.then(&next);
+            }
+            if let Some(next) = &self.transform {
+                image = image.then(next);
+            }
+            Some(image)
+        };
+        let Some(transform) = transform else {
             return self.source_line_sections(line, policy).map(Some);
         };
-        let (a, b, d, e, xoff, yoff) = transform.affine_components();
-        if ![a, b, d, e, xoff, yoff]
-            .iter()
-            .all(|value| value.exact_rational_ref().is_some())
-        {
-            return Ok(None);
-        }
         let inverse = transform.inverse().map_err(invalid)?;
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
+        self.image_source_line_sections(&source_line, &transform, policy)
+            .map(Some)
+    }
+
+    /// Consumes an already certified source-chart support without a forward
+    /// and inverse coordinate roundtrip. Generated chords retain this view
+    /// when their selected endpoints prove a source abscissa directly.
+    pub(crate) fn source_chart_line_sections(
+        &self,
+        line: &crate::LineSeg2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<PolynomialLineSections2> {
+        if !self.maps.is_empty() {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        match &self.transform {
+            Some(transform) => self.image_source_line_sections(line, transform, policy),
+            None => self.source_line_sections(line, policy),
+        }
+    }
+
+    fn image_source_line_sections(
+        &self,
+        source_line: &crate::LineSeg2,
+        transform: &crate::Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<PolynomialLineSections2> {
+        let inverse = transform.inverse().map_err(invalid)?;
         let mut source = self.clone();
         source.transform = None;
+        source.maps.clear();
         source.endpoints = self.endpoints.clone().map(|point| {
             CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
         });
-        let mut sections = source.source_line_sections(&source_line, policy)?;
+        let mut sections = source.source_line_sections(source_line, policy)?;
         let PolynomialLineSections2::Isolated(points) = &mut sections else {
             // An invertible image preserves the complete support identity;
             // the source-abscissa/line-parameter map is unchanged.
-            return Ok(Some(sections));
+            return Ok(sections);
         };
         for section in points {
             // Reuse the actual selected boundary point at a retained endpoint.
@@ -427,7 +490,7 @@ impl PolynomialCurveBranch2 {
                 section.cross = section.cross.map(negate);
             }
         }
-        Ok(Some(sections))
+        Ok(sections)
     }
 
     /// Every point of this source-plane branch on the exact native `line`.
@@ -437,8 +500,9 @@ impl PolynomialCurveBranch2 {
     /// in the source rectangle, which include crossings of every branch; a
     /// root is kept only when this branch's own fiber point satisfies the
     /// line exactly. A root of even multiplicity is a tangency and is kept.
-    /// An identically zero substitution means the line is a component of the
-    /// zero set; that is an unsupported blocker, never an empty result.
+    /// An identically zero substitution identifies a line component; its
+    /// selected branch retains an overlap correspondence, while the exact
+    /// quotient supplies the other branches' finite contacts.
     ///
     /// An active boundary returns its retained parameter and stored endpoint,
     /// so an event keeps the event fiber's incidence rather than an open-slab
@@ -772,6 +836,55 @@ impl PolynomialCurveBranch2 {
             .collect()
     }
 
+    /// Locate a point in the original injective graph chart. The inverse
+    /// similarity recovers only the source abscissa; equality with this
+    /// branch's selected fiber proves incidence, not the support equation alone.
+    pub(crate) fn point_parameter(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveParameter2>> {
+        if !self.maps.is_empty() {
+            // A rational image may have multiple or continuous preimages.
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        let form = match &self.transform {
+            Some(image) => {
+                let inverse = image.inverse().map_err(invalid)?;
+                let (a, b, _, _, x, _) = inverse.affine_components();
+                [a.clone(), b.clone(), x.clone()]
+            }
+            None => [Real::one(), Real::zero(), Real::zero()],
+        };
+        let mut parameter = decided(
+            crate::bezier_offset::point_affine_form_parameter(point, &form, policy)
+                .map_err(invalid)?,
+        )?;
+        let first = decided(
+            parameter
+                .cmp_by_refinement(self.range.start(), policy)
+                .map_err(invalid)?,
+        )?;
+        let last = decided(
+            parameter
+                .cmp_by_refinement(self.range.end(), policy)
+                .map_err(invalid)?,
+        )?;
+        if first.is_lt() || last.is_gt() {
+            return Ok(None);
+        }
+        let expected = if first.is_eq() {
+            parameter = self.range.start().clone();
+            self.endpoints[0].clone()
+        } else if last.is_eq() {
+            parameter = self.range.end().clone();
+            self.endpoints[1].clone()
+        } else {
+            self.map_point(self.interior_point(&parameter, policy)?, policy)?
+        };
+        Ok(decided(expected.same_point(point, policy))?.then_some(parameter))
+    }
+
     pub(super) fn point_at(
         &self,
         value: &CurveParameter2,
@@ -862,13 +975,13 @@ impl PolynomialCurveBranch2 {
             Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
                 point,
                 transform.clone(),
-                policy,
+                &policy.retained_object_policy(),
             )),
             None => point,
         })
     }
 
-    pub(super) fn reversed(&self) -> Self {
+    pub(crate) fn reversed(&self) -> Self {
         let mut result = self.clone();
         result.reversed = !result.reversed;
         result
@@ -885,13 +998,27 @@ impl PolynomialCurveBranch2 {
             CurvePoint2::from(BezierSimilarityPoint2::new(
                 point,
                 transform.clone(),
-                policy,
+                &policy.retained_object_policy(),
             ))
         });
         result
     }
 
-    pub(super) fn restricted(
+    /// Restricts a source whose range order, containment and endpoint incidence
+    /// have already been certified by the arrangement. Preserve those points
+    /// instead of reconstructing their selected fibers.
+    pub(crate) fn restricted_with_certified_endpoints(
+        &self,
+        range: CurveParameterRange2,
+        endpoints: [CurvePoint2; 2],
+    ) -> Self {
+        let mut result = self.clone();
+        result.range = range;
+        result.endpoints = endpoints;
+        result
+    }
+
+    pub(crate) fn restricted(
         &self,
         start: CurveParameter2,
         end: CurveParameter2,
@@ -964,7 +1091,7 @@ impl Curve2 {
         }
     }
 
-    pub(super) fn from_polynomial_branch(branch: PolynomialCurveBranch2) -> Self {
+    pub(crate) fn from_polynomial_branch(branch: PolynomialCurveBranch2) -> Self {
         Self {
             data: Arc::new(CurveData2 {
                 carrier: CurveCarrier2::Polynomial(Box::new(branch)),
@@ -975,5 +1102,84 @@ impl Curve2 {
                 bounds: OnceLock::new(),
             }),
         }
+    }
+}
+
+#[cfg(test)]
+mod policy_tests {
+    use super::*;
+    use hypersolve::bivariate_topology::{BivariateCurveDomain, decompose_bivariate_curve};
+
+    #[test]
+    fn selected_similarity_keeps_approximate_endpoint_dependencies() {
+        let topology = decompose_bivariate_curve(
+            &hypersolve::BivariatePolynomial::new(vec![vec![
+                5.into(),
+                5.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+            ]]),
+            &BivariateCurveDomain {
+                first: [(-1).into(), 1.into()],
+                second: [(-2).into(), 2.into()],
+            },
+            Default::default(),
+        )
+        .unwrap();
+        let source = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+        let branch = source.curves()[0].polynomial_branch().unwrap();
+        let translation = Similarity2::try_from_real_affine(
+            1.into(),
+            0.into(),
+            0.into(),
+            1.into(),
+            1.into(),
+            0.into(),
+        )
+        .unwrap();
+        let aggregate = crate::evaluate_under(hyperlimit::PredicatePolicy::APPROXIMATE_512, || {
+            let parent = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |policy| {
+                    // Seed an actual consumed-policy receipt, independently
+                    // of the following locally exact image construction.
+                    policy.observe_approximate_512();
+                    Ok::<_, CurveError>(branch.transformed(&translation, policy))
+                },
+            )
+            .unwrap();
+            assert_eq!(
+                parent.certainty,
+                crate::CurveCertainty::Approximate512Consumed
+            );
+            let child = crate::policy::resolve_certified_operation(
+                &CurveContext::APPROXIMATE_512,
+                |policy| Ok::<_, CurveError>(parent.value.transformed(&translation, policy)),
+            )
+            .unwrap();
+            assert_eq!(child.certainty, crate::CurveCertainty::Certified);
+            crate::evaluate_under(hyperlimit::PredicatePolicy::STRICT, || {
+                for endpoint in &child.value.endpoints {
+                    let query = endpoint
+                        .affine_form(0.into(), 1.into(), 0.into())
+                        .compare_to_real(&Real::zero());
+                    assert!(matches!(query, Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Unsupported));
+                    let replay = endpoint
+                        .definition()
+                        .and_then(crate::CurvePointDefinition2::into_point);
+                    assert!(matches!(replay, Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Unsupported));
+                }
+            })
+            .certified()
+            .unwrap();
+        });
+        assert_eq!(
+            aggregate.certainty(),
+            crate::CurveCertainty::Approximate512Consumed
+        );
     }
 }

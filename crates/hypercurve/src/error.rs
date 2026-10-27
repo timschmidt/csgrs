@@ -115,6 +115,19 @@ pub enum ExactCurveError {
 }
 
 impl ExactCurveError {
+    /// Re-enters an internal classification interface without interpreting a
+    /// blocker as invalid geometry. The consuming operation supplies its own
+    /// operation and support context when it requires a definite decision.
+    pub(crate) fn classify_result<T>(
+        result: ExactCurveResult<T>,
+    ) -> CurveResult<crate::Classification<T>> {
+        match result {
+            Ok(value) => Ok(crate::Classification::Decided(value)),
+            Err(Self::Blocked(blocker)) => Ok(crate::Classification::Uncertain(blocker.reason())),
+            Err(Self::Invalid { cause, .. }) => Err(cause),
+        }
+    }
+
     /// Wraps a low-level curve failure, preserving policy replay as a blocker.
     pub(crate) fn invalid(
         operation: CurveOperation2,
@@ -122,6 +135,9 @@ impl ExactCurveError {
         cause: CurveError,
     ) -> Self {
         match cause {
+            CurveError::UnsupportedFiniteCurveProjection { family } => {
+                Self::blocked(operation, family, UncertaintyReason::Unsupported)
+            }
             CurveError::IncompatiblePredicatePolicy => {
                 Self::blocked(operation, family, UncertaintyReason::Predicate)
             }
@@ -136,6 +152,9 @@ impl ExactCurveError {
     /// Wraps a region/path failure, preserving policy replay as a blocker.
     pub(crate) fn invalid_unattributed(operation: CurveOperation2, cause: CurveError) -> Self {
         match cause {
+            CurveError::UnsupportedFiniteCurveProjection { family } => {
+                Self::blocked(operation, family, UncertaintyReason::Unsupported)
+            }
             CurveError::IncompatiblePredicatePolicy => {
                 Self::blocked_unattributed(operation, UncertaintyReason::Predicate)
             }
@@ -381,6 +400,11 @@ pub enum CurveError {
     FilletConstraintRequired,
     /// Finite projection options contain non-finite or unsupported values.
     InvalidFiniteProjectionOptions,
+    /// The finite projection has no admitted sampler for this exact family.
+    UnsupportedFiniteCurveProjection {
+        /// Exact family whose geometry is retained without a sampled result.
+        family: CurveFamily2,
+    },
     /// Edge-preview tolerances are negative or non-finite.
     InvalidPreviewOptions,
     /// Retained import record metadata is inconsistent or non-finite.
@@ -426,6 +450,9 @@ pub enum CurveError {
 impl fmt::Display for CurveError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Self::UnsupportedFiniteCurveProjection { family } => {
+                write!(f, "finite curve projection is unsupported for {family:?}")
+            }
             Self::IncompatiblePredicatePolicy => {
                 write!(
                     f,

@@ -341,6 +341,7 @@ docs/evidence/2026-10-26-hypercurve-closure-native-circle	10	80015	1e1bf512fe517
 docs/evidence/2026-10-26-hypercurve-closure-native-contact-evidence	12	329667	b2c6714712ce3b03bef818b23c7422b972e5dbe99f9e22166e5d0f04a9469075
 docs/evidence/2026-10-26-hypercurve-closure-native-pairs	31	2029711	9c2aee95e8caaf702d91d45e2eed32cf5c6359baf543dcb4dcfa47a179479b54
 docs/evidence/2026-10-26-hypercurve-closure-polynomial-chords	273	9941360	07ec6f93dc278782911c1756d62550e489a493df418ab3efdfdb75193f6cc35d
+docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations	227	6750543	18441451082feb7c408e2951a88f80a9b84e2a05eb699cb35de72f0e8d1433d9
 docs/evidence/2026-10-26-hypercurve-closure-polynomial-pairs	165	3871244	3a1cc48424006b37ad2c2be99587216ef49b9d48e0db8acd31fcdea986ef7b13
 docs/evidence/2026-10-26-hypercurve-closure-rational-sections	442	15497091	c55babd43904c40db014bf6053f8aa1fceaad9a4d2a30fdc1d9f2156a8ab5e48
 docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas	213	7201989	1e45871c00e897e88d579812c2bb87e974e9ad9a356f6e36d6cae467992a4014
@@ -349,6 +350,18 @@ docs/evidence/2026-10-26-hypercurve-closure-validation-attempt-904e	12786	369654
 docs/evidence/2026-10-26-hypercurve-closure-validation-expanded	14368	43715836	6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3
 docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle	24	568359	32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a
 docs/evidence/2026-10-26-research-closeout	12763	187318255	ef84e4aed934ad5014ed36b27a41951d58b2200ab82a5cee3e7ac39e2ba005ad
+docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair	567	23612610	af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d
+docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities	202	4910607	cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612
+docs/evidence/2026-10-27-hypercurve-closure-chord-replay	555	18335290	79716febf65ec101df08a8ed67ed3d5411e2b003c616c4a02acc5c04575e1d67
+docs/evidence/2026-10-27-hypercurve-closure-circle-replay	590	27534685	f0d529e9c2ca5cb332cd43e9ae22f01c48bf6b665b2f5fddc946b2742631413d
+docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order	503	19569574	6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a
+docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries	404	16033938	3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52
+docs/evidence/2026-10-27-hypercurve-closure-native-replay	289	8114777	14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd
+docs/evidence/2026-10-27-hypercurve-closure-parallel-replay	426	13660333	5b0a3f0c28cb0a70f0779f98ab2da108b2078fe5423008e50a92cd37f47f54fe
+docs/evidence/2026-10-27-hypercurve-closure-point-replay	702	27425737	e5473caf511936bc1704e8d8ed1251b73bf1e2b17ab078623375a2d8b08f932b
+docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions	564	26364613	6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b
+docs/evidence/2026-10-27-hypercurve-closure-selected-composition	344	13220752	309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499
+docs/evidence/2026-10-27-hypercurve-closure-similarity-policy	242	6278223	db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

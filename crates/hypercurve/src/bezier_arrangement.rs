@@ -769,9 +769,9 @@ fn retained_endpoint_data(
         BezierSplitFragment2::AlgebraicCuspSemicircle(_) => Some(Classification::Decided(
             retained_topology_endpoint_data(arrangement_fragment),
         )),
-        BezierSplitFragment2::SelectedFiber(_) => Some(Classification::Decided(
-            retained_topology_endpoint_data(arrangement_fragment),
-        )),
+        BezierSplitFragment2::SelectedFiber(_) | BezierSplitFragment2::Polynomial(_) => Some(
+            Classification::Decided(retained_topology_endpoint_data(arrangement_fragment)),
+        ),
     }
 }
 

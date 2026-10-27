@@ -2708,6 +2708,10 @@ impl Curve2 {
     /// Each span replays its exact incidence equations; roots remain
     /// represented values or certified isolators, and no parameter is
     /// rounded. Distinct visits of the same point are all reported.
+    /// Selected polynomial graph branches and their invertible similarities
+    /// recover the original source abscissa and validate the selected fiber,
+    /// including closed algebraic trims and retained point inputs. General
+    /// rational images require a separate inverse/preimage authority.
     /// Retained points on generated straight chords reuse the chord's exact
     /// incidence and finite-order proofs. Other retained-point queries without
     /// an applicable incidence authority report an unsupported blocker rather
@@ -2734,20 +2738,46 @@ impl Curve2 {
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePointLocations2> {
+        if let Some(branch) = self.polynomial_branch() {
+            let parameter = branch
+                .point_parameter(point, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Intersection))?;
+            return Ok(CurvePointLocations2::Locations(
+                parameter
+                    .into_iter()
+                    .map(|parameter| {
+                        CurveLocation2::new(
+                            0,
+                            CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+                            parameter,
+                        )
+                    })
+                    .collect(),
+            ));
+        }
         let blocked =
             |reason| ExactCurveError::blocked(CurveOperation2::Intersection, self.family(), reason);
         let Some(point) = point.coordinates() else {
             let spans = self.source_spans(policy, CurveOperation2::Intersection)?;
             let mut locations = Vec::new();
             for (span_index, span) in spans.iter().enumerate() {
-                let crate::curve_support::CurveSupport2::Line(chord) =
-                    crate::curve_support::CurveSupport2::from_fragment(&span.fragment)
-                else {
-                    return Err(blocked(UncertaintyReason::Unsupported));
-                };
+                let parameter =
+                    match crate::curve_support::CurveSupport2::from_fragment(&span.fragment) {
+                        crate::curve_support::CurveSupport2::Line(chord) => {
+                            chord.point_parameter(point, policy).map(|parameter| {
+                                parameter.map(|parameter| {
+                                    parameter.map(CurveParameter2::from_algebraic_chord)
+                                })
+                            })
+                        }
+                        crate::curve_support::CurveSupport2::Circle(circle) => {
+                            circle.point_parameter(point, policy)
+                        }
+                        _ => return Err(blocked(UncertaintyReason::Unsupported)),
+                    };
                 let parameter = ExactCurveError::decided(
                     CurveOperation2::Intersection,
-                    chord.point_parameter(point, policy).map_err(|cause| {
+                    parameter.map_err(|cause| {
                         ExactCurveError::invalid(
                             CurveOperation2::Intersection,
                             self.family(),
@@ -2756,11 +2786,7 @@ impl Curve2 {
                     })?,
                 )?;
                 if let Some(parameter) = parameter {
-                    locations.push(CurveLocation2::new(
-                        span_index,
-                        span.chart(),
-                        CurveParameter2::from_algebraic_chord(parameter),
-                    ));
+                    locations.push(CurveLocation2::new(span_index, span.chart(), parameter));
                 }
             }
             return Ok(CurvePointLocations2::Locations(locations));
@@ -2893,6 +2919,10 @@ impl Curve2 {
                 fragment => {
                     let range = fragment.curve_region_parameter_range();
                     match crate::curve_support::CurveSupport2::from_fragment(fragment) {
+                        crate::curve_support::CurveSupport2::Polynomial(branch) => branch
+                            .point_parameter(&query, policy)?
+                            .into_iter()
+                            .collect(),
                         crate::curve_support::CurveSupport2::Bezier(curve) => {
                             let rational =
                                 RationalBezier2::try_from_subcurve(&curve).map_err(invalid)?;
@@ -2945,48 +2975,13 @@ impl Curve2 {
                             }
                         }
                         crate::curve_support::CurveSupport2::Circle(circle) => {
-                            let incidence = circle
-                                .semicircle()
-                                .retained_point_incidence_sign(&query, policy)
-                                .map_err(invalid)?;
-                            if let Classification::Uncertain(reason) = incidence {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                            if incidence != Classification::Decided(crate::RealSign::Zero) {
-                                Vec::new()
-                            } else {
-                                let parameter = match circle
-                                    .semicircle()
-                                    .parameter_at_certified_incident_point(&query, policy)
-                                    .map_err(invalid)?
-                                {
-                                    Classification::Decided(parameter) => parameter,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                };
-                                // A point on the complementary half lies off
-                                // this fragment's angular range.
-                                let inside = match parameter.as_algebraic_cusp() {
-                                    Some(cusp) if !parameter.is_algebraic_cusp_complement() => {
-                                        match circle
-                                            .certified_incident_point_evidence_location(
-                                                cusp, &query, policy,
-                                            )
-                                            .map_err(invalid)?
-                                        {
-                                            Classification::Decided(location) => !matches!(
-                                                location,
-                                                crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
-                                            ),
-                                            Classification::Uncertain(reason) => {
-                                                return Ok(Classification::Uncertain(reason));
-                                            }
-                                        }
-                                    }
-                                    _ => false,
-                                };
-                                if inside { vec![parameter] } else { Vec::new() }
+                            match circle.point_parameter(&query, policy).map_err(invalid)? {
+                                Classification::Decided(parameter) => {
+                                    parameter.into_iter().collect()
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
                             }
                         }
                     }

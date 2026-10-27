@@ -56,8 +56,8 @@ fn vertical_tangent_and_cusp_events_are_not_transverse() {
 }
 
 #[test]
-fn polynomial_pair_sections_and_region_blockers() {
-    sections::polynomial_pair_sections_and_region_blockers();
+fn polynomial_pair_sections_and_region_admission() {
+    sections::polynomial_pair_sections_and_region_admission();
 }
 
 #[test]

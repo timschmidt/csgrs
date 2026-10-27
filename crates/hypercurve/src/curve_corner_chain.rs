@@ -3063,6 +3063,7 @@ impl<'a> CurveCornerChain2<'a> {
             // Selected fibers can own a separately regularized tangent field.
             // A bare parallel record does not carry that field's branch proof.
             BezierSplitFragment2::SelectedFiber(_)
+            | BezierSplitFragment2::Polynomial(_)
             | BezierSplitFragment2::AlgebraicChord(_)
             | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Ok(None),
         };

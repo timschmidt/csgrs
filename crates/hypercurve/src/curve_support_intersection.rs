@@ -2173,6 +2173,16 @@ fn span_self_intersections(
     };
     let mut result = Evidence::default();
     let incidence = match &span.support {
+        CurveSupport2::Polynomial(branch) => {
+            if branch.rational_maps().is_empty() {
+                return Ok(());
+            }
+            Err(ExactCurveError::blocked(
+                CurveOperation2::Intersection,
+                CurveFamily2::ImplicitPolynomial,
+                UncertaintyReason::Unsupported,
+            ))
+        }
         CurveSupport2::Bezier(source) => {
             let source = RationalBezier2::try_from_subcurve(source).map_err(|cause| {
                 ExactCurveError::invalid(
@@ -2290,6 +2300,13 @@ impl Pair<'_> {
                 Ok(())
             }
             None => match (&pair.first.support, &pair.second.support) {
+                (CurveSupport2::Polynomial(_), _) | (_, CurveSupport2::Polynomial(_)) => {
+                    Err(ExactCurveError::blocked(
+                        CurveOperation2::Intersection,
+                        CurveFamily2::ImplicitPolynomial,
+                        UncertaintyReason::Unsupported,
+                    ))
+                }
                 (CurveSupport2::Bezier(first), CurveSupport2::Bezier(second)) => {
                     pair.rational(&rational(first)?, &rational(second)?, result)
                 }
@@ -2360,6 +2377,18 @@ pub(super) fn intersect(
     policy: &CurveContext,
     prepared: Option<&[PreparedRationalPair]>,
 ) -> ExactCurveResult<CurveIntersectionResult2> {
+    // Polynomial pairs use their source/selector-aware dispatch before this
+    // fallback. Admission to a region does not give the generic support path
+    // an algorithm for other images or mixed families. Preserve its typed
+    // representation failure rather than publishing a new partial result.
+    if first.polynomial_branch().is_some() || second.polynomial_branch().is_some() {
+        return Err(ExactCurveError::blocked_pair(
+            CurveOperation2::Intersection,
+            first.family(),
+            second.family(),
+            UncertaintyReason::Unsupported,
+        ));
+    }
     let first_spans = spans(first, policy)?;
     let second_spans = spans(second, policy)?;
     debug_assert!(

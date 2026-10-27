@@ -85,6 +85,213 @@ in this repository.
 
 ## Follow-on records
 
+The combined replay publication archive `hypercurve-replay-publication-evidence-2026-10-27` ends at
+`7776fbc75fabcba93f1d5e0b1b07dded631b524f` with 363 records. It retains the previously
+published pre-push evidence and all separately qualified increments through
+common-field point and circle predicates. The combined code requires a fresh
+complete pre-push run; the earlier publication receipt applies only to its
+named source revision. No historical executions count toward this new run.
+
+The local `hypercurve-fiber-point-order-evidence-2026-10-27` branch ends at
+`33f87cb54308298a6a305b0fb6c6f8b133d477b8`, adding `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`
+(503 files, 19,569,574 bytes), SHA-256 `6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a`.
+It records shared-field linear/circle predicates, exact half-chart inversion of
+proved constant displacements, and checked direction-definition replay. All
+2,839 Hypercurve tests, 64 affected root tests, 3,012 dependent-package tests,
+strict MSRV and fuzz Clippy, core builds, API docs, formatting, 16 matrix guards
+and 188 capability witnesses pass; 34 existing ignored cases remain. Original
+positive failures, corrected-source probes, exact geometric expectations,
+source/cold/warm replay diagnostics, reached budgets and retry are retained.
+Qualification and parent-transition records prove every non-receipt source byte
+unchanged. This record is local and unpushed. General selected angular fields,
+filled-region archives, total resource bounds, full pre-push qualification and
+published-package delivery remain open.
+
+The local `hypercurve-circle-replay-evidence-2026-10-27` branch ends at
+`057b04a795ccca9ec8f60099cfcf5b06a01e4292`, adding `docs/evidence/2026-10-27-hypercurve-closure-circle-replay`
+(590 files, 27,534,685 bytes), SHA-256 `f0d529e9c2ca5cb332cd43e9ae22f01c48bf6b665b2f5fddc946b2742631413d`.
+It records exact selected circle frames, signed contacts, independent incident
+selectors, checked chord unit directions and downstream point/region operations.
+All 2,832 Hypercurve tests, 64 root tests, 3,012 dependent-package tests, strict
+MSRV and fuzz Clippy, builds without optional features, API docs, formatting,
+16 matrix guards and 181 capability witnesses pass. The suite retains the same
+34 existing ignored cases. Original failures, prototype snapshots and fresh
+process replay before further operations are preserved. This record is local
+and unpushed. General circle charts, correlated-fiber midpoint ordering,
+repeated-offset chart transport, filled-region archives, total resource bounds,
+full pre-push checks and published-package delivery remain open.
+
+The local `hypercurve-point-replay-evidence-2026-10-27` branch ends at
+`9ed71e03ca34a38db6ec46f5194101181445fbfb`, adding `docs/evidence/2026-10-27-hypercurve-closure-point-replay`
+(702 files, 27,425,737 bytes), SHA-256 `e5473caf511936bc1704e8d8ed1251b73bf1e2b17ab078623375a2d8b08f932b`.
+It records exact selected point dependency graphs, source-preserving chord
+displacements, shared map prefixes, checked point-depth limits and Hyperbrep
+planar-point archive admission. All 2,820 Hypercurve tests, 63 root tests,
+3,012 dependent-package tests, strict MSRV and fuzz-target Clippy, builds without
+optional features, API documentation, formatting, 16 matrix guards and 170
+capability witnesses pass. The Hypercurve suite retains 34 existing ignored
+cases. Committed-parent failures, failed prototypes, source snapshots and
+fresh-process replay before further operations are preserved. This record is
+local and unpushed. Complete selected circles and broader generated/filled-region
+replay, total resource bounds, full pre-push checks and published-package delivery
+remain open.
+
+The local `hypercurve-chord-replay-evidence-2026-10-27` branch ends at
+`449fb13ca4931dbd460429664a30846e201dea0c`, adding `docs/evidence/2026-10-27-hypercurve-closure-chord-replay`
+(555 files, 18,335,290 bytes), SHA-256 `79716febf65ec101df08a8ed67ed3d5411e2b003c616c4a02acc5c04575e1d67`.
+It records exact selected-chord replay, shared point/source/root and endpoint
+relations, validated support charts, and deterministic analytic endpoint
+projection after exact queries. All 2,809 Hypercurve tests, 62 root tests,
+3,010 dependent-package tests, strict MSRV Clippy, the build without optional
+features, API documentation, formatting, 16 matrix guards and 160 capability
+witnesses pass. The Hypercurve suite retains 34 existing ignored cases.
+Committed-parent failures, failed prototypes, source snapshots and fresh-process
+replay before further operations are preserved. This record is local and
+unpushed. Broader generated and filled-region replay, total resource bounds,
+full pre-push checks and published-package delivery remain open.
+
+The local `hypercurve-parallel-replay-evidence-2026-10-27` branch ends at
+`368840d8c3c4e3ca489870a56f8642c10122ff42`, adding `docs/evidence/2026-10-27-hypercurve-closure-parallel-replay`
+(426 files, 13,660,333 bytes), SHA-256 `5b0a3f0c28cb0a70f0779f98ab2da108b2078fe5423008e50a92cd37f47f54fe`.
+It records native procedural-parallel replay, retained source/range/normal-side
+relations and finite projection on exterior or subdivided intervals.
+All 2,799 Hypercurve tests, 61 root tests, 3,010 dependent-package tests,
+strict MSRV Clippy, the build without optional features, API documentation,
+formatting, 16 matrix guards and 151 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases. Committed-parent export/projection
+failures, failed prototypes, source snapshots and separate-process replay before
+further region operations are retained. This record is local and unpushed.
+Full pre-push checks, broader generated/filled-region replay, general algebraic
+closure and total resource bounds remain open.
+
+The local `hypercurve-native-replay-evidence-2026-10-27` branch ends at
+`e0d8165fae971704511ba1f27fd6286eff408f6b`, adding `docs/evidence/2026-10-27-hypercurve-closure-native-replay`
+(289 files, 8,114,777 bytes), SHA-256 `14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd`.
+It records exact native source restrictions, selected-root and projective-chart
+replay, retained-domain finite projection and root adapter error transport.
+All 2,790 Hypercurve tests, 60 root tests, 3,010 dependent-package tests,
+strict MSRV Clippy, the build without optional features, API documentation,
+formatting, 16 matrix guards and 142 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases. Original export/projection failures,
+failed prototypes and qualification, source snapshots and fresh-process replay
+evidence are retained. This record is local and unpushed. Full pre-push checks,
+broader generated/filled-region replay and general algebraic closure remain open.
+
+The local `hypercurve-algebraic-pair-evidence-2026-10-27` branch ends at
+`8b0caa9be41bdacd1f40bd9f60b7b9da3f339962`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair`
+(567 files, 23,612,610 bytes), SHA-256 `af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d`.
+It records shared algebraic similarity incidence, selected-endpoint chord
+source charts, projective common-fiber equations and strict selected-field
+admission. All 1,233 Hypersolve tests, 2,781 Hypercurve tests, 43 root downstream
+tests, 3,605 tests across nine dependent packages, strict MSRV Clippy,
+formatting, 16 matrix guards and 133 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases; standalone exactCore comparisons retain
+19 existing oracle-defect cases. Original unsupported, undecided and timeout
+witnesses, both failed qualifications, unchanged regression tests, the minimized
+generated seed, and the repaired two-crate comparison inventory are archived.
+Per-command source snapshots distinguish the metadata repair from the unchanged
+kernel inputs. This record is local and
+unpushed; full pre-push qualification, general algebraic closure and native
+fresh-process replay remain open.
+
+The local `hypercurve-similarity-policy-evidence-2026-10-27` branch
+ends at `5c1494e708b19575a7616ee58443d4acf07350f1`, adding `docs/evidence/2026-10-27-hypercurve-closure-similarity-policy`
+(242 files, 6,278,223 bytes), SHA-256 `db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c`.
+It records policy retention for selected polynomial similarity points and
+endpoints: locally certified outputs remain usable under STRICT, while nested
+approximate dependencies keep their replay barriers. 2,773 Hypercurve tests,
+43 root downstream tests, 3,010 tests across six dependent packages,
+strict MSRV Clippy, formatting, 16 matrix guards and 125 capability witnesses
+pass. Original failed witnesses, the unchanged generic policy-barrier check,
+a consumed-receipt dependency witness and raw commands remain archived.
+Point replay here is checked in memory. This record is local and unpushed;
+full pre-push qualification and broader algebraic closure remain open.
+
+The local `hypercurve-selected-integration-evidence-2026-10-27` branch
+ends at `04eccb7d4eccb1928dc4e1c2998174cd4a6f27c4`, adding `docs/evidence/2026-10-27-hypercurve-closure-selected-composition`
+(344 files, 13,220,752 bytes), SHA-256 `309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499`.
+It retains all three parent evidence histories and qualifies their combined
+selected-branch compositions through exact face probes, original source/root/map
+relations, transforms, disconnected components and further operation on empty
+results. 1,223 Hypersolve tests, 2,770 Hypercurve tests, 43 root downstream tests,
+3,010 dependent-package tests, strict MSRV Clippy, formatting, 16 matrix
+guards and 123 capability witnesses pass. Failed attempts and rejected probe
+changes remain archived. This record is local and unpushed; full repository
+pre-push validation remains pending. General algebraic closure and native
+region replay remain open.
+
+The integration evidence branch now ends at `de84df74612abfd1e4d447e4827e42ef46f302a6`,
+retaining 351 records including the independently qualified algebraic
+similarity increment. Combined source and composition qualification
+remain pending; these parent records do not establish that result.
+
+The local `hypercurve-algebraic-similarity-evidence-2026-10-27` branch
+ends at `1216d6408218a4746703408ea0e51832ae4fed62`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`
+(202 files, 4,910,607 bytes), SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`.
+It records native-line sections through retained algebraic similarities with
+original selected polynomial sources preserved. 2,745 Hypercurve tests,
+43 root downstream tests, 3,009 tests across six dependent packages,
+strict MSRV Clippy, formatting, 16 matrix guards and 98 capability witnesses
+pass. Expanded equations, exact parameters, tangency, overlap continuation,
+selected trims, distinct nearby supports and actual exhaustion/retry are covered.
+Original failed witnesses and raw source-attributed commands remain archived.
+This record is local and unpushed. General image and algebraic operation closure
+and fresh-process native replay remain open; full pre-push qualification is
+still required before publication.
+
+The local `hypercurve-selected-integration-evidence-2026-10-27` branch
+at `c81fae2f7fb6c17844f8d9eeb51d0971e5f8ffe6` combines 350 archived records from the
+qualified region and horizontal-boundary increments. The individual
+receipts below retain their original source scope. Combined integration
+checks and repository pre-push validation remain pending.
+
+The separate local `hypercurve-polynomial-region-evidence-2026-10-27`
+branch ends at `aceb9add07aaaa060aabac0f31c98154d82a7d96`, adding
+`docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions` (564 files,
+26,364,613 bytes), SHA-256
+`6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b`.
+It records selected polynomial supports in the shared filled arrangement:
+2,754 Hypercurve tests, 43 root downstream tests, 3,009 tests across six
+dependent packages, strict MSRV Clippy, formatting, 16 matrix guards and 107
+capability witnesses pass. The unchanged H08 boundary and original failing
+Boolean/open-clip cases remain, alongside holes, disconnected material,
+reversal, mixed circles, exact selected trims, cusp/node incidence and actual
+exhaustion/retry. Qualification used `5de7f0cb05` plus the frozen region
+increment; non-receipt bytes remain unchanged. The original failed attempts and
+the corrected quintic test oracle remain archived. General implicit operations,
+nonzero offsets/corners and fresh-process replay remain open. This record is
+local and unpushed; the separate complete repository publication run excludes
+this increment, whose full pre-push validation remains pending.
+
+The local `hypercurve-horizontal-boundary-evidence-2026-10-27` branch
+ends at `84c4bd3d979ac681096e69a9c1a35f9e1d4ac681`, adding `docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`
+(404 files, 16,033,938 bytes), SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`.
+It records complete closed horizontal boundary components in the existing
+finite-fiber topology, with original equations and branch incidence retained.
+1,223 Hypersolve tests, 2,744 Hypercurve tests, 43 root downstream tests,
+3,010 dependent-package tests, strict MSRV Clippy, formatting, 16 matrix
+guards and 97 capability witnesses pass. Selected trims, overlap and further
+intersection, exact source replay in a fresh process, and the original BRep
+boundary section through native/affine replay are covered. Earlier failed
+attempts remain archived. Vertical/repeated components, algebraic coefficient
+fields and general closure remain open. This record is local and unpushed;
+the full repository pre-push validation of this increment remains pending.
+
+The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
+branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations` (227 files,
+6,750,543 bytes), SHA-256
+`18441451082feb7c408e2951a88f80a9b84e2a05eb699cb35de72f0e8d1433d9`.
+It records selected polynomial point incidence in original charts and invertible
+similarities: 2,738 Hypercurve tests, 43 root downstream tests, 3,009 tests
+across six dependent packages, strict MSRV Clippy, formatting, 16 matrix guards
+and 91 capability witnesses pass. The three original Unsupported fixtures,
+independent transformed equations, selected trims and exhaustion/retry remain
+archived. Qualification used `09ce677746` plus frozen prerequisite and
+point-location bytes, preserved when advancing the parent to `d7ae8ea218`.
+General preimages, polynomial regions and fresh-process replay remain open.
+This local record is unpushed; full repository pre-push qualification is pending.
+
 The combined publication archive ends at `cafb43c3cf6a9ac5577d14fb97c7899b05fd6add` with 350 records.
 Its new record `docs/evidence/2026-10-26-hypercurve-closure-validation-expanded` contains
 14,368 files and 43,715,836 bytes, SHA-256

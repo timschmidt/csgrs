@@ -10,6 +10,12 @@ on the audit date. Versions are listed below.
 **Harness:** [`exactcore-hyper-comparison`](README.md), a same-process differential
 test and Criterion benchmark suite.
 
+**Crate inventory update:** 2026-10-27. The current inventory includes 20 sibling
+packages after adding `hyperbrep-io` and `hyperspatial`, both without a same-domain
+exactCore contract. This updates the crate dispositions only; numerical results,
+benchmark measurements, and the original 18 package versions below remain
+attributed to the August audit. The two added versions are from this update.
+
 ## Executive conclusion
 
 There is a substantial, useful common kernel. exactCore and Hyper agree throughout
@@ -43,10 +49,10 @@ hidden from the passing result.
 
 | Measure | Result |
 |---|---:|
-| Hyper crates audited | 18 / 18 |
+| Hyper crates with an explicit audit disposition | 20 / 20 |
 | Crates with differential suites | 8 |
 | Compatible crates awaiting a differential suite | 1 (`hyperbrep`) |
-| Crates with no same-domain exactCore contract | 9 |
+| Crates with no same-domain exactCore contract | 11 |
 | Semantic comparison families | 65 |
 | Direct matches | 49 (75.4% of all rows) |
 | Adapted/convention matches | 4 (6.2%) |
@@ -230,6 +236,7 @@ its own differential test and benchmark suite.
 | `hypermesh` | 0.1.0 | compared, feature-gated | Planes, convex triangles and pairwise triangle contacts; no exactCore mesh-boolean system counterpart |
 | `hyperpath` | 0.3.0 | compared, feature-gated | Line-path metrics/order and explicit full-circle boundary predicates |
 | `hyperbrep` | 0.2.0 | comparison pending | Finite `Curve3` lines and planar surfaces overlap and the crate builds against the current `hypercurve` context/outcome API; a dedicated exactCore differential suite remains to be added |
+| `hyperbrep-io` | 0.1.0 | no direct counterpart | Bounded STEP Part21 and native BRep exchange; exactCore has no STEP or BRep exchange contract |
 | `hypercircuit` | 0.3.0 | no direct counterpart | Circuit MNA, event routing, board and interchange domain APIs; exactCore has no circuit model |
 | `hyperdrc` | 0.3.0 | no direct counterpart | Gerber parsing, spatial indexing and PCB design-rule checking |
 | `hyperevolution` | 0.3.0 | no direct counterpart | Evolutionary proposal/fitness/search carriers |
@@ -238,6 +245,7 @@ its own differential test and benchmark suite.
 | `hyperparts` | 0.3.0 | no direct counterpart | Source-attributed part knowledge graph |
 | `hyperphysics` | 0.3.0 | no direct counterpart | Physical simulation and mass-property contracts; shape primitives do not make exactCore a physics engine |
 | `hypersdf` | 0.2.0 | no direct counterpart | Signed-distance/implicit-field composition contract; isolated exactCore distance methods are lower-level |
+| `hyperspatial` | 0.1.0 | no direct counterpart | Geodesy, map projections, reference frames and epochs; exactCore scalar primitives do not provide this domain contract |
 | `hypervoxel` | 0.3.0 | no direct counterpart | Voxel frames, sparse grids, aggregate facts and reports |
 
 ## Complete semantic comparison matrix

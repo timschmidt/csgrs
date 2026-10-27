@@ -272,7 +272,9 @@ impl CurveEnvelopeAccumulator {
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => fragment
                 .conservative_bounds()
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
-            BezierSplitFragment2::AnalyticParallel(_) | BezierSplitFragment2::SelectedFiber(_) => {
+            BezierSplitFragment2::AnalyticParallel(_)
+            | BezierSplitFragment2::SelectedFiber(_)
+            | BezierSplitFragment2::Polynomial(_) => {
                 crate::bezier_region::retained_fragment_query_bounds(fragment, policy)
             }
         };

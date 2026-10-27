@@ -12,7 +12,31 @@
 //! path also carries a bounded, versioned `data-hypercurve-path` extension so
 //! rational quadratics, arbitrary rational Beziers, polynomial B-splines,
 //! NURBS, periodicity, and non-decimal [`Real`] values round-trip exactly
-//! through Hypercurve. Other SVG consumers ignore this `data-*` attribute and
+//! through Hypercurve. Retained authored-source restrictions and procedural
+//! quadratic, cubic and rational Bezier parallels also preserve selected
+//! algebraic parameters, source charts and traversal. Parallel definitions retain
+//! their shared sources and signed distances; replay rechecks each finite range's
+//! regularity. Selected straight chords retain their support, coordinate chart
+//! and directed endpoints. Those endpoints may be exact coordinates, rational
+//! source images, rational expressions or native parallel evaluations at retained
+//! Bezier parameters; shared curve-endpoint references preserve incidence.
+//! Polynomial fibers retain the base parameter, equation and singleton selector.
+//! Rational images retain original denominator guards; similarities and unique
+//! supporting-line intersections retain their checked point dependencies.
+//! Replay rechecks point definitions, support incidence and strict chart order.
+//! Chord-normal selected circles retain their center, directed frame chord,
+//! nonzero signed radius, selected angular contacts and finite oriented ranges.
+//! Independent incident points re-prove circle incidence and the selected half.
+//! Non-cardinal transported chord directions retain checked unit-vector witnesses;
+//! replay proves unit length, parallelism and orientation before retaining them.
+//! Other circle frames, general contact charts and auxiliary chord contacts
+//! remain unsupported.
+//! Chord displacements retain their selected source, origin, signed normal or
+//! tangent displacement and translation, sharing one recipe for paired endpoints.
+//! Point-definition nesting and extension bytes have separate configurable limits;
+//! neither is a total arithmetic-work, memory or cancellation bound.
+//! These guarantees concern stroke paths; filled-region export still
+//! uses its finite projection. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;
@@ -41,9 +65,11 @@ pub enum SvgError {
     Unsupported(String),
     /// Exact geometry construction, transformation, or Boolean failure.
     Geometry(String),
+    /// Exact native-definition replay failed, retaining its typed context and cause.
+    Exact(ExactCurveError),
     /// An exact coordinate has an undecided certificate or exhausted its budget.
     Scalar(hyperreal::Problem),
-    /// A configured finite projection or sampling bound was exceeded.
+    /// A configured projection, extension-byte or point-definition-depth bound was exceeded.
     SizeOverflow {
         /// Name of the exceeded bound.
         limit: &'static str,
@@ -56,6 +82,7 @@ impl fmt::Display for SvgError {
             Self::MalformedInput(detail) => write!(formatter, "malformed SVG input: {detail}"),
             Self::Unsupported(detail) => write!(formatter, "unsupported SVG input: {detail}"),
             Self::Geometry(detail) => write!(formatter, "SVG geometry conversion failed: {detail}"),
+            Self::Exact(error) => write!(formatter, "SVG exact replay failed: {error}"),
             Self::Scalar(error) => write!(formatter, "SVG exact coordinate failed: {error}"),
             Self::SizeOverflow { limit } => {
                 write!(
@@ -71,6 +98,7 @@ impl std::error::Error for SvgError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Scalar(error) => Some(error),
+            Self::Exact(error) => Some(error),
             _ => None,
         }
     }
@@ -106,6 +134,10 @@ pub struct SvgOptions {
     pub max_curve_segments: usize,
     /// Maximum decoded byte length of one exact Hypercurve path extension.
     pub max_extension_bytes: usize,
+    /// Maximum nested rational-image, similarity, chord-displacement, supporting-line point
+    /// or selected-circle frame constructions in one exact path graph. Leaf point definitions have
+    /// depth zero. This is distinct from arithmetic work and memory limits.
+    pub max_point_definition_depth: usize,
 }
 
 impl Default for SvgOptions {
@@ -114,6 +146,7 @@ impl Default for SvgOptions {
             curve_tolerance: 0.1,
             max_curve_segments: 4096,
             max_extension_bytes: 16 * 1024 * 1024,
+            max_point_definition_depth: 256,
         }
     }
 }
@@ -1254,7 +1287,11 @@ fn path_geometry(
     options: SvgOptions,
 ) -> SvgResult<SvgGeometry2> {
     if let Some(encoded) = exact_path {
-        let path = exact::decode_path(encoded, options.max_extension_bytes)?;
+        let path = exact::decode_path(
+            encoded,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         if context.fills() && path.start() != path.end() {
             return Err(SvgError::Geometry(
                 "filled exact path contains an explicitly open subpath".into(),
@@ -1500,7 +1537,11 @@ pub fn export_svg_document_with_options(
 
     for wire in &geometry.wires {
         let path = curve_path_from_wire(wire)?;
-        let exact = exact::encode_path(&path, options.max_extension_bytes)?;
+        let exact = exact::encode_path(
+            &path,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         write!(
             &mut body,
             "<path fill=\"none\" stroke=\"black\" {EXACT_PATH_ATTRIBUTE}=\"{exact}\" d=\""
@@ -1510,7 +1551,11 @@ pub fn export_svg_document_with_options(
         body.push_str("\"/>\n");
     }
     for path in &geometry.paths {
-        let exact = exact::encode_path(path, options.max_extension_bytes)?;
+        let exact = exact::encode_path(
+            path,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         write!(
             &mut body,
             "<path fill=\"none\" stroke=\"black\" {EXACT_PATH_ATTRIBUTE}=\"{exact}\" d=\""
@@ -1552,6 +1597,11 @@ fn append_native_path(
             .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
             .into_value();
+        if projected.points().len().saturating_sub(1) > options.max_curve_segments {
+            return Err(SvgError::SizeOverflow {
+                limit: "configured curve-segment count",
+            });
+        }
         for (index, point) in projected.points().iter().enumerate() {
             write!(
                 output,

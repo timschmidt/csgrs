@@ -3,6 +3,48 @@
 use super::*;
 
 impl BezierAlgebraicCuspSemicircleFragment2 {
+    /// Locates a represented or retained point using this circle's incidence,
+    /// angular inversion and finite-range authorities without materializing
+    /// independent scalar coordinates.
+    pub(crate) fn point_parameter(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<CurveParameter2>>> {
+        self.validate_policy(policy)?;
+        match self
+            .semicircle()
+            .retained_point_incidence_sign(point, policy)?
+        {
+            Classification::Decided(RealSign::Zero) => {}
+            Classification::Decided(_) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+        let parameter = match self
+            .semicircle()
+            .parameter_at_certified_incident_point(point, policy)?
+        {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let Some(cusp) = parameter
+            .as_algebraic_cusp()
+            .filter(|_| !parameter.is_algebraic_cusp_complement())
+        else {
+            return Ok(Classification::Decided(None));
+        };
+        self.certified_incident_point_evidence_location(cusp, point, policy)
+            .map(|location| {
+                location.map(|location| {
+                    (!matches!(
+                        location,
+                        BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
+                    ))
+                    .then_some(parameter)
+                })
+            })
+    }
+
     pub(crate) fn validate_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         policy.validate_retained_policy(self.data.policy)
     }

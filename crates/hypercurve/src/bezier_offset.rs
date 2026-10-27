@@ -46,6 +46,8 @@ pub use approximation::*;
 pub(crate) use bivariate_replay::*;
 pub(crate) use cusp_overlap::overlap_parameter_is_in_range;
 use cusp_overlap::*;
+#[cfg(feature = "svg")]
+pub(crate) use cusp_semicircle::{CircleChordNormalDefinition2, CircleParameterDefinition2};
 pub(crate) use fiber_sign::*;
 use multivariate_sign::*;
 pub(crate) use parallel_components::*;
@@ -12691,6 +12693,16 @@ pub(crate) fn algebraic_chord_points_linear_order(
         }
     }
 
+    match common_point_linear_order(first, second, coefficient_x, coefficient_y, policy)? {
+        Classification::Decided(order) => return Ok(Classification::Decided(order)),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        Classification::Uncertain(_) => {}
+    }
+
     // Preserve each endpoint's one-field coordinate correlation before
     // comparing independent selected fields. This handles exact oblique
     // equality without constructing a four-variable Cartesian tensor image.
@@ -13452,6 +13464,12 @@ impl BezierSimilarityPoint2 {
             .accepts_retained_policy(self.data.policy)
             .then_some((&self.data.source, &self.data.transform))
     }
+
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> *const () {
+        Arc::as_ptr(&self.data).cast()
+    }
+
     pub(crate) fn new(
         mut source: CurvePoint2,
         mut transform: Similarity2,

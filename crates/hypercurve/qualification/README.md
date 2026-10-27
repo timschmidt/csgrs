@@ -19,7 +19,8 @@ selects one row and can be repeated. Omitting it runs all catalog rows.
 `--build-timeout SECONDS` controls build containment separately from each row's
 published timeout. Cargo uses `--locked --release --all-features`; normal Cargo
 build-cache reuse is allowed. Each fixture runs alone in a fresh test process,
-with one test thread. This is not a fresh-process archive replay guarantee.
+with one test thread. A fresh-process archive replay claim additionally requires
+the witness itself to save and reload geometry in separate processes.
 
 The [catalog](capabilities.json) separates authored, generated and selected
 implicit inputs. Each row names its owner, properties, scalar/input domain,
@@ -45,14 +46,109 @@ nothing about rows that were not run.
 
 The schema also reserves distinct outcomes for proved no solution,
 underconstrained input, undecided predicates and unbounded output. An outcome
-not present in the catalog has no new witness here. In particular, the
-polynomial frontier test retains a filled-region implementation gap alongside
-the original disjoint pair's completed incidence. Authored SVG
-round trips exercise eight authored families in one process; they do not cover
-generated definitions, fresh-process native replay or later modeling operations.
+not present in the catalog has no new witness here. The polynomial frontier test now preserves both the original disjoint pair
+and the unchanged H08 boundary as positive incidence/admission witnesses.
+The original authored SVG round trips exercise eight authored families in one
+process. Selected source-restriction and procedural-parallel replay have separate
+witnesses below; these do not establish all generated definitions or filled-region
+replay.
 Point-definition selector rejection is distinct from native archive replay.
 Membership samples are only the finite assertions listed, not a proof of the
 entire represented set.
+
+The selected SVG witnesses retain native sources, original ranges, traversal,
+selected polynomial roots and projective charts in version 4 metadata. One
+fixture saves a quadratic trim, reloads it in another process, then checks exact
+point incidence, further restriction, another archive and reversed overlap.
+Separate witnesses cover a shared degree-seven root, algebraic coefficients,
+similarities, rational trims of all eight authored families, invalid selectors,
+references and chart poles, and reached byte/segment limits followed by retry.
+The version 3 fixtures remain unchanged. Finite projection consumes the existing
+retained source spans, and its output never replaces authoritative metadata.
+Shared scalar expression DAG serialization, cross-path dependencies, other
+generated carriers, filled-region replay and total resource bounds remain open.
+
+The parallel SVG witnesses retain quadratic, cubic and rational Bezier sources,
+signed distances, selected ranges and traversal in the same version 4 graph.
+The named parabola, nonrational ellipse offset, Pythagorean-hodograph cubic and
+zero-distance stationary source have independently derived midpoint expectations.
+Cusp-split pieces retain one source and one selected boundary; distinct distances
+on one source retain that sharing through a second archive. A separate process
+reloads a closed path with a parallel boundary, admits it through the existing
+region authority, then consumes it in Booleans and a round offset. Its finite
+membership assertions are not an independent proof of the entire offset set.
+Other witnesses cover an algebraic trim followed by a reflected algebraic
+similarity and another archive, exterior source ranges, invalid references and
+singular ranges even with an empty final path, and reached byte limits followed
+by retry. A rational pole outside the retained range does not prevent replay;
+a pole inside it retains the existing typed Boundary blocker.
+
+Finite parallel projection now subdivides inconclusive interval bounds and
+accepts a chord only after obtaining a certified enclosure. Power-basis bounds
+apply to the retained finite range, including ranges outside the unit chart.
+Display points still cannot supply exact incidence or replace the native
+definition. The existing subdivision depth and extension-byte limits are not
+total-work, coefficient-growth, retained-memory or cancellation bounds. These
+witnesses do not qualify selected joint fibers, other generated supports,
+filled-region archives, general offset closure or complete resource control.
+
+The selected-chord SVG witnesses preserve supporting lines, directed endpoints,
+validated coordinate charts and shared point definitions in version 4 metadata.
+They cover exact coordinates, rational source images, rational expressions and
+native parallel evaluations at retained Bezier parameters. A degree-seven root
+is reloaded in a separate process before incidence, split, reversal, overlap and
+another archive. Alternative charts and exterior ranges are checked separately.
+Invalid charts, point/support references and original denominator poles fail
+even with an empty final path. Reached byte limits permit larger retries; the
+named repeated-piece fixture checks shared roots and linear metadata growth,
+without claiming general arithmetic or memory bounds.
+
+A mixed parallel/chord fixture checks independent exact endpoint coordinates,
+shared source/root definitions and complete SVG determinism after incidence
+queries, for both a lazy endpoint and a standalone point definition. The direct
+finite-projection unit regression also retains the original cold/warm case and
+coarse/fine/coarse requests. Another witness reloads mixed native/generated
+boundaries with a circular hole and disconnected material, then checks loop
+roles, hole ownership, boundary reconstruction, empty-set Boolean continuation
+and a round offset's specified exact hole boundary. Point-location assertions
+are finite expectations, not a standalone proof of the entire offset set.
+The additional point-graph witnesses below extend that initial point vocabulary.
+Auxiliary contact records, other generated circle frames, filled-region archives
+and total resource bounds remain unqualified.
+
+The point-graph SVG witnesses encode polynomial fibers, rational images,
+similarities and supporting-line intersections as prior validated dependencies.
+The original degree-seven fillet yields a trimmed line whose selected contact
+replays in another process before a further exact split and another archive.
+This initial line-piece witness is extended by the selected-circle witnesses
+below; the original complete-circle failure remains in the evidence record.
+Other witnesses retain a correlated cubic fiber over a quadratic base, an
+original rational denominator, an algebraic reflection and independently
+selected degree-seven/degree-five line supports with exterior intersections.
+Defining relations and exact point queries are checked separately from complete
+SVG determinism. Invalid references, multiple or missing fiber roots, false
+exact-root witnesses, nonsimilar matrices, degenerate or parallel line pairs
+and original poles are rejected even for an empty final path.
+
+The point-definition depth limit is separate from extension bytes. A raw graph
+with 300 nested similarities checks the default limit and a larger retry; an
+endpoint/chord indirection cannot reset depth. Rational-map chains exercise
+export limits and recovery. The 4/8/16-span prefix fixture checks linear native
+record growth and byte exhaustion/retry. These checks do not bound solver work,
+existing native prefix-vector allocations, scalar expression trees or total
+memory. Chord-displacement witnesses additionally check signed tangent and normal
+distances, arbitrary origins, exact translations, reversed sources, paired
+endpoint sharing and malformed recipe references. Joint point definitions are
+distinct from general joint parameter
+charts, whose interchange is still unsupported.
+
+The displacement definition also passes through Hyperbrep's native planar-point
+archive. Public model tests retain the original selected fillet cut before
+another split and archive, and check a native-coordinate source with and without
+an explicit origin. The source and origin consume archive record budgets before
+scalar decoding; exhausted attempts allow a larger retry. Degenerate or nonlinear
+source substitutions remain invalid. These tests do not turn Hyperbrep's nested
+point format into a shared dependency graph or qualify generated circle replay.
 
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line
@@ -69,8 +165,8 @@ coordinates include cubic, seventh-root and mixed quadratic expressions.
 Substituted coefficients require certified zero decisions: a quartic's line
 component must not become an empty result because its zero expression is not
 structurally obvious. These witnesses cover native `LineSeg2` inputs; selected
-chord carriers, broader transform coefficients and general branch pairs still
-need separate qualification. They do not establish universal algebraic closure.
+chord carriers and general branch pairs need their own qualification. Algebraic
+similarity coefficients are exercised separately below. They do not establish universal algebraic closure.
 
 The point-order witnesses compare an interior polynomial fiber with an exact
 event singleton, retain distinct neighbors separated by `2^-100`, and replay
@@ -89,8 +185,8 @@ exact. Retained splits and overlap restrictions are consumed by another
 intersection. A degree-37 graph checks continuation beyond the bounded
 resultant's ordinary degree schedule. Singular incidence may complete without
 a certified tangent sign; that is not singular differential completion.
-Different image transforms, broader coefficient domains and filled polynomial
-regions remain unqualified or explicitly blocked. Point-definition replay
+Those pair witnesses do not qualify different image transforms, broader
+coefficient domains or filled polynomial regions. Point-definition replay
 remains in memory, and the 300-second fixture allowance is external containment.
 
 The generated-line witnesses retain polynomial-fiber endpoints and chord-owned
@@ -123,6 +219,57 @@ and retry witnesses test certainty and explicit reached exhaustion separately.
 General coefficient fields, collapsed/vertical common traces, other image maps,
 nonrational parallels and polynomial filled operations remain unqualified.
 
+Polynomial point-location witnesses consume native and generated points in
+selected graph charts and invertible rational/algebraic similarities. They
+check exact root selection, closed algebraic trims, shared singular endpoints,
+nearby distinct points, changed transforms, output-to-input intersections and
+recovery after reached exhaustion. General rational image preimages and filled
+polynomial arrangements remain outside this increment. Checked point definitions
+here are in-memory replay, not fresh-process native archive qualification.
+
+Selected polynomial region witnesses now retain graph supports in the shared
+arrangement. They qualify the original H08 cap, native and selected point
+classification, all four Booleans, holes, disconnected components, reversal,
+similarity transport, exact contact-only empty results, `2^-80` separation,
+degree-five trims, open-curve clipping, mixed circular boundaries, cusp and node
+incidence, and output reconstruction followed by further operations. Independent
+equations and source/root/domain assertions accompany topology and set identities.
+Zero offset succeeds; nonzero offsets, corner edits and finite projection retain
+explicit implementation gaps. Reached exhaustion, larger retry and certainty
+transitions are separate claims. This does not establish the entire algebraic
+region domain, total resource bounds or fresh-process native replay.
+
+The algebraic similarity witnesses extend native-line sections to retained
+images with quadratic and seventh-root scale/translation coefficients and an
+oblique map using both sqrt(2) and sqrt(3). Independently expanded world
+equations, original source abscissas, reflection and traversal signs, tangency,
+selected trim endpoints, overlap continuation and exact nearby separation are
+checked. Reached counted exhaustion remains distinct from a larger successful
+retry and Certified policy transitions. These are similarity pullbacks through
+the existing section authority; general rational images, different-image
+polynomial pairs and fresh-process native archive replay remain unqualified.
+
+The composition witnesses combine the independently qualified polynomial
+regions, horizontal domain components and algebraic similarity sections. They
+retain the original failing clip/reconstruct/subtract/intersect chain, exact
+selected boundary coordinates, a selected quintic ordinate and its quarter-turn
+image, plus a guarded rational map followed by an algebraic similarity. Existing
+intersection and winding authorities consume exact-coordinate axis probes when
+ordinary directions are unavailable. Polynomial/chord sections use the existing
+strict-predicate scope with the original replay context. Both fill rules, traversal, source/root/map
+identity, overlap continuation and Certified policy receipts are asserted within
+the named cases. General algebraic closure, native archive replay and total
+resource bounds remain unqualified.
+
+The selected-polynomial policy witnesses retain the same point or transformed
+branch produced with a Certified receipt under `APPROXIMATE_512`, then consume
+it under `STRICT`. Exact coordinate relations, checked point definitions and
+further chord/line incidence remain available. A separate unit witness keeps an
+observed approximate dependency qualified through a later locally Certified
+similarity; the original explicit similarity-policy barrier regression is
+unchanged. This qualifies the named polynomial construction paths, not a new
+native archive format or every point-family policy transition.
+
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.
 Missing tests, ignored tests, zero-test passes, failing builds or tests, changed
@@ -148,3 +295,73 @@ claim, archive the relevant raw record under the repository's
 matrix is evidence for these witnesses only; broader transforms, singularities,
 nonrational offset chains, generated replay, general algebraic regions and
 shipped consumers still require their own algorithms and acceptance evidence.
+
+The eight `polynomial_algebraic_pairs` witnesses extend the catalog to shared
+algebraic similarities, selected overlaps, seventh-root scales, reflected
+region intersections and oblique chords with selected endpoints. They retain
+source equations, exact trim parameters and checked in-memory point replay.
+Ten companion Hypersolve acceptance tests cover projective coefficient
+proofs, distinct nearby equations, selected parameter factors, uncached
+singleton points and strict field admission of mutable root selectors.
+Structural witness negation keeps its existing contract and does not certify
+field admission. Full qualification and its source attribution are
+recorded in the increment ledger; these named cases do not establish arbitrary
+algebraic operation closure or fresh-process native interchange.
+
+
+The selected-circle graph witnesses retain a chord-normal frame and selected
+angular domain without requiring independently materialized center coordinates.
+The original degree-seven circular fillet replays in a separate process before
+exact point location, splitting, reversal and a second archive. Algebraic
+rotation/scaling and reflection preserve exact endpoints and an independently
+transformed interior point, separately from full SVG determinism. Replayed
+boundaries reenter the shared region arrangement, empty-set Boolean identities,
+boundary reconstruction, and a mixed authored/generated fixture with a hole and
+disconnected material. Changing a tangent neighbor to a transverse line must
+recover both independently derived crossings in both operand orders.
+
+Handwritten records reject wrong, forward and cross-circle references, zero
+radii, invalid angular ranges, off-circle points, wrong half selections, incorrect
+signed normal displacements and nonunit, nonparallel or reversed chord directions.
+These checks include unused definitions. A reached circle dependency-depth or
+extension-byte limit prevents publication; a larger retry succeeds. A private
+unit test additionally checks consumed approximate-policy barriers.
+
+This remains an incremental support qualification. Rational, parallel-normal
+and selected-radial generated circle frames, other mapped angular contacts,
+repeated-offset chart transport and filled-region archives remain open. A retained
+probe with a correlated degree-seven/five fiber center originally imported and
+evaluated its endpoints but failed its midpoint query with `Blocked(Ordering)`.
+The following common-field witnesses close that retained case; the original
+positive failure remains in the evidence record. The
+finite witnesses and depth/byte limits do not prove universal algebraic closure,
+total solver work, coefficient growth, heap bounds or cooperative cancellation.
+
+
+The common-field point witnesses reuse the rational-query source pullback for
+oblique linear comparison and selected-circle residuals. Their center retains
+`2*beta^7-1=0` with `3/4<beta<1` and the correlated fiber
+`gamma^5+beta-2=0` with `1<gamma<2`. The independently defined displacement
+`(3/5,4/5)` is exactly on the unit circle. Its midpoint query now continues
+through evaluation, subdivision, reversal and a second native archive. Negative
+radii, both traversal directions, diameter endpoints, an interior quarter point,
+the opposite half and a `2^-80` displacement verify chart selection separately
+from support incidence. Negative denominator maps retain their signs, and a
+vanishing original denominator remains invalid even with a cancellable quotient.
+
+Algebraic rotation/scaling and reflection retain independent point incidence and
+complete SVG determinism. A reflected oblique frame originally lost its compact
+rational unit direction during replay; an equal radical expression changed one
+display coordinate. The direction record now preserves its checked definition
+when the ordinary constructor would rebuild different scalar bytes. Byte
+identity controls omission only; exact value predicates still prove validity.
+The original comparison, source/cold/warm diagnostic, and older replay corpus
+are retained.
+
+A reached zero solver-work budget prevents a completed point query; retries on
+the same objects succeed within 512 counted root refinements and zero algebraic
+promotions. Strict/approximate/strict requests remain certified when these exact
+proofs suffice. These counters do not bound total arithmetic, coefficient growth,
+heap use or cancellation. General independent point fields, nonconstant angular
+inversion, other circle frames and the complete operation-closure target remain
+open; no universal completion or performance claim follows from this corpus.

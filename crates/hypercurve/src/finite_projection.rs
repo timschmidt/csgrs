@@ -492,7 +492,14 @@ impl CurvePath2 {
         };
         let mut points = Vec::with_capacity(self.curves().len() + 1);
         for curve in self.curves() {
-            if let Some(fragment) = curve.retained_fragment() {
+            if let Some(spans) = curve
+                .restricted_source_spans(policy, crate::CurveOperation2::Evaluation)
+                .map_err(|error| CurveError::Topology(error.to_string()))?
+            {
+                for span in spans {
+                    append_curve_fragment_samples(&mut points, &span.fragment, options, policy)?;
+                }
+            } else if let Some(fragment) = curve.retained_fragment() {
                 append_curve_fragment_samples(&mut points, fragment, options, policy)?;
             } else {
                 let fragments = curve
@@ -833,6 +840,7 @@ fn project_curve_region_loop_to_curve_path(
     let mut subcurves = Vec::with_capacity(fragments.len());
     for fragment in fragments {
         let curve = match fragment {
+            BezierSplitFragment2::Polynomial(_) => return Ok(None),
             BezierSplitFragment2::Materialized { curve, .. } => Piece::Bezier(curve.clone()),
             BezierSplitFragment2::RetainedBezier {
                 reversed,
@@ -1038,6 +1046,11 @@ fn append_curve_fragment_samples(
     policy: &CurveContext,
 ) -> CurveResult<()> {
     match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            return Err(CurveError::UnsupportedFiniteCurveProjection {
+                family: crate::CurveFamily2::ImplicitPolynomial,
+            });
+        }
         BezierSplitFragment2::Materialized { curve, .. } => {
             append_bezier_subcurve_samples(points, curve, options, policy, 0)?;
         }
@@ -1159,10 +1172,19 @@ fn finite_retained_point(
     if let Some(point) = point.coordinates() {
         return finite_point(point);
     }
+    if let crate::CurvePointData2::Endpoint(endpoint) = &point.0
+        && let Ok(Classification::Decided(Some(resolved))) = endpoint.resolve(policy)
+    {
+        return finite_retained_point(&resolved, chord_error, policy);
+    }
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let Classification::Decided(bounds) =
-            algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
-        else {
+        let bounds = match &point.0 {
+            crate::CurvePointData2::AnalyticParallel(point) => {
+                point.conservative_bounds_at_refinement(refinement_steps, policy)
+            }
+            _ => algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy),
+        };
+        let Classification::Decided(bounds) = bounds else {
             continue;
         };
         let minimum = finite_point(bounds.min())?;
@@ -1550,39 +1572,45 @@ fn append_parallel_parameter_samples(
         bounds_upper,
         policy,
     ) {
-        Classification::Decided(bounds) => bounds,
+        Classification::Decided(bounds) => Some(bounds),
+        // A wide interval can contain zero in its denominator or speed
+        // enclosure even when the retained branch is regular. Subdivision
+        // tightens that enclosure; it never substitutes samples for a proof.
+        Classification::Uncertain(crate::UncertaintyReason::Ordering) if depth < MAX_DEPTH => None,
         Classification::Uncertain(reason) => {
             return Err(CurveError::Topology(format!(
                 "finite retained-parallel projection could not bound its analytic carrier: {reason:?}"
             )));
         }
     };
-    let corners = [
-        [
-            finite_real(bounds.min().x())?,
-            finite_real(bounds.min().y())?,
-        ],
-        [
-            finite_real(bounds.min().x())?,
-            finite_real(bounds.max().y())?,
-        ],
-        [
-            finite_real(bounds.max().x())?,
-            finite_real(bounds.min().y())?,
-        ],
-        [
-            finite_real(bounds.max().x())?,
-            finite_real(bounds.max().y())?,
-        ],
-    ];
-    if corners
-        .into_iter()
-        .map(|point| point_segment_distance(point, start_point, end_point))
-        .fold(0.0, f64::max)
-        <= chord_error
-    {
-        push_if_new(points, end_point);
-        return Ok(());
+    if let Some(bounds) = bounds {
+        let corners = [
+            [
+                finite_real(bounds.min().x())?,
+                finite_real(bounds.min().y())?,
+            ],
+            [
+                finite_real(bounds.min().x())?,
+                finite_real(bounds.max().y())?,
+            ],
+            [
+                finite_real(bounds.max().x())?,
+                finite_real(bounds.min().y())?,
+            ],
+            [
+                finite_real(bounds.max().x())?,
+                finite_real(bounds.max().y())?,
+            ],
+        ];
+        if corners
+            .into_iter()
+            .map(|point| point_segment_distance(point, start_point, end_point))
+            .fold(0.0, f64::max)
+            <= chord_error
+        {
+            push_if_new(points, end_point);
+            return Ok(());
+        }
     }
     if depth >= MAX_DEPTH {
         return Err(CurveError::Topology(
@@ -1928,6 +1956,75 @@ mod tests {
 
     fn point(x: i64, y: i64) -> Point2 {
         Point2::new(Real::from(x), Real::from(y))
+    }
+
+    #[test]
+    fn selected_parallel_chord_projection_is_stable_after_exact_queries() {
+        use crate::{
+            BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial,
+            BezierParameterRange2, CurvePointLocations2,
+        };
+        let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
+        for direct_point in [false, true] {
+            let beta = BezierParameter2::Algebraic(
+                BezierAlgebraicParameter2::try_isolate(
+                    BezierParameterPolynomial::try_new_power_basis(vec![
+                        (-1).into(),
+                        0.into(),
+                        2.into(),
+                    ])
+                    .unwrap(),
+                    BezierParameterInterval::try_new(q(1, 2), q(3, 4)).unwrap(),
+                )
+                .unwrap(),
+            );
+            let source =
+                QuadraticBezier2::new(point(0, 0), Point2::new(q(1, 2), 0.into()), point(1, 1));
+            let curve = Curve2::try_analytic_parallel(
+                source.parallel_left(q(-1, 4)).unwrap(),
+                BezierParameterRange2::try_new(BezierParameter2::Exact(Real::zero()), beta)
+                    .unwrap(),
+            )
+            .unwrap();
+            let endpoint = curve.end();
+            let definition = endpoint.definition().unwrap();
+            let endpoint = if direct_point {
+                definition.into_point().unwrap()
+            } else {
+                endpoint
+            };
+            let chord = Curve2::try_line(endpoint, point(2, 0).into()).unwrap();
+            let path = CurvePath2::try_new(vec![curve, chord]).unwrap();
+            let options = FiniteProjectionOptions::try_new(0.01).unwrap();
+            let before = path.project_to_finite_polyline(&options).unwrap();
+
+            // C(t)=(t,t²), d=-1/4 and t²=1/2 give this independent
+            // endpoint. Querying its incidence warms retained point bounds.
+            let t = q(1, 2).sqrt().unwrap();
+            let speed = Real::from(3).sqrt().unwrap();
+            let expected = Point2::new(
+                &t + (&t / (Real::from(2) * &speed)).unwrap(),
+                q(1, 2) - (q(1, 4) / speed).unwrap(),
+            )
+            .into();
+            assert!(path.curves()[1].start().coincides_with(&expected).unwrap());
+            let CurvePointLocations2::Locations(locations) =
+                path.curves()[1].point_locations(&expected).unwrap()
+            else {
+                panic!("one shared endpoint");
+            };
+            assert_eq!(locations.len(), 1);
+            let after = path.project_to_finite_polyline(&options).unwrap();
+            assert_eq!(before.points(), after.points());
+
+            let fine = path
+                .project_to_finite_polyline(&FiniteProjectionOptions::try_new(0.001).unwrap())
+                .unwrap();
+            assert!(fine.points().len() >= before.points().len());
+            let coarse_again = path.project_to_finite_polyline(&options).unwrap();
+            assert_eq!(before.points(), coarse_again.points());
+            assert!(path.curves()[0].end().coincides_with(&expected).unwrap());
+        }
     }
 
     fn terminally_equal_x_pair() -> (Real, Real) {

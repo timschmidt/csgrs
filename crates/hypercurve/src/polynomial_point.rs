@@ -21,6 +21,18 @@ pub(crate) struct PolynomialPoint2 {
 }
 
 impl PolynomialPoint2 {
+    /// Prefix views may have different wrapper allocations while retaining the
+    /// same immutable map application or selected fiber. An owning point clone
+    /// keeps either key alive for the duration of one native export.
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> (u8, *const ()) {
+        if let Some(map) = self.maps.last() {
+            (4, std::sync::Arc::as_ptr(map).cast())
+        } else {
+            (7, std::ptr::from_ref(self.fiber.root()).cast())
+        }
+    }
+
     pub(crate) fn polynomial_sign(
         &self,
         polynomial: &BivariatePolynomial,

@@ -740,12 +740,60 @@ pub fn empty_contained_boundary_and_solver_frontier() {
         panic!("boundary tangency is an isolated point");
     };
     assert!(point.coincides_with(&Point3::origin().into()).unwrap());
+    // Preserve the original z=v boundary-section fixture as exact success,
+    // together with its upper-boundary counterpart z=v-1.
+    for (equation, ordinate, tag) in [
+        (y(), Real::zero(), "lower-boundary-section"),
+        (
+            polynomial(vec![vec![(-1).into(), 1.into()]]),
+            Real::one(),
+            "upper-boundary-section",
+        ),
+    ] {
+        let surface = tensor([x(), y(), equation], one());
+        let sections = branches(plane().intersect_surface(&surface).unwrap());
+        assert_eq!(sections.len(), 1);
+        let section = &sections[0];
+        check_correspondence(section, &plane(), &surface);
+        let restricted = section
+            .subcurve(&q(1, 4), &q(3, 4))
+            .unwrap()
+            .reversed()
+            .unwrap();
+        check_correspondence(&restricted, &plane(), &surface);
+        let restored = model_and_replay(&[restricted], &surface, tag);
+        let cutting = Surface::plane(
+            Point3::new(q(1, 2), 0.into(), 0.into()),
+            Vector3::y(),
+            Vector3::z(),
+        )
+        .unwrap();
+        for curve in restored.curves() {
+            let CurveSurfaceIntersection::Points(contacts) =
+                cutting.intersect_curve(curve.geometry()).unwrap()
+            else {
+                panic!("the replayed boundary section has one transverse contact");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert!(
+                contacts[0]
+                    .point
+                    .coincides_with(&Point3::new(q(1, 2), ordinate.clone(), 0.into()).into())
+                    .unwrap()
+            );
+            assert!(
+                contacts[0]
+                    .point
+                    .coincides_with(&curve.geometry().point_at(&contacts[0].parameter).unwrap())
+                    .unwrap()
+            );
+        }
+    }
     for (equation, expected) in [
         (
             polynomial(vec![vec![q(-1, 2)], vec![1.into()]]),
             BivariateTopologyError::VerticalComponent,
         ),
-        (y(), BivariateTopologyError::BoundaryComponent),
         (
             polynomial(vec![vec![q(1, 4), (-1).into(), 1.into()]]),
             BivariateTopologyError::RepeatedComponent,

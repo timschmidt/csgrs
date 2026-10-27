@@ -14,6 +14,11 @@ impl BezierAlgebraicChordPairPoint2 {
         })
     }
 
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> *const () {
+        Arc::as_ptr(&self.data).cast()
+    }
+
     pub(in crate::bezier_offset) fn accepts_policy(&self, policy: &CurveContext) -> bool {
         policy.accepts_retained_policy(self.data.policy)
     }
@@ -2569,6 +2574,82 @@ impl BezierAlgebraicChordPairPoint2 {
 }
 
 impl BezierAlgebraicChordParallelPoint2 {
+    pub(crate) fn strict_definition(&self) -> Option<crate::CurvePointDefinition2> {
+        self.accepts_policy(&CurveContext::STRICT).then(|| {
+            crate::CurvePointDefinition2::ChordDisplacement {
+                source: self.data.source.clone().into(),
+                origin: self.data.source_point.as_deref().cloned(),
+                at_end: self.at_end,
+                distance: self.data.distance.clone(),
+                translation: [
+                    self.data.translation_x.clone(),
+                    self.data.translation_y.clone(),
+                ],
+                left_normal: self.data.direction
+                    == BezierAlgebraicChordUnitDisplacement2::LeftNormal,
+            }
+        })
+    }
+
+    pub(crate) fn from_replay_definition(
+        source: crate::Curve2,
+        origin: Option<CurvePoint2>,
+        at_end: bool,
+        distance: Real,
+        translation: [Real; 2],
+        left_normal: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        let source = if let Some(crate::BezierSplitFragment2::AlgebraicChord(source)) =
+            source.retained_fragment()
+        {
+            source.clone()
+        } else if let Some(crate::CurveGeometry2::Line(line)) = source.geometry() {
+            match BezierAlgebraicChord2::try_new(
+                line.start().clone().into(),
+                line.end().clone().into(),
+                policy,
+            )? {
+                Classification::Decided(source) => source,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        } else {
+            return Err(CurveError::InvalidCurveParameter);
+        };
+        source.validate_policy(policy)?;
+        let [translation_x, translation_y] = translation;
+        Ok(Classification::Decided(Self {
+            data: Arc::new(BezierAlgebraicChordParallelData2 {
+                source,
+                source_point: origin.map(Arc::new),
+                distance,
+                translation_x,
+                translation_y,
+                direction: if left_normal {
+                    BezierAlgebraicChordUnitDisplacement2::LeftNormal
+                } else {
+                    BezierAlgebraicChordUnitDisplacement2::Tangent
+                },
+                policy: policy.retained_object_policy(),
+                recursive_points: OnceLock::new(),
+            }),
+            at_end,
+        }))
+    }
+
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> (bool, *const ()) {
+        (self.at_end, Arc::as_ptr(&self.data).cast())
+    }
+
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_endpoint(&self, at_end: bool) -> Self {
+        Self {
+            data: Arc::clone(&self.data),
+            at_end,
+        }
+    }
+
     pub(in crate::bezier_offset) fn accepts_policy(&self, policy: &CurveContext) -> bool {
         policy.accepts_retained_policy(self.data.policy)
     }
@@ -7231,5 +7312,80 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 )
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod replay_tests {
+    use super::*;
+
+    #[test]
+    fn chord_displacement_replay_preserves_policy_barriers() {
+        let build = |policy: &CurveContext| {
+            let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(3, 4).into(),
+                policy,
+            )
+            .unwrap() else {
+                panic!("the exact nonzero chord must construct")
+            };
+            chord
+        };
+        let strict = build(&CurveContext::STRICT);
+        let outcome =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
+                policy.observe_approximate_512();
+                let chord = build(policy);
+                let point = BezierAlgebraicChordParallelPoint2::new_pair(
+                    strict.clone(),
+                    1.into(),
+                    0.into(),
+                    0.into(),
+                    policy,
+                )
+                .0;
+                Ok::<_, CurveError>((chord, point))
+            })
+            .unwrap();
+        assert_eq!(
+            outcome.certainty,
+            crate::CurveCertainty::Approximate512Consumed
+        );
+        let (qualified_source, qualified_point) = outcome.into_value();
+        assert!(qualified_point.strict_definition().is_none());
+        let replay = |source| {
+            crate::CurvePointDefinition2::ChordDisplacement {
+                source,
+                origin: None,
+                at_end: false,
+                distance: 1.into(),
+                translation: [0.into(), 0.into()],
+                left_normal: true,
+            }
+            .into_point()
+        };
+        assert!(replay(qualified_source.into()).is_err());
+        let point = replay(strict.into()).unwrap();
+        assert!(
+            point
+                .coincides_with(
+                    &Point2::new(
+                        (Real::from(-4) / Real::from(5)).unwrap(),
+                        (Real::from(3) / Real::from(5)).unwrap(),
+                    )
+                    .into()
+                )
+                .unwrap()
+        );
+        assert!(
+            point
+                .definition()
+                .unwrap()
+                .into_point()
+                .unwrap()
+                .coincides_with(&point)
+                .unwrap()
+        );
     }
 }

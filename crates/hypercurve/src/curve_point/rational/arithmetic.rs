@@ -2,7 +2,6 @@
 
 use super::*;
 use hypersolve::bivariate_arithmetic::bivariate_add;
-use hypersolve::exact_factor::bivariate_evaluate_exact;
 
 #[derive(Clone, Copy)]
 enum Operation {
@@ -57,56 +56,23 @@ impl CurvePointRationalForm2 {
 
     fn combine(&self, other: &Self, operation: Operation) -> ExactCurveResult<Self> {
         let (source, numerator, denominator) = resolve(CurveOperation2::Construction, |policy| {
-            use crate::bezier_offset::{PointFormSource2, point_form_source};
-            let prepare = |form: &Self| -> CurveResult<Classification<PointFormSource2>> {
-                point_form_source(&form.source, &form.numerator, &form.denominator, policy)
-            };
-            let same = self.source.shares_storage(&other.source) || self.source == other.source;
-            let mut first;
-            let mut second;
-            if same {
-                first = PointFormSource2::new(
+            use crate::bezier_offset::{PointFormSource2, common_point_form_sources};
+            let [first, second] = match common_point_form_sources(
+                PointFormSource2::new(
                     self.source.clone(),
                     self.numerator.clone(),
                     self.denominator.clone(),
-                );
-                second = PointFormSource2::new(
+                ),
+                PointFormSource2::new(
                     other.source.clone(),
                     other.numerator.clone(),
                     other.denominator.clone(),
-                );
-            } else {
-                first = match prepare(self)? {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                second = match prepare(other)? {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                materialize_represented(&mut first);
-                materialize_represented(&mut second);
-                if constant(&first.numerator) && constant(&first.denominator) {
-                    first.source = second.source.clone();
-                } else if constant(&second.numerator) && constant(&second.denominator) {
-                    second.source = first.source.clone();
-                }
-                match first.source.same_point(&second.source, policy) {
-                    Classification::Decided(true) => {}
-                    Classification::Decided(false) => {
-                        return Ok(Classification::Uncertain(
-                            crate::UncertaintyReason::Unsupported,
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
-            }
+                ),
+                policy,
+            )? {
+                Classification::Decided(forms) => forms,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
             // Keeping one already shared denominator prevents finite sums
             // (including dot products) from multiplying its degree at every
             // addition. This is structural equality, not a guessed identity.
@@ -152,28 +118,5 @@ impl CurvePointRationalForm2 {
         let mut result = source.rational_form(numerator, denominator)?;
         result.operands = Some(std::sync::Arc::new([self.clone(), other.clone()]));
         Ok(result)
-    }
-}
-
-fn constant(polynomial: &BivariatePolynomial) -> bool {
-    polynomial.coefficients.iter().enumerate().all(|(i, row)| {
-        row.iter()
-            .enumerate()
-            .all(|(j, coefficient)| (i == 0 && j == 0) || coefficient.definitely_zero())
-    })
-}
-
-fn materialize_represented(form: &mut crate::bezier_offset::PointFormSource2) {
-    if let Some(point) = form.source.coordinates() {
-        form.numerator = BivariatePolynomial::new(vec![vec![bivariate_evaluate_exact(
-            &form.numerator,
-            point.x(),
-            point.y(),
-        )]]);
-        form.denominator = BivariatePolynomial::new(vec![vec![bivariate_evaluate_exact(
-            &form.denominator,
-            point.x(),
-            point.y(),
-        )]]);
     }
 }

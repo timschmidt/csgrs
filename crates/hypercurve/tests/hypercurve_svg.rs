@@ -581,6 +581,7 @@ fn options_bound_import_sampling_and_export_projection() {
         curve_tolerance: 0.000_001,
         max_curve_segments: 8,
         max_extension_bytes: 4096,
+        ..SvgOptions::default()
     };
     assert!(matches!(
         import_svg_document_with_options(

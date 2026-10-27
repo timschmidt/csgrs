@@ -925,7 +925,9 @@ pub(crate) fn path_retained_fragments(
 ) -> ExactCurveResult<Classification<Vec<BezierSplitFragment2>>> {
     let mut fragments = Vec::with_capacity(path.curves().len());
     for curve in path.curves() {
-        if let Some(fragment) = curve.retained_fragment() {
+        if let Some(branch) = curve.polynomial_branch() {
+            fragments.push(BezierSplitFragment2::Polynomial(Box::new(branch.clone())));
+        } else if let Some(fragment) = curve.retained_fragment() {
             fragments.push(fragment.clone());
         } else if let Some(spans) =
             curve.restricted_source_spans(policy, CurveOperation2::Arrangement)?
@@ -1199,10 +1201,11 @@ impl CurveRegionBoundaryLoop2 {
 
     /// Returns each exact boundary curve in traversal order.
     ///
-    /// Analytic parallels, algebraic chords, selected circles, and selected-fiber
-    /// cuts are [`Curve2`] values. Later Boolean, offset, fillet, and chamfer
-    /// steps accept those values directly. [`Curve2::geometry`] remains the
-    /// optional native definition.
+    /// Analytic parallels, algebraic chords, selected circles, selected-fiber
+    /// cuts and selected polynomial branches retain their [`Curve2`] values.
+    /// Later operations consume their original definitions and return typed
+    /// blockers for capabilities not yet implemented for a carrier.
+    /// [`Curve2::geometry`] remains the optional native definition.
     ///
     /// Repeated access borrows the same curves and their cached calculations.
     pub fn curves(&self) -> &[Curve2] {
@@ -1401,6 +1404,10 @@ fn validate_retained_fragment_provenance(
     policy: &CurveContext,
 ) -> CurveResult<()> {
     match fragment {
+        // The private branch carrier can only be built from validated topology,
+        // certified restrictions and guarded image maps. Retaining it does not
+        // replace those authorities with unvalidated coordinates or flags.
+        BezierSplitFragment2::Polynomial(_) => Ok(()),
         BezierSplitFragment2::Materialized { start, end, .. } => {
             if start.scalar().is_none() || end.scalar().is_none() {
                 return Err(CurveError::Topology(
@@ -1797,6 +1804,14 @@ pub(crate) fn curve_fragment_endpoint_point(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::CurvePoint2>>> {
     let point = match fragment {
+        BezierSplitFragment2::Polynomial(branch) => {
+            let curve = Curve2::from_polynomial_branch((**branch).clone());
+            if start_endpoint {
+                curve.start()
+            } else {
+                curve.end()
+            }
+        }
         BezierSplitFragment2::Materialized { curve, .. } => crate::CurvePoint2::from(
             if start_endpoint {
                 curve.start()
@@ -2012,6 +2027,7 @@ fn fragment_certifies_nonnegative_turn(
     policy: &CurveContext,
 ) -> CurveResult<bool> {
     match fragment {
+        BezierSplitFragment2::Polynomial(_) => Ok(false),
         BezierSplitFragment2::AlgebraicChord(_) => Ok(true),
         BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
             Ok(fragment.semicircle().is_clockwise() == fragment.is_reversed())
@@ -3123,7 +3139,8 @@ impl CurveRegion2 {
                             circle.clone().without_certified_tangent_endpoints(),
                         ));
                     }
-                    BezierSplitFragment2::SelectedFiber(_) => {
+                    BezierSplitFragment2::SelectedFiber(_)
+                    | BezierSplitFragment2::Polynomial(_) => {
                         fragments.push(fragment.fragment().clone());
                     }
                 }
@@ -5320,14 +5337,22 @@ impl CurveRegion2 {
         policy: &CurveContext,
         prepared: &mut Option<crate::curve_region_boolean::CurveRegionBooleanContext<'a>>,
     ) -> CurveResult<Classification<RegionPointLocation>> {
-        match point {
-            CurvePoint2(CurvePointData2::Exact(point)) => self.classify_point_raw(point, policy),
-            CurvePoint2(CurvePointData2::Algebraic(point)) => {
-                self.classify_algebraic_point_raw(point, policy)
+        let direct = match point {
+            CurvePoint2(CurvePointData2::Exact(point)) => {
+                Some(self.classify_point_raw(point, policy)?)
             }
-            _ => crate::curve_region_boolean::classify_retained_point_evidence_against_region_by_probe(
-                self, point.clone(), policy, prepared,
-            ),
+            CurvePoint2(CurvePointData2::Algebraic(point)) => {
+                Some(self.classify_algebraic_point_raw(point, policy)?)
+            }
+            _ => None,
+        };
+        match direct {
+            Some(Classification::Uncertain(UncertaintyReason::Unsupported | UncertaintyReason::Boundary)) | None => {
+                crate::curve_region_boolean::classify_retained_point_evidence_against_region_by_probe(
+                    self, point.clone(), policy, prepared,
+                )
+            }
+            Some(result) => Ok(result),
         }
     }
 
@@ -6256,6 +6281,25 @@ fn transform_retained_region_fragment(
         })
     };
     match fragment {
+        BezierSplitFragment2::Polynomial(branch) => {
+            let similarity = similarity.as_ref().ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Transformation,
+                    CurveFamily2::ImplicitPolynomial,
+                    UncertaintyReason::Unsupported,
+                )
+            })?;
+            let transformed = Curve2::from_polynomial_branch((**branch).clone())
+                .transform_similarity_with_policy(similarity, policy)?
+                .into_value();
+            Ok(BezierSplitFragment2::Polynomial(Box::new(
+                transformed
+                    .polynomial_branch()
+                    .expect("a similarity retains the selected branch")
+                    .clone(),
+            )))
+        }
+
         BezierSplitFragment2::Materialized { start, end, curve } => {
             Ok(BezierSplitFragment2::Materialized {
                 start: start.clone(),
@@ -6551,6 +6595,9 @@ fn retained_line_fragment_endpoints(
     policy: &CurveContext,
 ) -> CurveResult<Classification<(Point2, Point2)>> {
     match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+        }
         BezierSplitFragment2::Materialized { curve, .. } => {
             let fit = match subcurve_fit_exact_line_image(curve, policy)? {
                 Classification::Decided(BezierLineImageFitRelation::Fit(fit)) => fit,
@@ -6814,7 +6861,9 @@ pub(crate) fn retained_line_fragment_segment(
             .cloned()
             .map(|line| (line, fragment.is_reversed())),
         BezierSplitFragment2::AlgebraicChord(chord) => chord.exact_line().map(|line| (line, false)),
-        BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
+        BezierSplitFragment2::AlgebraicCuspSemicircle(_) | BezierSplitFragment2::Polynomial(_) => {
+            None
+        }
     };
     if let Some((line, reversed)) = source {
         return line

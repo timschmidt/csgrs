@@ -92,6 +92,66 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Correlated point predicates and frame replay (2026-10-27).** Shared rational
+  point-field pullbacks now serve oblique linear comparison and selected-circle
+  incidence. A proved constant displacement in a represented circle frame uses
+  the existing exact half-chart inverse, preserving signed radius, traversal and
+  complementary-half ownership. The original degree-seven/five fiber-center
+  midpoint case now continues through splitting and native replay. This does not
+  provide general angular inversion in independent selected fields.
+  Version 4 uses its existing checked unit-direction record when an ordinary
+  endpoint normalization would reconstruct a different scalar definition.
+  Readers retain the checked incoming components even if another vector has
+  equal values. Reconstructible identical definitions keep their old encoding;
+  affected transformed frames may gain an existing tag25 record. Geometry is
+  unchanged and no format tag or version is added.
+
+- **Selected-circle graph replay (2026-10-27).** Version 4 adds a chord-normal
+  circle frame, scalar angular parameter, signed normal contact, finite circle
+  range and independently incident point (tags 20–24). A checked chord unit
+  direction (tag 25) preserves transported oblique frames; its reference retains
+  the distinction between an infinite support and a finite chord. Native endpoint
+  directions already reconstructed from represented coordinates keep their old
+  encoding. Readers validate every unused definition, the literal signed
+  displacement, circle incidence, selected half and ascending domain. No tangent
+  or incidence Boolean is accepted as proof. Older readers reject the new tags;
+  existing version 3 and version 4 records remain readable. Circle frames add one
+  dependency level to `SvgOptions::max_point_definition_depth`. These witnesses
+  cover named chord-normal frames, not all generated circle charts or filled
+  region archives.
+
+- **Selected-point graph replay (2026-10-27).** Version 4 metadata adds
+  polynomial-fiber, rational-image, similarity, supporting-line-intersection
+  and shared chord-displacement point records (tags 14–19). Existing version 3
+  and version 4 records remain
+  readable; older readers reject the new tags. Authored version 3 encoding is
+  unchanged. Shared rational-map prefixes are encoded once per path. Check
+  geometric equality separately when updating deterministic output expectations.
+  `SvgOptions` adds `max_point_definition_depth` with default 256; complete Rust
+  struct literals must set it or use `..SvgOptions::default()`. The new
+  `CurvePointDefinition2::ChordDisplacement` variant requires exhaustive enum
+  matches to add an arm. Zero allows leaf
+  point definitions. The limit counts map, similarity, displacement and
+  intersection nesting
+  in the input graph, including dependencies reached through curve endpoints,
+  even when a constructor can simplify the resulting point. It does not bound
+  total arithmetic work, coefficient growth, heap use or cancellation.
+  Hyperbrep native planar-point archives also add `ChordDisplacement`, replaying
+  it through Hypercurve after counting its source and optional origin records.
+  Older readers reject this new variant; existing archive variants keep their
+  format. Hyperbrep retains its existing nested point syntax and archive budgets.
+- **Selected-chord SVG replay (2026-10-27).** Version 4 native path metadata
+  gains point, supporting-chord, selected-range and curve-endpoint records
+  (tags 7–13). Repeated retained curves may share one definition, changing
+  metadata length and checksum for those paths. Current readers still accept
+  existing version 3 and version 4 records; older readers cannot consume the
+  new tags. Authored version 3 encoding is unchanged. Applications comparing
+  generated-path bytes should regenerate their serialized expectations while
+  checking exact geometry separately. The standard SVG projection of selected
+  parallel endpoints now follows a reproducible refinement sequence, so warmed
+  predicate caches no longer choose different display vertices. Existing
+  display files affected by that bug can change; authoritative exact geometry
+  and the requested projection tolerance are preserved.
 - **PLY decimal spelling.** Positions and normals used a fixed 17 fractional
   digits, which could round small nonzero values to zero. Each binary64 value
   is now spelled exactly, with up to 1074 fractional digits where needed.

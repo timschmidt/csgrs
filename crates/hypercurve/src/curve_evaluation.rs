@@ -79,6 +79,7 @@ impl Curve2 {
         }
 
         let reversed = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => return branch.point_at(parameter, policy),
             BezierSplitFragment2::RetainedBezier { reversed, .. } => *reversed,
             BezierSplitFragment2::AnalyticParallel(fragment) => fragment.is_reversed(),
             BezierSplitFragment2::SelectedFiber(fragment) => fragment.is_reversed(),
@@ -124,6 +125,7 @@ impl Curve2 {
             return Ok(self.endpoint((start_order == Ordering::Equal) != reversed));
         }
         let point = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => return branch.point_at(parameter, policy),
             BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
                 let source = RationalBezier2::try_from_subcurve(source_curve)
                     .map_err(|cause| evaluation_error(family, cause))?;
@@ -235,6 +237,9 @@ impl Curve2 {
             return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
         }
         let parallel = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => {
+                return branch.derivatives_at(parameter, max_order, policy);
+            }
             BezierSplitFragment2::RetainedBezier { source_curve, .. } => {
                 let source = RationalBezier2::try_from_subcurve(source_curve)
                     .map_err(|cause| evaluation_error(family, cause))?;

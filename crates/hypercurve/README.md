@@ -487,7 +487,61 @@ exact signatures.
   `export_svg_document` provide SVG exchange. Native `L`, `A`, `Q`, and `C`
   commands are used where possible; a versioned `data-hypercurve-path`
   attribute preserves curve families and exact values for Hypercurve
-  round-trips.
+  stroke round-trips. Version 3 remains readable and is still emitted for
+  authored paths. Version 4 retains authored-source restrictions and procedural
+  quadratic, cubic and rational Bezier parallels, including signed distance,
+  selected Bezier roots, projective parameter charts and traversal in a shared
+  definition graph per path. Import rechecks roots, charts, domains, parallel
+  regularity and connectivity under strict predicates; `SvgError::Exact` retains
+  failures from this replay. Parallel ranges keep their original source chart,
+  including finite ranges outside the authored unit interval. Cusp boundaries
+  must remain explicitly split.
+  Selected straight chords preserve their supporting line, validated monotone
+  coordinate chart and directed endpoint selections. Replayable endpoints include
+  exact coordinates, rational source images, rational expressions and native
+  parallel points at retained Bezier parameters. Shared curve-endpoint records
+  preserve their incidence relation. Import proves point definitions, support
+  incidence and chart order, including for unused records. Auxiliary chord
+  contacts and general joint-parameter charts remain open.
+  Parallel endpoint projection uses the requested refinement independently of
+  stronger cached predicate bounds, keeping repeated display output stable after
+  exact incidence queries.
+  The standard SVG `d` attribute is only a finite display projection.
+  Point dependencies also retain polynomial fibers, rational maps, exact
+  similarities and unique supporting-line intersections. Replay validates fiber
+  selectors and optional exact-root witnesses, original denominator guards and
+  line uniqueness. These points need no independently materialized scalar
+  coordinates. Chord displacements retain the actual selected source, normal or
+  tangent direction, signed distance, optional origin and exact translation;
+  paired endpoints share one replayed recipe.
+  `SvgOptions::max_point_definition_depth` defaults to 256 and
+  counts nested map, similarity, displacement and supporting-line point definitions; leaves
+  have depth zero. Endpoint and chord references carry their dependency depth.
+  Reached depth limits return `SvgError::SizeOverflow` before publishing a path;
+  callers may retry with a larger limit. This limit and extension bytes do not
+  bound total arithmetic, coefficient growth, retained memory or cancellation.
+  Chord-normal selected circles retain their center, directed frame chord,
+  signed nonzero radius, scalar or selected normal-contact parameters and finite
+  oriented range. Independently supplied incident points retain their own
+  definition and re-prove incidence and the selected half on replay. A transported
+  oblique chord direction is checked for unit length, parallelism and orientation;
+  a stored certification flag is insufficient. Construction-time tangent flags
+  are not serialized. The retained relations support fresh-process splitting,
+  reversal, algebraic similarities and the named region reconstruction witnesses.
+  Correlated point queries reuse the original rational-map and fiber fields for
+  oblique linear comparison and circle incidence. When a certified point's
+  displacement from a represented circle frame reduces to exact constants, the
+  existing half chart inverts those displacements without solving another
+  line-circle intersection. The degree-seven/five center witness continues
+  through exact point location, subdivision, reversal and replay; general
+  nonconstant angular selections still require their own supported chart.
+  Transported unit directions are omitted only when reconstruction retains the
+  same serialized scalar definitions; value equality alone is insufficient for
+  deterministic display projection.
+  A circle frame adds one dependency level to the point-depth limit.
+  Filled-region native replay, other generated supports and sharing across
+  separate paths remain open. Byte and segment limits do not bound all scalar
+  decoding, arithmetic, expression growth, memory or cancellation.
 
 ## Precision, guarantees, and boundaries
 
