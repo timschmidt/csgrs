@@ -1188,6 +1188,8 @@ pub(crate) enum BezierSplitFragment2 {
     AlgebraicCuspSemicircle(BezierAlgebraicCuspSemicircleFragment2),
     /// Exact rational or analytic carrier restricted by selected-fiber scalar roots.
     SelectedFiber(BezierSelectedFiberFragment2),
+    /// A selected polynomial graph with its original source and closed domain.
+    Polynomial(Box<crate::PolynomialCurveBranch2>),
 }
 
 /// Ordered split result for one Bezier segment.
@@ -1218,6 +1220,7 @@ impl BezierSplitFragment2 {
             Self::AnalyticParallel(fragment) => fragment.is_reversed(),
             Self::AlgebraicCuspSemicircle(fragment) => fragment.is_reversed(),
             Self::SelectedFiber(fragment) => fragment.is_reversed(),
+            Self::Polynomial(branch) => branch.is_reversed(),
         }
     }
 
@@ -1242,6 +1245,7 @@ impl BezierSplitFragment2 {
                 CurveParameter2::from_algebraic_cusp(fragment.end_parameter().clone()),
             ),
             Self::SelectedFiber(fragment) => fragment.range.clone(),
+            Self::Polynomial(branch) => branch.parameter_range().clone(),
         }
     }
 }
@@ -1885,6 +1889,7 @@ impl BezierSplitFragment2 {
                 Ok(Self::AlgebraicCuspSemicircle(fragment.reversed()))
             }
             Self::SelectedFiber(fragment) => Ok(Self::SelectedFiber(fragment.reversed())),
+            Self::Polynomial(branch) => Ok(Self::Polynomial(Box::new(branch.reversed()))),
         }
     }
 }

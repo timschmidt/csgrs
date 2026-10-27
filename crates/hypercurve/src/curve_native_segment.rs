@@ -142,6 +142,11 @@ fn certified_fragment_segment(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Segment2>> {
     let range_proof = match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            return Ok(Classification::Uncertain(
+                crate::UncertaintyReason::Unsupported,
+            ));
+        }
         BezierSplitFragment2::Materialized { curve, .. } => {
             return certified_native_span_segment(curve, policy);
         }

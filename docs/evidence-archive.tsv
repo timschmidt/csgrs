@@ -347,6 +347,7 @@ docs/evidence/2026-10-26-hypercurve-closure-rational-sections	442	15497091	c55ba
 docs/evidence/2026-10-26-hypercurve-closure-selected-abscissas	213	7201989	1e45871c00e897e88d579812c2bb87e974e9ad9a356f6e36d6cae467992a4014
 docs/evidence/2026-10-26-hypercurve-closure-validation	12153	58233737	78c71e823c48c8f104fde6290654f66fa54452b8e50043be7380cb534b9fc137
 docs/evidence/2026-10-26-research-closeout	12763	187318255	ef84e4aed934ad5014ed36b27a41951d58b2200ab82a5cee3e7ac39e2ba005ad
+docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions	564	26364613	6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

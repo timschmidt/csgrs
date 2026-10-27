@@ -85,6 +85,24 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-polynomial-region-evidence-2026-10-27`
+branch ends at `aceb9add07aaaa060aabac0f31c98154d82a7d96`, adding
+`docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions` (564 files,
+26,364,613 bytes), SHA-256
+`6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b`.
+It records selected polynomial supports in the shared filled arrangement:
+2,754 Hypercurve tests, 43 root downstream tests, 3,009 tests across six
+dependent packages, strict MSRV Clippy, formatting, 16 matrix guards and 107
+capability witnesses pass. The unchanged H08 boundary and original failing
+Boolean/open-clip cases remain, alongside holes, disconnected material,
+reversal, mixed circles, exact selected trims, cusp/node incidence and actual
+exhaustion/retry. Qualification used `5de7f0cb05` plus the frozen region
+increment; non-receipt bytes remain unchanged. The original failed attempts and
+the corrected quintic test oracle remain archived. General implicit operations,
+nonzero offsets/corners and fresh-process replay remain open. This record is
+local and unpushed; the separate complete repository publication run excludes
+this increment, whose full pre-push validation remains pending.
+
 The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
 branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations` (227 files,

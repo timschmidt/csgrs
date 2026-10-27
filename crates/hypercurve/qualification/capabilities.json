@@ -1369,7 +1369,7 @@
     {
       "id": "implicit_frontier",
       "target": "polynomial_curves",
-      "test": "polynomial_pair_sections_and_region_blockers",
+      "test": "polynomial_pair_sections_and_region_admission",
       "owner": "Hypercurve polynomial incidence and region arrangement",
       "properties": [
         "P12",
@@ -1391,7 +1391,7 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "Selected source-plane incidence completes for the original disjoint pair. Polynomial filled-region admission remains an implementation gap; passing the blocker does not complete region support.",
+      "semantics": "The original disjoint pair retains exact empty incidence. The unchanged H08 parabola boundary now enters the shared filled arrangement; broader implicit-region closure is not implied.",
       "claims": [
         {
           "stage": "incidence_order",
@@ -1400,11 +1400,11 @@
         },
         {
           "stage": "region_admission",
-          "outcome": "unsupported",
-          "assertion": "Simple polynomial boundary orientation and CurveRegion2 admission return Unsupported."
+          "outcome": "exact_success",
+          "assertion": "The unchanged two-branch parabola and vertical-line path has counterclockwise orientation and one three-piece filled boundary."
         }
       ],
-      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the unchanged filled-region errors are explicitly checked as Unsupported.",
+      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the original region represents 0<=x<=1/4 and y\u00b2<=x, with its two ordered roots and closing line.",
       "timeout_seconds": 300
     },
     {
@@ -4045,6 +4045,636 @@
         }
       ],
       "oracle": "Actual reached budget counters, selected parameter equality and certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_orientation",
+      "target": "polynomial_region_admission",
+      "test": "original_parabola_path_has_exact_loop_orientation",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original H08 parabola cap and its reversed path.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Exact loop orientation reverses from counterclockwise to clockwise."
+        }
+      ],
+      "oracle": "The traversal of y=-sqrt(x), the vertical cap, and y=+sqrt(x) encloses material on its left.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_admission",
+      "target": "polynomial_region_admission",
+      "test": "original_parabola_path_is_admitted_to_the_shared_region",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The unchanged H08 cap under NonZero and EvenOdd.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Both fill rules publish one boundary with two selected polynomial branches and one line."
+        }
+      ],
+      "oracle": "The exact region is 0<=x<=1/4 and y\u00b2<=x; all original pieces remain.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_points",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_classifies_native_and_retained_points",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent native points and evaluated selected points on both parabola branches.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Inside, outside and boundary locations remain exact, including selected branch points."
+        }
+      ],
+      "oracle": "Independent inequalities 0<=x<=1/4 and y\u00b2<=x; exact cap and cusp-axis boundary points.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_reconstruction",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_boolean_reconstruction_keeps_selected_supports",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The cap clipped to 1/16<=x<=1/8, rebuilt with EvenOdd, subtracted from itself and accumulated from empty.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "One four-piece boundary retains both source roots and their exact domains; reconstruction and empty identities compose."
+        }
+      ],
+      "oracle": "Original defining equation, slab/root identities, exact parameter endpoints, retained line supports and canonical empty results.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_path_points",
+      "target": "polynomial_region_admission",
+      "test": "reconstructed_polynomial_path_classifies_native_and_selected_points",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A boundary path reconstructed from the polynomial region.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Native inside/outside points and selected branch points classify after reconstruction."
+        }
+      ],
+      "oracle": "Independent native points and incidence of each retained boundary branch.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_holes",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_holes_follow_both_fill_rules_and_boolean_operations",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A rational rectangle strictly inside the cap, all four Boolean operations, both fill rules and reversed authored boundaries.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Subtraction/Xor creates a hole with opposite orientation; reversal and reconstruction preserve it; union restores the cap."
+        }
+      ],
+      "oracle": "The entire hole obeys y\u00b2<=1/64<1/16<=x; two loop orientations, independent point roles and set identities.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_similarities",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_regions_keep_disconnected_components_under_similarity",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two caps translated three units apart, then quarter-rotated, scaled by three and translated.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Two material components retain source equations and image transforms; transformed composition and reconstruction agree semantically."
+        }
+      ],
+      "oracle": "Disjoint source x-intervals, inverse of T(x,y)=(2-3y,-1+3x), exact point roles, four retained branches and Xor identities.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_nearby",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_regularizes_contact_but_keeps_nearby_distinct_boundaries",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A cap sharing only its vertical boundary with a rectangle, and a second rectangle starting exactly 2^-80 inside it.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "The contact-only intersection is empty; the nearby cut retains a positive-width four-piece region."
+        }
+      ],
+      "oracle": "Exact distinct parameter endpoints, positive width 2^-80, independent interior point and subsequent empty-set composition.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_quintic",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_boolean_reuses_generic_quintic_trim_and_replay",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The strictly increasing graph y=x^5+x\u00b2+5x-5 capped at y=3, clipped by y>=0 and then x>=3/4 and x>=7/8.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The degree-five selected trim survives checked point replay and reconstruction; later cuts below and above the root retain the correct five- and four-piece boundaries."
+        }
+      ],
+      "oracle": "Independent degree-five root isolation; f(3/4)=-461/1024 and f(7/8)=21415/32768; original equation, exact parameter bounds and selected boundary classification.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_authored_trim",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_clips_open_authored_curves",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "An authored horizontal segment from (-1,0) to (1,0), clipped by the polynomial cap.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The retained segment has exact endpoints (0,0) and (1/4,0)."
+        }
+      ],
+      "oracle": "The intersection of y=0 with 0<=x<=1/4 and y\u00b2<=x is independently the closed interval [0,1/4].",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_generated_trim",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_clips_open_generated_curves",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Both selected cap branches clipped by a rational rectangle and then consumed by the original polynomial region.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Open generated curves retain their source roots and [1/16,1/8] domains, including reversed traversal."
+        }
+      ],
+      "oracle": "Original root identity, exact source-domain endpoints and further closed-set clipping.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_circle",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_mixed_circular_boolean_retains_original_supports",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The cap intersected with the radius-1/2 disk centered at the origin, then reconstructed.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Two selected polynomial pieces, two circular pieces and one line remain consumable exact boundaries."
+        }
+      ],
+      "oracle": "Polynomial/circle contacts satisfy x\u00b2+x=1/4 with alpha=(sqrt(2)-1)/2; source domains, circle equations, cap x-coordinate and independent filled-set points.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_limits",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_zero_offset_keeps_sources_and_remaining_gaps_are_typed",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The cap at zero offset and attempted nonzero round offset, chord-setback chamfer, circular fillet and finite projection.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Zero offset retains the original branch supports and exact set."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "unsupported",
+          "assertion": "The nonzero polynomial-support offset returns Unsupported."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "unsupported",
+          "assertion": "Polynomial-support fillet and chord-setback chamfer return Unsupported without panic or unchanged-input success."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "unsupported",
+          "assertion": "The finite projection adapter reports Unsupported; no fitted output replaces the exact source."
+        }
+      ],
+      "oracle": "Source root inventory and symmetric-difference identity; unsupported operations retain their actual public typed outcomes.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_retry",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_budget_retry_and_policy_transitions_keep_exact_results",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A cap/rectangle clip under zero counted work, a larger retry, and STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exhausted",
+          "assertion": "A zero counted allowance is reached and returns BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Actual exhaustion precedes publication; a 100000-refinement/100000-promotion retry succeeds and all policy receipts remain Certified."
+        }
+      ],
+      "oracle": "Reached limit/used/requested counters, exact topology and symmetric-difference identities.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_cusp",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_cusp_keeps_one_sided_branch_incidence",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The cusp cap 0<=x<=1,y\u00b2<=x\u00b3, clipped and reconstructed.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Its singular endpoint remains Boundary; both one-sided source branches survive exact clipping and reconstruction."
+        }
+      ],
+      "oracle": "Independent cusp equation and point roles; exact [1/4,1/2] source restrictions and retained defining equation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_region_node",
+      "target": "polynomial_region_admission",
+      "test": "polynomial_region_node_keeps_two_material_lobes_at_shared_vertex",
+      "owner": "Hypercurve retained polynomial supports and shared CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Both material lobes of y\u00b2<=x\u00b2, -1<=x<=1, meeting only at the origin, under both fill rules.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The arrangement keeps two material loops at the shared node and preserves them under clipping."
+        }
+      ],
+      "oracle": "Independent two-lobe inequalities, exact shared origin incidence, point roles and subtraction identity.",
       "timeout_seconds": 300
     }
   ]

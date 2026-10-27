@@ -1090,7 +1090,7 @@ pub fn mapped_sections_survive_budget_retry_and_policy_changes() {
     }
 }
 
-pub fn polynomial_pair_sections_and_region_blockers() {
+pub fn polynomial_pair_sections_and_region_admission() {
     let quintic = set(QUINTIC);
     let curve = &quintic.curves()[0];
     // The unchanged irrational vertical and sloped lines are positive
@@ -1110,8 +1110,8 @@ pub fn polynomial_pair_sections_and_region_blockers() {
         assert!(topology.result().is_disjoint());
         assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
     }
-    // Filled regions do not yet carry polynomial supports (H08). A closed
-    // path of two branch pieces and a vertical line is still a typed blocker.
+    // Preserve the original H08 boundary. Its polynomial supports now enter
+    // the same arrangement as the closing line, with their selected roots.
     let range = CurveParameterRange2::try_new(Real::zero().into(), q(1, 4).into()).unwrap();
     let path = hypercurve::CurvePath2::try_new(vec![
         parabola.curves()[0].restrict_source(range.clone()).unwrap(),
@@ -1123,16 +1123,21 @@ pub fn polynomial_pair_sections_and_region_blockers() {
             .unwrap(),
     ])
     .unwrap();
-    for error in [
-        path.simple_loop_orientation().unwrap_err(),
+    assert_eq!(
+        path.simple_loop_orientation().unwrap(),
+        hypercurve::CurveLoopOrientation2::Counterclockwise
+    );
+    let region =
         hypercurve::CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::NonZero)
-            .unwrap_err(),
-    ] {
-        assert!(
-            matches!(&error, ExactCurveError::Blocked(blocker) if blocker.reason() == UncertaintyReason::Unsupported),
-            "{error:?}"
-        );
-    }
+            .unwrap();
+    assert_eq!(region.boundary_loops().len(), 1);
+    assert_eq!(region.boundary_loops()[0].curves().len(), 3);
+    assert_eq!(
+        region
+            .classify_point(&Point2::new(q(1, 8), Real::zero()).into())
+            .unwrap(),
+        hypercurve::RegionPointLocation::Inside
+    );
 }
 
 pub fn sections_survive_context_drop_budgets_and_policies() {

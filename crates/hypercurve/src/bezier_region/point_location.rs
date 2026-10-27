@@ -31,6 +31,16 @@ pub(super) fn retained_loop_sample_point_evidence(
     let mut last_reason = UncertaintyReason::Unsupported;
     for fragment in boundary_loop.fragments() {
         let candidate = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => {
+                match branch.parameter_range().strict_interior_scalar(policy)? {
+                    Classification::Decided(parameter) => ExactCurveError::classify_result(
+                        Curve2::from_polynomial_branch((**branch).clone())
+                            .point_at_with_policy(&parameter.into(), policy)
+                            .map(CurveOutcome::into_value),
+                    )?,
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                }
+            }
             BezierSplitFragment2::Materialized { curve, .. } => {
                 subcurve_point_at(curve, half.clone(), policy).map(CurvePoint2::from)
             }
@@ -738,6 +748,10 @@ pub(super) fn retained_fragment_algebraic_ray_curve(
     }
 
     let (curve, retained_range, reversed) = match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+
         BezierSplitFragment2::Materialized { curve, .. } => {
             (RationalBezier2::try_from_subcurve(curve)?, None, false)
         }
@@ -1585,6 +1599,11 @@ pub(super) fn retained_fragment_contains_point(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     match fragment {
+        BezierSplitFragment2::Polynomial(branch) => ExactCurveError::classify_result(
+            branch
+                .point_parameter(&CurvePoint2::from(point.clone()), policy)
+                .map(|parameter| parameter.is_some()),
+        ),
         BezierSplitFragment2::Materialized { curve, .. } => {
             Ok(subcurve_contains_point(curve, point, policy))
         }
@@ -1671,6 +1690,8 @@ pub(super) fn retained_circle_tangent_contacts(
     fragment: &BezierSplitFragment2,
 ) -> Option<&[crate::rational_bezier::RationalQuadraticCircleTangentContact2]> {
     let circle = match fragment {
+        BezierSplitFragment2::Polynomial(_) => None,
+
         BezierSplitFragment2::Materialized {
             curve: BezierSubcurve2::RationalQuadratic(curve),
             ..
@@ -1788,6 +1809,7 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
             continue;
         }
         let exact_parallel_curve = match fragment {
+            BezierSplitFragment2::Polynomial(_) => None,
             BezierSplitFragment2::AnalyticParallel(fragment) => match fragment
                 .parallel()
                 .exact_rational_parallel_component(policy)
@@ -1929,6 +1951,7 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
             continue;
         }
         let procedural_parallel = match fragment {
+            BezierSplitFragment2::Polynomial(_) => None,
             BezierSplitFragment2::AnalyticParallel(fragment) if exact_parallel_curve.is_none() => {
                 Some((
                     fragment.parallel(),
@@ -2127,6 +2150,9 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
             _ => None,
         };
         let (curve, range, reversed) = match fragment {
+            BezierSplitFragment2::Polynomial(_) => {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
             BezierSplitFragment2::Materialized { curve, .. } => (curve, None, false),
             BezierSplitFragment2::RetainedBezier {
                 reversed,

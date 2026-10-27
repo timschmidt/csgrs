@@ -2075,13 +2075,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let carrier = &self.data.carriers[index];
             let fragment = carrier
                 .geometry
-                .restrict_certified(
+                .restrict_with_policy(
                     carrier.range(),
                     carrier.selected_fiber_endpoint_points.as_deref().cloned(),
                     carrier.reversed,
                     &self.data.policy,
                 )
-                .map_err(|cause| self.invalid(index, cause))?;
+                .map_err(|error| error.with_operation(CurveOperation2::Boolean))?;
             let published = CurveRegionCarrier2 {
                 data: Arc::new(CurveRegionCarrierData2 {
                     curve: Curve2::from_retained_fragment(fragment),
@@ -2843,6 +2843,15 @@ impl<'a> CurveRegionBooleanContext<'a> {
             .iter()
             .enumerate()
             .map(|(carrier_index, carrier)| {
+                if let CurveSupport2::Polynomial(branch) = &carrier.geometry {
+                    return split_polynomial_carrier(
+                        carrier,
+                        branch,
+                        &events[carrier_index],
+                        &contact_points,
+                        &self.data.policy,
+                    );
+                }
                 split_carrier(
                     carrier,
                     &events[carrier_index],
@@ -3629,7 +3638,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 .all(|carrier| match &carrier.geometry {
                     CurveSupport2::Bezier(curve) => subcurve_is_strict_line_image(curve),
                     CurveSupport2::Line(chord) => chord.exact_line().is_some(),
-                    CurveSupport2::Parallel(_) | CurveSupport2::Circle(_) => false,
+                    CurveSupport2::Parallel(_)
+                    | CurveSupport2::Circle(_)
+                    | CurveSupport2::Polynomial(_) => false,
                 })
         })
     }
@@ -4008,7 +4019,7 @@ fn prepare_carrier_curve(
     hyperreal::dispatch_trace::record("hypercurve", "boolean-carrier-preparation", "prepared");
     carrier
         .geometry
-        .restrict_certified(
+        .restrict_with_policy(
             carrier.range(),
             carrier.selected_fiber_endpoint_points.as_deref().cloned(),
             // Arrangement traversal is applied by the owning carrier. Pair
@@ -4017,7 +4028,7 @@ fn prepare_carrier_curve(
             policy,
         )
         .map(Curve2::from_retained_fragment)
-        .map_err(|cause| ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause))
+        .map_err(|error| error.with_operation(CurveOperation2::Boolean))
 }
 
 /// Starts the table of pair operands for Bezier carriers. Only a
@@ -4236,6 +4247,20 @@ fn build_candidate_carrier_pair(
         return Ok(None);
     }
     let context = match (&first_carrier.geometry, &second_carrier.geometry) {
+        (CurveSupport2::Polynomial(_), _) | (_, CurveSupport2::Polynomial(_)) => {
+            prepared_carrier_curve(carriers, curves, first_carrier_index, policy)?;
+            prepared_carrier_curve(carriers, curves, second_carrier_index, policy)?;
+            RegionCarrierPairContext::Common(CurveIntersectionContext::try_new_with_batch_cache(
+                curves[first_carrier_index]
+                    .as_ref()
+                    .expect("prepared first carrier"),
+                curves[second_carrier_index]
+                    .as_ref()
+                    .expect("prepared second carrier"),
+                policy,
+                intersection_cache,
+            )?)
+        }
         (CurveSupport2::Circle(_), CurveSupport2::Line(_)) => RegionCarrierPairContext::CuspChord {
             cusp_is_first: true,
         },
@@ -4586,6 +4611,15 @@ fn build_parameterized_carrier(
     filled_side_is_left: bool,
 ) -> RegionCarrier {
     let selected_fiber_endpoint_points = match fragment {
+        BezierSplitFragment2::Polynomial(branch) => {
+            let curve = Curve2::from_polynomial_branch((**branch).clone());
+            let points = if branch.is_reversed() {
+                [curve.end(), curve.start()]
+            } else {
+                [curve.start(), curve.end()]
+            };
+            Some(Arc::new(points))
+        }
         BezierSplitFragment2::SelectedFiber(fragment) => {
             let points = if fragment.is_reversed() {
                 [fragment.end_point().clone(), fragment.start_point().clone()]
@@ -4656,6 +4690,102 @@ fn build_region_carrier(
     }
     carrier.family = carrier.geometry.family();
     Ok(carrier)
+}
+
+fn split_polynomial_carrier(
+    carrier: &RegionCarrier,
+    branch: &crate::PolynomialCurveBranch2,
+    events: &[CarrierEvent],
+    contact_points: &[ContactVertex],
+    policy: &CurveContext,
+) -> ExactCurveResult<Vec<SplitCarrierFragment>> {
+    let invalid = |cause| ExactCurveError::invalid(CurveOperation2::Boolean, carrier.family, cause);
+    let decide = |order| match order {
+        Classification::Decided(order) => Ok(order),
+        Classification::Uncertain(reason) => Err(ExactCurveError::blocked(
+            CurveOperation2::Boolean,
+            carrier.family,
+            reason,
+        )),
+    };
+    let compare = |first: &CarrierEvent, second: &CarrierEvent| {
+        decide(
+            first
+                .parameter
+                .cmp_by_refinement(&second.parameter, policy)
+                .map_err(invalid)?,
+        )
+    };
+    let mut boundaries = events.to_vec();
+    for index in 1..boundaries.len() {
+        let mut cursor = index;
+        while cursor > 0 && compare(&boundaries[cursor], &boundaries[cursor - 1])? == Ordering::Less
+        {
+            boundaries.swap(cursor, cursor - 1);
+            cursor -= 1;
+        }
+    }
+    let curve = Curve2::from_polynomial_branch(branch.clone());
+    let point = |event: &CarrierEvent| -> ExactCurveResult<CurvePoint2> {
+        if let Some(points) = &carrier.selected_fiber_endpoint_points {
+            if event.parameter == carrier.start {
+                return Ok(points[0].clone());
+            }
+            if event.parameter == carrier.end {
+                return Ok(points[1].clone());
+            }
+        }
+        if let Some(vertex) = event.topology_vertex
+            && let Some(point) = contact_points
+                .iter()
+                .filter(|contact| contact.topology_vertex == vertex)
+                .find_map(|contact| contact.point.clone())
+        {
+            return Ok(point);
+        }
+        curve
+            .point_at_with_policy(&event.parameter, policy)
+            .map(crate::CurveOutcome::into_value)
+            .map_err(|error| error.with_operation(CurveOperation2::Boolean))
+    };
+    let mut output = Vec::with_capacity(boundaries.len().saturating_sub(1));
+    for pair in boundaries.windows(2) {
+        if compare(&pair[0], &pair[1])? == Ordering::Equal {
+            if matches!((pair[0].topology_vertex, pair[1].topology_vertex), (Some(first), Some(second)) if first != second)
+            {
+                return Err(invalid(CurveError::Topology(
+                    "equal polynomial cuts have distinct topology vertices".into(),
+                )));
+            }
+            continue;
+        }
+        let fragment = carrier
+            .geometry
+            .restrict_certified(
+                CurveParameterRange2::new_validated(
+                    pair[0].parameter.clone(),
+                    pair[1].parameter.clone(),
+                ),
+                Some([point(&pair[0])?, point(&pair[1])?]),
+                carrier.reversed,
+                policy,
+            )
+            .map_err(invalid)?;
+        let (start_topology_vertex, end_topology_vertex) = if carrier.reversed {
+            (pair[1].topology_vertex, pair[0].topology_vertex)
+        } else {
+            (pair[0].topology_vertex, pair[1].topology_vertex)
+        };
+        output.push(SplitCarrierFragment {
+            fragment,
+            start_topology_vertex,
+            end_topology_vertex,
+        });
+    }
+    if carrier.reversed {
+        output.reverse();
+    }
+    Ok(output)
 }
 
 fn split_carrier(
@@ -4887,7 +5017,7 @@ fn split_selected_fiber_carrier(
         CurveSupport2::Parallel(parallel) => {
             BezierSelectedFiberSource2::AnalyticParallel(parallel.clone())
         }
-        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) | CurveSupport2::Polynomial(_) => {
             return Err(CurveError::Topology(
                 "a selected-fiber boundary reached an incompatible carrier".into(),
             ));
@@ -8383,7 +8513,7 @@ fn fragment_range(
         }
         BezierSplitFragment2::AlgebraicChord(_)
         | BezierSplitFragment2::AlgebraicCuspSemicircle(_) => None,
-        BezierSplitFragment2::SelectedFiber(_) => None,
+        BezierSplitFragment2::SelectedFiber(_) | BezierSplitFragment2::Polynomial(_) => None,
     }
 }
 

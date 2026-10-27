@@ -21,6 +21,7 @@ pub(crate) enum CurveSupport2 {
     Parallel(BezierParallel2),
     Line(crate::BezierAlgebraicChord2),
     Circle(crate::BezierAlgebraicCuspSemicircleFragment2),
+    Polynomial(Box<crate::PolynomialCurveBranch2>),
 }
 
 fn subcurve_certified_outer_bounds(
@@ -120,6 +121,7 @@ impl CurveSupport2 {
     /// Borrows no region bookkeeping and retains the original support field.
     pub(crate) fn from_fragment(fragment: &BezierSplitFragment2) -> Self {
         match fragment {
+            BezierSplitFragment2::Polynomial(branch) => Self::Polynomial(branch.clone()),
             BezierSplitFragment2::Materialized { curve, .. }
             | BezierSplitFragment2::RetainedBezier {
                 source_curve: curve,
@@ -151,6 +153,37 @@ impl CurveSupport2 {
     /// analytic, line and circle ranges retain lazy endpoint evaluators;
     /// selected-fiber ranges require their certified point images. Traversal
     /// is applied after restriction without changing the source chart.
+    pub(crate) fn restrict_with_policy(
+        &self,
+        range: CurveParameterRange2,
+        endpoint_images: Option<[CurvePoint2; 2]>,
+        reversed: bool,
+        policy: &CurveContext,
+    ) -> crate::ExactCurveResult<BezierSplitFragment2> {
+        if let Self::Polynomial(branch) = self {
+            let mut restricted = match endpoint_images {
+                Some(points) => branch.restricted_with_certified_endpoints(range, points),
+                None => branch.restricted(range.start().clone(), range.end().clone(), policy)?,
+            };
+            if restricted.is_reversed() != reversed {
+                restricted = restricted.reversed();
+            }
+            return Ok(BezierSplitFragment2::Polynomial(Box::new(restricted)));
+        }
+        self.restrict_certified(range, endpoint_images, reversed, policy)
+            .map_err(|cause| {
+                crate::ExactCurveError::invalid(
+                    crate::CurveOperation2::Subdivision,
+                    self.family(),
+                    cause,
+                )
+            })
+    }
+
+    /// Restricts an already selected support without evaluating a new
+    /// polynomial fiber. Polynomial callers must provide both certified
+    /// endpoint images; callers needing their evaluation use
+    /// `restrict_with_policy` and preserve any resulting typed blocker.
     pub(crate) fn restrict_certified(
         &self,
         range: CurveParameterRange2,
@@ -158,6 +191,18 @@ impl CurveSupport2 {
         reversed: bool,
         policy: &CurveContext,
     ) -> CurveResult<BezierSplitFragment2> {
+        if let Self::Polynomial(branch) = self {
+            let points = endpoint_images.ok_or_else(|| {
+                CurveError::Topology(
+                    "a certified polynomial restriction requires its endpoint images".into(),
+                )
+            })?;
+            let mut restricted = branch.restricted_with_certified_endpoints(range, points);
+            if restricted.is_reversed() != reversed {
+                restricted = restricted.reversed();
+            }
+            return Ok(BezierSplitFragment2::Polynomial(Box::new(restricted)));
+        }
         let selected_source = match self {
             Self::Bezier(curve) if endpoint_images.is_some() => Some(
                 BezierSelectedFiberSource2::Rational(RationalBezier2::try_from_subcurve(curve)?),
@@ -181,6 +226,7 @@ impl CurveSupport2 {
             ))
         } else {
             match self {
+                Self::Polynomial(_) => unreachable!("polynomial restrictions are handled above"),
                 Self::Bezier(curve) => {
                     let (Some(start), Some(end)) = (
                         range.start().as_bezier_parameter(),
@@ -293,6 +339,7 @@ impl CurveSupport2 {
 
     pub(crate) const fn family(&self) -> CurveFamily2 {
         match self {
+            Self::Polynomial(_) => CurveFamily2::ImplicitPolynomial,
             Self::Bezier(curve) => subcurve_family(curve),
             Self::Line(_) => CurveFamily2::Line,
             Self::Parallel(_) | Self::Circle(_) => CurveFamily2::RationalBezier,
@@ -305,7 +352,7 @@ impl CurveSupport2 {
             Self::Parallel(_) => {
                 unreachable!("parallel/rational dispatch requires a Bezier carrier")
             }
-            Self::Line(_) | Self::Circle(_) => {
+            Self::Line(_) | Self::Circle(_) | Self::Polynomial(_) => {
                 unreachable!("cusp/rational dispatch requires a Bezier carrier")
             }
         }
@@ -317,7 +364,7 @@ impl CurveSupport2 {
             Self::Bezier(_) => {
                 unreachable!("analytic pair dispatch requires a parallel carrier")
             }
-            Self::Line(_) | Self::Circle(_) => {
+            Self::Line(_) | Self::Circle(_) | Self::Polynomial(_) => {
                 unreachable!("cusp/parallel dispatch requires a parallel carrier")
             }
         }
@@ -326,7 +373,7 @@ impl CurveSupport2 {
     pub(crate) fn circle(&self) -> &crate::BezierAlgebraicCuspSemicircleFragment2 {
         match self {
             Self::Circle(fragment) => fragment,
-            Self::Bezier(_) | Self::Parallel(_) | Self::Line(_) => {
+            Self::Bezier(_) | Self::Parallel(_) | Self::Line(_) | Self::Polynomial(_) => {
                 unreachable!("algebraic-cusp dispatch requires a cusp carrier")
             }
         }
@@ -338,6 +385,22 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::Point2>> {
         match self {
+            Self::Polynomial(branch) => {
+                let curve = crate::Curve2::from_polynomial_branch((**branch).clone());
+                Ok(
+                    match crate::ExactCurveError::classify_result(
+                        curve.point_at_with_policy(&parameter.clone().into(), policy),
+                    )? {
+                        Classification::Decided(point) => {
+                            point.into_value().coordinates().cloned().map_or(
+                                Classification::Uncertain(UncertaintyReason::Unsupported),
+                                Classification::Decided,
+                            )
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    },
+                )
+            }
             Self::Bezier(BezierSubcurve2::Rational(curve)) => {
                 Ok(curve.point_at_affine_classified(parameter, policy))
             }
@@ -365,6 +428,27 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveDerivative2>> {
         match self {
+            Self::Polynomial(branch) => {
+                let curve = crate::Curve2::from_polynomial_branch((**branch).clone());
+                Ok(
+                    match crate::ExactCurveError::classify_result(
+                        curve.derivative_at_with_policy(&parameter.clone().into(), policy),
+                    )? {
+                        Classification::Decided(vector) => {
+                            vector.into_value().represented_coordinates().map_or(
+                                Classification::Uncertain(UncertaintyReason::Unsupported),
+                                |(dx, dy)| {
+                                    Classification::Decided(CurveDerivative2::new(
+                                        dx.clone(),
+                                        dy.clone(),
+                                    ))
+                                },
+                            )
+                        }
+                        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                    },
+                )
+            }
             Self::Bezier(curve) => RationalBezier2::try_from_subcurve(curve)
                 .map(|curve| curve.derivative_at_affine_classified(parameter, policy)),
             Self::Parallel(parallel) => parallel.derivative_at_with_policy(parameter, policy),
@@ -388,6 +472,12 @@ impl CurveSupport2 {
         policy: &CurveContext,
     ) -> Classification<Aabb2> {
         match self {
+            Self::Polynomial(branch) => crate::ExactCurveError::classify_result(
+                crate::Curve2::from_polynomial_branch((**branch).clone())
+                    .bounds()
+                    .cloned(),
+            )
+            .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)),
             Self::Bezier(curve) => subcurve_certified_outer_bounds(curve, range, policy),
             Self::Parallel(parallel) => {
                 let unit = CurveParameterRange2::unit();
@@ -438,6 +528,17 @@ impl CurveSupport2 {
         range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> bool {
+        if let Self::Polynomial(branch) = self {
+            // A selected graph is injective in its source abscissa. Its
+            // admitted similarities are invertible; a general image map
+            // needs its own injectivity proof before suppressing self events.
+            return branch.rational_maps().is_empty()
+                && matches!(
+                    CurveParameterDomain2::new(branch.parameter_range(), None)
+                        .contains_finite_range(range, &policy.strict_counterpart()),
+                    Ok(Classification::Decided(true))
+                );
+        }
         if matches!(self, Self::Line(_) | Self::Circle(_)) {
             return true;
         }
@@ -459,7 +560,9 @@ impl CurveSupport2 {
                             if curve.has_certified_injective_axis(policy)
                     )
             }
-            Self::Line(_) | Self::Circle(_) => unreachable!("intrinsically injective support"),
+            Self::Line(_) | Self::Circle(_) | Self::Polynomial(_) => {
+                unreachable!("injectivity handled above")
+            }
         }
     }
 
@@ -474,6 +577,7 @@ impl CurveSupport2 {
             Self::Parallel(parallel) => parallel.exact_rational_parallel_component(policy),
             Self::Line(_) => Ok(Classification::Decided(None)),
             Self::Circle(_) => Ok(Classification::Decided(None)),
+            Self::Polynomial(_) => Ok(Classification::Decided(None)),
         }
     }
 }

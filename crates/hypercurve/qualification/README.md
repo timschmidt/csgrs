@@ -45,9 +45,9 @@ nothing about rows that were not run.
 
 The schema also reserves distinct outcomes for proved no solution,
 underconstrained input, undecided predicates and unbounded output. An outcome
-not present in the catalog has no new witness here. In particular, the
-polynomial frontier test retains a filled-region implementation gap alongside
-the original disjoint pair's completed incidence. Authored SVG
+not present in the catalog has no new witness here. The polynomial frontier test now preserves both the original disjoint pair
+and the unchanged H08 boundary as positive incidence/admission witnesses.
+Authored SVG
 round trips exercise eight authored families in one process; they do not cover
 generated definitions, fresh-process native replay or later modeling operations.
 Point-definition selector rejection is distinct from native archive replay.
@@ -89,8 +89,8 @@ exact. Retained splits and overlap restrictions are consumed by another
 intersection. A degree-37 graph checks continuation beyond the bounded
 resultant's ordinary degree schedule. Singular incidence may complete without
 a certified tangent sign; that is not singular differential completion.
-Different image transforms, broader coefficient domains and filled polynomial
-regions remain unqualified or explicitly blocked. Point-definition replay
+Those pair witnesses do not qualify different image transforms, broader
+coefficient domains or filled polynomial regions. Point-definition replay
 remains in memory, and the 300-second fixture allowance is external containment.
 
 The generated-line witnesses retain polynomial-fiber endpoints and chord-owned
@@ -130,6 +130,18 @@ nearby distinct points, changed transforms, output-to-input intersections and
 recovery after reached exhaustion. General rational image preimages and filled
 polynomial arrangements remain outside this increment. Checked point definitions
 here are in-memory replay, not fresh-process native archive qualification.
+
+Selected polynomial region witnesses now retain graph supports in the shared
+arrangement. They qualify the original H08 cap, native and selected point
+classification, all four Booleans, holes, disconnected components, reversal,
+similarity transport, exact contact-only empty results, `2^-80` separation,
+degree-five trims, open-curve clipping, mixed circular boundaries, cusp and node
+incidence, and output reconstruction followed by further operations. Independent
+equations and source/root/domain assertions accompany topology and set identities.
+Zero offset succeeds; nonzero offsets, corner edits and finite projection retain
+explicit implementation gaps. Reached exhaustion, larger retry and certainty
+transitions are separate claims. This does not establish the entire algebraic
+region domain, total resource bounds or fresh-process native replay.
 
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.

@@ -830,6 +830,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             split_fragment_is_affine_line(&split.fragment)
                         }
                         BezierSplitFragment2::RetainedBezier { .. }
+                        | BezierSplitFragment2::Polynomial(_)
                         | BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                         | BezierSplitFragment2::SelectedFiber(_) => false,
@@ -1018,6 +1019,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             chord.exact_line().map(|line| line.point_at(half.clone()))
                         }
                         BezierSplitFragment2::Materialized { .. }
+                        | BezierSplitFragment2::Polynomial(_)
                         | BezierSplitFragment2::RetainedBezier { .. }
                         | BezierSplitFragment2::AnalyticParallel(_)
                         | BezierSplitFragment2::SelectedFiber(_)
@@ -1396,6 +1398,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         BezierSplitFragment2::Materialized { .. }
                         | BezierSplitFragment2::RetainedBezier { .. } => 3,
                         BezierSplitFragment2::AnalyticParallel(_)
+                        | BezierSplitFragment2::Polynomial(_)
                         | BezierSplitFragment2::SelectedFiber(_) => 4,
                     };
                     (rank, carrier_index, split_index)
@@ -1702,8 +1705,30 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 has_single_boundary_jump,
             );
         }
+        if let BezierSplitFragment2::Polynomial(branch) = fragment {
+            let range = branch.parameter_range();
+            let parameter = match range
+                .start()
+                .strict_scalar_between_ordered(range.end(), &self.data.policy)
+                .map_err(|cause| self.invalid(carrier_index, cause))?
+            {
+                Classification::Decided(parameter) => CurveParameter2::from(parameter),
+                Classification::Uncertain(reason) => {
+                    return Err(self.blocked(carrier_index, reason));
+                }
+            };
+            let representative = Curve2::from_polynomial_branch((**branch).clone())
+                .point_at_with_policy(&parameter, &self.data.policy)?
+                .into_value();
+            return self.regularized_fragment_decision_by_boundary_probe(
+                carrier_index,
+                representative,
+                Some(&parameter),
+            );
+        }
         let carrier = &self.data.carriers[carrier_index];
         let max_representatives = match &carrier.geometry {
+            CurveSupport2::Polynomial(_) => 4,
             CurveSupport2::Bezier(
                 BezierSubcurve2::Quadratic(_) | BezierSubcurve2::RationalQuadratic(_),
             ) => 4,
@@ -1736,9 +1761,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         } else {
             match &carrier.geometry {
                 CurveSupport2::Bezier(curve) => RationalBezier2::try_from_subcurve(curve).ok(),
-                CurveSupport2::Parallel(_) | CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
-                    None
-                }
+                CurveSupport2::Parallel(_)
+                | CurveSupport2::Line(_)
+                | CurveSupport2::Circle(_)
+                | CurveSupport2::Polynomial(_) => None,
             }
         };
         let isolator_touches =
@@ -1823,7 +1849,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         CurveSupport2::Bezier(_)
                         | CurveSupport2::Parallel(_)
                         | CurveSupport2::Line(_)
-                        | CurveSupport2::Circle(_) => None,
+                        | CurveSupport2::Circle(_)
+                        | CurveSupport2::Polynomial(_) => None,
                     });
                 let representative = match retained_endpoint {
                     Some(point) => point,
@@ -1923,8 +1950,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 left, right,
             ));
         }
-        if last_reason == UncertaintyReason::Boundary
-            && let Some((representative, parameter)) = boundary_probe_representative
+        if matches!(
+            last_reason,
+            UncertaintyReason::Boundary | UncertaintyReason::Unsupported
+        ) && let Some((representative, parameter)) = boundary_probe_representative
         {
             return self.regularized_fragment_decision_by_boundary_probe(
                 carrier_index,
@@ -2389,7 +2418,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 CurveSupport2::Line(source) => source,
                 CurveSupport2::Bezier(_)
                 | CurveSupport2::Parallel(_)
-                | CurveSupport2::Circle(_) => chord,
+                | CurveSupport2::Circle(_)
+                | CurveSupport2::Polynomial(_) => chord,
             };
             // `chord` is an ordered nonempty split of `source_chord`, and its
             // representative is strictly interior to that split.  This
@@ -2413,7 +2443,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let left = match classify(true) {
                 Ok(classification) => classification,
                 Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() == UncertaintyReason::Boundary =>
+                    if matches!(
+                        blocker.reason(),
+                        UncertaintyReason::Boundary | UncertaintyReason::Unsupported
+                    ) =>
                 {
                     return self.regularized_fragment_decision_by_boundary_probe(
                         carrier_index,
@@ -2428,7 +2461,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 None => match classify(false) {
                     Ok(classification) => classification,
                     Err(ExactCurveError::Blocked(blocker))
-                        if blocker.reason() == UncertaintyReason::Boundary =>
+                        if matches!(
+                            blocker.reason(),
+                            UncertaintyReason::Boundary | UncertaintyReason::Unsupported
+                        ) =>
                     {
                         return self.regularized_fragment_decision_by_boundary_probe(
                             carrier_index,
@@ -2471,7 +2507,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let left = match classify(true) {
             Ok(classification) => classification,
             Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::Boundary =>
+                if matches!(
+                    blocker.reason(),
+                    UncertaintyReason::Boundary | UncertaintyReason::Unsupported
+                ) =>
             {
                 return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
@@ -2486,7 +2525,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             None => match classify(false) {
                 Ok(classification) => classification,
                 Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() == UncertaintyReason::Boundary =>
+                    if matches!(
+                        blocker.reason(),
+                        UncertaintyReason::Boundary | UncertaintyReason::Unsupported
+                    ) =>
                 {
                     return self.regularized_fragment_decision_by_boundary_probe(
                         carrier_index,

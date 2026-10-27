@@ -833,6 +833,7 @@ fn project_curve_region_loop_to_curve_path(
     let mut subcurves = Vec::with_capacity(fragments.len());
     for fragment in fragments {
         let curve = match fragment {
+            BezierSplitFragment2::Polynomial(_) => return Ok(None),
             BezierSplitFragment2::Materialized { curve, .. } => Piece::Bezier(curve.clone()),
             BezierSplitFragment2::RetainedBezier {
                 reversed,
@@ -1038,6 +1039,11 @@ fn append_curve_fragment_samples(
     policy: &CurveContext,
 ) -> CurveResult<()> {
     match fragment {
+        BezierSplitFragment2::Polynomial(_) => {
+            return Err(CurveError::UnsupportedFiniteCurveProjection {
+                family: crate::CurveFamily2::ImplicitPolynomial,
+            });
+        }
         BezierSplitFragment2::Materialized { curve, .. } => {
             append_bezier_subcurve_samples(points, curve, options, policy, 0)?;
         }

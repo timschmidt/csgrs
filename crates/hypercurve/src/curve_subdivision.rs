@@ -58,6 +58,13 @@ impl CurveSourceSpan2 {
         let support = CurveSupport2::from_fragment(&self.fragment);
         let family = support.family();
         let result = match &support {
+            CurveSupport2::Polynomial(branch) => {
+                if branch.rational_maps().is_empty() {
+                    Classification::Decided(None)
+                } else {
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                }
+            }
             CurveSupport2::Bezier(curve) => curve
                 .point_image(policy)
                 .map(|point| point.map(CurvePoint2::from)),
@@ -307,6 +314,14 @@ impl Curve2 {
         policy: &CurveContext,
         operation: CurveOperation2,
     ) -> ExactCurveResult<std::borrow::Cow<'_, [CurveSourceSpan2]>> {
+        if let Some(branch) = self.polynomial_branch() {
+            return Ok(std::borrow::Cow::Owned(vec![CurveSourceSpan2 {
+                fragment: BezierSplitFragment2::Polynomial(Box::new(branch.clone())),
+                source_scale: Real::one(),
+                source_offset: Real::zero(),
+                native_lineage: None,
+            }]));
+        }
         if let Some(spans) = self.restricted_source_spans(policy, operation)? {
             return Ok(std::borrow::Cow::Borrowed(spans));
         }

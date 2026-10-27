@@ -2914,6 +2914,10 @@ impl Curve2 {
                 fragment => {
                     let range = fragment.curve_region_parameter_range();
                     match crate::curve_support::CurveSupport2::from_fragment(fragment) {
+                        crate::curve_support::CurveSupport2::Polynomial(branch) => branch
+                            .point_parameter(&query, policy)?
+                            .into_iter()
+                            .collect(),
                         crate::curve_support::CurveSupport2::Bezier(curve) => {
                             let rational =
                                 RationalBezier2::try_from_subcurve(&curve).map_err(invalid)?;

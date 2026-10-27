@@ -75,8 +75,15 @@ struct PolynomialCurveSource2 {
 /// Common components retain monotone abscissa correspondences in the original
 /// local span charts. Poles, selected parameters and strict predicates retain
 /// their existing guards and limits. General constant-abscissa/collapsed traces,
-/// other image maps, singular differential limits, rational Bézier promotion
-/// of the polynomial branch, and filled arrangements retain typed blockers.
+/// other image maps, singular differential limits and rational Bézier promotion
+/// of the polynomial branch retain typed blockers.
+/// Closed graph boundaries also enter [`crate::CurveRegion2`]'s shared
+/// arrangement, retaining these same supports through classification,
+/// Booleans, reconstruction and supported similarities. Those operations
+/// still require complete pair incidence and exact selected-field decisions;
+/// this carrier does not establish general implicit-region closure. Nonzero
+/// offsets, corner edits and finite projection of polynomial supports remain
+/// unsupported.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -281,6 +288,10 @@ impl PolynomialCurveBranch2 {
     /// Whether traversal runs from the upper to the lower source parameter.
     pub const fn is_reversed(&self) -> bool {
         self.reversed
+    }
+
+    pub(crate) fn parameter_range(&self) -> &CurveParameterRange2 {
+        &self.range
     }
 
     /// Complete source graph, shared by all restrictions and images.
@@ -922,7 +933,7 @@ impl PolynomialCurveBranch2 {
         })
     }
 
-    pub(super) fn reversed(&self) -> Self {
+    pub(crate) fn reversed(&self) -> Self {
         let mut result = self.clone();
         result.reversed = !result.reversed;
         result
@@ -945,7 +956,21 @@ impl PolynomialCurveBranch2 {
         result
     }
 
-    pub(super) fn restricted(
+    /// Restricts a source whose range order, containment and endpoint incidence
+    /// have already been certified by the arrangement. Preserve those points
+    /// instead of reconstructing their selected fibers.
+    pub(crate) fn restricted_with_certified_endpoints(
+        &self,
+        range: CurveParameterRange2,
+        endpoints: [CurvePoint2; 2],
+    ) -> Self {
+        let mut result = self.clone();
+        result.range = range;
+        result.endpoints = endpoints;
+        result
+    }
+
+    pub(crate) fn restricted(
         &self,
         start: CurveParameter2,
         end: CurveParameter2,
@@ -1018,7 +1043,7 @@ impl Curve2 {
         }
     }
 
-    pub(super) fn from_polynomial_branch(branch: PolynomialCurveBranch2) -> Self {
+    pub(crate) fn from_polynomial_branch(branch: PolynomialCurveBranch2) -> Self {
         Self {
             data: Arc::new(CurveData2 {
                 carrier: CurveCarrier2::Polynomial(Box::new(branch)),

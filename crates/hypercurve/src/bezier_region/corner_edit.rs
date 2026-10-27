@@ -1633,7 +1633,7 @@ pub(super) fn retain_corner_extension_interval(
     let source = match &support {
         CurveSupport2::Bezier(curve) => RationalBezier2::try_from_subcurve(curve),
         CurveSupport2::Parallel(parallel) => parallel.source().to_rational_bezier(),
-        CurveSupport2::Line(_) | CurveSupport2::Circle(_) => {
+        CurveSupport2::Line(_) | CurveSupport2::Circle(_) | CurveSupport2::Polynomial(_) => {
             return Err(ExactCurveError::blocked(
                 operation,
                 support.family(),

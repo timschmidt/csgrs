@@ -612,9 +612,12 @@ also retain finite contacts and common components in a shared source chart or
 equal rational similarity image. Singular tangent signs may remain unclassified.
 Generated chords additionally retain certified support views and point-based
 parameters for native supports, constant-abscissa charts and proved constant
-selected components. Other algebraic similarities, different pair images,
-nonlinear maps, general unrelated selected chord supports and filled polynomial
-arrangements remain implementation gaps.
+selected components. Selected graph boundaries also retain these supports in
+the shared region arrangement. The bounded region witnesses cover exact
+classification, Booleans, reconstruction, open clipping, rational similarities,
+mixed circular boundaries and cusp/node incidence. Broader algebraic
+similarities, different pair images, nonlinear maps, general unrelated selected
+chord supports and completion of the full algebraic region domain remain gaps.
 
 **Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
 the original translated quintic fixture reproduced `Unsupported`. Pulling the
@@ -974,6 +977,68 @@ remain open. Counted work and external timeouts do not bound all arithmetic,
 coefficient growth, retained memory or cancellation. No performance improvement
 is claimed. Full repository pre-push qualification remains pending.
 
+**Polynomial shared-region increment (2026-10-27).** The unchanged H08
+parabola boundary first reproduced `Construction/ImplicitPolynomial/Unsupported`
+for orientation and admission. Its selected branches now remain supporting
+fragments in the existing `CurveRegion2` arrangement. P12–P13, P15 and P17–P20
+require the original equation, ordered root, exact domain, traversal and contact
+points to survive splitting and publication. A Boolean introduces no new supports.
+No rational fit or alternate region authority is introduced.
+
+**API migration:** `CurveError` gains
+`UnsupportedFiniteCurveProjection { family }`. External exhaustive Rust
+matches must add this arm or an appropriate catch-all, preserving an unsupported
+family outcome and returning no sampled geometry. Exact-operation adapters map
+it to `ExactCurveError::Blocked` with `UncertaintyReason::Unsupported` and the
+affected family. This is a breaking Rust API addition for exhaustive matches
+and requires appropriate package release versioning; package publication is
+not part of this increment.
+
+Initial carrier admission still produced two loops instead of one for a clip.
+The retained original fixture now passes through the existing exact boundary
+probe. Selected point incidence is reused before unrelated probes; polynomial
+fragment classification retains its exact interior point. The same authority
+handles reconstructed path points and open authored/generated clipping. The
+original second quintic cut at `x=3/4` is retained with its correct five-piece
+expectation (`f(3/4)=-461/1024`), followed by a cut at `7/8` yielding four pieces
+(`f(7/8)=21415/32768`). This corrects the test oracle without dropping the case.
+
+Sixteen new public witnesses and the promoted original H08 fixture cover exact
+point and path classification, all four Booleans, holes and reversal under both
+fill rules, disconnected material, rational similarities, regularized empty
+contact, `2^-80` separation, degree-five selected trims, checked point replay,
+reconstruction and further operation, mixed circular supports, open clipping,
+cusp and node incidence, zero offset, and actually reached budget exhaustion
+with a larger retry. STRICT/APPROXIMATE_512/STRICT receipts remain Certified.
+Independent equations, source/root/domain assertions and topology accompany the
+set identities; sampled membership alone is not the oracle.
+
+The first complete suite exposed one existing error-contract regression:
+an unsupported polynomial pair returned a partial result instead of its prior
+typed error after region-carrier admission. The generic support fallback now
+preserves that representation failure. The original assertion remains unchanged,
+and the failed full-suite output is retained with the other attempts.
+
+Final checks on `5de7f0cb05` plus the frozen increment pass: 2,754 Hypercurve
+tests (81 suites, 34 existing ignored), 43 root downstream tests and 3,009
+tests across six dependent packages (0 existing ignored). Strict Hypercurve
+all-target/all-feature MSRV Clippy, formatting, 16 matrix guards, 107 capability
+witnesses, typos, repository budget and diff checks pass. All earlier failed
+attempts, diagnostic sources and the interrupted prototype are retained. Raw
+evidence is in `docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions`, SHA-256
+`6f2a9bdaf22a1b19e14126ff46325060a0532769608178d363979ea008f51c9b`. All non-receipt bytes remain identical after adding this record.
+
+This is bounded A3 progress. Arbitrary coefficient fields, general image maps,
+vertical/repeated components and every singular local sector remain open.
+Nonzero polynomial-support offsets, fillets, chamfers and finite projection
+still return typed Unsupported; those guard tests do not count as geometric
+completion. Checked point definitions do not establish fresh-process native
+replay or full BRep trim support. Counted work and external timeouts do not bound
+all arithmetic, coefficient growth, retained memory or cancellation. No
+performance improvement is claimed. The separate publication candidate through
+`b1c011a070` excludes this increment; full repository pre-push qualification is
+still required before publishing it.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
@@ -998,15 +1063,15 @@ is claimed. Full repository pre-push qualification remains pending.
   world-x monotonicity. Further pair images and selected coefficient fields
   require their own source-domain and incidence proofs.
 - **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
-- **Filled regions and BRep trims (H08).** `CurveRegion2` construction and
-  `CurvePath2::simple_loop_orientation` with polynomial boundary pieces return
-  `Blocked(Construction, ImplicitPolynomial, Unsupported)`; a test records
-  this. Source-span and boundary ownership, pair incidence, point location,
-  local sectors and BRep consumers must all retain the graph, selector and
-  domain. Compare the chart-qualified views and shared incidence of H01–H04
-  with narrow family services; they are exploratory alternatives, not required
-  predecessors. The 25 October handoff stages actual pair/component capability
-  in R05–R07 and explicitly permits advanced API prototypes.
+- **Complete implicit regions and BRep trims (H08).** The unchanged H08 cap
+  now passes loop orientation and shared `CurveRegion2` admission. The bounded
+  region corpus exercises retained graph supports, holes, disconnected and
+  touching material, mixed circles, exact trims and later operations. This
+  does not complete arbitrary implicit branches, coefficient fields, singular
+  sectors, image maps or BRep trimming. Nonzero polynomial-support offsets,
+  corner edits, finite projection and fresh-process native replay still need
+  their own acceptance work. Source/root/domain and contact evidence must
+  remain available throughout those extensions.
 
 ## 9. Selected-root comparison, fillet centres and tangent events (2026-10-23)
 

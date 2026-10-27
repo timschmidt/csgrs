@@ -9050,6 +9050,7 @@ fn pair_native_boolean_corner_publishes_a_third_generation_fillet() {
                             }
                             BezierSplitFragment2::AlgebraicCuspSemicircle(_) => "circle",
                             BezierSplitFragment2::SelectedFiber(_) => "selected-fiber",
+                            BezierSplitFragment2::Polynomial(_) => "polynomial",
                         })
                         .collect::<Vec<_>>()
                 })

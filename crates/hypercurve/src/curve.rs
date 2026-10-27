@@ -814,6 +814,7 @@ impl Curve2 {
                 BezierSubcurve2::Rational(_) => CurveFamily2::RationalBezier,
             },
             crate::BezierSplitFragment2::AnalyticParallel(_) => CurveFamily2::AnalyticParallel,
+            crate::BezierSplitFragment2::Polynomial(_) => CurveFamily2::ImplicitPolynomial,
             crate::BezierSplitFragment2::AlgebraicChord(_) => CurveFamily2::Line,
             crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_) => CurveFamily2::CircularArc,
             crate::BezierSplitFragment2::SelectedFiber(fragment) => {
@@ -886,6 +887,9 @@ impl Curve2 {
     }
 
     pub(crate) fn from_retained_fragment(fragment: crate::BezierSplitFragment2) -> Self {
+        if let crate::BezierSplitFragment2::Polynomial(branch) = fragment {
+            return Self::from_polynomial_branch(*branch);
+        }
         if let crate::BezierSplitFragment2::Materialized { curve, .. } = fragment {
             // Region topology carries straight pieces as degree-elevated
             // quadratics. With a midpoint control the quadratic chart is the
@@ -2962,7 +2966,12 @@ impl CurvePath2 {
     ) -> ExactCurveResult<CurveOutcome<Classification<ContourPointLocation>>> {
         resolve_certified_operation(policy, |attempt| {
             if let Some(coordinates) = point.coordinates() {
-                return self.classify_point_raw(coordinates, attempt);
+                match self.classify_point_raw(coordinates, attempt)? {
+                    Classification::Uncertain(
+                        crate::UncertaintyReason::Unsupported | crate::UncertaintyReason::Boundary,
+                    ) => {}
+                    outcome => return Ok(outcome),
+                }
             }
             // A path retains its trace, including zero-area retracing. Use its
             // raw loop and parity semantics; region regularization could erase it.
@@ -5023,7 +5032,13 @@ pub(crate) fn exact_corner_carrier<'a>(
     let bezier = || ExactCornerCarrier2::Bezier(curve);
     Ok(match curve.geometry() {
         None => {
-            let fragment = curve.retained_fragment().expect("restricted carrier");
+            let Some(fragment) = curve.retained_fragment() else {
+                return Err(ExactCurveError::blocked(
+                    operation,
+                    curve.family(),
+                    crate::UncertaintyReason::Unsupported,
+                ));
+            };
             if let Some(arc) =
                 RetainedRationalCornerArc2::from_fragment(fragment, operation, policy)?
             {
@@ -5043,7 +5058,8 @@ pub(crate) fn exact_corner_carrier<'a>(
                     Some(ExactCornerCarrier2::SelectedFiber(fragment))
                 }
                 crate::BezierSplitFragment2::RetainedBezier { .. }
-                | crate::BezierSplitFragment2::Materialized { .. } => None,
+                | crate::BezierSplitFragment2::Materialized { .. }
+                | crate::BezierSplitFragment2::Polynomial(_) => None,
             }
         }
         Some(CurveGeometry2::CircularArc(arc)) => Some(ExactCornerCarrier2::Arc(arc)),
