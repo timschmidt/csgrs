@@ -56,8 +56,8 @@ fn vertical_tangent_and_cusp_events_are_not_transverse() {
 }
 
 #[test]
-fn unadmitted_polynomial_pairs_keep_typed_blockers() {
-    sections::unadmitted_polynomial_pairs_keep_typed_blockers();
+fn polynomial_pair_sections_and_region_blockers() {
+    sections::polynomial_pair_sections_and_region_blockers();
 }
 
 #[test]

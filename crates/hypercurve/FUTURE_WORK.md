@@ -607,9 +607,11 @@ query; selected algebraic trims, reversal, tangent contacts and singular-event
 contacts retain their meanings. A selected common line keeps its overlap
 correspondence, while other branches retain their finite contacts with that
 line. The recorded scalar and selected-field decisions must succeed exactly;
-unresolved predicates retain their typed blockers. Other algebraic similarities,
-nonlinear maps, selected chord carriers, branch pairs and filled polynomial
-arrangements remain implementation gaps.
+unresolved predicates retain their typed blockers. Selected polynomial pairs
+also retain finite contacts and common components in a shared source chart or
+equal rational similarity image. Singular tangent signs may remain unclassified.
+Other algebraic similarities, different pair images, nonlinear maps, selected
+chord carriers and filled polynomial arrangements remain implementation gaps.
 
 **Rational-similarity section increment (2026-10-26).** Against `b1af6465b3`,
 the original translated quintic fixture reproduced `Unsupported`. Pulling the
@@ -740,6 +742,56 @@ A2, general polynomial operations or fresh-process native archive replay. No
 performance improvement is claimed. Full repository pre-push qualification
 for this increment remains pending.
 
+**Polynomial-pair incidence increment (2026-10-26).** At `fd1313a23a9`,
+three original pair witnesses reproduce `Unsupported`. The original positive
+parabola/quintic frontier remains intact as a successful empty result in both
+operand orders and APIs. Selected graph branches now intersect in a shared
+source chart or equal rational similarity image. Existing Hypersolve complete
+resultants propose abscissas; both original selected fibers decide incidence.
+Common factors retain selected overlap correspondences, residual roots and
+mixed-component contacts at original slab boundaries. Original source equations,
+root selections and active trim parameters remain authoritative.
+
+P15 and P17–P20 govern this extension. A same-root sample establishes overlap
+only on the checked event-free source slabs. Correspondence uses the original
+source abscissa chart, including negative and nonunit ranges. The first
+prototype incorrectly clipped a negative overlap to empty with a unit chart;
+that failure and its exact regression are retained. Shared similarities are
+compared by rational coefficient value, and cross signs account for determinant
+orientation, traversal and operand order. Singular incidence may complete with
+an absent tangent sign; a vanishing gradient is never published as tangency.
+The mixed contact at `(1/2,1/2)` exposed the independently qualified selected-
+fiber ordering defect recorded above.
+
+Nine public witnesses cover the original cases, common nonlinear and linear
+components, residual and mixed contacts, algebraic trims, exact negative-range
+correspondences, tangent and singular contacts, distinct `2^-100` supports,
+shared rational transforms, actual reached counted exhaustion and retry, policy
+changes, in-memory point replay and split/requery. A regular `y=x^37` section
+explicitly exceeds the ordinary bounded resultant degree schedule, then
+completes through the existing continuation. This one degree-37 case is not an
+arbitrary-degree completion proof. Different image transforms retain their
+explicit `Unsupported` control; filled polynomial region admission remains
+blocked in the unchanged original fixture.
+
+The final release suite passes 2,690 tests (76 suites, 34 existing ignored),
+all 43 root downstream tests and 3,009 tests across six direct dependent
+packages (0 existing ignored). Strict all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, all 46 capability witnesses, typos, repository
+budget and diff checks pass. Qualification used `fd1313a23a9` plus the frozen
+selected-fiber prerequisite and pair inputs; non-receipt source bytes were
+verified unchanged when advancing the commit parent to `f0fa18b7b8`.
+Raw failures, source snapshots and commands are retained in
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-pairs`, digest
+`3a1cc48424006b37ad2c2be99587216ef49b9d48e0db8acd31fcdea986ef7b13`.
+
+A2, general algebraic closure, broader coefficient fields and images, repeated
+or vertical topology components, filled polynomial operations and fresh-process
+native replay remain open. Counted refinements/promotions and external fixture
+timeouts are not total-work, memory or cancellation bounds. No performance
+improvement is claimed. Full repository pre-push qualification for this
+increment remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
@@ -748,9 +800,10 @@ for this increment remains pending.
   rows and measurements remain in [the experiment record](PERFORMANCE.md#shared-polynomial-cut-points-r05).
   Passing the original intersection contact's authority into subdivision
   remains a distinct experiment.
-- **Broader common components.** The qualified native-line components are admitted
-  above. Common nonlinear components and polynomial branch pairs still need
-  selected overlap correspondences and their remaining finite contacts.
+- **Broader common components.** Qualified polynomial pairs now retain selected
+  common nonlinear supports and residual/mixed contacts in a shared source or
+  rational similarity chart. Different images, broader coefficient fields and
+  repeated/vertical topology components still need their own acceptance work.
 - **Horizontal-line replay.** On a horizontal line the line parameter is the
   branch abscissa's own root, so a returned line piece's endpoint is a line
   point that is proved equal to, not stored as, the branch point. A
@@ -760,8 +813,8 @@ for this increment remains pending.
   similarity pullback and the recorded algebraic native lines are admitted
   above. Selected chord carriers, general algebraic similarities and nonlinear rational images still need
   their own section and source-domain proof; source-x monotonicity is not
-  world-x monotonicity. Branch pairs need resultant events and exact fiber
-  signs.
+  world-x monotonicity. Further pair images and selected coefficient fields
+  require their own source-domain and incidence proofs.
 - **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
 - **Filled regions and BRep trims (H08).** `CurveRegion2` construction and
   `CurvePath2::simple_loop_orientation` with polynomial boundary pieces return

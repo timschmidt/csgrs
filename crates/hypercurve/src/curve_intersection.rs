@@ -2,6 +2,8 @@
 
 #[path = "curve_support_intersection.rs"]
 mod curve_support_intersection;
+#[path = "polynomial_curve_pair.rs"]
+mod polynomial_curve_pair;
 #[path = "polynomial_curve_section.rs"]
 mod polynomial_curve_section;
 
@@ -2348,7 +2350,10 @@ impl CurveIntersectionContext {
             let result =
                 match polynomial_curve_section::polynomial_line_section(first, second, policy)? {
                     Some(result) => result,
-                    None => curve_support_intersection::intersect(first, second, policy, None)?,
+                    None => match polynomial_curve_pair::intersect(first, second, policy)? {
+                        Some(result) => result,
+                        None => curve_support_intersection::intersect(first, second, policy, None)?,
+                    },
                 };
             return Ok(Self {
                 data: CurveIntersectionContextData {

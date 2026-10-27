@@ -1090,30 +1090,26 @@ pub fn mapped_sections_survive_budget_retry_and_policy_changes() {
     }
 }
 
-pub fn unadmitted_polynomial_pairs_keep_typed_blockers() {
+pub fn polynomial_pair_sections_and_region_blockers() {
     let quintic = set(QUINTIC);
     let curve = &quintic.curves()[0];
-    let unsupported = |first: &Curve2, second: &Curve2| {
-        for (a, b) in [(first, second), (second, first)] {
-            for error in [
-                a.intersect_curve(b).unwrap_err(),
-                a.intersection_topology(b).unwrap_err(),
-            ] {
-                assert!(
-                    matches!(&error, ExactCurveError::Blocked(blocker) if blocker.reason() == UncertaintyReason::Unsupported),
-                    "{error:?}"
-                );
-            }
-        }
-    };
     // The unchanged irrational vertical and sloped lines are positive
     // witnesses in polynomial_algebraic_lines: respectively one selected
     // contact and a proved empty intersection.
     // The original rational translation case is now a positive witness in
     // mapped_quintic_line_sections_keep_source_parameters, with the same input.
-    // Two polynomial branches.
+    // Retain the original positive parabola branch: it is disjoint from
+    // this quintic's negative y branch, in both operand orders and APIs.
     let parabola = set(PARABOLA);
-    unsupported(curve, &parabola.curves()[1]);
+    for (a, b) in [
+        (curve, &parabola.curves()[1]),
+        (&parabola.curves()[1], curve),
+    ] {
+        assert!(a.intersect_curve(b).unwrap().is_disjoint());
+        let topology = a.intersection_topology(b).unwrap();
+        assert!(topology.result().is_disjoint());
+        assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+    }
     // Filled regions do not yet carry polynomial supports (H08). A closed
     // path of two branch pieces and a vertical line is still a typed blocker.
     let range = CurveParameterRange2::try_new(Real::zero().into(), q(1, 4).into()).unwrap();

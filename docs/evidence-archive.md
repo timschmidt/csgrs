@@ -85,6 +85,23 @@ in this repository.
 
 ## Follow-on records
 
+The separate local `hypercurve-polynomial-pair-evidence-2026-10-26` branch
+ends at `aefddcc9b36a3efee20293d37f39e98606c2d6c2`, adding
+`docs/evidence/2026-10-26-hypercurve-closure-polynomial-pairs` (165 files,
+3,871,244 bytes), SHA-256
+`3a1cc48424006b37ad2c2be99587216ef49b9d48e0db8acd31fcdea986ef7b13`.
+It records selected polynomial-pair incidence and exact source correspondence:
+2,690 Hypercurve tests, 43 root downstream tests, 3,009 tests across six
+direct dependent packages, strict MSRV Clippy, formatting, 16 matrix guards and
+46 capability witnesses pass. The original blockers, mixed-contact scalar
+failure, incorrect negative-range prototype, shared rational transforms,
+degree-37 continuation and exact source attribution are retained. Qualification
+used `fd1313a23a9` plus the frozen predicate and pair inputs; their bytes were
+preserved when advancing the parent to `f0fa18b7b8`. Broader images, filled
+polynomial regions, general coefficient fields and fresh-process native replay
+remain open. The record is local and unpushed; full repository pre-push
+qualification for this increment remains pending.
+
 The separate local `hypercurve-fiber-order-evidence-2026-10-26` branch
 ends at `1761ca45750dd215a45dd150e08393a8b50c64ac`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-fiber-order` (116 files,

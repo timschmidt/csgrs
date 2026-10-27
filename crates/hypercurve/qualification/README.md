@@ -46,7 +46,8 @@ nothing about rows that were not run.
 The schema also reserves distinct outcomes for proved no solution,
 underconstrained input, undecided predicates and unbounded output. An outcome
 not present in the catalog has no new witness here. In particular, the
-polynomial frontier test passing records an implementation gap. Authored SVG
+polynomial frontier test retains a filled-region implementation gap alongside
+the original disjoint pair's completed incidence. Authored SVG
 round trips exercise eight authored families in one process; they do not cover
 generated definitions, fresh-process native replay or later modeling operations.
 Point-definition selector rejection is distinct from native archive replay.
@@ -79,6 +80,18 @@ attempt must permit a larger retry. These are selected-point and scalar
 evidence checks, with in-memory replay only.
 Related unit witnesses preserve repeated supports and verify that a
 base-independent root relation never discards a query's actual base dependency.
+
+The polynomial-pair witnesses qualify selected graph branches in a common
+source chart, including equal rational similarities. Original quintic/parabola
+inputs, common components, mixed and residual contacts, algebraic trims,
+negative parameter ranges, tangencies and distinct nearby supports remain
+exact. Retained splits and overlap restrictions are consumed by another
+intersection. A degree-37 graph checks continuation beyond the bounded
+resultant's ordinary degree schedule. Singular incidence may complete without
+a certified tangent sign; that is not singular differential completion.
+Different image transforms, broader coefficient domains and filled polynomial
+regions remain unqualified or explicitly blocked. Point-definition replay
+remains in memory, and the 300-second fixture allowance is external containment.
 
 The driver obtains executables from Cargo's artifact messages, checks exact
 registration and ignored status, and requires one successful test summary.

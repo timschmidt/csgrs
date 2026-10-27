@@ -1369,7 +1369,7 @@
     {
       "id": "implicit_frontier",
       "target": "polynomial_curves",
-      "test": "unadmitted_polynomial_pairs_keep_typed_blockers",
+      "test": "polynomial_pair_sections_and_region_blockers",
       "owner": "Hypercurve polynomial incidence and region arrangement",
       "properties": [
         "P12",
@@ -1379,7 +1379,7 @@
         "P19",
         "P20"
       ],
-      "domain": "A quintic versus a polynomial branch pair, and a closed parabola-branch boundary. The original irrational-coordinate native lines are retained as positive witnesses in polynomial_algebraic_lines.",
+      "domain": "The original negative quintic and positive parabola branches, and the unchanged closed parabola-branch region boundary. Original irrational native lines and rational translations remain positive witnesses elsewhere.",
       "origins": [
         "authored",
         "selected_implicit"
@@ -1391,12 +1391,12 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "A passing frontier test records implementation gaps; it is not completed algebraic incidence or region support.",
+      "semantics": "Selected source-plane incidence completes for the original disjoint pair. Polynomial filled-region admission remains an implementation gap; passing the blocker does not complete region support.",
       "claims": [
         {
           "stage": "incidence_order",
-          "outcome": "unsupported",
-          "assertion": "Both operand orders reject the polynomial branch pair with Unsupported."
+          "outcome": "successful_empty",
+          "assertion": "Both operand orders and intersection APIs return a complete empty result for the original quintic/positive-parabola pair; neither operand splits."
         },
         {
           "stage": "region_admission",
@@ -1404,7 +1404,7 @@
           "assertion": "Simple polynomial boundary orientation and CurveRegion2 admission return Unsupported."
         }
       ],
-      "oracle": "Public ExactCurveError::Blocked reasons are explicitly matched to Unsupported.",
+      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the unchanged filled-region errors are explicitly checked as Unsupported.",
       "timeout_seconds": 300
     },
     {
@@ -1687,6 +1687,392 @@
         }
       ],
       "oracle": "Actual reached budget counters and exact equality after retry; counted work does not bound total arithmetic, coefficient growth, memory or cancellation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_finite",
+      "target": "polynomial_curve_pairs",
+      "test": "original_quintic_parabola_pair_splits_and_requeries",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original F=y^5+5y+5-x and G=y^2-x graph branches in rational source boxes, with reversal and both operand orders.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The negative parabola branch gives one exact selected contact with ordered source parameters and certified cross sign."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The unchanged positive parabola branch is disjoint."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both operands split into two retained pieces; selected pieces reintersect without further splitting."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The contact definition replays in memory with the same selected point."
+        }
+      ],
+      "oracle": "Independent defining equations, 3/5<x<7/10, y<0 and x^5+10x^3-x^2+35x-25=0 select the contact. No sampled fit or rounded coordinate is authoritative.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_components",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pair_components_keep_branch_selection_and_trims",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=y^2-x and G=(y^2-x)(y-3), selected positive or negative branches and trims with beta the positive root of 2*beta^2-1.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Selected matching branches retain the overlap [1/2,beta], exact identity correspondence and reversal orientation; opposite branches meet only at their shared origin when included."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Opposite branches restricted away from zero remain disjoint."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Algebraic overlap bounds split both original carriers and retain exact point-on-source relations."
+        }
+      ],
+      "oracle": "Original equations and exact root signs distinguish the two branches; exact endpoint order and correspondence checks establish the retained interval, and the regular common support gives the vertical tangent at the origin.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_mixed_components",
+      "target": "polynomial_curve_pairs",
+      "test": "shared_polynomial_component_keeps_residual_and_mixed_contacts",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "F=(y-x)(y+x) and G=(y-x)(2y-1), with original graph slabs retaining the common line and the residual branches.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The common selected line overlaps; the residual contact at (-1/2,1/2) and mixed-component contact at (1/2,1/2) survive component extraction with their exact cross signs."
+        }
+      ],
+      "oracle": "Independent linear factors give both rational contacts and the common interval. Candidate residual roots alone are insufficient; original selected endpoints and both original fibers are checked.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_tangent_distinction",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pair_sections_keep_tangencies_and_distinct_supports",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The graph y=x^2 against y=1/4, y=0 and a distinct parallel parabola displaced by 2^-100.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The two transverse contacts at x=+-1/2 and the tangent at the origin have exact signs and ordering in both operand orders."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The exactly distinct shifted parabola has no contact."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Two contacts split both original sources into three pieces."
+        }
+      ],
+      "oracle": "The explicit quadratic equations determine contacts, multiplicity and nonzero displacement; all comparisons are exact.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_overlap_maps",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pair_overlaps_keep_nonunit_parameter_maps",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected y=x and (y-x)(y-3) branches with negative source abscissas, reversed traversal and nonunit active ranges.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Overlap correspondence preserves original source abscissas, including the negative interval [-1/2,-1/4]."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Further clipping cannot enlarge the overlap; singleton clips do not become arcs, and retained source restrictions reintersect exactly."
+        }
+      ],
+      "oracle": "Exact identity of source x parameters and point-on-both-support checks establish correspondence separately from endpoint coincidence. Descending traversal is retained while restriction inputs obey the public ordered-range precondition.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_singular_incidence",
+      "target": "polynomial_curve_pairs",
+      "test": "singular_polynomial_pairs_do_not_invent_tangency",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent graph branches of y^2-x^2 and the horizontal line at their singular origin.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Origin incidence completes, while singular gradients leave tangent_cross_sign absent and certified_transverse false."
+        }
+      ],
+      "oracle": "Both original equations vanish at the exact origin; a zero gradient is not evidence of a unique tangent. This row claims no singular differential completion.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_retry",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pairs_retry_and_retain_certainty",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original quintic/negative-parabola pair under zero and larger counted budgets, with retained split pieces and contact replay after original objects are dropped.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A positive request actually reaches the zero counted budget; a larger retry completes."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Retained pieces reintersect as one piece per operand across STRICT, APPROXIMATE_512 and STRICT transitions with Certified certainty."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The retained contact definition replays in memory and satisfies both original equations."
+        }
+      ],
+      "oracle": "Reached budget counters, exact source equations, selected point equality and certainty receipts. Counted refinements/promotions are not a total-work, memory or cancellation bound.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_shared_similarity",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pairs_keep_contacts_and_overlaps_in_shared_similarity_charts",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Quintic/parabola contacts and common-line overlaps under equal independently constructed rational rotations/translations or reflections; an explicit identity versus an unmapped source; differing translations as an unsupported control.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Common invertible similarities retain original source parameters, world incidence and cross signs accounting for reflection, reversal and operand order."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Transformed contacts split and reintersect; overlap restrictions preserve negative original source abscissas."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Mapped contact definitions replay in memory."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "Different image transforms keep the existing typed Unsupported result in both operand orders."
+        }
+      ],
+      "oracle": "Independently expanded rational world equations certify transformed contacts. Exact original parameter comparisons and correspondence checks qualify topology; value equality of independently constructed transform coefficients avoids allocation identity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_pair_degree_continuation",
+      "target": "polynomial_curve_pairs",
+      "test": "polynomial_pairs_continue_past_the_hot_resultant_degree",
+      "owner": "Hypercurve selected polynomial incidence, exact source correspondence and shared scalar predicates",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The regular graph y=x^37 and graph 2y-1=0 in [-1,1]x[-2,2], with seed topology max_axis_degree=37 and other default limits.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Resultants and common components propose source parameters; original selected fibers establish incidence. Overlaps retain source chart maps and branch selection. Singular tangent evidence may remain unclassified even when finite incidence is complete.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The bounded resultant reports DegreeBoundExceeded; the complete pair path constructs the unique contact in both operand orders with certified transverse signs."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both sources split into two pieces and retained pieces reintersect without further splitting."
+        }
+      ],
+      "oracle": "Original equations give 2*x^37-1=0 and 1/2<x<1; monotonicity gives uniqueness. The original selected point is replayed on both sources without a mandatory native coordinate projection. This one degree-37 witness is not an arbitrary-degree completion proof.",
       "timeout_seconds": 300
     }
   ]
