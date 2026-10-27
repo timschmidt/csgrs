@@ -6,12 +6,25 @@ impl BezierAlgebraicChord2 {
     /// Cardinal directions are reconstructed by the ordinary chord owner.
     /// An explicitly transported oblique direction must retain its witness.
     pub(crate) fn native_replay_unit_tangent(&self) -> Option<[Real; 2]> {
-        if self.start().coordinates().is_some() && self.end().coordinates().is_some() {
-            // The ordinary constructor already re-establishes this direction
-            // from its represented endpoints; keep the existing wire form.
+        let tangent = self.data.certified_unit_tangent.as_deref()?;
+        if self.start().coordinates().is_some()
+            && self.end().coordinates().is_some()
+            && let Some((x, y)) = strict_common_retained_line_unit_tangent(
+                self.start(),
+                self.end(),
+                self.data.parameter_axis,
+                &CurveContext::STRICT,
+            )
+            && x.to_bytes() == tangent[0].to_bytes()
+            && y.to_bytes() == tangent[1].to_bytes()
+        {
+            // Definition equality is an encoding optimization only. Equal
+            // values can use different exact expressions and project through
+            // different finite enclosures, so value equality cannot omit the
+            // transported definition needed for deterministic replay.
             return None;
         }
-        self.data.certified_unit_tangent.as_deref().cloned()
+        Some(tangent.clone())
     }
 
     /// Checks an optional represented unit tangent against the actual chord.
@@ -28,20 +41,25 @@ impl BezierAlgebraicChord2 {
             Some(_) => return Err(CurveError::InvalidCurveParameter),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        if let Some((known_x, known_y)) = self.certified_unit_tangent()
-            && compare_reals(x, &known_x, policy) == Some(std::cmp::Ordering::Equal)
-            && compare_reals(y, &known_y, policy) == Some(std::cmp::Ordering::Equal)
-        {
-            return Ok(Classification::Decided(self.clone()));
-        }
-        for (a, b, expected) in [
-            (-y.clone(), x.clone(), std::cmp::Ordering::Equal),
-            (x.clone(), y.clone(), std::cmp::Ordering::Less),
-        ] {
-            match algebraic_chord_points_linear_order(self.start(), self.end(), &a, &b, policy)? {
-                Classification::Decided(order) if order == expected => {}
-                Classification::Decided(_) => return Err(CurveError::InvalidCurveParameter),
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        let already_proved = self
+            .certified_unit_tangent()
+            .is_some_and(|(known_x, known_y)| {
+                compare_reals(x, &known_x, policy) == Some(std::cmp::Ordering::Equal)
+                    && compare_reals(y, &known_y, policy) == Some(std::cmp::Ordering::Equal)
+            });
+        if !already_proved {
+            for (a, b, expected) in [
+                (-y.clone(), x.clone(), std::cmp::Ordering::Equal),
+                (x.clone(), y.clone(), std::cmp::Ordering::Less),
+            ] {
+                match algebraic_chord_points_linear_order(self.start(), self.end(), &a, &b, policy)?
+                {
+                    Classification::Decided(order) if order == expected => {}
+                    Classification::Decided(_) => return Err(CurveError::InvalidCurveParameter),
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
             }
         }
         let mut chord = self.clone();

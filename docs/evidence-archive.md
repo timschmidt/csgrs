@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-fiber-point-order-evidence-2026-10-27` branch ends at
+`33f87cb54308298a6a305b0fb6c6f8b133d477b8`, adding `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`
+(503 files, 19,569,574 bytes), SHA-256 `6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a`.
+It records shared-field linear/circle predicates, exact half-chart inversion of
+proved constant displacements, and checked direction-definition replay. All
+2,839 Hypercurve tests, 64 affected root tests, 3,012 dependent-package tests,
+strict MSRV and fuzz Clippy, core builds, API docs, formatting, 16 matrix guards
+and 188 capability witnesses pass; 34 existing ignored cases remain. Original
+positive failures, corrected-source probes, exact geometric expectations,
+source/cold/warm replay diagnostics, reached budgets and retry are retained.
+Qualification and parent-transition records prove every non-receipt source byte
+unchanged. This record is local and unpushed. General selected angular fields,
+filled-region archives, total resource bounds, full pre-push qualification and
+published-package delivery remain open.
+
 The local `hypercurve-circle-replay-evidence-2026-10-27` branch ends at
 `057b04a795ccca9ec8f60099cfcf5b06a01e4292`, adding `docs/evidence/2026-10-27-hypercurve-closure-circle-replay`
 (590 files, 27,534,685 bytes), SHA-256 `f0d529e9c2ca5cb332cd43e9ae22f01c48bf6b665b2f5fddc946b2742631413d`.

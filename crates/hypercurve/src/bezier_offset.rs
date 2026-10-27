@@ -12693,6 +12693,16 @@ pub(crate) fn algebraic_chord_points_linear_order(
         }
     }
 
+    match common_point_linear_order(first, second, coefficient_x, coefficient_y, policy)? {
+        Classification::Decided(order) => return Ok(Classification::Decided(order)),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        Classification::Uncertain(_) => {}
+    }
+
     // Preserve each endpoint's one-field coordinate correlation before
     // comparing independent selected fields. This handles exact oblique
     // equality without constructing a four-variable Cartesian tensor image.

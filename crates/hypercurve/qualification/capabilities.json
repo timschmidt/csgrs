@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload of generated supports and filled regions beyond authored-source restrictions, procedural parallels, selected chords, named point definitions and the demonstrated chord-normal circle frames; correlated-fiber midpoint ordering and general angular transports remain open.",
+    "Native save/reload beyond the demonstrated source, parallel, chord, selected-point and chord-normal-circle definitions; general independent angular fields, nonconstant chart inversions, other circle frames and filled-region archives remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -8087,6 +8087,310 @@
         }
       ],
       "oracle": "Explicit one-level dependency graph and encoded byte size; typed SizeOverflow is separate from unsupported geometry and solver budgets."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_point_radius_control",
+      "test": "common_field_rational_queries_certify_the_independent_radius",
+      "domain": "The existing public rational-query path on a degree-seven/five center translated by (3/5,4/5).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Shared-field subtraction, squaring and addition prove radius squared exactly one."
+        }
+      ],
+      "oracle": "The rational identity 9/25+16/25=1; this control already passes on the unchanged parent source."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_point_linear_cancellation",
+      "test": "oblique_linear_queries_retain_correlated_fiber_cancellation",
+      "domain": "Two independent rational point images separated by (3/5,4/5), queried along (-4,3), (3,4) and (-3,-4).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders prove exact zero, positive and negative linear differences without separate coordinate-root reconstruction."
+        }
+      ],
+      "oracle": "Independent dot products 0,5,-5; original positive equality fails Ordering on the parent."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_circle_replay",
+      "test": "correlated_fiber_circle_midpoint_reenters_native_replay",
+      "domain": "A chord-normal unit half circle centered at the degree-seven/five fiber point, with a 3-4-5 frame and independently defined midpoint.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Locate and evaluate the independently defined midpoint and both exact endpoints."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split at the midpoint, reverse both pieces and reassemble the reversed path."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The original and reconstructed reversed path reimport with exact endpoints and deterministic complete SVG."
+        }
+      ],
+      "oracle": "Independent unit-circle coordinates and endpoint differences; original full positive source is retained separately and rerun unchanged."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_circle_half_selection",
+      "test": "correlated_circle_queries_preserve_radius_sign_half_and_exact_separation",
+      "domain": "Both signed unit radii and both traversal directions, diameter endpoints, quarter and midpoint, center, complementary-half point and a 2^-80 displacement.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Admit only points on the finite selected half; evaluate every accepted parameter and keep nearby unequal points separate."
+        }
+      ],
+      "oracle": "Independent rational half-circle coordinates, known opposite side and nonzero radius residual."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_circle_similarity",
+      "test": "correlated_circle_queries_survive_algebraic_similarity_and_replay",
+      "domain": "Rotation/scaling and reflection with sqrt(2) coefficients applied to the correlated center and oblique 3-4-5 frame.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Independently transformed interior point and every endpoint retain exact incidence."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Checked transported unit definitions preserve complete SVG after cold replay and subsequent query."
+        }
+      ],
+      "oracle": "Exact similarity of the independent circle point; geometric equality and document bytes are separate assertions."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_circle_denominator_guards",
+      "test": "common_field_circle_queries_keep_negative_denominators_and_original_poles",
+      "domain": "A negative-denominator rational translation and a denominator equal to the selected fiber relation.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The negative-denominator point retains exact perpendicular equality and circle incidence."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "The original zero denominator is rejected even when numerator and denominator could cancel."
+        }
+      ],
+      "oracle": "Exact translation and the defining equation gamma^5+beta-2=0 prove the respective nonzero and zero guards."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve common rational point-field queries, selected-circle chart and retained chord direction evidence",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the jointly selected degree-seven base and degree-five fiber through rational point images. Shared exact predicates precede independent refinement; proved constant circle-frame displacements use the existing half chart. Checked unit definitions remain replay authority. This is finite qualification, not general independent-field or angular closure; external timeout is containment only.",
+      "id": "fiber_circle_budget_retry",
+      "test": "correlated_circle_queries_retry_after_counted_exhaustion_without_policy_upgrade",
+      "domain": "The same retained circle and point under zero work budgets and 512-refinement/zero-promotion retries, then strict/approximate/strict requests.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "A positive request actually reaches the configured zero work limit before a completed result."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Repeated larger retries return one point without cached refusal."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Every policy sequence reports Certified with exact common-field evidence."
+        }
+      ],
+      "oracle": "Reached counters, independent midpoint and certainty receipts; counts do not bound uninstrumented total work or memory."
     }
   ]
 }

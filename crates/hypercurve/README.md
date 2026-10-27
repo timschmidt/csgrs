@@ -528,6 +528,16 @@ exact signatures.
   a stored certification flag is insufficient. Construction-time tangent flags
   are not serialized. The retained relations support fresh-process splitting,
   reversal, algebraic similarities and the named region reconstruction witnesses.
+  Correlated point queries reuse the original rational-map and fiber fields for
+  oblique linear comparison and circle incidence. When a certified point's
+  displacement from a represented circle frame reduces to exact constants, the
+  existing half chart inverts those displacements without solving another
+  line-circle intersection. The degree-seven/five center witness continues
+  through exact point location, subdivision, reversal and replay; general
+  nonconstant angular selections still require their own supported chart.
+  Transported unit directions are omitted only when reconstruction retains the
+  same serialized scalar definitions; value equality alone is insufficient for
+  deterministic display projection.
   A circle frame adds one dependency level to the point-depth limit.
   Filled-region native replay, other generated supports and sharing across
   separate paths remain open. Byte and segment limits do not bound all scalar

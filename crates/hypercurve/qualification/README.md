@@ -330,8 +330,38 @@ unit test additionally checks consumed approximate-policy barriers.
 This remains an incremental support qualification. Rational, parallel-normal
 and selected-radial generated circle frames, other mapped angular contacts,
 repeated-offset chart transport and filled-region archives remain open. A retained
-probe with a correlated degree-seven/five fiber center imports and evaluates its
-endpoints, but its exact midpoint query returns `Blocked(Ordering)`; that result
-is an implementation gap, not geometric completion or resource exhaustion. The
+probe with a correlated degree-seven/five fiber center originally imported and
+evaluated its endpoints but failed its midpoint query with `Blocked(Ordering)`.
+The following common-field witnesses close that retained case; the original
+positive failure remains in the evidence record. The
 finite witnesses and depth/byte limits do not prove universal algebraic closure,
 total solver work, coefficient growth, heap bounds or cooperative cancellation.
+
+
+The common-field point witnesses reuse the rational-query source pullback for
+oblique linear comparison and selected-circle residuals. Their center retains
+`2*beta^7-1=0` with `3/4<beta<1` and the correlated fiber
+`gamma^5+beta-2=0` with `1<gamma<2`. The independently defined displacement
+`(3/5,4/5)` is exactly on the unit circle. Its midpoint query now continues
+through evaluation, subdivision, reversal and a second native archive. Negative
+radii, both traversal directions, diameter endpoints, an interior quarter point,
+the opposite half and a `2^-80` displacement verify chart selection separately
+from support incidence. Negative denominator maps retain their signs, and a
+vanishing original denominator remains invalid even with a cancellable quotient.
+
+Algebraic rotation/scaling and reflection retain independent point incidence and
+complete SVG determinism. A reflected oblique frame originally lost its compact
+rational unit direction during replay; an equal radical expression changed one
+display coordinate. The direction record now preserves its checked definition
+when the ordinary constructor would rebuild different scalar bytes. Byte
+identity controls omission only; exact value predicates still prove validity.
+The original comparison, source/cold/warm diagnostic, and older replay corpus
+are retained.
+
+A reached zero solver-work budget prevents a completed point query; retries on
+the same objects succeed within 512 counted root refinements and zero algebraic
+promotions. Strict/approximate/strict requests remain certified when these exact
+proofs suffice. These counters do not bound total arithmetic, coefficient growth,
+heap use or cancellation. General independent point fields, nonconstant angular
+inversion, other circle frames and the complete operation-closure target remain
+open; no universal completion or performance claim follows from this corpus.

@@ -1583,6 +1583,77 @@ coefficient or scalar-expression growth, temporary/retained memory or cooperativ
 cancellation. Full pre-push qualification and published-package delivery remain
 pending for this increment.
 
+**Correlated point and circle predicate increment (2026-10-27).** The
+preceding selected-circle increment `32b114ca03` retains a probe whose
+correlated degree-seven/five center imports and evaluates exact endpoints, but
+whose midpoint query returns `Blocked(Ordering)`. A fresh unchanged-source build
+reproduces that original positive assertion. The existing rational-query API
+already proves the radius squared exactly one; oblique affine comparison also
+fails before this change. Hypercurve's common point-field authority, circle
+incidence and half chart, and chord-direction replay own these changes under
+P15, P18–P20, P27, P29 and P30.
+
+Public rational-query arithmetic and geometric predicates now share the same
+checked source pullback and common-field alignment. Both selected coordinates
+retain their base/fiber relation. Oblique projections subtract before independent
+coordinate refinement; circle residuals use nonzero checked denominators and a
+positive squared denominator. Original map and operand guards remain owned.
+When a certified incident point's displacement reduces to exact constants in a
+represented normal frame, the existing rational half-chart inverse consumes
+those displacements directly. Signed radii, traversal, diameter endpoints and
+complementary-half ownership keep their established meaning. This is not an
+algorithm for every independent selected angular field.
+
+A reflected oblique-frame witness also reproduces loss of a compact rational
+unit direction during native replay: geometry, metadata and viewBox agree, while
+one display coordinate changes after reconstruction through an equal radical
+expression. Source/cold/warm probes distinguish this from query mutation. The
+existing checked unit-direction record is now omitted only when the ordinary
+chord owner reconstructs identical scalar definitions. Readers retain validated
+incoming components even when another vector is equal in value. Exact length,
+parallelism and orientation predicates still establish validity; byte identity
+only decides whether an encoding can omit a definition. No new wire tag or
+format version is introduced.
+
+Seven maintained witnesses cover the original selected center without independent
+coordinates; exact oblique dot products in both operand orders; midpoint location
+and evaluation followed by subdivision, reversal and another native archive;
+both signed radii and traversal directions, diameter endpoints, quarter points,
+excluded halves and `2^-80` separation; negative denominator maps and original
+zero-pole rejection; algebraic similarities and reflected complete SVG replay;
+and actually reached zero work budgets followed by successful 512-refinement,
+zero-promotion retries. Strict/approximate/strict requests remain Certified when
+these exact proofs suffice. Exact geometry and deterministic serialization are
+separate assertions. The original external positive program succeeds unchanged,
+and the earlier replay corpus remains intact.
+
+All 18 final groups pass: 2,839 Hypercurve tests across 92 suites with the same
+34 existing ignored cases, 64 affected root tests across 11 suites, 3,012 tests
+across six dependent packages, strict MSRV Clippy for all targets/features of
+Hypercurve/CSGRS/Hyperbrep, builds without optional features, denied-warning API
+docs and fuzz Clippy, formatting, 16 matrix guards, 188 capability witnesses,
+typos, repository budget and diff checks. Raw evidence is `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`,
+SHA-256 `6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a`. The qualification ran on a frozen complete source snapshot
+while the preceding increment completed its independent checks. Afterwards,
+reparenting imported only the three parent receipts and proved all other source
+bytes unchanged. Both the full qualified patch and the final parent-relative
+patch are retained; receipt checks follow the final ledger edits.
+
+A host filesystem quota interrupted one Hypercircuit command and its report.
+The truncated attempt is retained without inferring success. After verified
+storage recovery, the complete command and all remaining groups ran on unchanged
+source; the first nine complete source-attributed records remain intact.
+
+Original failures remain available, including the initial harness search-path
+error, the distinct angular-inversion blocker after incidence was fixed, and
+the reflected display assertion. General independent fields, nonconstant angular
+inversion, other generated circle frames, repeated-offset chart transport and
+filled-region native archives remain open. Counted refinements/promotions do
+not bound total arithmetic, coefficient growth, expression size, heap use or
+cancellation. A finite corpus does not prove universal closure or performance.
+Full repository pre-push qualification and published-package delivery remain
+pending for these bytes.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

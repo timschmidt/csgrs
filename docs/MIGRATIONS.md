@@ -92,6 +92,20 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Correlated point predicates and frame replay (2026-10-27).** Shared rational
+  point-field pullbacks now serve oblique linear comparison and selected-circle
+  incidence. A proved constant displacement in a represented circle frame uses
+  the existing exact half-chart inverse, preserving signed radius, traversal and
+  complementary-half ownership. The original degree-seven/five fiber-center
+  midpoint case now continues through splitting and native replay. This does not
+  provide general angular inversion in independent selected fields.
+  Version 4 uses its existing checked unit-direction record when an ordinary
+  endpoint normalization would reconstruct a different scalar definition.
+  Readers retain the checked incoming components even if another vector has
+  equal values. Reconstructible identical definitions keep their old encoding;
+  affected transformed frames may gain an existing tag25 record. Geometry is
+  unchanged and no format tag or version is added.
+
 - **Selected-circle graph replay (2026-10-27).** Version 4 adds a chord-normal
   circle frame, scalar angular parameter, signed normal contact, finite circle
   range and independently incident point (tags 20–24). A checked chord unit
