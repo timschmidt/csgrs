@@ -2590,7 +2590,8 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             Self::SelectedFiberRational { map, .. } => &map.data.semicircle,
             Self::SelectedFiberParallel { map, .. } => &map.data.semicircle,
             Self::Parallel { map, .. } => &map.data.semicircle,
-            Self::SelectedParallelContact { semicircle, .. } => semicircle,
+            Self::SelectedParallelContact { semicircle, .. }
+            | Self::IncidentPoint { semicircle, .. } => semicircle,
             Self::SelectedCircularTangentContact { semicircle, .. } => semicircle,
             Self::SelectedPairContact { semicircle, .. } => semicircle,
             Self::SelectedChordNormalContact { semicircle, .. }
@@ -2618,7 +2619,8 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     /// physical source of an exact overlap transport.
     pub(in crate::bezier_offset) fn retained_point_evidence(&self) -> Option<&CurvePoint2> {
         match self {
-            Self::SelectedCircularTangentContact { point, .. }
+            Self::IncidentPoint { point, .. }
+            | Self::SelectedCircularTangentContact { point, .. }
             | Self::SelectedPairContact { point, .. }
             | Self::SelectedChordNormalContact { point, .. }
             | Self::SelectedChordParallelNormalContact { point, .. }
@@ -3380,6 +3382,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         &BezierAlgebraicCuspSemicircleRationalMapContact2,
     )> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::Rational { map, contact } => Some((map, contact)),
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
@@ -3412,6 +3415,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         bool,
     )> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::Pair {
                 map,
                 contact,
@@ -3461,6 +3465,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         bool,
     )> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::SelectedPairContact {
                 semicircle,
                 map,
@@ -3524,6 +3529,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         bool,
     )> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::Chord { map, contact } => Some((map, contact, false)),
             Self::PairOverlapMap {
                 overlap, source, ..
@@ -3568,6 +3574,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         bool,
     )> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::Rational { map, contact } => match &contact.correlation {
                 BezierAlgebraicCuspSemicircleRationalCorrelation2::MapWithChordTangent {
                     chord,
@@ -3646,6 +3653,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         self: &Arc<Self>,
     ) -> Option<Arc<Self>> {
         match self.as_ref() {
+            Self::IncidentPoint { .. } => None,
             Self::Chord { .. } => Some(self.clone()),
             Self::PairOverlapMap { source, .. } => {
                 let BezierAlgebraicCuspSemicircleParameter2::Mapped(source) = source else {
@@ -3692,6 +3700,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         &self,
     ) -> Option<(&BezierAlgebraicCuspSemicircle2, bool, CurveContext)> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::PairOverlap {
                 overlap, endpoint, ..
             } => {
@@ -3739,6 +3748,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         &self,
     ) -> Option<BezierAlgebraicCuspSemicircleMappedTangentSource2<'_>> {
         match self {
+            Self::IncidentPoint { .. } => None,
             Self::Rational { map, contact } => Some(
                 BezierAlgebraicCuspSemicircleMappedTangentSource2::Rational {
                     curve: &map.data.curve,
@@ -3896,6 +3906,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
         policy: &CurveContext,
     ) -> CurveResult<Option<BezierAlgebraicCuspSemicircleMappedPointSource2>> {
         match self {
+            Self::IncidentPoint { .. } => Ok(None),
             Self::Rational { map, .. } => {
                 if !policy.accepts_retained_policy(map.data.policy) {
                     return Err(CurveError::Topology(
@@ -4408,6 +4419,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
     ) -> CurveResult<Option<Classification<RealSign>>> {
         policy.strict_predicate_pass(|| {
             Ok(match self {
+                Self::IncidentPoint { .. } => None,
                 Self::Rational { map, contact } => {
                     Some(map.tangent_cross_dot_linear_combination_sign(
                         contact,
@@ -4552,6 +4564,7 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
             )));
         }
         match self {
+            Self::IncidentPoint { .. } => Ok(None),
             Self::SelectedFiberRational {
                 tangent_cross_sign, ..
             }
@@ -5034,7 +5047,8 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                 policy,
                 ..
             } => *policy,
-            BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { policy, .. } => *policy,
+            BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { policy, .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { policy, .. } => *policy,
             BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedParallelContact {
                 policy,
                 ..
@@ -5363,7 +5377,8 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
                         })
                     }))
                 }
-                BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
+                BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. }
+                | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }
                 | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlapMap { .. } => {
                     Ok(Classification::Decided(None))
@@ -6318,6 +6333,9 @@ other => return match other {
                 .map(Classification::Decided)
                 .unwrap_or(Classification::Uncertain(UncertaintyReason::Ordering))),
             Self::Mapped(data) => match data.as_ref() {
+                selected @ BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. } => {
+                    selected.incident_point_order_to_real(parameter, policy)
+                }
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
                     map.mapped_contact_order_to_real(contact, parameter, policy)
                 }
@@ -6431,7 +6449,8 @@ other => return match other {
             BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { source, half_angle, .. } => {
                 return cusp_chamfer_parameter_bracket(source, half_angle, refinement_steps, policy);
             }
-            BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact { .. }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedCircularTangentContact { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedPairContact { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordNormalContact { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::SelectedChordParallelNormalContact { .. } => {
@@ -6746,6 +6765,17 @@ other => return match other {
         }
         if self.shares_tangent_point(other, policy)? {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
+        }
+        if let Some(order) =
+            policy.strict_predicate_pass(|| self.incident_points_order(other, policy))?
+        {
+            match order {
+                Classification::Decided(_)
+                | Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(order);
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
         if let Some(Classification::Decided(order)) =
             policy.strict_predicate_pass(|| self.translated_pair_contact_order(other, policy))

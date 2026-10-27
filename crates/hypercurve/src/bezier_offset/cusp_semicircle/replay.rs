@@ -65,6 +65,17 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Some(CircleParameterDefinition2::Exact(value.clone()))
             }
             BezierAlgebraicCuspSemicircleParameter2::Mapped(parameter) => {
+                if let BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint {
+                    semicircle,
+                    point,
+                    policy,
+                    ..
+                } = parameter.as_ref()
+                    && semicircle == self
+                    && CurveContext::STRICT.accepts_retained_policy(*policy)
+                {
+                    return Some(CircleParameterDefinition2::IncidentPoint(point.clone()));
+                }
                 if let BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } =
                     parameter.as_ref()
                     && map.data.semicircle == *self

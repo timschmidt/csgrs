@@ -1227,6 +1227,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 "hypercurve",
                 "selected-circle-parallel-tangent-mapped-kind",
                 match mapped.as_ref() {
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. } => "incident-point",
                     BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. } => {
                         "rational"
                     }

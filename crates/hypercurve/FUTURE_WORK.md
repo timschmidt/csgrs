@@ -1654,6 +1654,60 @@ cancellation. A finite corpus does not prove universal closure or performance.
 Full repository pre-push qualification and published-package delivery remain
 pending for these bytes.
 
+**Selected circle-point angular authority increment (2026-10-27).** A fresh
+unchanged-source build of the preceding common-field increment `98ec9e8994`
+proves the independent unit-circle identity at `u=beta`, but its positive point
+location returns `Blocked(Unsupported)`. The original program and all subsequent
+split, reversal and replay assertions remain intact. Hypercurve's selected-circle
+parameter and shared point-field owners implement this extension under P15,
+P18–P20, P26, P27 and P29.
+
+The parameter retains the exact incident point, its selected circle and both
+radial-coordinate forms in a common field. Circle incidence and signed half
+selection precede publication; diameter endpoints retain canonical ownership.
+Exact linear signs order represented chart cuts, while the monotone normal
+coordinate orders two points on one half. Similarities transport the shared
+radial forms and original point. Native version 4 reuses its checked incident
+point record and reconstructs the authority from defining relations; no new
+wire tag, independent angular root or coordinate materialization is introduced.
+Inherited qualification remains explicit. An earlier one-projection prototype
+regressed an existing circular-fillet replay; its unchanged test is retained,
+and requiring both radial coordinates resolves that failure.
+
+Five new public witnesses and two private policy/validation tests cover the
+original selected point; independent equal definitions and `2^-80` close cuts;
+restriction, splitting and reversal; both signed radii and turns; excluded halves
+and nearby off-support points; algebraic similarities and reflection; fresh-process
+replay before another split; invalid incidence and half selection; reached zero
+work limits and larger retries; and Certified strict/approximate/strict requests
+when strict evidence suffices. Exact geometry and complete archive determinism
+are checked separately. The close-cut fixture completes within 300 seconds, but
+ordinary coordinate equality and projection remain measured cost frontiers.
+
+All 18 final groups pass: 2,846 Hypercurve tests in 92 suites with 34 existing
+ignored cases, 64 affected root tests in 11 suites, 3,012 tests across six dependent
+packages, strict MSRV Clippy across all Hypercurve/CSGRS/Hyperbrep targets/features,
+core builds, denied-warning API docs and fuzz Clippy, formatting, 16 matrix guards,
+193 capability fixtures, typos, repository budget and diff checks. Evidence is
+`docs/evidence/2026-10-27-hypercurve-closure-selected-circle-points`, SHA-256 `51d30ce5818c61dfe18aee1f16cd950e00e5115f7b91cd79bac20adbc2156b68`. Complete before/after source snapshots are identical;
+after qualification, only the three parent receipts are imported and all other
+bytes are proved unchanged. Both full and parent-relative patches are retained.
+
+The original failed prototypes and interrupted host-quota attempts remain in the
+archive. A missing test-harness dependency is corrected without adding a package
+or weakening its fresh-process assertions. Interrupted checks are rerun on the
+same source after verified storage recovery. A later execution-session interruption
+preserves six completed groups and the partial downstream log; the interrupted
+command and remaining checks resume on the identical source, with fresh recorded
+exit statuses. Positive downstream probes still
+report `Blocked(Unsupported)` for public selected-circle derivatives and for a
+closed correlated-center circle's filled-region admission, before its offset
+chain. These are implementation gaps, not geometric completion or exhaustion.
+General fields, other frames, mixed regions, repeated offsets and corner edits
+remain open. Instrumented refinement limits do not bound total work, growth,
+heap use or cancellation. Full pre-push qualification and package delivery remain
+pending; this finite corpus does not establish universal closure or a speedup.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

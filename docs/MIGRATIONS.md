@@ -92,6 +92,18 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Selected circle points as angular authority (2026-10-27).** An exact point
+  incident on a selected circle can retain its joint rational/algebraic field
+  through point location, restriction, subdivision, reversal and similarities
+  when the circle has a represented unit frame and both radial coordinates share
+  a query field. Coordinate and angular roots need not be materialized.
+  Existing circle incidence and signed half selection still gate admission.
+  Native version 4 reuses its checked incident-point record and rebuilds the
+  query authority from the point and circle; no new tag or version is added.
+  Prior source/contact carriers retain their authority when the field pullback
+  is unavailable. Public selected-circle derivatives and general filled-region
+  admission for correlated centers remain open.
+
 - **Correlated point predicates and frame replay (2026-10-27).** Shared rational
   point-field pullbacks now serve oblique linear comparison and selected-circle
   incidence. A proved constant displacement in a represented circle frame uses

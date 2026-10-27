@@ -5,6 +5,7 @@ use super::*;
 mod chord_kernel;
 mod fragment;
 mod frames;
+mod incident_point;
 mod pair_kernel;
 mod parallel_kernel;
 mod parameters;
@@ -2361,19 +2362,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(center) => center,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let represented_normal = match self.data.frame.chord_normal() {
-            Some(frame) => frame
-                .anchor
-                .certified_unit_tangent()
-                .or_else(|| {
-                    frame
-                        .anchor
-                        .certified_axis_direction()
-                        .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
-                })
-                .map(|(x, y)| (-y, x)),
-            None => self.data.frame.represented_unit_normal()?,
-        };
+        let represented_normal = self.represented_frame_unit_normal()?;
         if let Some((normal_x, normal_y)) = represented_normal {
             match common_point_constant_displacement(point, &center, policy)? {
                 Classification::Decided(Some((x, y))) => {
@@ -2394,6 +2383,24 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ));
                 }
                 Classification::Decided(None) | Classification::Uncertain(_) => {}
+            }
+            match policy.strict_predicate_pass(|| {
+                self.selected_incident_point_parameter(
+                    point,
+                    &center,
+                    (&normal_x, &normal_y),
+                    policy,
+                )
+            })? {
+                Classification::Decided((parameter, complementary)) => {
+                    return Ok(Classification::Decided(publish(parameter, complementary)));
+                }
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
             }
         }
         let radial = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
@@ -7900,6 +7907,25 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
             return Ok(transformed);
         }
         let transformed = match data.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint {
+                semicircle, point, radial, policy,
+            } if semicircle == source_carrier => {
+                let (m00, m01, m10, m11, _, _) = transform.affine_components();
+                let radial = Arc::new([
+                    point_form_linear_combination(radial, m00, m01),
+                    point_form_linear_combination(radial, m10, m11),
+                ]);
+                Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+                    BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint {
+                        semicircle: self.semicircle(source_carrier, transform)?,
+                        point: CurvePoint2::from(BezierSimilarityPoint2::new(
+                            point.clone(), transform.clone(), policy,
+                        )),
+                        radial,
+                        policy: *policy,
+                    },
+                )))
+            }
             BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap {
                 overlap,
                 endpoint,
@@ -8236,7 +8262,8 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
                     },
                 )))
             }
-            BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. }
+            BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. }
+            | BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Parallel { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::Pair { .. }
             | BezierAlgebraicCuspSemicircleMappedParameterData2::PairOverlap { .. }

@@ -5,6 +5,7 @@ use hypersolve::bivariate_arithmetic::{
     bivariate_add, bivariate_compose, bivariate_multiply, bivariate_scale, bivariate_subtract,
 };
 
+#[derive(Debug)]
 pub(crate) struct PointFormSource2 {
     pub(crate) source: CurvePoint2,
     pub(crate) numerator: BivariatePolynomial,
@@ -186,15 +187,13 @@ pub(super) fn common_point_linear_order(
     )
 }
 
-/// Signs |P-C|^2-r^2 in one certified common coordinate field. The squared
-/// denominator is positive only after both original difference denominators
-/// have been proved nonzero under the consuming policy.
-pub(super) fn common_point_circle_residual_sign(
+/// Retains both coordinates of P-C in one shared query field. The caller
+/// keeps the original point and center, including their denominator guards.
+pub(super) fn common_point_displacement(
     point: &CurvePoint2,
     center: &CurvePoint2,
-    radius_squared: &Real,
     policy: &CurveContext,
-) -> CurveResult<Classification<RealSign>> {
+) -> CurveResult<Classification<[PointFormSource2; 2]>> {
     let coordinate_difference = |numerator: BivariatePolynomial| {
         let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
         point_form_difference(
@@ -217,7 +216,46 @@ pub(super) fn common_point_circle_residual_sign(
         Classification::Decided(value) => value,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let [dx, dy] = match common_point_form_sources(dx, dy, policy)? {
+    common_point_form_sources(dx, dy, policy)
+}
+
+/// A linear query of two already aligned field coordinates. Keep a shared
+/// denominator instead of multiplying it into itself on every angular query.
+pub(super) fn point_form_linear_combination(
+    [x, y]: &[PointFormSource2; 2],
+    a: &Real,
+    b: &Real,
+) -> PointFormSource2 {
+    let (numerator, denominator) = if x.denominator == y.denominator {
+        (
+            bivariate_add(
+                &bivariate_scale(x.numerator.clone(), a),
+                &bivariate_scale(y.numerator.clone(), b),
+            ),
+            x.denominator.clone(),
+        )
+    } else {
+        (
+            bivariate_add(
+                &bivariate_scale(bivariate_multiply(&x.numerator, &y.denominator), a),
+                &bivariate_scale(bivariate_multiply(&y.numerator, &x.denominator), b),
+            ),
+            bivariate_multiply(&x.denominator, &y.denominator),
+        )
+    };
+    PointFormSource2::new(x.source.clone(), numerator, denominator)
+}
+
+/// Signs |P-C|^2-r^2 in one certified common coordinate field. The squared
+/// denominator is positive only after both original difference denominators
+/// have been proved nonzero under the consuming policy.
+pub(super) fn common_point_circle_residual_sign(
+    point: &CurvePoint2,
+    center: &CurvePoint2,
+    radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let [dx, dy] = match common_point_displacement(point, center, policy)? {
         Classification::Decided(forms) => forms,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };

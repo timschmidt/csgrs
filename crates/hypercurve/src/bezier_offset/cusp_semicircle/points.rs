@@ -823,10 +823,12 @@ impl BezierAlgebraicCuspDerivedPointSource2 {
                     ..
                 } => "similarity",
                 BezierAlgebraicCuspSemicircleMappedParameterData2::Chamfer { .. } => "chamfer",
+                BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. } => "incident-point",
             };
             eprintln!("radial/source tangent source kind={kind}");
         }
         let displacement_sign = match parameter.as_ref() {
+            BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint { .. } => None,
             BezierAlgebraicCuspSemicircleMappedParameterData2::Rational { map, contact } => {
                 tangent.authored_source_tangent_displacement_sign(
                     &contact.other_parameter,

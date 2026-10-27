@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-circle-points-evidence-2026-10-27` branch ends at
+`9cd590ad47e73ca9e1b3fa3ce13307f4d40686c0`, adding `docs/evidence/2026-10-27-hypercurve-closure-selected-circle-points`
+(596 files, 29,543,839 bytes), SHA-256 `51d30ce5818c61dfe18aee1f16cd950e00e5115f7b91cd79bac20adbc2156b68`.
+It records selected circle-point angular authority, both radial coordinates in
+one exact field, signed half selection, ordered close cuts, similarity transport
+and native replay. All 2,846 Hypercurve tests, 64 affected root tests, 3,012
+consumer tests, strict MSRV/fuzz Clippy, core builds, API docs, 16 matrix guards
+and 193 capability witnesses pass; 34 existing ignored cases remain. Original
+positive failures, the corrected replay regression, close-cut cost diagnostics,
+policy and budget checks, and interrupted quota/session attempts are preserved. Every
+non-receipt source byte matches final qualification. The record is local and
+unpushed. Public selected-circle derivatives, correlated-center region admission,
+general operation closure, total resource bounds and package delivery remain open.
+
 The local `hypercurve-fiber-point-order-evidence-2026-10-27` branch ends at
 `33f87cb54308298a6a305b0fb6c6f8b133d477b8`, adding `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`
 (503 files, 19,569,574 bytes), SHA-256 `6f36bec9d2a26a7b7830fdd268ede65c1260e6bfd538218d3f818efe7c43f08a`.

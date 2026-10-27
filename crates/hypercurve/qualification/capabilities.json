@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond the demonstrated source, parallel, chord, selected-point and chord-normal-circle definitions; general independent angular fields, nonconstant chart inversions, other circle frames and filled-region archives remain open.",
+    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle definitions; general independent angular fields, other circle frames and region archives remain open. Selected-circle public derivatives and correlated-center region admission remain measured Unsupported consumers; the repeated-offset probe stops at that admission.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -8391,6 +8391,247 @@
         }
       ],
       "oracle": "Reached counters, independent midpoint and certainty receipts; counts do not bound uninstrumented total work or memory."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve selected-circle angular queries and shared point-field predicates; native replay rechecks their definitions",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the selected degree-seven/five point field and represented circle frame. Circle incidence, signed half selection and both radial-coordinate queries precede publication. Retain the point through ordered cuts, traversal, similarities and replay. This does not establish derivative or region closure. External timeout is containment, not a total-work contract.",
+      "id": "selected_circle_point_angular_authority",
+      "test": "nonconstant_angular_point_reenters_selected_circle",
+      "domain": "Circle center(beta,gamma) with 2*beta^7=1 and gamma^5+beta=2; independent rational half-circle point at u=beta in a 3-4-5 unit frame.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Prove independent unit radius, select one interior location and evaluate the original joint point."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split at the nonconstant angular point and assemble the reversed pieces."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replay the reversed path with deterministic complete SVG and retained exact source definitions."
+        }
+      ],
+      "oracle": "Independent rational circle identity and selected base/fiber relations; the unchanged original positive program fails Unsupported on the parent."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve selected-circle angular queries and shared point-field predicates; native replay rechecks their definitions",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the selected degree-seven/five point field and represented circle frame. Circle incidence, signed half selection and both radial-coordinate queries precede publication. Retain the point through ordered cuts, traversal, similarities and replay. This does not establish derivative or region closure. External timeout is containment, not a total-work contract.",
+      "id": "selected_circle_point_close_cuts",
+      "test": "selected_circle_points_order_independent_definitions_and_nearby_cuts",
+      "domain": "Independent points at beta-2^-80, beta, beta+2^-80 on one selected half.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Order both pairs both ways, prove adjacent points distinct, and equate independently constructed identical points."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Restrict between the outside cuts, split at the middle and reverse without merging any points."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Reimport the reversed tiny arc and prove endpoint identities separately from deterministic SVG."
+        }
+      ],
+      "oracle": "Strict monotonicity of the half-circle chart and exact dyadic separation; point inequality assertions are preserved despite their measured cost."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve selected-circle angular queries and shared point-field predicates; native replay rechecks their definitions",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the selected degree-seven/five point field and represented circle frame. Circle incidence, signed half selection and both radial-coordinate queries precede publication. Retain the point through ordered cuts, traversal, similarities and replay. This does not establish derivative or region closure. External timeout is containment, not a total-work contract.",
+      "id": "selected_circle_point_signed_similarity",
+      "test": "selected_circle_points_keep_signed_halves_and_similarity_transport",
+      "domain": "Both signed radii and turns at u=beta/2+1/4; opposite-half and 2^-80-displaced points, then sqrt(2) rotation/scaling and reflection.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Accept the intended point and reject independent opposite-half and off-support points."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split and transform both pieces while retaining their common selected endpoint."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Both replayed pieces locate the independently transformed endpoint and reproduce the complete archive."
+        }
+      ],
+      "oracle": "Independent rational circle formula, exact similarity of its point and signed half-chart rules."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve selected-circle angular queries and shared point-field predicates; native replay rechecks their definitions",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the selected degree-seven/five point field and represented circle frame. Circle incidence, signed half selection and both radial-coordinate queries precede publication. Retain the point through ordered cuts, traversal, similarities and replay. This does not establish derivative or region closure. External timeout is containment, not a total-work contract.",
+      "id": "selected_circle_point_cold_replay",
+      "test": "selected_circle_points_replay_in_a_fresh_process_before_another_split",
+      "domain": "Reversed pieces split at u=beta, exported to a separate process without live source caches.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Cold replay proves both copies of the shared endpoint and deterministic SVG."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "An independent u=beta/2 point splits a replayed piece; its new endpoints reenter another exact archive."
+        }
+      ],
+      "oracle": "Independent base/fiber point definitions and exact endpoint relations; separate processes cannot rely on retained live proof state."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve selected-circle angular queries and shared point-field predicates; native replay rechecks their definitions",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P27",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Preserve the selected degree-seven/five point field and represented circle frame. Circle incidence, signed half selection and both radial-coordinate queries precede publication. Retain the point through ordered cuts, traversal, similarities and replay. This does not establish derivative or region closure. External timeout is containment, not a total-work contract.",
+      "id": "selected_circle_point_budget_retry",
+      "test": "selected_circle_point_queries_retry_without_promoting_requested_policy",
+      "domain": "Zero work limits and retries with 4096 refinements and zero promotions, followed by strict/approximate/strict split and replay.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "A positive request reaches the actual zero work limit before publishing a completed location."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Repeated larger retries locate the same point without poisoned state."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Every policy request keeps Certified certainty when strict defining relations suffice."
+        }
+      ],
+      "oracle": "Reached counters, independently defined circle point and certainty receipts; counts do not bound total work or memory."
     }
   ]
 }

@@ -3414,6 +3414,15 @@ pub(crate) enum BezierSelectedChordNormalAnchor2 {
 
 #[derive(Debug)]
 pub(crate) enum BezierAlgebraicCuspSemicircleMappedParameterData2 {
+    /// An interior circle point whose shared algebraic coordinates supply
+    /// angular predicates directly. The selected point and circle retain
+    /// their defining relations; no independent angular scalar is required.
+    IncidentPoint {
+        semicircle: BezierAlgebraicCuspSemicircle2,
+        point: CurvePoint2,
+        radial: Arc<[PointFormSource2; 2]>,
+        policy: CurveContext,
+    },
     Rational {
         map: BezierAlgebraicCuspSemicircleRationalParameterMap2,
         contact: BezierAlgebraicCuspSemicircleRationalMapContact2,

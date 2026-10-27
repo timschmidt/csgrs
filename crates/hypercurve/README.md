@@ -533,8 +533,13 @@ exact signatures.
   displacement from a represented circle frame reduces to exact constants, the
   existing half chart inverts those displacements without solving another
   line-circle intersection. The degree-seven/five center witness continues
-  through exact point location, subdivision, reversal and replay; general
-  nonconstant angular selections still require their own supported chart.
+  through exact point location, subdivision, reversal and replay. Nonconstant
+  incident points in a shared rational/algebraic field now retain the point as
+  their angular authority. A represented circle frame orders those points
+  without reconstructing an independent angular scalar. Exact cuts, reversal,
+  similarities and native replay preserve the shared field. Arbitrary independent
+  fields, other circle frames, public selected-circle derivatives and general
+  region admission still have implementation gaps.
   Transported unit directions are omitted only when reconstruction retains the
   same serialized scalar definitions; value equality alone is insufficient for
   deterministic display projection.

@@ -362,6 +362,46 @@ A reached zero solver-work budget prevents a completed point query; retries on
 the same objects succeed within 512 counted root refinements and zero algebraic
 promotions. Strict/approximate/strict requests remain certified when these exact
 proofs suffice. These counters do not bound total arithmetic, coefficient growth,
-heap use or cancellation. General independent point fields, nonconstant angular
-inversion, other circle frames and the complete operation-closure target remain
-open; no universal completion or performance claim follows from this corpus.
+heap use or cancellation. General independent point fields, other circle frames
+and the complete operation-closure target remain open. The following extension
+covers nonconstant angular selections in a shared field; neither corpus proves
+universal completion or a performance advantage.
+
+
+Selected circle-point parameters retain an independently defined point and its
+original selected base/fiber instead of reconstructing a scalar angle. The
+qualification center satisfies `2*beta^7=1` and `gamma^5+beta=2`; the independent
+point uses the rational half chart at `u=beta`. For radius `r`, unit normal `N`,
+and selected turn, let `n=(P-C).N` and `b=turn*cross(N,P-C)`. On the selected half,
+comparison with a represented parameter `v` uses the exact sign of
+`r*((1-2*v)*b-2*v*(1-v)*n)`. Two points on that same half are ordered by its strictly
+monotone normal coordinate, accounting for the sign of `r`. Interior parameters
+exclude diameter endpoints, which retain canonical zero/one ownership.
+
+Both radial coordinates must share a valid field before publication. A prototype
+that checked only one projection admitted an older fillet contact whose remaining
+angular queries were unsupported; its unchanged fresh-process replay test caught
+the error. The complete radial view shares the original immutable source.
+Similarities transport both coordinates through their certified linear part.
+Native replay reconstructs and checks point/circle incidence and the selected
+half; the stored query view and live caches are not serialized proof.
+
+Public fixtures cover independent definitions, cuts separated by `2^-80`, exact
+restriction, split/reverse/replay, both signed radii and turns, algebraic rotation
+and scaling, reflection, and another split after a fresh process imports the
+archive. Private owner tests reject invalid incidence and complementary-half
+records and preserve inherited frame and point qualification. Requesting an
+approximate policy with strict dependencies does not itself consume approximation.
+Actual zero work limits prevent completed queries; retries have 4096 counted
+refinements available and zero promotions. These counters do not bound all
+arithmetic or retained memory, and no new cancellation contract is claimed.
+
+The close-cut prototype completes within its 300-second fixture envelope, but
+ordinary point equality and display projection account for most of its runtime;
+angular ordering uses the shared field. This is a cost frontier, not a speedup
+claim. Separate positive probes preserve two open consumers: public derivative
+queries report `Blocked(Unsupported)`, and a closed circle assembled from these
+pieces reports `Blocked(Unsupported)` at filled-region admission, before its
+round-offset chain can run. These are implementation gaps, not exact completion,
+no-solution proofs, or resource exhaustion. Mixed regions, repeated offsets and
+corner edits still require their own completion evidence.
