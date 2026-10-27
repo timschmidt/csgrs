@@ -520,6 +520,15 @@ exact signatures.
   Reached depth limits return `SvgError::SizeOverflow` before publishing a path;
   callers may retry with a larger limit. This limit and extension bytes do not
   bound total arithmetic, coefficient growth, retained memory or cancellation.
+  Chord-normal selected circles retain their center, directed frame chord,
+  signed nonzero radius, scalar or selected normal-contact parameters and finite
+  oriented range. Independently supplied incident points retain their own
+  definition and re-prove incidence and the selected half on replay. A transported
+  oblique chord direction is checked for unit length, parallelism and orientation;
+  a stored certification flag is insufficient. Construction-time tangent flags
+  are not serialized. The retained relations support fresh-process splitting,
+  reversal, algebraic similarities and the named region reconstruction witnesses.
+  A circle frame adds one dependency level to the point-depth limit.
   Filled-region native replay, other generated supports and sharing across
   separate paths remain open. Byte and segment limits do not bound all scalar
   decoding, arithmetic, expression growth, memory or cancellation.

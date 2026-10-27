@@ -24,7 +24,13 @@
 //! Rational images retain original denominator guards; similarities and unique
 //! supporting-line intersections retain their checked point dependencies.
 //! Replay rechecks point definitions, support incidence and strict chart order.
-//! Auxiliary chord contacts and other generated curve carriers remain unsupported.
+//! Chord-normal selected circles retain their center, directed frame chord,
+//! nonzero signed radius, selected angular contacts and finite oriented ranges.
+//! Independent incident points re-prove circle incidence and the selected half.
+//! Non-cardinal transported chord directions retain checked unit-vector witnesses;
+//! replay proves unit length, parallelism and orientation before retaining them.
+//! Other circle frames, general contact charts and auxiliary chord contacts
+//! remain unsupported.
 //! Chord displacements retain their selected source, origin, signed normal or
 //! tangent displacement and translation, sharing one recipe for paired endpoints.
 //! Point-definition nesting and extension bytes have separate configurable limits;
@@ -128,8 +134,8 @@ pub struct SvgOptions {
     pub max_curve_segments: usize,
     /// Maximum decoded byte length of one exact Hypercurve path extension.
     pub max_extension_bytes: usize,
-    /// Maximum nested rational-image, similarity, chord-displacement or supporting-line point
-    /// constructions in one exact path graph. Leaf point definitions have
+    /// Maximum nested rational-image, similarity, chord-displacement, supporting-line point
+    /// or selected-circle frame constructions in one exact path graph. Leaf point definitions have
     /// depth zero. This is distinct from arithmetic work and memory limits.
     pub max_point_definition_depth: usize,
 }

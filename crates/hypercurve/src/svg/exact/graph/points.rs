@@ -16,6 +16,7 @@ pub(super) const SIMILARITY_POINT: u8 = 16;
 pub(super) const SUPPORTING_LINE_POINT: u8 = 17;
 pub(super) const CHORD_DISPLACEMENT: u8 = 18;
 pub(super) const DISPLACEMENT_POINT: u8 = 19;
+pub(super) const CHORD_UNIT_TANGENT: u8 = 25;
 
 fn depth_overflow() -> SvgError {
     SvgError::SizeOverflow {
@@ -23,7 +24,7 @@ fn depth_overflow() -> SvgError {
     }
 }
 
-fn check_depth(depth: usize, limit: usize) -> SvgResult<usize> {
+pub(super) fn check_depth(depth: usize, limit: usize) -> SvgResult<usize> {
     if depth > limit {
         Err(depth_overflow())
     } else {
@@ -31,7 +32,7 @@ fn check_depth(depth: usize, limit: usize) -> SvgResult<usize> {
     }
 }
 
-fn next_depth(depth: usize, limit: usize) -> SvgResult<usize> {
+pub(super) fn next_depth(depth: usize, limit: usize) -> SvgResult<usize> {
     check_depth(depth.checked_add(1).ok_or_else(depth_overflow)?, limit)
 }
 
@@ -59,7 +60,7 @@ impl GraphWriter {
         self.parameter(parameter)
     }
 
-    fn point(&mut self, point: &CurvePoint2) -> SvgResult<u32> {
+    pub(super) fn point(&mut self, point: &CurvePoint2) -> SvgResult<u32> {
         // Postorder traversal keeps the native dependency DAG shared without
         // consuming the Rust call stack for every nested point construction.
         let mut tasks = vec![PointTask::Visit(point.clone(), 0)];
@@ -338,7 +339,21 @@ impl GraphWriter {
         self.writer.write_bool(increases)?;
         self.point_depths[index as usize] =
             self.point_depths[start as usize].max(self.point_depths[end as usize]);
+        let index = self.chord_unit_tangent(chord, index)?;
         self.chords.insert(key, (chord.clone(), index));
+        Ok(index)
+    }
+
+    fn chord_unit_tangent(&mut self, chord: &BezierAlgebraicChord2, source: u32) -> SvgResult<u32> {
+        let Some(tangent) = chord.native_replay_unit_tangent() else {
+            return Ok(source);
+        };
+        let index = self.begin(CHORD_UNIT_TANGENT)?;
+        self.writer.write_u32(source)?;
+        for component in tangent {
+            self.writer.write_real(&component)?;
+        }
+        self.point_depths[index as usize] = self.point_depths[source as usize];
         Ok(index)
     }
 
@@ -368,11 +383,11 @@ impl GraphWriter {
             .map(|index| self.point_depths[index as usize])
             .max()
             .unwrap_or(0);
-        Ok(index)
+        self.chord_unit_tangent(chord, index)
     }
 }
 
-fn point_reference(definitions: &[Definition], index: usize) -> SvgResult<&CurvePoint2> {
+pub(super) fn point_reference(definitions: &[Definition], index: usize) -> SvgResult<&CurvePoint2> {
     match definitions.get(index) {
         Some(Definition::Point(point)) => Ok(point),
         _ => Err(malformed("exact path has an invalid point reference")),
@@ -405,6 +420,34 @@ pub(super) fn read_definition(
 ) -> SvgResult<(Definition, usize)> {
     let mut depth = 0;
     let point = match tag {
+        CHORD_UNIT_TANGENT => {
+            let source = reader.read_len()?;
+            let (chord, support) = match definitions.get(source) {
+                Some(Definition::Chord(chord)) => (chord, true),
+                Some(Definition::Curve(curve)) => {
+                    let Some(crate::BezierSplitFragment2::AlgebraicChord(chord)) =
+                        curve.retained_fragment()
+                    else {
+                        return Err(malformed("unit tangent must reference a retained chord"));
+                    };
+                    (chord, false)
+                }
+                _ => return Err(malformed("unit tangent must reference a retained chord")),
+            };
+            let tangent = [reader.read_real()?, reader.read_real()?];
+            return certified(chord.replay_unit_tangent(tangent, &CurveContext::STRICT)).map(
+                |chord| {
+                    (
+                        if support {
+                            Definition::Chord(chord)
+                        } else {
+                            Definition::Curve(chord.into())
+                        },
+                        point_depths[source],
+                    )
+                },
+            );
+        }
         CURVE_ENDPOINT => {
             let index = reader.read_len()?;
             let source = curve_reference(definitions, index)?;

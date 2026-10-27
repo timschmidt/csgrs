@@ -113,15 +113,15 @@ roles, hole ownership, boundary reconstruction, empty-set Boolean continuation
 and a round offset's specified exact hole boundary. Point-location assertions
 are finite expectations, not a standalone proof of the entire offset set.
 The additional point-graph witnesses below extend that initial point vocabulary.
-Auxiliary contact records, generated circles, filled-region archives and total
-resource bounds remain unqualified.
+Auxiliary contact records, other generated circle frames, filled-region archives
+and total resource bounds remain unqualified.
 
 The point-graph SVG witnesses encode polynomial fibers, rational images,
 similarities and supporting-line intersections as prior validated dependencies.
 The original degree-seven fillet yields a trimmed line whose selected contact
 replays in another process before a further exact split and another archive.
-This is a line-piece witness: replay of the complete generated fillet circle
-remains open, with the original full failure retained in the evidence record.
+This initial line-piece witness is extended by the selected-circle witnesses
+below; the original complete-circle failure remains in the evidence record.
 Other witnesses retain a correlated cubic fiber over a quadratic base, an
 original rational denominator, an algebraic reflection and independently
 selected degree-seven/degree-five line supports with exterior intersections.
@@ -307,3 +307,31 @@ Structural witness negation keeps its existing contract and does not certify
 field admission. Full qualification and its source attribution are
 recorded in the increment ledger; these named cases do not establish arbitrary
 algebraic operation closure or fresh-process native interchange.
+
+
+The selected-circle graph witnesses retain a chord-normal frame and selected
+angular domain without requiring independently materialized center coordinates.
+The original degree-seven circular fillet replays in a separate process before
+exact point location, splitting, reversal and a second archive. Algebraic
+rotation/scaling and reflection preserve exact endpoints and an independently
+transformed interior point, separately from full SVG determinism. Replayed
+boundaries reenter the shared region arrangement, empty-set Boolean identities,
+boundary reconstruction, and a mixed authored/generated fixture with a hole and
+disconnected material. Changing a tangent neighbor to a transverse line must
+recover both independently derived crossings in both operand orders.
+
+Handwritten records reject wrong, forward and cross-circle references, zero
+radii, invalid angular ranges, off-circle points, wrong half selections, incorrect
+signed normal displacements and nonunit, nonparallel or reversed chord directions.
+These checks include unused definitions. A reached circle dependency-depth or
+extension-byte limit prevents publication; a larger retry succeeds. A private
+unit test additionally checks consumed approximate-policy barriers.
+
+This remains an incremental support qualification. Rational, parallel-normal
+and selected-radial generated circle frames, other mapped angular contacts,
+repeated-offset chart transport and filled-region archives remain open. A retained
+probe with a correlated degree-seven/five fiber center imports and evaluates its
+endpoints, but its exact midpoint query returns `Blocked(Ordering)`; that result
+is an implementation gap, not geometric completion or resource exhaustion. The
+finite witnesses and depth/byte limits do not prove universal algebraic closure,
+total solver work, coefficient growth, heap bounds or cooperative cancellation.

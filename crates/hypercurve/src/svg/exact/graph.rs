@@ -13,6 +13,7 @@ use crate::{
 };
 use std::collections::HashMap;
 
+mod circles;
 mod points;
 
 pub(super) const PREFIX: &str = "4:";
@@ -47,6 +48,8 @@ pub(super) fn encode_path(
         displacements: HashMap::new(),
         point_depths: Vec::new(),
         max_point_depth,
+        circles: HashMap::new(),
+        circle_parameters: HashMap::new(),
     };
     graph.writer.bytes.extend_from_slice(MAGIC);
     graph.writer.write_len(0)?;
@@ -79,6 +82,14 @@ struct GraphWriter {
     displacements: HashMap<*const (), (crate::CurvePoint2, u32)>,
     point_depths: Vec<usize>,
     max_point_depth: usize,
+    circles: HashMap<*const (), (crate::bezier_offset::BezierAlgebraicCuspSemicircle2, u32)>,
+    circle_parameters: HashMap<
+        (u32, *const ()),
+        (
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+            u32,
+        ),
+    >,
 }
 
 impl GraphWriter {
@@ -103,6 +114,11 @@ impl GraphWriter {
     }
 
     fn curve_definition(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        if let Some(crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)) =
+            curve.retained_fragment()
+        {
+            return self.circle_fragment(fragment);
+        }
         if let Some(crate::BezierSplitFragment2::AlgebraicChord(chord)) = curve.retained_fragment()
         {
             return self.chord(chord);
@@ -226,6 +242,11 @@ enum Definition {
     Point(crate::CurvePoint2),
     Chord(crate::BezierAlgebraicChord2),
     Displacement(crate::BezierAlgebraicChordParallelPoint2),
+    Circle(crate::bezier_offset::BezierAlgebraicCuspSemicircle2),
+    CircleParameter {
+        circle: u32,
+        parameter: crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2,
+    },
 }
 
 fn curve_reference(definitions: &[Definition], index: usize) -> SvgResult<&Curve2> {
@@ -401,8 +422,24 @@ pub(super) fn decode_path(
             | points::SIMILARITY_POINT
             | points::SUPPORTING_LINE_POINT
             | points::CHORD_DISPLACEMENT
-            | points::DISPLACEMENT_POINT) => {
+            | points::DISPLACEMENT_POINT
+            | points::CHORD_UNIT_TANGENT) => {
                 let (definition, depth) = points::read_definition(
+                    tag,
+                    &mut reader,
+                    &definitions,
+                    &point_depths,
+                    max_point_depth,
+                )?;
+                point_depth = depth;
+                definition
+            }
+            tag @ (circles::CHORD_NORMAL_CIRCLE
+            | circles::SCALAR_CIRCLE_PARAMETER
+            | circles::CHORD_NORMAL_CONTACT
+            | circles::CIRCLE_RANGE
+            | circles::INCIDENT_CIRCLE_POINT) => {
+                let (definition, depth) = circles::read_definition(
                     tag,
                     &mut reader,
                     &definitions,

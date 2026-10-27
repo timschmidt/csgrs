@@ -2761,14 +2761,23 @@ impl Curve2 {
             let spans = self.source_spans(policy, CurveOperation2::Intersection)?;
             let mut locations = Vec::new();
             for (span_index, span) in spans.iter().enumerate() {
-                let crate::curve_support::CurveSupport2::Line(chord) =
-                    crate::curve_support::CurveSupport2::from_fragment(&span.fragment)
-                else {
-                    return Err(blocked(UncertaintyReason::Unsupported));
-                };
+                let parameter =
+                    match crate::curve_support::CurveSupport2::from_fragment(&span.fragment) {
+                        crate::curve_support::CurveSupport2::Line(chord) => {
+                            chord.point_parameter(point, policy).map(|parameter| {
+                                parameter.map(|parameter| {
+                                    parameter.map(CurveParameter2::from_algebraic_chord)
+                                })
+                            })
+                        }
+                        crate::curve_support::CurveSupport2::Circle(circle) => {
+                            circle.point_parameter(point, policy)
+                        }
+                        _ => return Err(blocked(UncertaintyReason::Unsupported)),
+                    };
                 let parameter = ExactCurveError::decided(
                     CurveOperation2::Intersection,
-                    chord.point_parameter(point, policy).map_err(|cause| {
+                    parameter.map_err(|cause| {
                         ExactCurveError::invalid(
                             CurveOperation2::Intersection,
                             self.family(),
@@ -2777,11 +2786,7 @@ impl Curve2 {
                     })?,
                 )?;
                 if let Some(parameter) = parameter {
-                    locations.push(CurveLocation2::new(
-                        span_index,
-                        span.chart(),
-                        CurveParameter2::from_algebraic_chord(parameter),
-                    ));
+                    locations.push(CurveLocation2::new(span_index, span.chart(), parameter));
                 }
             }
             return Ok(CurvePointLocations2::Locations(locations));
@@ -2970,48 +2975,13 @@ impl Curve2 {
                             }
                         }
                         crate::curve_support::CurveSupport2::Circle(circle) => {
-                            let incidence = circle
-                                .semicircle()
-                                .retained_point_incidence_sign(&query, policy)
-                                .map_err(invalid)?;
-                            if let Classification::Uncertain(reason) = incidence {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                            if incidence != Classification::Decided(crate::RealSign::Zero) {
-                                Vec::new()
-                            } else {
-                                let parameter = match circle
-                                    .semicircle()
-                                    .parameter_at_certified_incident_point(&query, policy)
-                                    .map_err(invalid)?
-                                {
-                                    Classification::Decided(parameter) => parameter,
-                                    Classification::Uncertain(reason) => {
-                                        return Ok(Classification::Uncertain(reason));
-                                    }
-                                };
-                                // A point on the complementary half lies off
-                                // this fragment's angular range.
-                                let inside = match parameter.as_algebraic_cusp() {
-                                    Some(cusp) if !parameter.is_algebraic_cusp_complement() => {
-                                        match circle
-                                            .certified_incident_point_evidence_location(
-                                                cusp, &query, policy,
-                                            )
-                                            .map_err(invalid)?
-                                        {
-                                            Classification::Decided(location) => !matches!(
-                                                location,
-                                                crate::bezier_offset::BezierAlgebraicCuspSemicircleIncidentLocation2::Exterior
-                                            ),
-                                            Classification::Uncertain(reason) => {
-                                                return Ok(Classification::Uncertain(reason));
-                                            }
-                                        }
-                                    }
-                                    _ => false,
-                                };
-                                if inside { vec![parameter] } else { Vec::new() }
+                            match circle.point_parameter(&query, policy).map_err(invalid)? {
+                                Classification::Decided(parameter) => {
+                                    parameter.into_iter().collect()
+                                }
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
                             }
                         }
                     }

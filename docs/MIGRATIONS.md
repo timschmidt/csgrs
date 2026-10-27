@@ -92,6 +92,20 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Selected-circle graph replay (2026-10-27).** Version 4 adds a chord-normal
+  circle frame, scalar angular parameter, signed normal contact, finite circle
+  range and independently incident point (tags 20–24). A checked chord unit
+  direction (tag 25) preserves transported oblique frames; its reference retains
+  the distinction between an infinite support and a finite chord. Native endpoint
+  directions already reconstructed from represented coordinates keep their old
+  encoding. Readers validate every unused definition, the literal signed
+  displacement, circle incidence, selected half and ascending domain. No tangent
+  or incidence Boolean is accepted as proof. Older readers reject the new tags;
+  existing version 3 and version 4 records remain readable. Circle frames add one
+  dependency level to `SvgOptions::max_point_definition_depth`. These witnesses
+  cover named chord-normal frames, not all generated circle charts or filled
+  region archives.
+
 - **Selected-point graph replay (2026-10-27).** Version 4 metadata adds
   polynomial-fiber, rational-image, similarity, supporting-line-intersection
   and shared chord-displacement point records (tags 14–19). Existing version 3

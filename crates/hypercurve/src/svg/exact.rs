@@ -21,7 +21,10 @@ pub(super) fn encode_path(
             || curve.analytic_parallel().is_some()
             || matches!(
                 curve.retained_fragment(),
-                Some(crate::BezierSplitFragment2::AlgebraicChord(_))
+                Some(
+                    crate::BezierSplitFragment2::AlgebraicChord(_)
+                        | crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_)
+                )
             )
     }) {
         return graph::encode_path(path, max_bytes, max_point_depth);

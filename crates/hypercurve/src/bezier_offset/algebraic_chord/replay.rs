@@ -3,6 +3,52 @@
 use super::*;
 
 impl BezierAlgebraicChord2 {
+    /// Cardinal directions are reconstructed by the ordinary chord owner.
+    /// An explicitly transported oblique direction must retain its witness.
+    pub(crate) fn native_replay_unit_tangent(&self) -> Option<[Real; 2]> {
+        if self.start().coordinates().is_some() && self.end().coordinates().is_some() {
+            // The ordinary constructor already re-establishes this direction
+            // from its represented endpoints; keep the existing wire form.
+            return None;
+        }
+        self.data.certified_unit_tangent.as_deref().cloned()
+    }
+
+    /// Checks an optional represented unit tangent against the actual chord.
+    /// The archive supplies components, never a trusted certification flag.
+    pub(crate) fn replay_unit_tangent(
+        &self,
+        tangent: [Real; 2],
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        self.validate_policy(policy)?;
+        let [x, y] = &tangent;
+        match real_sign(&(x * x + y * y - Real::one()), policy) {
+            Some(RealSign::Zero) => {}
+            Some(_) => return Err(CurveError::InvalidCurveParameter),
+            None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+        }
+        if let Some((known_x, known_y)) = self.certified_unit_tangent()
+            && compare_reals(x, &known_x, policy) == Some(std::cmp::Ordering::Equal)
+            && compare_reals(y, &known_y, policy) == Some(std::cmp::Ordering::Equal)
+        {
+            return Ok(Classification::Decided(self.clone()));
+        }
+        for (a, b, expected) in [
+            (-y.clone(), x.clone(), std::cmp::Ordering::Equal),
+            (x.clone(), y.clone(), std::cmp::Ordering::Less),
+        ] {
+            match algebraic_chord_points_linear_order(self.start(), self.end(), &a, &b, policy)? {
+                Classification::Decided(order) if order == expected => {}
+                Classification::Decided(_) => return Err(CurveError::InvalidCurveParameter),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let mut chord = self.clone();
+        Arc::make_mut(&mut chord.data).certified_unit_tangent = Some(Arc::new(tangent));
+        Ok(Classification::Decided(chord))
+    }
+
     /// Auxiliary contact definitions need their own replay records. A chart
     /// and two points cannot replace those relations merely by fitting a line.
     pub(crate) fn native_replay_chart(&self) -> Option<(Axis2, bool)> {

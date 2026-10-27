@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload of generated supports and filled regions beyond authored-source restrictions, procedural parallels, selected chords and the named point-definition witnesses.",
+    "Native save/reload of generated supports and filled regions beyond authored-source restrictions, procedural parallels, selected chords, named point definitions and the demonstrated chord-normal circle frames; correlated-fiber midpoint ordering and general angular transports remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -7619,6 +7619,474 @@
         }
       ],
       "oracle": "Exact rational endpoint coordinates, the explicit nine-record shared graph and distinct malformed versus depth-limit errors."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_fillet",
+      "test": "selected_circular_fillet_replays_in_a_fresh_process_before_split_and_reversal",
+      "domain": "Unique trim-only radius1/4 right-angle fillet translated by the positive degree-seven root beta of 2t^7-1.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh-process complete fillet replay, exact interior point, subdivision, reversal and a second deterministic full SVG."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The point (beta+9/10,1/20) lies on the retained quarter circle and reenters exact evaluation and splitting."
+        }
+      ],
+      "oracle": "Independent radius, endpoints and rational circle point with radial components (3/5,-4/5); no sampled geometry supplies incidence."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_region",
+      "test": "replayed_fillet_reenters_region_boolean_and_boundary_reconstruction",
+      "domain": "A closed square with one selected circular fillet, saved as an exact boundary path and re-admitted under NonZero fill.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Retain one material loop and independently derived inside/outside/boundary classifications."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Empty union, difference, xor and intersection identities; exact self-difference after replay and reconstruction."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Boundary extraction, another archive, and re-admission retain mutual empty differences."
+        }
+      ],
+      "oracle": "Analytic quarter-circle equation, exact boundary point, loop roles and both directed set differences after reconstruction."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_changed_neighbor",
+      "test": "changed_neighbors_replay_both_crossings_without_inheriting_tangency",
+      "domain": "Replace the original tangent by a line of slope1/2 through the original selected endpoint; a second contact lies in the arc interior.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders return exactly two complete transverse contacts with no overlap."
+        }
+      ],
+      "oracle": "Direct line substitution in the circle equation gives the endpoint and (beta+19/20,1/10); original tangent flags cannot suppress the second root."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_mixed_region",
+      "test": "mixed_generated_circle_replay_preserves_holes_and_disconnected_material",
+      "domain": "A selected filleted boundary, selected rectangular hole and disconnected authored native circle.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Reassemble native wires and selected paths without display chords."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "NonZero fill retains two material loops and one hole, with independent interior/exterior points."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Empty union, self-difference, self-xor and boundary reconstruction retain the declared topology."
+        }
+      ],
+      "oracle": "Independent rectangle and circle geometry, material/hole counts and exact Boolean empty identities."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_similarity",
+      "test": "algebraic_similarity_and_reflection_keep_selected_circle_replay",
+      "domain": "A degree-seven selected fillet under a rotation/scaling with sqrt(2) matrix entries and a reflected algebraic similarity.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Preserve full SVG bytes after replay, including transported chord-frame directions."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Every transformed endpoint matches and an independently transformed interior point remains on the arc."
+        }
+      ],
+      "oracle": "Exact similarity applied independently to the original circle point; semantic equality is separate from complete document determinism."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_invalid_references",
+      "test": "unused_circle_records_reject_wrong_typed_forward_and_cross_circle_references",
+      "domain": "Unused raw frame, parameter, point, unit-direction and range definitions with wrong/self/forward references or a parameter from another circle.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Reject every malformed reference before publishing an empty final path."
+        }
+      ],
+      "oracle": "Typed MalformedInput for deliberately invalid dependency identities and record kinds."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_unit_direction",
+      "test": "chord_unit_direction_replay_checks_length_parallelism_and_orientation",
+      "domain": "A 3-4-5 oblique circle frame and raw zero, nonunit, perpendicular and reversed direction witnesses.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Re-prove and retain the oblique unit direction, its exact semicircle endpoints and deterministic replay."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Invalid directions cannot be accepted even when unused."
+        }
+      ],
+      "oracle": "Independent unit tangent (3/5,4/5), its left normal and opposite endpoint; exact length and orientation counterexamples."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_normal_contact",
+      "test": "chord_normal_contact_records_reprove_the_displacement_relation",
+      "domain": "A right-half unit circle with a vertical normal-frame source; correct and incorrect signed contact recipes.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The literal negative unit left normal selects (1,0)."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Wrong direction, point, distance or signed side is proved Invalid rather than accepted or relabeled undecided."
+        }
+      ],
+      "oracle": "Exact equation P=C+dN, unit circle radius and selected right half; no serialized incidence flag."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_point_location",
+      "test": "retained_circle_point_queries_clip_the_arc_and_distinguish_nearby_points",
+      "domain": "The selected quarter-circle endpoints, center, on-support points outside the arc and an independent point displaced by 2^-80.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both endpoints reenter evaluation; exterior and near-but-distinct points have no locations."
+        }
+      ],
+      "oracle": "Independent exact circle equation, retained angular domain and nonzero rational displacement."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_domain_validation",
+      "test": "replay_reproves_radius_incidence_selected_half_and_ascending_domain",
+      "domain": "Raw zero-radius frames, angular endpoints outside [0,1], equal/reversed ranges and incident selectors on the wrong half or off support.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Reject invalid unused radius, range and selector definitions."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Valid scalar and independently incident selectors retain exact unit-circle endpoints."
+        }
+      ],
+      "oracle": "Known unit-circle coordinates and angular domain inequalities, independent of the SVG display path."
+    },
+    {
+      "target": "svg_circle_replay",
+      "owner": "Hypercurve retained chord direction and selected-circle owners; native dependency replay and shared region arrangement",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Version4 stroke metadata replays checked chord-normal circle frames, literal signed normal contacts or independently incident points, and finite oriented angular ranges. Retain and re-prove transported unit directions. No serialized tangency flag is authority. Named completion only: other circle frames, general mapped contacts, correlated fiber midpoint ordering, repeated-offset chart transport, filled-region replay and total resource bounds remain open. Timeout is external containment.",
+      "id": "circle_replay_resource_retry",
+      "test": "circle_dependency_depth_is_reached_before_publication_and_retry_succeeds",
+      "domain": "One selected-circle frame with leaf point dependencies, depth limits0/1 and a 64-byte extension budget.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exhausted",
+          "assertion": "The configured dependency-depth and byte limits are actually reached during import and export."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Larger retries recover deterministic full SVG without cached failure."
+        }
+      ],
+      "oracle": "Explicit one-level dependency graph and encoded byte size; typed SizeOverflow is separate from unsupported geometry and solver budgets."
     }
   ]
 }

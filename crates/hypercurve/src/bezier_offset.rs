@@ -46,6 +46,8 @@ pub use approximation::*;
 pub(crate) use bivariate_replay::*;
 pub(crate) use cusp_overlap::overlap_parameter_is_in_range;
 use cusp_overlap::*;
+#[cfg(feature = "svg")]
+pub(crate) use cusp_semicircle::{CircleChordNormalDefinition2, CircleParameterDefinition2};
 pub(crate) use fiber_sign::*;
 use multivariate_sign::*;
 pub(crate) use parallel_components::*;

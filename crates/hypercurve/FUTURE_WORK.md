@@ -1515,6 +1515,74 @@ do not bound all arithmetic, coefficient growth, native prefix-vector allocation
 temporary/retained memory or cancellation. Full repository pre-push checks and
 published-package delivery remain pending for this increment.
 
+**Selected circle frame replay increment (2026-10-27).** The preceding
+point-graph increment `83fd8c03b0` can replay the line cut from the original
+degree-seven fillet, while the complete generated circle still fails export.
+The unchanged-source baseline and its original positive assertion are retained.
+A separate baseline also rejects the independent retained circle point before
+serialization. Hypercurve owns circle frames, selected angular domains, exact
+point incidence and retained chord directions; native SVG and the CSGRS adapter
+consume those owners. P15, P18–P20, P27 and P28–P30 apply.
+
+Version 4 now preserves chord-normal circle frames with their exact center,
+directed source chord, nonzero signed radius and orientation. Scalar angular
+parameters, signed normal contacts and independently incident points select
+finite ascending ranges with explicit traversal. The original point and shared
+source definitions remain authoritative; there is no coordinate fitting or
+forced independent scalar materialization. Replay proves the literal signed
+normal relation, radius, incident-point equation and selected half. Every unused
+record is checked, including typed references and cross-circle parameter owners.
+
+Transported oblique chord frames retain a represented unit-direction witness.
+The chord owner proves unit length, perpendicular equality and positive directed
+displacement before retaining it. Supports and finite chord ranges remain
+distinct. Represented endpoint directions already reconstructed by the ordinary
+constructor keep their existing wire form. This restores the construction fact
+needed for deterministic projection after algebraic similarities. Construction
+tangent flags are not serialized; the retained normal relations and existing
+arrangement predicates re-establish applicable contacts. A changed-neighbor
+witness confirms both transverse roots instead of inheriting tangency.
+
+Eleven public curve witnesses cover the complete original fillet in a fresh
+process before exact incidence, splitting, reversal and a second archive;
+algebraic rotation/scaling and reflection; region admission, all four empty-set
+Boolean operations and boundary reconstruction; mixed native/generated boundaries
+with a hole and disconnected material; two changed-neighbor crossings in both
+orders; invalid unit directions and signed contacts; finite-arc clipping and
+`2^-80` separation; malformed frames, selectors and ranges; and reached depth
+and byte limits followed by larger retries. A unit witness checks consumed
+approximate-policy barriers. The CSGRS SVG adapter repeats complete circle
+replay followed by split, reversal and another archive. Exact expectations are
+checked separately from deterministic complete SVG bytes.
+
+All 18 final groups pass: 2,832 Hypercurve tests across 91 suites, with the same
+34 existing ignored cases; 64 root tests across 11 affected suites; 3,012 tests
+across six dependent packages; strict all-target/all-feature Hypercurve,
+Hyperbrep and CSGRS MSRV Clippy; builds without optional features; API docs with
+warnings denied; fuzz Clippy; formatting; 16 matrix guards; 181 capability
+witnesses; typos, repository budget and diff checks. Evidence is in `docs/evidence/2026-10-27-hypercurve-closure-circle-replay`,
+SHA-256 `f0d529e9c2ca5cb332cd43e9ae22f01c48bf6b665b2f5fddc946b2742631413d`. All non-receipt bytes remain
+identical after qualification. A host filesystem quota truncated extraction of
+a required Gerber fixture during the first consumer attempt. Its positive
+coverage assertion failed; the full consumer command was rerun successfully on
+unchanged source after storage recovery. No fixture or assertion was changed.
+Original failures and every prototype source
+snapshot are retained, including the selected angular-record gap, missing unit
+direction evidence, support/range reference distinction, unchanged older chart
+assertion and proved-invalid contact classification. No hard geometry assertion
+was replaced by a blocker expectation.
+
+Other generated circle frames, general mapped contacts, repeated-offset angular
+transport and filled-region native archives remain required work. A separate
+correlated degree-seven/five fiber-center probe imports and evaluates exact
+endpoints, but its independently mapped midpoint returns `Blocked(Ordering)`.
+That preserved positive failure is an implementation gap, not exhausted work or
+completed support. This finite corpus is not a universal algebraic closure proof.
+Frame dependency depth and extension bytes do not bound total solver work,
+coefficient or scalar-expression growth, temporary/retained memory or cooperative
+cancellation. Full pre-push qualification and published-package delivery remain
+pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
