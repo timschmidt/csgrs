@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-horizontal-boundary-evidence-2026-10-27` branch
+ends at `84c4bd3d979ac681096e69a9c1a35f9e1d4ac681`, adding `docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`
+(404 files, 16,033,938 bytes), SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`.
+It records complete closed horizontal boundary components in the existing
+finite-fiber topology, with original equations and branch incidence retained.
+1,223 Hypersolve tests, 2,744 Hypercurve tests, 43 root downstream tests,
+3,010 dependent-package tests, strict MSRV Clippy, formatting, 16 matrix
+guards and 97 capability witnesses pass. Selected trims, overlap and further
+intersection, exact source replay in a fresh process, and the original BRep
+boundary section through native/affine replay are covered. Earlier failed
+attempts remain archived. Vertical/repeated components, algebraic coefficient
+fields and general closure remain open. This record is local and unpushed;
+the full repository pre-push validation of this increment remains pending.
+
 The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
 branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-polynomial-locations` (227 files,

@@ -974,6 +974,51 @@ remain open. Counted work and external timeouts do not bound all arithmetic,
 coefficient growth, retained memory or cancellation. No performance improvement
 is claimed. Full repository pre-push qualification remains pending.
 
+**Horizontal boundary-component increment (2026-10-27).** On committed
+`5de7f0cb05`, the original `y+2=0` graph in `[-2,2]^2` and both components
+of `y^2-4=0` reproduced `BoundaryComponent`. Hypersolve now keeps a horizontal
+boundary factor in the original equation and closed fibers. Such a component
+has no discrete boundary-entry event. Contacts with other branches are already
+zeros of `resultant(F,F_y)`; existing root-free separators and closed strip
+counts establish event incidence. P11, P15 and P17–P20 remain owned there.
+
+Ten solver witnesses cover the original lower/upper cases and the documented
+circle-plus-boundary fixture, tangent parabola/circle contacts, crossings with
+one side outside, algebraic event fibers, `2^-80` distinct components, checked
+source replay, and actual counted exhaustion/retry. Independent rational Sturm
+counts include closed endpoints. Six Hypercurve witnesses consume these graphs
+through degree-five selected trims, finite intersections and overlap, point
+location, singular endpoint incidence, reversal, similarity transport and
+fresh-process diagnostic source replay followed by another operation. The
+original HyperBRep boundary tensor is retained as a positive section witness,
+with both pcurves, whole-image validation, native archive replay and affine
+transport/revalidation; its upper-boundary counterpart also completes.
+
+The stronger spatial fixture also reproduced a directed pcurve correspondence
+mismatch. Matching directed endpoints fixes that error on both the new section
+and an already admitted rational source restriction. A further plane contact
+then exposed a rational-map dispatch gap: exact similarities stored as quotients
+now supply a checked view to the existing line-section algorithm. Original map
+definitions and denominator guards remain, including removable factors. This
+does not complete general rational images or nonuniform affine incidence.
+
+Final checks pass: 1,223 Hypersolve tests (24 suites), 2,744 Hypercurve tests
+(81 suites, 34 existing ignored), 43 root downstream tests and 3,010 tests
+across six dependent packages (0 existing ignored). Strict
+all-target/all-feature MSRV Clippy for Hypersolve, Hypercurve and HyperBRep,
+formatting, 16 matrix guards, 97 capability witnesses, typos, repository budget
+and diff checks pass. All failed attempts remain. Raw evidence is in
+`docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`, SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`. All non-receipt bytes match the qualified
+snapshot after this receipt.
+
+No factor or multiplicity is discarded. Vertical/repeated components, broader
+coefficient fields and general algebraic operations remain open. The diagnostic
+source encoding is not a native Hypercurve archive format. This increment does
+not include the separately qualified polynomial region work. Counted work and
+external timeouts do not bound every arithmetic operation, coefficient growth,
+retained byte or cancellation. No performance improvement is claimed; full
+repository pre-push qualification remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

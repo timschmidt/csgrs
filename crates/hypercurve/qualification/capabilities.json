@@ -4046,6 +4046,312 @@
       ],
       "oracle": "Actual reached budget counters, selected parameter equality and certainty receipts.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_selected_trim",
+      "target": "polynomial_boundary_components",
+      "test": "boundary_line_consumes_selected_trims_and_contacts",
+      "owner": "Hypersolve closed-fiber topology; Hypercurve selected graph consumers",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The original y+2 boundary graph on [-2,2]^2, trimmed at the degree-five root of t^5+t^2+5t-5 and at x=1.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial and closed rectangle remain authoritative. Root ordinals, exact domains and directed source charts are retained. Generic repeated and vertical components remain outside this increment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Retain the original topology allocation and polynomial branch through selected restriction and reversal."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Evaluate selected points and derivatives in the original source chart."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Locate the selected endpoint and intersect the trimmed graph with x=1; the exact contact is (1,-2)."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Consume the selected trim and its reversal in a later intersection."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replay the selected point definition in memory; no full native curve archive is claimed."
+        }
+      ],
+      "oracle": "Original source identity, independently defined ordinate and tangent, exact contact coordinates and unique original parameter.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_distinct_components",
+      "target": "polynomial_boundary_components",
+      "test": "both_boundary_lines_distinguish_points_and_overlaps",
+      "owner": "Hypersolve closed-fiber topology; Hypercurve selected graph consumers",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The two distinct components of y^2-4=0 on the closed boundary of [-2,2]^2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial and closed rectangle remain authoritative. Root ordinals, exact domains and directed source charts are retained. Generic repeated and vertical components remain outside this increment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Keep both ordered components of the original equation."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Each native point (0,+/-2) belongs only to its selected branch."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Retain each exact horizontal overlap and the distinct vertical-line contacts."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split into three source-preserving pieces and intersect every reconstructed piece again."
+        }
+      ],
+      "oracle": "Exact ordinates, separate branch selection, overlap counts and source/domain-preserving reconstruction.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_singular_incidence",
+      "target": "polynomial_boundary_components",
+      "test": "boundary_contact_retains_all_incident_branch_endpoints",
+      "owner": "Hypersolve closed-fiber topology; Hypercurve selected graph consumers",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The two components of y(y-x^2)=0 on [-1,1] by [0,2], sharing a tangency at (0,0).",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial and closed rectangle remain authoritative. Root ordinals, exact domains and directed source charts are retained. Generic repeated and vertical components remain outside this increment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Retain all four slab branches and the original product equation."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both incident branches on each side meet only at the original origin and have no interval overlap."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Locate the shared origin on all four branches and their reversals."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Checked point definitions retain the origin on each selected branch."
+        }
+      ],
+      "oracle": "Four independently expected incident arcs, original equation, exact origin, no common interval between the two components.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_similarity",
+      "target": "polynomial_boundary_components",
+      "test": "boundary_graph_similarity_preserves_parameter_and_incidence",
+      "owner": "Hypersolve closed-fiber topology; Hypercurve selected graph consumers",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The horizontal boundary graph y=-2 under T(x,y)=(2-3y,-1+3x), with reversed traversal and a selected degree-five source parameter.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial and closed rectangle remain authoritative. Root ordinals, exact domains and directed source charts are retained. Generic repeated and vertical components remain outside this increment.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The vertical image retains its original source abscissa and traversal."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "A transformed selected point locates at the original parameter."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A horizontal cutter has the exact point (8,-1) at source parameter zero."
+        }
+      ],
+      "oracle": "Independent transformed line equation x=8, exact cutter contact and original parameter equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_source_replay",
+      "target": "polynomial_boundary_components",
+      "test": "boundary_graph_replays_source_in_fresh_process",
+      "owner": "Hypersolve closed-fiber topology; Hypercurve selected graph consumers",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Rational equation/domain records for both boundary components of y^2-4=0, decoded in a child process.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original polynomial and closed rectangle remain authoritative. Root ordinals, exact domains and directed source charts are retained. Generic repeated and vertical components remain outside this increment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Reconstruct checked topology from rational coefficients and bounds without serialized adjacency or live caches; this diagnostic encoding is not a public native Hypercurve format."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The fresh process intersects both reconstructed branches with x=0 and locates the exact points."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Further selected restrictions preserve evaluable exact endpoints after fresh reconstruction."
+        }
+      ],
+      "oracle": "Fresh process success includes exact ordinate/parameter assertions, complete contact counts and further selected trimming; serialized byte equality alone is not the oracle.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "boundary_guarded_similarity",
+      "target": "polynomial_boundary_components",
+      "test": "boundary_rational_similarity_views_retain_original_guards_and_contacts",
+      "owner": "Hypercurve rational map proof views and original polynomial line-section authority",
+      "properties": [
+        "P11",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Boundary graph y=-2 with identity and removable-factor identity W=3+x, chained translated rotation/reflection maps, and an interleaved explicit reflection on [-2,2]^2. An original pole at x=0 and nonuniform/nonlinear map frontiers are separate guards.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Each rational map must be proved equal to a rational-coefficient similarity for this line-section view. Original maps, denominator guards, source parameters and branch selectors remain stored and authoritative. This is not general rational-map incidence.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Finite contacts, operand exchange, reversal and reflection preserve independently derived contact coordinates and signed tangent orientation."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "A common line overlap splits into three original-map pieces; later transverse intersections retain exactly one contact."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Successive rational similarity definitions and an interleaved native similarity preserve the original source chart without replacing stored map definitions."
+        },
+        {
+          "stage": "representation",
+          "outcome": "blocked_unspecified",
+          "assertion": "A removable identity with an original denominator zero on the source domain is rejected at map admission."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "Nonuniform affine and nonlinear rational map cases retain their typed Unsupported frontier; these guards do not establish completed incidence."
+        }
+      ],
+      "oracle": "Independent coordinates (0,-2), (9,-1), (9,1); signed cross products under reversal/reflection/exchange; exact original map equality and three-piece overlap with later contact census.",
+      "timeout_seconds": 300
     }
   ]
 }

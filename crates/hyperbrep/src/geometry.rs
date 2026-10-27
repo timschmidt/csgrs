@@ -2665,9 +2665,14 @@ fn materialized_surface_pcurve_from_matching_domains(
     curve: Curve2,
     target_domain: &ParameterDomain,
 ) -> GeometryResult<MaterializedSurfacePcurve> {
-    let curve_domain = curve.parameter_domain();
-    let (curve_domain_start, curve_domain_end) = curve_domain
-        .scalar_endpoints()
+    // Retained curves reverse traversal in their original parameter chart.
+    // Match directed endpoints so the affine map preserves that orientation.
+    let (first, last) = curve.parameter_endpoints();
+    let curve_domain_start = first
+        .scalar()
+        .ok_or(GeometryError::UnsupportedPcurveContour)?;
+    let curve_domain_end = last
+        .scalar()
         .ok_or(GeometryError::UnsupportedPcurveContour)?;
     let curve_start = curve_domain_start.clone();
     let curve_span = curve_domain_end - &curve_start;

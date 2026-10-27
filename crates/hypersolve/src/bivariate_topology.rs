@@ -10,8 +10,9 @@
 //!
 //! This is a set-topology package, not a planar geometry carrier or an
 //! intersection multiplicity classifier. The exact defining polynomial is
-//! retained for those consumers. Vertical components, identically zero
-//! boundary polynomials and repeated generic fibers have explicit blockers.
+//! retained for those consumers. Horizontal boundary components remain in
+//! the closed fibers; vertical components and repeated generic fibers have
+//! explicit blockers.
 //! Degree and refinement controls, and the shared work budget, do not bound
 //! every scalar operation, coefficient bit size, allocation or elapsed time.
 
@@ -93,7 +94,8 @@ pub enum BivariateTopologyError {
     VerticalComponent,
     /// The generic fiber and its derivative share a component.
     RepeatedComponent,
-    /// An entire horizontal domain boundary belongs to the curve.
+    /// Legacy blocker for an entire horizontal boundary belonging to the curve.
+    /// The checked decomposition now retains these finite-fiber components.
     BoundaryComponent,
     /// Source or projection dimensions exceed the declared limit.
     DegreeLimit,
@@ -417,7 +419,11 @@ fn decompose(
     for boundary in &domain.second {
         let polynomial = bivariate_specialize_second(&equation, boundary);
         if is_zero(&polynomial) {
-            return Err(BivariateTopologyError::BoundaryComponent);
+            // A horizontal component persists in every closed fiber. It has
+            // no discrete boundary-entry events; contacts with other branches
+            // are already zeros of resultant(F, F_y). Keep F unchanged, and
+            // let the closed root counts and separator proofs retain the arc.
+            continue;
         }
         add_projection(&mut projection, &polynomial, config)?;
     }

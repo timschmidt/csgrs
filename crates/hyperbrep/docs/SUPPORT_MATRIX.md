@@ -379,6 +379,20 @@ strict-convexity certificate.
 | Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; one/multiple exact bounded rational-quartic branches, including retained denominator poles; or exact containment of the complete bounded tensor surface |
 | Plane / positive-weight degree-one `2×2` NURBS tensor | The same complete rational-bilinear outcome matrix, with every retained line or rational pcurve mapped exactly into the authored active knot domains |
 
+The rational tensor surfaces `S(u,v)=(u,v,v)` and `S(u,v)=(u,v,v-1)` on
+`[0,1]^2` now retain their complete horizontal boundary section with `z=0`.
+The original boundary blocker fixture remains as a positive witness: both
+pcurves, restriction/reversal, whole-image validation, native save/reload,
+affine transport/revalidation and a further transverse plane contact complete.
+Materialized retained pcurves use their directed parameter endpoints when
+forming the affine spatial correspondence. This also fixes reversal of an
+already admitted rational source restriction. Rational map definitions that
+prove an exact similarity reuse Hypercurve line sections while retaining their
+original guards, so the replayed section remains intersectable. The
+[implementation record](IMPLEMENTATION_STATUS.json) links the shared solver
+qualification; vertical/repeated components and general trimmed arrangements
+remain open.
+
 `CurveSurfacePoint` exposes `Parameter`, `GeometricPoint3` and
 `CurveSurfaceContactKind::{Simple, Repeated, Boundary}`. The first two kinds
 classify the first derivative of the contact equation, including both sides
