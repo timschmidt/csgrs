@@ -12,11 +12,14 @@ const PREFIX: &str = "3:";
 const MAGIC: &[u8; 4] = b"HCP3";
 
 pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
-    if path
-        .curves()
-        .iter()
-        .any(|curve| curve.source_restriction().is_some() || curve.analytic_parallel().is_some())
-    {
+    if path.curves().iter().any(|curve| {
+        curve.source_restriction().is_some()
+            || curve.analytic_parallel().is_some()
+            || matches!(
+                curve.retained_fragment(),
+                Some(crate::BezierSplitFragment2::AlgebraicChord(_))
+            )
+    }) {
         return graph::encode_path(path, max_bytes);
     }
     let mut writer = ExactWriter::new(max_bytes);

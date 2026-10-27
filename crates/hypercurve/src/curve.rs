@@ -920,10 +920,16 @@ impl Curve2 {
             }
             return Self::from(curve);
         }
+        Self::from_shared_retained_fragment(Arc::new(fragment))
+    }
+
+    pub(crate) fn from_shared_retained_fragment(
+        fragment: Arc<crate::BezierSplitFragment2>,
+    ) -> Self {
         Self {
             data: Arc::new(CurveData2 {
                 carrier: CurveCarrier2::Restricted(Box::new(CurveRestrictedCarrier2 {
-                    fragment: Arc::new(fragment),
+                    fragment,
                     endpoints: [OnceLock::new(), OnceLock::new()],
                 })),
                 lineage: None,

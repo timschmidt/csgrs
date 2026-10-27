@@ -665,6 +665,11 @@ impl RationalBezierAlgebraicPointImage2 {
         Arc::ptr_eq(&self.data, &other.data)
     }
 
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> *const () {
+        Arc::as_ptr(&self.data).cast()
+    }
+
     fn from_coordinates(
         parameter: AlgebraicRootRepresentation,
         x: BezierAlgebraicRationalCoordinateImage,

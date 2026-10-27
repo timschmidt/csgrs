@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload of generated supports and filled regions beyond the authored-source restriction and named procedural-parallel witnesses.",
+    "Native save/reload of generated supports and filled regions beyond the authored-source restriction, procedural-parallel and named selected-chord witnesses.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -1404,7 +1404,7 @@
           "assertion": "The unchanged two-branch parabola and vertical-line path has counterclockwise orientation and one three-piece filled boundary."
         }
       ],
-      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the original region represents 0<=x<=1/4 and y\u00b2<=x, with its two ordered roots and closing line.",
+      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the original region represents 0<=x<=1/4 and y²<=x, with its two ordered roots and closing line.",
       "timeout_seconds": 300
     },
     {
@@ -4120,7 +4120,7 @@
           "assertion": "Both fill rules publish one boundary with two selected polynomial branches and one line."
         }
       ],
-      "oracle": "The exact region is 0<=x<=1/4 and y\u00b2<=x; all original pieces remain.",
+      "oracle": "The exact region is 0<=x<=1/4 and y²<=x; all original pieces remain.",
       "timeout_seconds": 300
     },
     {
@@ -4158,7 +4158,7 @@
           "assertion": "Inside, outside and boundary locations remain exact, including selected branch points."
         }
       ],
-      "oracle": "Independent inequalities 0<=x<=1/4 and y\u00b2<=x; exact cap and cusp-axis boundary points.",
+      "oracle": "Independent inequalities 0<=x<=1/4 and y²<=x; exact cap and cusp-axis boundary points.",
       "timeout_seconds": 300
     },
     {
@@ -4272,7 +4272,7 @@
           "assertion": "Subtraction/Xor creates a hole with opposite orientation; reversal and reconstruction preserve it; union restores the cap."
         }
       ],
-      "oracle": "The entire hole obeys y\u00b2<=1/64<1/16<=x; two loop orientations, independent point roles and set identities.",
+      "oracle": "The entire hole obeys y²<=1/64<1/16<=x; two loop orientations, independent point roles and set identities.",
       "timeout_seconds": 300
     },
     {
@@ -4365,7 +4365,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The strictly increasing graph y=x^5+x\u00b2+5x-5 capped at y=3, clipped by y>=0 and then x>=3/4 and x>=7/8.",
+      "domain": "The strictly increasing graph y=x^5+x²+5x-5 capped at y=3, clipped by y>=0 and then x>=3/4 and x>=7/8.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4424,7 +4424,7 @@
           "assertion": "The retained segment has exact endpoints (0,0) and (1/4,0)."
         }
       ],
-      "oracle": "The intersection of y=0 with 0<=x<=1/4 and y\u00b2<=x is independently the closed interval [0,1/4].",
+      "oracle": "The intersection of y=0 with 0<=x<=1/4 and y²<=x is independently the closed interval [0,1/4].",
       "timeout_seconds": 300
     },
     {
@@ -4501,7 +4501,7 @@
           "assertion": "Two selected polynomial pieces, two circular pieces and one line remain consumable exact boundaries."
         }
       ],
-      "oracle": "Polynomial/circle contacts satisfy x\u00b2+x=1/4 with alpha=(sqrt(2)-1)/2; source domains, circle equations, cap x-coordinate and independent filled-set points.",
+      "oracle": "Polynomial/circle contacts satisfy x²+x=1/4 with alpha=(sqrt(2)-1)/2; source domains, circle equations, cap x-coordinate and independent filled-set points.",
       "timeout_seconds": 300
     },
     {
@@ -4615,7 +4615,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The cusp cap 0<=x<=1,y\u00b2<=x\u00b3, clipped and reconstructed.",
+      "domain": "The cusp cap 0<=x<=1,y²<=x³, clipped and reconstructed.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4653,7 +4653,7 @@
         "P19",
         "P20"
       ],
-      "domain": "Both material lobes of y\u00b2<=x\u00b2, -1<=x<=1, meeting only at the origin, under both fill rules.",
+      "domain": "Both material lobes of y²<=x², -1<=x<=1, meeting only at the origin, under both fill rules.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -6746,6 +6746,427 @@
         }
       ],
       "oracle": "Independently assembled source/distance graph, explicit rectangle endpoint coordinates and inside point. Pointer checks concern retained sharing, not mathematical equality or a general set-equality proof.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_fresh_process",
+      "target": "svg_chord_replay",
+      "test": "selected_chord_split_replays_in_a_fresh_process_before_further_incidence",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A vertical chord at beta, the root of 2t^7-1 in (3/4,1), with y endpoints 0 and 2, split at y=1 and followed by its reversed whole support.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A child process reloads the native archive and preserves the selected root, exact endpoint relations and complete deterministic SVG output."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The first subchord overlaps the reversed whole support; the midpoint has one exact location on that reversed support."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The reloaded reversed chord splits at y=1 and survives another archive with directed endpoints y=2 and 0."
+        }
+      ],
+      "oracle": "The defining degree-seven root and exact vertical-line coordinates are independent of SVG display; overlap and split endpoints establish the named retained portions. The child process has no original live caches.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_algebraic_region",
+      "target": "svg_chord_replay",
+      "test": "algebraic_coordinate_chords_replay_before_region_boolean_and_offset",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Four generated chords bound the rectangle x in [sqrt(2),sqrt(2)+1],y in [0,2], followed by native replay, NonZero admission and round offset 1/8.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "All four exact authored coordinate endpoints survive as generated chord definitions."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "NonZero reconstruction admits the rectangle and distinguishes the explicitly specified inside/outside points."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "The rectangle and its offset each produce canonical empty self-difference."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "A round offset 1/8 completes and contains the specified original interior point."
+        }
+      ],
+      "oracle": "Independent radical endpoint coordinates and specified membership expectations, plus regularized self-difference identities; these finite assertions alone do not establish the entire offset set.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_chart_extension",
+      "target": "svg_chord_replay",
+      "test": "replay_retains_a_valid_alternative_chart_and_exterior_support_range",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A hand-encoded root support (0,0)->(2,1) uses its y chart; a decreasing selected range (6,3)->(4,2) lies outside that finite support witness.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Decoded endpoints equal the independently supplied coordinates and re-encoded metadata equals the hand-built canonical graph."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The valid y chart and reversed exterior range are retained rather than silently reselected using the constructor x-chart heuristic."
+        }
+      ],
+      "oracle": "Hand-built wire records, exact collinearity y=x/2, directed coordinates and separately asserted native metadata identity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_invalid_support",
+      "target": "svg_chord_replay",
+      "test": "invalid_chord_definitions_are_checked_before_an_empty_final_path",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Hand-encoded empty final paths containing a constant axis, incorrect coordinate direction, equal or reversed selected endpoints, an off-support point, and wrong-type/self/forward/missing support references.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Invalid geometric charts/domains produce ExactCurveError::Invalid; malformed references produce MalformedInput before an empty path can conceal them."
+        }
+      ],
+      "oracle": "Explicit coordinate order and line-incidence violations, with independently assembled reference indices and assertions of the public failure categories.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_correlated_point",
+      "target": "svg_chord_replay",
+      "test": "correlated_rational_expression_endpoints_replay_their_shared_selected_root",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "For beta the degree-seven root of 2t^7-1, endpoints use x=beta/(1+beta),y=beta^2/(1+beta)+k with k=0,1; a selected midpoint uses k=1/2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replay retains the numerator/denominator coefficient arrays, shared selected root and deterministic complete SVG."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The independently defined rational-expression midpoint has exactly one location on the replayed chord."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The chord splits at that midpoint and the retained pieces survive another native archive."
+        }
+      ],
+      "oracle": "Literal defining rational expressions over one selected root; exact midpoint incidence is independent of emitted SVG display.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_parallel_endpoint",
+      "target": "svg_chord_replay",
+      "test": "a_parallel_endpoint_and_its_incident_chord_replay_one_source_and_selector",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "C(t)=(t,t^2) with signed left offset -1/4 on[0,beta], beta the root of 2t^2-1 in (1/2,3/4), followed by an incident chord to(2,0). Both a lazy curve endpoint and a standalone checked parallel point are exercised.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The replayed chord endpoint shares the parallel source/distance and retains beta as its selector."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The joint equals (t+t/(2sqrt(3)),1/2-1/(4sqrt(3))) with t=sqrt(1/2), coincides with the source endpoint and has exactly one chord location."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Complete SVG output remains identical after the exact incidence queries, including display vertices, for both endpoint forms."
+        }
+      ],
+      "oracle": "Independently derived normal-offset coordinates and exact incidence; pointer assertions concern shared storage only. Full serialization equality separately detects cache-dependent display changes.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_sharing_retry",
+      "target": "svg_chord_replay",
+      "test": "shared_chord_dependencies_stay_compact_and_byte_exhaustion_recovers",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A degree-seven selected vertical chord repeated 4, 8 and 16 times with alternating traversal, plus import/export with a 64-byte native-extension limit and larger retries.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Decoded endpoint roots share one retained polynomial; metadata growth for the named piece counts is linear and bounded by the explicit per-piece assertion."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Both export and import reach the declared 64-byte limit and report SizeOverflow."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A default-budget retry succeeds with the original exact selected endpoint."
+        }
+      ],
+      "oracle": "Known selected-root identity, measured metadata lengths for three exact repeated-piece cases, actual configured byte-limit failures and an exact endpoint after retry. No general performance or memory bound is inferred.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_invalid_points",
+      "target": "svg_chord_replay",
+      "test": "selected_point_records_reject_wrong_references_and_original_denominator_poles",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "An empty final path with wrong-type curve-endpoint, rational-source, parameter and parallel references, a forward point source and a rational expression whose original denominator is zero.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Bad typed references are MalformedInput; the original denominator pole is ExactCurveError::Invalid even when its point is unused."
+        }
+      ],
+      "oracle": "Independently assembled wire types and a literal zero denominator; no successful empty result can conceal these failures.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "chord_replay_mixed_topology",
+      "target": "svg_chord_replay",
+      "test": "mixed_replay_preserves_a_hole_and_disconnected_material_through_operations",
+      "owner": "Hypercurve selected chord/point definitions, exact SVG graph and finite projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "At x origin sqrt(2), a mixed native/generated square [-3,3]^2 surrounds a clockwise unit circular hole; a separate generated rectangle [6,8]x[-1,1] supplies disconnected material. Replay precedes NonZero reconstruction and round offset 1/4.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata retains selected straight supports, validated coordinate charts, directed endpoints and shared prior point/source/root dependencies. Strict native constructors re-establish definitions, support incidence and order; display vertices never replace the exact object. This increment covers coordinate, rational-source, rational-expression and native parallel points with Bezier scalar/root selectors. Recursive point definitions, selected joint fibers, auxiliary chord contacts, generated circles, filled-region archives, cross-path sharing and total resource bounds remain open. The timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Every directed endpoint and native/generated representation choice survives, with complete deterministic SVG after further queries."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The reconstructed region has two material loops, one owned hole and the specified exact inside/outside/boundary point locations."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Boundary paths reconstruct a region with empty symmetric difference from the replayed region."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Canonical empty self-difference/xor is consumed by union with the region and preserves its two material loops and one hole."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Round expansion 1/4 retains the material/hole counts and has a hole boundary at radius3/4, with the explicitly tested inner and outer point locations."
+        }
+      ],
+      "oracle": "Independently authored rectangle and circle coordinates, exact endpoints, winding/ownership invariants, regularized set identities and the specified offset radius. Finite point tests do not alone prove the entire offset set.",
       "timeout_seconds": 300
     }
   ]

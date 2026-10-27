@@ -496,6 +496,16 @@ exact signatures.
   failures from this replay. Parallel ranges keep their original source chart,
   including finite ranges outside the authored unit interval. Cusp boundaries
   must remain explicitly split.
+  Selected straight chords preserve their supporting line, validated monotone
+  coordinate chart and directed endpoint selections. Replayable endpoints include
+  exact coordinates, rational source images, rational expressions and native
+  parallel points at retained Bezier parameters. Shared curve-endpoint records
+  preserve their incidence relation. Import proves point definitions, support
+  incidence and chart order, including for unused records. Recursive point
+  definitions, selected joint fibers and auxiliary chord contacts remain open.
+  Parallel endpoint projection uses the requested refinement independently of
+  stronger cached predicate bounds, keeping repeated display output stable after
+  exact incidence queries.
   The standard SVG `d` attribute is only a finite display projection.
   Filled-region native replay, other generated supports and sharing across
   separate paths remain open. Byte and segment limits do not bound all scalar

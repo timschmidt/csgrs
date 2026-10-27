@@ -92,6 +92,29 @@ total-work, coefficient-growth, retained-memory or cancellation bounds. These
 witnesses do not qualify selected joint fibers, other generated supports,
 filled-region archives, general offset closure or complete resource control.
 
+The selected-chord SVG witnesses preserve supporting lines, directed endpoints,
+validated coordinate charts and shared point definitions in version 4 metadata.
+They cover exact coordinates, rational source images, rational expressions and
+native parallel evaluations at retained Bezier parameters. A degree-seven root
+is reloaded in a separate process before incidence, split, reversal, overlap and
+another archive. Alternative charts and exterior ranges are checked separately.
+Invalid charts, point/support references and original denominator poles fail
+even with an empty final path. Reached byte limits permit larger retries; the
+named repeated-piece fixture checks shared roots and linear metadata growth,
+without claiming general arithmetic or memory bounds.
+
+A mixed parallel/chord fixture checks independent exact endpoint coordinates,
+shared source/root definitions and complete SVG determinism after incidence
+queries, for both a lazy endpoint and a standalone point definition. The direct
+finite-projection unit regression also retains the original cold/warm case and
+coarse/fine/coarse requests. Another witness reloads mixed native/generated
+boundaries with a circular hole and disconnected material, then checks loop
+roles, hole ownership, boundary reconstruction, empty-set Boolean continuation
+and a round offset's specified exact hole boundary. Point-location assertions
+are finite expectations, not a standalone proof of the entire offset set.
+Recursive point definitions, joint fibers, auxiliary contact records, generated
+circles, filled-region archives and total resource bounds remain unqualified.
+
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line
 evaluation, cusps, tangencies, distinct nearby supports, and a counted-budget

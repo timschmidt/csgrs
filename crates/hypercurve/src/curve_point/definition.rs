@@ -62,6 +62,32 @@ pub enum CurvePointDefinition2 {
 }
 
 impl CurvePoint2 {
+    /// Retains the endpoint's existing carrier, including its selected domain
+    /// and traversal. Native interchange can record this incidence directly.
+    #[cfg(feature = "svg")]
+    pub(crate) fn endpoint_source(&self) -> Option<(crate::Curve2, bool)> {
+        let CurvePointData2::Endpoint(endpoint) = &self.0 else {
+            return None;
+        };
+        Some((
+            crate::Curve2::from_shared_retained_fragment(std::sync::Arc::clone(&endpoint.fragment)),
+            endpoint.start,
+        ))
+    }
+
+    /// Encoder-local memoization of owned immutable definitions. The encoder
+    /// must retain a clone for every key; this is not mathematical equality.
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> Option<(u8, *const ())> {
+        match &self.0 {
+            CurvePointData2::Exact(point) => Some((0, std::ptr::from_ref(point.x()).cast())),
+            CurvePointData2::Algebraic(point) => Some((1, point.replay_storage_key())),
+            CurvePointData2::AnalyticParallel(point) => Some((2, point.replay_storage_key())),
+            CurvePointData2::Endpoint(point) => Some((3, std::sync::Arc::as_ptr(point).cast())),
+            _ => None,
+        }
+    }
+
     /// Returns a checked source definition, without eliminating selected roots.
     /// Construction policies incompatible with strict replay remain blocked.
     pub fn definition(&self) -> ExactCurveResult<CurvePointDefinition2> {

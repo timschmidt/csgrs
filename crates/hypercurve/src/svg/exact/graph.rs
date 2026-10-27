@@ -13,6 +13,8 @@ use crate::{
 };
 use std::collections::HashMap;
 
+mod points;
+
 pub(super) const PREFIX: &str = "4:";
 const MAGIC: &[u8; 4] = b"HCP4";
 const NATIVE_CURVE: u8 = 0;
@@ -34,6 +36,10 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
         parameters: HashMap::new(),
         parallel_sources: HashMap::new(),
         parallels: HashMap::new(),
+        point_sources: HashMap::new(),
+        points: HashMap::new(),
+        chords: HashMap::new(),
+        retained_curves: HashMap::new(),
     };
     graph.writer.bytes.extend_from_slice(MAGIC);
     graph.writer.write_len(0)?;
@@ -56,9 +62,13 @@ struct GraphWriter {
     // These pointers memoize live immutable storage, never leave the encoder,
     // and do not merge independently authored definitions by geometric fit.
     sources: HashMap<*const CurveGeometry2, u32>,
-    parameters: HashMap<*const BezierParameterPolynomial, u32>,
-    parallel_sources: HashMap<*const BezierParallelSource2, u32>,
-    parallels: HashMap<*const Real, u32>,
+    parameters: HashMap<*const BezierParameterPolynomial, (BezierAlgebraicParameter2, u32)>,
+    parallel_sources: HashMap<*const BezierParallelSource2, (BezierParallel2, u32)>,
+    parallels: HashMap<*const Real, (BezierParallel2, u32)>,
+    point_sources: HashMap<*const crate::HomogeneousControl2, (crate::RationalBezier2, u32)>,
+    points: HashMap<(u8, *const ()), (crate::CurvePoint2, u32)>,
+    chords: HashMap<*const crate::CurvePoint2, (crate::BezierAlgebraicChord2, u32)>,
+    retained_curves: HashMap<*const crate::BezierSplitFragment2, (Curve2, u32)>,
 }
 
 impl GraphWriter {
@@ -70,6 +80,22 @@ impl GraphWriter {
     }
 
     fn curve(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        let key = curve.retained_fragment().map(std::ptr::from_ref);
+        if let Some((_, index)) = key.and_then(|key| self.retained_curves.get(&key)) {
+            return Ok(*index);
+        }
+        let index = self.curve_definition(curve)?;
+        if let Some(key) = key {
+            self.retained_curves.insert(key, (curve.clone(), index));
+        }
+        Ok(index)
+    }
+
+    fn curve_definition(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        if let Some(crate::BezierSplitFragment2::AlgebraicChord(chord)) = curve.retained_fragment()
+        {
+            return self.chord(chord);
+        }
         if let Some(view) = curve.analytic_parallel() {
             let Some((start, end)) = view.range().as_bezier_parameters() else {
                 return Err(SvgError::Unsupported(
@@ -122,12 +148,12 @@ impl GraphWriter {
         // Distance belongs to the immutable parallel allocation and identifies
         // that complete support, including its source. Its address stays local.
         let key = std::ptr::from_ref(parallel.distance());
-        if let Some(index) = self.parallels.get(&key) {
+        if let Some((_, index)) = self.parallels.get(&key) {
             return Ok(*index);
         }
         let source = parallel.source();
         let source_key = std::ptr::from_ref(source);
-        let source_index = if let Some(index) = self.parallel_sources.get(&source_key) {
+        let source_index = if let Some((_, index)) = self.parallel_sources.get(&source_key) {
             *index
         } else {
             let native = match source {
@@ -138,13 +164,14 @@ impl GraphWriter {
             let index = self.begin(NATIVE_CURVE)?;
             // Never memoize the temporary native wrapper's address.
             self.writer.write_curve(&native)?;
-            self.parallel_sources.insert(source_key, index);
+            self.parallel_sources
+                .insert(source_key, (parallel.clone(), index));
             index
         };
         let index = self.begin(PARALLEL_SUPPORT)?;
         self.writer.write_u32(source_index)?;
         self.writer.write_real(parallel.distance())?;
-        self.parallels.insert(key, index);
+        self.parallels.insert(key, (parallel.clone(), index));
         Ok(index)
     }
 
@@ -158,7 +185,7 @@ impl GraphWriter {
             return Ok(index);
         };
         let key = std::ptr::from_ref(root.polynomial());
-        if let Some(index) = self.parameters.get(&key) {
+        if let Some((_, index)) = self.parameters.get(&key) {
             return Ok(*index);
         }
         let index = if let Some((source, numerator, denominator)) = root.source_chart() {
@@ -176,7 +203,7 @@ impl GraphWriter {
             self.writer.write_real(root.interval().end())?;
             index
         };
-        self.parameters.insert(key, index);
+        self.parameters.insert(key, (root.clone(), index));
         Ok(index)
     }
 }
@@ -185,6 +212,8 @@ enum Definition {
     Curve(Curve2),
     Parameter(BezierParameter2),
     Parallel(BezierParallel2),
+    Point(crate::CurvePoint2),
+    Chord(crate::BezierAlgebraicChord2),
 }
 
 fn curve_reference(definitions: &[Definition], index: usize) -> SvgResult<&Curve2> {
@@ -342,6 +371,13 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
                     curve
                 })
             }
+            tag @ (points::COORDINATES
+            | points::RATIONAL_POINT
+            | points::RATIONAL_EXPRESSION
+            | points::PARALLEL_POINT
+            | points::CURVE_ENDPOINT
+            | points::CHORD_SUPPORT
+            | points::CHORD_RANGE) => points::read_definition(tag, &mut reader, &definitions)?,
             tag => {
                 return Err(SvgError::Unsupported(format!(
                     "unknown exact Hypercurve definition tag {tag}"

@@ -92,6 +92,18 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Selected-chord SVG replay (2026-10-27).** Version 4 native path metadata
+  gains point, supporting-chord, selected-range and curve-endpoint records
+  (tags 7–13). Repeated retained curves may share one definition, changing
+  metadata length and checksum for those paths. Current readers still accept
+  existing version 3 and version 4 records; older readers cannot consume the
+  new tags. Authored version 3 encoding is unchanged. Applications comparing
+  generated-path bytes should regenerate their serialized expectations while
+  checking exact geometry separately. The standard SVG projection of selected
+  parallel endpoints now follows a reproducible refinement sequence, so warmed
+  predicate caches no longer choose different display vertices. Existing
+  display files affected by that bug can change; authoritative exact geometry
+  and the requested projection tolerance are preserved.
 - **PLY decimal spelling.** Positions and normals used a fixed 17 fractional
   digits, which could round small nonzero values to zero. Each binary64 value
   is now spelled exactly, with up to 1074 fractional digits where needed.

@@ -16,7 +16,13 @@
 //! quadratic, cubic and rational Bezier parallels also preserve selected
 //! algebraic parameters, source charts and traversal. Parallel definitions retain
 //! their shared sources and signed distances; replay rechecks each finite range's
-//! regularity. These guarantees concern stroke paths; filled-region export still
+//! regularity. Selected straight chords retain their support, coordinate chart
+//! and directed endpoints. Those endpoints may be exact coordinates, rational
+//! source images, rational expressions or native parallel evaluations at retained
+//! Bezier parameters; shared curve-endpoint references preserve incidence.
+//! Replay rechecks point definitions, support incidence and strict chart order.
+//! Other selected point definitions and auxiliary chord contacts remain unsupported.
+//! These guarantees concern stroke paths; filled-region export still
 //! uses its finite projection. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
 
