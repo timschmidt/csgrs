@@ -49,6 +49,48 @@ impl RationalMap2 {
         &self.denominator
     }
 
+    /// A sufficient exact similarity view for a map with rational coefficients.
+    /// This does not replace the definition or discharge its denominator guard.
+    /// Callers must retain the original admitted map and its source domain.
+    pub(crate) fn rational_similarity(&self) -> Option<Similarity2> {
+        let rational = |p: &BivariatePolynomial| -> Option<BivariatePolynomial> {
+            Some(BivariatePolynomial::new(
+                p.coefficients
+                    .iter()
+                    .map(|row| {
+                        row.iter()
+                            .map(|value| value.exact_rational_normal_form().map(Real::new))
+                            .collect()
+                    })
+                    .collect::<Option<Vec<_>>>()?,
+            ))
+        };
+        let denominator = rational(&self.denominator)?;
+        let affine = |numerator: &BivariatePolynomial| -> Option<[Real; 3]> {
+            let quotient =
+                hypersolve::divide_bivariate_polynomial_exact(&rational(numerator)?, &denominator)?;
+            for (i, row) in quotient.coefficients.iter().enumerate() {
+                for (j, value) in row.iter().enumerate() {
+                    if i + j > 1 && !value.definitely_zero() {
+                        return None;
+                    }
+                }
+            }
+            let coefficient = |i: usize, j: usize| {
+                quotient
+                    .coefficients
+                    .get(i)
+                    .and_then(|row| row.get(j))
+                    .cloned()
+                    .unwrap_or_else(Real::zero)
+            };
+            Some([coefficient(1, 0), coefficient(0, 1), coefficient(0, 0)])
+        };
+        let [a, b, x] = affine(&self.numerators[0])?;
+        let [d, e, y] = affine(&self.numerators[1])?;
+        Similarity2::try_from_real_affine(a, b, d, e, x, y).ok()
+    }
+
     pub(crate) fn from_similarity(map: &Similarity2) -> Self {
         let (a, b, c, d, x, y) = map.affine_components();
         Self::new(

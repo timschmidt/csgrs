@@ -539,9 +539,35 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         };
         let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
-        for candidate_index in 0..fallback_count.saturating_add(4) {
-            let Some(outside) = retained_probe_exterior_candidate(&outer_bounds, candidate_index)
-            else {
+        let ordinary_candidates = fallback_count.saturating_add(4);
+        for candidate_index in 0..ordinary_candidates.saturating_add(4) {
+            // Preserve the existing successful paths and their query costs.
+            // If all oblique probes are blocked, an available exact coordinate
+            // can certify an axis support while its companion stays selected.
+            let outside = if candidate_index < ordinary_candidates {
+                retained_probe_exterior_candidate(&outer_bounds, candidate_index)
+            } else {
+                match retained_probe_axis_candidate(
+                    &point,
+                    &outer_bounds,
+                    candidate_index - ordinary_candidates,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                {
+                    Classification::Decided(candidate) => candidate,
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        return Err(
+                            self.blocked(owner_carrier_index, UncertaintyReason::BudgetExhausted)
+                        );
+                    }
+                    Classification::Uncertain(reason) => {
+                        last_reason = reason;
+                        continue;
+                    }
+                }
+            };
+            let Some(outside) = outside else {
                 continue;
             };
             let probe = match crate::BezierAlgebraicChord2::try_new(

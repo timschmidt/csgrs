@@ -1133,6 +1133,35 @@ fn retained_probe_exterior_candidate(bounds: &Aabb2, index: usize) -> Option<cra
     })
 }
 
+/// Reuse an already represented coordinate without materializing its selected
+/// companion. The other coordinate is strictly outside the boundary enclosure,
+/// so this is an exterior point even when the retained coordinate is algebraic.
+fn retained_probe_axis_candidate(
+    point: &CurvePoint2,
+    bounds: &Aabb2,
+    index: usize,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<crate::Point2>>> {
+    let form = if index < 2 {
+        [Real::one(), Real::zero(), Real::zero()]
+    } else {
+        [Real::zero(), Real::one(), Real::zero()]
+    };
+    crate::bezier_offset::point_affine_form_parameter(point, &form, policy).map(|coordinate| {
+        coordinate.map(|parameter| {
+            let coordinate = parameter.scalar()?.clone();
+            let one = Real::one();
+            Some(match index {
+                0 => crate::Point2::new(coordinate, bounds.min_y() - &one),
+                1 => crate::Point2::new(coordinate, bounds.max_y() + &one),
+                2 => crate::Point2::new(bounds.min_x() - &one, coordinate),
+                3 => crate::Point2::new(bounds.max_x() + &one, coordinate),
+                _ => return None,
+            })
+        })
+    })
+}
+
 impl CurveRegionCarrier2 {
     /// Returns the exact curve in the chart used by this report's parameters.
     pub fn curve(&self) -> &Curve2 {

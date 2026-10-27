@@ -321,6 +321,20 @@ pub(super) fn intersect(
     branch_first: bool,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveIntersectionResult2>> {
+    // Disable terminal approximation without replacing the caller's replay
+    // authority. A point created in an APPROXIMATE_512 operation may retain
+    // that policy even when this particular section has a strict proof.
+    policy.strict_predicate_pass(|| {
+        intersect_certified(branch_curve, line_curve, branch_first, policy)
+    })
+}
+
+fn intersect_certified(
+    branch_curve: &Curve2,
+    line_curve: &Curve2,
+    branch_first: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CurveIntersectionResult2>> {
     let source = line_curve
         .source_restriction()
         .map_or(line_curve, |(source, _, _)| source);
@@ -333,8 +347,6 @@ pub(super) fn intersect(
     let Some([source_x, source_y]) = source_forms(branch)? else {
         return Ok(None);
     };
-    let strict = policy.strict_counterpart();
-    let policy = &strict;
     let sections = if let Some(line) = supporting_line(chord, branch, &source_x, &source_y, policy)?
     {
         branch.line_sections(&line, policy)?

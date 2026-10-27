@@ -85,6 +85,44 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-integration-evidence-2026-10-27` branch
+ends at `04eccb7d4eccb1928dc4e1c2998174cd4a6f27c4`, adding `docs/evidence/2026-10-27-hypercurve-closure-selected-composition`
+(344 files, 13,220,752 bytes), SHA-256 `309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499`.
+It retains all three parent evidence histories and qualifies their combined
+selected-branch compositions through exact face probes, original source/root/map
+relations, transforms, disconnected components and further operation on empty
+results. 1,223 Hypersolve tests, 2,770 Hypercurve tests, 43 root downstream tests,
+3,010 dependent-package tests, strict MSRV Clippy, formatting, 16 matrix
+guards and 123 capability witnesses pass. Failed attempts and rejected probe
+changes remain archived. This record is local and unpushed; full repository
+pre-push validation remains pending. General algebraic closure and native
+region replay remain open.
+
+The integration evidence branch now ends at `de84df74612abfd1e4d447e4827e42ef46f302a6`,
+retaining 351 records including the independently qualified algebraic
+similarity increment. Combined source and composition qualification
+remain pending; these parent records do not establish that result.
+
+The local `hypercurve-algebraic-similarity-evidence-2026-10-27` branch
+ends at `1216d6408218a4746703408ea0e51832ae4fed62`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`
+(202 files, 4,910,607 bytes), SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`.
+It records native-line sections through retained algebraic similarities with
+original selected polynomial sources preserved. 2,745 Hypercurve tests,
+43 root downstream tests, 3,009 tests across six dependent packages,
+strict MSRV Clippy, formatting, 16 matrix guards and 98 capability witnesses
+pass. Expanded equations, exact parameters, tangency, overlap continuation,
+selected trims, distinct nearby supports and actual exhaustion/retry are covered.
+Original failed witnesses and raw source-attributed commands remain archived.
+This record is local and unpushed. General image and algebraic operation closure
+and fresh-process native replay remain open; full pre-push qualification is
+still required before publication.
+
+The local `hypercurve-selected-integration-evidence-2026-10-27` branch
+at `c81fae2f7fb6c17844f8d9eeb51d0971e5f8ffe6` combines 350 archived records from the
+qualified region and horizontal-boundary increments. The individual
+receipts below retain their original source scope. Combined integration
+checks and repository pre-push validation remain pending.
+
 The separate local `hypercurve-polynomial-region-evidence-2026-10-27`
 branch ends at `aceb9add07aaaa060aabac0f31c98154d82a7d96`, adding
 `docs/evidence/2026-10-27-hypercurve-closure-polynomial-regions` (564 files,
@@ -102,6 +140,20 @@ the corrected quintic test oracle remain archived. General implicit operations,
 nonzero offsets/corners and fresh-process replay remain open. This record is
 local and unpushed; the separate complete repository publication run excludes
 this increment, whose full pre-push validation remains pending.
+
+The local `hypercurve-horizontal-boundary-evidence-2026-10-27` branch
+ends at `84c4bd3d979ac681096e69a9c1a35f9e1d4ac681`, adding `docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`
+(404 files, 16,033,938 bytes), SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`.
+It records complete closed horizontal boundary components in the existing
+finite-fiber topology, with original equations and branch incidence retained.
+1,223 Hypersolve tests, 2,744 Hypercurve tests, 43 root downstream tests,
+3,010 dependent-package tests, strict MSRV Clippy, formatting, 16 matrix
+guards and 97 capability witnesses pass. Selected trims, overlap and further
+intersection, exact source replay in a fresh process, and the original BRep
+boundary section through native/affine replay are covered. Earlier failed
+attempts remain archived. Vertical/repeated components, algebraic coefficient
+fields and general closure remain open. This record is local and unpushed;
+the full repository pre-push validation of this increment remains pending.
 
 The separate local `hypercurve-polynomial-location-evidence-2026-10-26`
 branch ends at `98fd9084af3539fabee8dbedc1ffe300935f46e9`, adding

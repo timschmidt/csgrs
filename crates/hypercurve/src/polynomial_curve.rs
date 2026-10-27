@@ -55,11 +55,14 @@ struct PolynomialCurveSource2 {
 /// root of the same equation is not an incident point. Rational image maps
 /// need a separate inverse/preimage contract for this query.
 /// Regular derivatives and smooth-event tangent directions retain that joint
-/// source. Source branches and their retained rational similarities intersect
-/// authored native lines, including exact algebraic coordinates and selected
+/// source. Source branches and their retained rational or algebraic similarities
+/// intersect authored native lines, including exact algebraic coordinates and selected
 /// restrictions, through [`Curve2::intersect_curve`] and
 /// [`Curve2::intersection_topology`]. Scalar and selected-field decisions must
 /// succeed exactly; unresolved predicates retain their typed blockers.
+/// Native-line sections also consume rational map definitions proved to be
+/// rational-coefficient similarities. These query views keep the original
+/// maps and their denominator guards; they do not complete general image queries.
 /// Generated chords keep point-based parameters when a retained native support
 /// or represented constant abscissa certifies the line in either chart.
 /// Equations independent of the source abscissa also certify constant selected
@@ -394,32 +397,48 @@ impl PolynomialCurveBranch2 {
         self.transform.is_none() && self.maps.is_empty()
     }
 
-    /// Uses the source section authority after a rational similarity pullback.
+    /// Uses the source section authority after an exact similarity pullback.
     /// Source abscissas remain the branch parameters; returned points and
-    /// tangent signs belong to the current image. Nonlinear rational images
-    /// and algebraic transform coefficients retain their existing capability gap.
+    /// tangent signs belong to the current image. The native line authority
+    /// decides algebraic coefficients without changing the original source.
+    /// Nonlinear rational images retain their existing capability gap.
     pub(crate) fn line_sections(
         &self,
         line: &crate::LineSeg2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<PolynomialLineSections2>> {
-        if !self.maps.is_empty() {
-            return Ok(None);
-        }
-        let Some(transform) = &self.transform else {
+        // A retained rational definition may encode a similarity, including
+        // a guarded identity. Use its proved affine view only for the query;
+        // returned points still replay every original map and denominator.
+        let transform = if self.maps.is_empty() {
+            self.transform.clone()
+        } else {
+            let mut maps = self.maps.iter();
+            let Some(mut image) = maps
+                .next()
+                .and_then(crate::RationalMap2::rational_similarity)
+            else {
+                return Ok(None);
+            };
+            for map in maps {
+                let Some(next) = map.rational_similarity() else {
+                    return Ok(None);
+                };
+                image = image.then(&next);
+            }
+            if let Some(next) = &self.transform {
+                image = image.then(next);
+            }
+            Some(image)
+        };
+        let Some(transform) = transform else {
             return self.source_line_sections(line, policy).map(Some);
         };
-        let (a, b, d, e, xoff, yoff) = transform.affine_components();
-        if ![a, b, d, e, xoff, yoff]
-            .iter()
-            .all(|value| value.exact_rational_ref().is_some())
-        {
-            return Ok(None);
-        }
         let inverse = transform.inverse().map_err(invalid)?;
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
         let mut source = self.clone();
         source.transform = None;
+        source.maps.clear();
         source.endpoints = self.endpoints.clone().map(|point| {
             CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
         });
@@ -453,8 +472,9 @@ impl PolynomialCurveBranch2 {
     /// in the source rectangle, which include crossings of every branch; a
     /// root is kept only when this branch's own fiber point satisfies the
     /// line exactly. A root of even multiplicity is a tangency and is kept.
-    /// An identically zero substitution means the line is a component of the
-    /// zero set; that is an unsupported blocker, never an empty result.
+    /// An identically zero substitution identifies a line component; its
+    /// selected branch retains an overlap correspondence, while the exact
+    /// quotient supplies the other branches' finite contacts.
     ///
     /// An active boundary returns its retained parameter and stored endpoint,
     /// so an event keeps the event fiber's incidence rather than an open-slab

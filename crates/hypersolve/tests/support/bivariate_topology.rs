@@ -119,10 +119,16 @@ fn audit_and_materialize(topology: &BivariateCurveTopology) {
                 } else {
                     &pair[1]
                 };
-                assert!(!Real::eval_poly(&row, lower).definitely_zero());
-                assert!(!Real::eval_poly(&row, upper).definitely_zero());
+                let lower_is_root = Real::eval_poly(&row, lower).definitely_zero();
+                let upper_is_root = Real::eval_poly(&row, upper).definitely_zero();
+                // Separators remain root-free. Clipping to a closed domain
+                // boundary can include a root, including an entire component.
+                assert!(!lower_is_root || lower == &domain.second[0]);
+                assert!(!upper_is_root || upper == &domain.second[1]);
                 assert_eq!(
-                    sequence.count_distinct_roots(lower, upper, STRICT),
+                    sequence
+                        .count_distinct_roots(lower, upper, STRICT)
+                        .map(|count| count + usize::from(lower_is_root)),
                     Some(expected)
                 );
             }
@@ -436,16 +442,19 @@ pub fn explicit_dimension_degeneracy_budget_and_recovery() {
             polynomial(&[&[0, 0, 1]]),
             BivariateTopologyError::RepeatedComponent,
         ),
-        (
-            polynomial(&[&[2, 1]]),
-            BivariateTopologyError::BoundaryComponent,
-        ),
     ] {
         assert_eq!(
             decompose_bivariate_curve(&source, &rectangle, config),
             Err(expected)
         );
     }
+    // The original boundary-component fixture now retains the complete
+    // horizontal graph, with the same equation and closed rectangle.
+    let boundary = polynomial(&[&[2, 1]]);
+    let topology = build(&boundary, &rectangle);
+    assert_eq!(topology.equation(), &boundary);
+    assert_eq!(topology.events().len(), 2);
+    assert_eq!(incidence(&topology), vec![vec![(0, 1)], vec![(1, 0)]]);
     let nonrational = BivariatePolynomial::new(vec![vec![Real::pi(), 1.into()]]);
     assert_eq!(
         decompose_bivariate_curve(&nonrational, &rectangle, config),

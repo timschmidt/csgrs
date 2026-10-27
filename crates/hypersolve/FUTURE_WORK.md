@@ -73,6 +73,33 @@ consumers that read it. Vertical components need a topology carrier for
 vertical segments and their adjacency to graph branches. Both are new public
 API on a crate prepared for release, so they are deferred.
 
+### Horizontal boundary components (2026-10-27)
+
+The historical `BoundaryComponent` result above and the original `y+2=0`
+fixture are retained in the qualification corpus. The extension on
+`5de7f0cb05` keeps a horizontal boundary factor in the original equation,
+closed fibers and selected graph. Its identically zero boundary specialization
+has no isolated entry events; contacts with other branches already occur in
+`resultant(F,F_y)`. Root-free separators and exact closed root counts retain
+all incident arcs. No factor or multiplicity is discarded.
+
+Ten focused solver witnesses cover both boundaries, distinct components,
+parabola and circle tangencies, partial-domain crossings, algebraic event
+parameters, `2^-80` separation, exact source replay and reached budget failure
+with larger retry. Independent rational Sturm counts audit closed connection
+bands. Hypercurve consumes the result through selected trims, overlaps, further
+intersections, reversal and similarity transport. The original BRep boundary
+section is now a positive native-replay witness. Its reversed restricted pcurve
+exposed a separate directed-chart correspondence bug, fixed in BRep's shared
+materialization owner without changing topology validation. A later plane contact also requires a
+checked similarity view of the retained rational maps; the original definitions
+and denominator guards remain authoritative.
+
+The [Hypercurve qualification ledger](../hypercurve/FUTURE_WORK.md) records
+commands, raw evidence and the remaining pre-push gate. Vertical and repeated
+components, algebraic coefficient fields and total resource bounds remain open;
+this does not adopt the multiplicity reduction discussed above.
+
 ## Represented-root completeness
 
 `represented_strict_sign` refines a represented value's image interval at

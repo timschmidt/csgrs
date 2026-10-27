@@ -44,6 +44,29 @@ fn selected_retained_pcurve_materializes() {
 }
 
 #[test]
+fn represented_retained_pcurves_keep_directed_parameter_correspondence() {
+    let curve = Curve2::from(QuadraticBezier2::new(
+        CurvePoint2::from_values(0, 0),
+        CurvePoint2::new(q(1, 2), 0.into()),
+        CurvePoint2::from_values(1, 1),
+    ))
+    .restrict_source(CurveParameterRange2::try_new(q(1, 4).into(), q(3, 4).into()).unwrap())
+    .unwrap();
+    let original = SurfaceIntersectionPcurve::retained_curve(curve).unwrap();
+    for mapping in [
+        original.clone(),
+        original.reversed().unwrap(),
+        original
+            .subcurve(&q(3, 8).into(), &q(5, 8).into())
+            .unwrap()
+            .reversed()
+            .unwrap(),
+    ] {
+        verify_selected_mapping(&mapping);
+    }
+}
+
+#[test]
 fn selected_iso_pcurve_materializes() {
     let domain = retained().domain;
     for axis in [TensorAxis::U, TensorAxis::V] {

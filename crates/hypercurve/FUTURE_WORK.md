@@ -1039,6 +1039,132 @@ performance improvement is claimed. The separate publication candidate through
 `b1c011a070` excludes this increment; full repository pre-push qualification is
 still required before publishing it.
 
+**Horizontal boundary-component increment (2026-10-27).** On committed
+`5de7f0cb05`, the original `y+2=0` graph in `[-2,2]^2` and both components
+of `y^2-4=0` reproduced `BoundaryComponent`. Hypersolve now keeps a horizontal
+boundary factor in the original equation and closed fibers. Such a component
+has no discrete boundary-entry event. Contacts with other branches are already
+zeros of `resultant(F,F_y)`; existing root-free separators and closed strip
+counts establish event incidence. P11, P15 and P17–P20 remain owned there.
+
+Ten solver witnesses cover the original lower/upper cases and the documented
+circle-plus-boundary fixture, tangent parabola/circle contacts, crossings with
+one side outside, algebraic event fibers, `2^-80` distinct components, checked
+source replay, and actual counted exhaustion/retry. Independent rational Sturm
+counts include closed endpoints. Six Hypercurve witnesses consume these graphs
+through degree-five selected trims, finite intersections and overlap, point
+location, singular endpoint incidence, reversal, similarity transport and
+fresh-process diagnostic source replay followed by another operation. The
+original HyperBRep boundary tensor is retained as a positive section witness,
+with both pcurves, whole-image validation, native archive replay and affine
+transport/revalidation; its upper-boundary counterpart also completes.
+
+The stronger spatial fixture also reproduced a directed pcurve correspondence
+mismatch. Matching directed endpoints fixes that error on both the new section
+and an already admitted rational source restriction. A further plane contact
+then exposed a rational-map dispatch gap: exact similarities stored as quotients
+now supply a checked view to the existing line-section algorithm. Original map
+definitions and denominator guards remain, including removable factors. This
+does not complete general rational images or nonuniform affine incidence.
+
+Final checks pass: 1,223 Hypersolve tests (24 suites), 2,744 Hypercurve tests
+(81 suites, 34 existing ignored), 43 root downstream tests and 3,010 tests
+across six dependent packages (0 existing ignored). Strict
+all-target/all-feature MSRV Clippy for Hypersolve, Hypercurve and HyperBRep,
+formatting, 16 matrix guards, 97 capability witnesses, typos, repository budget
+and diff checks pass. All failed attempts remain. Raw evidence is in
+`docs/evidence/2026-10-27-hypercurve-closure-horizontal-boundaries`, SHA-256 `3f1bfd095d5be2dfeca96045eaa0815ac6b5544b4e045fcfb4be5af0c9547b52`. All non-receipt bytes match the qualified
+snapshot after this receipt.
+
+No factor or multiplicity is discarded. Vertical/repeated components, broader
+coefficient fields and general algebraic operations remain open. The diagnostic
+source encoding is not a native Hypercurve archive format. This increment does
+not include the separately qualified polynomial region work. Counted work and
+external timeouts do not bound every arithmetic operation, coefficient growth,
+retained byte or cancellation. No performance improvement is claimed; full
+repository pre-push qualification remains pending.
+
+**Algebraic similarity section increment (2026-10-27).** On committed
+`5de7f0cb05`, native-line queries against the selected quintic scaled by
+`sqrt(2)` or translated by `(sqrt(3),sqrt(2))` reproduce
+`Intersection/ImplicitPolynomial/Unsupported`. Original source-line controls
+already succeed. The polynomial owner now lets the exact inverse similarity
+feed the existing native-line section authority. P15 and P17–P20 require the
+same original source equation, ordered fiber, parameter domain, selected
+endpoints, overlap correspondence and retained image to survive the query.
+
+A nonsingular similarity is bijective: contact and overlap pullbacks preserve
+the original source abscissa, and its determinant transports oriented crossing
+signs. Removing the rational-coefficient restriction adds no geometric carrier
+or elimination path. Exact scalar and selected-field decisions remain required;
+their undecided or exhausted outcomes keep their typed meaning.
+
+Seven public witnesses cover the original failures, a seventh-root scale,
+oblique maps using both `sqrt(2)` and `sqrt(3)`, reflection and all traversal
+orders, tangency, selected trim endpoints, excluded parameters, common line
+components, repeated overlap clipping and distinct `2^-80` source shifts.
+Independent expanded world equations, exact source parameters and topology
+assertions accompany checked in-memory point replay and further intersection.
+Reached zero counted work returns exhaustion; a larger retry succeeds, and
+STRICT/APPROXIMATE_512/STRICT retains Certified receipts after source drop.
+
+Final checks pass: 2,745 Hypercurve tests (81 suites, 34 existing ignored),
+43 root downstream tests and 3,009 tests across six dependent packages
+(0 existing ignored). Strict Hypercurve all-target/all-feature MSRV Clippy,
+formatting, 16 matrix guards, 98 capability witnesses, typos, repository budget
+and diff checks pass. Raw failures, source snapshots and exact commands are in
+`docs/evidence/2026-10-27-hypercurve-closure-algebraic-similarities`, SHA-256 `cb775d3b839b79110b7dca2f73d291d91217f19dc11e1707d6d9ca10bdf99612`. All non-receipt source bytes remain identical
+after this receipt.
+
+General rational images, different-image polynomial pairs, broader topology
+coefficient fields, repeated/vertical components and implicit offset/corner
+closure remain open. Point-definition replay here is in memory, not a native
+fresh-process archive. This branch excludes the separate region and horizontal
+boundary increments. Counted work and external timeouts do not bound total
+arithmetic, coefficient growth, retained memory or cancellation. No performance
+improvement is claimed; full repository pre-push qualification remains pending.
+
+**Selected-branch composition increment (2026-10-27).** This integration
+retains all three qualified parents: polynomial regions (`b6da97710c`), closed
+horizontal boundary components (`e49c24719f`) and algebraic similarity sections
+(`f2d0071114`). Their individual qualification did not establish composition.
+The combined closed-rectangle clip/reconstruct/subtract/intersect witness
+reproduced an Unsupported Boolean face decision. Existing exterior probes now
+also reuse an available exact coordinate while retaining its selected companion
+and original point relations. Complete pair replay and the shared winding
+authority still establish incidence and the retained face.
+
+Three composition witnesses preserve both fill rules and traversal directions,
+exact source and root identities, checked point replay, a selected quintic
+ordinate and its quarter-turn image, disconnected side components, and canonical
+empty results consumed by further union. A retained rational identity with
+denominator guard `3+x`, followed by an algebraic similarity, preserves contact
+coordinates, signs, overlap correspondence and subsequent intersection. The
+original failing cases remain unchanged. Adding boundary-regularization probe
+directions alone did not resolve the rotated case; that experiment was removed
+and its failed results remain archived. The rotated failure occurs in the
+APPROXIMATE_512 iteration: polynomial/chord intersection replaced the caller
+context with its strict counterpart. It now uses the existing strict-predicate
+scope, preserving replay authority while suppressing terminal approximation.
+No construction-policy barrier is removed.
+
+Final checks pass: 1,223 Hypersolve tests (24 suites), 2,770 Hypercurve tests
+(84 suites, 34 existing ignored), 43 root downstream tests and 3,010 tests
+across six dependent packages (0 existing ignored). Strict
+all-target/all-feature MSRV Clippy for Hypersolve, Hypercurve and HyperBRep,
+formatting, 16 matrix guards, 123 capability witnesses, typos, repository budget
+and diff checks pass. Raw attempts and qualification are in `docs/evidence/2026-10-27-hypercurve-closure-selected-composition`,
+SHA-256 `309880681d97f5bf8760866eea8009a38f0d1764bb4340f13e136d73e8da4499`. All non-receipt bytes remain identical to the qualified
+snapshot after this receipt.
+
+These are bounded composition cases, not general algebraic closure or a new
+native region archive format. Broader selected supports, coefficient fields,
+nonlinear maps, offsets and corner edits retain their recorded gaps. Counted
+work and external fixture timeouts do not establish total arithmetic, expression
+growth, retained-memory or cancellation bounds. No performance improvement is
+claimed. The separate publication candidate is excluded, and full repository
+pre-push qualification of this integration remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
@@ -1056,12 +1182,13 @@ still required before publishing it.
   point that is proved equal to, not stored as, the branch point. A
   selected-fiber image of the abscissa would keep the replay identity at the
   cost of fiber-field arithmetic.
-- **Selected abscissas and broader maps (H06, milestones 2 and 3).** Rational
-  similarity pullback and the recorded algebraic native lines are admitted
-  above. Selected chord carriers, general algebraic similarities and nonlinear rational images still need
-  their own section and source-domain proof; source-x monotonicity is not
-  world-x monotonicity. Further pair images and selected coefficient fields
-  require their own source-domain and incidence proofs.
+- **Selected abscissas and broader maps (H06, milestones 2 and 3).** Native-line
+  sections now consume retained algebraic similarities and checked rational-map
+  similarities where the original exact source decisions complete. Their
+  composition has a separate witness. General selected chord supports, nonlinear
+  rational images, further pair images and selected coefficient fields still
+  need their own source-domain and incidence proofs; source-x monotonicity is
+  not world-x monotonicity.
 - **Repeated and vertical components (H07).** See `hypersolve/FUTURE_WORK.md`.
 - **Complete implicit regions and BRep trims (H08).** The unchanged H08 cap
   now passes loop orientation and shared `CurveRegion2` admission. The bounded
