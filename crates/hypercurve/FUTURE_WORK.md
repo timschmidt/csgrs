@@ -1444,6 +1444,77 @@ observed only for the named repeated-piece fixture; no general performance or
 closure claim follows. Full repository pre-push checks and published-package
 delivery remain pending for this increment.
 
+**Selected point graph replay increment (2026-10-27).** Committed
+`78c661a8ae` exports a selected chord but rejects both the retained line
+and complete circular fillet from a degree-seven selected corner. The original
+positive assertions, exact cut expectations, commands, qualified-library digest
+and committed-source attribution remain in the evidence. This increment resolves
+the retained line. The unchanged complete-circle assertion still fails with an
+unsupported generated-curve definition. Hypercurve point construction and native
+SVG replay own the geometric work; Hyperbrep owns its planar-point archive and
+record admission. P15, P18–P20, P27 and P28–P30 apply.
+
+Version 4 adds polynomial-fiber, rational-image, exact-similarity and unique
+supporting-line-intersection point definitions, plus shared chord-displacement
+recipes and endpoint selections. Replay retains the correlated base parameter,
+re-proves the selected fiber, checks original denominator guards and reconstructs
+similarities and unique intersections. Chord displacements preserve the directed
+source, signed tangent or left-normal distance, optional origin and exact
+translation. A native line or selected chord supplies the original support;
+independent scalar materialization is unnecessary. The existing owner validates
+the construction, including inherited policy. Invalid unused definitions fail.
+
+The graph writer visits point dependencies iteratively. Local address keys own
+their immutable inputs and do not define mathematical equality. Reusing shared
+map prefixes emits 14, 26 and 50 native records for the named 4, 8 and 16-span
+fixtures; these measurements concern serialization growth, not total memory or
+speed. A new configurable point-definition depth limit is propagated through
+chord and endpoint indirection. Byte and depth exhaustion are typed and permit a
+larger-budget retry. The decoder reuses only prior checked immutable definitions;
+public point reconstruction continues to validate its dependencies.
+
+Hyperbrep's new planar-point variant delegates to the same geometry owner. Its
+resource pass counts the source and optional origin before scalar parsing. It
+retains the existing nested point format. Explicit native-line and selected-chord
+source syntax both replay. The API, SVG tags and archive variant are documented
+in `docs/MIGRATIONS.md`; existing inputs remain supported. The SVG fuzz target
+now exercises both metadata versions under its existing input limits.
+
+Ten public Hypercurve witnesses cover fresh-process replay of the original
+fillet-trimmed line before exact midpoint splitting and another archive;
+correlated fiber/map/algebraic-similarity relations; independent selected
+supporting lines and exterior intersections; invalid references, selectors,
+matrices and original poles; reached depth and byte limits with retry; shared
+map prefixes; signed tangent and normal displacements with source reversal,
+zero distance, arbitrary origin and translation; and shared endpoint recipes.
+A unit witness checks inherited approximate-policy rejection and strict recovery.
+One CSGRS SVG test repeats the trimmed-line composition. Two public Hyperbrep
+archive tests preserve exact displaced points and the original selected fillet
+cut through reload and further split, with deterministic serialization checked
+separately from those geometric expectations.
+
+All 18 final groups pass: 2,820 Hypercurve tests across 90 suites, retaining 34
+existing ignored cases; 63 root tests across ten affected suites; 3,012 tests
+across six dependent packages; strict all-target/all-feature Hypercurve,
+Hyperbrep and CSGRS MSRV Clippy; Hypercurve and Hyperbrep builds without optional
+features; all three API documentation builds with warnings denied; fuzz-target
+Clippy; formatting; 16 matrix guards; 170 capability witnesses; typos, repository
+budget and diff checks. Evidence is in `docs/evidence/2026-10-27-hypercurve-closure-point-replay`, SHA-256
+`e5473caf511936bc1704e8d8ed1251b73bf1e2b17ab078623375a2d8b08f932b`. All non-receipt source bytes remain
+identical after qualification. Failed prototypes and their source snapshots are
+retained. Those records distinguish construction/codec gaps from invalid fixture
+setup, compile failures and filesystem exhaustion. The native-source fixture
+now uses its intended native constructor without dropping its view assertion,
+exact point expectations or budget checks.
+
+Generated circles, auxiliary contact and other cusp-derived definitions,
+general joint parameter charts, broader generated and filled-region archives,
+scalar-expression DAGs and cross-path sharing remain open. The finite corpus is
+not a universal closure proof. Point nesting, bytes and existing archive limits
+do not bound all arithmetic, coefficient growth, native prefix-vector allocation,
+temporary/retained memory or cancellation. Full repository pre-push checks and
+published-package delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

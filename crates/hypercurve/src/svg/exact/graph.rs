@@ -25,7 +25,11 @@ const SOURCE_RESTRICTION: u8 = 4;
 const PARALLEL_SUPPORT: u8 = 5;
 const PARALLEL_RANGE: u8 = 6;
 
-pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
+pub(super) fn encode_path(
+    path: &CurvePath2,
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<String> {
     if path.curves().len() > max_bytes / 4 {
         return Err(extension_overflow());
     }
@@ -40,6 +44,9 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
         points: HashMap::new(),
         chords: HashMap::new(),
         retained_curves: HashMap::new(),
+        displacements: HashMap::new(),
+        point_depths: Vec::new(),
+        max_point_depth,
     };
     graph.writer.bytes.extend_from_slice(MAGIC);
     graph.writer.write_len(0)?;
@@ -69,6 +76,9 @@ struct GraphWriter {
     points: HashMap<(u8, *const ()), (crate::CurvePoint2, u32)>,
     chords: HashMap<*const crate::CurvePoint2, (crate::BezierAlgebraicChord2, u32)>,
     retained_curves: HashMap<*const crate::BezierSplitFragment2, (Curve2, u32)>,
+    displacements: HashMap<*const (), (crate::CurvePoint2, u32)>,
+    point_depths: Vec<usize>,
+    max_point_depth: usize,
 }
 
 impl GraphWriter {
@@ -76,6 +86,7 @@ impl GraphWriter {
         let index = self.count;
         self.count = self.count.checked_add(1).ok_or_else(extension_overflow)?;
         self.writer.write_u8(tag)?;
+        self.point_depths.push(0);
         Ok(index)
     }
 
@@ -214,6 +225,7 @@ enum Definition {
     Parallel(BezierParallel2),
     Point(crate::CurvePoint2),
     Chord(crate::BezierAlgebraicChord2),
+    Displacement(crate::BezierAlgebraicChordParallelPoint2),
 }
 
 fn curve_reference(definitions: &[Definition], index: usize) -> SvgResult<&Curve2> {
@@ -244,7 +256,11 @@ fn certified<T>(value: CurveResult<Classification<T>>) -> SvgResult<T> {
     ExactCurveError::decided(CurveOperation2::Construction, value).map_err(SvgError::Exact)
 }
 
-pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath2> {
+pub(super) fn decode_path(
+    bytes: &[u8],
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<CurvePath2> {
     let mut reader = ExactReader::new(bytes, max_bytes);
     if reader.take(MAGIC.len())? != MAGIC {
         return Err(malformed(
@@ -254,10 +270,12 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
     let count = reader.read_len()?;
     reader.check_collection_len(count, 1)?;
     let mut definitions = Vec::new();
+    let mut point_depths = Vec::new();
     // Different distances on one serialized source retain one source owner.
     // Regularity belongs to each finite range, not to this unbounded recipe.
     let mut parallel_sources: HashMap<usize, BezierParallel2> = HashMap::new();
     for _ in 0..count {
+        let mut point_depth = 0;
         let definition = match reader.read_u8()? {
             NATIVE_CURVE => Definition::Curve(reader.read_curve()?),
             SCALAR_PARAMETER => Definition::Parameter(BezierParameter2::Exact(reader.read_real()?)),
@@ -377,7 +395,23 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
             | points::PARALLEL_POINT
             | points::CURVE_ENDPOINT
             | points::CHORD_SUPPORT
-            | points::CHORD_RANGE) => points::read_definition(tag, &mut reader, &definitions)?,
+            | points::CHORD_RANGE
+            | points::POLYNOMIAL_FIBER
+            | points::RATIONAL_IMAGE
+            | points::SIMILARITY_POINT
+            | points::SUPPORTING_LINE_POINT
+            | points::CHORD_DISPLACEMENT
+            | points::DISPLACEMENT_POINT) => {
+                let (definition, depth) = points::read_definition(
+                    tag,
+                    &mut reader,
+                    &definitions,
+                    &point_depths,
+                    max_point_depth,
+                )?;
+                point_depth = depth;
+                definition
+            }
             tag => {
                 return Err(SvgError::Unsupported(format!(
                     "unknown exact Hypercurve definition tag {tag}"
@@ -385,6 +419,7 @@ pub(super) fn decode_path(bytes: &[u8], max_bytes: usize) -> SvgResult<CurvePath
             }
         };
         definitions.push(definition);
+        point_depths.push(point_depth);
     }
     let count = reader.read_len()?;
     reader.check_collection_len(count, 4)?;

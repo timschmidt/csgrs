@@ -501,12 +501,25 @@ exact signatures.
   exact coordinates, rational source images, rational expressions and native
   parallel points at retained Bezier parameters. Shared curve-endpoint records
   preserve their incidence relation. Import proves point definitions, support
-  incidence and chart order, including for unused records. Recursive point
-  definitions, selected joint fibers and auxiliary chord contacts remain open.
+  incidence and chart order, including for unused records. Auxiliary chord
+  contacts and general joint-parameter charts remain open.
   Parallel endpoint projection uses the requested refinement independently of
   stronger cached predicate bounds, keeping repeated display output stable after
   exact incidence queries.
   The standard SVG `d` attribute is only a finite display projection.
+  Point dependencies also retain polynomial fibers, rational maps, exact
+  similarities and unique supporting-line intersections. Replay validates fiber
+  selectors and optional exact-root witnesses, original denominator guards and
+  line uniqueness. These points need no independently materialized scalar
+  coordinates. Chord displacements retain the actual selected source, normal or
+  tangent direction, signed distance, optional origin and exact translation;
+  paired endpoints share one replayed recipe.
+  `SvgOptions::max_point_definition_depth` defaults to 256 and
+  counts nested map, similarity, displacement and supporting-line point definitions; leaves
+  have depth zero. Endpoint and chord references carry their dependency depth.
+  Reached depth limits return `SvgError::SizeOverflow` before publishing a path;
+  callers may retry with a larger limit. This limit and extension bytes do not
+  bound total arithmetic, coefficient growth, retained memory or cancellation.
   Filled-region native replay, other generated supports and sharing across
   separate paths remain open. Byte and segment limits do not bound all scalar
   decoding, arithmetic, expression growth, memory or cancellation.

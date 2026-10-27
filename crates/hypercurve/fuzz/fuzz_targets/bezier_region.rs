@@ -4,8 +4,8 @@ mod support;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, Classification, Curve2, PredicatePolicy, CurvePath2, CurvePoint2,
-    CurveRegion2, LineSeg2, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierParameterPolynomial, Classification, Curve2, CurvePath2, CurvePoint2, CurveRegion2,
+    LineSeg2, Point2, PredicatePolicy, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 use libfuzzer_sys::fuzz_target;
 
@@ -183,15 +183,13 @@ fuzz_target!(|data: &[u8]| {
         .into_iter()
         .filter_map(|(start, end)| algebraic_chord(start, end, &policy))
         .collect::<Vec<_>>();
-    if outer.len() == 4 && inner.len() == 4 {
-        if let (Ok(outer), Ok(inner)) = (CurvePath2::try_new(outer), CurvePath2::try_new(inner)) {
-            if let Ok(region) = CurveRegion2::try_from_boundary_paths(
-                &[outer, inner],
-                hypercurve::FillRule::EvenOdd,
-            ) {
-                let _ = region.loop_roles();
-            }
-        }
+    if outer.len() == 4
+        && inner.len() == 4
+        && let (Ok(outer), Ok(inner)) = (CurvePath2::try_new(outer), CurvePath2::try_new(inner))
+        && let Ok(region) =
+            CurveRegion2::try_from_boundary_paths(&[outer, inner], hypercurve::FillRule::EvenOdd)
+    {
+        let _ = region.loop_roles();
     }
 
     for chunk in data.chunks(9).take(4) {

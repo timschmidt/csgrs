@@ -11,7 +11,11 @@ mod graph;
 const PREFIX: &str = "3:";
 const MAGIC: &[u8; 4] = b"HCP3";
 
-pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
+pub(super) fn encode_path(
+    path: &CurvePath2,
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<String> {
     if path.curves().iter().any(|curve| {
         curve.source_restriction().is_some()
             || curve.analytic_parallel().is_some()
@@ -20,7 +24,7 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
                 Some(crate::BezierSplitFragment2::AlgebraicChord(_))
             )
     }) {
-        return graph::encode_path(path, max_bytes);
+        return graph::encode_path(path, max_bytes, max_point_depth);
     }
     let mut writer = ExactWriter::new(max_bytes);
     writer.bytes.extend_from_slice(MAGIC);
@@ -42,9 +46,13 @@ fn encode_bytes(prefix: &str, bytes: &[u8]) -> String {
     encoded
 }
 
-pub(super) fn decode_path(encoded: &str, max_bytes: usize) -> SvgResult<CurvePath2> {
+pub(super) fn decode_path(
+    encoded: &str,
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<CurvePath2> {
     if let Some(hex) = encoded.strip_prefix(graph::PREFIX) {
-        return graph::decode_path(&decode_bytes(hex, max_bytes)?, max_bytes);
+        return graph::decode_path(&decode_bytes(hex, max_bytes)?, max_bytes, max_point_depth);
     }
     let hex = encoded.strip_prefix(PREFIX).ok_or_else(|| {
         SvgError::Unsupported("unknown Hypercurve SVG path extension version".into())

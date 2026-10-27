@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-point-replay-evidence-2026-10-27` branch ends at
+`9ed71e03ca34a38db6ec46f5194101181445fbfb`, adding `docs/evidence/2026-10-27-hypercurve-closure-point-replay`
+(702 files, 27,425,737 bytes), SHA-256 `e5473caf511936bc1704e8d8ed1251b73bf1e2b17ab078623375a2d8b08f932b`.
+It records exact selected point dependency graphs, source-preserving chord
+displacements, shared map prefixes, checked point-depth limits and Hyperbrep
+planar-point archive admission. All 2,820 Hypercurve tests, 63 root tests,
+3,012 dependent-package tests, strict MSRV and fuzz-target Clippy, builds without
+optional features, API documentation, formatting, 16 matrix guards and 170
+capability witnesses pass. The Hypercurve suite retains 34 existing ignored
+cases. Committed-parent failures, failed prototypes, source snapshots and
+fresh-process replay before further operations are preserved. This record is
+local and unpushed. Complete selected circles and broader generated/filled-region
+replay, total resource bounds, full pre-push checks and published-package delivery
+remain open.
+
 The local `hypercurve-chord-replay-evidence-2026-10-27` branch ends at
 `449fb13ca4931dbd460429664a30846e201dea0c`, adding `docs/evidence/2026-10-27-hypercurve-closure-chord-replay`
 (555 files, 18,335,290 bytes), SHA-256 `79716febf65ec101df08a8ed67ed3d5411e2b003c616c4a02acc5c04575e1d67`.

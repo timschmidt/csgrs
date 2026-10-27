@@ -92,6 +92,26 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Selected-point graph replay (2026-10-27).** Version 4 metadata adds
+  polynomial-fiber, rational-image, similarity, supporting-line-intersection
+  and shared chord-displacement point records (tags 14–19). Existing version 3
+  and version 4 records remain
+  readable; older readers reject the new tags. Authored version 3 encoding is
+  unchanged. Shared rational-map prefixes are encoded once per path. Check
+  geometric equality separately when updating deterministic output expectations.
+  `SvgOptions` adds `max_point_definition_depth` with default 256; complete Rust
+  struct literals must set it or use `..SvgOptions::default()`. The new
+  `CurvePointDefinition2::ChordDisplacement` variant requires exhaustive enum
+  matches to add an arm. Zero allows leaf
+  point definitions. The limit counts map, similarity, displacement and
+  intersection nesting
+  in the input graph, including dependencies reached through curve endpoints,
+  even when a constructor can simplify the resulting point. It does not bound
+  total arithmetic work, coefficient growth, heap use or cancellation.
+  Hyperbrep native planar-point archives also add `ChordDisplacement`, replaying
+  it through Hypercurve after counting its source and optional origin records.
+  Older readers reject this new variant; existing archive variants keep their
+  format. Hyperbrep retains its existing nested point syntax and archive budgets.
 - **Selected-chord SVG replay (2026-10-27).** Version 4 native path metadata
   gains point, supporting-chord, selected-range and curve-endpoint records
   (tags 7–13). Repeated retained curves may share one definition, changing

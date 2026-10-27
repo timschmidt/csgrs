@@ -20,8 +20,15 @@
 //! and directed endpoints. Those endpoints may be exact coordinates, rational
 //! source images, rational expressions or native parallel evaluations at retained
 //! Bezier parameters; shared curve-endpoint references preserve incidence.
+//! Polynomial fibers retain the base parameter, equation and singleton selector.
+//! Rational images retain original denominator guards; similarities and unique
+//! supporting-line intersections retain their checked point dependencies.
 //! Replay rechecks point definitions, support incidence and strict chart order.
-//! Other selected point definitions and auxiliary chord contacts remain unsupported.
+//! Auxiliary chord contacts and other generated curve carriers remain unsupported.
+//! Chord displacements retain their selected source, origin, signed normal or
+//! tangent displacement and translation, sharing one recipe for paired endpoints.
+//! Point-definition nesting and extension bytes have separate configurable limits;
+//! neither is a total arithmetic-work, memory or cancellation bound.
 //! These guarantees concern stroke paths; filled-region export still
 //! uses its finite projection. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
@@ -56,7 +63,7 @@ pub enum SvgError {
     Exact(ExactCurveError),
     /// An exact coordinate has an undecided certificate or exhausted its budget.
     Scalar(hyperreal::Problem),
-    /// A configured finite projection or sampling bound was exceeded.
+    /// A configured projection, extension-byte or point-definition-depth bound was exceeded.
     SizeOverflow {
         /// Name of the exceeded bound.
         limit: &'static str,
@@ -121,6 +128,10 @@ pub struct SvgOptions {
     pub max_curve_segments: usize,
     /// Maximum decoded byte length of one exact Hypercurve path extension.
     pub max_extension_bytes: usize,
+    /// Maximum nested rational-image, similarity, chord-displacement or supporting-line point
+    /// constructions in one exact path graph. Leaf point definitions have
+    /// depth zero. This is distinct from arithmetic work and memory limits.
+    pub max_point_definition_depth: usize,
 }
 
 impl Default for SvgOptions {
@@ -129,6 +140,7 @@ impl Default for SvgOptions {
             curve_tolerance: 0.1,
             max_curve_segments: 4096,
             max_extension_bytes: 16 * 1024 * 1024,
+            max_point_definition_depth: 256,
         }
     }
 }
@@ -1269,7 +1281,11 @@ fn path_geometry(
     options: SvgOptions,
 ) -> SvgResult<SvgGeometry2> {
     if let Some(encoded) = exact_path {
-        let path = exact::decode_path(encoded, options.max_extension_bytes)?;
+        let path = exact::decode_path(
+            encoded,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         if context.fills() && path.start() != path.end() {
             return Err(SvgError::Geometry(
                 "filled exact path contains an explicitly open subpath".into(),
@@ -1515,7 +1531,11 @@ pub fn export_svg_document_with_options(
 
     for wire in &geometry.wires {
         let path = curve_path_from_wire(wire)?;
-        let exact = exact::encode_path(&path, options.max_extension_bytes)?;
+        let exact = exact::encode_path(
+            &path,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         write!(
             &mut body,
             "<path fill=\"none\" stroke=\"black\" {EXACT_PATH_ATTRIBUTE}=\"{exact}\" d=\""
@@ -1525,7 +1545,11 @@ pub fn export_svg_document_with_options(
         body.push_str("\"/>\n");
     }
     for path in &geometry.paths {
-        let exact = exact::encode_path(path, options.max_extension_bytes)?;
+        let exact = exact::encode_path(
+            path,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
         write!(
             &mut body,
             "<path fill=\"none\" stroke=\"black\" {EXACT_PATH_ATTRIBUTE}=\"{exact}\" d=\""

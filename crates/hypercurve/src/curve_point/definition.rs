@@ -59,6 +59,20 @@ pub enum CurvePointDefinition2 {
         first: [CurvePoint2; 2],
         second: [CurvePoint2; 2],
     },
+    /// A signed unit-direction displacement, retaining its selected straight
+    /// source. `source` must be a native line or retained chord. With `origin: None`,
+    /// `at_end` selects that chord's start or end; an explicit origin may be
+    /// anywhere. `left_normal` selects the source's left normal when true and
+    /// its forward unit tangent otherwise. Exact translation is applied after
+    /// the displacement. No independent normalized scalar fields are required.
+    ChordDisplacement {
+        source: crate::Curve2,
+        origin: Option<CurvePoint2>,
+        at_end: bool,
+        distance: crate::Real,
+        translation: [crate::Real; 2],
+        left_normal: bool,
+    },
 }
 
 impl CurvePoint2 {
@@ -84,6 +98,13 @@ impl CurvePoint2 {
             CurvePointData2::Algebraic(point) => Some((1, point.replay_storage_key())),
             CurvePointData2::AnalyticParallel(point) => Some((2, point.replay_storage_key())),
             CurvePointData2::Endpoint(point) => Some((3, std::sync::Arc::as_ptr(point).cast())),
+            CurvePointData2::Polynomial(point) => Some(point.replay_storage_key()),
+            CurvePointData2::Similarity(point) => Some((5, point.replay_storage_key())),
+            CurvePointData2::AlgebraicChordPair(point) => Some((6, point.replay_storage_key())),
+            CurvePointData2::AlgebraicChordParallel(point) => {
+                let (at_end, key) = point.replay_storage_key();
+                Some((8 + u8::from(at_end), key))
+            }
             _ => None,
         }
     }
@@ -155,6 +176,9 @@ impl CurvePoint2 {
                 let [first, second] = point.strict_support_endpoints().ok_or_else(blocked)?;
                 Ok(CurvePointDefinition2::SupportingLineIntersection { first, second })
             }
+            CurvePointData2::AlgebraicChordParallel(point) => {
+                point.strict_definition().ok_or_else(blocked)
+            }
             CurvePointData2::Endpoint(endpoint) => {
                 let point = ExactCurveError::decided(
                     CurveOperation2::Evaluation,
@@ -174,6 +198,22 @@ impl CurvePointDefinition2 {
     /// Replays the source with pole, regular-normal and line-uniqueness checks under strict
     /// predicates. The input definition carries no trusted validation flags.
     pub fn into_point(self) -> ExactCurveResult<CurvePoint2> {
+        self.replay(false)
+    }
+
+    /// Replays one graph node whose source point records have already passed
+    /// strict replay. The native decoder owns those immutable checked records;
+    /// no serialized certainty flag may satisfy this precondition.
+    ///
+    /// Reusing their validation prevents a shared dependency graph from being
+    /// recursively rebuilt as a tree. The current construction's denominator,
+    /// selector, similarity and unique-incidence checks still run normally.
+    #[cfg(feature = "svg")]
+    pub(crate) fn into_point_with_checked_sources(self) -> ExactCurveResult<CurvePoint2> {
+        self.replay(true)
+    }
+
+    fn replay(self, sources_checked: bool) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
             Self::RationalImage { source, map } => source.rational_image(&map),
@@ -259,11 +299,49 @@ impl CurvePointDefinition2 {
                 }
             }
             Self::Parallel { source, parameter } => source.checked_native_point(&parameter, policy),
+            Self::ChordDisplacement {
+                source,
+                origin,
+                at_end,
+                distance,
+                translation,
+                left_normal,
+            } => {
+                if !sources_checked {
+                    source.start().definition()?.into_point()?;
+                    source.end().definition()?.into_point()?;
+                    if let Some(origin) = &origin {
+                        origin.definition()?.into_point()?;
+                    }
+                }
+                let point = crate::BezierAlgebraicChordParallelPoint2::from_replay_definition(
+                    source,
+                    origin,
+                    at_end,
+                    distance,
+                    translation,
+                    left_normal,
+                    policy,
+                )
+                .map_err(|cause| {
+                    ExactCurveError::invalid(
+                        CurveOperation2::Construction,
+                        CurveFamily2::Line,
+                        cause,
+                    )
+                })?;
+                ExactCurveError::decided(
+                    CurveOperation2::Construction,
+                    point.map(CurvePoint2::from),
+                )
+            }
             Self::Similarity { source, transform } => {
                 // Replaying the definition establishes its source under the
                 // same strict policy; an arbitrary incompatible source cannot
                 // acquire a stronger claim merely by being wrapped.
-                source.definition()?.into_point()?;
+                if !sources_checked {
+                    source.definition()?.into_point()?;
+                }
                 Ok(crate::BezierSimilarityPoint2::new(source, transform, policy).into())
             }
             Self::SupportingLineIntersection { first, second } => {
@@ -273,8 +351,10 @@ impl CurvePointDefinition2 {
                 let line = |[start, end]: [CurvePoint2; 2]| {
                     // Retain source identity after proving every recursive
                     // definition admissible under the strict replay policy.
-                    start.definition()?.into_point()?;
-                    end.definition()?.into_point()?;
+                    if !sources_checked {
+                        start.definition()?.into_point()?;
+                        end.definition()?.into_point()?;
+                    }
                     ExactCurveError::decided(
                         CurveOperation2::Evaluation,
                         crate::BezierAlgebraicChord2::try_new(start, end, policy)

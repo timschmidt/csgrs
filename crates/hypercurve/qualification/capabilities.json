@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload of generated supports and filled regions beyond the authored-source restriction, procedural-parallel and named selected-chord witnesses.",
+    "Native save/reload of generated supports and filled regions beyond authored-source restrictions, procedural parallels, selected chords and the named point-definition witnesses.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -1404,7 +1404,7 @@
           "assertion": "The unchanged two-branch parabola and vertical-line path has counterclockwise orientation and one three-piece filled boundary."
         }
       ],
-      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the original region represents 0<=x<=1/4 and y²<=x, with its two ordered roots and closing line.",
+      "oracle": "The selected quintic has negative y while the positive parabola has nonnegative y; the original region represents 0<=x<=1/4 and y\u00b2<=x, with its two ordered roots and closing line.",
       "timeout_seconds": 300
     },
     {
@@ -4120,7 +4120,7 @@
           "assertion": "Both fill rules publish one boundary with two selected polynomial branches and one line."
         }
       ],
-      "oracle": "The exact region is 0<=x<=1/4 and y²<=x; all original pieces remain.",
+      "oracle": "The exact region is 0<=x<=1/4 and y\u00b2<=x; all original pieces remain.",
       "timeout_seconds": 300
     },
     {
@@ -4158,7 +4158,7 @@
           "assertion": "Inside, outside and boundary locations remain exact, including selected branch points."
         }
       ],
-      "oracle": "Independent inequalities 0<=x<=1/4 and y²<=x; exact cap and cusp-axis boundary points.",
+      "oracle": "Independent inequalities 0<=x<=1/4 and y\u00b2<=x; exact cap and cusp-axis boundary points.",
       "timeout_seconds": 300
     },
     {
@@ -4272,7 +4272,7 @@
           "assertion": "Subtraction/Xor creates a hole with opposite orientation; reversal and reconstruction preserve it; union restores the cap."
         }
       ],
-      "oracle": "The entire hole obeys y²<=1/64<1/16<=x; two loop orientations, independent point roles and set identities.",
+      "oracle": "The entire hole obeys y\u00b2<=1/64<1/16<=x; two loop orientations, independent point roles and set identities.",
       "timeout_seconds": 300
     },
     {
@@ -4365,7 +4365,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The strictly increasing graph y=x^5+x²+5x-5 capped at y=3, clipped by y>=0 and then x>=3/4 and x>=7/8.",
+      "domain": "The strictly increasing graph y=x^5+x\u00b2+5x-5 capped at y=3, clipped by y>=0 and then x>=3/4 and x>=7/8.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4424,7 +4424,7 @@
           "assertion": "The retained segment has exact endpoints (0,0) and (1/4,0)."
         }
       ],
-      "oracle": "The intersection of y=0 with 0<=x<=1/4 and y²<=x is independently the closed interval [0,1/4].",
+      "oracle": "The intersection of y=0 with 0<=x<=1/4 and y\u00b2<=x is independently the closed interval [0,1/4].",
       "timeout_seconds": 300
     },
     {
@@ -4501,7 +4501,7 @@
           "assertion": "Two selected polynomial pieces, two circular pieces and one line remain consumable exact boundaries."
         }
       ],
-      "oracle": "Polynomial/circle contacts satisfy x²+x=1/4 with alpha=(sqrt(2)-1)/2; source domains, circle equations, cap x-coordinate and independent filled-set points.",
+      "oracle": "Polynomial/circle contacts satisfy x\u00b2+x=1/4 with alpha=(sqrt(2)-1)/2; source domains, circle equations, cap x-coordinate and independent filled-set points.",
       "timeout_seconds": 300
     },
     {
@@ -4615,7 +4615,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The cusp cap 0<=x<=1,y²<=x³, clipped and reconstructed.",
+      "domain": "The cusp cap 0<=x<=1,y\u00b2<=x\u00b3, clipped and reconstructed.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4653,7 +4653,7 @@
         "P19",
         "P20"
       ],
-      "domain": "Both material lobes of y²<=x², -1<=x<=1, meeting only at the origin, under both fill rules.",
+      "domain": "Both material lobes of y\u00b2<=x\u00b2, -1<=x<=1, meeting only at the origin, under both fill rules.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -7168,6 +7168,457 @@
       ],
       "oracle": "Independently authored rectangle and circle coordinates, exact endpoints, winding/ownership invariants, regularized set identities and the specified offset radius. Finite point tests do not alone prove the entire offset set.",
       "timeout_seconds": 300
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_fillet_contact",
+      "test": "a_fillet_trimmed_line_replays_in_a_fresh_process_before_further_split",
+      "domain": "The first line retained by the unique trim-only radius1/4 fillet of a right-angle path translated by the degree-seven root of 2t^7-1.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A child process replays the line with its selected supporting-line intersection endpoint, then reproduces complete SVG bytes."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Locate the exact midpoint, split, replay again and retain the independently derived cut at beta+3/4."
+        }
+      ],
+      "oracle": "The degree-seven defining root, exact rational chord setback and independently formed midpoint; the complete generated circle remains outside this witness."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_fiber_map_similarity",
+      "test": "polynomial_fibers_maps_and_algebraic_similarities_keep_their_defining_relations",
+      "domain": "Selected alpha^2=2, beta^3=alpha with positive isolators; map (alpha,beta)/(1+beta), followed by an algebraic reflection and translation.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Retain both defining relations, the original rational map and similarity under strict/approximate/strict caller transitions; full SVG bytes agree."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The inverse rational map returns the original correlated point, the similarity retains the mapped source, and reversal retains endpoints."
+        }
+      ],
+      "oracle": "Polynomial residuals are exactly zero and the inverse rational map recovers the original selected fiber, independently of finite projection."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_independent_intersection",
+      "test": "intersections_keep_independent_selected_supports_and_exterior_parameters",
+      "domain": "A vertical line at a degree-seven selected root and horizontal line at an independent degree-five selected root; their crossing lies outside both finite witnesses.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Retain both finite support witnesses and exact selected coordinates, and reproduce complete SVG bytes."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both coordinate forms equal their independent selected roots without requiring Real coordinates."
+        }
+      ],
+      "oracle": "Independent degree-seven and degree-five root definitions and exact retained support endpoint comparisons."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_invalid_nodes",
+      "test": "new_point_records_reject_wrong_typed_forward_and_self_references",
+      "domain": "Handwritten unused point definitions with wrong, self or forward references; nonsimilar/singular matrices; degenerate, coincident and parallel line pairs.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Reject malformed references and invalid constructions before accepting an empty final path."
+        }
+      ],
+      "oracle": "Typed MalformedInput versus Exact Invalid assertions for known bad references and algebraically invalid matrices/line pairs."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_fiber_selectors",
+      "test": "polynomial_fiber_replay_proves_the_selector_and_exact_root_witness",
+      "domain": "y^2-2 at x=0 with singleton, multiple, empty, reversed and false-exact selectors; a linear fiber with an exact point interval.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The valid selector gives (0,sqrt(2)); a valid exact point-interval witness is admitted."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Multiple or absent roots, reversed bounds and a forged exact root cannot become empty success."
+        }
+      ],
+      "oracle": "Independent positive sqrt(2) coordinates and known root counts/equation residuals; no serialized trusted count."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_original_poles",
+      "test": "original_rational_map_poles_are_checked_on_the_selected_fiber",
+      "domain": "A selected sqrt(2) fiber mapped through denominators y^2-2 or zero, including removable 0/0, followed by a valid translation.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Original poles retain ZeroRationalPointDenominator even when numerator factors could cancel."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The non-pole translation replays to (1,sqrt(2))."
+        }
+      ],
+      "oracle": "The original defining polynomial vanishes at the selector; valid output has independently expressed exact coordinates."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_depth_retry",
+      "test": "point_depth_limits_cover_endpoint_indirection_and_retry_without_cached_failure",
+      "domain": "An endpoint/chord dependency bridge, 300 raw nested similarity definitions and eight/nine rational map prefixes.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exhausted",
+          "assertion": "Configured point-depth limits reject import and export before path publication, including endpoint indirection."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Larger retries succeed, mapped paths reproduce full SVG bytes and depth zero admits a leaf."
+        }
+      ],
+      "oracle": "Derived graph depth, distinct SizeOverflow label and exact larger-retry/determinism assertions; canonicalized similarities do not reset raw input depth."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_prefix_sharing",
+      "test": "shared_rational_map_prefixes_stay_linear_and_byte_exhaustion_recovers",
+      "domain": "4/8/16 consecutive line spans between shared rational-map prefixes of one correlated polynomial point.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Record counts obey the published linear ceiling; import/re-export preserves full bytes."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exhausted",
+          "assertion": "64-byte budgets reject import/export, then larger retries reproduce the original document."
+        }
+      ],
+      "oracle": "Count native definition records independently of draw commands; require <=4n+8 records and consecutive doubling bound. This is a serialization-growth assertion, not a timing or total-memory claim."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_chord_displacement",
+      "test": "chord_displacements_preserve_direction_origin_translation_and_source",
+      "domain": "A degree-seven selected 3-4-5 direction with both normal/tangent conventions, positive/negative distances, reversed traversal, optional arbitrary origins and rational translations.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replay every named displacement and retain source, origin, distance, translation and direction; complete SVG bytes agree."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Each endpoint equals the independently derived signed unit-direction formula in its original selected parameter."
+        }
+      ],
+      "oracle": "The exact 3-4-5 unit tangent and left normal, explicitly adjusted for source reversal and origin selection; no coordinate fitting."
+    },
+    {
+      "target": "svg_point_replay",
+      "owner": "Hypercurve selected point owners and native SVG dependency graph",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version4 stroke metadata replays prior validated point dependencies through existing strict constructors. Polynomial fibers retain their base and singleton selector; rational maps retain original poles; similarities and line intersections re-establish their construction. Depth and byte limits are separate. No claim of generated-circle, general joint-parameter or filled-region replay, complete algebraic closure, total work or heap bounds; timeout is external containment.",
+      "timeout_seconds": 300,
+      "id": "point_replay_displacement_sharing",
+      "test": "displacement_recipes_validate_references_and_share_endpoint_selections",
+      "domain": "One displacement recipe over a retained 3-4-5 chord, its two endpoint selections, malformed source/origin/recipe references and a depth-zero budget.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Two displaced endpoints share one recipe; nine native records replay to independently expressed rational endpoints with full SVG determinism."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Wrong/self/forward source, origin and recipe references are rejected even with no final path."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exhausted",
+          "assertion": "A depth-zero budget rejects the displacement; default settings replay it successfully."
+        }
+      ],
+      "oracle": "Exact rational endpoint coordinates, the explicit nine-record shared graph and distinct malformed versus depth-limit errors."
     }
   ]
 }

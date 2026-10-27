@@ -112,8 +112,43 @@ boundaries with a circular hole and disconnected material, then checks loop
 roles, hole ownership, boundary reconstruction, empty-set Boolean continuation
 and a round offset's specified exact hole boundary. Point-location assertions
 are finite expectations, not a standalone proof of the entire offset set.
-Recursive point definitions, joint fibers, auxiliary contact records, generated
-circles, filled-region archives and total resource bounds remain unqualified.
+The additional point-graph witnesses below extend that initial point vocabulary.
+Auxiliary contact records, generated circles, filled-region archives and total
+resource bounds remain unqualified.
+
+The point-graph SVG witnesses encode polynomial fibers, rational images,
+similarities and supporting-line intersections as prior validated dependencies.
+The original degree-seven fillet yields a trimmed line whose selected contact
+replays in another process before a further exact split and another archive.
+This is a line-piece witness: replay of the complete generated fillet circle
+remains open, with the original full failure retained in the evidence record.
+Other witnesses retain a correlated cubic fiber over a quadratic base, an
+original rational denominator, an algebraic reflection and independently
+selected degree-seven/degree-five line supports with exterior intersections.
+Defining relations and exact point queries are checked separately from complete
+SVG determinism. Invalid references, multiple or missing fiber roots, false
+exact-root witnesses, nonsimilar matrices, degenerate or parallel line pairs
+and original poles are rejected even for an empty final path.
+
+The point-definition depth limit is separate from extension bytes. A raw graph
+with 300 nested similarities checks the default limit and a larger retry; an
+endpoint/chord indirection cannot reset depth. Rational-map chains exercise
+export limits and recovery. The 4/8/16-span prefix fixture checks linear native
+record growth and byte exhaustion/retry. These checks do not bound solver work,
+existing native prefix-vector allocations, scalar expression trees or total
+memory. Chord-displacement witnesses additionally check signed tangent and normal
+distances, arbitrary origins, exact translations, reversed sources, paired
+endpoint sharing and malformed recipe references. Joint point definitions are
+distinct from general joint parameter
+charts, whose interchange is still unsupported.
+
+The displacement definition also passes through Hyperbrep's native planar-point
+archive. Public model tests retain the original selected fillet cut before
+another split and archive, and check a native-coordinate source with and without
+an explicit origin. The source and origin consume archive record budgets before
+scalar decoding; exhausted attempts allow a larger retry. Degenerate or nonlinear
+source substitutions remain invalid. These tests do not turn Hyperbrep's nested
+point format into a shared dependency graph or qualify generated circle replay.
 
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line

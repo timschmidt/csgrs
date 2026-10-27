@@ -492,6 +492,10 @@ pub(super) enum PlanarPoint {
         first: Box<[PlanarPoint; 2]>,
         second: Box<[PlanarPoint; 2]>,
     },
+    ChordDisplacement {
+        source: Box<Pcurve>,
+        origin: Option<Box<PlanarPoint>>,
+    },
 }
 impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
@@ -536,6 +540,15 @@ impl Record for PlanarPoint {
                 for point in (*first).into_iter().chain(*second) {
                     budget.record()?;
                     point.admit(budget)?;
+                }
+                Ok(())
+            }
+            Self::ChordDisplacement { source, origin } => {
+                budget.record()?;
+                source.admit(budget)?;
+                if let Some(origin) = origin {
+                    budget.record()?;
+                    origin.admit(budget)?;
                 }
                 Ok(())
             }

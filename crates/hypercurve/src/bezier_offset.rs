@@ -13452,6 +13452,12 @@ impl BezierSimilarityPoint2 {
             .accepts_retained_policy(self.data.policy)
             .then_some((&self.data.source, &self.data.transform))
     }
+
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_storage_key(&self) -> *const () {
+        Arc::as_ptr(&self.data).cast()
+    }
+
     pub(crate) fn new(
         mut source: CurvePoint2,
         mut transform: Similarity2,

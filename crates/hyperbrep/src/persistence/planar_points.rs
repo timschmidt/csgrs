@@ -62,6 +62,14 @@ pub(super) enum RawPlanarPoint {
         first: Box<[RawPlanarPoint; 2]>,
         second: Box<[RawPlanarPoint; 2]>,
     },
+    ChordDisplacement {
+        source: Box<RawPcurve>,
+        origin: Option<Box<RawPlanarPoint>>,
+        at_end: bool,
+        distance: Real,
+        translation: [Real; 2],
+        left_normal: bool,
+    },
 }
 
 impl GraphEncoder {
@@ -134,6 +142,24 @@ impl GraphEncoder {
                     ]),
                 }
             }
+            CurvePointDefinition2::ChordDisplacement {
+                source,
+                origin,
+                at_end,
+                distance,
+                translation,
+                left_normal,
+            } => RawPlanarPoint::ChordDisplacement {
+                source: Box::new(self.pcurve(&source)?),
+                origin: origin
+                    .as_ref()
+                    .map(|point| self.planar_point(point).map(Box::new))
+                    .transpose()?,
+                at_end,
+                distance,
+                translation,
+                left_normal,
+            },
         })
     }
 }
@@ -219,6 +245,21 @@ impl SelectionGraph {
                     second: [self.planar_point(c)?, self.planar_point(d)?],
                 }
             }
+            RawPlanarPoint::ChordDisplacement {
+                source,
+                origin,
+                at_end,
+                distance,
+                translation,
+                left_normal,
+            } => CurvePointDefinition2::ChordDisplacement {
+                source: pcurve(*source, self)?,
+                origin: origin.map(|point| self.planar_point(*point)).transpose()?,
+                at_end,
+                distance,
+                translation,
+                left_normal,
+            },
         };
         Ok(definition.into_point().map_err(GeometryError::from)?)
     }
