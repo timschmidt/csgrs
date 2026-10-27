@@ -1206,6 +1206,68 @@ performance improvement is claimed. Full repository pre-push qualification
 remains pending; checks on the separate earlier publication candidate do not
 validate this later source revision.
 
+**Shared algebraic image incidence increment (2026-10-27).** On committed
+`4519ec554d`, all eight public pair/chord witnesses reproduce the original
+rational-only image restrictions. The composed seventh-root scale also
+reproduces `Undecided` in the selected common-fiber solver on that revision.
+Earlier prototypes that admitted the common similarity but lacked the solver
+fallback exceeded the unchanged public hard case’s 300-second external allowance;
+those source snapshots and timeouts are retained.
+A mutated root interval is also accepted as field evidence without an actual
+selected root. These are P15 and
+P17–P20 failures at the curve incidence and selected-field admission boundaries.
+
+Polynomial pairs now compare their shared invertible similarity coefficients
+by strict value. Chords admit algebraic inverse coordinate forms and consume
+an already proved source-chart support directly, preserving selected endpoints
+without a forward/inverse expansion. After an undecided common-fiber GCD,
+Hypersolve can reuse its existing projective normalization when every
+coefficient ratio has an exact rational proof. A proved nonzero scalar factor
+preserves roots and multiplicities; parameter factors are retained. Field and
+quotient-ring projection admission recheck point membership or exactly one
+owned root in `(lower, upper]`. Uncached singleton endpoints remain supported,
+and unavailable selection predicates remain undecided.
+
+Eight curve witnesses cover seventh-root scale/reflection, translation,
+independently equal maps, algebraic trims and overlaps, tangent and near-distinct
+branches, changed transforms, actual zero-budget exhaustion and retry, policy
+transitions, both fill rules, reconstruction, further Booleans, and oblique
+chords with selected endpoints. Ten public solver witnesses cover composed
+coefficients, signed/transposed equations, nearby distinct equations, vanishing
+parameter factors, valid and invalid selectors, singleton membership, and
+structural-negation handoff. The first full qualification exposed four valid
+singleton regressions and a structural-negation generator regression. Their
+original tests and minimized seed remain unchanged; selection replay now lives
+at field admission, while structural witness arithmetic keeps its contract.
+
+Final checks pass: 1,233 Hypersolve tests (25 suites, none ignored), 2,781
+Hypercurve tests (86 suites, 34 existing ignored), 43 root downstream tests, and
+3,605 tests across nine dependent packages. The six curve consumers account
+for 3,010 of those tests; additional direct solver consumers are Hyperpath,
+Hyperphysics and the standalone exactCore comparison package. Its 19 existing
+oracle-defect cases remain ignored. ExactCore source hashes are recorded before
+and after execution. Strict Hypersolve/Hypercurve all-target/all-feature MSRV
+Clippy, formatting, 16 matrix guards, 133 capability witnesses, typos, repository
+budget and diff checks pass. Raw failed attempts, source snapshots and commands
+are in `docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair`, SHA-256 `af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d`. Non-receipt source bytes remain unchanged
+after this receipt.
+
+The comparison inventory guard also failed on the unchanged parent because it
+omitted HyperBRep I/O and Hyperspatial. Their domain dispositions are now explicit,
+with historical audit measurements preserved. Earlier kernel checks retain
+their original source attribution: only those two audit metadata files changed.
+The complete comparison suite, matrix and hygiene checks ran after that repair;
+both failed qualification attempts are archived.
+
+This is a shared-image chart extension and optional projective rationalization,
+not a general algorithm for unrelated maps or arbitrary coefficient fields.
+Structural root representation validation is not a complete field certificate.
+Checked point replay is in memory; fresh-process native interchange and general
+algebraic offset/corner closure remain open. Counted limits and external timeouts
+do not bound all arithmetic, coefficient growth, memory or cancellation. No
+performance improvement is claimed. Full repository pre-push qualification
+remains pending for this later increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

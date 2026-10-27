@@ -183,15 +183,16 @@ fn negate(sign: RealSign) -> RealSign {
 }
 
 /// A common invertible image preserves source incidence and parameter order.
-/// Compare rational affine coefficients by value, including an explicit
+/// Compare affine coefficients by certified value, including an explicit
 /// identity versus an unmapped source. This is a sufficient chart certificate;
 /// other images retain their existing dispatch and capability blockers.
-fn shared_rational_similarity(
+fn shared_similarity(
     first: &PolynomialCurveBranch2,
     second: &PolynomialCurveBranch2,
-) -> Option<Option<Similarity2>> {
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<Option<Similarity2>>> {
     if !first.rational_maps().is_empty() || !second.rational_maps().is_empty() {
-        return None;
+        return Ok(None);
     }
     let coefficients = |branch: &PolynomialCurveBranch2| {
         branch.image_transform().map_or_else(
@@ -220,23 +221,23 @@ fn shared_rational_similarity(
     };
     let a = coefficients(first);
     let b = coefficients(second);
-    if !a
-        .iter()
-        .chain(&b)
-        .all(|value| value.exact_rational_ref().is_some())
-        || !a
-            .iter()
-            .zip(&b)
-            .all(|(a, b)| a.exact_rational_ref() == b.exact_rational_ref())
-    {
-        return None;
+    let same = policy.strict_predicate_pass(|| -> ExactCurveResult<bool> {
+        for (a, b) in a.into_iter().zip(b) {
+            if order(&a.into(), &b.into(), policy)? != Ordering::Equal {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    })?;
+    if !same {
+        return Ok(None);
     }
-    Some(
+    Ok(Some(
         first
             .image_transform()
             .or_else(|| second.image_transform())
             .cloned(),
-    )
+    ))
 }
 
 pub(super) fn intersect(
@@ -247,7 +248,7 @@ pub(super) fn intersect(
     let (Some(a), Some(b)) = (first.polynomial_branch(), second.polynomial_branch()) else {
         return Ok(None);
     };
-    let Some(image) = shared_rational_similarity(a, b) else {
+    let Some(image) = shared_similarity(a, b, policy)? else {
         return Ok(None);
     };
     let inverse = image

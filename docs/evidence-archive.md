@@ -85,6 +85,23 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-algebraic-pair-evidence-2026-10-27` branch ends at
+`8b0caa9be41bdacd1f40bd9f60b7b9da3f339962`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair`
+(567 files, 23,612,610 bytes), SHA-256 `af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d`.
+It records shared algebraic similarity incidence, selected-endpoint chord
+source charts, projective common-fiber equations and strict selected-field
+admission. All 1,233 Hypersolve tests, 2,781 Hypercurve tests, 43 root downstream
+tests, 3,605 tests across nine dependent packages, strict MSRV Clippy,
+formatting, 16 matrix guards and 133 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases; standalone exactCore comparisons retain
+19 existing oracle-defect cases. Original unsupported, undecided and timeout
+witnesses, both failed qualifications, unchanged regression tests, the minimized
+generated seed, and the repaired two-crate comparison inventory are archived.
+Per-command source snapshots distinguish the metadata repair from the unchanged
+kernel inputs. This record is local and
+unpushed; full pre-push qualification, general algebraic closure and native
+fresh-process replay remain open.
+
 The local `hypercurve-similarity-policy-evidence-2026-10-27` branch
 ends at `5c1494e708b19575a7616ee58443d4acf07350f1`, adding `docs/evidence/2026-10-27-hypercurve-closure-similarity-policy`
 (242 files, 6,278,223 bytes), SHA-256 `db95b27ddd9dff1a5f89d3e234a663ea7e66140af57edd77b708c033fb95537c`.

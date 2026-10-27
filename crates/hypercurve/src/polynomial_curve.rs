@@ -436,17 +436,45 @@ impl PolynomialCurveBranch2 {
         };
         let inverse = transform.inverse().map_err(invalid)?;
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
+        self.image_source_line_sections(&source_line, &transform, policy)
+            .map(Some)
+    }
+
+    /// Consumes an already certified source-chart support without a forward
+    /// and inverse coordinate roundtrip. Generated chords retain this view
+    /// when their selected endpoints prove a source abscissa directly.
+    pub(crate) fn source_chart_line_sections(
+        &self,
+        line: &crate::LineSeg2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<PolynomialLineSections2> {
+        if !self.maps.is_empty() {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        match &self.transform {
+            Some(transform) => self.image_source_line_sections(line, transform, policy),
+            None => self.source_line_sections(line, policy),
+        }
+    }
+
+    fn image_source_line_sections(
+        &self,
+        source_line: &crate::LineSeg2,
+        transform: &crate::Similarity2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<PolynomialLineSections2> {
+        let inverse = transform.inverse().map_err(invalid)?;
         let mut source = self.clone();
         source.transform = None;
         source.maps.clear();
         source.endpoints = self.endpoints.clone().map(|point| {
             CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
         });
-        let mut sections = source.source_line_sections(&source_line, policy)?;
+        let mut sections = source.source_line_sections(source_line, policy)?;
         let PolynomialLineSections2::Isolated(points) = &mut sections else {
             // An invertible image preserves the complete support identity;
             // the source-abscissa/line-parameter map is unchanged.
-            return Ok(Some(sections));
+            return Ok(sections);
         };
         for section in points {
             // Reuse the actual selected boundary point at a retained endpoint.
@@ -462,7 +490,7 @@ impl PolynomialCurveBranch2 {
                 section.cross = section.cross.map(negate);
             }
         }
-        Ok(Some(sections))
+        Ok(sections)
     }
 
     /// Every point of this source-plane branch on the exact native `line`.

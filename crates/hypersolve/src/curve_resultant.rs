@@ -649,7 +649,7 @@ fn extract_bivariate_polynomial_system_axis_factors_once(
     }
 }
 
-fn normalize_bivariate_projective_scale(
+pub(crate) fn normalize_bivariate_projective_scale(
     polynomial: &BivariatePolynomial,
 ) -> Option<(BivariatePolynomial, Real)> {
     let (_, _, scale) = leading_bivariate_term(&polynomial.coefficients)?;

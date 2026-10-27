@@ -163,7 +163,7 @@ impl AlgebraicFieldValue {
 
 impl AlgebraicField {
     /// Replays a selected-root payload and starts a strict arithmetic batch.
-    /// The supplied isolation evidence remains the proof of uniqueness.
+    /// Rechecks point membership or the interval's unique owned root.
     pub fn new(root: &AlgebraicRootRepresentation) -> Result<Self, AlgebraicFieldError> {
         Ok(Self {
             source: Arc::new(root.clone()),
@@ -3404,9 +3404,12 @@ pub fn project_bivariate_fiber_at_algebraic_parameter(
     // This quotient-ring norm needs only the immutable defining polynomial.
     // Share the exact LocalAlgebraicField admission boundary, then avoid
     // cloning the complete refinable root and constructing an unused cache.
-    if !is_valid_local_algebraic_field_evidence(retained_root) {
+    if let Err(error) = replay_local_algebraic_field_selection(retained_root) {
         return AlgebraicFiberProjectionReport {
-            status: AlgebraicFiberProjectionStatus::InvalidEvidence,
+            status: match error {
+                LocalFieldError::InvalidEvidence => AlgebraicFiberProjectionStatus::InvalidEvidence,
+                _ => AlgebraicFiberProjectionStatus::Undecided,
+            },
             coefficients: Vec::new(),
         };
     }
@@ -3673,7 +3676,73 @@ fn count_fiber_roots(
     count_local_polynomial_roots(first, fiber_lower, fiber_upper, endpoints, field)
 }
 
+/// Keep a nonzero scalar equation factor out of a selected-field GCD when
+/// the original arithmetic did not decide. Every coefficient ratio must have
+/// an exact rational proof; a declined projection leaves the original outcome.
+fn rational_projective_fiber_equation(
+    polynomial: &BivariatePolynomial,
+) -> Option<Cow<'_, BivariatePolynomial>> {
+    if polynomial
+        .coefficients
+        .iter()
+        .flatten()
+        .all(|coefficient| coefficient.exact_rational_ref().is_some())
+    {
+        return Some(Cow::Borrowed(polynomial));
+    }
+    let (mut normalized, _) =
+        crate::curve_resultant::normalize_bivariate_projective_scale(polynomial)?;
+    for coefficient in normalized.coefficients.iter_mut().flatten() {
+        *coefficient = coefficient.exact_rational_normal_form()?.into();
+    }
+    Some(Cow::Owned(normalized))
+}
+
 fn count_common_fiber_roots(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    retained_parameter: CurveResultantParameter,
+    fiber_lower: &Real,
+    fiber_upper: &Real,
+    endpoints: FiberIntervalEndpoints,
+    field: &mut LocalAlgebraicField,
+) -> Result<LocalRootCountOutcome, LocalFieldError> {
+    let outcome = count_common_fiber_roots_once(
+        first,
+        second,
+        retained_parameter,
+        fiber_lower,
+        fiber_upper,
+        endpoints,
+        field,
+    );
+    if !matches!(outcome, Err(LocalFieldError::Undecided)) {
+        return outcome;
+    }
+    let (Some(first), Some(second)) = (
+        rational_projective_fiber_equation(first),
+        rational_projective_fiber_equation(second),
+    ) else {
+        return outcome;
+    };
+    if matches!(&first, Cow::Borrowed(_)) && matches!(&second, Cow::Borrowed(_)) {
+        return outcome;
+    }
+    // Projective normalization proves its scalar divisor nonzero under STRICT.
+    // It is independent of both parameters, so it preserves common roots and
+    // multiplicities on this same selected sheet, including degree drops.
+    count_common_fiber_roots_once(
+        &first,
+        &second,
+        retained_parameter,
+        fiber_lower,
+        fiber_upper,
+        endpoints,
+        field,
+    )
+}
+
+fn count_common_fiber_roots_once(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
     retained_parameter: CurveResultantParameter,
@@ -4530,6 +4599,51 @@ fn is_valid_local_algebraic_field_evidence(root: &AlgebraicRootRepresentation) -
         && algebraic_root_payload_replays_strictly(root)
 }
 
+fn replay_local_algebraic_field_selection(
+    root: &AlgebraicRootRepresentation,
+) -> Result<(), LocalFieldError> {
+    if !is_valid_local_algebraic_field_evidence(root) {
+        return Err(LocalFieldError::InvalidEvidence);
+    }
+    if root.interval.exact_root.is_some() {
+        // Structural replay above already checked this selected point.
+        return Ok(());
+    }
+    // Public payloads are mutable, so a stored count is not a uniqueness proof.
+    // An uncached singleton still selects its endpoint; a proper interval has
+    // the isolator's (lower, upper] ownership.
+    let valid = match compare_reals(
+        &root.interval.lower,
+        &root.interval.upper,
+        PredicatePolicy::STRICT,
+    )
+    .value()
+    .ok_or(LocalFieldError::Undecided)?
+    {
+        Ordering::Equal => compare_reals(
+            &Real::eval_poly(&root.polynomial_coefficients, &root.interval.lower),
+            &Real::zero(),
+            PredicatePolicy::STRICT,
+        )
+        .value()
+        .map(|sign| sign == Ordering::Equal),
+        Ordering::Less => crate::root_isolation::polynomial_has_one_distinct_root_with_ownership(
+            &root.polynomial_coefficients,
+            &root.interval.lower,
+            &root.interval.upper,
+            PredicatePolicy::STRICT,
+            false,
+            true,
+        ),
+        Ordering::Greater => Some(false),
+    };
+    match valid {
+        Some(true) => Ok(()),
+        Some(false) => Err(LocalFieldError::InvalidEvidence),
+        None => Err(LocalFieldError::Undecided),
+    }
+}
+
 /// Drops structurally zero leading coefficients, keeping the constant term.
 /// They carry no value, and the local field's reduced-form invariant and
 /// sign cache keys require a canonical degree.
@@ -4548,9 +4662,7 @@ impl LocalAlgebraicField {
         root: &AlgebraicRootRepresentation,
         policy: PredicatePolicy,
     ) -> Result<Self, LocalFieldError> {
-        if !is_valid_local_algebraic_field_evidence(root) {
-            return Err(LocalFieldError::InvalidEvidence);
-        }
+        replay_local_algebraic_field_selection(root)?;
         Ok(Self::from_validated_root(root, policy))
     }
 

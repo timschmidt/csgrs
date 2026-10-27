@@ -104,16 +104,15 @@ fn source_forms(
     };
     let inverse = image.inverse().map_err(invalid)?;
     let (a, b, d, e, x, y) = inverse.affine_components();
-    if [a, b, d, e, x, y]
-        .iter()
-        .any(|v| v.exact_rational_ref().is_none())
-    {
-        return Ok(None);
-    }
     Ok(Some([
         [a.clone(), b.clone(), x.clone()],
         [d.clone(), e.clone(), y.clone()],
     ]))
+}
+
+enum PolynomialChordSupport {
+    World(LineSeg2),
+    Source(LineSeg2),
 }
 
 /// A native support view does not replace this chord's selected endpoints.
@@ -123,7 +122,7 @@ fn supporting_line(
     source_x: &[Real; 3],
     source_y: &[Real; 3],
     policy: &CurveContext,
-) -> ExactCurveResult<Option<LineSeg2>> {
+) -> ExactCurveResult<Option<PolynomialChordSupport>> {
     chord.validate_policy(policy).map_err(invalid)?;
     if let Some(mut line) = chord
         .exact_line()
@@ -141,7 +140,7 @@ fn supporting_line(
         if positive != (sign == hyperreal::RealSign::Positive) {
             line = line.reversed();
         }
-        return Ok(Some(line));
+        return Ok(Some(PolynomialChordSupport::World(line)));
     }
     // A represented source abscissa can certify an entire vertical support
     // while both ordinates remain selected fibers. No ordinate is projected.
@@ -160,15 +159,15 @@ fn supporting_line(
             Point2::new(value.clone(), Real::zero()),
             Point2::new(value.clone(), dy),
         )
-        .map(Some)
+        .map(|line| Some(PolynomialChordSupport::World(line)))
         .map_err(invalid);
     }
-    let Some(transform) = branch.image_transform() else {
+    if branch.image_transform().is_none() {
         return Ok(None);
-    };
+    }
     // The same certificate can live in the retained source chart. Pull back
-    // the coordinate forms, then transport a support through the similarity;
-    // do not materialize the selected endpoint ordinates in either plane.
+    // the coordinate forms and retain the source support directly; do not
+    // materialize ordinates or expand a similarity/inverse roundtrip.
     let x = coordinate(chord.start(), source_x, policy)?;
     let Some(value) = x.scalar() else {
         return Ok(None);
@@ -190,9 +189,7 @@ fn supporting_line(
         Point2::new(value.clone(), dy),
     )
     .map_err(invalid)?;
-    line.transform_similarity(transform)
-        .map(Some)
-        .map_err(invalid)
+    Ok(Some(PolynomialChordSupport::Source(line)))
 }
 
 fn contact(
@@ -349,7 +346,12 @@ fn intersect_certified(
     };
     let sections = if let Some(line) = supporting_line(chord, branch, &source_x, &source_y, policy)?
     {
-        branch.line_sections(&line, policy)?
+        match line {
+            PolynomialChordSupport::World(line) => branch.line_sections(&line, policy)?,
+            PolynomialChordSupport::Source(line) => {
+                Some(branch.source_chart_line_sections(&line, policy)?)
+            }
+        }
     } else if branch.has_constant_source_ordinate(policy)? {
         // Independence of x proves every selected source graph is a straight
         // support. Endpoint equality selects that constant branch; it is not

@@ -5572,6 +5572,398 @@
       ],
       "oracle": "The original equation selects alpha uniquely; endpoints are (3-alpha,3) and (3-alpha,5), and the horizontal cut meets the branch once at (3-alpha,4). The same transformed output, rather than a reconstruction under a new policy, supplies the later queries and split.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_scale",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_pairs_consume_shared_algebraic_scale",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The quintic y^5+5y+5=x and negative parabola branch, both scaled by sqrt(2).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The original quintic and parabola equations remain attached to their similarity images."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders and traversal reversals yield one transverse contact with the derived orientation, exact expanded world equations and source abscissa in (3/5,7/10)."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The returned split fragments intersect again in the same retained contact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The checked in-memory contact definition reconstructs the same selected point."
+        }
+      ],
+      "oracle": "Eliminating y from y^5+5y+5=x and y^2=x gives x^5+10x^3-x^2+35x-25. Its selected root in (3/5,7/10) belongs to the negative parabola branch. Independent expanded world equations, source controls, parameter identity, tangent orientation and later fragment incidence check the same point.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_translation",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_pairs_consume_shared_algebraic_translation",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The same selected quintic/parabola contact translated by (sqrt(3),sqrt(2)).",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The original quintic and parabola equations remain attached to their similarity images."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders and traversal reversals yield one transverse contact with the derived orientation, exact expanded world equations and source abscissa in (3/5,7/10)."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The returned split fragments intersect again in the same retained contact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The checked in-memory contact definition reconstructs the same selected point."
+        }
+      ],
+      "oracle": "Eliminating y from y^5+5y+5=x and y^2=x gives x^5+10x^3-x^2+35x-25. Its selected root in (3/5,7/10) belongs to the negative parabola branch. Independent expanded world equations, source controls, parameter identity, tangent orientation and later fragment incidence check the same point.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_degree_seven",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_pairs_keep_higher_degree_images_and_reflections",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The same contact scaled by the positive seventh root of two, with and without reflection. The world equation uses independently grouped fourth and fifth powers.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The original quintic and parabola equations remain attached to their similarity images."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both operand orders and traversal reversals yield one transverse contact with the derived orientation, exact expanded world equations and source abscissa in (3/5,7/10)."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The returned split fragments intersect again in the same retained contact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The checked in-memory contact definition reconstructs the same selected point."
+        }
+      ],
+      "oracle": "Eliminating y from y^5+5y+5=x and y^2=x gives x^5+10x^3-x^2+35x-25. Its selected root in (3/5,7/10) belongs to the negative parabola branch. Independent expanded world equations, source controls, parameter identity, tangent orientation and later fragment incidence check the same point. This retains the original 300-second failed zero-predicate witness; completion requires exact coefficient relations, not interval convergence at zero.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_overlap",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_pairs_keep_selected_overlaps_under_equal_algebraic_images",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected portions of y^2=x and (y^2-x)(y-3)=0, trimmed through the selected positive root of 2x^2-1, under independently built equal reflected algebraic maps.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The partial common support has one overlap with the correct direction in both operand orders."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Clipped overlap correspondences preserve exact endpoint parameters and subsequent restricted-curve incidence."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Selected overlap endpoint definitions replay and agree on both original supports."
+        }
+      ],
+      "oracle": "The common factor y^2-x supplies the support; exact trim intersections and orientation determine the retained overlap independently of the additional factor y-3.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_distinct",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_pairs_keep_tangency_and_distinct_supports_in_algebraic_images",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A parabola and its tangent line component under a reflected seventh-root scale; a support and a transform perturbed by 2^-80.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The original parabola and line have one zero-cross-product contact at the origin, while the positively shifted parabola is disjoint."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "A changed image transform keeps its typed Unsupported boundary; a warm original-image query still succeeds."
+        }
+      ],
+      "oracle": "The equations y=x^2 and y=0 meet tangentially only at zero. y=x^2+2^-80 has no real zero. Exact coefficient equality must distinguish the changed transform.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_retry",
+      "target": "polynomial_algebraic_pairs",
+      "test": "polynomial_algebraic_pairs_retry_and_keep_certified_results",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The seventh-root reflected quintic/parabola contact under zero counted work, a larger retry, source drop and STRICT/APPROXIMATE_512/STRICT.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A zero allowance reaches an actual denied charge and reports BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A 100000-refinement/100000-promotion retry succeeds; retained output fragments and checked point replay remain Certified across policy changes."
+        }
+      ],
+      "oracle": "Reached counters, the exact selected contact, retained fragment domains and operation certainty receipts. The larger counters are not a total arithmetic or memory bound.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_regions",
+      "target": "polynomial_algebraic_pairs",
+      "test": "shared_algebraic_polynomial_pairs_feed_region_booleans",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Bands on source x in [0,1] above the quintic and negative parabola, under sqrt(2) scaling and reflection, with NonZero and EvenOdd fills.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Both transformed selected boundaries remain nonempty filled operands."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Their intersection retains both source supports and satisfies three independent exact point-location expectations."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Reconstructed boundary paths have empty symmetric difference with the result, which subtracts from its first operand to empty."
+        }
+      ],
+      "oracle": "The lower boundary is the maximum of the two source graphs. Exact inequalities at (1/2,0), (1/4,-3/4) and (3/4,-13/16), original support retention, reconstruction equality and subset difference jointly check the filled set.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "implicit_algebraic_pair_oblique_chord",
+      "target": "polynomial_algebraic_pairs",
+      "test": "oblique_algebraic_images_consume_chords_with_selected_endpoints",
+      "owner": "Hypercurve shared polynomial charts and retained chord supports; Hypersolve selected-field arithmetic and root replay",
+      "properties": [
+        "P4",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A generated vertical source chord between selected parabola ordinates at x=sqrt(1/2), intersecting the quintic after an oblique algebraic similarity with seventh-root translation and reflection.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Common invertible similarities preserve selected source incidence. Exact affine coefficient comparisons establish a shared chart; the original supports, trims and selected points remain authoritative. Generated chords retain certified source supports. These are named fixtures, not arbitrary mixed-image, normal-parallel, corner-edit or full algebraic closure. Point-definition replay here is in memory. Counted limits and external timeouts do not bound total arithmetic, coefficient growth, retained memory or cancellation.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The unique contact retains source parameter sqrt(1/2), in both operand orders and branch traversals."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both curves split into two pieces, and returned fragments intersect at the same retained contact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The selected point definition replays and agrees with the independently evaluated original branch at that source parameter."
+        }
+      ],
+      "oracle": "The two parabola points have the same exact abscissa and bracket the unique quintic ordinate. Invertibility preserves that contact. The source control and retained parameter relation detect unnecessary coordinate expansion.",
+      "timeout_seconds": 300
     }
   ]
 }

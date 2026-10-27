@@ -8,6 +8,7 @@ hypercurve	compared	Finite line segments supporting circles and circle relations
 hypermesh	compared	Planes convex triangles and pairwise triangle intersection	tests/meshes.rs;benches/meshes.rs	Feature mesh; general mesh booleans have no exactCore counterpart
 hyperpath	compared	Line-path metrics order and explicit-circle boundary predicates	tests/paths.rs;benches/paths.rs	Feature path; route constraints have no exactCore counterpart
 hyperbrep	comparison-pending	Finite Curve3 lines and planar Surface classification	-	Build compatibility is restored; a dedicated exactCore differential test and benchmark suite has not yet been added
+hyperbrep-io	no-direct-counterpart	Bounded STEP Part21 and native BRep exchange	-	No exactCore STEP or BRep exchange contract; primitive geometry is delegated to the kernel crates
 hypercircuit	no-direct-counterpart	Circuit MNA event routing board and interchange domain APIs	-	Uses exact-aware carriers but exactCore has no circuit model
 hyperdrc	no-direct-counterpart	Gerber parsing spatial indexing and PCB design-rule checking	-	No exactCore PCB or Gerber API
 hyperevolution	no-direct-counterpart	Evolutionary proposal and fitness carriers	-	No exactCore optimization-search API
@@ -16,4 +17,5 @@ hyperpack	no-direct-counterpart	Packing feasibility and replay carriers	-	No exa
 hyperparts	no-direct-counterpart	Source-attributed part knowledge graph	-	No exactCore knowledge-graph or component API
 hyperphysics	no-direct-counterpart	Physical simulation and mass-property carriers	-	No exactCore physical simulation contract
 hypersdf	no-direct-counterpart	Signed-distance and implicit-field carriers	-	ExactCore distance primitives do not expose an SDF field contract
+hyperspatial	no-direct-counterpart	Geodesy map projections reference frames and epochs	-	No exactCore frame-aware geodesy or map-projection domain contract; shared scalar primitives are compared separately
 hypervoxel	no-direct-counterpart	Voxel frames sparse-grid facts and reports	-	No exactCore voxel or sparse-grid API

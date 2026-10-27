@@ -199,3 +199,15 @@ claim, archive the relevant raw record under the repository's
 matrix is evidence for these witnesses only; broader transforms, singularities,
 nonrational offset chains, generated replay, general algebraic regions and
 shipped consumers still require their own algorithms and acceptance evidence.
+
+The eight `polynomial_algebraic_pairs` witnesses extend the catalog to shared
+algebraic similarities, selected overlaps, seventh-root scales, reflected
+region intersections and oblique chords with selected endpoints. They retain
+source equations, exact trim parameters and checked in-memory point replay.
+Ten companion Hypersolve acceptance tests cover projective coefficient
+proofs, distinct nearby equations, selected parameter factors, uncached
+singleton points and strict field admission of mutable root selectors.
+Structural witness negation keeps its existing contract and does not certify
+field admission. Full qualification and its source attribution are
+recorded in the increment ledger; these named cases do not establish arbitrary
+algebraic operation closure or fresh-process native interchange.
