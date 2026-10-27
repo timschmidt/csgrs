@@ -85,6 +85,18 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-voxel-write-oracle-evidence-2026-10-26` branch ends at
+`e5b2ee8217a3b9254b30130aacbbccbc0001ccc6`. Its new
+`docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle` record contains
+24 files and 568,359 bytes, SHA-256
+`32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a`.
+The full pre-push attempt at `904e5408e1` exposed an invalid random-write test
+expectation for unchanged voxel values. The deterministic failing seed and the
+original full random workload now use an independent dense-array change oracle.
+All 116 nested workspace tests, 78 Hypervoxel consumer tests, strict Voxelis
+Clippy, formatting and repository hygiene checks pass. This is targeted local
+qualification; publication remains blocked pending the complete validation set.
+
 The local `hypercurve-closure-2026-10-26` branch now ends at
 `2550c23fd100d06fb2343323ae8273ea97a70164`, adding
 `docs/evidence/2026-10-26-hypercurve-closure-line-endpoints` (13 files,
