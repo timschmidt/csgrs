@@ -12,7 +12,10 @@
 //! path also carries a bounded, versioned `data-hypercurve-path` extension so
 //! rational quadratics, arbitrary rational Beziers, polynomial B-splines,
 //! NURBS, periodicity, and non-decimal [`Real`] values round-trip exactly
-//! through Hypercurve. Other SVG consumers ignore this `data-*` attribute and
+//! through Hypercurve. Retained authored-source restrictions also preserve
+//! selected algebraic parameters, their source charts, and traversal. These
+//! guarantees concern stroke paths; filled-region export still uses its finite
+//! projection. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;
@@ -41,6 +44,8 @@ pub enum SvgError {
     Unsupported(String),
     /// Exact geometry construction, transformation, or Boolean failure.
     Geometry(String),
+    /// Exact native-definition replay failed, retaining its typed context and cause.
+    Exact(ExactCurveError),
     /// An exact coordinate has an undecided certificate or exhausted its budget.
     Scalar(hyperreal::Problem),
     /// A configured finite projection or sampling bound was exceeded.
@@ -56,6 +61,7 @@ impl fmt::Display for SvgError {
             Self::MalformedInput(detail) => write!(formatter, "malformed SVG input: {detail}"),
             Self::Unsupported(detail) => write!(formatter, "unsupported SVG input: {detail}"),
             Self::Geometry(detail) => write!(formatter, "SVG geometry conversion failed: {detail}"),
+            Self::Exact(error) => write!(formatter, "SVG exact replay failed: {error}"),
             Self::Scalar(error) => write!(formatter, "SVG exact coordinate failed: {error}"),
             Self::SizeOverflow { limit } => {
                 write!(
@@ -71,6 +77,7 @@ impl std::error::Error for SvgError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Scalar(error) => Some(error),
+            Self::Exact(error) => Some(error),
             _ => None,
         }
     }
@@ -1552,6 +1559,11 @@ fn append_native_path(
             .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
             .into_value();
+        if projected.points().len().saturating_sub(1) > options.max_curve_segments {
+            return Err(SvgError::SizeOverflow {
+                limit: "configured curve-segment count",
+            });
+        }
         for (index, point) in projected.points().iter().enumerate() {
             write!(
                 output,

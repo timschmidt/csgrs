@@ -1268,6 +1268,58 @@ do not bound all arithmetic, coefficient growth, memory or cancellation. No
 performance improvement is claimed. Full repository pre-push qualification
 remains pending for this later increment.
 
+**Selected native source replay increment (2026-10-27).** On committed
+`dca6233549`, an authored quadratic restricted at the selected positive root
+of `2t^2-1` fails native SVG export. The unchanged library also rejects finite
+projection of the retained line range `[1/4,3/4]`, whose independent endpoints
+are `(2,0)` and `(6,0)`. Both failures and the library digest are retained.
+The owning layers are Hypercurve exact interchange and finite path projection;
+the root SVG adapter transports typed failures. P15, P18–P20 and P28–P30 apply.
+
+Version 4 stroke metadata records native sources, selected parameters, original
+domains and traversal in dependency order. Selected roots carry their defining
+polynomials and isolators; projective charts reference the original selected
+root. Replay re-establishes each definition through existing STRICT constructors
+before assembling the path. Invalid, forward, cyclic and wrong-kind references
+are rejected, including invalid definitions followed by an empty path. Local
+allocation keys preserve existing sharing but are never serialized or treated
+as mathematical equality. Authored-only paths still emit version 3, and both
+versions remain readable. Finite projection consumes the existing retained
+source spans through its fragment sampler; display commands never replace the
+authoritative metadata. The existing maximum SVG segment count is checked
+before publication, and exact replay errors retain their kernel category.
+
+Nine curve witnesses include a separate-process reload followed by exact point
+incidence, further restriction, another archive and reversed overlap; shared
+degree-seven roots and projective charts; algebraic coefficients; similarity
+and replay; rational trims of all eight authored families; invalid selectors,
+ranges, references and chart poles; actual byte/segment limits with retry; and
+exact finite-projection endpoints and traversal. Two root adapter witnesses
+exercise public replay and typed invalid geometry paired with an empty path.
+The all-family witness uses rational trims; selected algebraic trim success
+is limited to the named cases.
+
+Final checks pass: 2,790 Hypercurve tests (87 suites, 34 existing ignored),
+60 root tests across seven affected suites, and 3,010 tests across six
+dependent packages, none ignored. Strict Hypercurve/CSGRS all-target/all-feature
+MSRV Clippy, the no-default-feature Hypercurve build, both API documentation
+builds with warnings denied, formatting, 16 matrix guards, 142 capability
+witnesses, typos, repository budget and diff checks pass. Raw failures, exact
+commands and source snapshots are in `docs/evidence/2026-10-27-hypercurve-closure-native-replay`,
+SHA-256 `14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd`. All non-receipt source bytes
+remain unchanged after this receipt. The initial compilation errors, projection
+failures and lint failure are retained; no existing test or hard fixture was
+weakened.
+
+This is a per-path authored-source restriction format. Other generated supports,
+selected or joint fibers, filled-region native replay, cross-path sharing and
+shared scalar-expression DAG serialization remain open. Byte and segment limits
+do not bound total arithmetic, coefficient growth, memory or cancellation. No
+performance improvement or universal closure is claimed. Full repository
+pre-push qualification and published-package delivery remain pending for this
+increment; checks on the earlier publication candidate do not validate these
+source bytes.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

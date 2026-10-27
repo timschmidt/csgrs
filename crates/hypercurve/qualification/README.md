@@ -19,7 +19,8 @@ selects one row and can be repeated. Omitting it runs all catalog rows.
 `--build-timeout SECONDS` controls build containment separately from each row's
 published timeout. Cargo uses `--locked --release --all-features`; normal Cargo
 build-cache reuse is allowed. Each fixture runs alone in a fresh test process,
-with one test thread. This is not a fresh-process archive replay guarantee.
+with one test thread. A fresh-process archive replay claim additionally requires
+the witness itself to save and reload geometry in separate processes.
 
 The [catalog](capabilities.json) separates authored, generated and selected
 implicit inputs. Each row names its owner, properties, scalar/input domain,
@@ -47,12 +48,24 @@ The schema also reserves distinct outcomes for proved no solution,
 underconstrained input, undecided predicates and unbounded output. An outcome
 not present in the catalog has no new witness here. The polynomial frontier test now preserves both the original disjoint pair
 and the unchanged H08 boundary as positive incidence/admission witnesses.
-Authored SVG
-round trips exercise eight authored families in one process; they do not cover
-generated definitions, fresh-process native replay or later modeling operations.
+The original authored SVG round trips exercise eight authored families in one
+process. Selected source-restriction replay has separate witnesses below;
+neither set establishes all generated definitions or filled-region replay.
 Point-definition selector rejection is distinct from native archive replay.
 Membership samples are only the finite assertions listed, not a proof of the
 entire represented set.
+
+The selected SVG witnesses retain native sources, original ranges, traversal,
+selected polynomial roots and projective charts in version 4 metadata. One
+fixture saves a quadratic trim, reloads it in another process, then checks exact
+point incidence, further restriction, another archive and reversed overlap.
+Separate witnesses cover a shared degree-seven root, algebraic coefficients,
+similarities, rational trims of all eight authored families, invalid selectors,
+references and chart poles, and reached byte/segment limits followed by retry.
+The version 3 fixtures remain unchanged. Finite projection consumes the existing
+retained source spans, and its output never replaces authoritative metadata.
+Shared scalar expression DAG serialization, cross-path dependencies, other
+generated carriers, filled-region replay and total resource bounds remain open.
 
 The rational-similarity section witnesses retain the original translated
 quintic case as a positive fixture. They also check transformed selected-line

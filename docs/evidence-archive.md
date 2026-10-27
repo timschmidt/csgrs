@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-native-replay-evidence-2026-10-27` branch ends at
+`e0d8165fae971704511ba1f27fd6286eff408f6b`, adding `docs/evidence/2026-10-27-hypercurve-closure-native-replay`
+(289 files, 8,114,777 bytes), SHA-256 `14268be5ef2fa70f0f4a0ff8f5879aa52885e5b2c335c3f42cab6b7ce99bf2dd`.
+It records exact native source restrictions, selected-root and projective-chart
+replay, retained-domain finite projection and root adapter error transport.
+All 2,790 Hypercurve tests, 60 root tests, 3,010 dependent-package tests,
+strict MSRV Clippy, the build without optional features, API documentation,
+formatting, 16 matrix guards and 142 capability witnesses pass. The Hypercurve
+suite retains 34 existing ignored cases. Original export/projection failures,
+failed prototypes and qualification, source snapshots and fresh-process replay
+evidence are retained. This record is local and unpushed. Full pre-push checks,
+broader generated/filled-region replay and general algebraic closure remain open.
+
 The local `hypercurve-algebraic-pair-evidence-2026-10-27` branch ends at
 `8b0caa9be41bdacd1f40bd9f60b7b9da3f339962`, adding `docs/evidence/2026-10-27-hypercurve-closure-algebraic-pair`
 (567 files, 23,612,610 bytes), SHA-256 `af8f3c08003180038a0db21aa3bbdf5e78fb86a7861c5901c5b43248e2e8703d`.

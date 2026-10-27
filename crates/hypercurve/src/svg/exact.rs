@@ -6,10 +6,19 @@ use crate::{
 };
 use std::fmt::Write;
 
+mod graph;
+
 const PREFIX: &str = "3:";
 const MAGIC: &[u8; 4] = b"HCP3";
 
 pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<String> {
+    if path
+        .curves()
+        .iter()
+        .any(|curve| curve.source_restriction().is_some())
+    {
+        return graph::encode_path(path, max_bytes);
+    }
     let mut writer = ExactWriter::new(max_bytes);
     writer.bytes.extend_from_slice(MAGIC);
     writer.write_len(path.curves().len())?;
@@ -18,32 +27,26 @@ pub(super) fn encode_path(path: &CurvePath2, max_bytes: usize) -> SvgResult<Stri
     }
     writer.check_size()?;
 
-    let mut encoded = String::with_capacity(PREFIX.len() + writer.bytes.len() * 2);
-    encoded.push_str(PREFIX);
-    for byte in writer.bytes {
+    Ok(encode_bytes(PREFIX, &writer.bytes))
+}
+
+fn encode_bytes(prefix: &str, bytes: &[u8]) -> String {
+    let mut encoded = String::with_capacity(prefix.len() + bytes.len() * 2);
+    encoded.push_str(prefix);
+    for byte in bytes {
         write!(&mut encoded, "{byte:02x}").expect("writing exact SVG metadata cannot fail");
     }
-    Ok(encoded)
+    encoded
 }
 
 pub(super) fn decode_path(encoded: &str, max_bytes: usize) -> SvgResult<CurvePath2> {
+    if let Some(hex) = encoded.strip_prefix(graph::PREFIX) {
+        return graph::decode_path(&decode_bytes(hex, max_bytes)?, max_bytes);
+    }
     let hex = encoded.strip_prefix(PREFIX).ok_or_else(|| {
         SvgError::Unsupported("unknown Hypercurve SVG path extension version".into())
     })?;
-    if hex.len() % 2 != 0 {
-        return Err(malformed("exact path extension has odd hexadecimal length"));
-    }
-    if hex.len() / 2 > max_bytes {
-        return Err(extension_overflow());
-    }
-
-    let mut bytes = Vec::with_capacity(hex.len() / 2);
-    for pair in hex.as_bytes().as_chunks::<2>().0 {
-        let high = hex_digit(pair[0])?;
-        let low = hex_digit(pair[1])?;
-        bytes.push((high << 4) | low);
-    }
-
+    let bytes = decode_bytes(hex, max_bytes)?;
     let mut reader = ExactReader::new(&bytes, max_bytes);
     if reader.take(MAGIC.len())? != MAGIC {
         return Err(malformed("exact path extension has an invalid header"));
@@ -57,6 +60,24 @@ pub(super) fn decode_path(encoded: &str, max_bytes: usize) -> SvgResult<CurvePat
         return Err(malformed("exact path extension has trailing bytes"));
     }
     CurvePath2::try_new(curves).map_err(|error| SvgError::Geometry(error.to_string()))
+}
+
+fn decode_bytes(hex: &str, max_bytes: usize) -> SvgResult<Vec<u8>> {
+    if !hex.len().is_multiple_of(2) {
+        return Err(malformed("exact path extension has odd hexadecimal length"));
+    }
+    if hex.len() / 2 > max_bytes {
+        return Err(extension_overflow());
+    }
+
+    let mut bytes = Vec::with_capacity(hex.len() / 2);
+    for pair in hex.as_bytes().as_chunks::<2>().0 {
+        let high = hex_digit(pair[0])?;
+        let low = hex_digit(pair[1])?;
+        bytes.push((high << 4) | low);
+    }
+
+    Ok(bytes)
 }
 
 fn hex_digit(byte: u8) -> SvgResult<u8> {

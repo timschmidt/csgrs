@@ -492,7 +492,14 @@ impl CurvePath2 {
         };
         let mut points = Vec::with_capacity(self.curves().len() + 1);
         for curve in self.curves() {
-            if let Some(fragment) = curve.retained_fragment() {
+            if let Some(spans) = curve
+                .restricted_source_spans(policy, crate::CurveOperation2::Evaluation)
+                .map_err(|error| CurveError::Topology(error.to_string()))?
+            {
+                for span in spans {
+                    append_curve_fragment_samples(&mut points, &span.fragment, options, policy)?;
+                }
+            } else if let Some(fragment) = curve.retained_fragment() {
                 append_curve_fragment_samples(&mut points, fragment, options, policy)?;
             } else {
                 let fragments = curve

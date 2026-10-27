@@ -487,7 +487,15 @@ exact signatures.
   `export_svg_document` provide SVG exchange. Native `L`, `A`, `Q`, and `C`
   commands are used where possible; a versioned `data-hypercurve-path`
   attribute preserves curve families and exact values for Hypercurve
-  round-trips.
+  stroke round-trips. Version 3 remains readable and is still emitted for
+  authored paths. Version 4 retains authored-source restrictions, selected
+  Bezier roots, projective parameter charts and traversal in a shared definition
+  graph per path. Import rechecks roots, charts, domains and connectivity under
+  strict predicates; `SvgError::Exact` retains failures from this replay.
+  The standard SVG `d` attribute is only a finite display projection.
+  Filled-region native replay, other generated supports and sharing across
+  separate paths remain open. Byte and segment limits do not bound all scalar
+  decoding, arithmetic, expression growth, memory or cancellation.
 
 ## Precision, guarantees, and boundaries
 

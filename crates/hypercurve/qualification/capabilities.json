@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Generated native save/reload in a fresh process followed by another modeling operation.",
+    "Native save/reload of generated supports and filled regions beyond the authored-source restriction witnesses.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -5963,6 +5963,387 @@
         }
       ],
       "oracle": "The two parabola points have the same exact abscissa and bracket the unique quintic ordinate. Invertibility preserves that contact. The source control and retained parameter relation detect unnecessary coordinate expansion.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_fresh",
+      "target": "svg_selected_replay",
+      "test": "fresh_process_replays_selected_trim_before_further_operations",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Quadratic (0,0),(1,2),(2,0) restricted to [0,beta], beta the positive root of 2t^2-1 in (1/2,3/4), followed by reversed traversal.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A separate child process imports the original source, selector and traversal; original source geometry and parameter values are checked."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The independently known point (1,1) has source parameter 1/2, and opposite traversals share their exact endpoints."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Further restriction, a second archive and reversed intersection preserve one complete overlap."
+        }
+      ],
+      "oracle": "Independent x=2t and y=4t(1-t), root selection, exact domain/source/traversal assertions and complete overlap topology.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_projective",
+      "target": "svg_selected_replay",
+      "test": "projective_parameters_replay_one_shared_selected_root",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "The selected positive root beta of 2t^7-1 and two images beta/(1+beta), 2beta/(1+beta) trim one quadratic source.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replayed images retain their original selected root and exact numerator/denominator charts, with one shared root object."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both selected image values compare equal to their authored definitions and adjacent endpoints coincide."
+        },
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Mixed native and restricted curves retain source geometry; repeat serialization is checked separately from geometry."
+        }
+      ],
+      "oracle": "Explicit degree-seven polynomial, selected interval and two projective equations; parameter comparisons and exact endpoint incidence.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_coefficients",
+      "target": "svg_selected_replay",
+      "test": "algebraic_coefficients_and_authoritative_metadata_survive_replay",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A quadratic with sqrt(2) and sqrt(3) control coordinates, trimmed at beta; its standard SVG display path is deliberately replaced.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The original algebraic source controls survive reload despite a different display path."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Evaluation at source parameter 1/2 agrees with (sqrt(2),sqrt(3)/2)."
+        }
+      ],
+      "oracle": "Independent quadratic midpoint formula and exact source-control equality; display substitution cannot establish the source.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_transforms",
+      "target": "svg_selected_replay",
+      "test": "replayed_restriction_consumes_a_similarity_and_another_archive",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A selected quadratic trim is reloaded, reflected/scaled by sqrt(2), translated, saved and reloaded again.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The retained source accepts the invertible algebraic similarity after import."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A second archive preserves beta and the independent transformed midpoint (1-sqrt(2),sqrt(2)-1)."
+        }
+      ],
+      "oracle": "Explicit affine image of the known midpoint, unchanged selected source-domain endpoint.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_families",
+      "target": "svg_selected_replay",
+      "test": "source_restrictions_replay_each_authored_family_in_its_original_chart",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Rational source trims [1/4,3/4] of the eight authored families with non-unit rational weights where applicable.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalQuadraticBezier",
+        "RationalBezier",
+        "PolynomialBSpline",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Reload preserves the entire native supporting definition, original parameter bounds and traversal."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Further restriction remains in the original source chart with the expected endpoints."
+        }
+      ],
+      "oracle": "Exact equality of native family definitions and source-domain bounds, endpoint incidence and source evaluation; no fitted reconstruction.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_selectors",
+      "target": "svg_selected_replay",
+      "test": "invalid_root_selectors_and_domains_never_become_geometry",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "No-root, multiple-root and wrong-interval selectors; ranges outside the authored domain, descending ranges and zero-length ranges.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Every malformed selected definition or domain is rejected by a typed ExactCurveError::Invalid before publishing geometry."
+        }
+      ],
+      "oracle": "Independent real-root counts for t^2+1, t^2-1 and 2t^2-1; exact interval/domain order.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_references",
+      "target": "svg_selected_replay",
+      "test": "malformed_graph_references_and_chart_poles_are_explicit_failures",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "Wrong-type, forward, self and missing source/parameter/path references, a zero projective denominator, truncated/oversized tables and an unknown definition tag.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Invalid references/truncation are malformed input; the zero-denominator chart retains the native Boundary blocker."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "unsupported",
+          "assertion": "An unknown definition tag is explicitly unsupported."
+        }
+      ],
+      "oracle": "Acyclic prior-reference grammar, actual type of referenced definitions and the identically zero original denominator.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_limits",
+      "target": "svg_selected_replay",
+      "test": "exact_extension_byte_exhaustion_does_not_poison_retry",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "A selected quadratic trim with a 64-byte extension allowance or eight display segments at tolerance 1e-6, then default allowances.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Export/import enforce actual configured extension bounds and export enforces the configured segment count."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Larger retries preserve beta and complete; ordinary authored export continues to emit version 3."
+        }
+      ],
+      "oracle": "Explicit SizeOverflow outcomes for reached byte/segment limits, followed by selected-parameter equality after reload. No total-work claim.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "native_restriction_replay_projection",
+      "target": "svg_selected_replay",
+      "test": "finite_projection_consumes_the_retained_domain_and_traversal",
+      "owner": "Hypercurve exact SVG interchange and finite path projection",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P28",
+        "P29",
+        "P30"
+      ],
+      "domain": "The line (0,0) to (8,0), restricted to [1/4,3/4] and reversed.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version 4 stroke metadata retains native sources, ascending source ranges, traversal, selected polynomial roots and projective parameter charts. Import rechecks definitions and connectivity under STRICT. Display paths are not exact evidence. These fixtures do not qualify other generated carriers, filled regions, cross-path sharing, shared scalar DAG serialization or total arithmetic/memory/cancellation bounds. The fixture timeout is external containment.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Finite projection yields exactly (2,0),(6,0), or the opposite order, without extending to the full source."
+        },
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The authoritative retained source bounds remain 1/4 and 3/4 after projection."
+        }
+      ],
+      "oracle": "Exact affine line evaluation at two rational endpoints; independently known finite coordinates and traversal.",
       "timeout_seconds": 300
     }
   ]
