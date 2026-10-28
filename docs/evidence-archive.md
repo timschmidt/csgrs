@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The replay publication archive ends at `e784a8ea0b53cc24f3b56a61d63a13e66b9e7701` with 364 records.
+Its new record `docs/evidence/2026-10-28-hypercurve-closure-replay-publication-validation` contains 13,491 files and 41,256,350 bytes,
+SHA-256 `da99dd32d0146a81c5e18080e73a3058aa4305338b7b40a45831ccd6b85ea446`. It records fresh source-attributed success for all 328
+pre-push command groups on `9d64f5dcab87ee79b5761a6db010d7e84e103b16`: 131 locally executable workflow groups,
+196 strict Clippy groups and the CI security audit. All 13 ASan campaigns include
+successful mutation evidence. Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-27, both
+release/package checks and the hosted-action review are retained. Lost runs from
+before the host restart are not credited. All 364 record digests
+verify, and four historical archive exclusions remain unchanged. Only three
+receipt files differ from the qualified code; they are checked separately.
+This supersedes earlier pending pre-push status for the included increments
+through retained fiber-point order. Later selected-circle points, differentials,
+rational point images, region/replay/contact and corner work are excluded.
+Hosted actions and publication/deployment are not established by local checks.
+
 The combined replay publication archive `hypercurve-replay-publication-evidence-2026-10-27` ends at
 `7776fbc75fabcba93f1d5e0b1b07dded631b524f` with 363 records. It retains the previously
 published pre-push evidence and all separately qualified increments through
