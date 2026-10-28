@@ -1944,6 +1944,39 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Empty native replay increment (2026-10-28).** The owning layer is CurveRegion2 normalization publication and replay, Boolean identity dependencies, affine transforms, finite projection and strict native SVG export,
+under P12 and P17–P20, with native adapter obligations under P26.
+The measured domain is Canonical and generated exact empty regions, supported finite strokes, and existing symbolic approximation-dependent empty topology; exact empty results remain valid subsequent operands.
+
+Empty arrangement publication retains actual consumed policy before removing the last boundary. Consumers validate and observe that retained topology before shortcuts. Boolean identities validate both operands and retain dependencies on each returned normalized carrier; affine identities validate the same receipt. Exact unchanged policies preserve shared storage. A changed dependency keeps boundary definitions, incidence and ownership while isolating policy caches. Whole empty SVG documents reuse the existing zero-root version-five graph and an explicit unit display viewport; the viewport adds no geometry. Both public finite profile projection APIs and CSGRS use these owning checks.
+
+Ten added Hypercurve fixtures and one CSGRS fixture cover canonical and generated empty export, independent zero graph cardinalities, changed display data, deterministic and fresh-process replay, all four subsequent Booleans, offsets, identity/translation/reflection/shear, both projection APIs and invalid options. Qualified empty input is exercised in both operand orders and batched Booleans, with each returned region reconsumed separately under strict and approximate policies. An existing positive-height symbolic collapse regression now also checks returned-object replay; its independent exact positive-height assertion is preserved.
+
+All 18 local qualification groups pass: 2,921 Hypercurve
+cases in 94 suites, 34 existing ignored cases; 67
+root adapter cases in 12 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 261
+capability fixtures, typos, repository budget and diff checks. The 15 focused
+groups also pass, including the unchanged native regressions and strengthened
+positive-height collapse test. Record docs/evidence/2026-10-28-hypercurve-closure-empty-native-replay has SHA-256 6b577979c9cbf9bbcc76d32a9fccc5622233d308c790a98788c8ef970478c346.
+Every non-receipt byte matches the freshly qualified snapshot. The completed
+corner parent is retained by commit; synchronizing its three receipts did not
+change implementation or acceptance bytes. Original failing probes and every
+subsequent attempt are archived, with outcomes kept distinct.
+
+A separate source-attributed canonical empty offset/affine/projection/native
+replay/Boolean chain completes under WorkBudget::ZERO, recording zero root
+refinements and zero promotions under strict, approximate-requested and strict
+policies. Each result remains certified. This measures those instrumented units;
+it does not establish a total computational or memory bound. Existing extension
+byte/depth limits, invalid-option checks and later retries remain exercised.
+
+Fresh probes on this qualified source still reproduce inherited-qualification loss in membership, area, role/profile, native-view, side/fact and bounds queries, and similarity native lowering. Those seven failing probes and the passing material-component control are archived as an explicit follow-on frontier; this increment does not claim to fix them. Two older CSGRS receipt-composition fixtures also still expect strict boundary readback after approximate construction. Their failures reproduce on both the committed corner parent after an owned-package rebuild and this candidate. Their explicit certainty migration belongs to the following query increment; the 67-case downstream subset here is not a claim that the complete CSGRS suite passes. The measured domain does not establish arbitrary algebraic operation closure or universal symbolic decisions. Complete total-work, expression/coefficient growth, retained-memory and cancellation bounds remain open. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

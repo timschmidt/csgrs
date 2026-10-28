@@ -2657,6 +2657,7 @@ impl CurveRegion2 {
         ty: &Real,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        self.validate_regularized_topology_replay(CurveOperation2::Transformation, policy)?;
         // The identity keeps every retained carrier and its evidence; wrapping
         // them as transformed images would only hide that shared identity.
         let structurally_zero =
@@ -2886,6 +2887,11 @@ impl CurveRegion2 {
         let loop_count = self.data.boundary_loops.len();
         let retained =
             policy.retained_object_policy_with_dependencies(self.data.normalized_policy());
+        // Preserve the shared canonical empty when no qualification changed.
+        // An approximate empty result needs its own retained topology receipt.
+        if loop_count == 0 && self.data.normalized_policy() == Some(retained) {
+            return Ok(self);
+        }
         let data = self.data_mut_for_construction();
         data.filled_side_is_left
             .certify(Arc::from(vec![true; loop_count]));
@@ -2897,6 +2903,28 @@ impl CurveRegion2 {
         // construction input and are not retained on the normalized result.
         data.state = CurveRegionState2::Normalized(retained);
         Ok(self)
+    }
+
+    /// Retains newly consumed dependencies on an otherwise unchanged normalized
+    /// result. Exact identities keep their shared carrier. A changed policy
+    /// gets independent caches while retaining the same boundary definitions,
+    /// incidence, ownership, and filled-left normalization proof.
+    pub(crate) fn with_consumed_topology_policy(self, policy: &CurveContext) -> Self {
+        let Some(previous) = self.data.normalized_policy() else {
+            return self;
+        };
+        let retained = policy.retained_object_policy_with_dependencies([previous]);
+        if retained == previous {
+            return self;
+        }
+        let mut data = CurveRegionData2::new(self.data.boundary_loops.clone());
+        data.certified_loop_roles = self.data.certified_loop_roles.clone();
+        data.state = CurveRegionState2::Normalized(retained);
+        data.filled_side_is_left
+            .certify(Arc::from(vec![true; data.boundary_loops.len()]));
+        Self {
+            data: Arc::new(data),
+        }
     }
 
     pub(crate) fn has_regularized_filled_left_topology(&self, policy: &CurveContext) -> bool {
@@ -2927,6 +2955,9 @@ impl CurveRegion2 {
             policy
                 .validate_retained_policy(retained)
                 .map_err(|cause| ExactCurveError::invalid_unattributed(operation, cause))?;
+            if retained != retained.strict_counterpart() {
+                policy.observe_approximate_512();
+            }
         }
         Ok(())
     }

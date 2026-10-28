@@ -10085,7 +10085,7 @@
           "assertion": "Union with a rectangle preserves the rectangle; an empty round offset stays empty."
         }
       ],
-      "oracle": "Canonical emptiness, exact union identity and explicit preservation of the existing whole-empty-document finite-bounds export error."
+      "oracle": "Canonical emptiness, exact union identity, further round offset and deterministic whole-empty-document native replay."
     },
     {
       "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
@@ -11170,6 +11170,436 @@
       ],
       "oracle": "Independent quarter-circle endpoint identities, overlap orientation and concentric radius separation.",
       "timeout_seconds": 300
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "canonical_empty_document_replays_before_further_operations",
+      "target": "svg_region_replay",
+      "test": "canonical_empty_document_replays_before_further_operations",
+      "domain": "Canonical empty geometry, zero-root native graph, changed display path and a fresh child process.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "A unit viewport adds no geometry; exact graph bytes, deterministic replay, Boolean identities and further empty offsets survive a fresh process."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "generated_empty_document_replays_with_valid_options_and_policy",
+      "target": "svg_region_replay",
+      "test": "generated_empty_document_replays_with_valid_options_and_policy",
+      "domain": "A rectangle removed by self-difference; legal minimum extension bytes and zero definition depth, plus invalid export options.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "Generated empty output replays under STRICT/APPROXIMATE_512-requested/STRICT without consuming approximation; invalid options remain invalid."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "invalid",
+          "assertion": "Non-finite tolerance, too few segments and extension bytes below the existing legal minimum are rejected before empty shortcuts."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "empty_region_export_keeps_inherited_topology_qualification_with_a_stroke",
+      "target": "svg_region_replay",
+      "test": "empty_region_export_keeps_inherited_topology_qualification_with_a_stroke",
+      "domain": "An existing symbolic closure control outside the algebraic envelope, whose approximation-dependent topology regularizes to empty, alone and beside an exact stroke.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "undecided",
+          "assertion": "Strict native export retains a Predicate blocker for qualified emptiness even when another carrier supplies finite bounds."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "empty_region_projection_keeps_inherited_topology_qualification",
+      "target": "svg_region_replay",
+      "test": "empty_region_projection_keeps_inherited_topology_qualification",
+      "domain": "The same approximation-dependent empty topology through finite region projection.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Strict projection blocks; authorized projection returns empty profiles and keeps Approximate512Consumed, including after another strict attempt."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "undecided",
+          "assertion": "STRICT cannot upgrade the inherited approximate topology to a certified empty result."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "empty_region_topology_replay_observes_inherited_approximation",
+      "target": "svg_region_replay",
+      "test": "empty_region_topology_replay_observes_inherited_approximation",
+      "domain": "The same qualified empty topology replayed by normalization and boundary reconstruction.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "qualified_approximation",
+          "assertion": "Strict replay blocks; approximate-requested empty normalization and boundary extraction preserve their inherited qualification."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "undecided",
+          "assertion": "STRICT cannot upgrade the inherited approximate topology to a certified empty result."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology publication and replay; finite projection and native SVG consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "empty_region_exact_projection_keeps_inherited_topology_qualification",
+      "target": "svg_region_replay",
+      "test": "empty_region_exact_projection_keeps_inherited_topology_qualification",
+      "domain": "The same qualified empty topology through projection with exact profile ownership.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Both strict attempts block; authorized exact-profile projection preserves the consumed topology qualification."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "undecided",
+          "assertion": "STRICT cannot upgrade the inherited approximate topology to a certified empty result."
+        }
+      ],
+      "oracle": "Independent empty-set identities, zero graph cardinalities, fresh-process replay, exact policy receipts and typed Predicate blockers; viewport and serialization equality are checked separately from set semantics."
+    },
+    {
+      "owner": "CurveRegion2 topology dependencies and Boolean/affine/offset consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "qualified_empty_boolean_inputs_and_results_keep_topology_receipt",
+      "target": "svg_region_replay",
+      "test": "qualified_empty_boolean_inputs_and_results_keep_topology_receipt",
+      "domain": "All four Boolean operations, both operand orders, exact empty and material operands, and an identical qualified operand.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "qualified_approximation",
+          "assertion": "Validate both operands before identities; each returned region keeps consumed topology and leaves the exact operand unchanged."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "undecided",
+          "assertion": "STRICT preserves the inherited Predicate blocker before and after authorized consumption."
+        }
+      ],
+      "oracle": "Independent empty/square Boolean expectations, every returned carrier reconsumed under STRICT and APPROXIMATE_512, unchanged exact source, and the separate positive-height symbolic collapse regression."
+    },
+    {
+      "owner": "CurveRegion2 topology dependencies and Boolean/affine/offset consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "qualified_empty_affine_images_keep_topology_receipt",
+      "target": "svg_region_replay",
+      "test": "qualified_empty_affine_images_keep_topology_receipt",
+      "domain": "Identity, translation, reflection and nonsingular shear of qualified empty topology.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "qualified_approximation",
+          "assertion": "Every transform observes admissibility before shortcuts and retains its source topology receipt."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "undecided",
+          "assertion": "STRICT preserves the inherited Predicate blocker before and after authorized consumption."
+        }
+      ],
+      "oracle": "Independent empty/square Boolean expectations, every returned carrier reconsumed under STRICT and APPROXIMATE_512, unchanged exact source, and the separate positive-height symbolic collapse regression."
+    },
+    {
+      "owner": "CurveRegion2 topology dependencies and Boolean/affine/offset consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "qualified_empty_offsets_keep_topology_receipt",
+      "target": "svg_region_replay",
+      "test": "qualified_empty_offsets_keep_topology_receipt",
+      "domain": "Zero, positive and negative round offsets of qualified empty topology.",
+      "claims": [
+        {
+          "stage": "repeated_offsets",
+          "outcome": "qualified_approximation",
+          "assertion": "Existing empty offset behavior preserves strict blockers and authorized receipts through repeated replay."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "undecided",
+          "assertion": "STRICT preserves the inherited Predicate blocker before and after authorized consumption."
+        }
+      ],
+      "oracle": "Independent empty/square Boolean expectations, every returned carrier reconsumed under STRICT and APPROXIMATE_512, unchanged exact source, and the separate positive-height symbolic collapse regression."
+    },
+    {
+      "owner": "CurveRegion2 topology dependencies and Boolean/affine/offset consumers",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Empty geometry and inherited topology qualification are separate. Canonical exact empty results retain shared storage. Actual terminal consumption is retained before boundary removal, validated before shortcuts and observed during authorized replay. Native empty graphs and a unit display viewport do not add material.",
+      "timeout_seconds": 300,
+      "id": "qualified_empty_boolean_batches_keep_each_result_receipt",
+      "target": "svg_region_replay",
+      "test": "qualified_empty_boolean_batches_keep_each_result_receipt",
+      "domain": "Shared four-operation Boolean batches with qualified empty, exact square and identical qualified operands.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "qualified_approximation",
+          "assertion": "Each batch result retains the inherited requirement independently of the enclosing outcome; approximate replay cannot make it strict."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "undecided",
+          "assertion": "STRICT preserves the inherited Predicate blocker before and after authorized consumption."
+        }
+      ],
+      "oracle": "Independent empty/square Boolean expectations, every returned carrier reconsumed under STRICT and APPROXIMATE_512, unchanged exact source, and the separate positive-height symbolic collapse regression."
     }
   ]
 }

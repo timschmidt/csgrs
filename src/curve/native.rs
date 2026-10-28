@@ -3943,20 +3943,41 @@ mod tests {
             Curve2::from(LineSeg2::try_new(p3, terminal_p0).unwrap()),
         ])
         .unwrap();
-        let region = hypercurve::provisional(|| {
+        let constructed = hypercurve::provisional(|| {
             CurveRegion2::try_from_boundary_paths(&[path], hypercurve::FillRule::EvenOdd)
-        })
-        .into_unverified()
-        .unwrap();
-
-        let strict = try_finite_profiles(&region, &GeometryContext::STRICT).unwrap();
-        assert_eq!(strict.certainty, crate::GeometryCertainty::Certified);
-        assert_eq!(strict.value.len(), 1);
-
-        let permissive =
-            try_finite_profiles(&region, &GeometryContext::APPROXIMATE_512).unwrap();
-        assert_eq!(permissive.certainty, crate::GeometryCertainty::Certified);
-        assert_eq!(permissive.value.len(), 1);
+        });
+        assert_eq!(
+            constructed.certainty(),
+            hypercurve::CurveCertainty::Approximate512Consumed
+        );
+        let region = constructed.into_unverified().unwrap();
+        // Reuse the retained loop topology while preserving the consumed
+        // closure receipt, including after an authorized warm-cache read.
+        for context in [
+            GeometryContext::STRICT,
+            GeometryContext::APPROXIMATE_512,
+            GeometryContext::STRICT,
+            GeometryContext::APPROXIMATE_512,
+            GeometryContext::STRICT,
+        ] {
+            let profiles = try_finite_profiles(&region, &context);
+            if context == GeometryContext::STRICT {
+                let error = profiles.unwrap_err();
+                assert_eq!(error.kind(), crate::errors::ValidationErrorKind::Undecided);
+                assert!(matches!(error,
+                    ValidationError::ExactCurve(hypercurve::ExactCurveError::Blocked(reason))
+                        if reason.reason() == hypercurve::UncertaintyReason::Predicate));
+            } else {
+                let profiles = profiles.unwrap();
+                assert_eq!(
+                    profiles.certainty,
+                    crate::GeometryCertainty::Approximate512Consumed
+                );
+                assert_eq!(profiles.value.len(), 1);
+                assert!(profiles.value[0].holes().is_empty());
+                assert!(profiles.value[0].material().is_closed());
+            }
+        }
     }
 
     #[test]

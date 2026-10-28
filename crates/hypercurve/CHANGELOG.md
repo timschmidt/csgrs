@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Export and replay exact empty SVG documents through the native zero-root
+  graph, using a unit display viewport. Empty topology retains consumed policy
+  through Boolean identities, affine transforms and finite projection; strict
+  consumers continue to reject inherited approximate topology.
+
 - Add independent selected-fiber predicate tests for source identity, repeated
   roots, degree drops, tiny nonzero residues, nonrational coefficients and
   certainty-preserving bounded retries.

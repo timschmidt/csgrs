@@ -1496,13 +1496,14 @@ impl CurveRegion2 {
         operation: BooleanOp,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
-        if let Some(region) = boolean_trivial_region(self, other, operation)? {
+        if let Some(region) = boolean_trivial_region(self, other, operation, policy)? {
             return region
                 .regularized_region_raw(policy)
+                .map(|region| region.with_consumed_topology_policy(policy))
                 .map_err(|error| error.with_operation(CurveOperation2::Boolean));
         }
         let (first, second) = self.regularized_pair(other, policy)?;
-        if let Some(region) = boolean_trivial_region(&first, &second, operation)? {
+        if let Some(region) = boolean_trivial_region(&first, &second, operation, policy)? {
             return Ok(region);
         }
         CurveRegionBooleanContext::try_new(&first, &second, policy)?
@@ -1547,10 +1548,10 @@ impl CurveRegion2 {
         // no arrangement at all.
         if first.is_empty() || second.is_empty() || first == second {
             let immediate = [
-                boolean_trivial_region(&first, &second, operations[0])?,
-                boolean_trivial_region(&first, &second, operations[1])?,
-                boolean_trivial_region(&first, &second, operations[2])?,
-                boolean_trivial_region(&first, &second, operations[3])?,
+                boolean_trivial_region(&first, &second, operations[0], policy)?,
+                boolean_trivial_region(&first, &second, operations[1], policy)?,
+                boolean_trivial_region(&first, &second, operations[2], policy)?,
+                boolean_trivial_region(&first, &second, operations[3], policy)?,
             ];
             return Ok(CurveRegionBooleanResults2 {
                 regions: Box::new(
@@ -3232,7 +3233,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
         if self.data.carriers.is_empty() {
-            return Ok(CurveRegion2::empty());
+            return CurveRegion2::empty()
+                .with_regularized_filled_left_topology(&self.data.policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid_unattributed(CurveOperation2::Arrangement, cause)
+                });
         }
         let topology = match self.build_split_topology() {
             Ok(topology) => topology,
@@ -3319,7 +3324,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         if arrangement_fragments.is_empty() {
-            return Ok(CurveRegion2::default());
+            return CurveRegion2::empty()
+                .with_regularized_filled_left_topology(&self.data.policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid_unattributed(CurveOperation2::Arrangement, cause)
+                });
         }
         let affine_line_output = arrangement_fragments
             .iter()
@@ -3538,7 +3547,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
         }
         if loops.is_empty() {
-            return Ok(CurveRegion2::empty());
+            return CurveRegion2::empty()
+                .with_regularized_filled_left_topology(&self.data.policy)
+                .map_err(|cause| {
+                    ExactCurveError::invalid_unattributed(CurveOperation2::Boolean, cause)
+                });
         }
         let region = CurveRegion2::new(loops)
             .and_then(|region| region.with_certified_filled_side_is_left(sides))
@@ -4514,14 +4527,18 @@ fn boolean_trivial_region(
     first: &CurveRegion2,
     second: &CurveRegion2,
     operation: BooleanOp,
+    policy: &CurveContext,
 ) -> ExactCurveResult<Option<CurveRegion2>> {
-    if first.is_empty() || second.is_empty() {
-        return empty_operand_result(first, second, operation).map(Some);
-    }
-    if first == second || first.has_equivalent_exact_boundary(second) {
-        return identical_operand_result(first, operation).map(Some);
-    }
-    Ok(None)
+    first.validate_regularized_topology_replay(CurveOperation2::Boolean, policy)?;
+    second.validate_regularized_topology_replay(CurveOperation2::Boolean, policy)?;
+    let region = if first.is_empty() || second.is_empty() {
+        empty_operand_result(first, second, operation)?
+    } else if first == second || first.has_equivalent_exact_boundary(second) {
+        identical_operand_result(first, operation)?
+    } else {
+        return Ok(None);
+    };
+    Ok(Some(region.with_consumed_topology_policy(policy)))
 }
 
 fn carrier_bounds_decided_disjoint(

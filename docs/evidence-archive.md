@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-empty-native-replay-evidence-2026-10-28` branch ends at
+`5396eff3cb4f6b019d664d83e835e0e041408743`, adding `docs/evidence/2026-10-28-hypercurve-closure-empty-native-replay`
+(1,175 files, 46,419,497 bytes), SHA-256 `6b577979c9cbf9bbcc76d32a9fccc5622233d308c790a98788c8ef970478c346`. It records
+CurveRegion2 normalization publication and replay, Boolean identity dependencies, affine transforms, finite projection and strict native SVG export. All 2,921 Hypercurve cases, 67
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 261 fixtures pass; 34 existing ignored cases remain.
+Every final implementation and acceptance byte is freshly qualified. Exact
+empty graphs, separate qualified topology receipts and subsequent consumers
+are covered, including original failures and source-attributed zero-work
+instrumentation. Parent 0fe42adbab and the receipt-only transition are
+recorded. This record is unpushed; complete closure, resource bounds and package
+delivery remain open.
+
 The local `hypercurve-selected-circle-corners-evidence-2026-10-28` branch ends at
 `a8894028434896af26584e04d3f0367d5787fe65`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-circle-corners`
 (1,600 files, 92,870,882 bytes), SHA-256 `d39113527e8a6013bce19c9ada17faefc0be34fd2a8bd8e5adaeb85168b904b9`. It records

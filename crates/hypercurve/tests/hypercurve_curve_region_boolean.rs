@@ -1573,6 +1573,18 @@ fn empty_output_does_not_certify_an_approximate_normalization() {
         let normalized = construct(&PredicatePolicy::APPROXIMATE_512).unwrap();
         assert_eq!(normalized.certainty, CurveCertainty::Approximate512Consumed);
         assert!(normalized.value.is_empty());
+        assert!(
+            crate::support::under(&PredicatePolicy::STRICT, || normalized
+                .value
+                .regularized_region())
+            .is_err()
+        );
+        let replay = crate::support::under(&PredicatePolicy::APPROXIMATE_512, || {
+            normalized.value.regularized_region()
+        })
+        .unwrap();
+        assert_eq!(replay.certainty, CurveCertainty::Approximate512Consumed);
+        assert!(replay.value.is_empty());
     }
     assert!(construct(&PredicatePolicy::STRICT).is_err());
     assert_eq!(

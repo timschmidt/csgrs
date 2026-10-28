@@ -180,3 +180,69 @@ fn svg_adapter_consumes_generated_selected_circle_fillet_and_offsets() {
             .is_empty()
     );
 }
+
+#[test]
+fn svg_adapter_replays_empty_results_and_preserves_qualification() {
+    let center = Point2::new(Real::zero(), Real::zero());
+    let start = Point2::new(Real::one(), Real::zero());
+    let boundary = CurvePath2::try_new(vec![
+        CircularArc2::try_from_center(start.clone(), start, center, false)
+            .unwrap()
+            .into(),
+    ])
+    .unwrap();
+    let source =
+        CurveRegion2::try_from_boundary_paths(&[boundary], FillRule::NonZero).unwrap();
+    let erased = source.boolean_region(&source, BooleanOp::Difference).unwrap();
+    for empty in [CurveRegion2::empty(), erased] {
+        assert!(empty.is_empty());
+        let text = export_svg(&empty, &[], &[]).unwrap();
+        assert!(text.contains("data-hypercurve-path=\"5:484350350000000000000000\""));
+        let (replay, wires, paths) = import_svg(&text).unwrap();
+        assert!(replay.is_empty() && wires.is_empty() && paths.is_empty());
+        assert_eq!(export_svg(&replay, &wires, &paths).unwrap(), text);
+        let restored = replay.boolean_region(&source, BooleanOp::Union).unwrap();
+        assert!(
+            restored
+                .boolean_region(&source, BooleanOp::Xor)
+                .unwrap()
+                .is_empty()
+        );
+        assert!(
+            replay
+                .offset(Real::one(), &OffsetCornerStyle2::Round)
+                .unwrap()
+                .is_empty()
+        );
+    }
+    let qualified = hypercurve::provisional(|| {
+        let zero = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        let start = Point2::new(Real::e().sin(), Real::zero());
+        let end = Point2::new(Real::e().sin() + zero, Real::zero());
+        let path = CurvePath2::try_new(vec![
+            hypercurve::QuadraticBezier2::new(
+                start,
+                Point2::new(Real::zero(), Real::one()),
+                end,
+            )
+            .into(),
+        ])
+        .unwrap();
+        CurveRegion2::try_from_boundary_paths(&[path], FillRule::EvenOdd).unwrap()
+    });
+    assert_eq!(
+        qualified.certainty(),
+        hypercurve::CurveCertainty::Approximate512Consumed
+    );
+    let qualified = qualified.into_unverified();
+    assert!(qualified.is_empty());
+    assert!(matches!(
+        export_svg(&qualified, &[], &[]),
+        Err(csgrs::io::IoError::Construction {
+            format: "SVG",
+            source: csgrs::errors::ValidationError::ExactCurve(hypercurve::ExactCurveError::Blocked(reason)),
+        }) if reason.reason() == hypercurve::UncertaintyReason::Predicate
+    ));
+}

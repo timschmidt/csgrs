@@ -616,6 +616,12 @@ impl CurveRegion2 {
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
+        match crate::ExactCurveError::classify_result(
+            self.validate_regularized_topology_replay(crate::CurveOperation2::Evaluation, policy),
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
         if self.is_empty() {
             return Ok(Classification::Decided(Vec::new()));
         }
@@ -737,6 +743,12 @@ impl CurveRegion2 {
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<FiniteRegionProfile2>>> {
+        match crate::ExactCurveError::classify_result(
+            self.validate_regularized_topology_replay(crate::CurveOperation2::Evaluation, policy),
+        )? {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
         if self.is_empty() {
             return Ok(Classification::Decided(Vec::new()));
         }

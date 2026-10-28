@@ -1501,6 +1501,8 @@ pub fn import_svg_document_with_options(
 /// share one checked definition graph and re-enter the existing arrangement on
 /// import. Native [`CurveGeometry2`] families and exact [`Real`] payloads retain
 /// their definitions. Unsupported retained definitions fail explicitly.
+/// An exact empty document carries a zero-root native graph and uses a unit
+/// display viewport. The viewport adds no filled geometry.
 pub fn export_svg_document(geometry: &SvgGeometry2) -> SvgResult<String> {
     export_svg_document_with_options(geometry, SvgOptions::default())
 }
@@ -1515,13 +1517,15 @@ pub fn export_svg_document_with_options(
     let projection =
         FiniteProjectionOptions::try_new(options.curve_tolerance).map_err(svg_geometry_error)?;
     let mut body = String::new();
-    let bounds = exact_finite_bounds(geometry)?;
+    // Even an empty boundary can depend on qualified topology decisions.
+    // Revalidate before choosing a display viewport or omitting its fill.
+    let region = geometry
+        .region
+        .regularized_region_raw(&CurveContext::STRICT)
+        .map_err(SvgError::Exact)?;
+    let bounds = exact_finite_bounds(geometry, &region)?;
 
-    if !geometry.region.is_empty() {
-        let region = geometry
-            .region
-            .regularized_region_raw(&CurveContext::STRICT)
-            .map_err(SvgError::Exact)?;
+    if !region.is_empty() || (geometry.wires.is_empty() && geometry.paths.is_empty()) {
         let boundaries = ExactCurveError::decided(
             crate::CurveOperation2::NativeTopology,
             region
@@ -1797,16 +1801,12 @@ fn finite_point(point: &Point2) -> SvgResult<[f64; 2]> {
         .map(|point| [point[0], point[1]])
 }
 
-fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
+fn exact_finite_bounds(geometry: &SvgGeometry2, region: &CurveRegion2) -> SvgResult<[f64; 4]> {
     let policy = CurveContext::STRICT;
-    let mut bounds = if geometry.region.is_empty() {
+    let mut bounds = if region.is_empty() {
         None
     } else {
-        match geometry
-            .region
-            .bounds_raw(&policy)
-            .map_err(svg_geometry_error)?
-        {
+        match region.bounds_raw(&policy).map_err(svg_geometry_error)? {
             Classification::Decided(bounds) => Some(bounds),
             Classification::Uncertain(reason) => {
                 return Err(SvgError::Geometry(format!(
@@ -1832,8 +1832,11 @@ fn exact_finite_bounds(geometry: &SvgGeometry2) -> SvgResult<[f64; 4]> {
             path.bounds().map_err(svg_geometry_error)?.clone(),
         )?;
     }
-    let bounds = bounds
-        .ok_or_else(|| SvgError::Geometry("cannot serialize SVG without finite geometry".into()))?;
+    let Some(bounds) = bounds else {
+        // All carriers were checked above. This viewport is a display
+        // convention for the empty set, not an added boundary or region.
+        return Ok([0.0, 0.0, 1.0, 1.0]);
+    };
     [
         bounds.min_x(),
         bounds.min_y(),

@@ -591,7 +591,26 @@ fn options_bound_import_sampling_and_export_projection() {
         Err(SvgError::SizeOverflow { .. })
     ));
 
-    assert!(SvgGeometry2::empty().to_svg().is_err());
+    // Empty native documents are valid successful geometry. The unit viewBox
+    // supplies display dimensions without adding a geometric boundary.
+    let empty = SvgGeometry2::empty().to_svg().unwrap();
+    let viewport = empty
+        .split("viewBox=\"")
+        .nth(1)
+        .unwrap()
+        .split('"')
+        .next()
+        .unwrap();
+    let coordinates = viewport
+        .split_whitespace()
+        .map(|value| value.parse::<f64>().unwrap())
+        .collect::<Vec<_>>();
+    assert_eq!(coordinates, [0.0, 0.0, 1.0, 1.0]);
+    assert!(empty.contains("data-hypercurve-path=\"5:"));
+    let replayed = import_svg_document(&empty).unwrap();
+    assert!(replayed.region().is_empty());
+    assert!(replayed.wires().is_empty() && replayed.paths().is_empty());
+    assert_eq!(replayed.to_svg().unwrap(), empty);
 }
 
 #[test]

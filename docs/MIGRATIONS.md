@@ -5,6 +5,36 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Finite profile projection retains topology certainty
+
+Both finite profile projection APIs and CSGRS `try_finite_profiles` validate
+the input region's retained normalization policy before using an empty result
+or cached loop topology. An approximate closure or normalization therefore
+remains `Approximate512Consumed` under explicitly authorized projection;
+strict reuse returns a typed `Predicate` blocker unless the source claim has
+a strict proof. Reusing topology avoids recomputation but does not upgrade
+its certainty. This applies to nonempty profiles as well as empty results.
+
+The existing terminal-closure profile fixture keeps its original source and
+single-profile expectation. It now checks the construction receipt, strict
+rejection, authorized qualified readback and repeated policy transitions.
+Projection remains a boundary product with its declared sampling and coordinate
+loss model; its validity does not certify fidelity to the original source.
+
+## Exact empty SVG documents
+
+Hypercurve and CSGRS now export a valid exact empty region without strokes as
+an SVG document. Previously this returned an error because the empty set has
+no finite bounding box. The document uses a unit `viewBox` for display and a
+version-five native graph with no definitions or roots; the viewport creates
+no geometry. Native reimport returns the empty region, which remains a valid
+operand for further operations. Callers that used export failure to detect
+emptiness should inspect the geometry instead.
+
+Invalid export options still fail. A region whose empty topology depends on
+an approximate decision still fails strict exact export; removing its final
+boundary does not certify its source geometry.
+
 ## Fallible constructors and operations
 
 These functions now return `Result`. They used to return empty or partial
