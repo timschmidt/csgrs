@@ -116,6 +116,16 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   wire version. Other frame and point-image carriers and general region admission
   remain open; these fixtures do not establish universal operation closure.
 
+- **Selected circle regions (2026-10-27).** Shared-field circular boundaries now
+  retain selected points through winding, side classification and the existing
+  Boolean arrangement. Native minor-arc predicates and region fill semantics
+  remain authoritative. Generated line representatives reuse a common field,
+  and circle/line endpoint proofs retain exact half-chart and transverse data.
+  Named degree-seven/five fixtures cover holes, disconnected components, winding
+  cancellation, mixed boundaries and a round +1/4 then -1/4 offset chain. No public
+  type or wire version changes. General incidence, large erosions and exact
+  filled-region native replay remain implementation gaps.
+
 - **Selected circle points as angular authority (2026-10-27).** An exact point
   incident on a selected circle can retain its joint rational/algebraic field
   through point location, restriction, subdivision, reversal and similarities

@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle definitions. General independent angular fields, other circle frames, other differential point-image carriers and region archives remain open. Correlated-center region admission remains a measured Unsupported consumer; its repeated-offset probe stops before offset execution.",
+    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle path definitions. General independent angular fields, other circle frames, other differential point-image carriers and filled-region archives remain open. The named shared-field circle region and round +1/4 then -1/4 offset chain now complete. The original radius-one erosion-by-two and fresh-process filled-region SVG composition probes remain unmet; ordinary filled SVG projection is not exact native replay.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -9455,6 +9455,374 @@
         }
       ],
       "oracle": "Independent circle equality, actual reached counters and policy receipts; no timeout is counted as exhaustion."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_round_chain",
+      "test": "selected_circle_cuts_enter_region_and_repeated_round_offsets",
+      "domain": "A radius-one circle centered at (beta,gamma), 2 beta^7=1 and gamma^5+beta=2, split at an algebraic angular point and assembled with the complementary half.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The reconstructed boundary enters CurveRegion2 with one material loop."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent center, selected boundary point and grown-radius boundary identities hold."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Exact path metadata is reloaded before region admission; this is not filled-region archive replay."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Union with canonical empty remains consumable, and the restored region XOR the original is empty."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "The round +1/4 offset followed by -1/4 completes with exact identity against the original."
+        }
+      ],
+      "oracle": "Original full positive chain, independent radial identities and exact symmetric difference; no area or display oracle."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_winding",
+      "test": "selected_circle_regions_preserve_winding_multiplicity_and_reversal",
+      "domain": "A full selected circle, its reversed traversal, duplicate boundaries and opposite traversals under NonZero and EvenOdd.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Declared fill rules control duplicate and canceled loops."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Reverse XOR and opposite traversal cancellation are empty; doubled EvenOdd is empty."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent radial points classify inside, on the circle and outside."
+        }
+      ],
+      "oracle": "Winding multiplicity and traversal identities plus exact radial points."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_hole",
+      "test": "selected_circle_regions_preserve_nested_hole_ownership",
+      "domain": "Oppositely oriented concentric selected circles of radii two and one.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Loop ownership is one material component and one hole."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Center, both boundaries, annular interior and exterior match independent exact expectations."
+        }
+      ],
+      "oracle": "Exact radius comparisons and explicit material/hole ownership."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_disconnected",
+      "test": "selected_circle_regions_preserve_disconnected_components",
+      "domain": "Two radius-one selected circles separated by an exact translation of five along x.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Both disconnected components remain material loops."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Both centers and inner endpoints, and the separating point, retain their independent classifications."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "A translated selected path remains a valid region operand."
+        }
+      ],
+      "oracle": "Independent separation and radial identities, with two explicit material components."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_mixed",
+      "test": "selected_circle_regions_consume_mixed_line_and_circle_boundaries",
+      "domain": "A selected semicircle and its generated diameter, with a degree-seven/five correlated center.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The mixed circle/line loop enters the same CurveRegion2 arrangement."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent half-disk interior/exterior and line/circle boundary points match the intended set."
+        }
+      ],
+      "oracle": "Exact N=(-4/5,3/5), T=(3/5,4/5), independent points on the diameter and half disk."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_diameter_contacts",
+      "test": "selected_circle_diameter_retains_both_endpoint_contacts",
+      "domain": "The generated diameter of a selected semicircle.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The complete result retains exactly two endpoint contacts, no overlaps and no blockers."
+        }
+      ],
+      "oracle": "Two distinct endpoints on a nonzero circle exhaust its line contacts."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_secant_domains",
+      "test": "selected_circle_endpoint_secants_preserve_half_domains_and_cross_signs",
+      "domain": "Secants between rationally related points in the selected half, the complementary half, or one in each, with both curve and line traversals.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Finite selected halves retain exactly two, zero or one contacts with the correct transverse cross signs."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Each returned parameter on both operands evaluates to the retained exact contact point."
+        }
+      ],
+      "oracle": "Independent coordinates (-7/25,24/25), (1,0), (-1,0), (7/25,-24/25), circle membership and explicit tangent-cross signs."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point fields, line and minor-arc winding, circle/chord incidence and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain joint selected points and original denominator guards; reuse the existing winding and fill-rule authority. The degree-seven/five center and represented circle frame remain exact. Only the named completed workflows are qualified; general circle/line roots, large erosions, filled-region native archives, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_region_policy",
+      "test": "selected_circle_region_queries_preserve_policy_certainty",
+      "domain": "A selected circle reused under strict, approximate-requested and strict policies.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Region admission and exact interior/boundary queries remain Certified under all three requests."
+        }
+      ],
+      "oracle": "Independent exact radial assertions and returned certainty receipts."
     }
   ]
 }

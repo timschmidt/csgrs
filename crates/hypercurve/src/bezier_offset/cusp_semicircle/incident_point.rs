@@ -5,6 +5,82 @@ use std::cmp::Ordering;
 use super::*;
 
 impl BezierAlgebraicCuspSemicircle2 {
+    /// Two distinct incident endpoints exhaust a line's circle contacts.
+    /// Preserve their shared point fields and select the owning half chart;
+    /// no Cartesian center or new root is needed. The transverse signs follow
+    /// from `(A-C).(B-A) = -|B-A|²/2` and its positive counterpart at B.
+    pub(super) fn shared_point_endpoint_chord_contacts(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>>
+    {
+        // Native endpoint families already have compact support kernels.
+        // This path consumes mapped joint points before coordinate promotion.
+        if self.data.frame.rational().is_some() {
+            return Ok(Classification::Decided(None));
+        }
+        let Some((normal_x, normal_y)) = self.represented_frame_unit_normal()? else {
+            return Ok(Classification::Decided(None));
+        };
+        let center = match self.center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if ![&center, chord.start(), chord.end()].iter().any(|point| {
+            matches!(
+                point.0,
+                CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_)
+            )
+        }) {
+            return Ok(Classification::Decided(None));
+        }
+        let radius_squared = self.radial_distance() * self.radial_distance();
+        for point in [chord.start(), chord.end()] {
+            match common_point_circle_residual_sign(point, &center, &radius_squared, policy)? {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
+                    return Ok(Classification::Decided(None));
+                }
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            }
+        }
+        let mut contacts = Vec::with_capacity(2);
+        for (at_start, point) in [(true, chord.start()), (false, chord.end())] {
+            let (cusp_parameter, complementary) = match self.selected_incident_point_parameter(
+                point,
+                &center,
+                (&normal_x, &normal_y),
+                policy,
+            )? {
+                Classification::Decided(location) => location,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
+            if complementary {
+                continue;
+            }
+            contacts.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
+                cusp_parameter,
+                chord_parameter: if at_start {
+                    chord.start_parameter()
+                } else {
+                    chord.end_parameter()
+                },
+                point: point.clone(),
+                tangent_cross_sign: if at_start ^ self.is_clockwise() {
+                    RealSign::Positive
+                } else {
+                    RealSign::Negative
+                },
+            });
+        }
+        Ok(Classification::Decided(Some(contacts)))
+    }
+
     pub(super) fn represented_frame_unit_normal(&self) -> CurveResult<Option<(Real, Real)>> {
         Ok(match self.data.frame.chord_normal() {
             Some(frame) => frame

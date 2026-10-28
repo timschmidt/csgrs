@@ -7830,6 +7830,17 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
+        match self.shared_point_endpoint_chord_contacts(chord, policy)? {
+            Classification::Decided(Some(contacts)) => {
+                return Ok(Classification::Decided(contacts));
+            }
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
         if clip_to_finite_chord {
             // Bounds only reject work; they never decide an overlapping
             // circle/chord predicate. Keep their refinement below the policy

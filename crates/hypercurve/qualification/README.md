@@ -503,3 +503,22 @@ These counters do not bound total polynomial arithmetic, coefficient growth,
 expression size, retained memory, wall time or cancellation. Other selected
 point fields, general region admission, offsets and corner chains remain open;
 this corpus is not a proof of universal algebraic operation closure.
+
+Shared-field circle region witnesses now cover the degree-seven/five selected
+center through exact angular cuts, native path replay, region admission,
+independent point classification and a round +1/4 then -1/4 offset chain.
+The restored filled set has empty symmetric difference with the original.
+Separate witnesses cover winding multiplicity, reversed traversal, nested holes,
+disconnected components, mixed circle/diameter boundaries, selected secant halves
+and transverse signs, and policy certainty. Line representatives retain their
+shared point field before constructing an independent support intersection.
+All paths use the existing region arrangement and minor-arc winding semantics.
+
+These witnesses do not complete arbitrary circle/line intersections or erosion
+collapse. The preserved radius-one erosion-by-two probe still reports
+Unsupported after its concentric Boolean assertions pass. A separate preserved
+fresh-process filled-region SVG probe exposes the existing display-only export
+path; its projected drawing cannot establish exact native region replay. Both
+full positive probes remain next owning-layer work. Neither failure is counted
+as a completed capability, and no total arithmetic/memory or cancellation bound
+is inferred from these fixture timeouts.

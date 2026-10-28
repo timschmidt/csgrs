@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-circle-regions-evidence-2026-10-28` branch ends at
+`74c7a626ed6b4a7c88332336bf5d3e416cc94e60`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-circle-regions`
+(362 files, 9,196,503 bytes), SHA-256 `fc6fe4b2838bd73c3b30eee19c1da57af1c2fabf612c29e8f8e1d71e5c225bc8`. It records
+Hypercurve common point-field predicates, retained line representatives, circle endpoint contacts, minor-arc and line winding, and the existing CurveRegion2 arrangement. All 2,878 Hypercurve cases, 64
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 221 fixtures pass; 34 existing ignored cases remain.
+The recovered source is freshly qualified; lost pre-restart attempts are not
+credited. Source equality and the transition from parent `d75bb9ea3c` are
+recorded. This record is unpushed; complete closure, resource bounds and package
+delivery remain open.
+
 The local `hypercurve-rational-point-images-evidence-2026-10-27` branch ends
 at `01f2e7a9311b962f07e3b7ba6a71d9fcf38e2d63`, adding `docs/evidence/2026-10-27-hypercurve-closure-rational-point-images`
 (772 files, 33,841,191 bytes), SHA-256 `79bf8acccb4cf36a8782e5288fa411c360f85b4d2c65a7d2777e5aead3a88c01`. It records shared

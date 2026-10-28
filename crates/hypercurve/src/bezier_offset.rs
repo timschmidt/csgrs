@@ -5384,9 +5384,9 @@ fn cloned_once_lock<T: Clone>(source: &OnceLock<T>) -> OnceLock<T> {
 /// predicate, so no path constructs a primitive element.
 #[derive(Debug)]
 pub(crate) struct BezierAlgebraicCuspSemicircleAlgebraicRay2 {
-    start: RationalBezierAlgebraicPointImage2,
-    end: RationalBezierAlgebraicPointImage2,
-    center: RationalBezierAlgebraicPointImage2,
+    start: CurvePoint2,
+    end: CurvePoint2,
+    center: CurvePoint2,
     radius_squared: Real,
     clockwise: bool,
 }
@@ -13250,6 +13250,33 @@ impl BezierAlgebraicChordSupportPredicate2 {
             .any(|endpoint| point.shares_storage(endpoint))
         {
             return Ok(Classification::Decided(crate::classify::LineSide::On));
+        }
+        // Selected point maps can share a joint field even when no individual
+        // Cartesian coordinate has been materialized. Use the same determinant
+        // authority for chord incidence and circular-arc winding.
+        if [support_chord.start(), support_chord.end(), point]
+            .iter()
+            .any(|point| {
+                matches!(
+                    point.0,
+                    CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_)
+                )
+            })
+        {
+            match common_point_oriented_side(
+                support_chord.start(),
+                support_chord.end(),
+                point,
+                policy,
+            )? {
+                decided @ Classification::Decided(_) => return Ok(decided),
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
+            }
         }
         if let Some(side) = support_chord.retained_procedural_point_side(point, policy)? {
             return Ok(Classification::Decided(side));

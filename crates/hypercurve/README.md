@@ -545,7 +545,12 @@ exact signatures.
   in a represented unit frame reuse the rational chart evaluator. Represented
   parameters and incident points in a shared polynomial-point field keep exact
   derivative magnitude and all requested orders; restriction and reversal retain
-  the source parameter. Arbitrary independent fields, other frame and point-image
+  the source parameter. Shared-field circle boundaries now enter `CurveRegion2`
+  through the existing line/minor-arc winding and arrangement. Named witnesses
+  cover angular trimming and path replay, holes, disconnected components,
+  winding cancellation, mixed circle/diameter loops and a round +1/4 then -1/4
+  offset chain. Generated line representatives preserve their common point field.
+  Circle/line endpoint contacts retain selected-half and transverse evidence. Arbitrary independent fields, other frame and point-image
   carriers, and general region admission still have implementation gaps.
   Transported unit directions are omitted only when reconstruction retains the
   same serialized scalar definitions; value equality alone is insufficient for

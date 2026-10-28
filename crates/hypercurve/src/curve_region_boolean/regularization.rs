@@ -1,6 +1,7 @@
 //! Regularized fragment actions and side decisions.
 
 use super::*;
+use hypersolve::BivariatePolynomial;
 
 impl<'a> CurveRegionBooleanContext<'a> {
     /// Resolves result-side actions after complete pair replay.
@@ -2104,6 +2105,67 @@ impl<'a> CurveRegionBooleanContext<'a> {
         ))
     }
 
+    fn regularized_circle_point_side_decision(
+        &self,
+        carrier_index: usize,
+        fragment: &crate::BezierAlgebraicCuspSemicircleFragment2,
+        parameter: &Real,
+        representative: &CurvePoint2,
+    ) -> ExactCurveResult<RegularizedFragmentDecision> {
+        let parameter = CurveParameter2::from_algebraic_cusp(
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(parameter.clone()),
+        );
+        let derivative = fragment.derivatives_at_parameter(&parameter, 1, &self.data.policy)?;
+        let tangent = derivative[0].coordinate_image()?;
+        let coordinate_sign = |numerator| {
+            crate::bezier_offset::point_rational_form_sign(
+                &tangent,
+                &numerator,
+                &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                &self.data.policy,
+            )
+            .map(|sign| {
+                sign.map(|sign| {
+                    if fragment.is_reversed() {
+                        match sign {
+                            RealSign::Negative => RealSign::Positive,
+                            RealSign::Positive => RealSign::Negative,
+                            RealSign::Zero => RealSign::Zero,
+                        }
+                    } else {
+                        sign
+                    }
+                })
+            })
+            .map_err(|cause| self.invalid(carrier_index, cause))
+        };
+        let tangent_x = coordinate_sign(BivariatePolynomial::new(vec![
+            vec![Real::zero()],
+            vec![Real::one()],
+        ]))?;
+        let tangent_y = coordinate_sign(BivariatePolynomial::new(vec![vec![
+            Real::zero(),
+            Real::one(),
+        ]]))?;
+        let left = self.retained_point_fragment_side_classification(
+            carrier_index,
+            representative,
+            tangent_x,
+            tangent_y,
+            true,
+        )?;
+        let right = self.retained_point_fragment_side_classification(
+            carrier_index,
+            representative,
+            tangent_x,
+            tangent_y,
+            false,
+        )?;
+        Ok(RegularizedFragmentDecision::from_classified_sides(
+            left, right,
+        ))
+    }
+
     pub(super) fn regularized_algebraic_cusp_fragment_decision_by_probe(
         &self,
         carrier_index: usize,
@@ -2120,6 +2182,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Err(self.blocked(carrier_index, reason));
             }
         };
+
+        if crate::bezier_offset::point_retains_joint_field(&target) {
+            match self.regularized_circle_point_side_decision(
+                carrier_index,
+                fragment,
+                parameter,
+                &target,
+            ) {
+                Ok(decision) => return Ok(decision),
+                Err(error @ ExactCurveError::Invalid { .. }) => return Err(error),
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::BudgetExhausted =>
+                {
+                    return Err(ExactCurveError::Blocked(blocker));
+                }
+                Err(ExactCurveError::Blocked(_)) => {}
+            }
+        }
 
         let mut last_reason = UncertaintyReason::Unsupported;
         let mut outer_bounds = None;
@@ -2479,16 +2559,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 left, right,
             ));
         }
-        let representative = match representative {
-            CurvePoint2(CurvePointData2::Algebraic(representative)) => representative,
-            representative => {
-                return self.regularized_fragment_decision_by_boundary_probe(
-                    carrier_index,
-                    representative,
-                    None,
-                );
-            }
-        };
+        // Native composite representatives retain an endpoint-winding proof.
+        // Keep that authority unless this is the existing algebraic-point path
+        // or the joint field handled by the new retained point side ray.
+        if !matches!(representative.0, CurvePointData2::Algebraic(_))
+            && !crate::bezier_offset::point_retains_joint_field(&representative)
+        {
+            return self.regularized_fragment_decision_by_boundary_probe(
+                carrier_index,
+                representative,
+                None,
+            );
+        }
         let tangent = |axis| {
             chord
                 .tangent_axis_sign(axis, &self.data.policy)
@@ -2496,7 +2578,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let [tangent_x, tangent_y] = [tangent(Axis2::X)?, tangent(Axis2::Y)?];
         let classify = |left| {
-            self.algebraic_fragment_side_classification(
+            self.retained_point_fragment_side_classification(
                 carrier_index,
                 &representative,
                 tangent_x,
@@ -2514,7 +2596,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             {
                 return self.regularized_fragment_decision_by_boundary_probe(
                     carrier_index,
-                    CurvePoint2::from(representative),
+                    representative,
                     None,
                 );
             }
@@ -2532,7 +2614,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 {
                     return self.regularized_fragment_decision_by_boundary_probe(
                         carrier_index,
-                        CurvePoint2::from(representative),
+                        representative,
                         None,
                     );
                 }
@@ -3014,6 +3096,23 @@ impl<'a> CurveRegionBooleanContext<'a> {
         tangent_y: Classification<RealSign>,
         left: bool,
     ) -> ExactCurveResult<(Vec<i32>, RegionPointLocation)> {
+        self.retained_point_fragment_side_classification(
+            carrier_index,
+            &representative.clone().into(),
+            tangent_x,
+            tangent_y,
+            left,
+        )
+    }
+
+    pub(super) fn retained_point_fragment_side_classification(
+        &self,
+        carrier_index: usize,
+        representative: &CurvePoint2,
+        tangent_x: Classification<RealSign>,
+        tangent_y: Classification<RealSign>,
+        left: bool,
+    ) -> ExactCurveResult<(Vec<i32>, RegionPointLocation)> {
         let carrier = &self.data.carriers[carrier_index];
         let reverse_sign = |sign| match sign {
             RealSign::Negative => RealSign::Positive,
@@ -3072,7 +3171,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             let classification = self
                 .region_for_carrier(carrier_index)
-                .algebraic_loop_windings_from_boundary_side_ray(
+                .point_evidence_loop_windings_from_boundary_side_ray(
                     representative,
                     Real::from(direction_x),
                     Real::from(direction_y),

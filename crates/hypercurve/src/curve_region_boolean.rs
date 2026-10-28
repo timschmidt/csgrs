@@ -1762,6 +1762,15 @@ pub(crate) fn classify_retained_point_evidence_against_region_by_probe<'a>(
     policy: &CurveContext,
     prepared: &mut Option<CurveRegionBooleanContext<'a>>,
 ) -> CurveResult<Classification<RegionPointLocation>> {
+    match region.classify_point_evidence_by_ray(&point, policy)? {
+        decided @ Classification::Decided(_) => return Ok(decided),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        Classification::Uncertain(_) => {}
+    }
     if prepared.is_none() {
         let context = match CurveRegionBooleanContext::try_new_curve_boundary(&[], region, policy) {
             Ok(context) => context,

@@ -2915,6 +2915,23 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             .strict_scalar_between(&self.data.end, &self.data.policy)
     }
 
+    pub(crate) fn representative_point_evidence(
+        &self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurvePoint2>> {
+        self.validate_policy(policy)?;
+        if self.data.semicircle.data.frame.rational().is_some() {
+            return Ok(self.representative_point()?.map(CurvePoint2::from));
+        }
+        let parameter = match self.representative_parameter()? {
+            Classification::Decided(parameter) => parameter,
+            Classification::Uncertain(reason) => {
+                return Ok(Classification::Uncertain(reason));
+            }
+        };
+        self.data.semicircle.point_evidence_at(&parameter, policy)
+    }
+
     pub(crate) fn representative_point(
         &self,
     ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
@@ -2940,7 +2957,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
         self.validate_policy(policy)?;
         let Some(_) = self.data.semicircle.data.frame.rational() else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return self.point_evidence_ray_evaluator(policy);
         };
         let mut start = match self
             .data
@@ -3000,9 +3017,9 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         };
         Ok(Classification::Decided(
             BezierAlgebraicCuspSemicircleAlgebraicRay2 {
-                start,
-                end,
-                center: self.data.semicircle.center_point_image(policy)?,
+                start: start.into(),
+                end: end.into(),
+                center: self.data.semicircle.center_point_image(policy)?.into(),
                 radius_squared: self.data.semicircle.radial_distance()
                     * self.data.semicircle.radial_distance(),
                 clockwise: self.data.semicircle.is_clockwise() ^ self.data.reversed,

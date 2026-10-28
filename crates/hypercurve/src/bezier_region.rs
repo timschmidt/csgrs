@@ -24,6 +24,7 @@ mod native_fragments;
 mod offset_joins;
 mod offset_spans;
 mod point_location;
+mod point_ray;
 #[cfg(test)]
 mod retained_circular_tests;
 use corner_edit::*;

@@ -1260,6 +1260,21 @@ fn process_minor_arc_winding(
     }
 }
 
+/// Half-open line crossing after exact endpoint-side and orientation decisions.
+pub(crate) const fn line_winding_decision(
+    start_at_or_below: bool,
+    end_above: bool,
+    side: crate::classify::LineSide,
+) -> i32 {
+    if start_at_or_below && end_above && matches!(side, crate::classify::LineSide::Left) {
+        1
+    } else if !start_at_or_below && !end_above && matches!(side, crate::classify::LineSide::Right) {
+        -1
+    } else {
+        0
+    }
+}
+
 /// The exact circular-arc winding state after all non-coordinate predicates.
 /// Endpoint x ordering is requested only for the two geometrically ambiguous
 /// branches, keeping the common native and algebraic paths allocation-free and

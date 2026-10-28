@@ -26,6 +26,17 @@ impl PointFormSource2 {
     }
 }
 
+/// A similarity transports a joint point field without separating its
+/// coordinates. This is only a dispatch hint; the queried determinant still
+/// validates the retained maps, guards and policy in that field.
+pub(crate) fn point_retains_joint_field(point: &CurvePoint2) -> bool {
+    match &point.0 {
+        CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_) => true,
+        CurvePointData2::Similarity(image) => point_retains_joint_field(&image.data.source),
+        _ => false,
+    }
+}
+
 /// Aligns source-bound queries using their retained coordinate maps. The
 /// caller keeps the original immutable inputs and denominator guards; these
 /// pulled-back forms are temporary predicate views, not replacement points.
@@ -219,6 +230,96 @@ pub(super) fn common_point_displacement(
     common_point_form_sources(dx, dy, policy)
 }
 
+/// Intersects a line with a fixed coordinate in the endpoints' shared field.
+/// The caller owns the finite placement on the line's injective axis. Original
+/// coordinate denominators remain guards even when division moves a factor
+/// into a numerator.
+pub(super) fn common_point_line_at_coordinate(
+    start: &CurvePoint2,
+    end: &CurvePoint2,
+    axis: Axis2,
+    coordinate: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurvePoint2>> {
+    let [dx, dy] = match common_point_displacement(end, start, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (direction, other_direction, axis_polynomial, other_polynomial) = match axis {
+        Axis2::X => (
+            dx,
+            dy,
+            BivariatePolynomial::new(vec![vec![-coordinate], vec![Real::one()]]),
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+        ),
+        Axis2::Y => (
+            dy,
+            dx,
+            BivariatePolynomial::new(vec![vec![-coordinate, Real::one()]]),
+            BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+        ),
+    };
+    match point_rational_form_sign(
+        &direction.source,
+        &direction.numerator,
+        &direction.denominator,
+        policy,
+    )? {
+        Classification::Decided(RealSign::Positive | RealSign::Negative) => {}
+        Classification::Decided(RealSign::Zero) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let axis_difference = match point_form_source(start, &axis_polynomial, &one, policy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [axis_difference, other_direction] =
+        match common_point_form_sources(axis_difference, other_direction, policy)? {
+            Classification::Decided(forms) => forms,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let product = PointFormSource2::new(
+        axis_difference.source,
+        bivariate_multiply(&axis_difference.numerator, &other_direction.numerator),
+        bivariate_multiply(&axis_difference.denominator, &other_direction.denominator),
+    );
+    let [product, direction] = match common_point_form_sources(product, direction, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let quotient = PointFormSource2::new(
+        product.source,
+        bivariate_multiply(
+            &bivariate_multiply(&product.numerator, &direction.denominator),
+            &direction.denominator,
+        ),
+        bivariate_multiply(
+            &bivariate_multiply(&product.denominator, &direction.numerator),
+            &direction.denominator,
+        ),
+    );
+    let other = match point_form_difference(
+        PointFormSource2::new(start.clone(), other_polynomial, one),
+        quotient,
+        policy,
+    )? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let fixed = bivariate_scale(other.denominator.clone(), coordinate);
+    let numerators = match axis {
+        Axis2::X => [fixed, other.numerator],
+        Axis2::Y => [other.numerator, fixed],
+    };
+    crate::ExactCurveError::classify_result(other.source.rational_image_with_policy(
+        &crate::RationalMap2::new(numerators, other.denominator),
+        policy,
+    ))
+}
+
 /// A linear query of two already aligned field coordinates. Keep a shared
 /// denominator instead of multiplying it into itself on every angular query.
 pub(super) fn point_form_linear_combination(
@@ -283,6 +384,58 @@ pub(super) fn common_point_circle_residual_sign(
         ),
     );
     point_polynomial_sign(&dx.source, &residual, policy)
+}
+
+/// Signs the oriented area of three points in their retained common field.
+/// Each original coordinate denominator remains a guard of the determinant.
+pub(super) fn common_point_oriented_side(
+    start: &CurvePoint2,
+    end: &CurvePoint2,
+    point: &CurvePoint2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<crate::classify::LineSide>> {
+    let [ux, uy] = match common_point_displacement(end, start, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let [vx, vy] = match common_point_displacement(point, start, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let product = |first, second| {
+        common_point_form_sources(first, second, policy).map(|forms| {
+            forms.map(|[first, second]| {
+                PointFormSource2::new(
+                    first.source,
+                    bivariate_multiply(&first.numerator, &second.numerator),
+                    bivariate_multiply(&first.denominator, &second.denominator),
+                )
+            })
+        })
+    };
+    let first = match product(ux, vy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let second = match product(uy, vx)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let determinant = match point_form_difference(first, second, policy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    Ok(point_rational_form_sign(
+        &determinant.source,
+        &determinant.numerator,
+        &determinant.denominator,
+        policy,
+    )?
+    .map(|sign| match sign {
+        RealSign::Negative => crate::classify::LineSide::Right,
+        RealSign::Zero => crate::classify::LineSide::On,
+        RealSign::Positive => crate::classify::LineSide::Left,
+    }))
 }
 
 /// Pulls a query into its original coordinate field. The public form retains

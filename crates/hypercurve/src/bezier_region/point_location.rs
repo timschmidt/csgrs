@@ -63,12 +63,7 @@ pub(super) fn retained_loop_sample_point_evidence(
                 .map(CurvePoint2::from),
             BezierSplitFragment2::AlgebraicChord(chord) => chord.representative_point(policy)?,
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                match fragment.representative_point()? {
-                    Classification::Decided(point) => {
-                        Classification::Decided(CurvePoint2::from(point))
-                    }
-                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
-                }
+                fragment.representative_point_evidence(policy)?
             }
         };
         match candidate {
@@ -130,6 +125,23 @@ pub(crate) fn classify_point_evidence_against_retained_loop(
     match direct {
         Some(decided @ Classification::Decided(_)) => Ok(decided),
         Some(Classification::Uncertain(_)) | None => {
+            match super::point_ray::point_evidence_loop_winding(boundary_loop, point, policy)? {
+                Classification::Decided(RetainedRayWinding::Boundary) => {
+                    return Ok(Classification::Decided(ContourPointLocation::Boundary));
+                }
+                Classification::Decided(RetainedRayWinding::Winding(winding)) => {
+                    return Ok(Classification::Decided(winding_location(
+                        winding,
+                        FillRule::EvenOdd,
+                    )));
+                }
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
+            }
             crate::curve_region_boolean::classify_retained_point_evidence_against_loop_by_probe(
                 region,
                 loop_index,

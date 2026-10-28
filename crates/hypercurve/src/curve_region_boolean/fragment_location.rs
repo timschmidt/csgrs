@@ -433,13 +433,27 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         match direct {
             Some(decided @ Classification::Decided(_)) => Ok(decided),
-            Some(Classification::Uncertain(_)) | None => self
-                .classify_retained_point_off_boundary_by_probe(
-                    owner_carrier_index,
-                    point,
-                    boundary_operand,
-                    RetainedPointProbeClassification::FilledRegion,
-                ),
+            Some(Classification::Uncertain(UncertaintyReason::BudgetExhausted)) => Ok(
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+            ),
+            Some(Classification::Uncertain(_)) | None => {
+                match boundary_region
+                    .classify_point_evidence_by_ray(&point, &self.data.policy)
+                    .map_err(|cause| self.invalid(owner_carrier_index, cause))?
+                {
+                    decided @ Classification::Decided(_) => Ok(decided),
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => Ok(
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+                    ),
+                    Classification::Uncertain(_) => self
+                        .classify_retained_point_off_boundary_by_probe(
+                            owner_carrier_index,
+                            point,
+                            boundary_operand,
+                            RetainedPointProbeClassification::FilledRegion,
+                        ),
+                }
+            }
         }
     }
 

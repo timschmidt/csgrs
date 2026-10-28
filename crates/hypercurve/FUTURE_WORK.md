@@ -1823,6 +1823,32 @@ limits, not bounds on total arithmetic, expression growth, heap or cancellation.
 Other fields, arbitrary algebraic region/operation closure and published package
 delivery remain open. Full pre-push qualification is pending for this increment.
 
+**Selected circle regions increment (2026-10-28).** The owning layer is Hypercurve common point-field predicates, retained line representatives, circle endpoint contacts, minor-arc and line winding, and the existing CurveRegion2 arrangement,
+under P12, P15 and P17–P20, with native adapter obligations under P26.
+The measured domain is The named degree-seven/five joint-field circle centers, represented unit frames, exact angular restrictions, retained generated lines, holes and disconnected components.
+
+Point-backed circle rays share native minor-arc crossing and endpoint ownership. Common-field determinants and transverse-coordinate line representatives preserve coordinate correlation and original guards. Two distinct endpoints on a nonzero circle exhaust its line contacts; selected halves and transverse signs are still checked. The existing arrangement consumes these relations for material, hole and Boolean fragment classification. Candidate ray searches suppress approximate terminals while seeking an exact answer. Native independent-field contact and endpoint-winding proofs retain priority.
+
+Eight added public fixtures cover the unchanged split/complement/native path replay, region admission, +1/4 then -1/4 round offsets and exact XOR chain; winding multiplicity and cancellation; reversal; holes; disconnected circles; a semicircle/diameter boundary; complete endpoint contacts; complementary and reversed secants; and strict/approximate-requested/strict certainty. Independent point and radius identities supplement topology and set identities.
+
+All 18 fresh local qualification groups pass: 2,878 Hypercurve
+cases in 93 suites, 34 existing ignored cases; 64
+root adapter cases in 11 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 221
+capability fixtures, typos, repository budget and diff checks. Both unchanged
+native oblique fillet and composite chord-role regressions pass. Record
+`docs/evidence/2026-10-28-hypercurve-closure-selected-circle-regions` has SHA-256 `fc6fe4b2838bd73c3b30eee19c1da57af1c2fabf612c29e8f8e1d71e5c225bc8`.
+Every non-receipt byte matches the freshly qualified snapshot. A host restart
+removed earlier temporary runs; recovery provenance and the fresh runs are
+archived, and lost attempts are not credited. The interrupted nested-workspace
+attempt is retained, followed by a complete rerun outside the outer workspace.
+
+The full radius-one erosion by two and fresh-process filled-region replay chains remain separate implementation gaps on this increment. Exact path replay before region admission is a different demonstrated stage. General independent circle/line fields and arbitrary algebraic regions remain open. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

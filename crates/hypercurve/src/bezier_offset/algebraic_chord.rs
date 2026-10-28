@@ -1789,6 +1789,28 @@ impl BezierAlgebraicChord2 {
         coordinate: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurvePoint2>> {
+        // A shared selected field already defines this affine point. Keep
+        // that relation before introducing a two-support intersection carrier.
+        if [self.start(), self.end()]
+            .into_iter()
+            .any(point_retains_joint_field)
+        {
+            match common_point_line_at_coordinate(
+                self.start(),
+                self.end(),
+                self.data.parameter_axis.axis,
+                coordinate,
+                policy,
+            )? {
+                Classification::Decided(point) => return Ok(Classification::Decided(point)),
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Uncertain(_) => {}
+            }
+        }
         // Independently selected endpoints deliberately do not share a
         // primitive element. Intersect this support with an exact line at the
         // certified interior coordinate instead. The ordinary chord-pair
@@ -4026,19 +4048,11 @@ impl BezierAlgebraicChord2 {
             };
         }
         Ok(Classification::Decided(
-            if start_side != std::cmp::Ordering::Greater
-                && end_side == std::cmp::Ordering::Greater
-                && side == crate::classify::LineSide::Left
-            {
-                1
-            } else if start_side == std::cmp::Ordering::Greater
-                && end_side != std::cmp::Ordering::Greater
-                && side == crate::classify::LineSide::Right
-            {
-                -1
-            } else {
-                0
-            },
+            crate::contour::line_winding_decision(
+                start_side != std::cmp::Ordering::Greater,
+                end_side == std::cmp::Ordering::Greater,
+                side,
+            ),
         ))
     }
 

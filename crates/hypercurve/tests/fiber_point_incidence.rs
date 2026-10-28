@@ -1387,3 +1387,296 @@ fn coordinate_order_keeps_distinct_selected_fiber_fallback() {
         assert!(!a.coincides_with(&b).unwrap());
     }
 }
+
+#[test]
+fn selected_circle_cuts_enter_region_and_repeated_round_offsets() {
+    use hypercurve::{BooleanOp, CurvePath2, FillRule, OffsetCornerStyle2, RegionPointLocation};
+    let path = circle_path();
+    let point = algebraic_angular_point(1, true, Real::one(), Real::zero());
+    let curve = &path.curves()[0];
+    let (first, second) = curve.split_at(angular_location(curve, &point)).unwrap();
+    let complement = circle_path_in_frame(1, false);
+    let full = CurvePath2::try_new(vec![
+        first,
+        second,
+        complement.curves()[0].reversed().unwrap(),
+    ])
+    .unwrap();
+    let text = angular_svg(full);
+    let replay = import_svg_document(&text).unwrap();
+    eprintln!("exact split, complement, and replay completed");
+    let region = CurveRegion2::try_from_boundary_paths(replay.paths(), FillRule::NonZero).unwrap();
+    assert_eq!(region.loop_role_counts().unwrap(), (1, 0));
+    assert_eq!(
+        region.classify_point(&center()).unwrap(),
+        RegionPointLocation::Inside
+    );
+    assert_eq!(
+        region.classify_point(&point).unwrap(),
+        RegionPointLocation::Boundary
+    );
+    eprintln!("region admission and independent interior/boundary completed");
+    let union = region
+        .boolean_region(&CurveRegion2::empty(), BooleanOp::Union)
+        .unwrap();
+    let grown = union.offset(q(1, 4), &OffsetCornerStyle2::Round).unwrap();
+    assert_eq!(
+        grown
+            .classify_point(&translate(&center(), q(3, 4), 1.into()))
+            .unwrap(),
+        RegionPointLocation::Boundary
+    );
+    let restored = grown.offset(q(-1, 4), &OffsetCornerStyle2::Round).unwrap();
+    assert!(
+        restored
+            .boolean_region(&region, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(
+        restored.classify_point(&point).unwrap(),
+        RegionPointLocation::Boundary
+    );
+}
+
+fn selected_full_circle(radius: i32, clockwise: bool) -> hypercurve::CurvePath2 {
+    let first = circle_path_in_frame(radius, clockwise);
+    let second = circle_path_in_frame(radius, !clockwise);
+    hypercurve::CurvePath2::try_new(vec![
+        first.curves()[0].clone(),
+        second.curves()[0].reversed().unwrap(),
+    ])
+    .unwrap()
+}
+
+#[test]
+fn selected_circle_regions_preserve_winding_multiplicity_and_reversal() {
+    use hypercurve::{BooleanOp, FillRule, RegionPointLocation};
+    let path = selected_full_circle(1, true);
+    let reverse = path.reversed().unwrap();
+    let region =
+        CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), FillRule::NonZero)
+            .unwrap();
+    let reversed =
+        CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&reverse), FillRule::NonZero)
+            .unwrap();
+    assert_eq!(region.loop_role_counts().unwrap(), (1, 0));
+    assert!(
+        region
+            .boolean_region(&reversed, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    for rule in [FillRule::NonZero, FillRule::EvenOdd] {
+        let doubled =
+            CurveRegion2::try_from_boundary_paths(&[path.clone(), path.clone()], rule).unwrap();
+        assert_eq!(doubled.is_empty(), rule == FillRule::EvenOdd);
+        let canceled =
+            CurveRegion2::try_from_boundary_paths(&[path.clone(), reverse.clone()], rule).unwrap();
+        assert!(canceled.is_empty());
+    }
+    for (x, y, location) in [
+        (q(0, 1), q(0, 1), RegionPointLocation::Inside),
+        (q(3, 5), q(4, 5), RegionPointLocation::Boundary),
+        (q(6, 5), q(8, 5), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            region.classify_point(&translate(&center(), x, y)).unwrap(),
+            location
+        );
+    }
+}
+
+#[test]
+fn selected_circle_regions_preserve_nested_hole_ownership() {
+    use hypercurve::{FillRule, RegionPointLocation};
+    let outer = selected_full_circle(2, true);
+    let inner = selected_full_circle(1, false);
+    let annulus =
+        CurveRegion2::try_from_boundary_paths(&[outer, inner], FillRule::NonZero).unwrap();
+    assert_eq!(annulus.loop_role_counts().unwrap(), (1, 1));
+    for (x, location) in [
+        (q(0, 1), RegionPointLocation::Outside),
+        (q(1, 1), RegionPointLocation::Boundary),
+        (q(3, 2), RegionPointLocation::Inside),
+        (q(2, 1), RegionPointLocation::Boundary),
+        (q(3, 1), RegionPointLocation::Outside),
+    ] {
+        assert_eq!(
+            annulus
+                .classify_point(&translate(&center(), x, Real::zero()))
+                .unwrap(),
+            location
+        );
+    }
+}
+
+#[test]
+fn selected_circle_regions_preserve_disconnected_components() {
+    use hypercurve::{FillRule, RegionPointLocation, Similarity2};
+    let first = selected_full_circle(1, true);
+    let transform = Similarity2::try_from_real_affine(
+        1.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        5.into(),
+        0.into(),
+    )
+    .unwrap();
+    let second = first.transform_similarity(&transform).unwrap();
+    let region =
+        CurveRegion2::try_from_boundary_paths(&[first, second], FillRule::NonZero).unwrap();
+    assert_eq!(region.loop_role_counts().unwrap(), (2, 0));
+    for (x, location) in [
+        (q(0, 1), RegionPointLocation::Inside),
+        (q(1, 1), RegionPointLocation::Boundary),
+        (q(5, 2), RegionPointLocation::Outside),
+        (q(4, 1), RegionPointLocation::Boundary),
+        (q(5, 1), RegionPointLocation::Inside),
+    ] {
+        assert_eq!(
+            region
+                .classify_point(&translate(&center(), x, Real::zero()))
+                .unwrap(),
+            location
+        );
+    }
+}
+
+#[test]
+fn selected_circle_regions_consume_mixed_line_and_circle_boundaries() {
+    use hypercurve::{Curve2, CurvePath2, FillRule, RegionPointLocation};
+    let half = circle_path();
+    let curve = half.curves()[0].clone();
+    let diameter = Curve2::try_line(curve.end(), curve.start()).unwrap();
+    let path = CurvePath2::try_new(vec![curve, diameter]).unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero).unwrap();
+    assert_eq!(region.loop_role_counts().unwrap(), (1, 0));
+    // This chart traverses clockwise from N=(-4/5,3/5) through T=(3/5,4/5).
+    for (x, y, location) in [
+        (q(3, 10), q(2, 5), RegionPointLocation::Inside),
+        (q(-3, 10), q(-2, 5), RegionPointLocation::Outside),
+        (q(0, 1), q(0, 1), RegionPointLocation::Boundary),
+        (q(3, 5), q(4, 5), RegionPointLocation::Boundary),
+    ] {
+        assert_eq!(
+            region.classify_point(&translate(&center(), x, y)).unwrap(),
+            location
+        );
+    }
+}
+
+#[test]
+fn selected_circle_diameter_retains_both_endpoint_contacts() {
+    let curve = circle_path().curves()[0].clone();
+    let diameter = hypercurve::Curve2::try_line(curve.end(), curve.start()).unwrap();
+    let result = curve.intersect_curve(&diameter).unwrap();
+    assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+    assert_eq!(result.contacts().len(), 2);
+    assert!(result.overlaps().is_empty());
+}
+
+#[test]
+fn selected_circle_endpoint_secants_preserve_half_domains_and_cross_signs() {
+    use hypercurve::{Curve2, RealSign};
+    let curve = circle_path().curves()[0].clone();
+    let other = circle_path_in_frame(1, false).curves()[0].clone();
+    let a = translate(&center(), q(-7, 25), q(24, 25));
+    let b = translate(&center(), Real::one(), Real::zero());
+    let c = translate(&center(), -Real::one(), Real::zero());
+    let d = translate(&center(), q(7, 25), q(-24, 25));
+    for (circle, u, point) in [
+        (&curve, q(1, 4), &a),
+        (&curve, q(3, 4), &b),
+        (&other, q(1, 4), &c),
+        (&other, q(3, 4), &d),
+    ] {
+        assert!(
+            circle
+                .point_at(&u.into())
+                .unwrap()
+                .coincides_with(point)
+                .unwrap()
+        );
+    }
+    for (start, end, expected) in [(&a, &b, 2), (&c, &d, 0), (&a, &c, 1)] {
+        let line = Curve2::try_line(start.clone(), end.clone()).unwrap();
+        for reverse_circle in [false, true] {
+            let circle = if reverse_circle {
+                curve.reversed().unwrap()
+            } else {
+                curve.clone()
+            };
+            for reverse_line in [false, true] {
+                let chord = if reverse_line {
+                    line.reversed().unwrap()
+                } else {
+                    line.clone()
+                };
+                let result = circle.intersect_curve(&chord).unwrap();
+                assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+                assert!(result.overlaps().is_empty());
+                assert_eq!(result.contacts().len(), expected);
+                for contact in result.contacts() {
+                    let at_a = contact.point().coincides_with(&a).unwrap();
+                    assert!(at_a || contact.point().coincides_with(&b).unwrap());
+                    assert!(contact.is_certified_transverse());
+                    let positive = (!at_a) ^ reverse_circle ^ reverse_line;
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(if positive {
+                            RealSign::Positive
+                        } else {
+                            RealSign::Negative
+                        })
+                    );
+                    assert!(
+                        circle
+                            .point_at(&contact.first().parameter().unwrap())
+                            .unwrap()
+                            .coincides_with(contact.point())
+                            .unwrap()
+                    );
+                    assert!(
+                        chord
+                            .point_at(&contact.second().parameter().unwrap())
+                            .unwrap()
+                            .coincides_with(contact.point())
+                            .unwrap()
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn selected_circle_region_queries_preserve_policy_certainty() {
+    use hypercurve::{CurveCertainty, FillRule, PredicatePolicy, RegionPointLocation};
+    let path = selected_full_circle(1, true);
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let region = CurveRegion2::try_from_boundary_paths(
+                std::slice::from_ref(&path),
+                FillRule::NonZero,
+            )
+            .unwrap();
+            assert_eq!(
+                region.classify_point(&center()).unwrap(),
+                RegionPointLocation::Inside
+            );
+            assert_eq!(
+                region
+                    .classify_point(&translate(&center(), Real::one(), Real::zero()))
+                    .unwrap(),
+                RegionPointLocation::Boundary
+            );
+        });
+        assert_eq!(outcome.certainty(), CurveCertainty::Certified);
+    }
+}
