@@ -3734,6 +3734,7 @@ pub fn contains_xy(
 
 /// Classifies a point with the selected policy. Boundaries return `None`;
 /// undecided classifications retain their native error and context.
+/// Empty regions retain any inherited topology qualification.
 pub fn contains_xy_with_context(
     input: &CurveRegion2,
     x: Real,
@@ -3741,9 +3742,6 @@ pub fn contains_xy_with_context(
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<Option<bool>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    if input.is_empty() {
-        return Ok(decisions.finish(Some(false)));
-    }
     let classification =
         decisions.exact_curve(|| input.classify_point(&Point2::new(x, y).into()))?;
     let inside = match classification {

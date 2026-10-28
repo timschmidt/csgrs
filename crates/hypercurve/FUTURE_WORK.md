@@ -2013,6 +2013,30 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Qualified region adapters increment (2026-10-28).** The owning layer is CSGRS native region membership adapter, delegating to CurveRegion2,
+under P9, P19, P25 and P30. The measured domain is Canonical and generated exact empty regions, exact square controls, and qualified empty/nonempty descendants of the independently positive-height symbolic cap.
+
+The adapter removes its is_empty shortcut and always consumes the owning Hypercurve membership query through GeometryDecisions. Native strict blockers and Approximate512Consumed receipts survive the wrapper; a returned empty boundary alone cannot certify that the original source had no interior. No geometry algorithm is duplicated in the adapter.
+
+Three public Rust fixtures exercise strict/approximate/strict membership and bounds on exact and qualified empty/nonempty inputs, the strict convenience API, typed Predicate blockers, Boolean descendants and exact operand nonmutation. A separately proven positive source height and interior point prevent using collapsed topology as an exact oracle. Real Node binding controls also consume canonical empty and square-minus-itself results through strict and contextual membership and bounds. Those JavaScript additions exercise exact empty controls; the symbolic inherited-qualification witness is Rust-only.
+
+All 13 local qualification groups and two focused groups pass. The complete
+CSGRS all-feature release run has 691 passing cases in
+76 suites, with 7 existing ignored
+cases. Three new adapter fixtures also pass with only the curve feature.
+Hyperdrc, Hypercircuit and the FFI crate contribute 2,037 passing
+cases. Strict MSRV and WASM Clippy, denied-warning docs, formatting, typos,
+repository budget and diff checks pass. Actual generated Node bindings run
+five JavaScript programs; TypeScript declarations are checked and three typed
+programs are compiled and executed by the repository's binding script.
+
+Record docs/evidence/2026-10-28-hypercurve-closure-qualified-region-adapters has SHA-256 1a421bfa417a475db8cbdb9fd72a13751c2863685b63255386603d9a1489ae75. All non-receipt bytes match the qualified
+source. The completed query parent is retained by commit; its full kernel and
+consumer qualification is separate evidence. Only the four intended adapter
+paths differ from that parent before synchronizing the three receipts.
+
+This closes the reproduced CSGRS membership shortcut, not arbitrary algebraic operation closure or all ABI provenance surfaces. The adapter inherits the parent kernel support envelope and resource limits. Total work, coefficient/expression growth, retained-memory bounds, cooperative cancellation and full package delivery remain open. Full pre-push validation and publication remain pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

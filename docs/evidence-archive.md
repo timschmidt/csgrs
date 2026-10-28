@@ -85,6 +85,16 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-qualified-region-adapters-evidence-2026-10-28` branch ends at
+`fedf350fcf2a4d555b95ffec6af213d52dedc68a`, adding `docs/evidence/2026-10-28-hypercurve-closure-qualified-region-adapters` (220 files,
+17,313,387 bytes), SHA-256 `1a421bfa417a475db8cbdb9fd72a13751c2863685b63255386603d9a1489ae75`. It records the CSGRS membership
+adapter's inherited topology receipt. The complete CSGRS suite, three new
+fixtures in full and minimal feature configurations, affected consumer and
+FFI suites, strict native/WASM Clippy and actual Node/TypeScript binding
+consumers pass. The four-path scope, final parent qualification and receipt-only
+transition are checked. Earlier failures remain archived. This record is
+unpushed; general closure, complete resource bounds and delivery remain open.
+
 The local `hypercurve-qualified-region-queries-evidence-2026-10-28` branch ends at
 `c0f8d44e0741bffa646cc5c89bc73ca878db8e21`, adding `docs/evidence/2026-10-28-hypercurve-closure-qualified-region-queries`
 (900 files, 43,595,026 bytes), SHA-256 `e53da03d4e3a828d095c5531aa534edf10504c0446e94343f5c74086c3c6256c`. It records

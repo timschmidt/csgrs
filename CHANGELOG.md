@@ -6,6 +6,9 @@ Changes since 0.20.1; versions 0.21 and 0.22 were not published. Caller-facing
 migrations, including changed serialized output, are listed in
 [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 
+- Planar membership validates inherited topology even for empty regions. Strict
+  queries keep typed undecided errors; authorized approximate queries retain
+  their consumed certainty through the CSGRS wrapper.
 - A unit cube rotated successively by the independently imported binary64
   angles 13.1, 17.3, -13.1 and -17.3 degrees about one axis can now complete
   a certified union with the original cube and subtract back to empty.

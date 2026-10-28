@@ -14,6 +14,22 @@ const keep = (value) => { owned.push(value); return value; };
 try {
   const empty = keep(new CurveRegionJs());
   const square = keep(CurveRegionJs.square(1));
+  const removal = keep(square.difference(square, false));
+  assert.equal(removal.certainty, Certainty.Certified);
+  owned.pop();
+  const removed = keep(removal.intoRegion());
+  for (const source of [empty, removed]) {
+    assert.equal(source.containsXY(1, 0), false);
+    for (const approximate of [false, true, false]) {
+      const query = keep(source.containsXYWithContext(1, 0, approximate));
+      assert.equal(query.status, Status.Decided);
+      assert.equal(query.value, false);
+      assert.equal(query.certainty, Certainty.Certified);
+      const bounds = keep(source.boundingBoxWithContext(approximate));
+      assert.equal(bounds.isEmpty, true);
+      assert.equal(bounds.certainty, Certainty.Certified);
+    }
+  }
   const planarPerspective = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1));
   const outOfPlane = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1));
   const zeroWeight = keep(new Matrix4Js(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0));
