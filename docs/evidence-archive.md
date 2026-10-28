@@ -85,6 +85,12 @@ in this repository.
 
 ## Follow-on records
 
+The local integration candidate combines selected polynomial field evidence
+2472aef555210a4222d04fe1b746c8c7ac015be3 and published evidence e784a8ea0b53cc24f3b56a61d63a13e66b9e7701 at 9700b7d8fd1124660c33a1059ebf321e968ce1f3.
+All retained records from both parents remain in the aggregate manifest.
+The next complete workflow/Clippy qualification is pending; this merge itself
+does not qualify or publish the implementation.
+
 The local hypercurve-selected-polynomial-replay-evidence-2026-10-28 branch ends at
 2472aef555210a4222d04fe1b746c8c7ac015be3, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-replay (145 files,
 9,456,865 bytes), SHA-256 fb6e286a80355fe74b82833f708652cfdcdef185cb2394b1531693f7d1730316. It records strict shared scalar-graph
@@ -246,6 +252,27 @@ policy and budget checks, and interrupted quota/session attempts are preserved. 
 non-receipt source byte matches final qualification. The record is local and
 unpushed. Public selected-circle derivatives, correlated-center region admission,
 general operation closure, total resource bounds and package delivery remain open.
+The replay publication archive ends at `e784a8ea0b53cc24f3b56a61d63a13e66b9e7701` with 364 records.
+Its new record `docs/evidence/2026-10-28-hypercurve-closure-replay-publication-validation` contains 13,491 files and 41,256,350 bytes,
+SHA-256 `da99dd32d0146a81c5e18080e73a3058aa4305338b7b40a45831ccd6b85ea446`. It records fresh source-attributed success for all 328
+pre-push command groups on `9d64f5dcab87ee79b5761a6db010d7e84e103b16`: 131 locally executable workflow groups,
+196 strict Clippy groups and the CI security audit. All 13 ASan campaigns include
+successful mutation evidence. Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-27, both
+release/package checks and the hosted-action review are retained. Lost runs from
+before the host restart are not credited. All 364 record digests
+verify, and four historical archive exclusions remain unchanged. Only three
+receipt files differ from the qualified code; they are checked separately.
+This supersedes earlier pending pre-push status for the included increments
+through retained fiber-point order. Later selected-circle points, differentials,
+rational point images, region/replay/contact and corner work are excluded.
+Hosted actions and publication/deployment are not established by local checks.
+
+The combined replay publication archive `hypercurve-replay-publication-evidence-2026-10-27` ends at
+`7776fbc75fabcba93f1d5e0b1b07dded631b524f` with 363 records. It retains the previously
+published pre-push evidence and all separately qualified increments through
+common-field point and circle predicates. The combined code requires a fresh
+complete pre-push run; the earlier publication receipt applies only to its
+named source revision. No historical executions count toward this new run.
 
 The local `hypercurve-fiber-point-order-evidence-2026-10-27` branch ends at
 `33f87cb54308298a6a305b0fb6c6f8b133d477b8`, adding `docs/evidence/2026-10-27-hypercurve-closure-fiber-point-order`
@@ -446,6 +473,49 @@ archived. Qualification used `09ce677746` plus frozen prerequisite and
 point-location bytes, preserved when advancing the parent to `d7ae8ea218`.
 General preimages, polynomial regions and fresh-process replay remain open.
 This local record is unpushed; full repository pre-push qualification is pending.
+
+The combined publication archive ends at `cafb43c3cf6a9ac5577d14fb97c7899b05fd6add` with 350 records.
+Its new record `docs/evidence/2026-10-26-hypercurve-closure-validation-expanded` contains
+14,368 files and 43,715,836 bytes, SHA-256
+`6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3`. It records fresh, source-attributed
+success for all 328 pre-push command groups on `b1c011a070e61970fc7ee15a0c206b2f3b84e5f0`:
+131 locally executable workflow groups, 196 strict Clippy groups and the CI
+security audit. All 13 ASan campaigns include successful mutation evidence.
+Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-27, both release/package checks and the
+hosted-action review are retained. All 350 record digests verify; four historical
+third-party archive exclusions remain unchanged. The three documentation files
+carrying this receipt are checked separately; all other tracked bytes equal the
+qualified revision. This completes the publication candidate's local pre-push
+qualification and supersedes earlier pending status for its included increments.
+Later point-location, polynomial-region, horizontal-boundary, algebraic-similarity
+and integration changes are excluded. Hosted actions and actual
+publication/deployment are not established by local validation.
+
+The combined local `hypercurve-publication-evidence-2026-10-26` archive ends at
+`15af9d0b78ec35c82bf00217eec4dd25c46c5918` and retains 349 records.
+
+The complete command inventory was attempted against `904e5408e1`: 324 of
+325 groups passed. The unchanged-value voxel assertion failed, so that revision
+was not published. Both release/package checks and all 13 ASan campaigns passed;
+the unsuccessful run remains evidence of an incomplete qualification attempt.
+Its record, `docs/evidence/2026-10-26-hypercurve-closure-validation-attempt-904e`,
+contains 12,786 files and 36,965,435 bytes, SHA-256
+`94d4948defd834cd3b4984d64196a6063eab0038b9bde0454341a86c347951a4`.
+The combined local archive retains this attempt and all independently qualified
+follow-on records. A fresh 328-group pre-push run is required for the combined
+code candidate; no previous command execution is counted toward that run.
+
+The local `hypercurve-voxel-write-oracle-evidence-2026-10-26` branch ends at
+`e5b2ee8217a3b9254b30130aacbbccbc0001ccc6`. Its new
+`docs/evidence/2026-10-26-hypercurve-closure-voxel-write-oracle` record contains
+24 files and 568,359 bytes, SHA-256
+`32e6bc134c56648d70bd45a26e1032fd4cd07623b7b1c138cb9f74bfc26b7a4a`.
+The full pre-push attempt at `904e5408e1` exposed an invalid random-write test
+expectation for unchanged voxel values. The deterministic failing seed and the
+original full random workload now use an independent dense-array change oracle.
+All 116 nested workspace tests, 78 Hypervoxel consumer tests, strict Voxelis
+Clippy, formatting and repository hygiene checks pass. This is targeted local
+qualification; publication remains blocked pending the complete validation set.
 
 The separate local `hypercurve-rational-section-evidence-2026-10-26` branch
 ends at `a4abd246af4e572dbf62a7c139f127fd84bd085b`, adding

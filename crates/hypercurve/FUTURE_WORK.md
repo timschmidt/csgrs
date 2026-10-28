@@ -2246,6 +2246,66 @@ remain Unsupported with all corresponding controls passing. Scalar replay
 is not yet connected to geometric point/parameter or native curve interchange
 consumers. Those integrations, completed modeling operations and full pre-push
 verification remain open.
+**Combined pre-push qualification (2026-10-27).** The source revision
+`b1c011a070e61970fc7ee15a0c206b2f3b84e5f0` combines the qualified closure increments through
+polynomial/rational sections with the unchanged-write voxel test correction.
+All 328 required command groups pass in fresh executions: 131 locally executable
+workflow groups, 196 strict Clippy groups and the CI security audit. The full
+Hypercurve suite, downstream consumers, feature combinations, documentation,
+benchmarks, WASM/demo builds and both release/package checks are included.
+All 13 address-sanitized fuzz campaigns pass with recorded mutation evidence.
+Stable 1.99.1, MSRV 1.95.0 and nightly-2026-10-27 are recorded with the commands.
+The sanitizer launch wrapper was interrupted, while its original workflow child
+continued the unchanged campaigns. That child's actual OS exit status and every
+full-budget campaign outcome are retained separately from the wrapper failure.
+
+The complete inventory, original unsuccessful attempts, source attribution and
+hosted-action review are in `docs/evidence/2026-10-26-hypercurve-closure-validation-expanded`,
+SHA-256 `6e43b5a833fff1a7c2f6c99e21741693681f7d91b4440a7061699f54e8e25cc3`.
+No historical command results count toward this run. The four archive exclusion
+receipts are preserved, and all 350 archived records verify. This receipt changes
+only three documentation files; every other tracked byte matches the qualified
+revision. Formatting, typos, repository budget, diff and archive verification
+are rerun after the receipt edit. Earlier statements that this combined code
+still awaited pre-push qualification describe its incremental qualification
+history and are superseded by this record.
+
+Hosted configuration, uploads and deployment actions were inspected rather than
+executed; local packaging does not establish publication or deployment. Timing
+under concurrent load is not a performance claim. Later point-location,
+polynomial-region, horizontal-boundary, algebraic-similarity and integration work
+is excluded from this revision. The full exact-closure plan and the unsupported
+capabilities in the matrix remain open.
+
+**Replay publication pre-push qualification (2026-10-28).** The frozen
+source `9d64f5dcab87ee79b5761a6db010d7e84e103b16` includes the qualified closure and native replay increments
+through retained fiber-point order. All 328 required command groups pass in
+fresh executions: 131 locally executable workflow groups, 196 strict Clippy
+groups and the CI security audit. The full Hypercurve suite, downstream
+consumers, feature combinations, documentation, benchmarks, WASM/demo builds
+and both release/package checks are included. All 13 address-sanitized fuzz
+campaigns pass with recorded mutation evidence. Stable 1.99.1, MSRV 1.95.0 and
+nightly-2026-10-27 are recorded with the commands.
+
+The complete inventory, source attribution, fresh unsuccessful attempts and
+hosted-action review are in `docs/evidence/2026-10-28-hypercurve-closure-replay-publication-validation`, SHA-256 `da99dd32d0146a81c5e18080e73a3058aa4305338b7b40a45831ccd6b85ea446`. No historical
+command results count toward this run. A host restart removed the earlier
+in-flight runs; all required commands were rerun after recovery. The first
+recovered normal attempt exposed outer Cargo workspace discovery, so the
+checkout was relocated and every normal phase rerun on identical source bytes.
+All 364 archived records verify; four historical third-party
+archive exclusion receipts remain. This receipt changes only three documentation
+files, with every other tracked byte equal to the qualified revision. Formatting,
+typos, repository budget, diff and archive verification are rerun afterward.
+Earlier pending pre-push statements for the included increments describe their
+incremental history and are superseded by this record.
+
+Hosted configuration, uploads and deployment actions were inspected rather than
+executed; local packaging does not establish publication or deployment. Timing
+under concurrent validation is not a performance claim. Selected-circle point
+queries, circle differentials, rational point images and the later region,
+compound replay, contact and corner increments are excluded from this candidate.
+The full exact-closure plan and outstanding capability gaps remain open.
 
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
