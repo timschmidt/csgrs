@@ -2120,6 +2120,53 @@ pass. General independent-field joins, Hypercurve point/parameter integration,
 trimming, reconstructed boundaries and exact native replay remain open.
 Full pre-push verification for this changed implementation remains pending.
 
+**Selected polynomial field join increment (2026-10-28).**
+Hypersolve owns these scalar embeddings under P1, P7, P18, P19 and P20.
+`SelectedPolynomialField::joined_with` builds a common field for finite selected
+polynomial towers over admitted recursive quadratic fields. It reuses native
+source union and embeddings, then replays divergent polynomial equations over
+their mapped parent values in the original singleton intervals. The retained
+correspondences transport finite rational values and positive denominator
+proofs. Ancestor joins reuse authority; independent allocations and different
+polynomial presentations do not determine mathematical value equality.
+
+Five new witnesses pass: dependent divergent generators (`b^3=a`, `c^5=a`,
+`a^3=2`), rational quotients and a further selected extension; independently
+selected equal roots and opposite branches; foreign native cubic/quadratic
+roots with a retained positive radical; distinct roots separated by `2^-160`;
+and zero-budget refusal, larger-budget retry and ancestor reuse without
+approximate consumption. The eight preceding selected-field witnesses also
+pass. The missing join API was reproduced before implementation on the exact
+inherited producer snapshot. Alignment to committed parent `ebc9df9b09c201166ebdef714a48391d31e3fbbe` changed
+only Git ancestry and the three admission receipt files; every qualified
+non-receipt source byte is unchanged.
+
+All 13 qualification groups pass: full/all-target Hypersolve release tests
+(1,253 passed,
+0 ignored), minimal tests
+(1,250 passed), affected Hypercurve consumers
+(160 passed), CSGRS consumers
+(13 passed), strict MSRV lint for solver and
+curve, denied-warning solver docs, allocation lifetime profiling and hygiene.
+The additive API is not called by existing geometry paths. The parent separately
+qualifies its shared root-sign changes across the full downstream stack.
+
+The evidence record `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-joins` has SHA-256 `f6d1431299629a7604de444a7c4433db2d5faf3f886db8e45c75817bbe0890ff` and retains commands,
+logs, source attribution, the missing-API witness and parent-alignment proof.
+Each appended polynomial selection consumes the shared promotion entry; this
+counter does not bound total arithmetic, coefficient growth, expression size,
+memory or cancellation. Equal independent generators may retain separate
+representations while exact predicates prove equality. No performance or
+universal completeness claim is made.
+
+Seven geometric operations still return `Unsupported` on this source, with
+three exact source controls passing. A separate point witness confirms that
+adding coordinate queries from independently selected cubic-root points remains
+`Unsupported`, while both source equations and zero-divisor rejection pass.
+Point/parameter integration, constructed contact carriers, trimming, arrangement
+and exact native replay remain open.
+Full pre-push verification for this changed implementation remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

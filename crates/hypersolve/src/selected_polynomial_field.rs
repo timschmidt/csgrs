@@ -10,9 +10,12 @@
 //!
 //! One shared promotion unit admits each new extension's selection proof.
 //! Arithmetic and remainder work inside that proof are not a total work,
-//! coefficient-size, memory or cancellation bound. Foreign nonancestor fields
-//! require a separately proved embedding; identity checks here do not decide
-//! equality of arbitrary algebraic values.
+//! coefficient-size, memory or cancellation bound. Common fields retain exact
+//! embeddings of independent selections; construction-identity checks alone
+//! do not decide equality of arbitrary algebraic values.
+
+mod join;
+pub use join::SelectedPolynomialJoin;
 
 use std::{cmp::Ordering, sync::Arc};
 

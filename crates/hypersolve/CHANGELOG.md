@@ -60,6 +60,10 @@
 
 ### Added
 
+- Exact joins of independently selected polynomial fields retain native and
+  polynomial generator embeddings, original singleton selectors, and finite
+  denominator proofs for further arithmetic and selected constructions.
+
 - Retain arbitrary finite-degree polynomial extensions and dependent rational
   values over selected coefficient fields. Exact root counting validates open
   singleton selectors, including repeated roots; denominator guards are checked

@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-polynomial-joins-evidence-2026-10-28` branch ends at
+`84e540fa5f525e65d539cee6e82f588e33d2231c`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-joins` (105 files,
+6,495,209 bytes), SHA-256 `f6d1431299629a7604de444a7c4433db2d5faf3f886db8e45c75817bbe0890ff`. It records exact joins of selected
+polynomial fields, five new composition witnesses, eight predecessor witnesses
+and 13 qualification groups. The source attribution and parent alignment are
+retained. Seven public geometric operation blockers remain explicit; no complete
+geometric closure or resource bound is claimed. This record is unpushed.
+
 The local `hypercurve-selected-polynomial-fields-evidence-2026-10-28` branch ends at
 `bbeb520c52b1981ecab206e583963740aa1087b5`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-fields` (466 files,
 10,794,189 bytes), SHA-256 `6d899441a567c861c800cff052716fcdd7b26dbc7ef69c8b0b62ccb655815d46`. It records selected polynomial
