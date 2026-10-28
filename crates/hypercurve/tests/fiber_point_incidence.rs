@@ -1680,3 +1680,126 @@ fn selected_circle_region_queries_preserve_policy_certainty() {
         assert_eq!(outcome.certainty(), CurveCertainty::Certified);
     }
 }
+
+#[test]
+fn selected_circle_region_replays_in_a_fresh_process_then_offsets() {
+    use hypercurve::{BooleanOp, FillRule, OffsetCornerStyle2, RegionPointLocation};
+    const KEY: &str = "HYPERCURVE_SELECTED_REGION_FRESH_REPLAY";
+    if let Some(path) = std::env::var_os(KEY) {
+        let text = std::fs::read_to_string(path).unwrap();
+        let doc = import_svg_document(&text).unwrap();
+        let region = doc.region();
+        assert_eq!(region.loop_role_counts().unwrap(), (1, 1));
+        assert_eq!(
+            region.classify_point(&center()).unwrap(),
+            RegionPointLocation::Outside
+        );
+        assert_eq!(
+            region
+                .classify_point(&translate(&center(), q(3, 2), Real::zero()))
+                .unwrap(),
+            RegionPointLocation::Inside
+        );
+        assert_eq!(export_svg_document(&doc).unwrap(), text);
+        let grown = region.offset(q(1, 4), &OffsetCornerStyle2::Round).unwrap();
+        for x in [q(3, 4), q(9, 4)] {
+            assert_eq!(
+                grown
+                    .classify_point(&translate(&center(), x, Real::zero()))
+                    .unwrap(),
+                RegionPointLocation::Boundary
+            );
+        }
+        let restored = grown.offset(q(-1, 4), &OffsetCornerStyle2::Round).unwrap();
+        assert!(
+            restored
+                .boolean_region(region, BooleanOp::Xor)
+                .unwrap()
+                .is_empty()
+        );
+        let empty = restored
+            .boolean_region(region, BooleanOp::Difference)
+            .unwrap();
+        assert!(empty.is_empty());
+        return;
+    }
+    let region = CurveRegion2::try_from_boundary_paths(
+        &[
+            selected_full_circle(2, true),
+            selected_full_circle(1, false),
+        ],
+        FillRule::NonZero,
+    )
+    .unwrap();
+    let rebuilt =
+        CurveRegion2::try_from_boundary_paths(&region.boundary_paths().unwrap(), FillRule::NonZero)
+            .unwrap();
+    assert!(
+        rebuilt
+            .boolean_region(&region, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    let text = export_svg_document(&SvgGeometry2::new(rebuilt, Vec::new(), Vec::new())).unwrap();
+    let path = std::env::temp_dir().join(format!(
+        "hypercurve-selected-region-replay-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&path, &text).unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "selected_circle_region_replays_in_a_fresh_process_then_offsets",
+            "--exact",
+            "--nocapture",
+        ])
+        .env(KEY, &path)
+        .output()
+        .unwrap();
+    std::fs::remove_file(&path).unwrap();
+    assert!(
+        output.status.success(),
+        "child {:?}: {}\n{}",
+        output.status,
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn selected_region_replay_depth_limit_rejects_then_retries_exactly() {
+    use hypercurve::{
+        BooleanOp, FillRule, SvgError, SvgOptions, export_svg_document_with_options,
+        import_svg_document_with_options,
+    };
+    let region = CurveRegion2::try_from_boundary_paths(
+        &[
+            selected_full_circle(2, true),
+            selected_full_circle(1, false),
+        ],
+        FillRule::NonZero,
+    )
+    .unwrap();
+    let source = SvgGeometry2::new(region.clone(), vec![], vec![]);
+    let text = export_svg_document(&source).unwrap();
+    let options = SvgOptions {
+        max_point_definition_depth: 0,
+        ..SvgOptions::default()
+    };
+    assert!(matches!(
+        export_svg_document_with_options(&source, options),
+        Err(SvgError::SizeOverflow { .. })
+    ));
+    assert!(matches!(
+        import_svg_document_with_options(&text, options),
+        Err(SvgError::SizeOverflow { .. })
+    ));
+    let replay = import_svg_document(&text).unwrap();
+    assert!(
+        replay
+            .region()
+            .boolean_region(&region, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    assert_eq!(export_svg_document(&replay).unwrap(), text);
+}

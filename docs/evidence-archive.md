@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-region-replay-evidence-2026-10-28` branch ends at
+`50903a9a13df1ad56c60251cfe7883f4c0fc8857`, adding `docs/evidence/2026-10-28-hypercurve-closure-region-replay`
+(373 files, 7,191,304 bytes), SHA-256 `2890052379c7cb1997e3c1e57174c0101cde7f1e8fe4a6315a788a4f7e37917e`. It records
+Hypercurve native SVG graph interchange, CurveRegion2 regularization-policy replay, and the CSGRS SVG adapter. All 2,888 Hypercurve cases, 65
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 231 fixtures pass; 34 existing ignored cases remain.
+The recovered source is freshly qualified; lost pre-restart attempts are not
+credited. Source equality and the transition from parent `60fcfc8526` are
+recorded. This record is unpushed; complete closure, resource bounds and package
+delivery remain open.
+
 The local `hypercurve-selected-circle-regions-evidence-2026-10-28` branch ends at
 `74c7a626ed6b4a7c88332336bf5d3e416cc94e60`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-circle-regions`
 (362 files, 9,196,503 bytes), SHA-256 `fc6fe4b2838bd73c3b30eee19c1da57af1c2fabf612c29e8f8e1d71e5c225bc8`. It records

@@ -49,6 +49,25 @@ fn encode_bytes(prefix: &str, bytes: &[u8]) -> String {
     encoded
 }
 
+pub(super) fn encode_paths(
+    paths: &[CurvePath2],
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<String> {
+    graph::encode_paths(paths, max_bytes, max_point_depth)
+}
+
+pub(super) fn decode_paths(
+    encoded: &str,
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<Vec<CurvePath2>> {
+    if let Some(hex) = encoded.strip_prefix(graph::PATHS_PREFIX) {
+        return graph::decode_paths(&decode_bytes(hex, max_bytes)?, max_bytes, max_point_depth);
+    }
+    decode_path(encoded, max_bytes, max_point_depth).map(|path| vec![path])
+}
+
 pub(super) fn decode_path(
     encoded: &str,
     max_bytes: usize,

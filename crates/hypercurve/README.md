@@ -487,7 +487,7 @@ exact signatures.
   `export_svg_document` provide SVG exchange. Native `L`, `A`, `Q`, and `C`
   commands are used where possible; a versioned `data-hypercurve-path`
   attribute preserves curve families and exact values for Hypercurve
-  stroke round-trips. Version 3 remains readable and is still emitted for
+  path and filled-region round-trips. Version 3 remains readable and is still emitted for
   authored paths. Version 4 retains authored-source restrictions and procedural
   quadratic, cubic and rational Bezier parallels, including signed distance,
   selected Bezier roots, projective parameter charts and traversal in a shared
@@ -556,9 +556,20 @@ exact signatures.
   same serialized scalar definitions; value equality alone is insufficient for
   deterministic display projection.
   A circle frame adds one dependency level to the point-depth limit.
-  Filled-region native replay, other generated supports and sharing across
-  separate paths remain open. Byte and segment limits do not bound all scalar
-  decoding, arithmetic, expression growth, memory or cancellation.
+  Filled regions use version 5 compound path roots over one shared definition
+  graph. Export regularizes the existing region, retains its exact boundaries,
+  and emits a single even-odd fill with a separate display projection. Import
+  checks every definition and closed path before reconstructing the region
+  through the existing arrangement; stored roles or success flags are unnecessary.
+  The named fresh-process annulus retains its joint selected center through
+  further round offsets and exact set identities. Metadata is independent of
+  display tolerance. Reached byte/depth limits permit larger retries. A zero-root
+  compound imports as canonical empty; exporting an entirely empty document still
+  reports the existing finite-bounds error. Other generated supports and arbitrary
+  implicit-region closure remain open. Sharing covers the compound graph, not
+  unrelated SVG elements or scalar expression DAGs. Byte and segment limits do
+  not bound all scalar decoding, arithmetic, expression growth, memory or
+  cancellation.
 
 ## Precision, guarantees, and boundaries
 

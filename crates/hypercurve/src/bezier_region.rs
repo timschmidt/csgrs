@@ -2915,6 +2915,22 @@ impl CurveRegion2 {
         true
     }
 
+    /// Retained boundaries alone cannot re-prove the decisions that removed
+    /// other boundaries during normalization. Replaying their geometry under
+    /// a stronger policy must not upgrade that inherited topology claim.
+    pub(crate) fn validate_regularized_topology_replay(
+        &self,
+        operation: CurveOperation2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<()> {
+        if let Some(retained) = self.data.normalized_policy() {
+            policy
+                .validate_retained_policy(retained)
+                .map_err(|cause| ExactCurveError::invalid_unattributed(operation, cause))?;
+        }
+        Ok(())
+    }
+
     /// Shares a successful, certified normalization of immutable authored loops.
     /// The certificate belongs to the operation from this input to its output:
     /// even an exact empty output does not certify approximate input decisions.
@@ -4112,6 +4128,7 @@ impl CurveRegion2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Vec<CurvePath2>>> {
+        self.validate_regularized_topology_replay(operation, policy)?;
         let mut paths = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
             let curves = boundary_loop.curves().to_vec();

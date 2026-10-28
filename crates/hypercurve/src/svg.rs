@@ -35,8 +35,10 @@
 //! tangent displacement and translation, sharing one recipe for paired endpoints.
 //! Point-definition nesting and extension bytes have separate configurable limits;
 //! neither is a total arithmetic-work, memory or cancellation bound.
-//! These guarantees concern stroke paths; filled-region export still
-//! uses its finite projection. Other SVG consumers ignore this `data-*` attribute and
+//! Filled regions retain their regularized exact boundaries in a version 5
+//! compound graph, sharing definitions across all boundary paths. Import validates
+//! each definition and closed path, then uses the existing region arrangement and
+//! declared SVG fill rule. Other SVG consumers ignore this `data-*` attribute and
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;
@@ -1287,21 +1289,23 @@ fn path_geometry(
     options: SvgOptions,
 ) -> SvgResult<SvgGeometry2> {
     if let Some(encoded) = exact_path {
-        let path = exact::decode_path(
+        let paths = exact::decode_paths(
             encoded,
             options.max_extension_bytes,
             options.max_point_definition_depth,
         )?;
-        if context.fills() && path.start() != path.end() {
-            return Err(SvgError::Geometry(
-                "filled exact path contains an explicitly open subpath".into(),
-            ));
+        if context.fills() {
+            for path in &paths {
+                let connected = crate::curve::validate_closed_curve_path_connectivity(
+                    path,
+                    &CurveContext::STRICT,
+                )
+                .map_err(SvgError::Exact)?;
+                ExactCurveError::decided(crate::CurveOperation2::Construction, connected)
+                    .map_err(SvgError::Exact)?;
+            }
         }
-        return geometry_from_paths(
-            std::slice::from_ref(&path),
-            std::slice::from_ref(&path),
-            context,
-        );
+        return geometry_from_paths(&paths, &paths, context);
     }
 
     let subpaths = parse_svg_path_data(data)?;
@@ -1492,9 +1496,11 @@ pub fn import_svg_document_with_options(
 
 /// Serializes native Hypercurve topology as a complete SVG document.
 ///
-/// Stroke paths carry a versioned exact Hypercurve extension in addition to
-/// their interoperable standard-SVG `d` representation. Importing the emitted
-/// document restores every [`CurveGeometry2`] family and exact [`Real`] payload.
+/// Paths and filled regions carry a versioned exact Hypercurve extension in
+/// addition to their interoperable standard-SVG `d` projection. Region boundaries
+/// share one checked definition graph and re-enter the existing arrangement on
+/// import. Native [`CurveGeometry2`] families and exact [`Real`] payloads retain
+/// their definitions. Unsupported retained definitions fail explicitly.
 pub fn export_svg_document(geometry: &SvgGeometry2) -> SvgResult<String> {
     export_svg_document_with_options(geometry, SvgOptions::default())
 }
@@ -1512,8 +1518,24 @@ pub fn export_svg_document_with_options(
     let bounds = exact_finite_bounds(geometry)?;
 
     if !geometry.region.is_empty() {
-        let profiles = match geometry
+        let region = geometry
             .region
+            .regularized_region_raw(&CurveContext::STRICT)
+            .map_err(SvgError::Exact)?;
+        let boundaries = ExactCurveError::decided(
+            crate::CurveOperation2::NativeTopology,
+            region
+                .boundary_paths_with_policy(&CurveContext::STRICT)
+                .map_err(SvgError::Exact)?
+                .into_value(),
+        )
+        .map_err(SvgError::Exact)?;
+        let exact = exact::encode_paths(
+            &boundaries,
+            options.max_extension_bytes,
+            options.max_point_definition_depth,
+        )?;
+        let profiles = match region
             .project_to_finite_profiles_with_policy(&projection, &CurveContext::STRICT)
             .map_err(svg_geometry_error)?
             .into_value()
@@ -1525,14 +1547,18 @@ pub fn export_svg_document_with_options(
                 )));
             }
         };
+        write!(
+            &mut body,
+            "<path fill=\"black\" fill-rule=\"evenodd\" stroke=\"none\" {EXACT_PATH_ATTRIBUTE}=\"{exact}\" d=\""
+        )
+        .expect("writing SVG path element to String cannot fail");
         for profile in profiles {
-            body.push_str("<path fill=\"black\" fill-rule=\"evenodd\" stroke=\"none\" d=\"");
             append_finite_path(&mut body, profile.material().points(), true, options)?;
             for hole in profile.holes() {
                 append_finite_path(&mut body, hole.points(), true, options)?;
             }
-            body.push_str("\"/>\n");
         }
+        body.push_str("\"/>\n");
     }
 
     for wire in &geometry.wires {

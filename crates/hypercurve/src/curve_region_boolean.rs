@@ -1609,6 +1609,7 @@ impl CurveRegion2 {
     }
 
     pub(crate) fn regularized_region_raw(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        self.validate_regularized_topology_replay(CurveOperation2::Arrangement, policy)?;
         if self.is_empty() {
             return Ok(self.clone());
         }

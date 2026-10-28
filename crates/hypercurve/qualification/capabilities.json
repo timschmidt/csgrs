@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle path definitions. General independent angular fields, other circle frames, other differential point-image carriers and filled-region archives remain open. The named shared-field circle region and round +1/4 then -1/4 offset chain now complete. The original radius-one erosion-by-two and fresh-process filled-region SVG composition probes remain unmet; ordinary filled SVG projection is not exact native replay.",
+    "Native save/reload beyond the demonstrated authored sources, retained parallels and chords, selected points and represented-frame circles. Version 5 shares checked definitions across compound region boundaries; the named fresh-process annulus replay and further offsets complete. General independent angular fields, other circle frames, other differential point carriers and arbitrary implicit regions remain open. The original radius-one erosion-by-two probe remains unmet.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -9823,6 +9823,424 @@
         }
       ],
       "oracle": "Independent exact radial assertions and returned certainty receipts."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_fresh_circle_chain",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_region_replays_in_a_fresh_process_then_offsets",
+      "domain": "The full radius-two/radius-one annulus centered at (beta,gamma), 2 beta^7=1 and gamma^5+beta=2, with represented unit frames.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh child imports the actual filled region, preserves hole/material roles, and reproduces the complete SVG deterministically."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Round +1/4 and -1/4 offsets remain consumable, with independent radius3/4 and radius9/4 boundary points."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Restored XOR original and restored difference original are canonical empty."
+        }
+      ],
+      "oracle": "Original full positive witness unchanged; independent algebraic point/radius identities and filled-set identities are separate from byte determinism."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_point_depth_retry",
+      "target": "fiber_point_incidence",
+      "test": "selected_region_replay_depth_limit_rejects_then_retries_exactly",
+      "domain": "The same selected annulus with a zero point-definition-depth limit, then default limits.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Both export and import reach their configured point-depth limit; a larger retry preserves exact set and deterministic output."
+        }
+      ],
+      "oracle": "Actual SizeOverflow errors at depth zero followed by a successful exact replay; no failed cache poisons retry."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_nested_components",
+      "target": "svg_region_replay",
+      "test": "compound_region_replay_retains_holes_islands_and_disconnected_material",
+      "domain": "Rational rectangular material, an interior hole, a nested island and a disconnected rectangle.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "One compound metadata graph restores three material loops and one hole."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent rational interior, hole, island, gap and boundary points match."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Miter +1/4 then -1/4 restores the exact original set."
+        }
+      ],
+      "oracle": "Independent coordinate and nesting expectations, exact symmetric difference and separately deterministic serialization."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_display_independence",
+      "target": "svg_region_replay",
+      "test": "filled_circle_metadata_preserves_exact_boundary_across_display_tolerances",
+      "domain": "A native radius-one circle centered at (sqrt(2),3), coarse/fine/coarse projections and an unrelated replacement drawing.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The exact payload is independent of display tolerance and remains authoritative when d is changed."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "The independent 3/5,4/5 radial point remains on the exact circle, the center is inside and the replacement drawing is outside."
+        }
+      ],
+      "oracle": "Exact unit-circle identity, source XOR replay and distinct display geometry; metadata equality alone is not the set oracle."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_invalid_graphs",
+      "target": "svg_region_replay",
+      "test": "compound_region_replay_rejects_invalid_roots_counts_headers_and_open_paths",
+      "domain": "Wrong root references, count overruns, trailing bytes, header mismatch, an open compound path and an unused unknown definition.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "References, header/trailing bytes and open closure fail with their actual malformed or invalid typed outcomes."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Oversized path and root counts report the configured extension size limit."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "unsupported",
+          "assertion": "An unused unknown definition remains Unsupported even with no path roots."
+        }
+      ],
+      "oracle": "Each malformed variant checks its error category under strict, approximate-requested and strict policies; none falls back to the valid display drawing."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_empty_operand",
+      "target": "svg_region_replay",
+      "test": "empty_compound_metadata_is_a_valid_further_operand",
+      "domain": "A checked version5 graph with no definitions or path roots, despite a nonempty display path.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "Empty authoritative metadata imports as canonical empty geometry."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Union with a rectangle preserves the rectangle; an empty round offset stays empty."
+        }
+      ],
+      "oracle": "Canonical emptiness, exact union identity and explicit preservation of the existing whole-empty-document finite-bounds export error."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_byte_retry",
+      "target": "svg_region_replay",
+      "test": "compound_extension_byte_limits_cover_all_paths_and_allow_retry",
+      "domain": "Two disconnected rational rectangles, at one byte below and exactly at their combined extension length.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The whole compound payload is counted; import/export reject the smaller budget, then exact replay succeeds at the measured length."
+        }
+      ],
+      "oracle": "Actual SizeOverflow results and exact filled-set identity at the boundary budget."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_exact_transform",
+      "target": "svg_region_replay",
+      "test": "compound_fill_replay_applies_svg_transforms_to_exact_boundaries",
+      "domain": "A rational rectangle and hole transformed by matrix(-2,0,0,2,10,5).",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Import applies the reflected similarity to exact boundaries and preserves one material and one hole."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent transformed rectangles and exact boundary/interior/exterior points agree."
+        }
+      ],
+      "oracle": "Independently authored expected rectangles and exact symmetric difference."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_mixed_versions",
+      "target": "svg_region_replay",
+      "test": "compound_fill_and_legacy_strokes_replay_without_consuming_approximation",
+      "domain": "A version5 filled rectangle and a version3 quadratic stroke in one document.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Region and stroke carriers, stroke definition and deterministic complete SVG survive together under each requested policy."
+        }
+      ],
+      "oracle": "Exact stroke equality, region symmetric difference and Certified receipts under strict/approximate-requested/strict."
+    },
+    {
+      "owner": "Hypercurve native SVG graph codec and existing CurveRegion2 boundary reconstruction and arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Version5 retains checked definitions and selected dependencies across compound paths. Strict import validates each definition and rebuilds region fill through the existing arrangement; drawing data is a display projection. Versions3/4 remain readable and single-path output retains its format. Declared byte/depth limits are not total work or memory bounds.",
+      "timeout_seconds": 300,
+      "id": "native_region_qualified_join",
+      "target": "svg_region_replay",
+      "test": "filled_region_export_revalidates_qualified_connectivity",
+      "domain": "An existing symbolic angle-addition identity requiring terminal connectivity, outside the algebraic decision envelope.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "qualified_approximation",
+          "assertion": "Construction retains Approximate512Consumed and export rejects the unresolved native connectivity under every requested policy."
+        }
+      ],
+      "oracle": "A measured consumed construction terminal and explicit failed export; local serialization cannot upgrade inherited certainty."
     }
   ]
 }

@@ -516,9 +516,29 @@ All paths use the existing region arrangement and minor-arc winding semantics.
 
 These witnesses do not complete arbitrary circle/line intersections or erosion
 collapse. The preserved radius-one erosion-by-two probe still reports
-Unsupported after its concentric Boolean assertions pass. A separate preserved
-fresh-process filled-region SVG probe exposes the existing display-only export
-path; its projected drawing cannot establish exact native region replay. Both
-full positive probes remain next owning-layer work. Neither failure is counted
-as a completed capability, and no total arithmetic/memory or cancellation bound
-is inferred from these fixture timeouts.
+Unsupported after its concentric Boolean assertions pass. The separate full
+fresh-process filled-region SVG probe is now completed by the compound replay
+increment below. The erosion failure remains next owning-layer work and is not
+counted as completed geometry. No total arithmetic/memory or cancellation bound
+is inferred from fixture timeouts.
+
+Version 5 filled-region witnesses now share the existing checked definition
+nodes across multiple closed boundary paths. Strict replay uses the same region
+arrangement and fill-rule authority; it does not trust serialized topology flags.
+The original degree-seven/five annulus witness runs in a fresh process before
+round expansion, contraction and exact set identities. Independent radius and
+point expectations are checked separately from deterministic complete SVG.
+Other witnesses cover nested holes/islands and disconnected material, reflected
+transforms, a symbolic-center circle with coarse/fine/coarse display projections,
+changed drawing data, mixed versions, malformed references/roots and closure,
+unused invalid definitions, exact byte/depth boundary retries and canonical empty
+operands. A qualified symbolic join remains qualified and cannot enter a native
+archive as certified geometry. The root CSGRS adapter has a corresponding filled
+annulus continuation witness.
+
+Earlier path-only rows qualify their original stage; this compound increment
+supplies the named region replay extension, without enlarging their individual
+claims. Cross-element or scalar-expression DAG sharing, arbitrary implicit-region
+replay, total arithmetic/memory and cancellation remain open. Whole-empty-document
+export retains its existing finite-bounds error; zero-root native metadata import
+and empty downstream operands are separate supported operations.

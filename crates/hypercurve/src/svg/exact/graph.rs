@@ -2,7 +2,8 @@
 //!
 //! References share replayed objects; neither an address nor a stored success
 //! flag establishes mathematical identity. Every definition is checked before
-//! any path is published. Native geometry continues to use the version 3 codec.
+//! any path is published. Single native paths continue to use version 3.
+//! Version 5 shares the same definitions across multiple boundary paths.
 
 use super::{ExactReader, ExactWriter, encode_bytes, extension_overflow, malformed};
 use crate::{
@@ -18,6 +19,8 @@ mod points;
 
 pub(super) const PREFIX: &str = "4:";
 const MAGIC: &[u8; 4] = b"HCP4";
+pub(super) const PATHS_PREFIX: &str = "5:";
+const PATHS_MAGIC: &[u8; 4] = b"HCP5";
 const NATIVE_CURVE: u8 = 0;
 const SCALAR_PARAMETER: u8 = 1;
 const SELECTED_ROOT: u8 = 2;
@@ -34,23 +37,7 @@ pub(super) fn encode_path(
     if path.curves().len() > max_bytes / 4 {
         return Err(extension_overflow());
     }
-    let mut graph = GraphWriter {
-        writer: ExactWriter::new(max_bytes),
-        count: 0,
-        sources: HashMap::new(),
-        parameters: HashMap::new(),
-        parallel_sources: HashMap::new(),
-        parallels: HashMap::new(),
-        point_sources: HashMap::new(),
-        points: HashMap::new(),
-        chords: HashMap::new(),
-        retained_curves: HashMap::new(),
-        displacements: HashMap::new(),
-        point_depths: Vec::new(),
-        max_point_depth,
-        circles: HashMap::new(),
-        circle_parameters: HashMap::new(),
-    };
+    let mut graph = GraphWriter::new(max_bytes, max_point_depth);
     graph.writer.bytes.extend_from_slice(MAGIC);
     graph.writer.write_len(0)?;
     let references = path
@@ -93,6 +80,26 @@ struct GraphWriter {
 }
 
 impl GraphWriter {
+    fn new(max_bytes: usize, max_point_depth: usize) -> Self {
+        Self {
+            writer: ExactWriter::new(max_bytes),
+            count: 0,
+            sources: HashMap::new(),
+            parameters: HashMap::new(),
+            parallel_sources: HashMap::new(),
+            parallels: HashMap::new(),
+            point_sources: HashMap::new(),
+            points: HashMap::new(),
+            chords: HashMap::new(),
+            retained_curves: HashMap::new(),
+            displacements: HashMap::new(),
+            point_depths: Vec::new(),
+            max_point_depth,
+            circles: HashMap::new(),
+            circle_parameters: HashMap::new(),
+        }
+    }
+
     fn begin(&mut self, tag: u8) -> SvgResult<u32> {
         let index = self.count;
         self.count = self.count.checked_add(1).ok_or_else(extension_overflow)?;
@@ -288,6 +295,24 @@ pub(super) fn decode_path(
             "exact path extension has an invalid graph header",
         ));
     }
+    let definitions = read_definitions(&mut reader, max_point_depth)?;
+    let count = reader.read_len()?;
+    reader.check_collection_len(count, 4)?;
+    let curves = (0..count)
+        .map(|_| Ok(curve_reference(&definitions, reader.read_len()?)?.clone()))
+        .collect::<SvgResult<Vec<_>>>()?;
+    if !reader.is_empty() {
+        return Err(malformed("exact path extension has trailing graph bytes"));
+    }
+    CurvePath2::try_new_raw(curves, &CurveContext::STRICT).map_err(SvgError::Exact)
+}
+
+/// Decode definitions once so references across boundary paths retain shared
+/// source selections. Every node is checked, including unreferenced nodes.
+fn read_definitions(
+    reader: &mut ExactReader<'_>,
+    max_point_depth: usize,
+) -> SvgResult<Vec<Definition>> {
     let count = reader.read_len()?;
     reader.check_collection_len(count, 1)?;
     let mut definitions = Vec::new();
@@ -426,7 +451,7 @@ pub(super) fn decode_path(
             | points::CHORD_UNIT_TANGENT) => {
                 let (definition, depth) = points::read_definition(
                     tag,
-                    &mut reader,
+                    reader,
                     &definitions,
                     &point_depths,
                     max_point_depth,
@@ -441,7 +466,7 @@ pub(super) fn decode_path(
             | circles::INCIDENT_CIRCLE_POINT) => {
                 let (definition, depth) = circles::read_definition(
                     tag,
-                    &mut reader,
+                    reader,
                     &definitions,
                     &point_depths,
                     max_point_depth,
@@ -458,13 +483,75 @@ pub(super) fn decode_path(
         definitions.push(definition);
         point_depths.push(point_depth);
     }
+    Ok(definitions)
+}
+
+/// Compound boundaries use the existing definition graph with several roots.
+/// No stored region role, winding result or validity flag is trusted on replay.
+pub(super) fn encode_paths(
+    paths: &[CurvePath2],
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<String> {
+    let roots = paths.iter().try_fold(paths.len(), |count, path| {
+        count
+            .checked_add(path.curves().len())
+            .ok_or_else(extension_overflow)
+    })?;
+    if roots > max_bytes / 4 {
+        return Err(extension_overflow());
+    }
+    let mut graph = GraphWriter::new(max_bytes, max_point_depth);
+    graph.writer.bytes.extend_from_slice(PATHS_MAGIC);
+    graph.writer.write_len(0)?;
+    let references = paths
+        .iter()
+        .map(|path| {
+            path.curves()
+                .iter()
+                .map(|curve| graph.curve(curve))
+                .collect::<SvgResult<Vec<_>>>()
+        })
+        .collect::<SvgResult<Vec<_>>>()?;
+    graph.writer.bytes[4..8].copy_from_slice(&graph.count.to_be_bytes());
+    graph.writer.write_len(references.len())?;
+    for path in references {
+        graph.writer.write_len(path.len())?;
+        for reference in path {
+            graph.writer.write_u32(reference)?;
+        }
+    }
+    Ok(encode_bytes(PATHS_PREFIX, &graph.writer.bytes))
+}
+
+pub(super) fn decode_paths(
+    bytes: &[u8],
+    max_bytes: usize,
+    max_point_depth: usize,
+) -> SvgResult<Vec<CurvePath2>> {
+    let mut reader = ExactReader::new(bytes, max_bytes);
+    if reader.take(PATHS_MAGIC.len())? != PATHS_MAGIC {
+        return Err(malformed(
+            "exact path extension has an invalid compound graph header",
+        ));
+    }
+    let definitions = read_definitions(&mut reader, max_point_depth)?;
     let count = reader.read_len()?;
     reader.check_collection_len(count, 4)?;
-    let curves = (0..count)
-        .map(|_| Ok(curve_reference(&definitions, reader.read_len()?)?.clone()))
+    let paths = (0..count)
+        .map(|_| {
+            let count = reader.read_len()?;
+            reader.check_collection_len(count, 4)?;
+            let curves = (0..count)
+                .map(|_| Ok(curve_reference(&definitions, reader.read_len()?)?.clone()))
+                .collect::<SvgResult<Vec<_>>>()?;
+            CurvePath2::try_new_raw(curves, &CurveContext::STRICT).map_err(SvgError::Exact)
+        })
         .collect::<SvgResult<Vec<_>>>()?;
     if !reader.is_empty() {
-        return Err(malformed("exact path extension has trailing graph bytes"));
+        return Err(malformed(
+            "exact path extension has trailing compound graph bytes",
+        ));
     }
-    CurvePath2::try_new_raw(curves, &CurveContext::STRICT).map_err(SvgError::Exact)
+    Ok(paths)
 }

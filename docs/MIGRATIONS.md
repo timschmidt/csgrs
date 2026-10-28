@@ -116,6 +116,20 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   wire version. Other frame and point-image carriers and general region admission
   remain open; these fixtures do not establish universal operation closure.
 
+- **Exact filled-region SVG replay (2026-10-27).** Filled exports now carry
+  version 5 compound path roots over the existing checked definition graph.
+  One SVG path contains all regularized material/hole boundaries with even-odd
+  fill and a separate finite drawing. Hypercurve import validates definitions,
+  selections and closure, then rebuilds `CurveRegion2` through its arrangement.
+  Versions 3 and 4 remain readable, and standalone stroke output keeps those
+  versions. Older Hypercurve readers reject version 5; other SVG viewers render
+  the drawing. Serialized filled exports intentionally change. No approximate
+  region is promoted by an archive: unresolved strict replay fails. Limits count
+  the complete compound extension and point depth; a larger retry is supported.
+  Empty compound metadata imports as empty, while whole-empty-document export
+  retains its finite-bounds error. These named workflows do not complete arbitrary
+  implicit-region replay, general circle incidence or total resource control.
+
 - **Selected circle regions (2026-10-27).** Shared-field circular boundaries now
   retain selected points through winding, side classification and the existing
   Boolean arrangement. Native minor-arc predicates and region fill semantics

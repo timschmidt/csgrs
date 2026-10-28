@@ -1849,6 +1849,32 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Region replay increment (2026-10-28).** The owning layer is Hypercurve native SVG graph interchange, CurveRegion2 regularization-policy replay, and the CSGRS SVG adapter,
+under P12, P15 and P17–P20, with native adapter obligations under P26.
+The measured domain is Finite exact boundary graphs admitted by the existing native path graph format, including joint-field selected circles, holes, islands, disconnected components, canonical empty regions and supported SVG transforms.
+
+Native v5 stores multiple path roots in one checked definition graph, preserving shared source, selected-root and fiber identities. Every definition, including unused definitions, is validated; typed prior references, selectors, denominator guards, closed boundaries, and trailing bytes are checked. Filled export obtains exact regularized boundary paths from CurveRegion2. Display path data remains a separate projection. Import uses the existing arrangement, fill semantics and transform handling. Retained regularized topology is revalidated under the requested policy before cached or empty shortcuts, because retained boundaries cannot reprove removed topology.
+
+Two additional point-composition fixtures, eight native region fixtures and one root-adapter fixture cover fresh-process annulus replay and further offsets; holes, islands and disconnected components; coarse/fine/coarse display with exact semantic equality; altered display data; malformed graph references and selectors; byte/depth limits and retry; reflection; legacy formats; canonical empty graphs; and strict/approximate/strict topology qualification.
+
+All 18 fresh local qualification groups pass: 2,888 Hypercurve
+cases in 94 suites, 34 existing ignored cases; 65
+root adapter cases in 12 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 231
+capability fixtures, typos, repository budget and diff checks. Both unchanged
+native oblique fillet and composite chord-role regressions pass. Record
+`docs/evidence/2026-10-28-hypercurve-closure-region-replay` has SHA-256 `2890052379c7cb1997e3c1e57174c0101cde7f1e8fe4a6315a788a4f7e37917e`.
+Every non-receipt byte matches the freshly qualified snapshot. A host restart
+removed earlier temporary runs; recovery provenance and the fresh runs are
+archived, and lost attempts are not credited. The interrupted nested-workspace
+attempt is retained, followed by a complete rerun outside the outer workspace.
+
+Zero-root native graphs represent canonical empty regions, but whole empty-document export still has its separate finite-display-bounds contract. Byte and depth limits are not total-work or memory bounds. Large erosion remains the following contact increment; general algebraic interchange and package delivery are not claimed. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
