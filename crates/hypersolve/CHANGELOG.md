@@ -60,6 +60,10 @@
 
 ### Added
 
+- Retain arbitrary finite-degree polynomial extensions and dependent rational
+  values over selected coefficient fields. Exact root counting validates open
+  singleton selectors, including repeated roots; denominator guards are checked
+  at the selected root. Native quadratic fields remain shared dependencies.
 - Compose bivariate equations with polynomial homogeneous coordinates in one
   retained recursive coefficient field. The result preserves selected algebraic
   dependencies and denominator factors for subsequent exact root isolation;

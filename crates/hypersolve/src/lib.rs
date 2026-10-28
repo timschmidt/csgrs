@@ -53,6 +53,7 @@ pub mod residual_replay;
 pub mod resultant;
 pub mod root_isolation;
 mod root_sign;
+pub mod selected_polynomial_field;
 pub mod simplex_projection;
 pub mod sketch;
 mod sketch_arc_incidence;
@@ -340,8 +341,8 @@ pub use root_isolation::{
     subdivide_bernstein_univariate_polynomial_interval_roots,
 };
 pub use root_sign::{
-    ordered_field_sign_at_selected_root, ordered_field_vanishes_at_selected_root,
-    sign_at_selected_root, sign_at_selected_tuple,
+    ordered_field_count_roots, ordered_field_sign_at_selected_root,
+    ordered_field_vanishes_at_selected_root, sign_at_selected_root, sign_at_selected_tuple,
 };
 pub use simplex_projection::{
     SimplexProjectionConfig, SimplexProjectionError, SimplexProjectionReport,

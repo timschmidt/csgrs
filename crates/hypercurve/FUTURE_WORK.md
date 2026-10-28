@@ -2075,6 +2075,51 @@ source and exact relation controls pass. General implicit distance contacts, cor
 points, branch/domain replay, trimming and downstream closure remain open.
 Full pre-push verification for this changed implementation remains pending.
 
+**Selected polynomial field increment (2026-10-28).**
+Hypersolve owns this extension under P1, P7, P18, P19 and P20.
+`SelectedPolynomialField` retains a finite chain of selected polynomial roots
+over an admitted native recursive quadratic field. Strict Sturm counting
+checks that each open interval contains exactly one distinct root and excludes
+endpoint roots. Repeated, reducible and nonmonic equations remain supported.
+Values retain their shared parent, original defining equation and positive
+rational denominator proof; arithmetic reduces locally without global
+inversion or independent coordinate projection.
+
+Eight acceptance witnesses pass, including dependent degrees 3, 3 and 5
+(`c^45=2`), a locally invertible denominator on a reducible equation, repeated
+roots, invalid and ambiguous selectors, zero-budget refusal and successful
+retry, independently factored root counts, and roots separated by `2^-160`.
+The original elliptic corner contact is also constructed in one retained field:
+`4a^3+3=0`, corner `(a,1/2)`, radius `1/64`. Its selected point satisfies
+`y^2=1+x^3`, the original squared chord-distance equation and the retained
+left/down side conditions. This proves the scalar contact construction only.
+The missing APIs were reproduced on parent `d88ae9e028c7d2c3dc4061bc515ee917d34be65b` before implementation.
+
+All 23 final qualification groups pass: full/all-target solver release tests
+(1,248 passed,
+0 ignored), minimal solver tests
+(1,245 passed), full Hypercurve tests
+(2,931 passed,
+34 ignored), full CSGRS tests
+(691 passed,
+7 ignored), six downstream consumer suites,
+strict MSRV Clippy, minimal core checks, denied-warning docs, solver and curve
+fuzz-target lint, allocation lifetime profiling, the capability matrix and
+hygiene. Existing ignored tests remain ignored; they are not completion evidence.
+
+The archived record `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-fields` has SHA-256 `6d899441a567c861c800cff052716fcdd7b26dbc7ef69c8b0b62ccb655815d46`. It retains baseline
+failures, final source attribution, commands and logs. All non-receipt bytes
+match the qualified source. One promotion unit admits a new extension proof;
+this counter does not bound arithmetic work, coefficient growth, expression
+size, memory or cancellation. No performance or universal closure claim follows.
+
+Seven public geometric operations still return `Unsupported` on this exact
+source: offset, chamfer and fillet on the parabola and elliptic caps, plus the
+chamfer at the generated algebraic elliptic corner. All three source controls
+pass. General independent-field joins, Hypercurve point/parameter integration,
+trimming, reconstructed boundaries and exact native replay remain open.
+Full pre-push verification for this changed implementation remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

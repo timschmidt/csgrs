@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-polynomial-fields-evidence-2026-10-28` branch ends at
+`bbeb520c52b1981ecab206e583963740aa1087b5`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-fields` (466 files,
+10,794,189 bytes), SHA-256 `6d899441a567c861c800cff052716fcdd7b26dbc7ef69c8b0b62ccb655815d46`. It records selected polynomial
+fields, eight exact witnesses and 23 local/downstream qualification groups.
+The elliptic scalar contact succeeds; seven public geometric operations remain
+unsupported. Original failures and resource limits remain explicit. No completed
+geometric chamfer, universal closure or package delivery is claimed. This record
+is unpushed.
+
 The local `hypercurve-polynomial-substitution-evidence-2026-10-28` branch ends at
 `588685ed15c8b41c5c1690523b46fd3669f1f73e`, adding `docs/evidence/2026-10-28-hypercurve-closure-polynomial-substitution` (127 files,
 8,537,302 bytes), SHA-256 `99744a5cbe56cd5f10eb2657d6a7cc46abacaeed0f81b079bba79e01785b69a1`. It records retained-field polynomial

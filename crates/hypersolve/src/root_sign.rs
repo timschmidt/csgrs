@@ -111,7 +111,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     };
     // The chain's first division, `defining' * predicate mod defining`, has
     // a known elimination count; decline before forming its product.
-    let mut budget = RemainderBudget::new(field.remainder_elimination_budget());
+    let budget = RemainderBudget::new(field.remainder_elimination_budget());
     if !budget.covers(product_len.saturating_sub(first.len() - 1)) {
         return Ok(None);
     }
@@ -124,16 +124,81 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
             *entry = field.add(entry, &term)?;
         }
     }
-    // The first polynomial's endpoint signs were already certified above.
-    let mut previous = [lower_sign, upper_sign];
+    Ok(field_remainder_variations(
+        first,
+        second,
+        [&interval.lower, &interval.upper],
+        [lower_sign, upper_sign],
+        budget,
+        field,
+    )?
+    .and_then(|v| query_sign_from_variations(v[0], v[1])))
+}
+
+/// Counts distinct real roots in an open interval over an exact ordered field.
+///
+/// The original equation may be reducible, nonmonic or repeated. Both
+/// endpoints must be off its zero set. The zero equation, an invalid interval,
+/// an endpoint root, or an unavailable bounded remainder chain returns `None`;
+/// a nonzero constant or a rootless interval returns `Some(0)`. Coefficient
+/// decisions propagate through the caller's field context. This is a selection
+/// proof, not an isolator metadata check and not a total resource bound.
+pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    defining: &[C],
+    lower: &Real,
+    upper: &Real,
+    field: &mut F,
+) -> Result<Option<usize>, F::Error> {
+    if sign(&(upper - lower)) != Some(Ordering::Greater) {
+        return Ok(None);
+    }
+    let mut first = defining.to_vec();
+    field.normalize_positive_scale(&mut first);
+    trim_polynomial(&mut first, field)?;
+    let Some(leading) = first.last() else {
+        return Ok(None);
+    };
+    if first.len() == 1 {
+        return Ok((field.sign(leading)? != Ordering::Equal).then_some(0));
+    }
+    let previous = [
+        field_polynomial_sign(&first, lower, field)?,
+        field_polynomial_sign(&first, upper, field)?,
+    ];
+    if previous.contains(&Ordering::Equal) {
+        return Ok(None);
+    }
+    let second = first
+        .iter()
+        .enumerate()
+        .skip(1)
+        .map(|(power, coefficient)| field.scale(coefficient, &Real::from(power as u128)))
+        .collect::<Result<Vec<_>, _>>()?;
+    let budget = RemainderBudget::new(field.remainder_elimination_budget());
+    Ok(
+        field_remainder_variations(first, second, [lower, upper], previous, budget, field)?
+            .and_then(|v| v[0].checked_sub(v[1])),
+    )
+}
+
+// Shared signed remainder chain for root counting and selected-root signs.
+// Strictly positive pseudo-remainder scales preserve both Sturm variations.
+fn field_remainder_variations<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    mut first: Vec<C>,
+    mut second: Vec<C>,
+    bounds: [&Real; 2],
+    mut previous: [Ordering; 2],
+    mut budget: RemainderBudget,
+    field: &mut F,
+) -> Result<Option<[usize; 2]>, F::Error> {
     let mut variations = [0_usize; 2];
     loop {
         field.normalize_positive_scale(&mut second);
         trim_polynomial(&mut second, field)?;
         if second.is_empty() {
-            return Ok(query_sign_from_variations(variations[0], variations[1]));
+            return Ok(Some(variations));
         }
-        for (endpoint, point) in [&interval.lower, &interval.upper].into_iter().enumerate() {
+        for (endpoint, point) in bounds.into_iter().enumerate() {
             let current = field_polynomial_sign(&second, point, field)?;
             if current != Ordering::Equal {
                 variations[endpoint] += usize::from(previous[endpoint] != current);
@@ -142,7 +207,7 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
         }
         // A constant, including the retained zero coefficient, ends the chain.
         if second.len() == 1 {
-            return Ok(query_sign_from_variations(variations[0], variations[1]));
+            return Ok(Some(variations));
         }
         if !budget.spend(&first, &second) {
             return Ok(None);

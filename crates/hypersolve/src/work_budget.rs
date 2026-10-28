@@ -22,7 +22,8 @@
 //! promotion units. Selected-fiber polynomial-image norms, bivariate quotient
 //! norms, tagged tensor-fiber projections, bivariate system resultants,
 //! constrained tensor-axis resultants, fixed-rank three/four-variable norms,
-//! their subresultants, bivariate cofactor parameter lifts, common-component
+//! their subresultants, selected polynomial-field extension validation,
+//! bivariate cofactor parameter lifts, common-component
 //! discovery, and axis-factor extraction also participate.
 //! Bivariate finite-fiber topology charges its construction entry, its existing
 //! projection/fiber operations, and connection-strip or outer-separator
@@ -33,6 +34,11 @@
 //! scalar precision refinement, and arbitrary caller arithmetic are not
 //! comprehensively instrumented. Those paths need additional work
 //! before any whole-operation completion or time bound can be claimed.
+//!
+//! A new selected polynomial extension charges one promotion unit before its
+//! singleton root count and local monic normalization. Reusing an admitted
+//! field or performing its arithmetic charges no extension unit. The count
+//! and arithmetic are not bounded by this entry counter.
 //!
 //! One promotion unit admits one instrumented projection entry, regardless of
 //! its degree or number of eliminated axes; root subdivisions performed inside
