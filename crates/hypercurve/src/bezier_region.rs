@@ -2951,10 +2951,15 @@ impl CurveRegion2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<()> {
+        self.validate_regularized_topology_policy(policy)
+            .map_err(|cause| ExactCurveError::invalid_unattributed(operation, cause))
+    }
+
+    /// Every semantic query validates the normalization dependency before
+    /// reading cached boundary facts or interpreting an empty collection.
+    fn validate_regularized_topology_policy(&self, policy: &CurveContext) -> CurveResult<()> {
         if let Some(retained) = self.data.normalized_policy() {
-            policy
-                .validate_retained_policy(retained)
-                .map_err(|cause| ExactCurveError::invalid_unattributed(operation, cause))?;
+            policy.validate_retained_policy(retained)?;
             if retained != retained.strict_counterpart() {
                 policy.observe_approximate_512();
             }
@@ -3065,6 +3070,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
         rational_quadratic_cache: &mut RationalQuadraticAreaIntegralCache,
     ) -> CurveResult<Classification<&[bool]>> {
+        self.validate_regularized_topology_policy(policy)?;
         resolve_cached_classification(&self.data.filled_side_is_left, policy, |attempt| {
             self.compute_filled_side_is_left_with_area_cache(attempt, rational_quadratic_cache)
         })
@@ -3456,6 +3462,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionLoopRole>>> {
+        self.validate_regularized_topology_policy(policy)?;
         if let Some(roles) = &self.data.certified_loop_roles {
             return Ok(Classification::Decided(roles.to_vec()));
         }
@@ -3852,10 +3859,23 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<&LineArcRegion2>> {
+        self.validate_regularized_topology_policy(policy)?;
         let cached = resolve_cached_classification(
             &self.data.line_image_region,
             policy,
             |attempt| -> CurveResult<Classification<Option<LineArcRegion2>>> {
+                // The cache tries strict evaluation first. An inherited policy
+                // barrier is uncertainty here, so an authorized approximate
+                // request can continue without certifying its native view.
+                match ExactCurveError::classify_result(self.validate_regularized_topology_replay(
+                    CurveOperation2::NativeTopology,
+                    attempt,
+                ))? {
+                    Classification::Decided(()) => {}
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
                 match self.retained_native_line_arc_region(attempt)? {
                     Classification::Decided(region) => {
                         return Ok(Classification::Decided(Some(region)));
@@ -5353,6 +5373,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Vec<Classification<RegionPointLocation>>>> {
         resolve_certified_operation(policy, |attempt| {
+            self.validate_regularized_topology_policy(attempt)?;
             let native = if points.iter().any(|point| point.coordinates().is_some())
                 && self.has_regularized_filled_left_topology(attempt)
                 && let Classification::Decided(native) = self.native_line_arc_region(attempt)?
@@ -5386,6 +5407,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
         prepared: &mut Option<crate::curve_region_boolean::CurveRegionBooleanContext<'a>>,
     ) -> CurveResult<Classification<RegionPointLocation>> {
+        self.validate_regularized_topology_policy(policy)?;
         let direct = match point {
             CurvePoint2(CurvePointData2::Exact(point)) => {
                 Some(self.classify_point_raw(point, policy)?)
@@ -5454,6 +5476,7 @@ impl CurveRegion2 {
         policy: &CurveContext,
         certify_boundary: bool,
     ) -> CurveResult<Classification<RegionPointLocation>> {
+        self.validate_regularized_topology_policy(policy)?;
         if self
             .data
             .certified_loop_roles
@@ -5533,6 +5556,7 @@ impl CurveRegion2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RegionPointLocation>> {
+        self.validate_regularized_topology_policy(policy)?;
         if self.has_regularized_filled_left_topology(policy) {
             match self.native_line_arc_region(policy)? {
                 Classification::Decided(region) => {
@@ -5905,19 +5929,20 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<CurveOutcome<Classification<Option<Real>>>> {
-        if let Some(area) = self.data.signed_area_cache.certified() {
-            return Ok(CurveOutcome::new(
-                Classification::Decided(area.clone()),
-                CurveCertainty::Certified,
-            ));
-        }
-        resolve_certified_operation(policy, |attempt| self.signed_area_raw(attempt))
+        resolve_certified_operation(policy, |attempt| {
+            self.validate_regularized_topology_policy(attempt)?;
+            if let Some(area) = self.data.signed_area_cache.certified() {
+                return Ok(Classification::Decided(area.clone()));
+            }
+            self.signed_area_raw(attempt)
+        })
     }
 
     pub(crate) fn signed_area_raw(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
+        self.validate_regularized_topology_policy(policy)?;
         resolve_cached_evaluation(&self.data.signed_area_cache, policy, |attempt| {
             self.compute_signed_area(attempt)
         })
@@ -5954,6 +5979,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
+        self.validate_regularized_topology_policy(policy)?;
         let mut magnitudes = Vec::with_capacity(self.data.boundary_loops.len());
         if self
             .data

@@ -644,10 +644,24 @@ fn path_stroke_obeys_the_approximate_512_connectivity_terminal() {
     })
     .unwrap();
     assert_eq!(stroke.certainty, CurveCertainty::Approximate512Consumed);
-    assert_eq!(
-        location(&stroke.value, p(1, 0)),
-        RegionPointLocation::Inside
-    );
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let location =
+            crate::support::under(&policy, || stroke.value.classify_point(&p(1, 0).into()));
+        if policy == PredicatePolicy::STRICT {
+            assert!(
+                matches!(location, Err(ExactCurveError::Blocked(reason)) if reason.reason() == hypercurve::UncertaintyReason::Predicate)
+            );
+        } else {
+            let location =
+                location.expect("authorized stroke readback must retain its connectivity receipt");
+            assert_eq!(location.certainty, CurveCertainty::Approximate512Consumed);
+            assert_eq!(location.into_value(), RegionPointLocation::Inside);
+        }
+    }
 }
 
 #[test]

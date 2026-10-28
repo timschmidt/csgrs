@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Geometric region queries validate inherited normalization policy before empty
+  and cached shortcuts. Native similarity lowering retains that policy on its
+  result; authorized approximate queries expose their consumed certainty.
+
 - Export and replay exact empty SVG documents through the native zero-root
   graph, using a unit display viewport. Empty topology retains consumed policy
   through Boolean identities, affine transforms and finite projection; strict

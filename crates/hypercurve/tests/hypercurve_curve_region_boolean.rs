@@ -758,6 +758,30 @@ fn assert_location(region: &CurveRegion2, point: Point2, expected: RegionPointLo
     );
 }
 
+// Approximate construction is still approximate when a later query can
+// locally classify its retained boundary. Require the inherited receipt as
+// well as every original geometric expectation.
+fn assert_qualified_location(region: &CurveRegion2, point: Point2, expected: RegionPointLocation) {
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let outcome =
+            crate::support::under(&policy, || region.classify_point(&point.clone().into()));
+        if policy == PredicatePolicy::STRICT {
+            assert!(
+                matches!(outcome, Err(ExactCurveError::Blocked(reason)) if reason.reason() == hypercurve::UncertaintyReason::Predicate)
+            );
+        } else {
+            let outcome = outcome
+                .expect("authorized readback must retain the geometry and its qualification");
+            assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
+            assert_eq!(outcome.into_value(), expected);
+        }
+    }
+}
+
 fn native_segment_counts(region: &CurveRegion2, policy: &PredicatePolicy) -> (usize, usize) {
     let native = crate::support::under(policy, || region.native_contours_fast_path())
         .expect("native publication must not fail")
@@ -1404,7 +1428,7 @@ fn circular_conic_batch_obeys_the_approximate_512_terminal() {
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert!(batch.value.difference().is_empty());
     assert!(batch.value.xor().is_empty());
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         Point2::new(first_center, Real::zero()),
         RegionPointLocation::Inside,
@@ -1427,7 +1451,7 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     })
     .expect("the authorized 512-bit terminal should complete equal symbolic boundaries");
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
-    assert_location(
+    assert_qualified_location(
         &outcome.value,
         Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
         RegionPointLocation::Inside,
@@ -1442,7 +1466,7 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     })
     .expect("the shared arrangement must obey the authorized 512-bit terminal");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
         RegionPointLocation::Inside,
@@ -1676,17 +1700,17 @@ fn general_curve_batch_obeys_the_approximate_512_terminal() {
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_eq!(batch.value.union().boundary_loops().len(), 1);
     assert_eq!(batch.value.intersection().boundary_loops().len(), 1);
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         point(0, 2),
         RegionPointLocation::Inside,
     );
-    assert_location(
+    assert_qualified_location(
         batch.value.intersection(),
         point(0, 2),
         RegionPointLocation::Inside,
     );
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         point(0, -2),
         RegionPointLocation::Outside,
@@ -1710,12 +1734,12 @@ fn line_general_batch_obeys_the_approximate_512_terminal() {
     })
     .expect("the authorized terminal should decide the general line image");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         point(2, 2),
         RegionPointLocation::Inside,
     );
-    assert_location(
+    assert_qualified_location(
         batch.value.intersection(),
         point(2, 2),
         RegionPointLocation::Inside,
@@ -1739,12 +1763,12 @@ fn conic_general_batch_obeys_the_approximate_512_terminal() {
     })
     .expect("the authorized terminal should decide the conic/general shared image");
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
-    assert_location(
+    assert_qualified_location(
         batch.value.union(),
         Point2::new(first_center.clone(), Real::zero()),
         RegionPointLocation::Inside,
     );
-    assert_location(
+    assert_qualified_location(
         batch.value.intersection(),
         Point2::new(first_center, Real::zero()),
         RegionPointLocation::Inside,

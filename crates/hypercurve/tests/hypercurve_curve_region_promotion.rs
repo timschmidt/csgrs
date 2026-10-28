@@ -2636,13 +2636,22 @@ fn unified_region_offset_corner_options_obey_the_terminal_policy() {
         approximate.certainty,
         CurveCertainty::Approximate512Consumed
     );
-    assert_eq!(
-        decided(
-            crate::support::under(&PredicatePolicy::STRICT, || approximate.value.filled_area())
-                .unwrap()
-        ),
-        Some(Real::from(34))
-    );
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let area = crate::support::under(&policy, || approximate.value.filled_area());
+        if policy == PredicatePolicy::STRICT {
+            assert!(
+                matches!(area, Err(ExactCurveError::Blocked(reason)) if reason.reason() == hypercurve::UncertaintyReason::Predicate)
+            );
+        } else {
+            let area = area.expect("authorized area readback must retain its topology receipt");
+            assert_eq!(area.certainty, CurveCertainty::Approximate512Consumed);
+            assert_eq!(area.value, Some(Real::from(34)));
+        }
+    }
 }
 
 #[test]

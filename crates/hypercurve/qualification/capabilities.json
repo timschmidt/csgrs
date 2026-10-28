@@ -11600,6 +11600,401 @@
         }
       ],
       "oracle": "Independent empty/square Boolean expectations, every returned carrier reconsumed under STRICT and APPROXIMATE_512, unchanged exact source, and the separate positive-height symbolic collapse regression."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_membership_queries_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_membership_queries_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Scalar and batch membership of an independently interior source point and exterior control.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Scalar and batch membership of an independently interior source point and exterior control."
+        },
+        {
+          "stage": "classification",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_area_queries_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_area_queries_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Signed and filled area, including repeated cached queries.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Signed and filled area, including repeated cached queries."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_role_queries_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_role_queries_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Material/hole roles, counts and boundary profiles.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Material/hole roles, counts and boundary profiles."
+        },
+        {
+          "stage": "classification",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_native_view_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_native_view_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Borrowed native contours through strict cache trials and authorized approximate fallback.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Borrowed native contours through strict cache trials and authorized approximate fallback."
+        },
+        {
+          "stage": "representation",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_material_components_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_material_components_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Existing empty material decomposition preserves inherited qualification.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Existing empty material decomposition preserves inherited qualification."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_side_and_fact_queries_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_side_and_fact_queries_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Filled-side and native structural facts preserve their normalization dependency.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Filled-side and native structural facts preserve their normalization dependency."
+        },
+        {
+          "stage": "classification",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_bounds_keep_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_bounds_keep_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Empty bounds validate before returning the absence of a finite box.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Empty bounds validate before returning the absence of a finite box."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_empty_similarity_keeps_native_lowering_receipt",
+      "target": "qualified_region_queries",
+      "test": "qualified_empty_similarity_keeps_native_lowering_receipt",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Native similarity lowering retains the topology receipt on the returned carrier.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Native similarity lowering retains the topology receipt on the returned carrier."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "qualified_nonempty_queries_and_components_retain_topology_receipts",
+      "target": "qualified_region_queries",
+      "test": "qualified_nonempty_queries_and_components_retain_topology_receipts",
+      "domain": "Existing symbolic positive-height cap regularized approximately to empty; not an algebraic-domain restriction. Qualified union with an exact disjoint square, cached queries and separately reconsumed material components.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "qualified_approximation",
+          "assertion": "Authorized query observes and retains inherited topology qualification. Qualified union with an exact disjoint square, cached queries and separately reconsumed material components."
+        },
+        {
+          "stage": "classification",
+          "outcome": "undecided",
+          "assertion": "STRICT keeps a typed Predicate blocker before and after authorized cached consumption."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "owner": "CurveRegion2 query policy validation and native cache/similarity consumers",
+      "properties": [
+        "P9",
+        "P12",
+        "P14",
+        "P19"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Strict/approximate/strict policy replay; no geometric approximation is introduced by a query.",
+      "timeout_seconds": 120,
+      "id": "exact_region_queries_remain_certified_across_policy_changes",
+      "target": "qualified_region_queries",
+      "test": "exact_region_queries_remain_certified_across_policy_changes",
+      "domain": "Exact canonical empty and rational square controls. Canonical empty and rational square queries and similarity remain certified under all three requested policies.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Canonical empty and rational square queries and similarity remain certified under all three requested policies."
+        }
+      ],
+      "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
     }
   ]
 }

@@ -232,7 +232,8 @@ mod curve_receipts {
     }
 
     /// The union of the unit square with its copy translated by `1 + zero`,
-    /// and a strict rebuild of its boundary without retained facts.
+    /// and an explicitly adopted model of its retained boundary. Strict proofs
+    /// about the adopted model do not certify fidelity to the original union.
     fn approximate_region() -> (CurveRegion2, CurveRegion2) {
         let square = curve::square(Real::one()).unwrap();
         let touching =
@@ -247,66 +248,112 @@ mod curve_receipts {
         assert!(!union.is_certified());
         assert!(union.clone().certified().is_none());
         let union = union.into_unverified().unwrap();
-        let rebuilt = CurveRegion2::try_from_boundary_paths(
-            &union.boundary_paths().unwrap(),
-            FillRule::NonZero,
-        )
-        .unwrap();
+        assert!(matches!(
+            union.boundary_paths(),
+            Err(ExactCurveError::Blocked(reason))
+                if reason.reason() == hypercurve::UncertaintyReason::Predicate
+        ));
+        let paths =
+            hypercurve::evaluate_under(hypercurve::PredicatePolicy::APPROXIMATE_512, || {
+                union.boundary_paths()
+            });
+        assert_eq!(
+            paths.certainty(),
+            hypercurve::CurveCertainty::Approximate512Consumed
+        );
+        let paths = paths.into_unverified().unwrap();
+        // Intentional adoption: this control represents the retained boundary
+        // as a new model, without claiming replay of the original source.
+        let rebuilt =
+            CurveRegion2::try_from_boundary_paths(&paths, FillRule::NonZero).unwrap();
         (union, rebuilt)
+    }
+
+    fn assert_inherited_topology_blocker(error: csgrs::errors::ValidationError) {
+        assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Undecided);
+        assert!(matches!(error,
+            csgrs::errors::ValidationError::ExactCurve(ExactCurveError::Blocked(reason))
+                if reason.reason() == hypercurve::UncertaintyReason::Predicate
+        ));
     }
 
     #[test]
     fn region_receipts_are_local_and_reuse_reports_the_terminal() {
         let (union, rebuilt) = approximate_region();
-        for region in [&union, &rebuilt] {
-            let inside = curve::contains_xy_with_context(
-                region,
-                Real::one(),
-                half(),
-                &GeometryContext::STRICT,
-            )
-            .unwrap();
-            assert_eq!(inside.certainty, GeometryCertainty::Certified);
-            assert_eq!(inside.value, Some(true));
+        for context in [
+            GeometryContext::STRICT,
+            GeometryContext::APPROXIMATE_512,
+            GeometryContext::STRICT,
+        ] {
+            let inside =
+                curve::contains_xy_with_context(&union, Real::one(), half(), &context);
             let moved = curve::try_translated_with_context(
-                region,
+                &union,
                 Real::from(5),
                 Real::zero(),
-                &GeometryContext::STRICT,
+                &context,
+            );
+            let extruded = curve::try_extrude(&union, Real::one(), &context);
+            if context == GeometryContext::STRICT {
+                assert_inherited_topology_blocker(inside.unwrap_err());
+                assert_inherited_topology_blocker(moved.unwrap_err());
+                assert_inherited_topology_blocker(extruded.unwrap_err());
+            } else {
+                let inside = inside.unwrap();
+                assert_eq!(inside.certainty, GeometryCertainty::Approximate512Consumed);
+                assert_eq!(inside.value, Some(true));
+                let moved = moved.unwrap();
+                assert_eq!(moved.certainty, GeometryCertainty::Approximate512Consumed);
+                let moved_query = curve::contains_xy_with_context(
+                    &moved.value,
+                    Real::from(6),
+                    half(),
+                    &context,
+                )
+                .unwrap();
+                assert_eq!(
+                    (moved_query.certainty, moved_query.value),
+                    (GeometryCertainty::Approximate512Consumed, Some(true))
+                );
+                assert_inherited_topology_blocker(
+                    curve::contains_xy_with_context(
+                        &moved.value,
+                        Real::from(6),
+                        half(),
+                        &GeometryContext::STRICT,
+                    )
+                    .unwrap_err(),
+                );
+                let extruded = extruded.unwrap();
+                assert_eq!(extruded.certainty, GeometryCertainty::Approximate512Consumed);
+                assert_eq!(
+                    extruded.value.construction_evidence().predicate_certainty(),
+                    None
+                );
+                assert!(
+                    extruded
+                        .value
+                        .construction_evidence()
+                        .source_history_missing()
+                );
+            }
+            // Certified relative to the explicitly adopted retained boundary.
+            let inside =
+                curve::contains_xy_with_context(&rebuilt, Real::one(), half(), &context)
+                    .unwrap();
+            assert_eq!(
+                (inside.certainty, inside.value),
+                (GeometryCertainty::Certified, Some(true))
+            );
+            let moved = curve::try_translated_with_context(
+                &rebuilt,
+                Real::from(5),
+                Real::zero(),
+                &context,
             )
             .unwrap();
             assert_eq!(moved.certainty, GeometryCertainty::Certified);
         }
-        // An approximate query that reuses the approximate normalization
-        // reports the terminal; the rebuilt region proves the same answer.
-        for (region, expected) in [
-            (&union, GeometryCertainty::Approximate512Consumed),
-            (&rebuilt, GeometryCertainty::Certified),
-        ] {
-            let inside = curve::contains_xy_with_context(
-                region,
-                Real::one(),
-                half(),
-                &GeometryContext::APPROXIMATE_512,
-            )
-            .unwrap();
-            assert_eq!((inside.certainty, inside.value), (expected, Some(true)));
-            let moved = curve::try_translated_with_context(
-                region,
-                Real::from(5),
-                Real::zero(),
-                &GeometryContext::APPROXIMATE_512,
-            )
-            .unwrap();
-            assert_eq!(moved.certainty, expected);
-        }
-        let extruded =
-            curve::try_extrude(&union, Real::one(), &GeometryContext::STRICT).unwrap();
-        assert_eq!(extruded.certainty, GeometryCertainty::Certified);
-        assert_eq!(
-            extruded.value.construction_evidence().predicate_certainty(),
-            None
-        );
     }
 
     #[test]
@@ -320,22 +367,65 @@ mod curve_receipts {
         )
         .unwrap();
         assert_eq!(moved.certainty, GeometryCertainty::Approximate512Consumed);
-        // The strict extrusion alone is a certified local proof.
+        assert_inherited_topology_blocker(
+            curve::try_extrude(&moved.value, Real::one(), &GeometryContext::STRICT)
+                .unwrap_err(),
+        );
+        let strict_chain = moved.clone().and_then(|region| {
+            curve::try_extrude(&region, Real::one(), &GeometryContext::STRICT)
+        });
+        assert_inherited_topology_blocker(strict_chain.unwrap_err());
         let local =
-            curve::try_extrude(&moved.value, Real::one(), &GeometryContext::STRICT).unwrap();
-        assert_eq!(local.certainty, GeometryCertainty::Certified);
+            curve::try_extrude(&moved.value, Real::one(), &GeometryContext::APPROXIMATE_512)
+                .unwrap();
+        assert_eq!(local.certainty, GeometryCertainty::Approximate512Consumed);
         let chained = moved
             .clone()
             .and_then(|region| {
-                curve::try_extrude(&region, Real::one(), &GeometryContext::STRICT)
+                curve::try_extrude(&region, Real::one(), &GeometryContext::APPROXIMATE_512)
             })
             .unwrap();
         assert_eq!(chained.certainty, GeometryCertainty::Approximate512Consumed);
         assert_eq!(chained.value, local.value);
-        // A map keeps the receipt it was given but cannot see its closure's
-        // decisions, here a strict area query.
-        let mapped = moved.clone().map(|region| region.filled_area().unwrap());
+        // A map preserves its existing receipt; it cannot turn a typed failure
+        // from its closure into successful geometry or infer new decisions.
+        let mapped = moved.clone().map(|region| region.filled_area());
         assert_eq!(mapped.certainty, GeometryCertainty::Approximate512Consumed);
+        assert!(matches!(mapped.value, Err(ExactCurveError::Blocked(reason))
+            if reason.reason() == hypercurve::UncertaintyReason::Predicate));
+        let authorized = moved.clone().map(|region| {
+            hypercurve::evaluate_under(hypercurve::PredicatePolicy::APPROXIMATE_512, || {
+                region.filled_area()
+            })
+        });
+        assert_eq!(
+            authorized.certainty,
+            GeometryCertainty::Approximate512Consumed
+        );
+        assert_eq!(
+            authorized.value.certainty(),
+            hypercurve::CurveCertainty::Approximate512Consumed
+        );
+        let area = authorized
+            .value
+            .into_unverified()
+            .unwrap()
+            .expect("nonempty union area");
+        // The inherited sine-addition expression is deliberately outside the
+        // strict scalar normal form. This numeric readback uses the same
+        // explicitly authorized terminal and cannot count as an exact proof.
+        assert!(matches!(
+            hyperlimit::compare_reals(
+                &area,
+                &Real::from(2),
+                hyperlimit::PredicatePolicy::APPROXIMATE_512
+            ),
+            hyperlimit::PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Equal,
+                certainty: hyperlimit::Certainty::Approximate,
+                ..
+            }
+        ));
 
         let strict = curve::try_translated_with_context(
             &rebuilt,

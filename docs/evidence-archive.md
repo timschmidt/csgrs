@@ -85,6 +85,18 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-qualified-region-queries-evidence-2026-10-28` branch ends at
+`c0f8d44e0741bffa646cc5c89bc73ca878db8e21`, adding `docs/evidence/2026-10-28-hypercurve-closure-qualified-region-queries`
+(900 files, 43,595,026 bytes), SHA-256 `e53da03d4e3a828d095c5531aa534edf10504c0446e94343f5c74086c3c6256c`. It records
+CurveRegion2 geometric queries, policy-aware native contour caching and native similarity lowering. All 2,931 Hypercurve cases, 67
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 271 fixtures pass; 34 existing ignored cases remain.
+Every final implementation and acceptance byte is freshly qualified. Original
+query failures, rejected guard behavior, exact/nonempty controls and zero-budget
+instrumentation are archived separately. Parent 79ca1ae442 and the receipt-only
+transition are recorded. This record is unpushed; full closure and package
+delivery remain open.
+
 The local `hypercurve-empty-native-replay-evidence-2026-10-28` branch ends at
 `5396eff3cb4f6b019d664d83e835e0e041408743`, adding `docs/evidence/2026-10-28-hypercurve-closure-empty-native-replay`
 (1,175 files, 46,419,497 bytes), SHA-256 `6b577979c9cbf9bbcc76d32a9fccc5622233d308c790a98788c8ef970478c346`. It records

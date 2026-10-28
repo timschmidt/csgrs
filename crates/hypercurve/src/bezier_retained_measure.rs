@@ -41,12 +41,14 @@ impl CurveRegion2 {
     /// evidence without segmentation. Carriers lacking sufficient exact
     /// interior evidence report a blocker.
     pub fn bounds(&self) -> crate::ExactCurveResult<Option<Aabb2>> {
+        let policy = crate::policy::principal_context();
+        self.validate_regularized_topology_replay(crate::CurveOperation2::Classification, &policy)?;
         if self.boundary_loops().is_empty() {
             return Ok(None);
         }
         crate::ExactCurveError::principal_query(
             crate::CurveOperation2::Classification,
-            self.bounds_with_policy(&crate::policy::principal_context()),
+            self.bounds_with_policy(&policy),
         )
         .map(Some)
     }

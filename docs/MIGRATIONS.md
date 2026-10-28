@@ -5,6 +5,39 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Region query certainty after approximate construction
+
+Geometric queries on `CurveRegion2` retain the policy required by its
+normalization. Earlier membership, area, role, bounds and native-view queries
+could report a strict result after an explicitly approximate construction had
+removed or changed topology. These queries now return
+`ExactCurveError::Blocked(Predicate)` under `STRICT` when that inherited
+requirement has no strict proof. A cached value or an empty boundary does not
+establish fidelity to the original source.
+
+An explicitly authorized `evaluate_under(PredicatePolicy::APPROXIMATE_512, ...)`
+readback keeps its `Approximate512Consumed` receipt and the retained geometry's
+query value. Callers should keep that receipt through subsequent operations;
+obtaining a strict source claim requires a new proof or strict reconstruction
+from the original inputs. Exact constructions remain certified even when the
+caller requests the approximate policy.
+
+The existing approximate Boolean, miter-option and stroke-connectivity
+fixtures retain their inputs, construction policies and geometric expectations.
+Their readback assertions now require strict rejection followed by authorized
+qualified success, then strict rejection again. The independent positive-height
+cap regression prevents treating a disappeared boundary as proof of the source
+empty set.
+
+The CSGRS receipt-composition fixtures apply the same rule to boundary
+readback, translation, extrusion and `GeometryOutcome::and_then`/`map`.
+Strict source claims remain blocked; authorized operations retain the
+approximation receipt and their original geometry expectations. Their
+separate strict reconstruction control explicitly adopts the extracted
+boundary as a new model. Its local proofs do not establish fidelity to the
+original approximate construction. Meshes with missing source history keep
+that missing-history marker rather than claiming certified ancestry.
+
 ## Finite profile projection retains topology certainty
 
 Both finite profile projection APIs and CSGRS `try_finite_profiles` validate

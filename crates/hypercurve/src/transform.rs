@@ -430,6 +430,7 @@ impl CurveRegion2 {
                 ExactCurveError::invalid(CurveOperation2::Transformation, CurveFamily2::Line, cause)
             })?;
             return Self::try_from_line_arc_region_raw(&transformed, policy)
+                .map(|region| region.with_consumed_topology_policy(policy))
                 .map_err(|error| error.with_operation(CurveOperation2::Transformation));
         }
         self.transform_affine_raw(

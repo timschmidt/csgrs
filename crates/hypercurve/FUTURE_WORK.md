@@ -1977,6 +1977,42 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Qualified region queries increment (2026-10-28).** The owning layer is CurveRegion2 geometric queries, policy-aware native contour caching and native similarity lowering,
+under P9, P12, P14 and P19.
+The measured domain is Canonical exact empty and rational-square regions, plus existing symbolic approximate normalization and its empty or nonempty Boolean successors. Structural collection accessors remain structural observations.
+
+A shared owning-layer validator checks and observes the retained normalization policy before geometric queries interpret empty boundaries or reuse cached facts. Membership, signed and filled area, roles and profiles, filled sides, native facts and contours, and bounds share this requirement. The native cache keeps an internal strict policy barrier as typed uncertainty so an authorized approximate request can continue without promoting the result. Native similarity lowering also attaches the consumed dependency to its returned region. Requesting approximation alone leaves exact controls certified.
+
+Ten public integration fixtures preserve the eight original probes and add exact empty/square controls and a qualified nonempty union. The independent positive-height cap has source area 2h/3>0 and interior point (1,h/4), although approximate normalization retained no boundary. Its disjoint square union has intended area 4+2h/3. Repeated queries, strict/approximate/strict cache transitions, bounds, native views, similarity output and separately consumed material components preserve their qualification; exact operands remain unchanged.
+
+All 19 local qualification groups pass: 2,931 Hypercurve
+cases in 95 suites, 34 existing ignored cases; 67
+root adapter cases in 12 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 271
+capability fixtures, typos, repository budget and diff checks. All 24 focused
+groups pass, including ten query fixtures, unchanged exact parent regressions,
+and seven documented readback migrations. Those seven preserve the original
+geometry expectations while requiring inherited approximation receipts;
+strict readback rejects the unproved source claim before and after warming.
+The complete CSGRS suite also passes, including migrated receipt-composition
+consumers whose explicit boundary-adoption control has a separate source claim.
+Record docs/evidence/2026-10-28-hypercurve-closure-qualified-region-queries has SHA-256 e53da03d4e3a828d095c5531aa534edf10504c0446e94343f5c74086c3c6256c. Every non-receipt byte matches the final
+qualified snapshot. The completed empty-replay parent is retained by commit;
+only its three admission receipts were synchronized afterward.
+
+A separate source-attributed zero-budget probe records zero root refinements
+and promotions for exact and qualified query controls under strict,
+approximate-requested and strict policies. Exact controls stay certified;
+qualified inputs keep typed strict blockers or authorized consumed certainty.
+This is instrumentation of those units, not a total computational bound.
+Original failures and all incomplete or rejected attempts remain archived.
+
+A fresh CSGRS public probe still returns Certified false for qualified empty membership because its adapter bypasses the native query. Its bounds control already preserves the receipt. This reproduced wrapper gap is archived as a separate follow-on increment; no end-to-end adapter completion is claimed here. These fixtures qualify the named query and receipt paths, not arbitrary algebraic operation closure or universal symbolic decisions. General coefficient fields, all representation/degeneracy combinations, complete total-work and coefficient/expression growth accounting, retained-memory bounds, cooperative cancellation and package delivery remain open. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
