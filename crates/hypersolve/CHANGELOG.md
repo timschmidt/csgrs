@@ -60,6 +60,10 @@
 
 ### Added
 
+- Compose bivariate equations with polynomial homogeneous coordinates in one
+  retained recursive coefficient field. The result preserves selected algebraic
+  dependencies and denominator factors for subsequent exact root isolation;
+  it does not select a geometric branch or extend a rational chart domain.
 - `PredicatePolicy`, `PredicateOutcome`, `PredicateCertainty`,
   `PredicateSign`, `classify_real_sign_predicate` and
   `compare_real_predicate` are re-exported from Hyperlimit.

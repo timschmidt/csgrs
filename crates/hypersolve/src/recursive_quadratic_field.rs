@@ -20,7 +20,9 @@ use crate::tensor_support::*;
 use crate::*;
 
 mod polynomial;
-pub use polynomial::evaluate_bivariate_homogeneous_polynomial;
+pub use polynomial::{
+    compose_bivariate_homogeneous_polynomial, evaluate_bivariate_homogeneous_polynomial,
+};
 
 /// One exact coefficient field retained by recursively composed line/circle
 /// contacts.  The base is the existing dense selected-root/two-speed-radical

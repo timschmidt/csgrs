@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-polynomial-substitution-evidence-2026-10-28` branch ends at
+`588685ed15c8b41c5c1690523b46fd3669f1f73e`, adding `docs/evidence/2026-10-28-hypercurve-closure-polynomial-substitution` (127 files,
+8,537,302 bytes), SHA-256 `99744a5cbe56cd5f10eb2657d6a7cc46abacaeed0f81b079bba79e01785b69a1`. It records retained-field polynomial
+substitution, five independent arithmetic witnesses, local solver qualification
+and affected curve/model consumers. Original geometric operation blockers and
+failed baseline compilation remain explicit. No completed implicit chamfer,
+universal closure, resource bound or delivery is claimed. This record is unpushed.
+
 The local `hypercurve-qualified-region-adapters-evidence-2026-10-28` branch ends at
 `fedf350fcf2a4d555b95ffec6af213d52dedc68a`, adding `docs/evidence/2026-10-28-hypercurve-closure-qualified-region-adapters` (220 files,
 17,313,387 bytes), SHA-256 `1a421bfa417a475db8cbdb9fd72a13751c2863685b63255386603d9a1489ae75`. It records the CSGRS membership

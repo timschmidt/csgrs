@@ -2037,6 +2037,44 @@ paths differ from that parent before synchronizing the three receipts.
 
 This closes the reproduced CSGRS membership shortcut, not arbitrary algebraic operation closure or all ABI provenance surfaces. The adapter inherits the parent kernel support envelope and resource limits. Total work, coefficient/expression growth, retained-memory bounds, cooperative cancellation and full package delivery remain open. Full pre-push validation and publication remain pending.
 
+**Retained-field polynomial substitution increment (2026-10-28).**
+Hypersolve owns this arithmetic extension under P1, P7, P18 and P19.
+`compose_bivariate_homogeneous_polynomial` constructs
+`W(t)^d P(X(t)/W(t), Y(t)/W(t))` with coefficients in the same selected
+recursive field. The domain is finite bivariate equations with supported exact
+`Real` coefficients and nonempty coordinate polynomials at a sufficient degree.
+The implementation uses existing field arithmetic, retains denominator factors
+and rejects incompatible fields or invalid degrees. It creates no independent
+coordinate roots, cancels no guards and selects no geometric branch.
+
+Five independent witnesses pass: explicit cubic-center circle coefficients,
+degree-37 binomial coefficients, denominator and invalid-input controls,
+consumption by the exact ordered-field root isolator, and a nested radical
+identity. The first three witnesses reproduced the missing API on parent
+`6d3630028c7f7a5eb9aeb2b1ec74119269d1b31b` before implementation. The final 13-group qualification passes:
+Hypersolve all-feature/all-target release tests (1,240
+passes, 0 ignored), minimal release tests
+(1,237 passes,
+0 ignored), affected Hypercurve consumers
+(160 passes) and CSGRS consumers
+(13 passes), strict MSRV Clippy for the
+solver and curve crates, denied-warning docs, the four-iteration allocation
+lifetime profile, formatting, typos, repository budget and diff checks.
+
+The archived record `docs/evidence/2026-10-28-hypercurve-closure-polynomial-substitution` has SHA-256 `99744a5cbe56cd5f10eb2657d6a7cc46abacaeed0f81b079bba79e01785b69a1`. Source attribution,
+commands, logs and prior failures are retained; all non-receipt bytes match
+the final qualified snapshot. These are local arithmetic and consumer results,
+not a shipped package or geometric chamfer completion claim. No new bound on
+total work, coefficient growth, expression size, memory or cancellation is
+established; external time and RSS measurements are not such bounds.
+
+The preserved geometric frontier has six `Unsupported` offset/chamfer/fillet
+cases on admitted parabola and elliptic caps, plus a chamfer blocker at the
+Boolean-generated elliptic corner `y=1/2, x^3+3/4=0, x<0`. These outcomes are reproduced on this frozen source after qualification;
+source and exact relation controls pass. General implicit distance contacts, correlated contact
+points, branch/domain replay, trimming and downstream closure remain open.
+Full pre-push verification for this changed implementation remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
