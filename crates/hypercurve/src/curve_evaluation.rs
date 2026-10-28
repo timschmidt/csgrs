@@ -181,8 +181,9 @@ impl Curve2 {
     /// chain-rule factor applies. Rational sources evaluate every order at
     /// represented and selected parameters; analytic parallels give first
     /// derivatives at represented and selected source parameters, and exact
-    /// chords their constant first derivative. Other carriers and orders
-    /// report the unsupported capability rather than a guess.
+    /// chords their constant first derivative. Represented circle frames reuse
+    /// rational chart derivatives in the original selected point field. Other
+    /// carriers and orders report the unsupported capability rather than a guess.
     pub(super) fn retained_derivatives_at(
         &self,
         parameter: &CurveParameter2,
@@ -224,6 +225,17 @@ impl Curve2 {
                 })
                 .collect());
         }
+        let scalar_circle_parameter;
+        let parameter = if matches!(fragment, BezierSplitFragment2::AlgebraicCuspSemicircle(_))
+            && let Some(BezierParameter2::Exact(value)) = parameter.as_bezier_parameter()
+        {
+            scalar_circle_parameter = CurveParameter2::from_algebraic_cusp(
+                BezierAlgebraicCuspSemicircleParameter2::Exact(value.clone()),
+            );
+            &scalar_circle_parameter
+        } else {
+            parameter
+        };
         let range = self.parameter_domain();
         let compare = |boundary| {
             decided(
@@ -252,7 +264,9 @@ impl Curve2 {
                 fragment.analytic_parallel().ok_or_else(unsupported)?
             }
             BezierSplitFragment2::AnalyticParallel(fragment) => fragment.parallel(),
-            BezierSplitFragment2::AlgebraicCuspSemicircle(_) => return Err(unsupported()),
+            BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                return fragment.derivatives_at_parameter(parameter, max_order, policy);
+            }
             BezierSplitFragment2::Materialized { .. } | BezierSplitFragment2::AlgebraicChord(_) => {
                 unreachable!("native curves and chords are handled above")
             }

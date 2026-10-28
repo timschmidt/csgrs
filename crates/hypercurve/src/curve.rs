@@ -399,7 +399,7 @@ struct CurveData2 {
     parameter_domain: OnceLock<crate::CurveParameterRange2>,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     rational_evaluators: PolicyEvaluationCache<Vec<RationalBezier2>>,
-    bounds: OnceLock<ExactCurveResult<Aabb2>>,
+    bounds: PolicyEvaluationCache<Aabb2>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -503,7 +503,7 @@ struct CurvePathData2 {
     closure_policy: Option<CurveContext>,
     native_bezier_fragments: PolicyEvaluationCache<Vec<NativeBezierFragment2>>,
     boundary_loop: PolicyEvaluationCache<CurveRegionBoundaryLoop2>,
-    bounds: OnceLock<ExactCurveResult<Aabb2>>,
+    bounds: PolicyEvaluationCache<Aabb2>,
 }
 
 /// Exact affine chart from a support parameter to its public curve parameter.
@@ -936,7 +936,7 @@ impl Curve2 {
                 parameter_domain: OnceLock::new(),
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 rational_evaluators: PolicyEvaluationCache::new(),
-                bounds: OnceLock::new(),
+                bounds: PolicyEvaluationCache::new(),
             }),
         }
     }
@@ -1446,7 +1446,7 @@ impl Curve2 {
                 parameter_domain: OnceLock::new(),
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 rational_evaluators: PolicyEvaluationCache::new(),
-                bounds: OnceLock::new(),
+                bounds: PolicyEvaluationCache::new(),
             }),
         }
     }
@@ -1831,7 +1831,10 @@ impl Curve2 {
     /// `[0, 1]`; spline curves use their authored knot domain. Implicit graph
     /// branches use their original first coordinate, including after traversal
     /// reversal. A regular graph point requires nonzero `Fy`; singular-chart
-    /// limits remain typed blockers.
+    /// limits remain typed blockers. Selected circles with represented unit
+    /// frames retain this same source-chart convention. Their represented or
+    /// shared polynomial-point parameters return exact coordinate images,
+    /// including derivative magnitude, without reconstructing an angular root.
     pub fn derivatives_at(
         &self,
         parameter: &CurveParameter2,
@@ -2194,12 +2197,17 @@ impl Curve2 {
             .collect())
     }
 
-    /// Borrows conservative exact bounds computed once for this shared curve.
+    /// Borrows conservative exact bounds retained for this shared immutable curve.
+    ///
+    /// Only successful strict bounds are cached. An exhausted or undecided
+    /// attempt leaves the cache empty so a later query can retry.
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
-        match self.data.bounds.get_or_init(|| compute_curve_bounds(self)) {
-            Ok(bounds) => Ok(bounds),
-            Err(error) => Err(error.clone()),
-        }
+        decided_bounds(
+            resolve_cached_evaluation(&self.data.bounds, &CurveContext::STRICT, |_| {
+                compute_curve_bounds(self).map(Classification::Decided)
+            })?,
+            self.family(),
+        )
     }
 
     /// Returns retained exact native Bezier fragments for topology ingestion.
@@ -2335,7 +2343,7 @@ impl CurvePath2 {
                 closure_policy,
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 boundary_loop: PolicyEvaluationCache::new(),
-                bounds: OnceLock::new(),
+                bounds: PolicyEvaluationCache::new(),
             }),
         }
     }
@@ -2933,18 +2941,20 @@ impl CurvePath2 {
         Self::try_new_raw(curves, policy).map_err(|error| remap_operation(error, operation))
     }
 
-    /// Borrows conservative exact bounds computed once across all path curves.
+    /// Borrows conservative exact bounds retained across all immutable path curves.
+    ///
+    /// Only successful strict bounds are cached; a failed attempt can be retried.
     pub fn bounds(&self) -> ExactCurveResult<&Aabb2> {
-        match self.data.bounds.get_or_init(|| {
-            let mut bounds = self.data.curves[0].bounds()?.clone();
-            for curve in &self.data.curves[1..] {
-                bounds = decided_bounds(bounds.union(curve.bounds()?), curve.family())?;
-            }
-            Ok(bounds)
-        }) {
-            Ok(bounds) => Ok(bounds),
-            Err(error) => Err(error.clone()),
-        }
+        decided_bounds(
+            resolve_cached_evaluation(&self.data.bounds, &CurveContext::STRICT, |_| {
+                let mut bounds = self.data.curves[0].bounds()?.clone();
+                for curve in &self.data.curves[1..] {
+                    bounds = decided_bounds(bounds.union(curve.bounds()?), curve.family())?;
+                }
+                Ok::<_, ExactCurveError>(Classification::Decided(bounds))
+            })?,
+            self.data.curves[0].family(),
+        )
     }
 
     /// Classifies an exact point against this closed path.
@@ -3539,7 +3549,7 @@ fn decided_subcurve_bounds(
     decided_bounds(bounds, family)
 }
 
-fn decided_bounds(bounds: Classification<Aabb2>, family: CurveFamily2) -> ExactCurveResult<Aabb2> {
+fn decided_bounds<T>(bounds: Classification<T>, family: CurveFamily2) -> ExactCurveResult<T> {
     match bounds {
         Classification::Decided(bounds) => Ok(bounds),
         Classification::Uncertain(reason) => Err(ExactCurveError::blocked(

@@ -825,3 +825,565 @@ fn selected_circle_point_queries_retry_without_promoting_requested_policy() {
         assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
     }
 }
+
+#[test]
+fn selected_circle_point_derivative_keeps_joint_field_and_exact_magnitude() {
+    use hypersolve::bivariate_arithmetic::bivariate_multiply;
+    let path = circle_path();
+    let curve = &path.curves()[0];
+    let point = algebraic_angular_point(1, true, Real::one(), Real::zero());
+    let parameter = angular_location(curve, &point);
+    let denominator = polynomial(&[&[1], &[-2], &[2]]);
+    // Differentiate the rational circle chart while holding its center fixed.
+    // n'=-4u(1-u)/D^2, b'=2(1-2u)/D^2, N=(-4/5,3/5), T=(3/5,4/5).
+    let expected = center()
+        .rational_image(&RationalMap2::new(
+            [
+                BivariatePolynomial::new(vec![vec![q(6, 5)], vec![q(4, 5)], vec![q(-16, 5)]]),
+                BivariatePolynomial::new(vec![vec![q(8, 5)], vec![q(-28, 5)], vec![q(12, 5)]]),
+            ],
+            bivariate_multiply(&denominator, &denominator),
+        ))
+        .unwrap();
+    let derivative = curve.derivative_at(&parameter).unwrap();
+    assert!(
+        derivative
+            .coordinate_image()
+            .unwrap()
+            .coincides_with(&expected)
+            .unwrap()
+    );
+}
+
+// Independent closed form: z=(1-u+iu)/(1-u-iu), so for k>=1,
+// z^(k)=2i*k!*(1+i)^(k-1)/(1-(1+i)u)^(k+1).
+// Rationalizing this expression supplies all orders without the evaluator's
+// Leibniz recurrence or differentiation of a reduced selected-field value.
+fn circle_derivative_expectation(
+    order: usize,
+    radius: i32,
+    clockwise: bool,
+    scale: Real,
+    shift: Real,
+) -> RationalMap2 {
+    use hypersolve::bivariate_arithmetic::{
+        bivariate_add as add, bivariate_multiply as mul, bivariate_scale as times,
+        bivariate_subtract as sub,
+    };
+    let u = BivariatePolynomial::new(vec![vec![shift], vec![scale]]);
+    let a = sub(&polynomial(&[&[1]]), &u);
+    let d = add(&mul(&a, &a), &mul(&u, &u));
+    let complex_product = |left: &[BivariatePolynomial; 2], right: &[BivariatePolynomial; 2]| {
+        [
+            sub(&mul(&left[0], &right[0]), &mul(&left[1], &right[1])),
+            add(&mul(&left[0], &right[1]), &mul(&left[1], &right[0])),
+        ]
+    };
+    let mut constant = [polynomial(&[&[0]]), polynomial(&[&[2]])];
+    for k in 1..=order {
+        if k > 1 {
+            constant = complex_product(&constant, &[polynomial(&[&[1]]), polynomial(&[&[1]])]);
+        }
+        constant = constant.map(|value| times(value, &Real::from(u128::try_from(k).unwrap())));
+    }
+    let mut numerator = constant;
+    let mut denominator = polynomial(&[&[1]]);
+    for _ in 0..=order {
+        numerator = complex_product(&numerator, &[a.clone(), u.clone()]);
+        denominator = mul(&denominator, &d);
+    }
+    let direction = if clockwise { radius } else { -radius };
+    RationalMap2::new(
+        [
+            add(
+                &times(numerator[0].clone(), &q(-4 * radius, 5)),
+                &times(numerator[1].clone(), &q(3 * direction, 5)),
+            ),
+            add(
+                &times(numerator[0].clone(), &q(3 * radius, 5)),
+                &times(numerator[1].clone(), &q(4 * direction, 5)),
+            ),
+        ],
+        denominator,
+    )
+}
+
+#[test]
+fn selected_circle_derivatives_match_independent_complex_formula() {
+    for (radius, clockwise) in [(1, true), (-2, false)] {
+        let path = circle_path_in_frame(radius, clockwise);
+        let point = algebraic_angular_point(radius, clockwise, q(1, 2), q(1, 4));
+        let parameter = angular_location(&path.curves()[0], &point);
+        let derivatives = path.curves()[0].derivatives_at(&parameter, 3).unwrap();
+        assert_eq!(derivatives.len(), 3);
+        for (index, derivative) in derivatives.iter().enumerate() {
+            let expected = center()
+                .rational_image(&circle_derivative_expectation(
+                    index + 1,
+                    radius,
+                    clockwise,
+                    q(1, 2),
+                    q(1, 4),
+                ))
+                .unwrap();
+            let image = derivative.coordinate_image().unwrap();
+            assert!(image.coordinates().is_none());
+            assert!(
+                image.coincides_with(&expected).unwrap(),
+                "order {}",
+                index + 1
+            );
+            let replay = image.definition().unwrap().into_point().unwrap();
+            assert!(replay.coincides_with(&expected).unwrap());
+        }
+    }
+}
+
+#[test]
+fn selected_circle_scalar_derivatives_keep_chart_endpoints_and_orders() {
+    for radius in [-2, 1] {
+        for clockwise in [false, true] {
+            let path = circle_path_in_frame(radius, clockwise);
+            let curve = &path.curves()[0];
+            for value in [Real::zero(), q(1, 2), Real::one()] {
+                let parameter = hypercurve::CurveParameter2::from(value.clone());
+                let derivatives = curve.derivatives_at(&parameter, 8).unwrap();
+                assert_eq!(derivatives.len(), 8);
+                for (index, derivative) in derivatives.iter().enumerate() {
+                    let source: CurvePoint2 =
+                        hypercurve::Point2::new(value.clone(), Real::zero()).into();
+                    let expected = source
+                        .rational_image(&circle_derivative_expectation(
+                            index + 1,
+                            radius,
+                            clockwise,
+                            Real::one(),
+                            Real::zero(),
+                        ))
+                        .unwrap();
+                    assert!(
+                        derivative
+                            .coordinate_image()
+                            .unwrap()
+                            .coincides_with(&expected)
+                            .unwrap()
+                    );
+                }
+                assert!(curve.derivatives_at(&parameter, 0).unwrap().is_empty());
+            }
+            for outside in [-1, 2] {
+                assert!(
+                    curve
+                        .derivatives_at(&Real::from(outside).into(), 0)
+                        .is_err()
+                );
+                assert!(
+                    curve
+                        .derivatives_at(&Real::from(outside).into(), 3)
+                        .is_err()
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn selected_circle_derivatives_survive_restriction_reversal_and_similarity() {
+    let path = circle_path();
+    let point = algebraic_angular_point(1, true, q(1, 2), q(1, 4));
+    let parameter = angular_location(&path.curves()[0], &point);
+    let expected = center()
+        .rational_image(&circle_derivative_expectation(1, 1, true, q(1, 2), q(1, 4)))
+        .unwrap();
+    let (left, right) = path.curves()[0].split_at(parameter).unwrap();
+    let split =
+        hypercurve::CurvePath2::try_new(vec![right.reversed().unwrap(), left.reversed().unwrap()])
+            .unwrap();
+    // Retained ranges use the original source chart, including reversed traversal.
+    for piece in split.curves() {
+        let at = angular_location(piece, &point);
+        assert!(
+            piece
+                .derivative_at(&at)
+                .unwrap()
+                .coordinate_image()
+                .unwrap()
+                .coincides_with(&expected)
+                .unwrap()
+        );
+    }
+    let root = Real::from(2).sqrt().unwrap();
+    for (a, b, c, d) in [
+        (root.clone(), -root.clone(), root.clone(), root.clone()),
+        (-root.clone(), Real::zero(), Real::zero(), root),
+    ] {
+        let transform = hypercurve::Similarity2::try_from_real_affine(
+            a.clone(),
+            b.clone(),
+            c.clone(),
+            d.clone(),
+            3.into(),
+            (-2).into(),
+        )
+        .unwrap();
+        let linear =
+            hypercurve::Similarity2::try_from_real_affine(a, b, c, d, 0.into(), 0.into()).unwrap();
+        let target = CurvePointDefinition2::Similarity {
+            source: point.clone(),
+            transform: transform.clone(),
+        }
+        .into_point()
+        .unwrap();
+        let expected = CurvePointDefinition2::Similarity {
+            source: expected.clone(),
+            transform: linear,
+        }
+        .into_point()
+        .unwrap();
+        let text = angular_svg(split.transform_similarity(&transform).unwrap());
+        let replay = import_svg_document(&text).unwrap();
+        for piece in replay.paths()[0].curves() {
+            let at = angular_location(piece, &target);
+            assert!(
+                piece
+                    .derivative_at(&at)
+                    .unwrap()
+                    .coordinate_image()
+                    .unwrap()
+                    .coincides_with(&expected)
+                    .unwrap()
+            );
+        }
+        assert_eq!(angular_svg(replay.paths()[0].clone()), text);
+    }
+}
+
+#[test]
+fn selected_circle_derivatives_retry_and_keep_requested_policy_certainty() {
+    let path = circle_path();
+    let point = algebraic_angular_point(1, true, Real::one(), Real::zero());
+    let parameter = angular_location(&path.curves()[0], &point);
+    let query = || path.curves()[0].derivative_at(&parameter);
+    // This retained exact derivative needs no charged refinement or promotion.
+    // Zero budget must permit it; exhaustion may only report work actually denied.
+    let exact =
+        hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
+    assert!(exact.result.unwrap().unwrap().coordinate_image().is_ok());
+    assert_eq!((exact.usage.refinements, exact.usage.promotions), (0, 0));
+    let compare = || query()?.compare_linear_form(&Real::one(), &Real::zero(), &Real::from(-1));
+    let exact_compare =
+        hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, compare);
+    assert_eq!(exact_compare.result.unwrap().unwrap(), Ordering::Less);
+    assert_eq!(
+        (
+            exact_compare.usage.refinements,
+            exact_compare.usage.promotions
+        ),
+        (0, 0)
+    );
+    // The whole incidence -> derivative -> vector-query chain requires charged
+    // work in incidence. Retained rational arithmetic itself has no total-work
+    // bound from these counters; its successful ZERO queries above remain valid.
+    let chain = || {
+        let CurvePointLocations2::Locations(locations) =
+            path.curves()[0].point_locations(&point)?
+        else {
+            panic!("one exact angular location");
+        };
+        assert_eq!(locations.len(), 1);
+        path.curves()[0]
+            .derivative_at(&locations[0].parameter().unwrap())?
+            .compare_linear_form(&Real::one(), &Real::zero(), &Real::from(-1))
+    };
+    for _ in 0..2 {
+        let denied =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, chain);
+        let reached = denied.result.unwrap_err();
+        assert_eq!((reached.limit, reached.used), (0, 0));
+        assert!(reached.requested > 0);
+        let retry = hypersolve::work_budget::with_budget(
+            hypersolve::work_budget::WorkBudget {
+                refinements: 4096,
+                promotions: 0,
+            },
+            chain,
+        );
+        assert_eq!(retry.result.unwrap().unwrap(), Ordering::Less);
+        assert_eq!(retry.usage.promotions, 0);
+    }
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let vector = query().unwrap();
+            assert!(
+                vector
+                    .coordinate_image()
+                    .unwrap()
+                    .definition()
+                    .unwrap()
+                    .into_point()
+                    .is_ok()
+            );
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+    }
+}
+
+#[test]
+fn selected_circle_derivative_size_guard() {
+    let path = circle_path();
+    assert!(matches!(
+        path.curves()[0].derivatives_at(&Real::zero().into(), usize::MAX),
+        Err(hypercurve::ExactCurveError::Blocked(blocker))
+            if blocker.reason() == hypercurve::UncertaintyReason::Unsupported
+    ));
+}
+
+#[test]
+fn selected_circle_derivative_points_replay_before_another_exact_split() {
+    const INPUT: &str = "HYPERCURVE_CIRCLE_DIFFERENTIAL_REPLAY_INPUT";
+    let verify = |text: &str| {
+        let replay = import_svg_document(text).unwrap();
+        let expected = center()
+            .rational_image(&circle_derivative_expectation(
+                1,
+                1,
+                true,
+                Real::one(),
+                Real::zero(),
+            ))
+            .unwrap();
+        let line = &replay.paths()[0].curves()[0];
+        assert!(line.start().coincides_with(&expected).unwrap());
+        assert!(
+            line.end()
+                .coincides_with(&translate(&expected, Real::one(), Real::zero()))
+                .unwrap()
+        );
+        let midpoint = translate(&expected, q(1, 2), Real::zero());
+        let at = angular_location(line, &midpoint);
+        let (first, second) = line.split_at(at).unwrap();
+        assert!(first.end().coincides_with(&midpoint).unwrap());
+        assert!(second.start().coincides_with(&midpoint).unwrap());
+        let next = angular_svg(hypercurve::CurvePath2::try_new(vec![first, second]).unwrap());
+        assert_eq!(
+            export_svg_document(&import_svg_document(&next).unwrap()).unwrap(),
+            next
+        );
+        assert_eq!(export_svg_document(&replay).unwrap(), text);
+    };
+    if let Some(path) = std::env::var_os(INPUT) {
+        verify(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let path = circle_path();
+    let point = algebraic_angular_point(1, true, Real::one(), Real::zero());
+    let parameter = angular_location(&path.curves()[0], &point);
+    let vector = path.curves()[0]
+        .derivative_at(&parameter)
+        .unwrap()
+        .coordinate_image()
+        .unwrap();
+    let line = hypercurve::Curve2::try_line(
+        vector.clone(),
+        translate(&vector, Real::one(), Real::zero()),
+    )
+    .unwrap();
+    let text = angular_svg(hypercurve::CurvePath2::try_new(vec![line]).unwrap());
+    verify(&text);
+    let file = std::env::temp_dir().join(format!(
+        "hypercurve-circle-differential-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&file, &text).unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "selected_circle_derivative_points_replay_before_another_exact_split",
+            "--nocapture",
+        ])
+        .env(INPUT, &file)
+        .output()
+        .unwrap();
+    std::fs::remove_file(file).unwrap();
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+fn rational_point_line_across_coarse_pole() -> hypercurve::CurvePath2 {
+    // The selected beta lies above 4/5, but its authored isolator [3/4,1]
+    // contains that pole. Refining the retained selection is sufficient;
+    // the exact point itself has a nonzero original denominator.
+    let start = center()
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[1]]), polynomial(&[&[0, 1]])],
+            BivariatePolynomial::new(vec![vec![q(-4, 5)], vec![1.into()]]),
+        ))
+        .unwrap();
+    let end = translate(&start, Real::one(), Real::zero());
+    hypercurve::CurvePath2::try_new(vec![hypercurve::Curve2::try_line(start, end).unwrap()])
+        .unwrap()
+}
+
+#[test]
+fn retained_rational_point_bounds_refine_original_pole_guards() {
+    let path = rational_point_line_across_coarse_pole();
+    let bounds = path.bounds().unwrap();
+    let line = &path.curves()[0];
+    for point in [line.start(), line.end()] {
+        for (a, b, lo, hi) in [
+            (Real::one(), Real::zero(), bounds.min_x(), bounds.max_x()),
+            (Real::zero(), Real::one(), bounds.min_y(), bounds.max_y()),
+        ] {
+            let value = point.affine_form(a, b, Real::zero());
+            assert_ne!(value.compare_to_real(lo).unwrap(), Ordering::Less);
+            assert_ne!(value.compare_to_real(hi).unwrap(), Ordering::Greater);
+        }
+    }
+    let text = angular_svg(path);
+    assert_eq!(
+        export_svg_document(&import_svg_document(&text).unwrap()).unwrap(),
+        text
+    );
+}
+
+#[test]
+fn retained_point_bounds_retry_after_actual_exhaustion_without_cached_failure() {
+    for _ in 0..2 {
+        let path = rational_point_line_across_coarse_pole();
+        let query = || path.bounds().cloned();
+        let denied =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+                let result = query();
+                assert!(matches!(
+                    &result,
+                    Err(hypercurve::ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == hypercurve::UncertaintyReason::BudgetExhausted
+                ));
+                result
+            });
+        let reached = denied.result.unwrap_err();
+        assert_eq!((reached.limit, reached.used), (0, 0));
+        assert!(reached.requested > 0);
+        let retry = hypersolve::work_budget::with_budget(
+            hypersolve::work_budget::WorkBudget {
+                refinements: 4096,
+                promotions: 0,
+            },
+            query,
+        );
+        let bounds = retry.result.unwrap().unwrap();
+        assert_eq!(retry.usage.promotions, 0);
+        let warm =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
+        assert_eq!(warm.result.unwrap().unwrap(), bounds);
+        assert_eq!((warm.usage.refinements, warm.usage.promotions), (0, 0));
+    }
+}
+
+fn independently_rebuilt_equal_point_pair() -> (CurvePoint2, CurvePoint2) {
+    let first = center()
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[0, 1], &[1]]), polynomial(&[&[0, -1], &[1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    let second = translate(
+        &translate(&first, Real::one(), -Real::one()),
+        -Real::one(),
+        Real::one(),
+    );
+    (first, second)
+}
+
+#[test]
+fn shared_field_linear_identity_zero_work_control() {
+    let (first, second) = independently_rebuilt_equal_point_pair();
+    for (a, b) in [(Real::one(), Real::zero()), (Real::zero(), Real::one())] {
+        let result =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+                first
+                    .affine_form(a.clone(), b.clone(), Real::zero())
+                    .compare(&second.affine_form(a, b, Real::zero()))
+            });
+        assert_eq!(result.result.unwrap().unwrap(), Ordering::Equal);
+        assert_eq!((result.usage.refinements, result.usage.promotions), (0, 0));
+    }
+}
+
+#[test]
+fn shared_field_coordinate_order_avoids_independent_projection() {
+    let (first, second) = independently_rebuilt_equal_point_pair();
+    for axis in [hypercurve::Axis2::X, hypercurve::Axis2::Y] {
+        let result =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+                first.compare_coordinate(&second, axis)
+            });
+        assert_eq!(result.result.unwrap().unwrap(), Ordering::Equal);
+        assert_eq!((result.usage.refinements, result.usage.promotions), (0, 0));
+    }
+    let mut epsilon = Real::one();
+    for _ in 0..80 {
+        epsilon = (epsilon / Real::from(2)).unwrap();
+    }
+    let near = translate(&second, epsilon.clone(), -epsilon);
+    for (axis, expected) in [
+        (hypercurve::Axis2::X, Ordering::Less),
+        (hypercurve::Axis2::Y, Ordering::Greater),
+    ] {
+        let result =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+                first.compare_coordinate(&near, axis)
+            });
+        assert_eq!(result.result.unwrap().unwrap(), expected);
+        assert_eq!((result.usage.refinements, result.usage.promotions), (0, 0));
+    }
+}
+
+#[test]
+fn coordinate_order_keeps_distinct_selected_fiber_fallback() {
+    let first = center();
+    let CurvePointDefinition2::PolynomialFiber {
+        parameter, root, ..
+    } = first.definition().unwrap()
+    else {
+        panic!("original selected fiber");
+    };
+    let second = CurvePointDefinition2::PolynomialFiber {
+        equation: polynomial(&[&[-3, 0, 0, 0, 0, 1], &[1]]),
+        parameter,
+        root,
+    }
+    .into_point()
+    .unwrap();
+    // The same beta is shared; gamma_2^5-gamma_1^5=1 and both are positive.
+    // These are distinct fibers, so a common-point source cannot be assumed.
+    for (a, b) in [
+        (first.clone(), second.clone()),
+        (
+            translate(&first, Real::one(), -Real::one()),
+            translate(&second, Real::one(), -Real::one()),
+        ),
+    ] {
+        assert_eq!(
+            a.compare_coordinate(&b, hypercurve::Axis2::X).unwrap(),
+            Ordering::Equal
+        );
+        assert_eq!(
+            a.compare_coordinate(&b, hypercurve::Axis2::Y).unwrap(),
+            Ordering::Less
+        );
+        assert_eq!(
+            b.compare_coordinate(&a, hypercurve::Axis2::Y).unwrap(),
+            Ordering::Greater
+        );
+        assert!(!a.coincides_with(&b).unwrap());
+    }
+}

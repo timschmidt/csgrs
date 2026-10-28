@@ -112,7 +112,7 @@ impl CurveVector2 {
             .rational_form(numerator, denominator)
     }
 
-    pub(super) fn joint(point: CurvePoint2) -> Self {
+    pub(crate) fn joint(point: CurvePoint2) -> Self {
         Self {
             data: CurveVectorData2::Joint(Box::new(point)),
         }

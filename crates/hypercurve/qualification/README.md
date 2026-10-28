@@ -399,9 +399,72 @@ arithmetic or retained memory, and no new cancellation contract is claimed.
 The close-cut prototype completes within its 300-second fixture envelope, but
 ordinary point equality and display projection account for most of its runtime;
 angular ordering uses the shared field. This is a cost frontier, not a speedup
-claim. Separate positive probes preserve two open consumers: public derivative
-queries report `Blocked(Unsupported)`, and a closed circle assembled from these
-pieces reports `Blocked(Unsupported)` at filled-region admission, before its
-round-offset chain can run. These are implementation gaps, not exact completion,
+claim. On that preceding revision, separate positive probes report
+`Blocked(Unsupported)` for public derivatives and for filled-region admission of
+a closed circle assembled from these pieces, before its round-offset chain.
+The following differential extension resolves the first probe within its stated
+frame and point-image domain; region admission remains open. These are implementation gaps, not exact completion,
 no-solution proofs, or resource exhaustion. Mixed regions, repeated offsets and
 corner edits still require their own completion evidence.
+
+
+Selected circle differentials reuse the existing rational Leibniz recurrence,
+with the center omitted from the chart being differentiated. For a represented
+unit normal `N`, signed radius `r`, and turn `s`, homogeneous controls are
+`(r*N,1)`, `(r*s*perp(N),0)`, and `(-r*N,1)`. Original chart polynomials are
+differentiated before any selected-field reduction. A retained incident point
+supplies its already aligned radial forms `n=(P-C).N` and
+`b=s*cross(N,P-C)`. The exact inverse `u=b/(r+n+b)` has a second chart
+`u=(r-n)/(r-n+b)` at its excluded endpoint. Original radial denominators and the
+chosen inverse denominator are checked before composing derivative images in
+the same joint point field. The guarded angular point `(u,0)` is shared by all
+derivative maps, preserving the original map chain instead of permanently
+expanding the same inverse denominator into each derivative. Neither angular
+roots nor coordinate roots are independently materialized. A frame's inherited qualification survives the
+mathematical cancellation of its center.
+
+The original degree-seven/five positive first-derivative assertion now succeeds
+with exact magnitude. Independent higher-order expectations use the closed
+complex formula `z^(k)=2i*k!*(1+i)^(k-1)/(1-(1+i)*u)^(k+1)`, rather than the
+implementation's derivative recurrence. Fixtures exercise three orders at
+nonconstant selected points, eight orders at both endpoints and the midpoint,
+signed radii and turns, restriction and reversal, algebraic similarities,
+point-definition replay, and a derivative image used to construct a line whose
+native archive is replayed in another process before another exact split.
+
+The retained derivative and an exact vector comparison complete at zero charged
+refinements/promotions. Initial test assumptions requiring their exhaustion were
+incorrect; both successful zero-budget assertions and the raw failed attempts
+are retained. The complete incidence-to-derivative-to-comparison chain reaches
+the actual zero limit and succeeds on repeated larger retries. These counters
+are not a total arithmetic, expression-growth, memory or cancellation bound.
+An unrepresentable requested output count returns a typed implementation blocker;
+a reproduced capacity panic is corrected using checked allocation guards shared
+with the rational derivative owner. No such blocker counts as completed geometry.
+
+Retained point bounds preserve the same selected roots and rational-map guards.
+An initial isolator can straddle a map pole even when the selected point is
+finite; local refinement must resolve that enclosure before native display can
+consume it. The minimized `1/(beta-4/5)` fixture checks exact endpoint containment
+and native replay independently. Curve and path bounds retain one successful
+strict enclosure per immutable owner through the existing thread-safe policy
+cache. Errors are not retained, so an actually exhausted ZERO request can retry
+with 4,096 refinements and no promotions; a later warm ZERO request reuses the
+proved enclosure. The entry lives with its owner, has no global retention or
+eviction, and a new transformed owner starts with its own cache.
+Cardinal coordinate order also reuses the existing shared-field linear predicate
+before materializing scalar images. Independent cancelling translations and
+signed `2^-80` differences require zero charged promotions/refinements; the same
+proof is consumed by affine-form equality and native chord-range replay.
+Field alignment removes retained maps and similarities before comparing their
+unmapped sources. Those source points already retain both scalar selections and
+use the existing comparison path, ensuring normalization makes progress even
+when the two selected fibers differ. A distinct-fiber regression preserves equal
+base coordinates, strict positive fifth-root order and translated-point identity. This is an
+entry-count contract, not a heap-byte or total-work bound.
+
+This corpus demonstrates represented frames with represented or shared
+polynomial-point angular authority. Other point-image fields, nonrepresented
+frames, filled-region admission, repeated offsets and corner edits remain open.
+The finite tests and local rational identities do not establish universal closure,
+a uniform practical resource bound or a comparative speedup.

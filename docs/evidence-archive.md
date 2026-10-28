@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-circle-differentials-evidence-2026-10-27` branch ends at
+`5eeeec42d607ed5c3126fd396a2150df5be50668`, adding `docs/evidence/2026-10-27-hypercurve-closure-circle-differentials`
+(972 files, 48,642,946 bytes), SHA-256 `551fcaa43f070caa54efa25e4591460d6d6fc27e94d1950edbb3a81be3618567`.
+It records the shared rational derivative recurrence, selected-circle chart
+inversion and exact joint vector images. All 2,859 Hypercurve tests, 64 affected
+root tests, 3,012 consumer tests, strict MSRV/fuzz Clippy, core builds, API docs,
+16 matrix guards and 205 capability fixtures pass; 34 existing ignored cases
+remain. Independent derivative formulas, source-chart transport, inherited
+qualification, fresh-process native consumers, true reached-limit retries and
+successful uncharged exact queries are separately asserted. The original
+Unsupported witness, capacity panic and all failed harness assumptions remain
+in the archive. All non-receipt source bytes match final qualification. This
+record is local and unpushed; other fields/frames, region admission, complete
+operation closure, total resource bounds and package delivery remain open.
+
 The local `hypercurve-selected-circle-points-evidence-2026-10-27` branch ends at
 `9cd590ad47e73ca9e1b3fa3ce13307f4d40686c0`, adding `docs/evidence/2026-10-27-hypercurve-closure-selected-circle-points`
 (596 files, 29,543,839 bytes), SHA-256 `51d30ce5818c61dfe18aee1f16cd950e00e5115f7b91cd79bac20adbc2156b68`.

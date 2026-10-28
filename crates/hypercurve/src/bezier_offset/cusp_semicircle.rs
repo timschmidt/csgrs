@@ -3,6 +3,7 @@
 use super::*;
 
 mod chord_kernel;
+mod differentials;
 mod fragment;
 mod frames;
 mod incident_point;

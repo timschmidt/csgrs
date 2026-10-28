@@ -3852,7 +3852,7 @@ impl BezierAlgebraicChord2 {
         self.validate_policy(policy)?;
         let endpoint_bounds = |endpoint| {
             if local_only {
-                algebraic_chord_endpoint_local_bounds_refined(endpoint, refinement_steps, policy)
+                refined_local_endpoint_bounds(endpoint, refinement_steps, policy)
             } else {
                 algebraic_chord_endpoint_bounds_refined(endpoint, refinement_steps, policy)
             }

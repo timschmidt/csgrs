@@ -2331,30 +2331,60 @@ pub(crate) fn rational_point_image_from_power_basis(
 
 pub(crate) fn rational_derivative_images_from_power_basis(
     parameter: &BezierAlgebraicParameter2,
-    mut x_numerator: Vec<Real>,
-    mut y_numerator: Vec<Real>,
-    mut denominator: Vec<Real>,
+    x_numerator: Vec<Real>,
+    y_numerator: Vec<Real>,
+    denominator: Vec<Real>,
     policy: &CurveContext,
     max_order: usize,
 ) -> CurveResult<Classification<Vec<RationalBezierAlgebraicTangentImage2>>> {
+    let strict = policy.strict_counterpart();
+    map_rational_derivatives_from_power_basis(
+        x_numerator,
+        y_numerator,
+        denominator,
+        max_order,
+        |coefficients| reduce_algebraic_image_polynomial(parameter, coefficients, &strict),
+        |coefficients| rational_tangent_image(parameter, coefficients, &strict),
+    )
+}
+
+/// Differentiates the original rational chart, then maps each derivative into
+/// its consuming field. Reduction applies only to values, never to the source
+/// polynomials being differentiated. Consumers share the same Leibniz recurrence
+/// while retaining their own joint field, guards, and policy evidence.
+pub(crate) fn map_rational_derivatives_from_power_basis<T, E>(
+    mut x_numerator: Vec<Real>,
+    mut y_numerator: Vec<Real>,
+    mut denominator: Vec<Real>,
+    max_order: usize,
+    mut reduce: impl FnMut(Vec<Real>) -> Result<Vec<Real>, E>,
+    mut image: impl FnMut(RationalTangentPolynomials) -> Result<Classification<T>, E>,
+) -> Result<Classification<Vec<T>>, E> {
     if max_order == 0 {
         return Ok(Classification::Decided(Vec::new()));
     }
-    let strict = policy.strict_counterpart();
+    let Some(value_count) = max_order.checked_add(1) else {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    };
+    let mut images = Vec::new();
+    let mut numerators = Vec::new();
+    // Match the native rational evaluator's representable-size guard. A
+    // rejected output allocation is an implementation restriction, not proof
+    // that a configured geometric work budget was exhausted.
+    if images.try_reserve_exact(max_order).is_err()
+        || numerators.try_reserve_exact(value_count).is_err()
+    {
+        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+    }
     let denominator_degree = denominator
         .iter()
         .rposition(|coefficient| !coefficient.definitely_zero())
         .unwrap_or(0);
-    let denominator_image =
-        reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
+    let denominator_image = reduce(denominator.clone())?;
     let mut previous_denominator_power = vec![Real::one()];
     let mut denominator_power = denominator_image.clone();
     let mut denominator_derivatives = Vec::new();
-    let mut numerators = vec![(
-        reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?,
-        reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?,
-    )];
-    let mut images = Vec::with_capacity(max_order);
+    numerators.push((reduce(x_numerator.clone())?, reduce(y_numerator.clone())?));
     for order in 1..=max_order {
         // Differentiate only the original source polynomials. Congruence at
         // the selected root does not preserve their derivatives.
@@ -2362,22 +2392,16 @@ pub(crate) fn rational_derivative_images_from_power_basis(
         y_numerator = polynomial_derivative(&y_numerator);
         if order <= denominator_degree {
             denominator = polynomial_derivative(&denominator);
-            let derivative =
-                reduce_algebraic_image_polynomial(parameter, denominator.clone(), &strict)?;
-            denominator_derivatives.push(reduce_algebraic_image_polynomial(
-                parameter,
-                polynomial_multiply(&derivative, &previous_denominator_power),
-                &strict,
-            )?);
+            let derivative = reduce(denominator.clone())?;
+            denominator_derivatives.push(reduce(polynomial_multiply(
+                &derivative,
+                &previous_denominator_power,
+            ))?);
         }
-        let mut dx_numerator = polynomial_multiply(
-            &reduce_algebraic_image_polynomial(parameter, x_numerator.clone(), &strict)?,
-            &denominator_power,
-        );
-        let mut dy_numerator = polynomial_multiply(
-            &reduce_algebraic_image_polynomial(parameter, y_numerator.clone(), &strict)?,
-            &denominator_power,
-        );
+        let mut dx_numerator =
+            polynomial_multiply(&reduce(x_numerator.clone())?, &denominator_power);
+        let mut dy_numerator =
+            polynomial_multiply(&reduce(y_numerator.clone())?, &denominator_power);
         // Write N_k and D_j for the original source derivatives. Leibniz
         // applied to N = D*C gives C^(k) = A_k / D^(k+1), where
         // A_k = N_k*D^k - sum_j binomial(k,j)*D_j*D^(j-1)*A_(k-j).
@@ -2407,24 +2431,19 @@ pub(crate) fn rational_derivative_images_from_power_basis(
                 &scale_polynomial(&polynomial_multiply(derivative, previous_y), coefficient),
             );
         }
-        let dx_numerator = reduce_algebraic_image_polynomial(parameter, dx_numerator, &strict)?;
-        let dy_numerator = reduce_algebraic_image_polynomial(parameter, dy_numerator, &strict)?;
+        let dx_numerator = reduce(dx_numerator)?;
+        let dy_numerator = reduce(dy_numerator)?;
         numerators.push((dx_numerator.clone(), dy_numerator.clone()));
         previous_denominator_power = denominator_power;
-        denominator_power = reduce_algebraic_image_polynomial(
-            parameter,
-            polynomial_multiply(&previous_denominator_power, &denominator_image),
-            &strict,
-        )?;
-        match rational_tangent_image(
-            parameter,
-            RationalTangentPolynomials {
-                dx_numerator,
-                dy_numerator,
-                denominator: denominator_power.clone(),
-            },
-            &strict,
-        )? {
+        denominator_power = reduce(polynomial_multiply(
+            &previous_denominator_power,
+            &denominator_image,
+        ))?;
+        match image(RationalTangentPolynomials {
+            dx_numerator,
+            dy_numerator,
+            denominator: denominator_power.clone(),
+        })? {
             Classification::Decided(image) => images.push(image),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
@@ -2762,8 +2781,8 @@ struct RationalCoordinatePolynomials {
 }
 
 #[derive(Clone, Debug)]
-struct RationalTangentPolynomials {
-    dx_numerator: Vec<Real>,
-    dy_numerator: Vec<Real>,
-    denominator: Vec<Real>,
+pub(crate) struct RationalTangentPolynomials {
+    pub(crate) dx_numerator: Vec<Real>,
+    pub(crate) dy_numerator: Vec<Real>,
+    pub(crate) denominator: Vec<Real>,
 }

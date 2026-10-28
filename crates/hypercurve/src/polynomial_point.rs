@@ -21,6 +21,10 @@ pub(crate) struct PolynomialPoint2 {
 }
 
 impl PolynomialPoint2 {
+    pub(crate) fn has_rational_maps(&self) -> bool {
+        !self.maps.is_empty()
+    }
+
     /// Prefix views may have different wrapper allocations while retaining the
     /// same immutable map application or selected fiber. An owning point clone
     /// keeps either key alive for the duration of one native export.

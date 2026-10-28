@@ -537,9 +537,12 @@ exact signatures.
   incident points in a shared rational/algebraic field now retain the point as
   their angular authority. A represented circle frame orders those points
   without reconstructing an independent angular scalar. Exact cuts, reversal,
-  similarities and native replay preserve the shared field. Arbitrary independent
-  fields, other circle frames, public selected-circle derivatives and general
-  region admission still have implementation gaps.
+  similarities and native replay preserve the shared field. Circle derivatives
+  in a represented unit frame reuse the rational chart evaluator. Represented
+  parameters and incident points in a shared polynomial-point field keep exact
+  derivative magnitude and all requested orders; restriction and reversal retain
+  the source parameter. Arbitrary independent fields, other frame and point-image
+  carriers, and general region admission still have implementation gaps.
   Transported unit directions are omitted only when reconstruction retains the
   same serialized scalar definitions; value equality alone is insufficient for
   deterministic display projection.

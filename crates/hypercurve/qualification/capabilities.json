@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle definitions; general independent angular fields, other circle frames and region archives remain open. Selected-circle public derivatives and correlated-center region admission remain measured Unsupported consumers; the repeated-offset probe stops at that admission.",
+    "Native save/reload beyond demonstrated source, parallel, chord, selected-point and represented-frame circle definitions. General independent angular fields, other circle frames, other differential point-image carriers and region archives remain open. Correlated-center region admission remains a measured Unsupported consumer; its repeated-offset probe stops before offset execution.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -8632,6 +8632,500 @@
         }
       ],
       "oracle": "Reached counters, independently defined circle point and certainty receipts; counts do not bound total work or memory."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_exact_differential",
+      "test": "selected_circle_point_derivative_keeps_joint_field_and_exact_magnitude",
+      "domain": "Degree-seven/five correlated center and independently authored circle point at u=beta.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The first derivative equals an independently differentiated rational coordinate map, including magnitude."
+        }
+      ],
+      "oracle": "Original positive assertion retained verbatim from the source-attributed Unsupported baseline."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_higher_differentials",
+      "test": "selected_circle_derivatives_match_independent_complex_formula",
+      "domain": "Orders1..3 at u=beta/2+1/4 with positive/negative radii and both turns.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Every derivative equals the independent complex closed-form expectation."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Each joint vector image reenters checked point definitions and preserves its exact value."
+        }
+      ],
+      "oracle": "Independent complex Mobius derivative formula, shared beta/gamma defining equations and exact point equality."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_endpoint_differentials",
+      "test": "selected_circle_scalar_derivatives_keep_chart_endpoints_and_orders",
+      "domain": "Orders1..8 at zero, one half and one for both radius signs and turns; zero-order and out-of-domain requests.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "All derivative orders agree with independent complex-form expectations at each chart endpoint and midpoint."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "Out-of-domain parameters remain errors, including a zero-order request."
+        }
+      ],
+      "oracle": "Independent exact endpoint values and closed-form derivatives, with explicit domain guards."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_differential_transport",
+      "test": "selected_circle_derivatives_survive_restriction_reversal_and_similarity",
+      "domain": "Split at beta/2+1/4, reverse retained ranges, then rotate/scale and reflect with sqrt(2) coefficients and translations.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Restriction and traversal reversal preserve source-chart derivatives, while similarities apply only their linear part."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replayed transformed pieces preserve the independently transformed derivative and deterministic complete archive."
+        }
+      ],
+      "oracle": "Original chart convention and exact independent vector similarity, with translation excluded from vectors."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_differential_resource_recovery",
+      "test": "selected_circle_derivatives_retry_and_keep_requested_policy_certainty",
+      "domain": "ZERO retained queries; ZERO and 4096-refinement/zero-promotion complete incidence/derivative/vector-query chains, then strict/approximate/strict.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Retained exact derivative and comparison succeed with zero charged work; larger complete-chain retries succeed without poisoning."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The complete incidence-to-derivative chain reaches the actual zero configured work limit."
+        },
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Requested approximate policy keeps Certified certainty when strict evidence suffices."
+        }
+      ],
+      "oracle": "Reached counters are separate from successful uncharged exact arithmetic; independent vector sign and certainty receipts."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_differential_size_guard",
+      "test": "selected_circle_derivative_size_guard",
+      "domain": "Derivative output count usize::MAX on an otherwise valid selected circle.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "unsupported",
+          "assertion": "An unrepresentable output allocation is a typed implementation blocker, never a panic or a false work-budget exhaustion."
+        }
+      ],
+      "oracle": "Checked output count and allocation failure semantics; original capacity panic retained as failed evidence."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve rational derivative recurrence, selected-circle source chart and shared point-field images",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Differentiate the original center-free circle chart while holding its selected frame fixed. Retain exact magnitude, source-chart parameters, original denominator guards and qualified dependencies. These witnesses cover represented frames with represented or shared polynomial-point angular authority; other field carriers and region operations remain open.",
+      "id": "selected_circle_differential_cold_replay",
+      "test": "selected_circle_derivative_points_replay_before_another_exact_split",
+      "domain": "The exact derivative point becomes a line endpoint; native export/import into a fresh process precedes another exact midpoint split.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The vector image keeps its independent exact expected coordinates."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process validates the line endpoints from defining relations and preserves deterministic complete archives."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "A separately defined midpoint splits the replayed line and both new endpoint identities remain exact."
+        }
+      ],
+      "oracle": "Independent derivative coordinate map, exact translation and midpoint identities; fresh-process reconstruction excludes live caches."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point/chord enclosures and immutable curve/path bounds caches",
+      "properties": [
+        "P18",
+        "P19",
+        "P20",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Refine the original selected root/fiber enclosure while preserving rational-map guards. Cache only successful strict bounds, with no independent coordinate materialization or permanent transient failures.",
+      "id": "retained_point_local_bounds",
+      "test": "retained_rational_point_bounds_refine_original_pole_guards",
+      "domain": "A retained point (1/(beta-4/5),gamma/(beta-4/5)) with beta initially isolated in [3/4,1], translated to a line endpoint.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Local refinement supplies a conservative exact enclosure despite the initial interval crossing the original map pole."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The line archive validates defining relations on import and preserves deterministic serialization."
+        }
+      ],
+      "oracle": "Independent exact endpoint comparisons against all four bounds; original nonzero denominator and selected beta/gamma relations."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve retained point/chord enclosures and immutable curve/path bounds caches",
+      "properties": [
+        "P18",
+        "P19",
+        "P20",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Refine the original selected root/fiber enclosure while preserving rational-map guards. Cache only successful strict bounds, with no independent coordinate materialization or permanent transient failures.",
+      "id": "retained_point_bounds_resource_recovery",
+      "test": "retained_point_bounds_retry_after_actual_exhaustion_without_cached_failure",
+      "domain": "Cold ZERO, retry with4096refinements and0promotions, then warm ZERO bounds on the same immutable curve/path; two fresh paths.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The initial query reaches an actual zero refinement limit and returns typed BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Failed curve/path bounds do not poison a larger-budget retry; a subsequent warm query reuses the exact enclosure with zero charged work."
+        }
+      ],
+      "oracle": "Actual reached-work counters, exact equality of the retained successful enclosure and independent fresh-object retries."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve coordinate-order owner and existing shared point-field linear predicates",
+      "properties": [
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Consume a retained common-field cardinal linear relation before constructing independent coordinate scalars. Preserve original denominator guards, policy and fallback for unrelated fields.",
+      "id": "shared_field_cardinal_order",
+      "test": "shared_field_coordinate_order_avoids_independent_projection",
+      "domain": "Two maps of a selected degree7/5 point related by cancelling rational translations, plus signed2^-80coordinate separations, under ZERO work limits.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both equal cardinal coordinates and both signed near-distinct comparisons follow the shared point-field relations."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Known shared-field coordinate identities and constant differences need no independent scalar promotion or root refinement."
+        }
+      ],
+      "oracle": "Independent cancelling-translation identities and exact signed2^-80differences; actual refinement/promotion counters remain zero."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve coordinate-order owner and existing shared point-field linear predicates",
+      "properties": [
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Consume a retained common-field cardinal linear relation before constructing independent coordinate scalars. Preserve original denominator guards, policy and fallback for unrelated fields.",
+      "id": "shared_field_linear_identity",
+      "test": "shared_field_linear_identity_zero_work_control",
+      "domain": "The same independent equal point definitions compared through public affine forms under ZERO work limits.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The initial equality proof used by affine-form comparison consumes the retained coordinate relation."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Both cardinal affine forms compare equal with zero charged refinements/promotions."
+        }
+      ],
+      "oracle": "Independent exact translation cancellation. This attempted baseline control also failed with an actual promotion request and remains a positive regression, not evidence reused from an earlier revision."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve coordinate-order owner and existing shared point-field linear predicates",
+      "properties": [
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Consume a retained common-field cardinal linear relation before constructing independent coordinate scalars. Preserve original denominator guards, policy and fallback for unrelated fields.",
+      "id": "shared_field_distinct_fiber_fallback",
+      "test": "coordinate_order_keeps_distinct_selected_fiber_fallback",
+      "domain": "The same selected beta with positive fibers gamma_1^5+beta=2 and gamma_2^5+beta=3, before and after equal rational translations.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The beta coordinates remain equal and positive fifth-root monotonicity gives strict gamma order in both directions, before and after equal translations; the points remain distinct without recursive source alignment."
+        }
+      ],
+      "oracle": "Shared beta defining relation, gamma_2^5-gamma_1^5=1 and strict monotonicity on the positive branch; original and translated points are checked separately."
     }
   ]
 }

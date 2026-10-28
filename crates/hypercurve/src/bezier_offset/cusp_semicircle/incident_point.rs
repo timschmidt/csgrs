@@ -406,4 +406,57 @@ mod tests {
             Classification::Uncertain(UncertaintyReason::Unsupported)
         ));
     }
+
+    #[test]
+    fn circle_derivatives_keep_frame_qualification_after_center_cancellation() {
+        let (center, _) = selected_center_and_point();
+        let qualified =
+            crate::policy::resolve_certified_operation(&CurveContext::APPROXIMATE_512, |policy| {
+                policy.observe_approximate_512();
+                Ok::<_, CurveError>(BezierAlgebraicCuspSemicircleFragment2::full(
+                    circle(center.clone(), policy),
+                    policy,
+                ))
+            })
+            .unwrap()
+            .into_value();
+        let curve = crate::Curve2::from_retained_fragment(
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(qualified),
+        );
+        let at = CurveParameter2::from(Real::zero());
+        assert!(
+            curve
+                .derivative_at_with_policy(&at, &CurveContext::STRICT)
+                .is_err()
+        );
+        let retained = curve
+            .derivative_at_with_policy(&at, &CurveContext::APPROXIMATE_512)
+            .unwrap()
+            .into_value()
+            .coordinate_image()
+            .unwrap();
+        // The center cancels mathematically, but its frame was selected using
+        // qualified evidence. A vector cannot become strict replay authority.
+        assert!(retained.definition().is_err());
+        let strict = crate::Curve2::from_retained_fragment(
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(
+                BezierAlgebraicCuspSemicircleFragment2::full(
+                    circle(center, &CurveContext::STRICT),
+                    &CurveContext::STRICT,
+                ),
+            ),
+        );
+        let fresh = strict
+            .derivative_at_with_policy(&at, &CurveContext::APPROXIMATE_512)
+            .unwrap();
+        assert_eq!(fresh.certainty, crate::CurveCertainty::Certified);
+        assert!(
+            fresh
+                .into_value()
+                .coordinate_image()
+                .unwrap()
+                .definition()
+                .is_ok()
+        );
+    }
 }

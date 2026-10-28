@@ -92,6 +92,18 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Selected circle chart derivatives (2026-10-27).** Public derivative queries
+  consume represented angular parameters and incident points in a shared
+  polynomial-point field when the circle has a represented unit frame. Exact
+  coordinate images preserve magnitude and every requested derivative order.
+  The center stays constant in the source chart even when its coordinates and
+  the queried parameter share algebraic dependencies. Retained restrictions and
+  reversal keep the source parameter; similarities apply their linear part to
+  vectors. Inherited frame qualification survives center cancellation. Existing
+  point definitions support replay and further line construction without a new
+  wire version. Other frame and point-image carriers and general region admission
+  remain open; these fixtures do not establish universal operation closure.
+
 - **Selected circle points as angular authority (2026-10-27).** An exact point
   incident on a selected circle can retain its joint rational/algebraic field
   through point location, restriction, subdivision, reversal and similarities
@@ -101,8 +113,9 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   Native version 4 reuses its checked incident-point record and rebuilds the
   query authority from the point and circle; no new tag or version is added.
   Prior source/contact carriers retain their authority when the field pullback
-  is unavailable. Public selected-circle derivatives and general filled-region
-  admission for correlated centers remain open.
+  is unavailable. The later differential extension covers represented frames
+  and shared polynomial-point images; general filled-region admission for
+  correlated centers remains open.
 
 - **Correlated point predicates and frame replay (2026-10-27).** Shared rational
   point-field pullbacks now serve oblique linear comparison and selected-circle

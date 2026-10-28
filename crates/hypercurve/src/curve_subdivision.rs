@@ -671,7 +671,7 @@ impl Curve2 {
                 parameter_domain: OnceLock::new(),
                 native_bezier_fragments: PolicyEvaluationCache::new(),
                 rational_evaluators: PolicyEvaluationCache::new(),
-                bounds: OnceLock::new(),
+                bounds: PolicyEvaluationCache::new(),
             }),
         }
     }

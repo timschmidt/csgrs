@@ -8905,6 +8905,34 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
+    let joint_point_field = |point: &CurvePoint2| match &point.0 {
+        // Field alignment compares the unmapped sources themselves. They
+        // already own both selected scalar coordinates; do not recursively
+        // ask for common-source alignment again at that base case.
+        CurvePointData2::Polynomial(point) => point.has_rational_maps(),
+        CurvePointData2::Similarity(image) => {
+            matches!(image.data.source.0, CurvePointData2::Polynomial(_))
+        }
+        _ => false,
+    };
+    if joint_point_field(first) || joint_point_field(second) {
+        // Coordinate order is a cardinal linear query in the existing field.
+        // Reuse that relation before projecting either coordinate into a new
+        // selected scalar, including during native chord-range replay.
+        let (a, b) = match axis {
+            Axis2::X => (Real::one(), Real::zero()),
+            Axis2::Y => (Real::zero(), Real::one()),
+        };
+        match common_point_linear_order(first, second, &a, &b, policy)? {
+            Classification::Decided(order) => return Ok(Classification::Decided(order)),
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            Classification::Uncertain(_) => {}
+        }
+    }
     for (candidate, other, reverse) in [(first, second, false), (second, first, true)] {
         if let CurvePointData2::Similarity(image) = &candidate.0
             && matches!(image.data.source.0, CurvePointData2::Polynomial(_))
@@ -11180,6 +11208,56 @@ pub(crate) fn algebraic_chord_endpoint_local_bounds_refined(
     algebraic_chord_endpoint_bounds_refined_impl(endpoint, refinement_steps, policy, true)
 }
 
+/// Tightens a local point enclosure without promoting its coordinates into
+/// independent fields. A coarse box may cross a rational-map pole even though
+/// the admitted selected point has a certified nonzero denominator.
+pub(super) fn refined_local_endpoint_bounds(
+    endpoint: &CurvePoint2,
+    refinement_steps: usize,
+    policy: &CurveContext,
+) -> Classification<Aabb2> {
+    let bounds = algebraic_chord_endpoint_local_bounds_refined(endpoint, refinement_steps, policy);
+    refine_local_endpoint_bounds(endpoint, refinement_steps, policy, bounds)
+}
+
+fn refine_local_endpoint_bounds(
+    endpoint: &CurvePoint2,
+    refinement_steps: usize,
+    policy: &CurveContext,
+    bounds: Classification<Aabb2>,
+) -> Classification<Aabb2> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+    }
+    if bounds.is_decided()
+        || matches!(
+            bounds,
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+        )
+    {
+        return bounds;
+    }
+    // Reuse the existing finite local refinement attempts. This is a sufficient
+    // enclosure search, not a universal resource or algebraic completion bound.
+    for steps in [2, 4, 8, 16] {
+        if steps > refinement_steps {
+            let refined = algebraic_chord_endpoint_local_bounds_refined(endpoint, steps, policy);
+            if hypersolve::work_budget::exhaustion().is_some() {
+                return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+            }
+            if refined.is_decided()
+                || matches!(
+                    refined,
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+                )
+            {
+                return refined;
+            }
+        }
+    }
+    bounds
+}
+
 fn algebraic_chord_endpoint_bounds_refined_impl(
     endpoint: &CurvePoint2,
     refinement_steps: usize,
@@ -11228,21 +11306,21 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
             // selected intersection is finite. Tighten the existing native
             // evidence before constructing a complete common point field.
             // A tighter conservative box also satisfies the original query.
-            for steps in [2, 4, 8, 16] {
-                if steps > refinement_steps {
-                    let refined =
-                        algebraic_chord_endpoint_local_bounds_refined(endpoint, steps, policy);
-                    if refined.is_decided() {
-                        return refined;
-                    }
-                }
+            let refined = refine_local_endpoint_bounds(endpoint, refinement_steps, policy, bounds);
+            if refined.is_decided()
+                || matches!(
+                    refined,
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+                )
+            {
+                return refined;
             }
-        }
-        if !local_only
-            && let Some(bounds) =
-                recursive_projective_endpoint_bounds_refined(endpoint, refinement_steps, policy)
-        {
-            return Classification::Decided(bounds);
+            return recursive_projective_endpoint_bounds_refined(
+                endpoint,
+                refinement_steps,
+                policy,
+            )
+            .map_or(refined, Classification::Decided);
         }
         return bounds;
     }

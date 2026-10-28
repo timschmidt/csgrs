@@ -1708,6 +1708,76 @@ remain open. Instrumented refinement limits do not bound total work, growth,
 heap use or cancellation. Full pre-push qualification and package delivery remain
 pending; this finite corpus does not establish universal closure or a speedup.
 
+**Selected circle differential increment (2026-10-27).** A fresh build of the
+preceding selected-point source `ec61084ab8` reproduces a positive exact
+first-derivative magnitude assertion as `Blocked(Unsupported)`, while its point,
+split and replay control passes. Hypercurve's rational derivative recurrence,
+selected-circle chart and shared point-image owners resolve this witness under
+P15, P18–P20, P25 and P29. The unchanged independent magnitude assertion passes.
+
+The existing rational Leibniz recurrence now shares its field-mapping boundary.
+Original chart polynomials are differentiated before selected-field reduction.
+A represented circle frame supplies a center-free rational chart; its retained
+incident point supplies both radial forms and a guarded rational angular inverse.
+The center stays constant even when its coordinates and the queried angle share
+a selected base root. Exact joint vector images preserve magnitude, source-chart
+restriction/reversal semantics, original denominator guards and inherited frame
+qualification. One shared guarded angular point feeds all derivative maps,
+retaining the map chain without expanding its inverse into every derivative.
+Existing point definitions and native graph records consume these images; no new public carrier, independent angular root or wire tag is required.
+
+Twelve public witnesses and one private policy test cover exact first magnitude,
+three higher orders from an independent complex formula, eight orders at chart
+endpoints/midpoint with signed radii/turns, invalid domains, zero order, retained
+restriction/reversal, algebraic similarities, checked point definitions, and a
+derivative image consumed by a line whose fresh-process native replay precedes
+another exact split. Frame qualification survives center cancellation. An
+oversized-output positive witness first reproduces a capacity panic; shared
+checked count/allocation guards now return a typed implementation blocker.
+
+Initial budget-test assumptions were incorrect: the retained derivative and
+its exact vector comparison complete with zero charged work. Both successes
+are now required, while the complete incidence-to-derivative-to-comparison chain
+reaches the actual zero limit and succeeds on repeated larger retries. Original
+failed assertions remain archived. No artificial charge, weaker geometric
+expectation, or false exhaustion was introduced. Instrumented counters do not
+bound all rational arithmetic, expression growth, heap use or cancellation.
+
+Two bounds witnesses preserve the original rational denominator guards when the
+initial isolator crosses a pole. Exact endpoint comparisons validate the retained
+enclosure. Curve and path caches retain only a successful strict enclosure, so an
+actually exhausted ZERO attempt can retry with a larger budget and a later warm
+ZERO query reuses the exact result. The cache holds one entry per immutable owner;
+this is not a heap-byte or total-work bound. Original failed bounds, cached-error
+and compiler attempts, plus the interrupted prototype6 capture, remain archived.
+
+The original cold replay also exposed avoidable scalar-image reconstruction in
+cardinal coordinate ordering. A 607-second externally stopped attempt, its exact
+native SVG and read-only stacks are retained; no completion is inferred from it.
+The coordinate-order owner now reuses the existing common-field linear proof.
+Both independently mapped equal points and signed `2^-80` differences are tested
+with ZERO counters, including public affine-form equality. The original replay
+fixture retains its 300-second envelope.
+A broader review reproduces recursive source alignment for distinct selected
+fibers. The shortcut now consumes maps/wrappers before comparing unmapped sources
+through their retained scalar selections. Both original failing polynomial-point
+targets and a minimized same-beta/distinct-fifth-root case remain in the corpus.
+
+All 18 final groups pass: 2,859 Hypercurve tests in 92 suites with 34 existing
+ignored cases, 64 affected root tests in 11 suites, 3,012 tests across six consumer
+packages, strict MSRV Clippy across all Hypercurve/CSGRS/Hyperbrep targets/features,
+core builds, denied-warning API docs and fuzz Clippy, format, 16 matrix guards,
+205 capability fixtures, typos, repository budget and diff checks. Evidence is
+`docs/evidence/2026-10-27-hypercurve-closure-circle-differentials`, SHA-256 `551fcaa43f070caa54efa25e4591460d6d6fc27e94d1950edbb3a81be3618567`. Final source snapshots match; importing only the
+three parent receipts preserves every other qualified byte. Full and final
+parent-relative patches, original programs and all failed attempts are retained.
+
+The demonstrated domain uses represented circle frames and represented or
+shared polynomial-point angular authority. Other point-image fields and frames,
+correlated-center filled-region admission, repeated offsets and corner edits
+remain open. This finite corpus is not universal closure, a total resource bound
+or a speedup claim. Full pre-push and package delivery remain pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
