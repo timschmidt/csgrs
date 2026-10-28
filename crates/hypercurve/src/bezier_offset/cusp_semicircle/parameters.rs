@@ -4195,7 +4195,8 @@ impl BezierAlgebraicCuspSemicircleMappedParameterData2 {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ),
             )
             | None => None,

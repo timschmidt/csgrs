@@ -1778,6 +1778,51 @@ correlated-center filled-region admission, repeated offsets and corner edits
 remain open. This finite corpus is not universal closure, a total resource bound
 or a speedup claim. Full pre-push and package delivery remain pending.
 
+**Retained rational point-image increment (2026-10-27).** The preceding
+source `b807a8352f` passes scalar-query and original-pole controls but rejects
+an exact native selected-point map as `Blocked(Unsupported)`. The unchanged
+positive witness now completes its map, checked replay and inverse map. The
+owners are Hypercurve point images, selected-parameter predicates, rational
+query pullbacks and native replay under P15, P18–P20, P26 and P29.
+
+Each shared immutable image retains its original selected source and rational
+map, including the original denominator. Queries reuse the existing common
+field and homogeneous projective machinery. Native predicates use retained
+chart polynomials before optional coordinate materialization. Original poles
+remain invalid even when cancellation is possible. Existing native point graph
+records preserve these dependencies; no new public type or wire version is
+required. Qualification survives identity and constant queries, and native
+replay remains strict inside a provisional scope. Actual work exhaustion is
+reported before a point is published.
+
+Eight public cases use an independent rational Bernstein unit-circle point,
+its defining equation and an exact rational inverse. They cover repeated maps,
+negative denominators, nearby distinct points, bounds, similarities, original
+and downstream removable poles, and a generated line whose fresh-process
+native replay precedes another exact midpoint split and rational map. Original
+positive no-projection and inner-publication budget failures remain in the
+corpus, with actual reached counters and larger retries. Three private policy
+cases preserve qualification. A request for approximate policy alone does not
+weaken certified evidence.
+
+All 18 final groups pass: 2,870 Hypercurve tests in 93 suites with34 existing ignored
+cases, 64 affected root tests in 11 suites, 3,012 tests across six consumer packages,
+strict MSRV all-target/all-feature Clippy, core builds, denied-warning docs and
+fuzz Clippy, formatting,16 matrix guards, 213 capability fixtures, typos, repository
+budget and diff checks. Evidence `docs/evidence/2026-10-27-hypercurve-closure-rational-point-images` has SHA-256 `79bf8acccb4cf36a8782e5288fa411c360f85b4d2c65a7d2777e5aead3a88c01`. Final source
+snapshots match; importing only the three parent receipts changes no other
+qualified byte. Original programs, compile failures, resource observations and
+policy regressions remain archived.
+
+The finer resource probe distinguishes construction, which already used no
+coordinate promotions, from the later comparison that requested one. The
+original failed constructor also returned inner success after reaching a ZERO
+refinement limit; the outer scope correctly reported exhaustion. Neither is
+counted as completed geometry. These are instrumented refinement/promotion
+limits, not bounds on total arithmetic, expression growth, heap or cancellation.
+Other fields, arbitrary algebraic region/operation closure and published package
+delivery remain open. Full pre-push qualification is pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

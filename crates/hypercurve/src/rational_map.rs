@@ -253,14 +253,32 @@ fn axes(domain: &Aabb2) -> [RealInterval; 2] {
 }
 
 impl CurvePoint2 {
-    /// Applies a rational map while preserving the joint polynomial point.
-    /// Authored points and similarities of polynomial points are also accepted.
+    /// Applies a rational map while preserving the joint selected point.
+    /// Authored, selected rational-curve and polynomial-fiber points retain
+    /// their source authority through repeated maps and similarities.
     /// Original poles remain invalid even if the image admits cancellation.
     pub fn rational_image(&self, map: &RationalMap2) -> ExactCurveResult<Self> {
-        self.rational_form(
-            BivariatePolynomial::new(Vec::new()),
-            map.denominator.clone(),
-        )?;
+        self.rational_image_with_policy(map, &crate::policy::principal_context())
+    }
+
+    pub(crate) fn rational_image_with_policy(
+        &self,
+        map: &RationalMap2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Self> {
+        if matches!(
+            self.0,
+            CurvePointData2::Algebraic(_) | CurvePointData2::RationalImage(_)
+        ) {
+            return crate::curve_point::RationalPointImage2::construct(self, map, policy);
+        }
+        let guard = crate::policy::resolve_certified_operation(policy, |attempt| {
+            crate::curve_point::RationalPointImage2::validate_map(self, map, attempt)
+        })
+        .map_err(|cause| {
+            ExactCurveError::invalid_unattributed(CurveOperation2::Construction, cause)
+        })?;
+        ExactCurveError::decided(CurveOperation2::Construction, guard.into_value())?;
         match &self.0 {
             CurvePointData2::Polynomial(point) => Ok(point.mapped(map)),
             CurvePointData2::Exact(point) => {
@@ -291,8 +309,8 @@ impl CurvePoint2 {
             CurvePointData2::Similarity(image) => {
                 let (source, transform) = image.strict_definition().ok_or_else(blocked)?;
                 source
-                    .rational_image(&RationalMap2::from_similarity(transform))?
-                    .rational_image(map)
+                    .rational_image_with_policy(&RationalMap2::from_similarity(transform), policy)?
+                    .rational_image_with_policy(map, policy)
             }
             CurvePointData2::Endpoint(endpoint) => {
                 let source = ExactCurveError::decided(
@@ -302,7 +320,7 @@ impl CurvePoint2 {
                     })?,
                 )?
                 .ok_or_else(blocked)?;
-                source.rational_image(map)
+                source.rational_image_with_policy(map, policy)
             }
             _ => Err(blocked()),
         }

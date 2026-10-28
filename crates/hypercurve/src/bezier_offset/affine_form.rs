@@ -95,6 +95,9 @@ pub(crate) fn point_affine_form_parameter(
     coefficients: &[Real; 3],
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
+    if let Classification::Uncertain(reason) = source.validate_rational_image(policy)? {
+        return Ok(Classification::Uncertain(reason));
+    }
     let [a, b, c] = coefficients;
     if a.zero_status() == ZeroKnowledge::Zero && b.zero_status() == ZeroKnowledge::Zero {
         return Ok(Classification::Decided(c.clone().into()));
@@ -127,6 +130,14 @@ pub(crate) fn point_affine_form_parameter(
         ))
     };
     match &source.0 {
+        CurvePointData2::RationalImage(_) => {
+            return point_rational_form_parameter(
+                source,
+                &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+                &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                policy,
+            );
+        }
         CurvePointData2::Polynomial(point) => {
             return Ok(point
                 .affine_parameter(&[a.clone(), b.clone(), c.clone()], policy)?
@@ -257,6 +268,9 @@ pub(crate) fn point_affine_form_order_to_real(
     value: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
+    if let Classification::Uncertain(reason) = point.validate_rational_image(policy)? {
+        return Ok(Classification::Uncertain(reason));
+    }
     use std::cmp::Ordering;
     let order = |sign| match sign {
         RealSign::Negative => Ordering::Less,
@@ -270,6 +284,13 @@ pub(crate) fn point_affine_form_order_to_real(
         ));
     }
     match &point.0 {
+        CurvePointData2::RationalImage(_) => point_rational_form_sign(
+            point,
+            &BivariatePolynomial::new(vec![vec![-value.clone(), b.clone()], vec![a.clone()]]),
+            &BivariatePolynomial::new(vec![vec![Real::one()]]),
+            policy,
+        )
+        .map(|sign| sign.map(order)),
         CurvePointData2::Polynomial(point) => point.affine_order(a, b, value, policy),
         CurvePointData2::Exact(point) => Ok(compare_reals(
             &Real::dot2_refs([a, b], [point.x(), point.y()]),

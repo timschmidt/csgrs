@@ -507,6 +507,10 @@ exact signatures.
   stronger cached predicate bounds, keeping repeated display output stable after
   exact incidence queries.
   The standard SVG `d` attribute is only a finite display projection.
+  Selected rational-curve points accept shared rational images and repeated
+  maps. Predicates pull queries into their original parameter field and retain
+  original denominator guards; independent coordinate projection is optional.
+  Checked definitions, similarities and native line replay consume these images.
   Point dependencies also retain polynomial fibers, rational maps, exact
   similarities and unique supporting-line intersections. Replay validates fiber
   selectors and optional exact-root witnesses, original denominator guards and

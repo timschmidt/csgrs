@@ -298,7 +298,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => None,
             };
             if let Some(classification) = direct {
@@ -315,6 +316,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
             }
             for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
                 let bounds = match endpoint {
+                    CurvePoint2(CurvePointData2::RationalImage(point)) => {
+                        point.bounds(refinement_steps, &self.data.policy)
+                    }
                     CurvePoint2(CurvePointData2::Polynomial(point)) => {
                         point.bounds(refinement_steps, &self.data.policy)
                     }
@@ -423,7 +427,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         match direct {
@@ -1248,7 +1253,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => {
                 return Ok(None);
             }

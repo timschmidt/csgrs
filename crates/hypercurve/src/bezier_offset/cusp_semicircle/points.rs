@@ -494,7 +494,8 @@ impl BezierAlgebraicCuspChordPoint2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => retained_point_evidence_equality_by_refinement(
                 &CurvePoint2::from(self.clone()),
                 other,

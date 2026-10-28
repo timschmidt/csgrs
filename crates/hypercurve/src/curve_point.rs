@@ -10,9 +10,11 @@ use hypersolve::AlgebraicRootRepresentation;
 mod affine;
 mod definition;
 mod rational;
+mod rational_image;
 pub use affine::CurvePointAffineForm2;
 pub use definition::CurvePointDefinition2;
 pub use rational::CurvePointRationalForm2;
+pub(crate) use rational_image::RationalPointImage2;
 
 /// An exact affine point with shared scalar or selected geometric evidence.
 ///
@@ -209,6 +211,8 @@ pub(crate) enum CurvePointData2 {
     Exact(Point2),
     /// A correlated point selected on a rational polynomial plane curve.
     Polynomial(std::sync::Arc<crate::polynomial_point::PolynomialPoint2>),
+    /// A shared rational map of an exact point, retaining its original poles.
+    RationalImage(std::sync::Arc<RationalPointImage2>),
     /// The contact point is retained as exact algebraic point evidence.
     ///
     /// A retained rational-expression status may defer coordinate images
@@ -262,6 +266,10 @@ impl CurvePoint2 {
             (
                 Self(CurvePointData2::Polynomial(first)),
                 Self(CurvePointData2::Polynomial(second)),
+            ) => std::sync::Arc::ptr_eq(first, second),
+            (
+                Self(CurvePointData2::RationalImage(first)),
+                Self(CurvePointData2::RationalImage(second)),
             ) => std::sync::Arc::ptr_eq(first, second),
             (
                 Self(CurvePointData2::AlgebraicChordPair(_)),
@@ -348,6 +356,13 @@ impl CurvePoint2 {
     /// endpoint fields. Any predicate that remains unproved stays explicit
     /// under `policy`.
     pub(crate) fn same_point(&self, other: &Self, policy: &CurveContext) -> Classification<bool> {
+        for point in [self, other] {
+            match point.validate_rational_image(policy) {
+                Ok(Classification::Decided(())) => {}
+                Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
+                Err(_) => return Classification::Uncertain(UncertaintyReason::Predicate),
+            }
+        }
         // Separate projections of one retained contact can allocate distinct
         // point handles while sharing the same source and exact transform.
         // Consume that positive identity before reconstructing either field.
@@ -406,7 +421,9 @@ impl CurvePoint2 {
         }
         match (self, other) {
             (Self(CurvePointData2::Polynomial(_)), _)
-            | (_, Self(CurvePointData2::Polynomial(_))) => {
+            | (_, Self(CurvePointData2::Polynomial(_)))
+            | (Self(CurvePointData2::RationalImage(_)), _)
+            | (_, Self(CurvePointData2::RationalImage(_))) => {
                 self.same_point_by_coordinate_evidence(other, policy)
             }
             (Self(CurvePointData2::Endpoint(_)), _) | (_, Self(CurvePointData2::Endpoint(_))) => {

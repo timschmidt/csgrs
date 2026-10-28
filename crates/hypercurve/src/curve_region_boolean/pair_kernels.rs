@@ -1909,6 +1909,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         let debug_kind = |point: &CurvePoint2| {
                             match point {
 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                                 CurvePoint2(CurvePointData2::Algebraic(_)) => {
                                     "algebraic"

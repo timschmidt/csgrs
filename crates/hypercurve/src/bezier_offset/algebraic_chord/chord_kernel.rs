@@ -1829,7 +1829,8 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         if let Some(point) = represented_point {
@@ -2066,7 +2067,8 @@ impl BezierAlgebraicChord2 {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => algebraic_chord_point_linear_order_to_exact(
                     endpoint,
                     line.start(),

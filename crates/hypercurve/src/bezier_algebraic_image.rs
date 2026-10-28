@@ -1344,31 +1344,14 @@ impl RationalBezierAlgebraicPointImage2 {
         &'a self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierAlgebraicPointPredicate2<'a>>> {
-        let Some(image) = self.resolved(policy) else {
-            return Err(CurveError::Topology(
-                "algebraic point image did not retain a replayable source".into(),
-            ));
+        // The authored rational chart already supplies both coordinates in
+        // one selected field. Predicates do not require independently isolated
+        // coordinate images; materialization remains an optional consumer.
+        let image = self;
+        let Some((x_numerator, y_numerator, denominator)) = image.retained_coordinate_polynomials()
+        else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let (x_numerator, y_numerator, denominator) =
-            if let Some(expression) = image.retained_expression() {
-                (
-                    expression.x_numerator.as_slice(),
-                    expression.y_numerator.as_slice(),
-                    expression.denominator.as_slice(),
-                )
-            } else {
-                let (Some(x), Some(y)) = (image.x(), image.y()) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                if x.denominator_coefficients() != y.denominator_coefficients() {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                (
-                    x.numerator_coefficients(),
-                    y.numerator_coefficients(),
-                    x.denominator_coefficients(),
-                )
-            };
         let parameter = match image.source_parameter(policy)? {
             Classification::Decided(parameter) => parameter,
             Classification::Uncertain(reason) => {

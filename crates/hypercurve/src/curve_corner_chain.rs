@@ -3124,7 +3124,8 @@ impl<'a> CurveCornerChain2<'a> {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         let represented_previous = exact_point(&previous_cut.point);

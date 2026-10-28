@@ -1426,6 +1426,7 @@ impl BezierAlgebraicChord2 {
         if std::env::var_os("HYPERCURVE_DEBUG_CHORD_PAIR_SIDES").is_some() {
             let kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -1581,7 +1582,8 @@ impl BezierAlgebraicChord2 {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => None,
             })
         };
@@ -2951,7 +2953,11 @@ impl BezierAlgebraicChord2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurvePoint2>> {
         match endpoint {
-            CurvePoint2(CurvePointData2::Endpoint(_) | CurvePointData2::Polynomial(_)) => {
+            CurvePoint2(
+                CurvePointData2::Endpoint(_)
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
+            ) => {
                 let transform = Similarity2::try_from_real_affine(
                     Real::one(),
                     Real::zero(),
@@ -3067,7 +3073,8 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             )) => {
                 let complement = Real::one() - scale;
                 let transform = Similarity2::try_from_real_affine(
@@ -3177,7 +3184,8 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             )) => {
                 let Some(similarity) = similarity else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -3644,7 +3652,8 @@ impl BezierAlgebraicChord2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         if let (Some(start), Some(end)) = (exact_endpoint(self.start()), exact_endpoint(self.end()))
@@ -4836,6 +4845,7 @@ impl BezierAlgebraicChord2 {
             "chord-normal-displacement-point-kind",
             match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",
@@ -4854,6 +4864,7 @@ impl BezierAlgebraicChord2 {
             "chord-normal-displacement-center-kind",
             match center {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",

@@ -468,3 +468,38 @@ polynomial-point angular authority. Other point-image fields, nonrepresented
 frames, filled-region admission, repeated offsets and corner edits remain open.
 The finite tests and local rational identities do not establish universal closure,
 a uniform practical resource bound or a comparative speedup.
+
+
+Rational point images retain the original selected point and one immutable map
+per node. Both coordinates share that point; their original denominator is
+checked before admission and again before a pulled-back query is consumed.
+For a polynomial query of total degree `d`, homogeneous substitution uses the
+same `d` in its numerator and denominator. These temporary predicate forms do
+not replace the original map graph or authorize cancellation at an original
+pole. The existing recursive projective field consumes the same homogeneous
+image and proves its denominator orientation. Native rational-point predicates
+read the original chart polynomials before optional coordinate materialization.
+No additional cache is introduced for the shared map node.
+
+The `rational_point_images` target keeps the original degree-seven positive
+witness: a rational parabola point `(a,a²)`, `2*a^7=1`, maps to
+`(2*a/(1+a²),(1-a²)/(1+a²))`. An independently authored rational Bernstein circle
+supplies its expected point. Checked replay and the inverse map recover the
+parabola. Additional cases retain negative denominators, nearby distinct
+points, original and downstream removable poles, exact bounds, similarities,
+and a generated line whose fresh-process native replay precedes another exact
+midpoint split and rational map. Geometric identities and deterministic native
+serialization are checked separately.
+
+A source-attributed positive witness requires map construction and independent
+point comparison with 4,096 refinements and zero coordinate promotions. Actual
+ZERO exhaustion is separately checked both inside the constructor and at the
+outer shared-budget boundary; larger retries on the same source must succeed.
+Private owner cases cover qualified identity and constant queries, as well as
+strict native replay inside a provisional scope. The original unsupported
+construction, unnecessary promotion request, incomplete exhaustion propagation,
+policy failures and harness compiler failures remain in the evidence record.
+These counters do not bound total polynomial arithmetic, coefficient growth,
+expression size, retained memory, wall time or cancellation. Other selected
+point fields, general region admission, offsets and corner chains remain open;
+this corpus is not a proof of universal algebraic operation closure.

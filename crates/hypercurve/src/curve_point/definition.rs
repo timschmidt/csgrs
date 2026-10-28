@@ -99,6 +99,9 @@ impl CurvePoint2 {
             CurvePointData2::AnalyticParallel(point) => Some((2, point.replay_storage_key())),
             CurvePointData2::Endpoint(point) => Some((3, std::sync::Arc::as_ptr(point).cast())),
             CurvePointData2::Polynomial(point) => Some(point.replay_storage_key()),
+            CurvePointData2::RationalImage(point) => {
+                Some((10, std::sync::Arc::as_ptr(point).cast()))
+            }
             CurvePointData2::Similarity(point) => Some((5, point.replay_storage_key())),
             CurvePointData2::AlgebraicChordPair(point) => Some((6, point.replay_storage_key())),
             CurvePointData2::AlgebraicChordParallel(point) => {
@@ -122,6 +125,18 @@ impl CurvePoint2 {
         match &self.0 {
             CurvePointData2::Exact(point) => Ok(CurvePointDefinition2::Coordinates(point.clone())),
             CurvePointData2::Polynomial(point) => Ok(point.definition()),
+            CurvePointData2::RationalImage(point) => {
+                ExactCurveError::decided(
+                    CurveOperation2::Evaluation,
+                    point.validate(&CurveContext::STRICT).map_err(|cause| {
+                        ExactCurveError::invalid_unattributed(CurveOperation2::Evaluation, cause)
+                    })?,
+                )?;
+                Ok(CurvePointDefinition2::RationalImage {
+                    source: point.source.clone(),
+                    map: point.map.clone(),
+                })
+            }
             CurvePointData2::Algebraic(point) => {
                 if let Some((source, parameter)) = point.native_curve_evaluation() {
                     return Ok(CurvePointDefinition2::Rational {
@@ -216,7 +231,7 @@ impl CurvePointDefinition2 {
     fn replay(self, sources_checked: bool) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
-            Self::RationalImage { source, map } => source.rational_image(&map),
+            Self::RationalImage { source, map } => source.rational_image_with_policy(&map, policy),
             Self::PolynomialFiber {
                 equation,
                 parameter,

@@ -90,6 +90,7 @@ impl BezierAlgebraicChord2 {
                                 let kind = |point: &CurvePoint2| {
                                     match point {
 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                                         CurvePoint2(CurvePointData2::Exact(_)) => {
                                             "exact"
                                         }
@@ -2259,6 +2260,7 @@ CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
             let caller = std::panic::Location::caller();
             let kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2696,6 +2698,7 @@ CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
             );
             let kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2788,6 +2791,7 @@ CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
                 let caller = std::panic::Location::caller();
                 let kind = |point: &CurvePoint2| match point {
                     CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                    CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                     CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                     CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                     CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",

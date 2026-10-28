@@ -217,6 +217,7 @@ impl BezierAlgebraicChord2 {
         #[cfg(test)]
         let evidence_kind = |point: &CurvePoint2| match point {
             CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+            CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
             CurvePoint2(CurvePointData2::Exact(_)) => "exact",
             CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
             CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2141,6 +2142,7 @@ impl BezierAlgebraicChord2 {
         {
             let kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",
@@ -2750,6 +2752,7 @@ impl BezierAlgebraicChord2 {
         if std::env::var_os("HYPERCURVE_DEBUG_PAIR_SCALAR").is_some() {
             let kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",

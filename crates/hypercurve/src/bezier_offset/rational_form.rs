@@ -294,6 +294,14 @@ pub(crate) fn point_form_source(
     policy: &CurveContext,
 ) -> CurveResult<Classification<PointFormSource2>> {
     match &source.0 {
+        CurvePointData2::RationalImage(image) => {
+            match image.pullback(numerator, denominator, policy)? {
+                Classification::Decided((numerator, denominator)) => {
+                    point_form_source(&image.source, &numerator, &denominator, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
         CurvePointData2::Polynomial(point) => {
             Ok(match point.source_query(numerator, denominator) {
                 Some(query) => Classification::Decided(query),
@@ -362,6 +370,15 @@ fn point_polynomial_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match &source.0 {
+        CurvePointData2::RationalImage(image) => {
+            let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+            match image.pullback(polynomial, &one, policy)? {
+                Classification::Decided((numerator, denominator)) => {
+                    point_rational_form_sign(&image.source, &numerator, &denominator, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
         CurvePointData2::Exact(point) => Ok(real_sign(
             &bivariate_evaluate_exact(polynomial, point.x(), point.y()),
             policy,
@@ -423,6 +440,14 @@ pub(crate) fn point_rational_form_parameter(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
     match &source.0 {
+        CurvePointData2::RationalImage(image) => {
+            match image.pullback(numerator, denominator, policy)? {
+                Classification::Decided((numerator, denominator)) => {
+                    point_rational_form_parameter(&image.source, &numerator, &denominator, policy)
+                }
+                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            }
+        }
         CurvePointData2::Exact(point) => Ok(Classification::Decided(
             (bivariate_evaluate_exact(numerator, point.x(), point.y())
                 / bivariate_evaluate_exact(denominator, point.x(), point.y()))?

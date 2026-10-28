@@ -9126,6 +9126,335 @@
         }
       ],
       "oracle": "Shared beta defining relation, gamma_2^5-gamma_1^5=1 and strict monotonicity on the positive branch; original and translated points are checked separately."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_query_control",
+      "test": "native_scalar_image_rational_query_control",
+      "domain": "The degree-seven parabola point and independently authored rational Bernstein circle.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Existing scalar rational queries equal the independently authored circle coordinates."
+        }
+      ],
+      "oracle": "Independent exact rational parametrization of the unit circle."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_composition",
+      "test": "native_scalar_point_image_replays_and_reenters_another_rational_map",
+      "domain": "Map(a,a\u00b2) to(2a/(1+a\u00b2),(1-a\u00b2)/(1+a\u00b2)) at the positive selected root 2a^7=1.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The generated point equals the independently authored circle and has zero circle residual."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Checked replay preserves the map and a further inverse map recovers the original point."
+        }
+      ],
+      "oracle": "Independent Bernstein circle data, unit-circle relation and rational inverse identity; original positive baseline unchanged."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_original_pole",
+      "test": "native_scalar_point_map_rejects_the_original_pole",
+      "domain": "A map with the same original numerator/denominator 2a^7-1 at its selected root.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "The original 0/0 is rejected as ZeroRationalPointDenominator despite formal cancellation."
+        }
+      ],
+      "oracle": "The selected defining equation makes the original denominator exactly zero."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_signed_order",
+      "test": "native_scalar_point_images_preserve_negative_denominators_and_order",
+      "domain": "Negated homogeneous map, independent point shifted by 1/1000000, similarities, enclosures and a downstream zero circle residual used as denominator.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both order directions and equal ordinate remain exact, while near-distinct points remain unequal."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "All four exact bound comparisons enclose the retained point."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Checked mapped and transformed point definitions preserve geometry."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "A later removable circle-residual pole remains invalid."
+        }
+      ],
+      "oracle": "Independent rational circle, signed exact translation and original pole equations."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_cold_replay",
+      "test": "native_scalar_point_images_replay_in_a_fresh_process_before_exact_split",
+      "domain": "A mapped point and its translated counterpart become a line; a fresh process reloads it before another midpoint split and map.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The fresh process validates both endpoints against independent exact definitions and preserves deterministic serialization."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "An independent midpoint splits the replayed line and both reconstructed endpoint identities remain exact."
+        }
+      ],
+      "oracle": "Independent Bernstein circle and exact translation/midpoint identities; fresh process excludes live caches."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_no_projection",
+      "test": "native_scalar_point_map_uses_no_independent_coordinate_promotion",
+      "domain": "The original map-and-independent-comparison chain with4,096 refinements / 0 promotions.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The complete exact point chain consumes no coordinate-promotion attempts."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The image equals the independent circle point in its original parameter field."
+        }
+      ],
+      "oracle": "Independent Bernstein data and actual shared work counters; the original positive promotion failure is retained."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_reached_limit",
+      "test": "native_scalar_point_image_does_not_publish_after_reached_exhaustion",
+      "domain": "A fresh native source enters image construction with ZERO work budget.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "An actually reached refinement limit produces typed BudgetExhausted before a point is published; the outer budget also reports the reached limit."
+        }
+      ],
+      "oracle": "Inner typed result and actual reached-work counters, independently asserted."
+    },
+    {
+      "target": "rational_point_images",
+      "owner": "Hypercurve retained point images, rational query pullbacks and native selected-parameter predicates",
+      "properties": [
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Retain the original selected point and map, validate original denominator guards, and consume its rational image through existing point, line and native replay owners. Optional coordinate materialization never replaces the source definition. General point fields and filled-region operation closure remain unqualified.",
+      "id": "native_scalar_map_retry",
+      "test": "native_scalar_point_images_retry_after_actual_exhaustion",
+      "domain": "Two fresh sources, each queried with ZERO then4,096 refinements / 0 promotions, followed by strict/approximate/strict requests.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The fresh ZERO request reaches its actual configured refinement limit."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Larger retries on the same source succeed without coordinate promotion or cached failure."
+        },
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "An approximate policy request remains Certified when all consumed evidence is exact."
+        }
+      ],
+      "oracle": "Independent circle equality, actual reached counters and policy receipts; no timeout is counted as exhaustion."
     }
   ]
 }

@@ -570,6 +570,48 @@ pub(super) fn recursive_projective_point_source(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierRecursiveProjectivePointSource2>>> {
     let source = match point {
+        CurvePoint2(CurvePointData2::RationalImage(image)) => {
+            if let Classification::Uncertain(reason) = image.validate(policy)? {
+                return Ok(Classification::Uncertain(reason));
+            }
+            let sources = match recursive_projective_evidence_points(&[&image.source], policy)? {
+                Classification::Decided(Some(sources)) => sources,
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let source = &sources[0];
+            let polynomials = [
+                &image.map.numerators()[0],
+                &image.map.numerators()[1],
+                image.map.denominator(),
+            ];
+            let Some(degree) = polynomials
+                .iter()
+                .map(|polynomial| {
+                    hypersolve::bivariate_arithmetic::bivariate_active_total_degree(polynomial)
+                })
+                .collect::<Option<Vec<_>>>()
+                .and_then(|degrees| degrees.into_iter().max())
+            else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let values = polynomials.map(|polynomial| {
+                evaluate_bivariate_homogeneous_polynomial(
+                    polynomial,
+                    &source.x,
+                    &source.y,
+                    &source.denominator,
+                    degree,
+                )
+            });
+            let [Some(x), Some(y), Some(denominator)] = values else {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            return Ok(positive_recursive_projective_point(
+                BezierRecursiveQuadraticProjectivePoint2 { x, y, denominator },
+            )?
+            .map(|point| Some(BezierRecursiveProjectivePointSource2::Recursive(point))));
+        }
         CurvePoint2(CurvePointData2::Polynomial(_)) => None,
         CurvePoint2(CurvePointData2::Endpoint(endpoint)) => {
             return match endpoint.resolve(policy)? {
@@ -698,6 +740,12 @@ pub(super) fn recursive_projective_evidence_denominator_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match point {
+        CurvePoint2(CurvePointData2::RationalImage(image)) => {
+            // The homogeneous image above is normalized before publication.
+            image
+                .validate(policy)
+                .map(|valid| valid.map(|()| RealSign::Positive))
+        }
         CurvePoint2(CurvePointData2::Polynomial(_)) => {
             Ok(Classification::Decided(RealSign::Positive))
         }
@@ -1252,6 +1300,7 @@ pub(super) fn represented_projective_evidence_points(
                 if std::env::var_os("HYPERCURVE_DEBUG_RATIONAL_BLOCKER").is_some() {
                     let kind = match point {
                         CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                        CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                         CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "pair",

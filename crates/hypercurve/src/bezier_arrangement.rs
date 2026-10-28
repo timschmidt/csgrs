@@ -758,7 +758,8 @@ fn retained_endpoint_data(
                 | crate::CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => None,
             };
             let mut data = retained_topology_endpoint_data(arrangement_fragment);

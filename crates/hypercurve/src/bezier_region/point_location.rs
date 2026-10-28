@@ -123,7 +123,8 @@ pub(crate) fn classify_point_evidence_against_retained_loop(
         | CurvePoint2(
             CurvePointData2::Similarity(_)
             | CurvePointData2::Endpoint(_)
-            | CurvePointData2::Polynomial(_),
+            | CurvePointData2::Polynomial(_)
+            | CurvePointData2::RationalImage(_),
         ) => None,
     };
     match direct {

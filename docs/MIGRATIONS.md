@@ -92,6 +92,18 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Rational images of selected rational-curve points (2026-10-27).**
+  `CurvePoint2::rational_image` accepts native selected rational-curve point
+  images and repeated rational maps. Each immutable image shares its original
+  point and keeps the original map and denominator. Exact point queries,
+  similarities, line construction and native replay consume those definitions.
+  Original poles remain invalid after algebraic cancellation. Native replay
+  remains strict inside a provisional scope, and identity and constant queries
+  preserve retained qualification. An actually reached work limit is reported
+  before a new image is published. Existing point definitions and wire records
+  suffice; no new public carrier or format version is required. Other point
+  fields and general region/operation closure remain open.
+
 - **Selected circle chart derivatives (2026-10-27).** Public derivative queries
   consume represented angular parameters and incident points in a shared
   polynomial-point field when the circle has a represented unit frame. Exact

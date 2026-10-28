@@ -1151,6 +1151,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "recursive-selected-radial-frame",
                     match _point {
                         CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                        CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                         CurvePoint2(CurvePointData2::Exact(_)) => "exact-center",
                         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic-center",
                         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair-center",
@@ -5017,6 +5018,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             let point_kind = |point: &CurvePoint2| match point {
                 CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                 CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                 CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",

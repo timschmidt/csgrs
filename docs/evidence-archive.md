@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-rational-point-images-evidence-2026-10-27` branch ends
+at `01f2e7a9311b962f07e3b7ba6a71d9fcf38e2d63`, adding `docs/evidence/2026-10-27-hypercurve-closure-rational-point-images`
+(772 files, 33,841,191 bytes), SHA-256 `79bf8acccb4cf36a8782e5288fa411c360f85b4d2c65a7d2777e5aead3a88c01`. It records shared
+rational point images, original guards, native parameter predicates, qualification
+and typed exhaustion. All 2,870 Hypercurve tests,64 root tests,3,012 consumer tests,
+strict MSRV/fuzz Clippy, core builds, docs,16 matrix guards and213 fixtures pass;
+34 existing ignored cases remain. Independent circle/inverse identities, cold
+native line reconstruction, exact splitting, original poles and reached-limit
+retries are asserted separately. Original failed witnesses and all attempts are
+retained. Every non-receipt byte matches final qualification. This local record
+is unpushed; complete algebraic operation closure, total resource bounds and
+package delivery remain open.
+
 The local `hypercurve-circle-differentials-evidence-2026-10-27` branch ends at
 `5eeeec42d607ed5c3126fd396a2150df5be50668`, adding `docs/evidence/2026-10-27-hypercurve-closure-circle-differentials`
 (972 files, 48,642,946 bytes), SHA-256 `551fcaa43f070caa54efa25e4591460d6d6fc27e94d1950edbb3a81be3618567`.

@@ -614,7 +614,8 @@ impl BezierAlgebraicChordPairPoint2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         Ok(Classification::Decided(coordinate))
@@ -1820,7 +1821,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => {}
             }
         }
@@ -2177,7 +2179,8 @@ impl BezierAlgebraicChordPairPoint2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         let shares_first_support = chord.shares_retained_support(&self.data.first)
@@ -3037,6 +3040,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                         "represented-chord-parallel-origin-kind",
                         match self.source_endpoint() {
                             CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+                            CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                             CurvePoint2(CurvePointData2::Exact(_)) => "exact",
                             CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
                             CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",
@@ -4958,7 +4962,8 @@ impl BezierAlgebraicChordParallelPoint2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         Ok(Classification::Decided(
@@ -5697,7 +5702,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 | CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ),
             )
             | Classification::Uncertain(_) => None,
@@ -7291,7 +7297,8 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => retained_point_evidence_equality_by_refinement(
                 &CurvePoint2::from(self.clone()),
                 other,

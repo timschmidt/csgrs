@@ -5225,7 +5225,8 @@ fn strict_common_retained_line_unit_tangent(
         | CurvePoint2(
             CurvePointData2::Similarity(_)
             | CurvePointData2::Endpoint(_)
-            | CurvePointData2::Polynomial(_),
+            | CurvePointData2::Polynomial(_)
+            | CurvePointData2::RationalImage(_),
         ) => None,
     };
     let constant_axis = match parameter_axis.axis {
@@ -8902,6 +8903,11 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
     axis: Axis2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<std::cmp::Ordering>> {
+    for point in [first, second] {
+        if let Classification::Uncertain(reason) = point.validate_rational_image(policy)? {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
     if first.shares_storage(second) {
         return Ok(Classification::Decided(std::cmp::Ordering::Equal));
     }
@@ -8910,6 +8916,7 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         // already own both selected scalar coordinates; do not recursively
         // ask for common-source alignment again at that base case.
         CurvePointData2::Polynomial(point) => point.has_rational_maps(),
+        CurvePointData2::RationalImage(_) => true,
         CurvePointData2::Similarity(image) => {
             matches!(image.data.source.0, CurvePointData2::Polynomial(_))
         }
@@ -9429,7 +9436,8 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ),
             _,
         )
@@ -9438,7 +9446,8 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
             CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ),
         ) => Ok(algebraic_chord_point_coordinate_order_fallback(
             first, second, axis, policy,
@@ -9672,7 +9681,8 @@ fn algebraic_axis_point_coordinates(
         | CurvePoint2(
             CurvePointData2::Similarity(_)
             | CurvePointData2::Endpoint(_)
-            | CurvePointData2::Polynomial(_),
+            | CurvePointData2::Polynomial(_)
+            | CurvePointData2::RationalImage(_),
         ) => {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
@@ -9744,7 +9754,8 @@ fn algebraic_chord_point_coordinate_representation(
         | CurvePoint2(
             CurvePointData2::Similarity(_)
             | CurvePointData2::Endpoint(_)
-            | CurvePointData2::Polynomial(_),
+            | CurvePointData2::Polynomial(_)
+            | CurvePointData2::RationalImage(_),
         ) => None,
     }
 }
@@ -9963,6 +9974,7 @@ fn represented_chord_direction_speed(
     #[cfg(feature = "dispatch-trace")]
     let evidence_kind = |point: &CurvePoint2| match point {
         CurvePoint2(CurvePointData2::Polynomial(_)) => "polynomial",
+        CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
         CurvePoint2(CurvePointData2::Exact(_)) => "exact",
         CurvePoint2(CurvePointData2::Algebraic(_)) => "algebraic",
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_)) => "chord-pair",
@@ -11265,6 +11277,9 @@ fn algebraic_chord_endpoint_bounds_refined_impl(
     local_only: bool,
 ) -> Classification<Aabb2> {
     let composite = match endpoint {
+        CurvePoint2(CurvePointData2::RationalImage(point)) => {
+            Some(point.bounds(refinement_steps, policy))
+        }
         CurvePoint2(CurvePointData2::Polynomial(point)) => {
             Some(point.bounds(refinement_steps, policy))
         }
@@ -11490,6 +11505,14 @@ pub(crate) fn retained_point_circle_incidence_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     match point {
+        CurvePoint2(CurvePointData2::RationalImage(_)) => {
+            return common_point_circle_residual_sign(
+                point,
+                &center.clone().into(),
+                radius_squared,
+                policy,
+            );
+        }
         CurvePoint2(CurvePointData2::Polynomial(point)) => {
             return point.circle_residual_sign(center, radius_squared, policy);
         }
@@ -12904,7 +12927,8 @@ fn algebraic_chord_endpoint_images(
         | CurvePoint2(
             CurvePointData2::Similarity(_)
             | CurvePointData2::Endpoint(_)
-            | CurvePointData2::Polynomial(_),
+            | CurvePointData2::Polynomial(_)
+            | CurvePointData2::RationalImage(_),
         ) => {
             unreachable!("correlated chord endpoints return before algebraic image normalization")
         }
@@ -13264,7 +13288,8 @@ impl BezierAlgebraicChordSupportPredicate2 {
             | CurvePoint2(
                 CurvePointData2::Similarity(_)
                 | CurvePointData2::Endpoint(_)
-                | CurvePointData2::Polynomial(_),
+                | CurvePointData2::Polynomial(_)
+                | CurvePointData2::RationalImage(_),
             ) => None,
         };
         let retained_side_was_uncertain = if let Some(side) = retained_side {
@@ -13329,7 +13354,8 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 CurvePoint2(
                     CurvePointData2::Similarity(_)
                     | CurvePointData2::Endpoint(_)
-                    | CurvePointData2::Polynomial(_),
+                    | CurvePointData2::Polynomial(_)
+                    | CurvePointData2::RationalImage(_),
                 ) => {
                     return chord.oriented_side_by_refinement(point, policy);
                 }
@@ -13374,7 +13400,8 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     | CurvePoint2(
                         CurvePointData2::Similarity(_)
                         | CurvePointData2::Endpoint(_)
-                        | CurvePointData2::Polynomial(_),
+                        | CurvePointData2::Polynomial(_)
+                        | CurvePointData2::RationalImage(_),
                     ) => {
                         unreachable!("correlated chord points return before image normalization")
                     }
@@ -13619,7 +13646,7 @@ impl BezierSimilarityPoint2 {
             ));
         }
         let source = match &self.data.source {
-            CurvePoint2(CurvePointData2::Polynomial(_)) => {
+            CurvePoint2(CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_)) => {
                 return Ok(Classification::Decided(None));
             }
             CurvePoint2(CurvePointData2::Endpoint(endpoint)) => match endpoint.resolve(policy)? {
