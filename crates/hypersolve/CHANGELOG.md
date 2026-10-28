@@ -60,6 +60,10 @@
 
 ### Added
 
+- Certified closed bounds for retained selected-polynomial values validate
+  containment and refine by exact comparisons without independent root images.
+  Shared refinement limits preserve typed refusal and larger-budget retry.
+
 - Exact joins of independently selected polynomial fields retain native and
   polynomial generator embeddings, original singleton selectors, and finite
   denominator proofs for further arithmetic and selected constructions.

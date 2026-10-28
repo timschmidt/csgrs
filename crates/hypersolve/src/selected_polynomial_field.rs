@@ -14,6 +14,8 @@
 //! embeddings of independent selections; construction-identity checks alone
 //! do not decide equality of arbitrary algebraic values.
 
+mod bounds;
+pub use bounds::SelectedPolynomialEnclosure;
 mod join;
 pub use join::SelectedPolynomialJoin;
 
@@ -52,6 +54,8 @@ pub enum SelectedPolynomialError<E> {
     Arithmetic(SelectedPolynomialArithmeticError),
     /// The open selector is reversed, empty, or has a defining root at an endpoint.
     InvalidSelector,
+    /// Supplied closed bounds are reversed or do not contain the retained value.
+    InvalidEnclosure,
     /// The defining equation vanishes identically in the parent field.
     ZeroPolynomial,
     /// The selector contains no real root of the defining equation.

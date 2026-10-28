@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-polynomial-bounds-evidence-2026-10-28` branch ends at
+`24ef19eea6278aaf9d75d8dec596c4129355a752`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-bounds` (104 files,
+6,609,652 bytes), SHA-256 `a0fe988c8ad9e07d71923244cc2ef91e9791f81100a283d1bf91f147f3047e83`. It records certified enclosures of
+retained polynomial-field values, five new exact witnesses, thirteen predecessor
+witnesses and 13 qualification groups. Geometric and point-consumer blockers,
+resource limits and parent-alignment evidence remain explicit. No completed
+geometric closure or package delivery is claimed. This record is unpushed.
+
 The local `hypercurve-selected-polynomial-joins-evidence-2026-10-28` branch ends at
 `84e540fa5f525e65d539cee6e82f588e33d2231c`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-joins` (105 files,
 6,495,209 bytes), SHA-256 `f6d1431299629a7604de444a7c4433db2d5faf3f886db8e45c75817bbe0890ff`. It records exact joins of selected

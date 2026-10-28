@@ -40,6 +40,11 @@
 //! field or performing its arithmetic charges no extension unit. The count
 //! and arithmetic are not bounded by this entry counter.
 //!
+//! Selected polynomial value bracketing and enclosure refinement charge one
+//! root-refinement unit per new bound comparison. Existing checked bounds and
+//! structural zeros can be reused without a new comparison. This count does
+//! not bound the algebraic work inside a sign decision.
+//!
 //! One promotion unit admits one instrumented projection entry, regardless of
 //! its degree or number of eliminated axes; root subdivisions performed inside
 //! it consume separate refinement units. Nested projection entries share the
@@ -78,7 +83,7 @@ use std::fmt;
 /// Maximum admitted work of each kind in a synchronous operation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct WorkBudget {
-    /// Root isolation subdivisions and singleton-isolator refinement attempts.
+    /// Root isolation subdivisions, singleton refinements, and selected-field bound comparisons.
     pub refinements: usize,
     /// Admitted algebraic projection, lifting, and common-factor attempts.
     pub promotions: usize,
@@ -95,7 +100,7 @@ impl WorkBudget {
 /// Actual work admitted by a budget, including nested operations.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct WorkUsage {
-    /// Admitted root-subdivision/refinement attempts.
+    /// Admitted root subdivisions, singleton refinements, and selected-field bound comparisons.
     pub refinements: usize,
     /// Admitted algebraic-promotion attempts.
     pub promotions: usize,
@@ -104,7 +109,7 @@ pub struct WorkUsage {
 /// The resource whose next unit could not be admitted.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum WorkKind {
-    /// One root-isolation subdivision or singleton-isolator refinement.
+    /// One root subdivision, singleton refinement, or selected-field bound comparison.
     RootRefinement,
     /// One algebraic projection/promotion attempt.
     AlgebraicPromotion,

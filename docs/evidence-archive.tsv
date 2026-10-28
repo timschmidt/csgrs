@@ -370,6 +370,7 @@ docs/evidence/2026-10-28-hypercurve-closure-qualified-region-queries	900	4359502
 docs/evidence/2026-10-28-hypercurve-closure-region-replay	373	7191304	2890052379c7cb1997e3c1e57174c0101cde7f1e8fe4a6315a788a4f7e37917e
 docs/evidence/2026-10-28-hypercurve-closure-selected-circle-corners	1600	92870882	d39113527e8a6013bce19c9ada17faefc0be34fd2a8bd8e5adaeb85168b904b9
 docs/evidence/2026-10-28-hypercurve-closure-selected-circle-regions	362	9196503	fc6fe4b2838bd73c3b30eee19c1da57af1c2fabf612c29e8f8e1d71e5c225bc8
+docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-bounds	104	6609652	a0fe988c8ad9e07d71923244cc2ef91e9791f81100a283d1bf91f147f3047e83
 docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-fields	466	10794189	6d899441a567c861c800cff052716fcdd7b26dbc7ef69c8b0b62ccb655815d46
 docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-joins	105	6495209	f6d1431299629a7604de444a7c4433db2d5faf3f886db8e45c75817bbe0890ff
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912

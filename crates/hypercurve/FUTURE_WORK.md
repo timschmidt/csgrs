@@ -2167,6 +2167,44 @@ Point/parameter integration, constructed contact carriers, trimming, arrangement
 and exact native replay remain open.
 Full pre-push verification for this changed implementation remains pending.
 
+**Selected polynomial enclosure increment (2026-10-28).**
+Hypersolve owns exact scalar enclosure certificates under P1, P7, P18, P19
+and P20. `SelectedPolynomialValue::enclosed` discovers dyadic bounds by strict
+field comparisons. `SelectedPolynomialEnclosure::try_new` checks authored
+closed bounds, and `refined` narrows a clone while retaining the original
+value, root dependencies and finite-denominator evidence. Neither bounds nor
+midpoints replace an authoritative coordinate or create an independent root.
+
+Five new witnesses pass: rational endpoint certificates for dependent
+`c^45=2`; rational-image and negative-value equations with exact zero; invalid
+bounds and closed endpoints; separation of values `2^-160` apart; and budget
+refusal, larger retry and zero-step certificate reuse without approximation.
+The thirteen preceding field selection/join witnesses also pass. Missing APIs
+were reproduced before implementation. Alignment to parent `4f018c062029149707d9b1a2023422c5d36e2b46` changed
+only Git ancestry and three admission receipts; qualified implementation bytes
+remain identical.
+
+All 13 qualification groups pass, including full/all-target solver release
+(1,258 passed,
+0 ignored), minimal solver tests
+(1,255 passed), affected Hypercurve consumers
+(160 passed), CSGRS consumers
+(13 passed), strict MSRV lint, denied-warning
+docs, allocation lifetime profiling and hygiene. The archive `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-bounds` has
+SHA-256 `a0fe988c8ad9e07d71923244cc2ef91e9791f81100a283d1bf91f147f3047e83` and preserves commands, source attribution, baseline
+failures, original witnesses and alignment evidence.
+
+Every new bound comparison charges one shared `RootRefinement` unit. This is
+an attempt count, not a total arithmetic, coefficient-growth, expression-size,
+memory, time or cancellation bound. Checked singleton and zero-step reuse need
+no new comparison. No performance or universal closure claim is made.
+
+Seven geometric operations and the independent cubic-root point-query sum
+still return `Unsupported` on this source, with all corresponding controls
+passing. The additive enclosure API is not yet used by existing geometric
+paths. Point/parameter integration, exact field-graph replay and completed
+modeling operations remain open. Full pre-push verification remains pending.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
