@@ -13254,29 +13254,14 @@ impl BezierAlgebraicChordSupportPredicate2 {
         // Selected point maps can share a joint field even when no individual
         // Cartesian coordinate has been materialized. Use the same determinant
         // authority for chord incidence and circular-arc winding.
-        if [support_chord.start(), support_chord.end(), point]
-            .iter()
-            .any(|point| {
-                matches!(
-                    point.0,
-                    CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_)
-                )
-            })
-        {
-            match common_point_oriented_side(
-                support_chord.start(),
-                support_chord.end(),
-                point,
-                policy,
-            )? {
-                decided @ Classification::Decided(_) => return Ok(decided),
-                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
-                    return Ok(Classification::Uncertain(
-                        UncertaintyReason::BudgetExhausted,
-                    ));
-                }
-                Classification::Uncertain(_) => {}
+        match support_chord.joint_field_oriented_side(point, policy)? {
+            decided @ Classification::Decided(_) => return Ok(decided),
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
             }
+            Classification::Uncertain(_) => {}
         }
         if let Some(side) = support_chord.retained_procedural_point_side(point, policy)? {
             return Ok(Classification::Decided(side));

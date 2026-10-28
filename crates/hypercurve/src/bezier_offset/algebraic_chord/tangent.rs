@@ -3,6 +3,24 @@
 use super::*;
 
 impl BezierAlgebraicChord2 {
+    /// The same determinant serves scalar support queries and the batched
+    /// pair kernel, including retained joint fields transported by similarity.
+    pub(in crate::bezier_offset) fn joint_field_oriented_side(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<crate::classify::LineSide>> {
+        if ![self.start(), self.end(), point]
+            .into_iter()
+            .any(point_retains_joint_field)
+        {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        policy.strict_predicate_pass(|| {
+            common_point_oriented_side(self.start(), self.end(), point, policy)
+        })
+    }
+
     /// Returns the original direction authority and whether this traversal is
     /// reversed relative to it. Exact parallel construction preserves this
     /// relation structurally, even when its normalized vector is not a pair of
@@ -2335,6 +2353,22 @@ impl BezierAlgebraicChord2 {
         // batch because one support lacks an algebraic ray must not bypass
         // construction evidence carried by the individual endpoints.
         for index in 0..2 {
+            for (target, support, point) in [
+                (&mut first_sides[index], other, first_points[index]),
+                (&mut second_sides[index], self, second_points[index]),
+            ] {
+                if target.is_none() {
+                    match support.joint_field_oriented_side(point, policy)? {
+                        Classification::Decided(side) => *target = Some(side),
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Ok(Classification::Uncertain(
+                                UncertaintyReason::BudgetExhausted,
+                            ));
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
+            }
             if first_sides[index].is_none()
                 && self.certified_axis_direction().is_none()
                 && other.certified_axis_direction().is_none()

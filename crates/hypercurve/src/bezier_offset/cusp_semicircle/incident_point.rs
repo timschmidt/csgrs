@@ -5,18 +5,17 @@ use std::cmp::Ordering;
 use super::*;
 
 impl BezierAlgebraicCuspSemicircle2 {
-    /// Two distinct incident endpoints exhaust a line's circle contacts.
-    /// Preserve their shared point fields and select the owning half chart;
-    /// no Cartesian center or new root is needed. The transverse signs follow
-    /// from `(A-C).(B-A) = -|B-A|²/2` and its positive counterpart at B.
-    pub(super) fn shared_point_endpoint_chord_contacts(
+    /// A known endpoint factors the line/circle quadratic. Two incident
+    /// endpoints already exhaust it; otherwise construct the other contact in
+    /// the same selected field. Recheck the original circle and selected half,
+    /// and retain finite-line clipping and transverse evidence separately.
+    pub(super) fn shared_point_incident_chord_contacts(
         &self,
         chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Vec<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>>
     {
-        // Native endpoint families already have compact support kernels.
-        // This path consumes mapped joint points before coordinate promotion.
         if self.data.frame.rational().is_some() {
             return Ok(Classification::Decided(None));
         }
@@ -36,46 +35,118 @@ impl BezierAlgebraicCuspSemicircle2 {
             return Ok(Classification::Decided(None));
         }
         let radius_squared = self.radial_distance() * self.radial_distance();
-        for point in [chord.start(), chord.end()] {
+        let mut incidence = [false; 2];
+        let mut undecided = None;
+        for (index, point) in [chord.start(), chord.end()].into_iter().enumerate() {
             match common_point_circle_residual_sign(point, &center, &radius_squared, policy)? {
-                Classification::Decided(RealSign::Zero) => {}
-                Classification::Decided(RealSign::Positive | RealSign::Negative) => {
-                    return Ok(Classification::Decided(None));
+                Classification::Decided(sign) => incidence[index] = sign == RealSign::Zero,
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
                 }
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+                Classification::Uncertain(reason) => undecided = Some(reason),
             }
         }
-        let mut contacts = Vec::with_capacity(2);
-        for (at_start, point) in [(true, chord.start()), (false, chord.end())] {
+        if !incidence.contains(&true) {
+            return Ok(match undecided {
+                Some(reason) => Classification::Uncertain(reason),
+                None => Classification::Decided(None),
+            });
+        }
+        let reverse_sign = |sign| match sign {
+            RealSign::Negative => RealSign::Positive,
+            RealSign::Positive => RealSign::Negative,
+            RealSign::Zero => RealSign::Zero,
+        };
+        let mut candidates = Vec::with_capacity(2);
+        if incidence == [true, true] {
+            // (A-C).(B-A) = -|B-A|^2/2, with the opposite sign at B.
+            let start_cross = if self.is_clockwise() {
+                RealSign::Negative
+            } else {
+                RealSign::Positive
+            };
+            candidates.push((
+                chord.start().clone(),
+                start_cross,
+                Some(chord.start_parameter()),
+            ));
+            candidates.push((
+                chord.end().clone(),
+                reverse_sign(start_cross),
+                Some(chord.end_parameter()),
+            ));
+        } else {
+            let (incident, parameter) = if incidence[0] {
+                (chord.start(), chord.start_parameter())
+            } else {
+                (chord.end(), chord.end_parameter())
+            };
+            let (second, dot_sign) = match common_point_circle_second_line_contact(
+                incident,
+                &center,
+                chord.start(),
+                chord.end(),
+                policy,
+            )? {
+                Classification::Decided(contact) => contact,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let first_cross = if self.is_clockwise() {
+                dot_sign
+            } else {
+                reverse_sign(dot_sign)
+            };
+            candidates.push((incident.clone(), first_cross, Some(parameter)));
+            if dot_sign != RealSign::Zero {
+                match common_point_circle_residual_sign(&second, &center, &radius_squared, policy)?
+                {
+                    Classification::Decided(RealSign::Zero) => {}
+                    Classification::Decided(_) => {
+                        return Err(CurveError::Topology(
+                            "a derived line contact does not satisfy its original circle".into(),
+                        ));
+                    }
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+                candidates.push((second, reverse_sign(first_cross), None));
+            }
+        }
+        let mut contacts = Vec::with_capacity(candidates.len());
+        for (point, tangent_cross_sign, endpoint_parameter) in candidates {
             let (cusp_parameter, complementary) = match self.selected_incident_point_parameter(
-                point,
+                &point,
                 &center,
                 (&normal_x, &normal_y),
                 policy,
             )? {
                 Classification::Decided(location) => location,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
             if complementary {
                 continue;
             }
+            let chord_parameter = match endpoint_parameter {
+                Some(parameter) => parameter,
+                None if clip_to_finite_chord => {
+                    match chord.parameter_at_certified_point(point.clone(), policy)? {
+                        Classification::Decided(Some(parameter)) => parameter,
+                        Classification::Decided(None) => continue,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                None => chord.parameter_at_certified_support_point(point.clone(), policy)?,
+            };
             contacts.push(BezierAlgebraicCuspSemicircleRetainedChordContact2 {
                 cusp_parameter,
-                chord_parameter: if at_start {
-                    chord.start_parameter()
-                } else {
-                    chord.end_parameter()
-                },
-                point: point.clone(),
-                tangent_cross_sign: if at_start ^ self.is_clockwise() {
-                    RealSign::Positive
-                } else {
-                    RealSign::Negative
-                },
+                chord_parameter,
+                point,
+                tangent_cross_sign,
             });
         }
         Ok(Classification::Decided(Some(contacts)))

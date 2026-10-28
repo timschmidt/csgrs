@@ -7830,7 +7830,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
-        match self.shared_point_endpoint_chord_contacts(chord, policy)? {
+        match self.shared_point_incident_chord_contacts(chord, clip_to_finite_chord, policy)? {
             Classification::Decided(Some(contacts)) => {
                 return Ok(Classification::Decided(contacts));
             }

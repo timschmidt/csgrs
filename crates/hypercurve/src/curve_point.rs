@@ -424,6 +424,27 @@ impl CurvePoint2 {
             | (_, Self(CurvePointData2::Polynomial(_)))
             | (Self(CurvePointData2::RationalImage(_)), _)
             | (_, Self(CurvePointData2::RationalImage(_))) => {
+                // A retained chord intersection equals any point incident
+                // with both of its nonparallel supports. Joint point images
+                // can prove those incidences without separating coordinates;
+                // their storage tag must not bypass the construction proof.
+                let retained_pair = match (self, other) {
+                    (Self(CurvePointData2::AlgebraicChordPair(point)), other)
+                    | (other, Self(CurvePointData2::AlgebraicChordPair(point))) => {
+                        Some((point, other))
+                    }
+                    _ => None,
+                };
+                if let Some((point, other)) = retained_pair {
+                    match policy.strict_predicate_pass(|| point.same_point_evidence(other, policy))
+                    {
+                        decided @ Classification::Decided(_) => return decided,
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
                 self.same_point_by_coordinate_evidence(other, policy)
             }
             (Self(CurvePointData2::Endpoint(_)), _) | (_, Self(CurvePointData2::Endpoint(_))) => {

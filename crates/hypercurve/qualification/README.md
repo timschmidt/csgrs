@@ -514,13 +514,12 @@ and transverse signs, and policy certainty. Line representatives retain their
 shared point field before constructing an independent support intersection.
 All paths use the existing region arrangement and minor-arc winding semantics.
 
-These witnesses do not complete arbitrary circle/line intersections or erosion
-collapse. The preserved radius-one erosion-by-two probe still reports
-Unsupported after its concentric Boolean assertions pass. The separate full
-fresh-process filled-region SVG probe is now completed by the compound replay
-increment below. The erosion failure remains next owning-layer work and is not
-counted as completed geometry. No total arithmetic/memory or cancellation bound
-is inferred from fixture timeouts.
+Those region-admission witnesses alone do not complete arbitrary circle/line
+intersections or erosion collapse. The original radius-one erosion-by-two probe
+and its complete empty-result continuation are covered by the incidence
+increment below. The separate full fresh-process filled-region SVG probe is
+completed by the compound replay increment. No total arithmetic/memory or
+cancellation bound is inferred from fixture timeouts.
 
 Version 5 filled-region witnesses now share the existing checked definition
 nodes across multiple closed boundary paths. Strict replay uses the same region
@@ -542,3 +541,25 @@ claims. Cross-element or scalar-expression DAG sharing, arbitrary implicit-regio
 replay, total arithmetic/memory and cancellation remain open. Whole-empty-document
 export retains its existing finite-bounds error; zero-root native metadata import
 and empty downstream operands are separate supported operations.
+
+The one-incident-endpoint circle/line witnesses retain the degree-seven/five
+center and a represented unit frame. A known point factors the line/circle
+quadratic, so the other contact stays in the same selected field without a new
+root or separate coordinate materialization. The original circle residual,
+denominator guards, selected half, finite chord, tangency and transverse signs
+remain checked. Independent expectations cover signed radii, reversed traversal,
+radial and oblique secants, finite clipping, tangent contacts and nonconstant
+fiber-valued endpoints. A generated contact is consumed by point comparison,
+parameter evaluation, subdivision and native replay.
+
+Shared-field line determinants also remain available through similarity wrappers
+in the batched chord kernel. Partial overlaps retain their exact finite ranges
+and traversal correspondences. Nearby parallel supports separated by `2^-80`
+stay distinct; transverse contacts reuse their defining supports to prove or
+reject point identity. The original full concentric Boolean and large-erosion
+program now reaches canonical empty geometry, a subsequent empty offset and
+union identity. It does not use a radius-specific region shortcut. Actual ZERO
+budget exhaustion permits a larger retry, and strict/provisional/strict queries
+remain certified when their exact proofs succeed. These named cases do not
+complete arbitrary circle/line roots, independent fields, general collapse
+events, total arithmetic/memory bounds or cooperative cancellation.

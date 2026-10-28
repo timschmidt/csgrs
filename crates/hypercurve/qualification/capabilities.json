@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond the demonstrated authored sources, retained parallels and chords, selected points and represented-frame circles. Version 5 shares checked definitions across compound region boundaries; the named fresh-process annulus replay and further offsets complete. General independent angular fields, other circle frames, other differential point carriers and arbitrary implicit regions remain open. The original radius-one erosion-by-two probe remains unmet.",
+    "Native save/reload beyond the demonstrated authored sources, retained parallels and chords, selected points and represented-frame circles. Version 5 shares checked definitions across compound region boundaries; the named fresh-process annulus replay and further offsets complete. General independent angular fields, other circle frames, other differential point carriers and arbitrary implicit regions remain open. The named shared-field one-incident-endpoint circle/line and large-erosion continuation now complete; general circle/line roots and independent fields remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -10241,6 +10241,383 @@
         }
       ],
       "oracle": "A measured consumed construction terminal and explicit failed export; local serialization cannot upgrade inherited certainty."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_incident_radial",
+      "test": "selected_circle_one_incident_radial_chords_keep_signed_radius_and_traversal",
+      "domain": "Signed radii -1 and 1, both circle traversals and both line directions for a chord from C+3N to C-N.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both selected diameter endpoints are retained with the exact transverse signs."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both operand parameters evaluate to each independent expected contact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Each retained contact definition reconstructs the same selected point."
+        }
+      ],
+      "oracle": "Independent N=(-4/5,3/5), contacts C+N and C-N, and signs of the exact radial dot product."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_incident_clipping",
+      "test": "selected_circle_one_incident_chords_clip_the_second_root_and_keep_tangency",
+      "domain": "Radial finite chords ending at C+N, and its tangent along T=(3/5,4/5), with both line directions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Exactly one contact survives each finite range; tangent multiplicity is reported as one nontransverse contact with zero cross sign."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Returned parameters evaluate to C+N on both operands."
+        }
+      ],
+      "oracle": "The antipodal circle contact is outside each radial finite chord; N dot T=0 proves tangency."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_incident_oblique",
+      "test": "selected_circle_one_incident_oblique_chord_retains_both_exact_contacts",
+      "domain": "A=(-7/25,24/25)+C and B=(57/25,-24/25)+C define a chord with only A incident; both operand traversals are exercised.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A and independently specified Q=(1,0)+C are the two contacts, with exact crossing signs."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Both operand parameters and reconstructed contact definitions agree with the independent points."
+        }
+      ],
+      "oracle": "A and Q have unit radius and B=A+2(Q-A); this gives independent contact positions and transverse signs."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_incident_fiber",
+      "test": "selected_circle_one_incident_fiber_chord_keeps_correlated_second_contact",
+      "domain": "A fiber-dependent angular point A and a chord from A to C-2(A-C), with one contact on each selected half.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Each half keeps exactly its own antipodal contact and certified transverse sign."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The generated point splits its selected circle without independent coordinate materialization."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Contact definitions and split path metadata re-enter exact point comparison; deterministic SVG is checked separately."
+        }
+      ],
+      "oracle": "Independently constructed chart images with radii 1, -1 and -2 give the two antipodal contacts and chord endpoint."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_field_chord_overlap",
+      "test": "selected_field_chords_retain_partial_overlap_through_similarity_and_reversal",
+      "domain": "Shared-field chords [C+3N,C-N] and [C+N,C-3N], identity/translated similarities, both traversals and operand orders.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One positive-length overlap retains exact ranges, endpoint inclusion and relative traversal."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Similarity-wrapped endpoints retain the same independently translated overlap closure."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Corresponding range endpoints evaluate to the two independent overlap endpoints."
+        }
+      ],
+      "oracle": "The exact common interval is [C+N,C-N]; pairing each range endpoint checks the retained correspondence."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_field_chord_separation",
+      "test": "selected_field_chord_sides_distinguish_near_parallel_and_transverse_supports",
+      "domain": "Parallel oblique supports separated by 2^-80, collinear finite disjoint chords, and a transverse pair through the selected center.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Near-distinct and finite disjoint chords have no contacts or overlaps; the transverse pair has exactly one contact with positive cross sign."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "The retained intersection equals the independent center in both argument orders and differs from a point displaced by 2^-80."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The contact definition replays and both returned parameters evaluate to that point."
+        }
+      ],
+      "oracle": "Independent orthogonal rational frame N,T and exact nonzero displacement; center incidence on both nonparallel supports determines the intersection uniquely."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_incident_retry",
+      "test": "selected_circle_one_incident_contacts_retry_and_preserve_policy_receipts",
+      "domain": "The nonconstant antipodal contact query on reused inputs, with actual ZERO work exhaustion and a 4096-refinement, zero-promotion retry.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The actual shared work counter reaches its zero limit before the attempt can publish a complete result."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Larger retries recover the independently expected contact without coordinate promotion."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Strict/provisional/strict operation scopes retain Certified receipts when exact incidence succeeds."
+        }
+      ],
+      "oracle": "Work limit/used/requested assertions, independent antipodal point identity, retained parameter/definition replay and explicit certainty receipts."
+    },
+    {
+      "target": "fiber_point_incidence",
+      "owner": "Hypercurve shared point fields, circle/chord and chord/chord incidence, retained intersection identity and the existing region arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "timeout_seconds": 300,
+      "semantics": "Selected circles retain a degree-seven/five center and represented unit frame. A certified incident chord endpoint determines the second contact in the same selected field, with original guards, selected-half and finite-range checks. Chord relations use the existing incidence and arrangement authority. Claims are limited to the named complete workflows; arbitrary roots, independent fields, total arithmetic/memory and cancellation remain open.",
+      "id": "selected_circle_erasure_continuation",
+      "test": "selected_circle_regions_boolean_annulus_and_empty_offsets",
+      "domain": "Concentric radii 2 and 1 at the degree-seven/five center, followed by radius-one disk erosion by two using Round semantics.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The exact annulus retains one material contour and one hole."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Independent points at radii 0,1,3/2,2,3 match annulus material and boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Difference, XOR, intersection and union satisfy the full original concentric set identities."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "successful_empty",
+          "assertion": "Erosion beyond the disk radius produces canonical empty geometry through the existing arrangement."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "successful_empty",
+          "assertion": "The empty result remains empty under further round offset and re-enters the original union identity."
+        }
+      ],
+      "oracle": "Independent concentric disk/annulus radial identities, disappearance of a radius-one disk under erosion by two, and exact symmetric-difference set checks."
     }
   ]
 }

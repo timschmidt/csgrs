@@ -1875,6 +1875,32 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Circle line contacts increment (2026-10-28).** The owning layer is Hypercurve common point-field rational queries, circle/chord incidence, chord orientation and overlap, and point equality using retained two-support evidence,
+under P12, P15 and P17–P20, with native adapter obligations under P26.
+The measured domain is Selected circles with represented unit frames and signed radius, joint-field centers and chord endpoints, known incident endpoints, finite/reversed/partial chord domains, and the named repeated-offset region chains.
+
+For an incident endpoint A, circle center C and nonzero chord direction D, the second line contact is A - 2((A-C) dot D)D/(D dot D). The common field retains the norm guard in the original rational map. A zero dot product proves tangency; candidate residuals, selected halves, finite domains, parameters and transverse signs are still checked. Shared-field orientation proves line coincidence or separation without separating coordinates. Two-support intersection evidence is consulted before generic point equality. Actual budget exhaustion propagates and does not poison retry.
+
+Eight additional public fixtures preserve the full concentric Boolean, radius-one erosion-by-two, canonical empty, further offset and union chain. They also exercise signed and reversed radii, finite clipping and tangency, independent oblique contacts, nonconstant retained fibers, selected halves, splitting and native replay, partial and reversed line overlaps, 2^-80 distinct parallels, transverse contacts in both identity orders, zero-budget retry and policy transitions.
+
+All 18 fresh local qualification groups pass: 2,896 Hypercurve
+cases in 94 suites, 34 existing ignored cases; 65
+root adapter cases in 12 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 239
+capability fixtures, typos, repository budget and diff checks. Both unchanged
+native oblique fillet and composite chord-role regressions pass. Record
+`docs/evidence/2026-10-28-hypercurve-closure-circle-line-contacts` has SHA-256 `4f5b200100277b66bf2680c5c6992fa9966c7172f005142e9a8390a5de762ea5`.
+Every non-receipt byte matches the freshly qualified snapshot. A host restart
+removed earlier temporary runs; recovery provenance and the fresh runs are
+archived, and lost attempts are not credited. The interrupted nested-workspace
+attempt is retained, followed by a complete rerun outside the outer workspace.
+
+The unchanged corner probes still expose a generated diameter setback identity blocker and unsupported explicitly constrained selected-circle fillet on this increment. General independent circle/line fields, arbitrary algebraic operation closure and complete resource bounds remain open. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

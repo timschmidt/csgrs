@@ -5,7 +5,7 @@ use hypersolve::bivariate_arithmetic::{
     bivariate_add, bivariate_compose, bivariate_multiply, bivariate_scale, bivariate_subtract,
 };
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) struct PointFormSource2 {
     pub(crate) source: CurvePoint2,
     pub(crate) numerator: BivariatePolynomial,
@@ -347,6 +347,145 @@ pub(super) fn point_form_linear_combination(
     PointFormSource2::new(x.source.clone(), numerator, denominator)
 }
 
+fn point_form_product(
+    first: PointFormSource2,
+    second: PointFormSource2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<PointFormSource2>> {
+    Ok(
+        common_point_form_sources(first, second, policy)?.map(|[first, second]| {
+            PointFormSource2::new(
+                first.source,
+                bivariate_multiply(&first.numerator, &second.numerator),
+                bivariate_multiply(&first.denominator, &second.denominator),
+            )
+        }),
+    )
+}
+
+fn point_form_dot(
+    first: &[PointFormSource2; 2],
+    second: &[PointFormSource2; 2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<PointFormSource2>> {
+    let mut products = Vec::with_capacity(2);
+    for (first, second) in first.iter().zip(second) {
+        match point_form_product(first.clone(), second.clone(), policy)? {
+            Classification::Decided(product) => products.push(product),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    let [x, y] = products.try_into().expect("two vector components");
+    Ok(common_point_form_sources(x, y, policy)?
+        .map(|forms| point_form_linear_combination(&forms, &Real::one(), &Real::one())))
+}
+
+/// Given an incident point A, the second contact on direction D is
+/// A - 2 ((A-C).D) D / (D.D). No new root or coordinate projection is needed.
+/// The dot sign also gives tangency and the two opposite transverse signs.
+pub(super) fn common_point_circle_second_line_contact(
+    incident: &CurvePoint2,
+    center: &CurvePoint2,
+    start: &CurvePoint2,
+    end: &CurvePoint2,
+    policy: &CurveContext,
+) -> CurveResult<Classification<(CurvePoint2, RealSign)>> {
+    let radial = match common_point_displacement(incident, center, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let direction = match common_point_displacement(end, start, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let norm = match point_form_dot(&direction, &direction, policy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    match point_rational_form_sign(&norm.source, &norm.numerator, &norm.denominator, policy)? {
+        Classification::Decided(RealSign::Positive) => {}
+        Classification::Decided(_) => {
+            return Err(CurveError::Topology(
+                "a circle contact line must have positive squared direction".into(),
+            ));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    let dot = match point_form_dot(&radial, &direction, policy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let sign =
+        match point_rational_form_sign(&dot.source, &dot.numerator, &dot.denominator, policy)? {
+            Classification::Decided(RealSign::Zero) => {
+                return Ok(Classification::Decided((incident.clone(), RealSign::Zero)));
+            }
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+    let [dot, norm] = match common_point_form_sources(dot, norm, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    // Division moves the norm denominator upstairs. Keep it as an original
+    // nonzero guard as well, including after native replay of the final map.
+    let scale = PointFormSource2::new(
+        dot.source,
+        bivariate_scale(
+            bivariate_multiply(
+                &bivariate_multiply(&dot.numerator, &norm.denominator),
+                &norm.denominator,
+            ),
+            &Real::from(2),
+        ),
+        bivariate_multiply(
+            &bivariate_multiply(&dot.denominator, &norm.numerator),
+            &norm.denominator,
+        ),
+    );
+    let coordinates = [
+        BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+        BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+    ];
+    let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let mut result = Vec::with_capacity(2);
+    for (direction, coordinate) in direction.into_iter().zip(coordinates) {
+        let delta = match point_form_product(scale.clone(), direction, policy)? {
+            Classification::Decided(form) => form,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match point_form_difference(
+            PointFormSource2::new(incident.clone(), coordinate, one.clone()),
+            delta,
+            policy,
+        )? {
+            Classification::Decided(form) => result.push(form),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        }
+    }
+    let [x, y] = result.try_into().expect("two contact coordinates");
+    let [x, y] = match common_point_form_sources(x, y, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (numerators, denominator) = if x.denominator == y.denominator {
+        ([x.numerator, y.numerator], x.denominator)
+    } else {
+        (
+            [
+                bivariate_multiply(&x.numerator, &y.denominator),
+                bivariate_multiply(&y.numerator, &x.denominator),
+            ],
+            bivariate_multiply(&x.denominator, &y.denominator),
+        )
+    };
+    Ok(crate::ExactCurveError::classify_result(
+        x.source
+            .rational_image_with_policy(&crate::RationalMap2::new(numerators, denominator), policy),
+    )?
+    .map(|point| (point, sign)))
+}
+
 /// Signs |P-C|^2-r^2 in one certified common coordinate field. The squared
 /// denominator is positive only after both original difference denominators
 /// have been proved nonzero under the consuming policy.
@@ -402,22 +541,11 @@ pub(super) fn common_point_oriented_side(
         Classification::Decided(forms) => forms,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let product = |first, second| {
-        common_point_form_sources(first, second, policy).map(|forms| {
-            forms.map(|[first, second]| {
-                PointFormSource2::new(
-                    first.source,
-                    bivariate_multiply(&first.numerator, &second.numerator),
-                    bivariate_multiply(&first.denominator, &second.denominator),
-                )
-            })
-        })
-    };
-    let first = match product(ux, vy)? {
+    let first = match point_form_product(ux, vy, policy)? {
         Classification::Decided(form) => form,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let second = match product(uy, vx)? {
+    let second = match point_form_product(uy, vx, policy)? {
         Classification::Decided(form) => form,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };

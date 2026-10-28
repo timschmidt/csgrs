@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-circle-line-contacts-evidence-2026-10-28` branch ends at
+`6115a1e02fe881250cda8eb537f67e5680e32a73`, adding `docs/evidence/2026-10-28-hypercurve-closure-circle-line-contacts`
+(407 files, 9,463,829 bytes), SHA-256 `4f5b200100277b66bf2680c5c6992fa9966c7172f005142e9a8390a5de762ea5`. It records
+Hypercurve common point-field rational queries, circle/chord incidence, chord orientation and overlap, and point equality using retained two-support evidence. All 2,896 Hypercurve cases, 65
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 239 fixtures pass; 34 existing ignored cases remain.
+The recovered source is freshly qualified; lost pre-restart attempts are not
+credited. Source equality and the transition from parent `437ebd05cd` are
+recorded. This record is unpushed; complete closure, resource bounds and package
+delivery remain open.
+
 The local `hypercurve-region-replay-evidence-2026-10-28` branch ends at
 `50903a9a13df1ad56c60251cfe7883f4c0fc8857`, adding `docs/evidence/2026-10-28-hypercurve-closure-region-replay`
 (373 files, 7,191,304 bytes), SHA-256 `2890052379c7cb1997e3c1e57174c0101cde7f1e8fe4a6315a788a4f7e37917e`. It records
