@@ -25,6 +25,8 @@ hyperlattice = { version = "0.7.0", path = "../hyperlattice", default-features =
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 [dev-dependencies]
+# Fresh-process selected-field replay exercises validated exact scalar interchange.
+hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false, features = ["serde"] }
 criterion = "0.5"
 # Competitive floating-point controls only. Production solving and proof
 # replay remain independent of these external numerical engines.

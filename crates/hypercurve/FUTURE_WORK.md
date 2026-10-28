@@ -2205,6 +2205,48 @@ passing. The additive enclosure API is not yet used by existing geometric
 paths. Point/parameter integration, exact field-graph replay and completed
 modeling operations remain open. Full pre-push verification remains pending.
 
+**Selected polynomial graph replay increment (2026-10-28).**
+Hypersolve owns shared scalar definitions and strict replay under P1, P4-P6,
+P8 and P18-P20. SelectedPolynomialDefinition retains native selected roots,
+positive radical extensions, polynomial relations and rational coordinates in
+a flat graph. Iterative export deduplicates owned immutable storage within one
+call. Replay validates every backward reference, root selection, radicand,
+coefficient field and denominator, including unused records, before exposing
+outputs. Serialized validity/count flags and live caches are not proof.
+
+Eight witnesses and their fresh-process child pass, together with eighteen
+preceding field witnesses. They cover dependent c^45=2, subsequent arithmetic,
+selection, joins and enclosures; all eight graph variants and both native
+radicals; repeated nonmonic relations; 2^-160 separation; invalid references,
+field ownership, selectors, point witnesses, radicals and zero denominators;
+budget refusal and retry; deterministic encoding and 1000 shared output aliases.
+The original elliptic contact replays its curve equation, radius 1/64 and
+left/down selection. Scalar JSON is a test-only adapter using Hyperreal's
+validated exact interchange; this API does not prescribe a production format.
+
+All 14 qualification groups pass: full/all-target solver release
+(1,267 passed,
+0 ignored), minimal solver tests
+(1,264 passed), production minimal-core checking,
+affected Hypercurve consumers (160 passed),
+CSGRS consumers (13 passed), strict MSRV
+lint, denied-warning docs, allocation profiling and hygiene. The archive
+docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-replay has SHA-256 fb6e286a80355fe74b82833f708652cfdcdef185cb2394b1531693f7d1730316 and retains commands, source attribution,
+baseline/compile failures and original witnesses. Alignment to 0ca183ed007f50a35921366df924cd5c18433682
+changed Git ancestry and three receipts, preserving qualified implementation
+bytes.
+
+Graph limits count records. Native base/extension admissions and polynomial
+selections charge the shared promotion counter. These are not total arithmetic,
+coefficient-size, memory, time or cancellation bounds. No performance or
+universal closure claim is made.
+
+Seven geometric operations and the independent cubic-root point-query sum
+remain Unsupported with all corresponding controls passing. Scalar replay
+is not yet connected to geometric point/parameter or native curve interchange
+consumers. Those integrations, completed modeling operations and full pre-push
+verification remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

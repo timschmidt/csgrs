@@ -60,6 +60,12 @@
 
 ### Added
 
+- Shared selected-polynomial field/value definitions retain original selectors,
+  native radicals and rational coordinates. Strict replay validates every record
+  and denominator before publishing outputs, with an explicit graph-node limit.
+  The scalar graph supplies format owners with exact data; geometric native
+  interchange still requires its own integration.
+
 - Certified closed bounds for retained selected-polynomial values validate
   containment and refine by exact comparisons without independent root images.
   Shared refinement limits preserve typed refusal and larger-budget retry.

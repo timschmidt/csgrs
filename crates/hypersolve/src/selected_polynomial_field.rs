@@ -14,6 +14,12 @@
 //! embeddings of independent selections; construction-identity checks alone
 //! do not decide equality of arbitrary algebraic values.
 
+mod definition;
+pub use definition::{
+    SelectedPolynomialDefinition, SelectedPolynomialDefinitionNode, SelectedPolynomialNodeLimit,
+    SelectedPolynomialReplayError, SelectedPolynomialRootDefinition,
+};
+
 mod bounds;
 pub use bounds::SelectedPolynomialEnclosure;
 mod join;

@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-polynomial-replay-evidence-2026-10-28 branch ends at
+2472aef555210a4222d04fe1b746c8c7ac015be3, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-replay (145 files,
+9,456,865 bytes), SHA-256 fb6e286a80355fe74b82833f708652cfdcdef185cb2394b1531693f7d1730316. It records strict shared scalar-graph
+replay, eight witnesses plus a fresh-process child, eighteen predecessor
+witnesses and 14 qualification groups. Geometric blockers, resource limits,
+test-only serialization and parent alignment remain explicit. Geometric closure
+and package delivery are not claimed. This record is unpushed.
+
 The local `hypercurve-selected-polynomial-bounds-evidence-2026-10-28` branch ends at
 `24ef19eea6278aaf9d75d8dec596c4129355a752`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-bounds` (104 files,
 6,609,652 bytes), SHA-256 `a0fe988c8ad9e07d71923244cc2ef91e9791f81100a283d1bf91f147f3047e83`. It records certified enclosures of
