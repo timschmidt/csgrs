@@ -5048,6 +5048,26 @@ impl BezierAlgebraicChordParallelPoint2 {
                 return same;
             }
         }
+        if self.data.source.certified_unit_tangent().is_some()
+            && (point_retains_joint_field(self.source_endpoint())
+                || point_retains_joint_field(other)
+                || matches!(
+                    &other.0,
+                    CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_)
+                ))
+        {
+            // The metric construction remains authoritative. Its represented
+            // unit direction also permits the existing coordinate query to
+            // pull the displacement back into the original selected field.
+            let equal =
+                CurvePoint2::from(self.clone()).same_point_by_coordinate_evidence(other, policy);
+            if hypersolve::work_budget::exhaustion().is_some() {
+                return Classification::Uncertain(UncertaintyReason::BudgetExhausted);
+            }
+            if matches!(equal, Classification::Decided(_)) {
+                return equal;
+            }
+        }
         retained_point_evidence_equality_by_refinement(
             &CurvePoint2::from(self.clone()),
             other,

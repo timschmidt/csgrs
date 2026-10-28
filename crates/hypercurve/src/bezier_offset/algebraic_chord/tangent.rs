@@ -12,7 +12,11 @@ impl BezierAlgebraicChord2 {
     ) -> CurveResult<Classification<crate::classify::LineSide>> {
         if ![self.start(), self.end(), point]
             .into_iter()
-            .any(point_retains_joint_field)
+            .any(|point| {
+                point_retains_joint_field(point)
+                    || matches!(&point.0, CurvePointData2::Endpoint(_) | CurvePointData2::Similarity(_))
+                    || matches!(&point.0, CurvePointData2::AlgebraicChordParallel(point) if point.data.source.certified_unit_tangent().is_some())
+            })
         {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
@@ -1941,6 +1945,16 @@ impl BezierAlgebraicChord2 {
             .any(|endpoint| endpoint.shares_storage(point))
         {
             return Ok(Classification::Decided(crate::classify::LineSide::On));
+        }
+        // Replay and finite support queries must use the same retained field
+        // determinant before independent interval boxes. In particular, exact
+        // incidence cannot be recovered by refining non-singleton coordinates.
+        match self.joint_field_oriented_side(point, policy)? {
+            decided @ Classification::Decided(_) => return Ok(decided),
+            exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(exhausted);
+            }
+            Classification::Uncertain(_) => {}
         }
         if let Some(direction) = self.certified_axis_direction()
             && let Some(side) = self.axis_oriented_side(point, direction, policy)

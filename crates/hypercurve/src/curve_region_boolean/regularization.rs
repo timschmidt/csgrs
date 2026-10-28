@@ -3165,16 +3165,48 @@ impl<'a> CurveRegionBooleanContext<'a> {
             (x.saturating_mul(3), y),
             (x, y.saturating_mul(3)),
         ];
-        for (direction_x, direction_y) in directions {
-            if direction_x == 0 && direction_y == 0 {
-                continue;
-            }
+        // The cheap sign-scaled directions coincide when the tangent is
+        // axis aligned. After an endpoint-collinear ray, try distinct rays
+        // in the same certified open half-plane. Each boundary fragment has
+        // at most two endpoint directions, so 2N+1 candidates include one
+        // that avoids them. Other undecided predicates remain typed.
+        let additional = if normal_x.is_some() && normal_y.is_some() {
+            self.data.carriers.len().saturating_mul(2).saturating_add(1)
+        } else {
+            0
+        };
+        let mut encountered_boundary = false;
+        for index in 0..directions.len().saturating_add(additional) {
+            let (direction_x, direction_y) = if let Some(&(dx, dy)) = directions.get(index) {
+                if dx == 0 && dy == 0 {
+                    continue;
+                }
+                (Real::from(dx), Real::from(dy))
+            } else {
+                if !encountered_boundary {
+                    break;
+                }
+                let Ok(slope) = u64::try_from(index - directions.len()) else {
+                    return Err(self.blocked(carrier_index, UncertaintyReason::Unsupported));
+                };
+                let slope = Real::from(slope);
+                if x != 0 {
+                    // A known zero normal-y permits either y direction.
+                    (
+                        Real::from(x),
+                        slope * Real::from(if y == 0 { 1 } else { y }),
+                    )
+                } else {
+                    // Here normal-x is known zero and normal-y is nonzero.
+                    (slope, Real::from(y))
+                }
+            };
             let classification = self
                 .region_for_carrier(carrier_index)
                 .point_evidence_loop_windings_from_boundary_side_ray(
                     representative,
-                    Real::from(direction_x),
-                    Real::from(direction_y),
+                    direction_x,
+                    direction_y,
                     carrier.loop_index,
                     carrier.fragment_index,
                     &self.data.policy,
@@ -3188,6 +3220,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok((windings, location));
                 }
                 Classification::Uncertain(reason) => {
+                    encountered_boundary |= reason == UncertaintyReason::Boundary;
                     last_reason = reason;
                 }
             }

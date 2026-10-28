@@ -59326,3 +59326,204 @@ fn recursive_formula_source_order_preserves_value_and_typed_local_decline() {
         }
     }
 }
+
+#[test]
+fn exact_point_translation_retains_consumed_and_inherited_policies() {
+    let outcome = crate::evaluate_under(crate::PredicatePolicy::APPROXIMATE_512, || {
+        let source = dense_chord_normal_point(
+            2,
+            vec![Real::zero(), Real::one()],
+            vec![Real::one()],
+            &CurveContext::STRICT,
+            "translation policy witness",
+        );
+        let translation = Similarity2::try_from_real_affine(
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+        )
+        .unwrap();
+        for retained in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let image = BezierSimilarityPoint2::new(source.clone(), translation.clone(), &retained);
+            let translated = image
+                .translated(&Real::one(), &Real::one(), &CurveContext::APPROXIMATE_512)
+                .unwrap();
+            assert_eq!(translated.data.policy, retained);
+            assert_eq!(
+                translated.strict_definition().is_some(),
+                retained == CurveContext::STRICT
+            );
+            if retained == CurveContext::APPROXIMATE_512 {
+                assert!(
+                    translated
+                        .predicate_point_evidence(&CurveContext::STRICT)
+                        .is_err()
+                );
+            }
+        }
+    });
+    assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+}
+
+#[test]
+fn qualified_chord_displacement_retains_direction_dependency() {
+    use crate::tests::decided;
+    let outcome = crate::evaluate_under(crate::PredicatePolicy::APPROXIMATE_512, || {
+        let mut chord = decided(
+            BezierAlgebraicChord2::try_new(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(1, 0).into(),
+                &CurveContext::STRICT,
+            )
+            .unwrap(),
+        );
+        assert!(chord.certified_unit_tangent().is_some());
+        Arc::make_mut(&mut chord.data).policy = CurveContext::APPROXIMATE_512;
+        let origin = CurvePoint2::from(Point2::from_values(2, 2));
+        for normal in [false, true] {
+            let point = if normal {
+                chord.normal_displaced_point_evidence(
+                    origin.clone(),
+                    Real::one(),
+                    &CurveContext::APPROXIMATE_512,
+                )
+            } else {
+                chord.tangent_displaced_point_evidence(
+                    origin.clone(),
+                    Real::one(),
+                    &CurveContext::APPROXIMATE_512,
+                )
+            }
+            .unwrap();
+            let CurvePoint2(CurvePointData2::AlgebraicChordParallel(displacement)) = &point else {
+                panic!("a qualified direction must retain its source chord");
+            };
+            assert_eq!(
+                displacement.data.source.data.policy,
+                CurveContext::APPROXIMATE_512
+            );
+            assert!(
+                point
+                    .definition()
+                    .and_then(|definition| definition.into_point())
+                    .is_err()
+            );
+            assert!(
+                if normal {
+                    chord.normal_displaced_point_evidence(
+                        origin.clone(),
+                        Real::one(),
+                        &CurveContext::STRICT,
+                    )
+                } else {
+                    chord.tangent_displaced_point_evidence(
+                        origin.clone(),
+                        Real::one(),
+                        &CurveContext::STRICT,
+                    )
+                }
+                .is_err()
+            );
+        }
+    });
+    assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+}
+
+#[test]
+fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
+    use crate::tests::decided;
+    let policy = CurveContext::STRICT;
+    let origin = CurvePoint2::from(Point2::from_values(0, 0));
+    let anchor = decided(
+        BezierAlgebraicChord2::try_new(origin.clone(), Point2::from_values(1, 0).into(), &policy)
+            .unwrap(),
+    );
+    let circle = decided(
+        BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
+            origin.clone(),
+            anchor,
+            Real::one(),
+            true,
+            &policy,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let endpoint = CurvePoint2::from(Point2::from_values(1, 0));
+    assert_eq!(
+        circle
+            .retained_point_incidence_sign(&endpoint, &policy)
+            .unwrap(),
+        Classification::Decided(RealSign::Zero)
+    );
+    let radial = decided(common_point_displacement(&endpoint, &origin, &policy).unwrap());
+    let cut = BezierAlgebraicCuspSemicircleParameter2::Mapped(Arc::new(
+        BezierAlgebraicCuspSemicircleMappedParameterData2::IncidentPoint {
+            semicircle: circle.clone(),
+            point: endpoint,
+            radial: Arc::new(radial),
+            policy,
+        },
+    ));
+    let fragment = decided(
+        BezierAlgebraicCuspSemicircleFragment2::try_new(
+            circle,
+            BezierAlgebraicCuspSemicircleParameter2::Exact(Real::zero()),
+            cut,
+            false,
+            &policy,
+        )
+        .unwrap(),
+    );
+    for reverse in [false, true] {
+        let source = if reverse {
+            fragment.reversed()
+        } else {
+            fragment.clone()
+        };
+        let distance = Real::from(if reverse { -1 } else { 1 });
+        let grown = decided(source.offset_left(&distance, &policy).unwrap()).unwrap();
+        assert!(matches!(
+            grown.data.end,
+            BezierAlgebraicCuspSemicircleParameter2::Mapped(_)
+        ));
+        let ray = decided(grown.algebraic_ray_evaluator(&policy).unwrap());
+        let endpoints = if reverse {
+            [(2, 0), (0, 2)]
+        } else {
+            [(0, 2), (2, 0)]
+        };
+        for (actual, (x, y)) in [&ray.start, &ray.end].into_iter().zip(endpoints) {
+            assert_eq!(
+                actual.same_point(&Point2::from_values(x, y).into(), &policy),
+                Classification::Decided(true)
+            );
+        }
+        let root = Real::from(2).sqrt().unwrap();
+        for (point, expected) in [
+            (Point2::new(root.clone(), root.clone()), true),
+            (Point2::new(-root.clone(), -root), false),
+            (Point2::from_values(0, 1), false),
+        ] {
+            assert_eq!(
+                ray.contains_point_for_point(&point.into(), &policy)
+                    .unwrap(),
+                Classification::Decided(expected)
+            );
+        }
+        assert_eq!(
+            ray.forward_ray_winding_delta_for_point(
+                &Point2::from_values(-3, 1).into(),
+                &Real::one(),
+                &Real::zero(),
+                false,
+                &policy,
+            )
+            .unwrap(),
+            Classification::Decided(if reverse { 1 } else { -1 })
+        );
+    }
+}

@@ -1901,6 +1901,49 @@ RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
 
+**Selected circle corners increment (2026-10-28).** The owning layer is Hypercurve common point fields, selected-circle incidence and endpoint transport, corner reconstruction, arrangement side rays, finite projection and native circle definitions,
+under P12, P15 and P17–P20, with native adapter obligations under P26.
+The measured domain is The named jointly selected degree-seven/five circle centers, represented metric frames, signed radii, translated support contacts, finite and reversed overlaps, and diameter-corner edits with explicit algebraic constraints.
+
+Common-field relations retain exact translated circle/circle and nonincident circle/line contacts, original radius equations, finite domains and tangent signs. Derived-point query views preserve coordinate guards and source identity. Coincident supports reuse the existing angular correspondence authority; overlap endpoints replay through their original point definitions. Mapped cuts use the fragment endpoint authority after concentric offsets. A finite set of distinct side rays in the certified normal half-plane avoids endpoint-collinear candidates without guessing winding. Exact point translations retain consumed policy and inherited barriers. Projection reuses only vertices whose exact connectivity is validated, while native definitions remain authoritative.
+
+The unchanged chamfer and constrained fillet programs now complete construction, independent contact checks, boundary reconstruction, path and filled-region replay, round dilation/contraction and semantic XOR. Twelve additional public fixtures cover exact roots, tangency, finite clipping, 2^-80 gaps, selected halves, reversal, partial overlap restriction/replay, fresh-process contact replay, policy transitions and resource retry. Three unit regressions cover mapped cut rays and retained policy dependencies. A CSGRS adapter fixture constructs a fillet from a compact exact seed, reloads its filled result and consumes further offsets.
+
+All 18 fresh local qualification groups pass: 2,911 Hypercurve
+cases in 94 suites, 34 existing ignored cases; 66
+root adapter cases in 12 suites; 3,012 cases across six
+consumer packages; strict MSRV all-target/all-feature and fuzz Clippy, core
+builds, denied-warning docs, formatting, 16 matrix guards, 251
+capability fixtures, typos, repository budget and diff checks. The unchanged
+native oblique fillet, composite chord-role, collapsed selected-circle and
+affine-chord regressions pass. Record
+`docs/evidence/2026-10-28-hypercurve-closure-selected-circle-corners` has SHA-256 `d39113527e8a6013bce19c9ada17faefc0be34fd2a8bd8e5adaeb85168b904b9`.
+Every non-receipt byte matches the freshly qualified snapshot. Original
+failures, subsequent diagnostic attempts and fixture corrections are archived.
+The initial attempt omitted the ignored SVG seed from source attribution and
+is not credited; the fresh complete attempt includes every final input.
+The third attempt exposed a native collapsed-circle regression and was
+interrupted without claiming resource exhaustion. Native coordinate-order
+dispatch now retains priority unless wrappers retain joint-field dependencies.
+The unchanged regression passes in
+29.96
+seconds in the final focused run. This is not a comparative benchmark.
+The fourth attempt exposed an affine-chord dispatch regression. The join now
+reuses its original chord frame instead of constructing a replacement direction
+chord; the original dispatch and geometric assertions pass unchanged.
+
+A separate source-attributed whole-chain probe exhausted the configured zero
+and 65,536 refinement limits, then completed two retries using 278,432 root
+refinement units and zero promotions each under limits of 4,194,304 and 4,096.
+Strict, approximate-requested and strict erosion/replay/XOR chains were certified.
+The archived probe includes the initial insufficient-budget attempt; exhaustion
+is distinct from completed geometry.
+
+Six fresh probes on this source still fail whole empty-document export or inherited empty-topology replay/projection. Their source-attributed programs are archived as a separate follow-on frontier. This is a bounded completion envelope for the named shared-field circles and corner chains. General independent coefficient fields, nonrepresented circle frames, arbitrary algebraic curve operations, complete cancellation and total arithmetic/memory bounds remain open. Shared refinement counters, external timeouts and process peak
+RSS do not establish total-work, expression-growth, retained-memory or
+cancellation bounds. No comparative performance or universal closure claim is
+made. Full pre-push validation and delivery remain pending for this increment.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

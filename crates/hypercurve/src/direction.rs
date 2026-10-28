@@ -12,6 +12,12 @@ pub(crate) struct UnitDirection2 {
 }
 
 impl UnitDirection2 {
+    /// Retains components whose unit length was proved by the caller's exact
+    /// construction. This is not an ingress for serialized proof flags.
+    pub(crate) fn from_certified_components(components: (Real, Real)) -> Self {
+        Self { components }
+    }
+
     pub(crate) fn from_direction(direction: &(Real, Real)) -> CurveResult<Classification<Self>> {
         let length_squared = &direction.0 * &direction.0 + &direction.1 * &direction.1;
         match real_sign(&length_squared, &CurveContext::STRICT) {

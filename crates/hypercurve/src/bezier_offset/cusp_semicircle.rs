@@ -197,6 +197,47 @@ impl BezierAlgebraicCuspSemicircle2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         center_parameter.validate_policy(policy)?;
+        if let BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) = &center_parameter {
+            let norm_relation = &normal_denominator * &normal_denominator
+                - support.radial_distance() * support.radial_distance();
+            match real_sign(&norm_relation, &CurveContext::STRICT) {
+                Some(RealSign::Zero) => {}
+                Some(_) => {
+                    return Err(CurveError::Topology(
+                        "a radial unit frame denominator differs from its support radius".into(),
+                    ));
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+            }
+            let center = match support.point_evidence_at(parameter, policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let support_center = match support.center_point_evidence(policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            // A represented angular value can have a represented radial
+            // displacement while its center remains a jointly selected point.
+            // Query that difference in the source field instead of separating
+            // either center's coordinates or requiring a mapped-root wrapper.
+            let (x, y) = match policy.strict_predicate_pass(|| {
+                common_point_constant_displacement(&center, &support_center, policy)
+            })? {
+                Classification::Decided(Some(displacement)) => displacement,
+                Classification::Decided(None) => {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return Self::from_retained_center_and_certified_unit_normal(
+                &center,
+                ((x / &normal_denominator)?, (y / &normal_denominator)?),
+                radial_distance,
+                clockwise,
+                policy,
+            );
+        }
         let BezierAlgebraicCuspSemicircleParameter2::Mapped(center_parameter) = center_parameter
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -470,7 +511,24 @@ impl BezierAlgebraicCuspSemicircle2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         let CurvePoint2(CurvePointData2::Algebraic(center)) = center else {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            // The caller owns the unit-normal proof. A native direction chord
+            // transports it without materializing the retained center or
+            // rediscovering a radical normalization identity.
+            let direction = crate::direction::UnitDirection2::from_certified_components((
+                unit_normal.1,
+                -unit_normal.0,
+            ));
+            let anchor = match BezierAlgebraicChord2::from_unit_direction(&direction, policy)? {
+                Classification::Decided(anchor) => anchor,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return Self::from_retained_center_and_chord_normal(
+                center.clone(),
+                anchor,
+                radial_distance,
+                clockwise,
+                policy,
+            );
         };
         let parameter = match algebraic_chord_image_parameter(center, policy)? {
             Classification::Decided(parameter) => parameter,
@@ -1434,7 +1492,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         chord.validate_policy(policy)?;
         let center = match &anchor_tangent {
             BezierSelectedChordNormalAnchor2::Represented(anchor_tangent) => {
-                let Some(frame_normal) = self.data.frame.represented_unit_normal()? else {
+                let Some(frame_normal) = self.represented_frame_unit_normal()? else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
                 let expected_normal = (-anchor_tangent.1.clone(), anchor_tangent.0.clone());

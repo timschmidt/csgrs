@@ -461,7 +461,10 @@ mod tests {
         };
         let parameter = parameter.as_algebraic_cusp().unwrap();
         assert!(parameter.validate_policy(&CurveContext::STRICT).is_err());
-        assert!(qualified.native_parameter_definition(parameter).is_none());
+        assert!(matches!(
+            qualified.native_parameter_definition(parameter),
+            Err(CurveError::IncompatiblePredicatePolicy)
+        ));
         let strict = circle(center.clone(), &CurveContext::STRICT);
         let Classification::Decided(inherited) = strict
             .parameter_at_certified_incident_point(&point, &CurveContext::APPROXIMATE_512)

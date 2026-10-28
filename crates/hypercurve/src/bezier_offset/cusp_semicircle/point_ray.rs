@@ -343,17 +343,17 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         let mut endpoints = Vec::with_capacity(2);
-        for parameter in [&self.data.start, &self.data.end] {
-            match parameter.coincident_point_evidence(self.semicircle(), policy)? {
+        // The fragment owns concentric transport of mapped cuts as well as
+        // traversal. A source-circle parameter alone does not describe the
+        // endpoint of a later normal offset.
+        for start_endpoint in [true, false] {
+            match self.endpoint_point_evidence(start_endpoint, policy)? {
                 Classification::Decided(Some(point)) => endpoints.push(point),
                 Classification::Decided(None) => {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
-        }
-        if self.is_reversed() {
-            endpoints.reverse();
         }
         let end = endpoints.pop().expect("two endpoints");
         let start = endpoints.pop().expect("two endpoints");

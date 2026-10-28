@@ -2339,11 +2339,67 @@ impl<'a> CurveCornerChain2<'a> {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record("hypercurve", "curve-region-fillet-chord", "entered");
         let Some(relation) = frame.anchor_evidence.as_ref() else {
-            return Err(ExactCurveError::blocked(
-                CurveOperation2::Fillet,
-                CurveFamily2::RationalBezier,
-                UncertaintyReason::Predicate,
-            ));
+            // Explicit center/contact constraints need not have a pair-solve
+            // tangent record. Recheck the terminal contact on the constructed
+            // circle, then invert its exact half chart. Its traversal already
+            // encodes the requested fillet side; the selected point owns the
+            // choice between one and two half charts.
+            match policy
+                .strict_predicate_pass(|| {
+                    fillet.retained_point_incidence_sign(&chord_cut.point, policy)
+                })
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(RealSign::Zero) => {}
+                Classification::Decided(_) => {
+                    return Err(curve_region_edit_error(
+                        CurveOperation2::Fillet,
+                        CurveError::Topology(
+                            "a constrained fillet contact was absent from its circle".into(),
+                        ),
+                    ));
+                }
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            }
+            let parameter = match fillet
+                .parameter_at_certified_incident_point(&chord_cut.point, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Fillet, cause))?
+            {
+                Classification::Decided(parameter) => parameter,
+                Classification::Uncertain(reason) => {
+                    return Err(ExactCurveError::blocked(
+                        CurveOperation2::Fillet,
+                        CurveFamily2::CircularArc,
+                        reason,
+                    ));
+                }
+            };
+            let crosses_complementary_half = parameter.is_algebraic_cusp_complement();
+            let terminal_circle = if crosses_complementary_half {
+                fillet.complementary_half()
+            } else {
+                fillet.clone()
+            };
+            return Self::publish_retained_circle_fillet(
+                frame.anchor_is_previous,
+                fillet,
+                terminal_circle,
+                parameter
+                    .as_algebraic_cusp()
+                    .expect("circle angular inversion returns its own parameter")
+                    .clone(),
+                crosses_complementary_half,
+                Some(chord_cut.point.clone()),
+                anchor_cut,
+                chord_cut,
+                policy,
+            );
         };
         let (tangent_cross, tangent_dot) = match (relation.cross, relation.dot) {
             (Some(cross), Some(dot)) => (cross, dot),

@@ -1536,6 +1536,7 @@ dependencies = [
  "hyperphysics",
  "hyperreal",
  "hypersdf",
+ "hypersolve",
  "hypertri",
  "image",
  "js-sys",

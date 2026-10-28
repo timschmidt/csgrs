@@ -1033,6 +1033,27 @@ pub(super) fn constrained_fillet_centers(
     let Some(binding) = binding.filter(|binding| binding.request.has_constraints()) else {
         return Ok(None);
     };
+    if let Some(center) = &binding.request.center
+        && crate::bezier_offset::point_retains_joint_field(center)
+        && offsets.iter().any(|offset| {
+            matches!(
+                offset,
+                FilletOffsetCarrier2::AlgebraicCusp { .. }
+                    | FilletOffsetCarrier2::AlgebraicChord { .. }
+            )
+        })
+        && offsets
+            .iter()
+            .all(|offset| !matches!(offset, FilletOffsetCarrier2::Parallel { .. }))
+    {
+        // The constraint supplies the candidate without separating its shared
+        // coordinates or rediscovering it by pair elimination. fillet_at_center
+        // still proves both offset incidences and every contact/domain rule.
+        return Ok(Some(CurveCornerSolutions2::Unique(witness(
+            center.clone(),
+            [None, None],
+        ))));
+    }
     // Native support solvers already retain specialized contact certificates.
     // Keep them; general parallel pairs need the expensive pair elimination.
     if !offsets

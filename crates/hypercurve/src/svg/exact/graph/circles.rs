@@ -50,9 +50,8 @@ impl GraphWriter {
         if let Some((_, index)) = key.and_then(|key| self.circle_parameters.get(&key)) {
             return Ok(*index);
         }
-        let definition = circle
-            .native_parameter_definition(parameter)
-            .ok_or_else(|| {
+        let definition =
+            certified(circle.native_parameter_definition(parameter))?.ok_or_else(|| {
                 SvgError::Unsupported(
                     "exact circle replay requires a retained angular contact definition".into(),
                 )

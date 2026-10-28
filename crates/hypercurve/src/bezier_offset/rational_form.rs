@@ -26,13 +26,57 @@ impl PointFormSource2 {
     }
 }
 
-/// A similarity transports a joint point field without separating its
-/// coordinates. This is only a dispatch hint; the queried determinant still
+/// Similarities and represented procedural displacements can transport a
+/// joint point field without separating its coordinates. This is only a
+/// dispatch hint; the queried determinant still
 /// validates the retained maps, guards and policy in that field.
 pub(crate) fn point_retains_joint_field(point: &CurvePoint2) -> bool {
     match &point.0 {
         CurvePointData2::Polynomial(_) | CurvePointData2::RationalImage(_) => true,
         CurvePointData2::Similarity(image) => point_retains_joint_field(&image.data.source),
+        CurvePointData2::Endpoint(endpoint) => match endpoint.fragment.as_ref() {
+            crate::BezierSplitFragment2::AlgebraicChord(chord) => {
+                point_retains_joint_field(if endpoint.start {
+                    chord.start()
+                } else {
+                    chord.end()
+                })
+            }
+            crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
+                let frame = &fragment.data.semicircle.data.frame;
+                frame
+                    .chord_normal()
+                    .is_some_and(|frame| point_retains_joint_field(&frame.center))
+                    || frame.selected_radial().is_some_and(|frame| {
+                        frame
+                            .center_parameter
+                            .retained_point_evidence()
+                            .is_some_and(point_retains_joint_field)
+                    })
+            }
+            _ => false,
+        },
+        CurvePointData2::AlgebraicChordParallel(point)
+            if point.data.source.certified_unit_tangent().is_some() =>
+        {
+            point_retains_joint_field(point.source_endpoint())
+        }
+        CurvePointData2::AlgebraicCuspChordDerived(point) => {
+            point
+                .data
+                .source
+                .retained_point()
+                .as_ref()
+                .is_some_and(point_retains_joint_field)
+                || point
+                    .data
+                    .source
+                    .semicircle()
+                    .data
+                    .frame
+                    .chord_normal()
+                    .is_some_and(|frame| point_retains_joint_field(&frame.center))
+        }
         _ => false,
     }
 }
@@ -525,6 +569,49 @@ pub(super) fn common_point_circle_residual_sign(
     point_polynomial_sign(&dx.source, &residual, policy)
 }
 
+/// Signs the circle-pair discriminant in the centers' shared point field.
+/// For q=|C2-C1|², real contacts require 4*q*r1²-(q+r1²-r2²)² >= 0.
+/// Keep the original coordinate guards; clearing the final squared
+/// denominator preserves the sign without materializing either center.
+pub(super) fn common_point_circle_pair_discriminant_sign(
+    first: &CurvePoint2,
+    second: &CurvePoint2,
+    first_radius_squared: &Real,
+    second_radius_squared: &Real,
+    policy: &CurveContext,
+) -> CurveResult<Classification<RealSign>> {
+    let displacement = match common_point_displacement(second, first, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    for form in &displacement {
+        if let Classification::Uncertain(reason) =
+            point_rational_denominator_sign(&form.source, &form.denominator, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let norm = match point_form_dot(&displacement, &displacement, policy)? {
+        Classification::Decided(form) => form,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let line = bivariate_add(
+        &norm.numerator,
+        &bivariate_scale(
+            norm.denominator.clone(),
+            &(first_radius_squared - second_radius_squared),
+        ),
+    );
+    let discriminant = bivariate_subtract(
+        &bivariate_scale(
+            bivariate_multiply(&norm.numerator, &norm.denominator),
+            &(Real::from(4) * first_radius_squared),
+        ),
+        &bivariate_multiply(&line, &line),
+    );
+    point_polynomial_sign(&norm.source, &discriminant, policy)
+}
+
 /// Signs the oriented area of three points in their retained common field.
 /// Each original coordinate denominator remains a guard of the determinant.
 pub(super) fn common_point_oriented_side(
@@ -566,6 +653,122 @@ pub(super) fn common_point_oriented_side(
     }))
 }
 
+/// Reuses the original common field for Q=C+a(P-C)+b*J(P-C)+T.
+/// This temporary rational map is only a query view; Q keeps its circle and
+/// selected contact authority for reconstruction and native replay.
+fn derived_circle_point_form(
+    point: &BezierAlgebraicCuspChordDerivedPoint2,
+    numerator: &BivariatePolynomial,
+    denominator: &BivariatePolynomial,
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<PointFormSource2>>> {
+    point.data.source.validate_policy(policy)?;
+    let Some(source) = point.data.source.retained_point() else {
+        return Ok(Classification::Decided(None));
+    };
+    if matches!(&source.0, CurvePointData2::AlgebraicCuspChordDerived(other) if Arc::ptr_eq(&point.data, &other.data))
+    {
+        return Ok(Classification::Decided(None));
+    }
+    let center = match point
+        .data
+        .source
+        .semicircle()
+        .center_point_evidence(policy)?
+    {
+        Classification::Decided(center) => center,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let radial = match common_point_displacement(&source, &center, policy)? {
+        Classification::Decided(radial) => radial,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    for form in &radial {
+        if let Classification::Uncertain(reason) =
+            point_rational_denominator_sign(&form.source, &form.denominator, policy)?
+        {
+            return Ok(Classification::Uncertain(reason));
+        }
+    }
+    let displacement = [
+        point_form_linear_combination(
+            &radial,
+            &point.data.radial_scale,
+            &(-point.data.perpendicular_scale.clone()),
+        ),
+        point_form_linear_combination(
+            &radial,
+            &point.data.perpendicular_scale,
+            &point.data.radial_scale,
+        ),
+    ];
+    let mut coordinates = Vec::with_capacity(2);
+    let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    for ((displacement, coordinate), translation) in displacement
+        .into_iter()
+        .zip([
+            BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+        ])
+        .zip([&point.data.translation_x, &point.data.translation_y])
+    {
+        let center_coordinate = match point_form_source(&center, &coordinate, &one, policy)? {
+            Classification::Decided(form) => form,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if let Classification::Uncertain(reason) = point_rational_denominator_sign(
+            &center_coordinate.source,
+            &center_coordinate.denominator,
+            policy,
+        )? {
+            return Ok(Classification::Uncertain(reason));
+        }
+        let forms = match common_point_form_sources(displacement, center_coordinate, policy)? {
+            Classification::Decided(forms) => forms,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let mut coordinate = point_form_linear_combination(&forms, &Real::one(), &Real::one());
+        coordinate.numerator = bivariate_add(
+            &coordinate.numerator,
+            &bivariate_scale(coordinate.denominator.clone(), translation),
+        );
+        coordinates.push(coordinate);
+    }
+    let [x, y] = coordinates
+        .try_into()
+        .expect("two affine-derived coordinates were constructed");
+    let [x, y] = match common_point_form_sources(x, y, policy)? {
+        Classification::Decided(forms) => forms,
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    let (coordinates, common_denominator) = if x.denominator == y.denominator {
+        ([x.numerator, y.numerator], x.denominator)
+    } else {
+        (
+            [
+                bivariate_multiply(&x.numerator, &y.denominator),
+                bivariate_multiply(&y.numerator, &x.denominator),
+            ],
+            bivariate_multiply(&x.denominator, &y.denominator),
+        )
+    };
+    if let Classification::Uncertain(reason) =
+        point_rational_denominator_sign(&x.source, &common_denominator, policy)?
+    {
+        return Ok(Classification::Uncertain(reason));
+    }
+    Ok(crate::RationalMap2::new(coordinates, common_denominator)
+        .pullback(numerator, denominator)
+        .map(|(numerator, denominator)| {
+            Classification::Decided(Some(PointFormSource2::new(
+                x.source,
+                numerator,
+                denominator,
+            )))
+        })
+        .unwrap_or(Classification::Uncertain(UncertaintyReason::Unsupported)))
+}
+
 /// Pulls a query into its original coordinate field. The public form retains
 /// its original operands/guards; this is not a replacement point definition.
 pub(crate) fn point_form_source(
@@ -602,6 +805,50 @@ pub(crate) fn point_form_source(
                 &pullback(denominator, &image.data.transform),
                 policy,
             )
+        }
+        CurvePointData2::AlgebraicChordParallel(point)
+            if let Some((tangent_x, tangent_y)) = point.data.source.certified_unit_tangent() =>
+        {
+            if !policy.accepts_retained_policy(point.data.policy) {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
+            point.data.source.validate_policy(policy)?;
+            let (x, y) = match point.data.direction {
+                BezierAlgebraicChordUnitDisplacement2::Tangent => (tangent_x, tangent_y),
+                BezierAlgebraicChordUnitDisplacement2::LeftNormal => (-tangent_y, tangent_x),
+            };
+            // This is a temporary query in the displaced point's original
+            // field. Keep the procedural point and its source-normal relation
+            // authoritative for composition and native replay.
+            let transform = Similarity2::try_from_real_affine(
+                Real::one(),
+                Real::zero(),
+                Real::zero(),
+                Real::one(),
+                x * &point.data.distance + &point.data.translation_x,
+                y * &point.data.distance + &point.data.translation_y,
+            )?;
+            point_form_source(
+                point.source_endpoint(),
+                &pullback(numerator, &transform),
+                &pullback(denominator, &transform),
+                policy,
+            )
+        }
+        CurvePointData2::AlgebraicCuspChordDerived(point) => {
+            match derived_circle_point_form(point, numerator, denominator, policy)? {
+                Classification::Decided(Some(form)) => Ok(Classification::Decided(form)),
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => Ok(
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+                ),
+                Classification::Decided(None) | Classification::Uncertain(_) => {
+                    Ok(Classification::Decided(PointFormSource2::new(
+                        source.clone(),
+                        numerator.clone(),
+                        denominator.clone(),
+                    )))
+                }
+            }
         }
         CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
             Classification::Decided(Some(point)) => {

@@ -482,6 +482,16 @@ impl CurvePath2 {
         options: &FiniteProjectionOptions,
         policy: &CurveContext,
     ) -> CurveResult<FinitePolyline2> {
+        match crate::curve::validate_curve_path_connectivity(self, policy)
+            .map_err(|error| CurveError::Topology(error.to_string()))?
+        {
+            Classification::Decided(()) => {}
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::Topology(format!(
+                    "finite path projection could not replay connectivity: {reason:?}"
+                )));
+            }
+        }
         let closed = match crate::curve::curve_path_is_closed(self, policy) {
             Classification::Decided(closed) => closed,
             Classification::Uncertain(reason) => {
@@ -1031,6 +1041,9 @@ fn project_curve_region_loop(
     options: &FiniteProjectionOptions,
     policy: &CurveContext,
 ) -> CurveResult<FinitePolyline2> {
+    boundary
+        .replay_connectivity(policy)
+        .map_err(|error| CurveError::Topology(error.to_string()))?;
     let mut points = Vec::with_capacity(boundary.fragments().len() + 1);
     for fragment in boundary.fragments() {
         append_curve_fragment_samples(&mut points, fragment, options, policy)?;
@@ -1082,10 +1095,13 @@ fn append_curve_fragment_samples(
             append_analytic_parallel_samples(points, fragment, options, policy)?;
         }
         BezierSplitFragment2::AlgebraicChord(chord) => {
-            push_if_new(
-                points,
-                finite_retained_point(chord.start(), options.chord_error, policy)?,
-            );
+            if points.is_empty() {
+                points.push(finite_retained_point(
+                    chord.start(),
+                    options.chord_error,
+                    policy,
+                )?);
+            }
             push_if_new(
                 points,
                 finite_retained_point(chord.end(), options.chord_error, policy)?,
@@ -1358,7 +1374,11 @@ fn append_algebraic_cusp_semicircle_samples(
             0,
         ) {
             Ok(()) => {
-                for point in projected {
+                // Each caller appends consecutive spans of one validated
+                // path, boundary, or source subdivision. Their shared exact
+                // vertex already has a projection in `points`.
+                let skip_start = usize::from(!points.is_empty());
+                for point in projected.into_iter().skip(skip_start) {
                     push_if_new(points, point);
                 }
                 return Ok(());
@@ -1501,6 +1521,8 @@ fn append_retained_parallel_range_samples(
     chord_error: f64,
     policy: &CurveContext,
 ) -> CurveResult<()> {
+    // Bound every emitted segment against the actual shared start vertex.
+    let start_point = points.last().copied().unwrap_or(start_point);
     let mut last_error = None;
     for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
         let range_start =
@@ -1535,7 +1557,11 @@ fn append_retained_parallel_range_samples(
             0,
         ) {
             Ok(()) => {
-                for point in projected {
+                // Each caller appends consecutive spans of one validated
+                // path, boundary, or source subdivision. Their shared exact
+                // vertex already has a projection in `points`.
+                let skip_start = usize::from(!points.is_empty());
+                for point in projected.into_iter().skip(skip_start) {
                     push_if_new(points, point);
                 }
                 return Ok(());
@@ -1757,9 +1783,11 @@ fn append_bezier_subcurve_samples(
     let common_weight_sign = subcurve_has_common_weight_sign(curve, policy);
     if common_weight_sign
         && let Some(controls) = controls
-        && control_polygon_chord_error(&controls) <= options.chord_error
+        && control_polygon_chord_error(&controls, points.last().copied()) <= options.chord_error
     {
-        push_if_new(points, controls[0]);
+        if points.is_empty() {
+            points.push(controls[0]);
+        }
         push_if_new(
             points,
             *controls.last().expect("Bezier controls are nonempty"),
@@ -1842,8 +1870,8 @@ fn subcurve_has_common_weight_sign(curve: &BezierSubcurve2, policy: &CurveContex
     common && sign.is_some()
 }
 
-fn control_polygon_chord_error(controls: &[[f64; 2]]) -> f64 {
-    let start = controls[0];
+fn control_polygon_chord_error(controls: &[[f64; 2]], shared_start: Option<[f64; 2]>) -> f64 {
+    let start = shared_start.unwrap_or(controls[0]);
     let end = *controls.last().expect("Bezier controls are nonempty");
     controls
         .iter()
@@ -1936,9 +1964,14 @@ fn append_arc_samples(
     Ok(points.len() - before)
 }
 
-fn close_ring(points: &mut Vec<[f64; 2]>) {
-    if points.len() >= 2 && points.first() != points.last() {
-        points.push(points[0]);
+// Every caller has a closed exact path, contour or region loop and has already
+// sampled its terminal endpoint. The endpoint is the same exact vertex as the
+// first, although independent retained expressions can project to different
+// finite values. Reuse its first projection; no proximity test proves closure.
+fn close_ring(points: &mut [[f64; 2]]) {
+    if points.len() >= 2 {
+        let first = points[0];
+        *points.last_mut().expect("a sampled ring has an endpoint") = first;
     }
 }
 

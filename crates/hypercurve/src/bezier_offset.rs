@@ -1604,8 +1604,20 @@ struct BezierAlgebraicCuspSemicirclePairParameterMapData2 {
 
 #[derive(Debug)]
 enum BezierCirclePairParameterMapSystem2 {
+    /// Constant center displacements and exact chart parameters retain the
+    /// original point fields without independently materializing coordinates.
+    Retained(Vec<BezierRetainedCirclePairContactData2>),
     Represented(BezierRepresentedCirclePairParameterMapSystem2),
     Recursive(BezierRecursiveCirclePairParameterMapSystem2),
+}
+
+#[derive(Debug)]
+struct BezierRetainedCirclePairContactData2 {
+    branch: i8,
+    parameters: [BezierAlgebraicCuspSemicircleParameter2; 2],
+    radials: [[Real; 2]; 2],
+    tangent_cross: Real,
+    tangent_dot: Real,
 }
 
 #[derive(Debug)]
@@ -8917,8 +8929,11 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
         // ask for common-source alignment again at that base case.
         CurvePointData2::Polynomial(point) => point.has_rational_maps(),
         CurvePointData2::RationalImage(_) => true,
-        CurvePointData2::Similarity(image) => {
-            matches!(image.data.source.0, CurvePointData2::Polynomial(_))
+        // Pull wrappers back only when they retain a joint point field.
+        // Native selected-circle contacts have their own cheaper predicates;
+        // a lazy endpoint wrapper alone is not a reason to merge their fields.
+        CurvePointData2::Similarity(_) | CurvePointData2::Endpoint(_) => {
+            point_retains_joint_field(point)
         }
         _ => false,
     };
@@ -13640,7 +13655,7 @@ impl BezierSimilarityPoint2 {
         Ok(Self::new(
             self.data.source.clone(),
             self.data.transform.translated(delta_x, delta_y),
-            policy,
+            &policy.retained_object_policy_with_dependencies([self.data.policy]),
         ))
     }
 

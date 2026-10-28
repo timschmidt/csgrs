@@ -78,15 +78,18 @@ fn point(x: i32, y: i32) -> Vec<u8> {
     real(&mut bytes, y.into());
     bytes
 }
-fn chord(tag: u8, references: &[u32]) -> Vec<u8> {
-    let mut bytes = record(tag, references);
-    bytes.extend([0, 1]);
-    bytes
-}
 fn circle_path() -> hypercurve::CurvePath2 {
     circle_path_in_frame(1, true)
 }
 fn circle_path_in_frame(radius: i32, clockwise: bool) -> hypercurve::CurvePath2 {
+    circle_path_with_anchor(radius, clockwise, 3, 4)
+}
+fn circle_path_with_anchor(
+    radius: i32,
+    clockwise: bool,
+    dx: i32,
+    dy: i32,
+) -> hypercurve::CurvePath2 {
     use std::fmt::Write;
     let equation = polynomial(&[&[-2, 0, 0, 0, 0, 1], &[1]]);
     let mut root = vec![2];
@@ -129,13 +132,21 @@ fn circle_path_in_frame(radius: i32, clockwise: bool) -> hypercurve::CurvePath2 
     real(&mut end, 1.into());
     let mut range = record(23, &[6, 7, 8]);
     range.push(0);
+    let anchor_chord = |tag, references: &[u32]| {
+        let mut bytes = record(tag, references);
+        bytes.extend([
+            u8::from(dx == 0),
+            u8::from(if dx == 0 { dy > 0 } else { dx > 0 }),
+        ]);
+        bytes
+    };
     let nodes = vec![
         root,
         fiber,
         point(0, 0),
-        point(3, 4),
-        chord(11, &[2, 3]),
-        chord(12, &[4, 2, 3]),
+        point(dx, dy),
+        anchor_chord(11, &[2, 3]),
+        anchor_chord(12, &[4, 2, 3]),
         circle,
         start,
         end,
@@ -2208,4 +2219,636 @@ fn selected_circle_one_incident_contacts_retry_and_preserve_policy_receipts() {
         });
         assert_eq!(outcome.certainty(), CurveCertainty::Certified);
     }
+}
+
+fn selected_corner_half_disk() -> hypercurve::CurvePath2 {
+    let arc = circle_path().curves()[0].clone();
+    let diameter = hypercurve::Curve2::try_line(arc.end(), arc.start()).unwrap();
+    hypercurve::CurvePath2::try_new(vec![arc, diameter]).unwrap()
+}
+
+fn selected_corner_continuation(
+    path: hypercurve::CurvePath2,
+    previous: &CurvePoint2,
+    next: &CurvePoint2,
+) {
+    use hypercurve::{BooleanOp, FillRule, OffsetCornerStyle2, RegionPointLocation};
+    assert_eq!(path.curves().len(), 3);
+    assert!(path.curves()[0].end().coincides_with(previous).unwrap());
+    assert!(path.curves()[1].start().coincides_with(previous).unwrap());
+    assert!(path.curves()[1].end().coincides_with(next).unwrap());
+    assert!(path.curves()[2].start().coincides_with(next).unwrap());
+    let original = selected_corner_half_disk();
+    assert!(path.start().coincides_with(&original.start()).unwrap());
+    assert!(path.end().coincides_with(&original.end()).unwrap());
+    let region =
+        CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&path), FillRule::NonZero)
+            .unwrap();
+    assert_eq!(region.loop_role_counts().unwrap(), (1, 0));
+    let original_corner = translate(&center(), q(4, 5), q(-3, 5));
+    let interior = translate(&center(), q(3, 20), q(1, 5));
+    for (point, expected) in [
+        (previous, RegionPointLocation::Boundary),
+        (next, RegionPointLocation::Boundary),
+        (&original_corner, RegionPointLocation::Outside),
+        (&interior, RegionPointLocation::Inside),
+    ] {
+        assert_eq!(region.classify_point(point).unwrap(), expected);
+    }
+    let text = angular_svg(path);
+    let path_replay = import_svg_document(&text).unwrap();
+    assert_eq!(export_svg_document(&path_replay).unwrap(), text);
+    let rebuilt =
+        CurveRegion2::try_from_boundary_paths(path_replay.paths(), FillRule::NonZero).unwrap();
+    assert!(
+        rebuilt
+            .boolean_region(&region, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    let filled =
+        export_svg_document(&SvgGeometry2::new(rebuilt.clone(), Vec::new(), Vec::new())).unwrap();
+    let replay = import_svg_document(&filled).unwrap();
+    assert_eq!(export_svg_document(&replay).unwrap(), filled);
+    assert!(
+        replay
+            .region()
+            .boolean_region(&rebuilt, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+    let grown = replay
+        .region()
+        .offset(q(1, 16), &OffsetCornerStyle2::Round)
+        .unwrap();
+    let restored = grown.offset(q(-1, 16), &OffsetCornerStyle2::Round).unwrap();
+    assert!(
+        restored
+            .boolean_region(&rebuilt, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[test]
+fn selected_circle_diameter_chamfer_reconstructs_replays_and_offsets() {
+    use hypercurve::CurveCornerMode2;
+    let root = Real::from(63).sqrt().unwrap();
+    let previous = translate(
+        &center(),
+        q(31, 40) + &root * q(3, 160),
+        q(-93, 160) + &root * q(1, 40),
+    );
+    let next = translate(&center(), q(3, 5), q(-9, 20));
+    let solutions = selected_corner_half_disk()
+        .chamfer_vertex_by_setbacks(1, q(1, 4), q(1, 4), CurveCornerMode2::TrimOnly)
+        .unwrap();
+    assert_eq!(solutions.candidate_count(), 1);
+    selected_corner_continuation(solutions.into_solutions().pop().unwrap(), &previous, &next);
+}
+
+#[test]
+fn selected_circle_diameter_constrained_fillet_reconstructs_replays_and_offsets() {
+    use hypercurve::{CurveCornerMode2, CurveFillet2, CurveFilletContact2};
+    let s = q(1, 2).sqrt().unwrap();
+    let fillet_center = translate(&center(), &s * q(4, 5) + q(3, 20), &s * q(-3, 5) + q(1, 5));
+    let previous = translate(
+        &center(),
+        &s * q(16, 15) + q(1, 5),
+        &s * q(-4, 5) + q(4, 15),
+    );
+    let next = translate(&center(), &s * q(4, 5), &s * q(-3, 5));
+    let request = CurveFillet2 {
+        radius: q(1, 4),
+        center: Some(fillet_center),
+        contacts: [
+            Some(CurveFilletContact2::Point(previous.clone())),
+            Some(CurveFilletContact2::Point(next.clone())),
+        ],
+    };
+    let solutions = selected_corner_half_disk()
+        .fillet_vertex(1, &request, CurveCornerMode2::TrimOnly)
+        .unwrap();
+    assert_eq!(solutions.candidate_count(), 1);
+    selected_corner_continuation(solutions.into_solutions().pop().unwrap(), &previous, &next);
+}
+
+fn shifted_selected_circle(distance: Real, clockwise: bool) -> hypercurve::Curve2 {
+    let transform = hypercurve::Similarity2::try_from_real_affine(
+        Real::one(),
+        Real::zero(),
+        Real::zero(),
+        Real::one(),
+        &distance * q(3, 5),
+        &distance * q(4, 5),
+    )
+    .unwrap();
+    circle_path_in_frame(1, clockwise).curves()[0]
+        .transform_similarity(&transform)
+        .unwrap()
+}
+
+#[test]
+fn selected_circle_shared_center_pair_contacts_preserve_exact_points_and_cross_signs() {
+    use hypercurve::RealSign;
+    let root = Real::from(3).sqrt().unwrap();
+    let upper = translate(
+        &center(),
+        q(3, 10) - &root * q(2, 5),
+        q(2, 5) + &root * q(3, 10),
+    );
+    let lower = translate(
+        &center(),
+        q(3, 10) + &root * q(2, 5),
+        q(2, 5) - &root * q(3, 10),
+    );
+    for reverse_first in [false, true] {
+        for reverse_second in [false, true] {
+            let first = circle_path().curves()[0].clone();
+            let second = shifted_selected_circle(Real::one(), false);
+            let first = if reverse_first {
+                first.reversed().unwrap()
+            } else {
+                first
+            };
+            let second = if reverse_second {
+                second.reversed().unwrap()
+            } else {
+                second
+            };
+            let result = first.intersect_curve(&second).unwrap();
+            assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+            assert!(result.overlaps().is_empty());
+            assert_eq!(result.contacts().len(), 2);
+            for contact in result.contacts() {
+                let at_upper = contact.point().coincides_with(&upper).unwrap();
+                assert!(at_upper || contact.point().coincides_with(&lower).unwrap());
+                assert!(contact.is_certified_transverse());
+                // CW J-negated first tangent and CCW second tangent give
+                // cross(T1,T2)=-cross(P-C1,P-C2): negative at +N.
+                let positive = !at_upper ^ reverse_first ^ reverse_second;
+                assert_eq!(
+                    contact.tangent_cross_sign(),
+                    Some(if positive {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    })
+                );
+                assert_circle_chord_contact_parameters(&first, &second, contact);
+            }
+        }
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_pair_contacts_keep_tangency_halves_and_separation() {
+    use hypercurve::RealSign;
+    let first = circle_path().curves()[0].clone();
+    let second = shifted_selected_circle(Real::from(2), false);
+    let expected = translate(&center(), q(3, 5), q(4, 5));
+    for (first, second) in [(&first, &second), (&second, &first)] {
+        let result = first.intersect_curve(second).unwrap();
+        assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+        assert!(result.overlaps().is_empty());
+        assert_eq!(result.contacts().len(), 1);
+        let contact = &result.contacts()[0];
+        assert!(!contact.is_certified_transverse());
+        assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+        assert!(contact.point().coincides_with(&expected).unwrap());
+        assert_circle_chord_contact_parameters(first, second, contact);
+    }
+    let tiny = (Real::one() / Real::from(1_u128 << 80)).unwrap();
+    for second in [
+        shifted_selected_circle(Real::from(2) + tiny, false),
+        shifted_selected_circle(Real::one(), true),
+    ] {
+        let result = first.intersect_curve(&second).unwrap();
+        assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+        assert!(result.contacts().is_empty());
+        assert!(result.overlaps().is_empty());
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_nonincident_chords_keep_roots_and_clipping() {
+    use hypercurve::{Curve2, RealSign};
+    let first = circle_path().curves()[0].clone();
+    let root = Real::from(3).sqrt().unwrap();
+    let upper = translate(
+        &center(),
+        q(3, 10) - &root * q(2, 5),
+        q(2, 5) + &root * q(3, 10),
+    );
+    let lower = translate(
+        &center(),
+        q(3, 10) + &root * q(2, 5),
+        q(2, 5) - &root * q(3, 10),
+    );
+    let at = |n: i32| translate(&center(), q(3, 10) + q(-4 * n, 5), q(2, 5) + q(3 * n, 5));
+    for (lo, expected_count) in [(-2, 2), (0, 1)] {
+        let second = Curve2::try_line(at(lo), at(2)).unwrap();
+        for reverse in [false, true] {
+            let second = if reverse {
+                second.reversed().unwrap()
+            } else {
+                second.clone()
+            };
+            let result = first.intersect_curve(&second).unwrap();
+            assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+            assert!(result.overlaps().is_empty());
+            assert_eq!(result.contacts().len(), expected_count);
+            for contact in result.contacts() {
+                let at_upper = contact.point().coincides_with(&upper).unwrap();
+                assert!(at_upper || (lo < 0 && contact.point().coincides_with(&lower).unwrap()));
+                assert!(contact.is_certified_transverse());
+                assert_eq!(
+                    contact.tangent_cross_sign(),
+                    Some(if at_upper ^ reverse {
+                        RealSign::Positive
+                    } else {
+                        RealSign::Negative
+                    })
+                );
+                assert_circle_chord_contact_parameters(&first, &second, contact);
+            }
+        }
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_nonincident_chords_keep_tangency_and_small_gaps() {
+    use hypercurve::{Curve2, RealSign};
+    let first = circle_path().curves()[0].clone();
+    let tiny = (Real::one() / Real::from(1_u128 << 80)).unwrap();
+    for (distance, expected_count) in [(Real::one(), 1), (Real::one() + tiny, 0)] {
+        let at = |n: i32| {
+            translate(
+                &center(),
+                &distance * q(3, 5) + q(-4 * n, 5),
+                &distance * q(4, 5) + q(3 * n, 5),
+            )
+        };
+        let second = Curve2::try_line(at(-2), at(2)).unwrap();
+        let result = first.intersect_curve(&second).unwrap();
+        assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+        assert!(result.overlaps().is_empty());
+        assert_eq!(result.contacts().len(), expected_count);
+        if let Some(contact) = result.contacts().first() {
+            assert_eq!(contact.tangent_cross_sign(), Some(RealSign::Zero));
+            assert!(!contact.is_certified_transverse());
+            assert!(
+                contact
+                    .point()
+                    .coincides_with(&translate(&center(), q(3, 5), q(4, 5)))
+                    .unwrap()
+            );
+            assert_circle_chord_contact_parameters(&first, &second, contact);
+        }
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_generated_endpoint_queries_keep_the_original_field() {
+    let center = center();
+    let coordinate = |point: &CurvePoint2, axis| {
+        point
+            .rational_form(
+                if axis == 0 {
+                    polynomial(&[&[0], &[1]])
+                } else {
+                    polynomial(&[&[0, 1]])
+                },
+                polynomial(&[&[1]]),
+            )
+            .unwrap()
+    };
+    for radius in [-1, 1] {
+        let circle = circle_path_in_frame(radius, true).curves()[0].clone();
+        for (point, direction) in [(circle.start(), radius), (circle.end(), -radius)] {
+            assert!(point.coordinates().is_none());
+            for (axis, expected) in [(0, q(-4 * direction, 5)), (1, q(3 * direction, 5))] {
+                let form = coordinate(&point, axis);
+                assert!(form.source().coincides_with(&point).unwrap());
+                let difference = form.subtract(&coordinate(&center, axis)).unwrap();
+                assert_eq!(
+                    difference.compare_to_real(&expected).unwrap(),
+                    Ordering::Equal
+                );
+                assert_eq!(difference.bounds().unwrap(), (expected.clone(), expected));
+            }
+            assert!(matches!(
+                point.rational_form(polynomial(&[&[1]]), polynomial(&[&[0]])),
+                Err(hypercurve::ExactCurveError::Invalid {
+                    cause: hypercurve::CurveError::ZeroRationalPointDenominator,
+                    ..
+                })
+            ));
+        }
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_contacts_retry_and_keep_certainty() {
+    let first = circle_path().curves()[0].clone();
+    let second = shifted_selected_circle(Real::one(), false);
+    let query = || first.intersect_curve(&second);
+    let verify = |result: hypercurve::CurveIntersectionResult2| {
+        assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+        assert_eq!(result.contacts().len(), 2);
+        assert!(result.overlaps().is_empty());
+        for contact in result.contacts() {
+            assert_circle_chord_contact_parameters(&first, &second, contact);
+        }
+    };
+    for _ in 0..2 {
+        let small =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, query);
+        assert_eq!((small.usage.refinements, small.usage.promotions), (0, 0));
+        match small.result {
+            Ok(result) => verify(result.unwrap()),
+            Err(reached) => {
+                assert_eq!((reached.limit, reached.used), (0, 0));
+                assert!(reached.requested > 0);
+            }
+        }
+        let retry = hypersolve::work_budget::with_budget(
+            hypersolve::work_budget::WorkBudget {
+                refinements: 4096,
+                promotions: 0,
+            },
+            query,
+        );
+        verify(retry.result.unwrap().unwrap());
+        assert_eq!(retry.usage.promotions, 0);
+    }
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || verify(query().unwrap()));
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_contact_replays_before_further_intersection() {
+    const INPUT: &str = "HYPERCURVE_RETAINED_CIRCLE_PAIR_REPLAY";
+    let verify = |text: &str| {
+        let replay = import_svg_document(text).unwrap();
+        assert_eq!(export_svg_document(&replay).unwrap(), text);
+        let root = Real::from(3).sqrt().unwrap();
+        let upper = translate(
+            &center(),
+            q(3, 10) - &root * q(2, 5),
+            q(2, 5) + &root * q(3, 10),
+        );
+        assert!(
+            replay.paths()[0].curves()[0]
+                .end()
+                .coincides_with(&upper)
+                .unwrap()
+        );
+        let second = shifted_selected_circle(Real::one(), false);
+        for curve in replay.paths()[0].curves() {
+            let result = curve.intersect_curve(&second).unwrap();
+            assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+            for contact in result.contacts() {
+                assert_circle_chord_contact_parameters(curve, &second, contact);
+            }
+        }
+        assert_eq!(replay.paths()[0].curves().len(), 2);
+    };
+    if let Some(file) = std::env::var_os(INPUT) {
+        verify(&std::fs::read_to_string(file).unwrap());
+        return;
+    }
+    let first = circle_path().curves()[0].clone();
+    let second = shifted_selected_circle(Real::one(), false);
+    let root = Real::from(3).sqrt().unwrap();
+    let upper = translate(
+        &center(),
+        q(3, 10) - &root * q(2, 5),
+        q(2, 5) + &root * q(3, 10),
+    );
+    let result = first.intersect_curve(&second).unwrap();
+    assert!(result.blockers().is_empty());
+    let contact = result
+        .contacts()
+        .iter()
+        .find(|contact| contact.point().coincides_with(&upper).unwrap())
+        .unwrap();
+    let (a, b) = first
+        .split_at(contact.first().parameter().unwrap())
+        .unwrap();
+    let text = angular_svg(hypercurve::CurvePath2::try_new(vec![a, b]).unwrap());
+    verify(&text);
+    let file = std::env::temp_dir().join(format!(
+        "hypercurve-retained-circle-pair-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&file, &text).unwrap();
+    let output = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "selected_circle_shared_center_contact_replays_before_further_intersection",
+            "--exact",
+            "--nocapture",
+        ])
+        .env(INPUT, &file)
+        .output()
+        .unwrap();
+    std::fs::remove_file(file).unwrap();
+    assert!(
+        output.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
+fn selected_circle_corner_reversal_preserves_set_and_constraints() {
+    use hypercurve::{BooleanOp, CurveCornerMode2, CurveFillet2, CurveFilletContact2, FillRule};
+    let s = q(1, 2).sqrt().unwrap();
+    let center = translate(&center(), &s * q(4, 5) + q(3, 20), &s * q(-3, 5) + q(1, 5));
+    let previous = translate(
+        &crate::center(),
+        &s * q(16, 15) + q(1, 5),
+        &s * q(-4, 5) + q(4, 15),
+    );
+    let next = translate(&crate::center(), &s * q(4, 5), &s * q(-3, 5));
+    let source = selected_corner_half_disk();
+    let mut references = Vec::new();
+    for reverse in [false, true] {
+        let path = if reverse {
+            source.reversed().unwrap()
+        } else {
+            source.clone()
+        };
+        let contacts = if reverse {
+            [next.clone(), previous.clone()]
+        } else {
+            [previous.clone(), next.clone()]
+        };
+        let request = CurveFillet2 {
+            radius: q(1, 4),
+            center: Some(center.clone()),
+            contacts: contacts.map(|p| Some(CurveFilletContact2::Point(p))),
+        };
+        for (index, solutions) in [
+            path.chamfer_vertex_by_setbacks(1, q(1, 4), q(1, 4), CurveCornerMode2::TrimOnly)
+                .unwrap(),
+            path.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly)
+                .unwrap(),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            assert_eq!(solutions.candidate_count(), 1);
+            let region = CurveRegion2::try_from_boundary_paths(
+                &solutions.into_solutions(),
+                FillRule::NonZero,
+            )
+            .unwrap();
+            if reverse {
+                assert!(
+                    region
+                        .boolean_region(&references[index], BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+            } else {
+                references.push(region);
+            }
+        }
+        for request in [
+            CurveFillet2 {
+                center: Some(crate::center()),
+                ..request.clone()
+            },
+            CurveFillet2 {
+                contacts: [
+                    Some(CurveFilletContact2::Point(crate::center())),
+                    request.contacts[1].clone(),
+                ],
+                ..request
+            },
+        ] {
+            assert_eq!(
+                path.fillet_vertex(1, &request, CurveCornerMode2::TrimOnly)
+                    .unwrap()
+                    .candidate_count(),
+                0
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_corner_offset_queries_retain_mapped_endpoint_domains() {
+    use hypercurve::{CurveCornerMode2, FillRule, OffsetCornerStyle2, RegionPointLocation};
+    let path = selected_corner_half_disk()
+        .chamfer_vertex_by_setbacks(1, q(1, 4), q(1, 4), CurveCornerMode2::TrimOnly)
+        .unwrap()
+        .into_solutions()
+        .pop()
+        .unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero).unwrap();
+    let grown = region.offset(q(1, 16), &OffsetCornerStyle2::Round).unwrap();
+    for (scale, expected) in [
+        (q(1, 4), RegionPointLocation::Inside),
+        (q(17, 16), RegionPointLocation::Boundary),
+        (Real::from(2), RegionPointLocation::Outside),
+    ] {
+        let point = translate(&center(), &scale * q(3, 5), &scale * q(4, 5));
+        assert_eq!(grown.classify_point(&point).unwrap(), expected);
+    }
+}
+
+#[test]
+fn selected_circle_shared_center_rotated_frames_keep_partial_overlap() {
+    use hypercurve::CurveOverlapOrientation2;
+    let first = circle_path().curves()[0].clone();
+    let second = circle_path_with_anchor(1, true, -4, 3).curves()[0].clone();
+    let expected = [
+        translate(&center(), q(-4, 5), q(3, 5)),
+        translate(&center(), q(3, 5), q(4, 5)),
+    ];
+    for reverse_first in [false, true] {
+        for reverse_second in [false, true] {
+            let first = if reverse_first {
+                first.reversed().unwrap()
+            } else {
+                first.clone()
+            };
+            let second = if reverse_second {
+                second.reversed().unwrap()
+            } else {
+                second.clone()
+            };
+            let result = first.intersect_curve(&second).unwrap();
+            assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+            assert!(result.contacts().is_empty());
+            assert_eq!(result.overlaps().len(), 1);
+            let overlap = &result.overlaps()[0];
+            assert_eq!(
+                overlap.orientation(),
+                if reverse_first ^ reverse_second {
+                    CurveOverlapOrientation2::Reversed
+                } else {
+                    CurveOverlapOrientation2::Same
+                }
+            );
+            assert!(overlap.includes_start() && overlap.includes_end());
+            for (curve, range) in [
+                (&first, overlap.first_range()),
+                (&second, overlap.second_range()),
+            ] {
+                let mut found = [false, false];
+                for parameter in [range.start(), range.end()] {
+                    let point = curve.point_at(parameter).unwrap();
+                    let index = expected
+                        .iter()
+                        .position(|p| point.coincides_with(p).unwrap())
+                        .unwrap();
+                    assert!(!found[index]);
+                    found[index] = true;
+                }
+                assert_eq!(found, [true, true]);
+                // Public overlap bounds follow paired traversal; restriction
+                // explicitly requires ascending source-chart bounds.
+                let range = match range.start().compare(range.end()).unwrap() {
+                    Ordering::Less => range.clone(),
+                    Ordering::Greater => hypercurve::CurveParameterRange2::try_new(
+                        range.end().clone(),
+                        range.start().clone(),
+                    )
+                    .unwrap(),
+                    Ordering::Equal => panic!("a quarter-circle overlap has positive extent"),
+                };
+                let restricted = curve.restrict_source(range).unwrap();
+                let path = hypercurve::CurvePath2::try_new(vec![restricted.clone()]).unwrap();
+                let text = angular_svg(path);
+                let replay = import_svg_document(&text).unwrap();
+                assert_eq!(export_svg_document(&replay).unwrap(), text);
+                assert!(
+                    replay.paths()[0]
+                        .start()
+                        .coincides_with(&restricted.start())
+                        .unwrap()
+                );
+                assert!(
+                    replay.paths()[0]
+                        .end()
+                        .coincides_with(&restricted.end())
+                        .unwrap()
+                );
+            }
+        }
+    }
+    let concentric = circle_path_with_anchor(2, true, -4, 3).curves()[0].clone();
+    let result = first.intersect_curve(&concentric).unwrap();
+    assert!(result.blockers().is_empty(), "{:?}", result.blockers());
+    assert!(result.contacts().is_empty() && result.overlaps().is_empty());
 }

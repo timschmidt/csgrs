@@ -293,10 +293,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         })
     }
 
-    /// Returns a represented exact traversal tangent at an authored diameter
-    /// or quarter-turn endpoint whenever the retained frame has a constant
-    /// represented unit normal. Rational rotations of direct round joins use
-    /// this path even though their tangent is no longer cardinal.
+    /// Returns the exact unit traversal tangent at a represented angular
+    /// endpoint whose circle frame has a represented unit normal. The rational
+    /// half chart retains algebraic scalar angles without requiring separately
+    /// materialized center coordinates.
     pub(crate) fn represented_endpoint_tangent(
         &self,
         start_endpoint: bool,
@@ -308,18 +308,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let parameter_slot = if parameter.zero_status() == ZeroKnowledge::Zero {
-            0_u8
-        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status() == ZeroKnowledge::Zero
-        {
-            1
-        } else if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero {
-            2
-        } else {
-            return Ok(Classification::Decided(None));
-        };
-        let Some((normal_x, normal_y)) =
-            self.data.semicircle.data.frame.represented_unit_normal()?
+        let Some((normal_x, normal_y)) = self.data.semicircle.represented_frame_unit_normal()?
         else {
             return Ok(Classification::Decided(None));
         };
@@ -328,11 +317,22 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         } else {
             Real::one()
         };
-        let radial = match parameter_slot {
-            0 => (normal_x, normal_y),
-            1 => (-(&normal_y * &turn), &normal_x * &turn),
-            2 => (-normal_x, -normal_y),
-            _ => unreachable!("cardinal parameter slot is closed"),
+        let radial = if parameter.zero_status() == ZeroKnowledge::Zero {
+            (normal_x, normal_y)
+        } else if (Real::from(2_i8) * parameter - Real::one()).zero_status() == ZeroKnowledge::Zero
+        {
+            (-(&normal_y * &turn), &normal_x * &turn)
+        } else if (parameter - Real::one()).zero_status() == ZeroKnowledge::Zero {
+            (-normal_x, -normal_y)
+        } else {
+            let one_minus = Real::one() - parameter;
+            let denominator = &one_minus * &one_minus + parameter * parameter;
+            let normal = Real::one() - Real::from(2_i8) * parameter;
+            let tangent = Real::from(2_i8) * parameter * one_minus * &turn;
+            (
+                ((&normal * &normal_x - &tangent * &normal_y) / &denominator)?,
+                ((normal * normal_y + tangent * normal_x) / denominator)?,
+            )
         };
         let radial_sign = match real_sign(self.data.semicircle.radial_distance(), policy) {
             Some(RealSign::Positive) => Real::one(),
@@ -1120,6 +1120,32 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
     ) -> CurveResult<Classification<Option<(RealSign, Option<RealSign>)>>> {
         self.validate_policy(policy)?;
         other.validate_policy(policy)?;
+        let represented = policy.strict_predicate_pass(|| {
+            Ok::<_, CurveError>((
+                self.represented_endpoint_tangent(self_start, policy)?,
+                other.represented_endpoint_tangent(other_start, policy)?,
+            ))
+        })?;
+        if let (Classification::Decided(Some(first)), Classification::Decided(Some(second))) =
+            represented
+        {
+            let relation = policy.strict_predicate_pass(|| {
+                let cross = real_sign(&(&first.0 * &second.1 - &first.1 * &second.0), policy);
+                let dot = real_sign(
+                    &Real::dot2_refs([&first.0, &first.1], [&second.0, &second.1]),
+                    policy,
+                );
+                cross.zip(dot)
+            });
+            if let Some((cross, dot)) = relation {
+                return Ok(Classification::Decided(Some((cross, Some(dot)))));
+            }
+        }
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         match self.endpoint_selected_radial_source_tangent_relation(
             self_start,
             other,

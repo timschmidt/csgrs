@@ -2586,6 +2586,260 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
     }
 
+    /// Uses the ordinary circle-pair construction in a shared translated
+    /// frame. The center relation, original circles and exact chart parameters
+    /// remain authoritative; no Cartesian coordinate field is constructed.
+    fn retained_translation_pair_intersections(
+        &self,
+        other: &Self,
+        first_center: &CurvePoint2,
+        second_center: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> CurveResult<Option<Classification<BezierAlgebraicCuspSemicirclePairIntersections2>>> {
+        let (Some(first_normal), Some(second_normal)) = (
+            self.represented_frame_unit_normal()?,
+            other.represented_frame_unit_normal()?,
+        ) else {
+            return Ok(None);
+        };
+        let (dx, dy) =
+            match common_point_constant_displacement(second_center, first_center, policy)? {
+                Classification::Decided(Some(delta)) => delta,
+                Classification::Decided(None) => return Ok(None),
+                Classification::Uncertain(reason) => {
+                    return Ok(Some(Classification::Uncertain(reason)));
+                }
+            };
+        let q = &dx * &dx + &dy * &dy;
+        match real_sign(&q, policy) {
+            Some(RealSign::Positive) => {}
+            Some(RealSign::Zero) => {
+                let first_radius_squared = self.radial_distance() * self.radial_distance();
+                let second_radius_squared = other.radial_distance() * other.radial_distance();
+                match real_sign(&(&first_radius_squared - &second_radius_squared), policy) {
+                    Some(RealSign::Positive | RealSign::Negative) => {
+                        return Ok(Some(Classification::Decided(
+                            BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                        )));
+                    }
+                    Some(RealSign::Zero) => {}
+                    None => {
+                        return Ok(Some(Classification::Uncertain(
+                            UncertaintyReason::Predicate,
+                        )));
+                    }
+                }
+                // Equal centers were proved in their original shared field.
+                // The native overlap authority needs only the two signed
+                // start radials, not independent center coordinates.
+                let scale = self.radial_distance() * other.radial_distance();
+                let dot = (&first_normal.0 * &second_normal.0 + &first_normal.1 * &second_normal.1)
+                    * &scale;
+                let cross = (&first_normal.0 * &second_normal.1
+                    - &first_normal.1 * &second_normal.0)
+                    * scale;
+                let (Some(dot_sign), Some(cross_sign)) =
+                    (real_sign(&dot, policy), real_sign(&cross, policy))
+                else {
+                    return Ok(Some(Classification::Uncertain(
+                        UncertaintyReason::Predicate,
+                    )));
+                };
+                let map = (cross_sign != RealSign::Zero).then(|| {
+                    BezierAlgebraicCuspSemicirclePairOverlapParameterMapData2::Represented {
+                        first_semicircle: self.clone(),
+                        second_semicircle: other.clone(),
+                        radial_dot: AlgebraicRootRepresentation::from_exact_value(&dot),
+                        radial_cross: AlgebraicRootRepresentation::from_exact_value(&cross),
+                        first_radius_squared,
+                        second_radius_squared,
+                        first_clockwise: self.is_clockwise(),
+                    }
+                });
+                return self
+                    .coincident_pair_intersections_from_radial_signs(
+                        other,
+                        cross_sign,
+                        Some(dot_sign),
+                        map,
+                        policy,
+                    )
+                    .map(Some);
+            }
+            Some(RealSign::Negative) => {
+                return Err(CurveError::Topology(
+                    "a retained circle-pair squared distance was negative".into(),
+                ));
+            }
+            None => {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            }
+        }
+        let radii_squared = [
+            self.radial_distance() * self.radial_distance(),
+            other.radial_distance() * other.radial_distance(),
+        ];
+        let line = &q + &radii_squared[0] - &radii_squared[1];
+        let discriminant = Real::from(4_i8) * &q * &radii_squared[0] - &line * &line;
+        let branches: &[i8] = match real_sign(&discriminant, policy) {
+            Some(RealSign::Negative) => {
+                return Ok(Some(Classification::Decided(
+                    BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                )));
+            }
+            Some(RealSign::Zero) => &[0],
+            Some(RealSign::Positive) => &[-1, 1],
+            None => {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            }
+        };
+        let radical = if branches.len() == 1 {
+            Real::zero()
+        } else {
+            discriminant.sqrt()?
+        };
+        let denominator = Real::from(2_i8) * &q;
+        let turn_product = self.turn_sign() * other.turn_sign();
+        let tangent_dot = &turn_product * (&radii_squared[0] + &radii_squared[1] - &q);
+        let mut contacts = Vec::with_capacity(branches.len());
+        let mut retained = Vec::with_capacity(branches.len());
+        for &branch in branches {
+            let signed_radical = Real::from(branch) * &radical;
+            let first_radial = [
+                ((&line * &dx - &signed_radical * &dy) / &denominator)?,
+                ((&line * &dy + &signed_radical * &dx) / &denominator)?,
+            ];
+            let second_radial = [&first_radial[0] - &dx, &first_radial[1] - &dy];
+            let radials = [first_radial, second_radial];
+            // Check the original unsquared support equations before chart
+            // selection. Elimination alone never publishes an incident point.
+            for (radial, radius_squared) in radials.iter().zip(&radii_squared) {
+                let residual = &radial[0] * &radial[0] + &radial[1] * &radial[1] - radius_squared;
+                match real_sign(&residual, policy) {
+                    Some(RealSign::Zero) => {}
+                    Some(_) => {
+                        return Err(CurveError::Topology(
+                            "a retained circle-pair contact failed its radius equation".into(),
+                        ));
+                    }
+                    None => {
+                        return Ok(Some(Classification::Uncertain(
+                            UncertaintyReason::Predicate,
+                        )));
+                    }
+                }
+            }
+            let point = CurvePoint2::from(BezierSimilarityPoint2::new(
+                first_center.clone(),
+                Similarity2::try_from_real_affine(
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    radials[0][0].clone(),
+                    radials[0][1].clone(),
+                )?,
+                &policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
+            ));
+            let mut parameters = Vec::with_capacity(2);
+            let mut locations = Vec::with_capacity(2);
+            for circle in [self, other] {
+                let parameter =
+                    match circle.parameter_at_certified_incident_point(&point, policy)? {
+                        Classification::Decided(parameter) => parameter,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Some(Classification::Uncertain(reason)));
+                        }
+                    };
+                if parameter.is_algebraic_cusp_complement() {
+                    break;
+                }
+                let Some(parameter @ BezierAlgebraicCuspSemicircleParameter2::Exact(value)) =
+                    parameter.as_algebraic_cusp()
+                else {
+                    return Ok(None);
+                };
+                let location = if real_sign(value, policy) == Some(RealSign::Zero) {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start
+                } else if real_sign(&(value - Real::one()), policy) == Some(RealSign::Zero) {
+                    BezierAlgebraicCuspSemicircleContactLocation2::End
+                } else {
+                    match in_closed_unit_interval(value, policy) {
+                        Some(true) => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                        Some(false) => return Err(CurveError::InvalidBezierParameter),
+                        None => {
+                            return Ok(Some(Classification::Uncertain(
+                                UncertaintyReason::Ordering,
+                            )));
+                        }
+                    }
+                };
+                parameters.push(parameter.clone());
+                locations.push(location);
+            }
+            if parameters.len() != 2 {
+                continue;
+            }
+            let tangent_cross = &turn_product * &signed_radical;
+            let Some(tangent_cross_sign) = real_sign(&tangent_cross, policy) else {
+                return Ok(Some(Classification::Uncertain(
+                    UncertaintyReason::Predicate,
+                )));
+            };
+            contacts.push(BezierAlgebraicCuspSemicirclePairContact2 {
+                branch,
+                first_location: locations[0],
+                second_location: locations[1],
+                tangent_cross_sign,
+            });
+            retained.push(BezierRetainedCirclePairContactData2 {
+                branch,
+                parameters: parameters
+                    .try_into()
+                    .expect("both retained contact charts were checked"),
+                radials,
+                tangent_cross,
+                tangent_dot: tangent_dot.clone(),
+            });
+        }
+        if contacts.is_empty() {
+            return Ok(Some(Classification::Decided(
+                BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+            )));
+        }
+        let parameter_map = BezierAlgebraicCuspSemicirclePairParameterMap2 {
+            data: Arc::new(BezierAlgebraicCuspSemicirclePairParameterMapData2 {
+                first_semicircle: self.clone(),
+                second_semicircle: other.clone(),
+                system: BezierCirclePairParameterMapSystem2::Retained(retained),
+                recursive_field: OnceLock::new(),
+                policy: policy.retained_object_policy_with_dependencies(
+                    self.data
+                        .frame
+                        .evidence_policy()
+                        .into_iter()
+                        .chain(other.data.frame.evidence_policy()),
+                ),
+            }),
+        };
+        Ok(Some(Classification::Decided(
+            BezierAlgebraicCuspSemicirclePairIntersections2::Contacts {
+                contacts,
+                parameter_map,
+            },
+        )))
+    }
+
     /// Intersects two selected algebraic cusp semicircles through the exact
     /// circle-circle discriminant. Each of the at most two support branches is
     /// replayed against both oriented half-circle predicates.
@@ -2627,6 +2881,61 @@ impl BezierAlgebraicCuspSemicircle2 {
                 None,
                 policy,
             );
+        }
+        let centers = policy.strict_predicate_pass(|| {
+            Ok::<_, CurveError>((
+                self.center_point_evidence(policy)?,
+                other.center_point_evidence(policy)?,
+            ))
+        })?;
+        match centers {
+            (Classification::Decided(first), Classification::Decided(second))
+                if point_retains_joint_field(&first) || point_retains_joint_field(&second) =>
+            {
+                if let Some(result) = policy.strict_predicate_pass(|| {
+                    self.retained_translation_pair_intersections(other, &first, &second, policy)
+                })? {
+                    match result {
+                        Classification::Decided(_)
+                        | Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                            return Ok(result);
+                        }
+                        Classification::Uncertain(_) => {}
+                    }
+                }
+                // A negative discriminant excludes contacts on the complete
+                // supports, hence on every selected half. Preserve the shared
+                // centers instead of demanding independent scalar coordinates
+                // merely to establish this exclusion.
+                match policy.strict_predicate_pass(|| {
+                    common_point_circle_pair_discriminant_sign(
+                        &first,
+                        &second,
+                        &(self.radial_distance() * self.radial_distance()),
+                        &(other.radial_distance() * other.radial_distance()),
+                        policy,
+                    )
+                })? {
+                    Classification::Decided(RealSign::Negative) => {
+                        return Ok(Classification::Decided(
+                            BezierAlgebraicCuspSemicirclePairIntersections2::NoContacts,
+                        ));
+                    }
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        return Ok(Classification::Uncertain(
+                            UncertaintyReason::BudgetExhausted,
+                        ));
+                    }
+                    Classification::Decided(_) | Classification::Uncertain(_) => {}
+                }
+            }
+            (Classification::Uncertain(UncertaintyReason::BudgetExhausted), _)
+            | (_, Classification::Uncertain(UncertaintyReason::BudgetExhausted)) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            _ => {}
         }
         let center_relation = self.represented_structural_center_relation(other, policy)?;
         let translation = self.represented_structural_translation(other, policy)?;

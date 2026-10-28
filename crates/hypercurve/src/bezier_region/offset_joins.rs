@@ -1454,7 +1454,17 @@ pub(super) fn append_selected_chord_pair_round_join(
             .certified_axis_direction()
             .map(BezierAlgebraicChordAxisDirection2::unit_tangent)
     });
-    let chord_frame = || {
+    let chord_frame = |represented_fallback| {
+        #[cfg(feature = "dispatch-trace")]
+        if represented_fallback {
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "curve-region-exact-offset-join",
+                "selected-chord-pair-round-chord-frame-fallback",
+            );
+        }
+        #[cfg(not(feature = "dispatch-trace"))]
+        let _ = represented_fallback;
         crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
             previous.source_end.clone(),
             anchor.clone(),
@@ -1463,9 +1473,15 @@ pub(super) fn append_selected_chord_pair_round_join(
             policy,
         )
     };
+    // Keep the original chord as the frame when the center needs the
+    // general carrier. The generic unit-normal constructor would otherwise
+    // build a new direction chord and discard this available source relation.
     let (selected, represented_frame) = if let Some((tangent_x, tangent_y)) =
         represented_unit_tangent.as_ref()
-    {
+        && matches!(
+            &previous.source_end,
+            CurvePoint2(CurvePointData2::Algebraic(_))
+        ) {
         let represented = crate::bezier_offset::BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
             &previous.source_end,
             (-tangent_y.clone(), tangent_x.clone()),
@@ -1478,18 +1494,12 @@ pub(super) fn append_selected_chord_pair_round_join(
                 // A represented circle frame owns one algebraic center field.
                 // Exact and other retained centers instead share the anchor's
                 // general chord-normal frame without projecting coordinates.
-                #[cfg(feature = "dispatch-trace")]
-                hyperreal::dispatch_trace::record(
-                    "hypercurve",
-                    "curve-region-exact-offset-join",
-                    "selected-chord-pair-round-chord-frame-fallback",
-                );
-                (chord_frame()?, false)
+                (chord_frame(true)?, false)
             }
             represented => (represented, true),
         }
     } else {
-        (chord_frame()?, false)
+        (chord_frame(represented_unit_tangent.is_some())?, false)
     };
     let semicircle = match selected {
         Classification::Decided(Some(semicircle)) => semicircle,

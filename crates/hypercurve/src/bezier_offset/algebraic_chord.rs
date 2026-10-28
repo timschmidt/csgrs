@@ -312,9 +312,36 @@ impl BezierAlgebraicChord2 {
         } else {
             false
         };
-        let pair_unit_tangent = pair_unit_tangent.or_else(|| {
+        let mut pair_unit_tangent = pair_unit_tangent.or_else(|| {
             strict_common_retained_line_unit_tangent(&start, &end, parameter_axis, policy)
         });
+        if pair_unit_tangent.is_none()
+            && [&start, &end].into_iter().any(|point| {
+                point_retains_joint_field(point) || matches!(&point.0, CurvePointData2::Endpoint(_))
+            })
+        {
+            // A shared selected origin may cancel from the displacement even
+            // though neither endpoint has separately represented coordinates.
+            // Retain the metric proof at construction so setbacks and normal
+            // offsets can translate the original point authority directly.
+            match policy.strict_predicate_pass(|| {
+                common_point_constant_displacement(&end, &start, policy)
+            })? {
+                Classification::Decided(Some(displacement)) => {
+                    if let Classification::Decided(direction) =
+                        crate::direction::UnitDirection2::from_direction(&displacement)?
+                    {
+                        pair_unit_tangent = Some(direction.components().clone());
+                    }
+                }
+                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                    return Ok(Classification::Uncertain(
+                        UncertaintyReason::BudgetExhausted,
+                    ));
+                }
+                Classification::Decided(None) | Classification::Uncertain(_) => (),
+            }
+        }
         let pair_axis_aligned = pair_unit_tangent.as_ref().is_some_and(|(x, y)| {
             x.zero_status() == ZeroKnowledge::Zero || y.zero_status() == ZeroKnowledge::Zero
         });
@@ -2989,7 +3016,11 @@ impl BezierAlgebraicChord2 {
                     delta_y.clone(),
                 )?;
                 Ok(Classification::Decided(CurvePoint2::from(
-                    BezierSimilarityPoint2::new(endpoint.clone(), transform, policy),
+                    BezierSimilarityPoint2::new(
+                        endpoint.clone(),
+                        transform,
+                        &policy.retained_object_policy(),
+                    ),
                 )))
             }
             CurvePoint2(CurvePointData2::Exact(point)) => Ok(Classification::Decided(
@@ -5040,7 +5071,12 @@ impl BezierAlgebraicChord2 {
         if distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(point);
         }
+        // Retain a qualified direction's chord evidence in the procedural
+        // carrier when the local construction policy alone cannot carry it.
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent()
+            && policy
+                .retained_object_policy()
+                .accepts_retained_policy(self.data.policy)
             && !matches!(&point, CurvePoint2(CurvePointData2::AnalyticParallel(_)))
         {
             return match Self::translated_endpoint(
@@ -5079,7 +5115,11 @@ impl BezierAlgebraicChord2 {
         if distance.zero_status() == ZeroKnowledge::Zero {
             return Ok(point);
         }
-        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
+        if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent()
+            && policy
+                .retained_object_policy()
+                .accepts_retained_policy(self.data.policy)
+        {
             return match Self::translated_endpoint(
                 &point,
                 &(tangent_x * &distance),

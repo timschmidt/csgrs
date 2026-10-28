@@ -5636,6 +5636,19 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         {
             return Ok(Classification::Decided(Some(point)));
         }
+        if semicircle.data.frame.rational().is_none()
+            && let Self::Mapped(data) = self
+            && data.semicircle_carrier() == semicircle
+            && let Some((source, start, source_policy)) = data.coincident_pair_endpoint_source()
+        {
+            policy.validate_retained_policy(source_policy)?;
+            // The overlap already identifies this boundary as an endpoint
+            // of a participating support. Preserve that support's point
+            // authority even when its center has no rational point image.
+            return Ok(source
+                .point_evidence_at(&if start { Real::zero() } else { Real::one() }, policy)?
+                .map(Some));
+        }
         match self.coincident_point_image(semicircle, policy)? {
             Classification::Decided(Some(point)) => {
                 return Ok(Classification::Decided(Some(CurvePoint2::from(point))));
@@ -5681,6 +5694,9 @@ impl BezierAlgebraicCuspSemicircleParameter2 {
         self.validate_policy(policy)?;
         if source.data.frame != offset.data.frame || source.is_clockwise() != offset.is_clockwise()
         {
+            return Ok(Classification::Decided(None));
+        }
+        if offset.data.frame.rational().is_none() {
             return Ok(Classification::Decided(None));
         }
         if source == offset {
@@ -7094,6 +7110,18 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         ])
     }
 
+    fn retained_contact_data(
+        &self,
+        contact: &BezierAlgebraicCuspSemicirclePairContact2,
+    ) -> Option<&BezierRetainedCirclePairContactData2> {
+        let BezierCirclePairParameterMapSystem2::Retained(contacts) = &self.data.system else {
+            return None;
+        };
+        contacts
+            .iter()
+            .find(|candidate| candidate.branch == contact.branch)
+    }
+
     pub(in crate::bezier_offset) fn represented_contact_data(
         &self,
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
@@ -7312,6 +7340,11 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         if let Some(contact_data) = self.recursive_contact_data(contact) {
             return Ok(Classification::Decided(Some(selected(&contact_data.frame))));
         }
+        if self.retained_contact_data(contact).is_some() {
+            return Ok(self
+                .recursive_geometric_pair_contact_frame(contact, policy)?
+                .map(|frame| frame.as_ref().map(selected)));
+        }
         let Some((system, contact_data)) = self.represented_contact_data(contact) else {
             return Err(CurveError::Topology(
                 "a circle-pair contact lost its recursive branch data".into(),
@@ -7435,6 +7468,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
         first: bool,
     ) -> Option<(&BezierAlgebraicCuspSemicircleParameter2, bool)> {
+        if let Some(data) = self.retained_contact_data(contact) {
+            return Some((&data.parameters[usize::from(!first)], false));
+        }
         let (_, data) = self.represented_contact_data(contact)?;
         let parameter = if first {
             &data.first_parameter
@@ -7496,6 +7532,16 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                     )
                 })?;
             return expression.sign(policy);
+        }
+        if let Some(data) = self.retained_contact_data(contact) {
+            return Ok(real_sign(
+                &(&data.tangent_cross * cross_scale + &data.tangent_dot * dot_scale),
+                policy,
+            )
+            .map_or(
+                Classification::Uncertain(UncertaintyReason::RealSign),
+                Classification::Decided,
+            ));
         }
         let Some((_, data)) = self.represented_contact_data(contact) else {
             return Err(CurveError::Topology(
@@ -7611,6 +7657,43 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
             return Err(CurveError::Topology(
                 "a represented selected-radial contact retained an invalid branch".into(),
             ));
+        }
+        if let Some(data) = self.retained_contact_data(contact) {
+            let radial = &data.radials[usize::from(!first)];
+            let delta = [
+                translation_x + radial_scale * &radial[0] - perpendicular_scale * &radial[1],
+                translation_y + perpendicular_scale * &radial[0] + radial_scale * &radial[1],
+            ];
+            if center_bias.zero_status() == ZeroKnowledge::Zero {
+                return Ok(Classification::Decided(delta.map(|value| {
+                    AlgebraicRootRepresentation::from_exact_value(&value)
+                })));
+            }
+            let circle = if first {
+                &self.data.first_semicircle
+            } else {
+                &self.data.second_semicircle
+            };
+            let center = match circle.center_point_evidence(policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            let center = match represented_point_evidence_coordinates(&center, policy)? {
+                Classification::Decided(center) => center,
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            };
+            return Ok(
+                match (
+                    represented_affine_coordinate(&[(&center[0], center_bias)], &delta[0]),
+                    represented_affine_coordinate(&[(&center[1], center_bias)], &delta[1]),
+                ) {
+                    (Classification::Decided(x), Classification::Decided(y)) => {
+                        Classification::Decided([x, y])
+                    }
+                    (Classification::Uncertain(reason), _)
+                    | (_, Classification::Uncertain(reason)) => Classification::Uncertain(reason),
+                },
+            );
         }
         if let Some((system, data)) = self.represented_contact_data(contact) {
             let center = if first {
@@ -7989,6 +8072,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
                 RealSign::Negative => std::cmp::Ordering::Greater,
             }));
         }
+        if let Some(data) = self.retained_contact_data(contact) {
+            return data.parameters[usize::from(!first)].order_to_real(parameter, policy);
+        }
         let Some((_, data)) = self.represented_contact_data(contact) else {
             return Err(CurveError::Topology(
                 "a circle-pair parameter lost its branch data".into(),
@@ -8128,6 +8214,9 @@ impl BezierAlgebraicCuspSemicirclePairParameterMap2 {
         contact: &BezierAlgebraicCuspSemicirclePairContact2,
         first: bool,
     ) -> BezierAlgebraicCuspSemicircleParameter2 {
+        if let Some(data) = self.retained_contact_data(contact) {
+            return data.parameters[usize::from(!first)].clone();
+        }
         let location = if first {
             contact.first_location
         } else {

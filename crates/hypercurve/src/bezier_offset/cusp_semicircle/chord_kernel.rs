@@ -5939,6 +5939,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         retained_orientation_reversed: bool,
         center: Point2,
         radial: (Real, Real),
+        retained_center: Option<&CurvePoint2>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierAlgebraicCuspSemicircleRetainedChordContact2>>> {
         // Give an unoriented affine support one deterministic solve frame.
@@ -6062,7 +6063,44 @@ impl BezierAlgebraicCuspSemicircle2 {
                     }
                 },
             };
-            let point = CurvePoint2::from(point);
+            let point = if let Some(retained_center) = retained_center {
+                // The solve is in coordinates relative to this original
+                // center. Validate the unsquared equation before publishing
+                // the selected point in its shared source field.
+                let residual = Real::dot2_refs(
+                    [&from_center.0, &from_center.1],
+                    [&from_center.0, &from_center.1],
+                ) - &radius_squared;
+                match real_sign(&residual, policy) {
+                    Some(RealSign::Zero) => {}
+                    Some(_) => {
+                        return Err(CurveError::Topology(
+                            "a translated line contact failed its original circle equation".into(),
+                        ));
+                    }
+                    None => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
+                }
+                CurvePoint2::from(BezierSimilarityPoint2::new(
+                    retained_center.clone(),
+                    Similarity2::try_from_real_affine(
+                        Real::one(),
+                        Real::zero(),
+                        Real::zero(),
+                        Real::one(),
+                        from_center.0,
+                        from_center.1,
+                    )?,
+                    &policy.retained_object_policy_with_dependencies(
+                        self.data
+                            .frame
+                            .evidence_policy()
+                            .into_iter()
+                            .chain([chord.data.policy]),
+                    ),
+                ))
+            } else {
+                CurvePoint2::from(point)
+            };
             let chord_parameter = if let Some(line_parameter) = chord_line_parameter {
                 match compare_reals(&line_parameter, &zero, policy) {
                     Some(std::cmp::Ordering::Equal) => chord.start_parameter(),
@@ -6162,6 +6200,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             retained_orientation_reversed,
             center,
             radial,
+            None,
             policy,
         )
     }
@@ -7815,6 +7854,68 @@ impl BezierAlgebraicCuspSemicircle2 {
         )
     }
 
+    /// Cancels a shared selected center before using the existing exact
+    /// line/circle primitive. The local line is a predicate view; output keeps
+    /// the original center, finite chord and exact chart parameters.
+    fn shared_center_chord_contacts(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<Vec<BezierAlgebraicCuspSemicircleRetainedChordContact2>>>>
+    {
+        let Some(normal) = self.represented_frame_unit_normal()? else {
+            return Ok(Classification::Decided(None));
+        };
+        let center = match self.center_point_evidence(policy)? {
+            Classification::Decided(center) => center,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if ![&center, chord.start(), chord.end()]
+            .into_iter()
+            .any(point_retains_joint_field)
+        {
+            return Ok(Classification::Decided(None));
+        }
+        let mut endpoints = Vec::with_capacity(2);
+        for point in [chord.start(), chord.end()] {
+            match common_point_constant_displacement(point, &center, policy)? {
+                Classification::Decided(Some((x, y))) => endpoints.push(Point2::new(x, y)),
+                Classification::Decided(None) => return Ok(Classification::Decided(None)),
+                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+            }
+        }
+        let [start, end]: [Point2; 2] = endpoints
+            .try_into()
+            .expect("both translated chord endpoints were checked");
+        let (dx, dy) = end.delta_from(&start);
+        match real_sign(&(&dx * &dx + &dy * &dy), policy) {
+            Some(RealSign::Positive) => {}
+            Some(_) => {
+                return Err(CurveError::Topology(
+                    "a retained nonzero chord collapsed in its translated frame".into(),
+                ));
+            }
+            None => return Ok(Classification::Uncertain(UncertaintyReason::Predicate)),
+        }
+        let line = LineSeg2::new_unchecked(start, end);
+        self.exact_frame_line_intersections(
+            chord,
+            &line,
+            true,
+            clip_to_finite_chord,
+            false,
+            Point2::new(Real::zero(), Real::zero()),
+            (
+                &normal.0 * self.radial_distance(),
+                &normal.1 * self.radial_distance(),
+            ),
+            Some(&center),
+            policy,
+        )
+        .map(|result| result.map(Some))
+    }
+
     pub(in crate::bezier_offset) fn chord_intersections_in_domain_once(
         &self,
         chord: &BezierAlgebraicChord2,
@@ -7831,6 +7932,19 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
         match self.shared_point_incident_chord_contacts(chord, clip_to_finite_chord, policy)? {
+            Classification::Decided(Some(contacts)) => {
+                return Ok(Classification::Decided(contacts));
+            }
+            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                return Ok(Classification::Uncertain(
+                    UncertaintyReason::BudgetExhausted,
+                ));
+            }
+            Classification::Decided(None) | Classification::Uncertain(_) => {}
+        }
+        match policy.strict_predicate_pass(|| {
+            self.shared_center_chord_contacts(chord, clip_to_finite_chord, policy)
+        })? {
             Classification::Decided(Some(contacts)) => {
                 return Ok(Classification::Decided(contacts));
             }
@@ -7973,6 +8087,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 retained_orientation_reversed,
                 center,
                 radial,
+                None,
                 policy,
             );
         }
@@ -8300,6 +8415,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 retained_orientation_reversed,
                 center,
                 radial,
+                None,
                 policy,
             );
         }

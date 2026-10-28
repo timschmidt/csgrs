@@ -4,7 +4,7 @@
   "target_domain": "The AGENTS.md algebraic closure contract and M0-M6/A1-A4 remain the target. Native and generated instances are identified independently. This catalog is an initial subset, not an exhaustive family or degeneracy inventory.",
   "unqualified_targets": [
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
-    "Native save/reload beyond the demonstrated authored sources, retained parallels and chords, selected points and represented-frame circles. Version 5 shares checked definitions across compound region boundaries; the named fresh-process annulus replay and further offsets complete. General independent angular fields, other circle frames, other differential point carriers and arbitrary implicit regions remain open. The named shared-field one-incident-endpoint circle/line and large-erosion continuation now complete; general circle/line roots and independent fields remain open.",
+    "Native save/reload beyond the demonstrated source and selected generated carriers remains open. Version 5 preserves the named filled-region chains. The selected-circle corner fixtures now complete chamfer or constrained fillet, reconstruction, exact replay and round dilation/contraction; named translated-circle and nonincident-line contacts and rotated overlaps also complete. General independent angular/coefficient fields, other circle frames and arbitrary implicit regions remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
@@ -10618,6 +10618,558 @@
         }
       ],
       "oracle": "Independent concentric disk/annulus radial identities, disappearance of a radius-one disk under erosion by two, and exact symmetric-difference set checks."
+    },
+    {
+      "id": "selected_circle_chamfer_chain",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_diameter_chamfer_reconstructs_replays_and_offsets",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Unit clockwise semicircle closed by its diameter; edit vertex C-N with TrimOnly, chord setbacks or circular radius 1/4. The circle cut is C-(31/32)N+(sqrt(63)/32)T and line cut C-(3/4)N.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "One selected solution has both independently derived contacts and preserves the original outer endpoints."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The three retained boundary curves reconstruct one filled component with no holes."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Both contacts are boundary, the original corner is outside and C+T/4 is inside."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native path and filled-region replay are deterministic and semantically equal by empty XOR."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Round dilation by 1/16 followed by erosion by 1/16 completes."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "The final restored region XOR the independently checked edited region is empty."
+        }
+      ],
+      "oracle": "The circle cut is C-(31/32)N+(sqrt(63)/32)T and line cut C-(3/4)N. Exact point identities, topology roles, membership and regularized-set XOR are separate assertions.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_constrained_fillet_chain",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_diameter_constrained_fillet_reconstructs_replays_and_offsets",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Unit clockwise semicircle closed by its diameter; edit vertex C-N with TrimOnly, chord setbacks or circular radius 1/4. For s=sqrt(1/2), center C-sN+T/4 and contacts C-(4s/3)N+T/3 and C-sN are explicitly constrained.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "One selected solution has both independently derived contacts and preserves the original outer endpoints."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The three retained boundary curves reconstruct one filled component with no holes."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Both contacts are boundary, the original corner is outside and C+T/4 is inside."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native path and filled-region replay are deterministic and semantically equal by empty XOR."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Round dilation by 1/16 followed by erosion by 1/16 completes."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "The final restored region XOR the independently checked edited region is empty."
+        }
+      ],
+      "oracle": "For s=sqrt(1/2), center C-sN+T/4 and contacts C-(4s/3)N+T/3 and C-sN are explicitly constrained. Exact point identities, topology roles, membership and regularized-set XOR are separate assertions.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_pair_roots",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_pair_contacts_preserve_exact_points_and_cross_signs",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Unit supports centered at C and C+T, with opposite selected halves and all four traversal combinations.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both contacts have exact parameters on both operands and the independently derived transverse sign."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Every returned contact point definition replays to the same point."
+        }
+      ],
+      "oracle": "Contacts C+T/2 +/- sqrt(3)N/2; derivative cross signs change with each traversal reversal.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_pair_tangent_gap",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_pair_contacts_keep_tangency_halves_and_separation",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Unit supports separated by 2T, (2+2^-80)T or T with the complementary selected half.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One tangent contact at separation two, in both operand orders, with zero tangent cross sign."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "proved_no_solution",
+          "assertion": "The strictly separated supports and wrong selected halves have no contacts or overlaps."
+        }
+      ],
+      "oracle": "The tangent is C+T; exact radius/separation and half selection distinguish the 2^-80 gap.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_line_nonincident",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_nonincident_chords_keep_roots_and_clipping",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Chord C+T/2+nN for n in [-2,2] or [0,2], with both chord traversals.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Return exactly two or one contacts after finite clipping, with both operand parameters and transverse signs."
+        }
+      ],
+      "oracle": "Independent n=+/-sqrt(3)/2 roots, finite interval membership, point definition replay and oriented cross signs.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_line_tangent_gap",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_nonincident_chords_keep_tangency_and_small_gaps",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Nonincident chord endpoints on C+dT+nN, n in [-2,2], d=1 or 1+2^-80.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "At d=1 the unique contact is C+T, with zero tangent cross sign and exact replayable parameters."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "proved_no_solution",
+          "assertion": "At d=1+2^-80 there are no contacts or overlaps."
+        }
+      ],
+      "oracle": "Independent circle-line distance and tangent equations; no tolerance merging.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_generated_point_queries",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_generated_endpoint_queries_keep_the_original_field",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Both endpoints of circles with signed radius +/-1.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Rational coordinate differences from the original center have exact expected signs and singleton bounds."
+        }
+      ],
+      "oracle": "Offsets +/-N and unchanged retained point sources; zero-denominator queries are rejected. This control already passed on the qualified parent.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_pair_policy_retry",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_contacts_retry_and_keep_certainty",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). The two-contact translated-circle case under ZERO then 4096 refinements with zero promotions; strict/approximate-requested/strict policies.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A larger-budget retry returns both fully evaluated and replayable contacts; zero-budget completion or actual exhaustion is distinguished."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Strict definition replay succeeds after each requested policy and every complete outcome is certified."
+        }
+      ],
+      "oracle": "Complete contact/parameter assertions after every successful attempt; actual reached counters for exhausted attempts; no total-work claim.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_pair_fresh_replay",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_contact_replays_before_further_intersection",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Split a selected semicircle at its upper contact with the translated complementary semicircle.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The split preserves the independently derived contact endpoint."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native replay in a fresh child process is deterministic."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both reloaded pieces intersect the other support with complete, evaluable and replayable contacts."
+        }
+      ],
+      "oracle": "C+T/2+sqrt(3)N/2 endpoint identity, fresh process, native bytes and further exact incidence checks.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_corner_reversal",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_corner_reversal_preserves_set_and_constraints",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Original and reversed diameter corners, both chord-setback chamfer and fully constrained circular fillet.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Each reversed edited region XOR its original traversal result is empty."
+        },
+        {
+          "stage": "corner_edits",
+          "outcome": "proved_no_solution",
+          "assertion": "Wrong center and wrong contact requests return no candidate."
+        }
+      ],
+      "oracle": "Set equality after traversal reversal and explicit impossible center/contact constraints.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_corner_offset_queries",
+      "target": "fiber_point_incidence",
+      "test": "selected_corner_offset_queries_retain_mapped_endpoint_domains",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Chamfered half disk after round dilation by 1/16.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "C+T/4 is inside, C+17T/16 is boundary and C+2T is outside."
+        }
+      ],
+      "oracle": "Independent radial expectations; this control already passed before the circle-ray endpoint fix.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_circle_rotated_overlap",
+      "target": "fiber_point_incidence",
+      "test": "selected_circle_shared_center_rotated_frames_keep_partial_overlap",
+      "owner": "Hypercurve retained points, selected-circle contacts and the existing CurveRegion2 arrangement",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint center C=(beta,gamma), 2*beta^7=1 and gamma^5+beta=2, selected by the original isolators; unit frame N=(-4/5,3/5), T=(3/5,4/5). Coincident unit-circle supports with quarter-turned normal frames, all four traversal combinations, plus unequal concentric radii.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original source, selected halves, finite domains and traversal remain authoritative. No display approximation participates in exact decisions.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One partial overlap has correct orientation and included endpoints C+N and C+T; unequal radii have no contacts."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Each overlap range restricts its original curve with exact endpoints."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Each restricted arc replays deterministically with unchanged start and end point identities."
+        }
+      ],
+      "oracle": "Independent quarter-circle endpoint identities, overlap orientation and concentric radius separation.",
+      "timeout_seconds": 300
     }
   ]
 }

@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `hypercurve-selected-circle-corners-evidence-2026-10-28` branch ends at
+`a8894028434896af26584e04d3f0367d5787fe65`, adding `docs/evidence/2026-10-28-hypercurve-closure-selected-circle-corners`
+(1,600 files, 92,870,882 bytes), SHA-256 `d39113527e8a6013bce19c9ada17faefc0be34fd2a8bd8e5adaeb85168b904b9`. It records
+Hypercurve common point fields, selected-circle incidence and endpoint transport, corner reconstruction, arrangement side rays, finite projection and native circle definitions. All 2,911 Hypercurve cases, 66
+root cases, 3,012 consumer cases, strict Clippy, core builds, docs, 16 matrix
+guards and 251 fixtures pass; 34 existing ignored cases remain.
+Every final source input is freshly qualified; the initial attempt with a
+missing fixture snapshot is not credited. Source equality and parent
+`2404957c1e` are recorded. This record is unpushed; complete closure, resource bounds and package
+delivery remain open.
+
 The local `hypercurve-circle-line-contacts-evidence-2026-10-28` branch ends at
 `6115a1e02fe881250cda8eb537f67e5680e32a73`, adding `docs/evidence/2026-10-28-hypercurve-closure-circle-line-contacts`
 (407 files, 9,463,829 bytes), SHA-256 `4f5b200100277b66bf2680c5c6992fa9966c7172f005142e9a8390a5de762ea5`. It records

@@ -56,7 +56,53 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
     }
 
+    /// Replays an overlap boundary through its original endpoint authority.
+    /// Preserve classified failures from chart inversion instead of treating
+    /// an exhausted proof as an unsupported serialization variant.
     pub(crate) fn native_parameter_definition(
+        &self,
+        parameter: &BezierAlgebraicCuspSemicircleParameter2,
+    ) -> CurveResult<Classification<Option<CircleParameterDefinition2>>> {
+        let policy = CurveContext::STRICT;
+        parameter.validate_policy(&policy)?;
+        if let Some(definition) = self.retained_parameter_definition(parameter) {
+            return Ok(Classification::Decided(Some(definition)));
+        }
+        let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter else {
+            return Ok(Classification::Decided(None));
+        };
+        if data.semicircle_carrier() != self || data.coincident_pair_endpoint_source().is_none() {
+            return Ok(Classification::Decided(None));
+        }
+        let point = match parameter.coincident_point_evidence(self, &policy)? {
+            Classification::Decided(Some(point)) => point,
+            Classification::Decided(None) => return Ok(Classification::Decided(None)),
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        let local = match self.parameter_at_certified_incident_point(&point, &policy)? {
+            Classification::Decided(local) => local,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        if local.is_algebraic_cusp_complement() {
+            return Err(CurveError::InvalidBezierRange);
+        }
+        // Use the same canonical chart as the reader, so the first export
+        // and a fresh replay have identical definitions. Otherwise retain P
+        // and let the existing incident-point reader re-prove its equations.
+        Ok(Classification::Decided(Some(
+            match local.as_algebraic_cusp() {
+                Some(BezierAlgebraicCuspSemicircleParameter2::Exact(value)) => {
+                    CircleParameterDefinition2::Exact(value.clone())
+                }
+                Some(BezierAlgebraicCuspSemicircleParameter2::Mapped(_)) => {
+                    CircleParameterDefinition2::IncidentPoint(point)
+                }
+                None => return Err(CurveError::InvalidCurveParameter),
+            },
+        )))
+    }
+
+    fn retained_parameter_definition(
         &self,
         parameter: &BezierAlgebraicCuspSemicircleParameter2,
     ) -> Option<CircleParameterDefinition2> {
