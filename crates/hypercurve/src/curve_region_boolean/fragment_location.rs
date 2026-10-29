@@ -559,10 +559,24 @@ impl<'a> CurveRegionBooleanContext<'a> {
         };
         let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
         let ordinary_candidates = fallback_count.saturating_add(4);
+        let prefer_axis_probes = boundary_carriers
+            .iter()
+            .any(|carrier| matches!(&carrier.geometry, CurveSupport2::Polynomial(_)));
         for candidate_index in 0..ordinary_candidates.saturating_add(4) {
-            // Preserve the existing successful paths and their query costs.
-            // If all oblique probes are blocked, an available exact coordinate
-            // can certify an axis support while its companion stays selected.
+            // Polynomial sections can reuse an already represented coordinate
+            // without adjoining both selected endpoint coordinates. Try those
+            // axis supports before the general selected-chord solver, retaining
+            // every oblique candidate when the axis probes are unavailable or
+            // degenerate. Other families keep their existing probe order.
+            let candidate_index = if prefer_axis_probes {
+                if candidate_index < 4 {
+                    ordinary_candidates.saturating_add(candidate_index)
+                } else {
+                    candidate_index - 4
+                }
+            } else {
+                candidate_index
+            };
             let outside = if candidate_index < ordinary_candidates {
                 retained_probe_exterior_candidate(&outer_bounds, candidate_index)
             } else {
@@ -673,6 +687,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 return Ok(Classification::Decided(RegionPointLocation::Boundary));
             }
             if comparison_blocked {
+                continue;
+            }
+            // A zero or unavailable tangent determinant does not prove that
+            // the probe stays on one side. This includes chart endpoints and
+            // odd-order tangencies. The target-boundary case was handled above;
+            // every other such contact requires another exterior direction.
+            if evidence
+                .contacts()
+                .iter()
+                .any(|contact| !contact.is_certified_transverse())
+            {
+                last_reason = UncertaintyReason::Boundary;
                 continue;
             }
 

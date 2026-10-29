@@ -744,18 +744,145 @@ fn polynomial_region_zero_offset_keeps_sources_and_remaining_gaps_are_typed() {
             .count(),
         2
     );
+    // This same original corner now has a unique exact trim-only chamfer.
+    // Its supports and chord setbacks determine the convex retained cap;
+    // successful construction alone is not the acceptance criterion.
+    use hypercurve::{CurveCornerSolutions2, CurvePoint2, CurvePointRationalForm2};
+    use std::cmp::Ordering;
+    fn coordinate(point: &CurvePoint2, x: bool) -> CurvePointRationalForm2 {
+        point
+            .rational_form(
+                BivariatePolynomial::new(if x {
+                    vec![vec![], vec![Real::one()]]
+                } else {
+                    vec![vec![Real::zero(), Real::one()]]
+                }),
+                BivariatePolynomial::new(vec![vec![Real::one()]]),
+            )
+            .unwrap()
+    }
+    let original = source.boundary_paths().unwrap();
+    let original = original[0].curves();
+    let CurveCornerSolutions2::Unique(chamfer) = source
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            1,
+            q(1, 64),
+            q(1, 64),
+            hypercurve::CurveCornerMode2::TrimOnly,
+        )
+        .unwrap()
+    else {
+        panic!("the original convex parabola corner has one trim-only chamfer");
+    };
+    let edited = chamfer.boundary_paths().unwrap();
+    assert_eq!(edited.len(), 1);
+    let curves = edited[0].curves();
+    assert_eq!(curves.len(), 4);
+    let lower = curves
+        .iter()
+        .position(|curve| {
+            curve.polynomial_branch().is_some_and(|branch| {
+                branch.has_same_parameterization(original[0].polynomial_branch().unwrap())
+            })
+        })
+        .unwrap();
+    let curves: Vec<_> = (0..4).map(|offset| &curves[(lower + offset) % 4]).collect();
+    assert!(
+        curves[0]
+            .start()
+            .coincides_with(&original[0].start())
+            .unwrap()
+    );
+    let cut = curves[0].end();
+    assert_eq!(curves[1].family(), CurveFamily2::Line);
+    assert!(curves[1].start().coincides_with(&cut).unwrap());
+    let line_cut = CurvePoint2::from(Point2::new(q(1, 4), q(-31, 64)));
+    assert!(curves[1].end().coincides_with(&line_cut).unwrap());
+    assert_eq!(curves[2].family(), CurveFamily2::Line);
+    assert!(curves[2].start().coincides_with(&line_cut).unwrap());
+    assert!(curves[2].end().coincides_with(&original[1].end()).unwrap());
+    assert!(
+        curves[3]
+            .polynomial_branch()
+            .unwrap()
+            .has_same_parameterization(original[2].polynomial_branch().unwrap())
+    );
+    assert!(
+        curves[3]
+            .start()
+            .coincides_with(&original[2].start())
+            .unwrap()
+    );
+    assert!(curves[3].end().coincides_with(&original[2].end()).unwrap());
+    assert_eq!(
+        curves[0]
+            .parameter_domain()
+            .start()
+            .compare(original[0].parameter_domain().start())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        curves[0]
+            .parameter_domain()
+            .end()
+            .compare(original[0].parameter_domain().start())
+            .unwrap(),
+        Ordering::Greater
+    );
+    assert_eq!(
+        curves[0]
+            .parameter_domain()
+            .end()
+            .compare(original[0].parameter_domain().end())
+            .unwrap(),
+        Ordering::Less
+    );
+    let x = coordinate(&cut, true);
+    let y = coordinate(&cut, false);
+    assert_eq!(
+        y.multiply(&y).unwrap().compare(&x).unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(y.compare_to_real(&Real::zero()).unwrap(), Ordering::Less);
+    let corner = original[1].start();
+    for point in [&cut, &line_cut] {
+        let dx = coordinate(point, true)
+            .subtract(&coordinate(&corner, true))
+            .unwrap();
+        let dy = coordinate(point, false)
+            .subtract(&coordinate(&corner, false))
+            .unwrap();
+        assert_eq!(
+            dx.multiply(&dx)
+                .unwrap()
+                .add(&dy.multiply(&dy).unwrap())
+                .unwrap()
+                .compare_to_real(&q(1, 4096))
+                .unwrap(),
+            Ordering::Equal
+        );
+    }
+    assert!(
+        chamfer
+            .boolean_region(&source, BooleanOp::Difference)
+            .unwrap()
+            .is_empty()
+    );
+    let rebuilt =
+        CurveRegion2::try_from_boundary_paths(&[edited[0].reversed().unwrap()], FillRule::EvenOdd)
+            .unwrap();
+    assert!(
+        rebuilt
+            .boolean_region(&chamfer, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+
     for error in [
         source
             .offset(q(1, 64), &hypercurve::OffsetCornerStyle2::Round)
-            .unwrap_err(),
-        source
-            .chamfer_loop_vertex_by_setbacks(
-                0,
-                1,
-                q(1, 64),
-                q(1, 64),
-                hypercurve::CurveCornerMode2::TrimOnly,
-            )
             .unwrap_err(),
         source
             .fillet_loop_vertex(
@@ -975,4 +1102,339 @@ fn polynomial_region_node_keeps_two_material_lobes_at_shared_vertex() {
                 .is_empty()
         );
     }
+}
+
+// An elliptic support prevents the frontier from being reduced to a catalog
+// of rationally parameterizable curves. On this selected cap the filled set
+// is -1 <= x <= 0 and y^2 <= 1 + x^3, with rational corner coordinates.
+fn elliptic_chamfer_admission_source() -> CurveRegion2 {
+    let equation = BivariatePolynomial::new(vec![
+        vec![(-1).into(), 0.into(), 1.into()],
+        vec![],
+        vec![],
+        vec![(-1).into()],
+    ]);
+    let topology = decompose_bivariate_curve(
+        &equation,
+        &BivariateCurveDomain {
+            first: [(-2).into(), 1.into()],
+            second: [(-2).into(), 2.into()],
+        },
+        BivariateTopologyConfig::default(),
+    )
+    .unwrap();
+    let set =
+        PolynomialCurveSet2::from_topology(topology, AlgebraicFiberRootIsolationConfig::default())
+            .unwrap();
+    assert_eq!(set.curves().len(), 2);
+    let range = CurveParameterRange2::try_new(Real::from(-1).into(), Real::zero().into()).unwrap();
+    let path = CurvePath2::try_new(vec![
+        set.curves()[0].restrict_source(range.clone()).unwrap(),
+        Curve2::from(
+            LineSeg2::try_new(
+                Point2::new(0.into(), (-1).into()),
+                Point2::new(0.into(), 1.into()),
+            )
+            .unwrap(),
+        ),
+        set.curves()[1]
+            .restrict_source(range)
+            .unwrap()
+            .reversed()
+            .unwrap(),
+    ])
+    .unwrap();
+    assert_eq!(
+        path.simple_loop_orientation().unwrap(),
+        CurveLoopOrientation2::Counterclockwise
+    );
+    CurveRegion2::try_from_boundary_paths(&[path], FillRule::NonZero).unwrap()
+}
+
+#[test]
+fn algebraic_corner_chamfer_preserves_the_region_through_reconstruction_and_boolean() {
+    use hypercurve::{
+        CurveCornerMode2, CurveCornerSolutions2, CurvePoint2, CurvePointRationalForm2,
+    };
+    use std::cmp::Ordering;
+    fn coordinate(point: &CurvePoint2, x: bool) -> CurvePointRationalForm2 {
+        point
+            .rational_form(
+                BivariatePolynomial::new(if x {
+                    vec![vec![], vec![Real::one()]]
+                } else {
+                    vec![vec![Real::zero(), Real::one()]]
+                }),
+                BivariatePolynomial::new(vec![vec![Real::one()]]),
+            )
+            .unwrap()
+    }
+    fn setback(point: &CurvePoint2, corner: &CurvePoint2) {
+        let dx = coordinate(point, true)
+            .subtract(&coordinate(corner, true))
+            .unwrap();
+        let dy = coordinate(point, false)
+            .subtract(&coordinate(corner, false))
+            .unwrap();
+        assert_eq!(
+            dx.multiply(&dx)
+                .unwrap()
+                .add(&dy.multiply(&dy).unwrap())
+                .unwrap()
+                .compare_to_real(&q(1, 4096))
+                .unwrap(),
+            Ordering::Equal
+        );
+    }
+    let source = elliptic_chamfer_admission_source()
+        .boolean_region(
+            &rectangle((-2).into(), 1.into(), (-2).into(), q(1, 2)),
+            BooleanOp::Intersection,
+        )
+        .unwrap();
+    let original = source.boundary_paths().unwrap();
+    assert_eq!(original.len(), 1);
+    let vertices: Vec<_> = original[0]
+        .curves()
+        .iter()
+        .enumerate()
+        .filter_map(|(index, curve)| {
+            (curve.polynomial_branch().is_some()
+                && coordinate(&curve.start(), false)
+                    .compare_to_real(&q(1, 2))
+                    .unwrap()
+                    == Ordering::Equal)
+                .then_some(index)
+        })
+        .collect();
+    assert_eq!(vertices.len(), 1);
+    let original_upper = &original[0].curves()[vertices[0]];
+    let corner = original_upper.start();
+    let x = coordinate(&corner, true);
+    assert_eq!(x.compare_to_real(&Real::zero()).unwrap(), Ordering::Less);
+    assert_eq!(
+        x.multiply(&x)
+            .unwrap()
+            .multiply(&x)
+            .unwrap()
+            .compare_to_real(&q(-3, 4))
+            .unwrap(),
+        Ordering::Equal
+    );
+    let CurveCornerSolutions2::Unique(result) = source
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            vertices[0],
+            q(1, 64),
+            q(1, 64),
+            CurveCornerMode2::TrimOnly,
+        )
+        .unwrap()
+    else {
+        panic!("one exact finite trim solution")
+    };
+    let paths = result.boundary_paths().unwrap();
+    assert_eq!(paths.len(), 1);
+    let path = &paths[0];
+    assert_eq!(path.curves().len(), 5);
+    assert_eq!(
+        path.simple_loop_orientation().unwrap(),
+        CurveLoopOrientation2::Counterclockwise
+    );
+    for (index, curve) in path.curves().iter().enumerate() {
+        assert!(
+            curve
+                .end()
+                .coincides_with(&path.curves()[(index + 1) % 5].start())
+                .unwrap()
+        );
+    }
+    let branches: Vec<_> = path
+        .curves()
+        .iter()
+        .enumerate()
+        .filter(|(_, curve)| curve.polynomial_branch().is_some())
+        .collect();
+    assert_eq!(branches.len(), 2);
+    let (upper_index, upper) = *branches
+        .iter()
+        .find(|(_, curve)| curve.polynomial_branch().unwrap().root_index() == 1)
+        .unwrap();
+    let (_, lower) = *branches
+        .iter()
+        .find(|(_, curve)| curve.polynomial_branch().unwrap().root_index() == 0)
+        .unwrap();
+    for curve in [upper, lower] {
+        assert!(
+            curve.polynomial_branch().unwrap().topology()
+                == original_upper.polynomial_branch().unwrap().topology()
+        );
+    }
+    assert!(
+        upper
+            .polynomial_branch()
+            .unwrap()
+            .has_same_parameterization(original_upper.polynomial_branch().unwrap())
+    );
+    assert_eq!(
+        upper
+            .parameter_domain()
+            .start()
+            .compare(&Real::from(-1).into())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        upper
+            .parameter_domain()
+            .end()
+            .compare(original_upper.parameter_domain().end())
+            .unwrap(),
+        Ordering::Less
+    );
+    assert_eq!(
+        lower
+            .parameter_domain()
+            .start()
+            .compare(&Real::from(-1).into())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        lower
+            .parameter_domain()
+            .end()
+            .compare(&Real::zero().into())
+            .unwrap(),
+        Ordering::Equal
+    );
+    let upper_cut = upper.start();
+    assert_eq!(
+        coordinate(&upper_cut, true)
+            .compare(&coordinate(&corner, true))
+            .unwrap(),
+        Ordering::Less
+    );
+    assert_eq!(
+        coordinate(&upper_cut, false)
+            .compare_to_real(&q(1, 2))
+            .unwrap(),
+        Ordering::Less
+    );
+    setback(&upper_cut, &corner);
+    let chord = &path.curves()[(upper_index + 4) % 5];
+    assert_eq!(chord.family(), CurveFamily2::Line);
+    assert!(chord.end().coincides_with(&upper_cut).unwrap());
+    let horizontal_cut = chord.start();
+    assert_eq!(
+        coordinate(&horizontal_cut, false)
+            .compare_to_real(&q(1, 2))
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        coordinate(&horizontal_cut, true)
+            .compare(&coordinate(&corner, true))
+            .unwrap(),
+        Ordering::Greater
+    );
+    setback(&horizontal_cut, &corner);
+    let top = &path.curves()[(upper_index + 3) % 5];
+    let right = &path.curves()[(upper_index + 2) % 5];
+    assert_eq!(top.family(), CurveFamily2::Line);
+    assert_eq!(right.family(), CurveFamily2::Line);
+    assert!(
+        top.start()
+            .coincides_with(&Point2::new(0.into(), q(1, 2)).into())
+            .unwrap()
+    );
+    assert!(top.end().coincides_with(&horizontal_cut).unwrap());
+    assert!(
+        right
+            .start()
+            .coincides_with(&Point2::from_values(0, -1).into())
+            .unwrap()
+    );
+    assert!(right.end().coincides_with(&top.start()).unwrap());
+    // These five exact oriented pieces bound the original convex set
+    // {-1<=x<=0, y^2<=1+x^3, y<=1/2} clipped by the new chord half-plane.
+    // The upper graph is strictly concave on (-1,0), so the inward chord
+    // removes precisely the corner between the two certified setback cuts.
+    assert_eq!(
+        result.classify_point(&corner).unwrap(),
+        RegionPointLocation::Outside
+    );
+    assert_eq!(
+        result.classify_point(&upper_cut).unwrap(),
+        RegionPointLocation::Boundary
+    );
+    assert_eq!(
+        result
+            .classify_point(&Point2::new(q(-1, 2), 0.into()).into())
+            .unwrap(),
+        RegionPointLocation::Inside
+    );
+    let rebuilt =
+        CurveRegion2::try_from_boundary_paths(&[path.reversed().unwrap()], FillRule::EvenOdd)
+            .unwrap();
+    // Both chamfer cuts are strictly left of -3/4. This independent later
+    // clip removes that whole edit and leaves exactly one lower polynomial
+    // graph over [-3/4,0], a top at y=1/2 and two vertical closing lines.
+    for point in [&upper_cut, &horizontal_cut] {
+        assert_eq!(
+            coordinate(point, true).compare_to_real(&q(-3, 4)).unwrap(),
+            Ordering::Less
+        );
+    }
+    let further = rebuilt
+        .boolean_region(
+            &rectangle(q(-3, 4), 0.into(), (-2).into(), q(1, 2)),
+            BooleanOp::Intersection,
+        )
+        .unwrap();
+    let paths = further.boundary_paths().unwrap();
+    assert_eq!(paths.len(), 1);
+    assert_eq!(paths[0].curves().len(), 4);
+    let branches: Vec<_> = paths[0]
+        .curves()
+        .iter()
+        .filter(|curve| curve.polynomial_branch().is_some())
+        .collect();
+    assert_eq!(branches.len(), 1);
+    let branch = branches[0];
+    assert_eq!(branch.polynomial_branch().unwrap().root_index(), 0);
+    assert!(
+        branch
+            .polynomial_branch()
+            .unwrap()
+            .has_same_parameterization(lower.polynomial_branch().unwrap())
+    );
+    assert_eq!(
+        branch
+            .parameter_domain()
+            .start()
+            .compare(&q(-3, 4).into())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        branch
+            .parameter_domain()
+            .end()
+            .compare(&Real::zero().into())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert_eq!(
+        further
+            .classify_point(&branch.point_at(&q(-1, 2).into()).unwrap())
+            .unwrap(),
+        RegionPointLocation::Boundary
+    );
+    assert_eq!(
+        further
+            .classify_point(&Point2::new(q(-1, 2), 0.into()).into())
+            .unwrap(),
+        RegionPointLocation::Inside
+    );
 }

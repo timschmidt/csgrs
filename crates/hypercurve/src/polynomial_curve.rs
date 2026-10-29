@@ -402,6 +402,37 @@ impl PolynomialCurveBranch2 {
         Arc::ptr_eq(&self.source, &other.source)
     }
 
+    /// Complete possible source contacts of two distinct ordered roots in one
+    /// checked slab. They cannot meet in its open interval. At an event, the
+    /// retained arc incidence identifies whether both select the same root.
+    /// The caller must check a common injective image and both active trims.
+    pub(crate) fn distinct_slab_branch_contacts(
+        &self,
+        other: &Self,
+    ) -> ExactCurveResult<Option<Vec<CurveParameter2>>> {
+        if self.slab != other.slab
+            || self.root == other.root
+            || !(self.shares_source(other) || self.topology() == other.topology())
+        {
+            return Ok(None);
+        }
+        let arcs = self.topology().slabs()[self.slab].arcs();
+        let first = &arcs[self.root];
+        let second = &arcs[other.root];
+        let mut contacts = Vec::new();
+        for (event, a, b) in [
+            (self.slab, first.left_root(), second.left_root()),
+            (self.slab + 1, first.right_root(), second.right_root()),
+        ] {
+            if a == b {
+                contacts.push(CurveParameter2::from(parameter(
+                    self.topology().events()[event].parameter(),
+                )?));
+            }
+        }
+        Ok(Some(contacts))
+    }
+
     pub(crate) fn endpoint(&self, start: bool) -> CurvePoint2 {
         self.endpoints[usize::from(start == self.reversed)].clone()
     }

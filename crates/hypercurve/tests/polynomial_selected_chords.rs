@@ -364,3 +364,242 @@ fn selected_chord_incidence_budget_refusal_allows_a_larger_retry() {
     );
     assert!(retry.result.is_ok());
 }
+
+#[test]
+fn selected_chord_separation_uses_the_whole_branch_and_its_source_chart() {
+    let branches = set(
+        p(&[&[0, 0, 1], &[-1]]),
+        [0.into(), 1.into()],
+        [(-2).into(), 2.into()],
+    );
+    assert_eq!(branches.curves().len(), 2);
+    let constant = set(
+        p(&[&[-1, 0, 0, 128]]),
+        [q(1, 4), q(3, 4)],
+        [0.into(), 1.into()],
+    );
+    let reflection = Similarity2::try_from_real_affine(
+        0.into(),
+        2.into(),
+        2.into(),
+        0.into(),
+        3.into(),
+        1.into(),
+    )
+    .unwrap();
+    for (root, branch) in branches.curves().iter().enumerate() {
+        let endpoints = [constant.curves()[0].start(), constant.curves()[0].end()].map(|point| {
+            shifted(
+                point,
+                if root == 0 {
+                    p(&[&[0, 1], &[1]])
+                } else {
+                    p(&[&[0, -1], &[-1]])
+                },
+                p(&[&[1]]),
+            )
+        });
+        let chord = Curve2::try_line(endpoints[0].clone(), endpoints[1].clone()).unwrap();
+        // On 0<=x<=1, the lower branch has y<=0 and the upper has y>=0.
+        // Both selected chord endpoints have the strict opposite sign, so
+        // their entire affine segment is disjoint, including the branch end.
+        for reflected in [false, true] {
+            for reversed in [false, true] {
+                let mut branch = branch.clone();
+                let mut chord = chord.clone();
+                if reflected {
+                    branch = branch.transform_similarity(&reflection).unwrap();
+                    chord = chord.transform_similarity(&reflection).unwrap();
+                }
+                if reversed {
+                    branch = branch.reversed().unwrap();
+                    chord = chord.reversed().unwrap();
+                }
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&chord, &branch)
+                    } else {
+                        (&branch, &chord)
+                    };
+                    let topology = first.intersection_topology(second).unwrap();
+                    assert!(topology.result().is_complete());
+                    assert!(topology.result().contacts().is_empty());
+                    assert!(topology.result().overlaps().is_empty());
+                    assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn selected_chord_separation_does_not_hide_interior_crossings() {
+    // The selected graph y=4x^2-1 has positive endpoint ordinates but is
+    // negative at its slab sample. Both chord ends have y=alpha>0. Neither
+    // the endpoint sides nor the sample side alone proves separation.
+    let graph = set(
+        p(&[&[1, 1], &[], &[-4]]),
+        [(-1).into(), 1.into()],
+        [(-2).into(), 4.into()],
+    );
+    assert_eq!(graph.curves().len(), 1);
+    let constant = set(
+        p(&[&[-1, 0, 0, 128]]),
+        [(-1).into(), 1.into()],
+        [0.into(), 1.into()],
+    );
+    let alpha = constant.curves()[0].start();
+    let chord = Curve2::try_line(alpha.clone(), constant.curves()[0].end()).unwrap();
+    for swapped in [false, true] {
+        let (first, second) = if swapped {
+            (&chord, &graph.curves()[0])
+        } else {
+            (&graph.curves()[0], &chord)
+        };
+        let topology = first.intersection_topology(second).unwrap();
+        let result = topology.result();
+        assert!(result.is_complete() && result.overlaps().is_empty());
+        assert_eq!(result.contacts().len(), 2);
+        assert_eq!((topology.first().len(), topology.second().len()), (3, 3));
+        let mut sides = [0, 0];
+        for contact in result.contacts() {
+            assert!(contact.is_certified_transverse());
+            let point = contact.point();
+            assert_eq!(
+                form(point, p(&[&[1, 1], &[], &[-4]]))
+                    .compare_to_real(&Real::zero())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                form(point, p(&[&[0, 1]]))
+                    .compare(&form(&alpha, p(&[&[0, 1]])))
+                    .unwrap(),
+                Ordering::Equal
+            );
+            let negative = form(point, p(&[&[], &[1]]))
+                .compare_to_real(&Real::zero())
+                .unwrap()
+                == Ordering::Less;
+            sides[usize::from(!negative)] += 1;
+            for (curve, location) in [(first, contact.first()), (second, contact.second())] {
+                assert!(
+                    curve
+                        .point_at(&location.parameter().unwrap())
+                        .unwrap()
+                        .coincides_with(point)
+                        .unwrap()
+                );
+            }
+        }
+        assert_eq!(sides, [1, 1]);
+    }
+}
+
+#[test]
+fn selected_chord_clips_at_an_algebraic_boundary_without_merging_nearby_ends() {
+    let (_, alpha) = selected_line(true);
+    let point = CurvePointDefinition2::RationalQueryPair {
+        sources: [alpha.clone(), alpha.clone()],
+        numerators: [p(&[&[0, 0, 1]]), p(&[&[0, 1]])],
+        denominators: [p(&[&[1]]), p(&[&[1]])],
+    }
+    .into_point()
+    .unwrap();
+    let trim = form(&point, p(&[&[], &[1]])).parameter().unwrap();
+    let branch = parabola()
+        .restrict_source(
+            hypercurve::CurveParameterRange2::try_new(trim, Real::one().into()).unwrap(),
+        )
+        .unwrap();
+    let epsilon = (Real::one() / Real::from(1_u128 << 80)).unwrap();
+    let reflection = Similarity2::try_from_real_affine(
+        0.into(),
+        2.into(),
+        2.into(),
+        0.into(),
+        3.into(),
+        1.into(),
+    )
+    .unwrap();
+    for displacement in [-1, 0, 1] {
+        let endpoint = CurvePointDefinition2::RationalQueryPair {
+            sources: [point.clone(), point.clone()],
+            numerators: [
+                BivariatePolynomial::new(vec![
+                    vec![Real::from(displacement) * &epsilon],
+                    vec![Real::one()],
+                ]),
+                p(&[&[0, 1]]),
+            ],
+            denominators: [p(&[&[1]]), p(&[&[1]])],
+        }
+        .into_point()
+        .unwrap();
+        let start = CurvePointDefinition2::RationalQueryPair {
+            sources: [alpha.clone(), alpha.clone()],
+            numerators: [p(&[&[0]]), p(&[&[0, 1]])],
+            denominators: [p(&[&[1]]), p(&[&[1]])],
+        }
+        .into_point()
+        .unwrap();
+        let line = Curve2::try_line(start, endpoint).unwrap();
+        for reflected in [false, true] {
+            for reversed in [false, true] {
+                let mut branch = branch.clone();
+                let mut line = line.clone();
+                let mut expected = point.clone();
+                if reflected {
+                    branch = branch.transform_similarity(&reflection).unwrap();
+                    line = line.transform_similarity(&reflection).unwrap();
+                    expected = CurvePointDefinition2::Similarity {
+                        source: expected,
+                        transform: reflection.clone(),
+                    }
+                    .into_point()
+                    .unwrap();
+                }
+                if reversed {
+                    branch = branch.reversed().unwrap();
+                    line = line.reversed().unwrap();
+                }
+                for swapped in [false, true] {
+                    let (first, second) = if swapped {
+                        (&line, &branch)
+                    } else {
+                        (&branch, &line)
+                    };
+                    let topology = first.intersection_topology(second).unwrap();
+                    let result = topology.result();
+                    assert!(result.is_complete() && result.overlaps().is_empty());
+                    assert_eq!(result.contacts().len(), usize::from(displacement >= 0));
+                    let pieces = if swapped {
+                        (1 + usize::from(displacement > 0), 1)
+                    } else {
+                        (1, 1 + usize::from(displacement > 0))
+                    };
+                    assert_eq!((topology.first().len(), topology.second().len()), pieces);
+                    for contact in result.contacts() {
+                        assert!(contact.point().coincides_with(&expected).unwrap());
+                        assert!(contact.is_certified_transverse());
+                        assert_eq!(
+                            contact.tangent_cross_sign(),
+                            Some(sign(!(reflected ^ swapped)))
+                        );
+                        for (curve, location) in
+                            [(first, contact.first()), (second, contact.second())]
+                        {
+                            assert!(
+                                curve
+                                    .point_at(&location.parameter().unwrap())
+                                    .unwrap()
+                                    .coincides_with(contact.point())
+                                    .unwrap()
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

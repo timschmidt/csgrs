@@ -8,6 +8,12 @@ use hypersolve::bivariate_arithmetic::bivariate_parameter_derivative;
 
 type Form = CurvePointRationalForm2;
 
+enum AbscissaSection {
+    Unresolved,
+    Empty,
+    Endpoint(usize),
+}
+
 fn polynomial(rows: Vec<Vec<Real>>) -> BivariatePolynomial {
     BivariatePolynomial::new(rows)
 }
@@ -87,6 +93,88 @@ fn from_queries(forms: [Form; 2], policy: &CurveContext) -> ExactCurveResult<Cur
 }
 
 impl PolynomialCurveBranch2 {
+    /// A finite affine chord can only meet a graph where their exact source
+    /// abscissa intervals overlap. A singleton overlap identifies its actual
+    /// endpoint; the selected branch and tangent still need validation.
+    fn abscissa_section(
+        &self,
+        abscissas: [&Form; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<AbscissaSection> {
+        let points = [abscissas[0].parameter()?, abscissas[1].parameter()?];
+        for (boundary, outside) in [
+            (self.range.start(), Ordering::Less),
+            (self.range.end(), Ordering::Greater),
+        ] {
+            let first = decided(
+                points[0]
+                    .cmp_by_refinement(boundary, policy)
+                    .map_err(invalid)?,
+            )?;
+            let second = decided(
+                points[1]
+                    .cmp_by_refinement(boundary, policy)
+                    .map_err(invalid)?,
+            )?;
+            if first == outside && second == outside {
+                return Ok(AbscissaSection::Empty);
+            }
+            if first == Ordering::Equal && second == outside {
+                return Ok(AbscissaSection::Endpoint(0));
+            }
+            if first == outside && second == Ordering::Equal {
+                return Ok(AbscissaSection::Endpoint(1));
+            }
+        }
+        Ok(AbscissaSection::Unresolved)
+    }
+
+    /// Excludes a chord strictly across the source x-axis from this selected
+    /// branch. The complete native section census, not endpoint positions,
+    /// proves that the branch cannot cross the separator inside its original
+    /// slab. Continuity includes the closed ends in the same half-plane.
+    fn separated_by_source_axis(
+        &self,
+        ordinates: [&Form; 2],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<bool> {
+        let zero = Real::zero();
+        let side = ordinates[0].compare_to_real(&zero)?;
+        if side == Ordering::Equal || ordinates[1].compare_to_real(&zero)? != side {
+            return Ok(false);
+        }
+        let sample = coordinates(&self.checked_slab_sample()?)?[1].compare_to_real(&zero)?;
+        if sample == side {
+            return Ok(false);
+        }
+        let section = self
+            .topology()
+            .equation()
+            .coefficients
+            .iter()
+            .map(|row| row.first().cloned().unwrap_or_else(Real::zero))
+            .collect::<Vec<_>>();
+        if !polynomial_is_zero(&section, policy)? {
+            let events = self.topology().events();
+            let start = CurveParameter2::from(parameter(events[self.slab].parameter())?);
+            let end = CurveParameter2::from(parameter(events[self.slab + 1].parameter())?);
+            for root in self.section_abscissas(section)? {
+                if decided(root.cmp_by_refinement(&start, policy).map_err(invalid)?)?
+                    == Ordering::Greater
+                    && decided(root.cmp_by_refinement(&end, policy).map_err(invalid)?)?
+                        == Ordering::Less
+                {
+                    return Ok(false);
+                }
+            }
+        }
+        // If F(x,0) vanishes identically, y=0 is a global component. Ordered
+        // simple roots cannot meet that component within this checked slab;
+        // a sample on it selects that entire component. This case is not a
+        // claim that the zero polynomial has no roots.
+        Ok(true)
+    }
+
     /// `None` denotes a proved common selected line component; a finite list
     /// includes all contacts on the closed chord and this selected branch.
     pub(crate) fn selected_chord_sections(
@@ -112,8 +200,88 @@ impl PolynomialCurveBranch2 {
         let end = local(chord.end())?;
         let [ax, ay] = coordinates(&start)?;
         let [bx, by] = coordinates(&end)?;
+        let abscissa_section = match self.abscissa_section([&ax, &bx], policy) {
+            Ok(AbscissaSection::Empty) => return Ok(Some(Vec::new())),
+            Ok(section) => section,
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() != UncertaintyReason::BudgetExhausted =>
+            {
+                AbscissaSection::Unresolved
+            }
+            Err(error) => return Err(error),
+        };
+        match self.separated_by_source_axis([&ay, &by], policy) {
+            Ok(true) => return Ok(Some(Vec::new())),
+            Ok(false) => {}
+            // Separation is an optional sufficient proof. Unavailable proof
+            // leaves the existing complete section algorithm authoritative.
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
+            Err(error) => return Err(error),
+        }
         let dx = bx.subtract(&ax)?;
         let dy = by.subtract(&ay)?;
+        let fx = bivariate_parameter_derivative(
+            self.topology().equation(),
+            CurveResultantParameter::First,
+        );
+        let fy = bivariate_parameter_derivative(
+            self.topology().equation(),
+            CurveResultantParameter::Second,
+        );
+        let tangent = |point: &CurvePoint2| -> ExactCurveResult<Option<RealSign>> {
+            let local = local(point)?;
+            let fy = form(&local, fy.clone())?;
+            if fy.compare_to_real(&Real::zero())? == Ordering::Equal {
+                return Ok(None);
+            }
+            let sign = form(&local, fx.clone())?
+                .multiply(&dx)?
+                .add(&fy.multiply(&dy)?)?
+                .multiply(&fy)?
+                .compare_to_real(&Real::zero())?;
+            let sign = match sign {
+                Ordering::Less => RealSign::Negative,
+                Ordering::Equal => RealSign::Zero,
+                Ordering::Greater => RealSign::Positive,
+            };
+            Ok(Some(
+                if self
+                    .transform
+                    .as_ref()
+                    .is_some_and(|t| t.reverses_orientation())
+                {
+                    negate(sign)
+                } else {
+                    sign
+                },
+            ))
+        };
+        if let AbscissaSection::Endpoint(index) = abscissa_section {
+            let point = [chord.start(), chord.end()][index];
+            let boundary_section = || -> ExactCurveResult<Option<Vec<PolynomialLineSection2>>> {
+                let Some(parameter) = self.point_parameter(point, policy)? else {
+                    return Ok(Some(Vec::new()));
+                };
+                let Some(cross) = tangent(point)? else {
+                    // At a singular boundary the complete component route
+                    // may establish stronger evidence; retain that route.
+                    return Ok(None);
+                };
+                Ok(Some(vec![PolynomialLineSection2 {
+                    parameter,
+                    point: point.clone(),
+                    cross: Some(cross),
+                }]))
+            };
+            match boundary_section() {
+                Ok(Some(sections)) => return Ok(Some(sections)),
+                Ok(None) => {}
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
+                Err(error) => return Err(error),
+            }
+        }
         let coefficients = substitute(
             self.topology().equation(),
             &start,
@@ -157,14 +325,6 @@ impl PolynomialCurveBranch2 {
             }
             return Ok(Some(sections));
         };
-        let fx = bivariate_parameter_derivative(
-            self.topology().equation(),
-            CurveResultantParameter::First,
-        );
-        let fy = bivariate_parameter_derivative(
-            self.topology().equation(),
-            CurveResultantParameter::Second,
-        );
         let mut sections = Vec::new();
         for root in roots {
             let t = coordinates(&root)?[0].clone();
@@ -184,35 +344,7 @@ impl PolynomialCurveBranch2 {
             let Some(parameter) = self.point_parameter(&point, policy)? else {
                 continue;
             };
-            let tangent = || -> ExactCurveResult<Option<RealSign>> {
-                let local = local(&point)?;
-                let fy = form(&local, fy.clone())?;
-                if fy.compare_to_real(&Real::zero())? == Ordering::Equal {
-                    return Ok(None);
-                }
-                let sign = form(&local, fx.clone())?
-                    .multiply(&dx)?
-                    .add(&fy.multiply(&dy)?)?
-                    .multiply(&fy)?
-                    .compare_to_real(&Real::zero())?;
-                let sign = match sign {
-                    Ordering::Less => RealSign::Negative,
-                    Ordering::Equal => RealSign::Zero,
-                    Ordering::Greater => RealSign::Positive,
-                };
-                Ok(Some(
-                    if self
-                        .transform
-                        .as_ref()
-                        .is_some_and(|t| t.reverses_orientation())
-                    {
-                        negate(sign)
-                    } else {
-                        sign
-                    },
-                ))
-            };
-            let cross = match tangent() {
+            let cross = match tangent(&point) {
                 Ok(sign) => sign,
                 Err(ExactCurveError::Blocked(blocker))
                     if blocker.reason() != UncertaintyReason::BudgetExhausted =>

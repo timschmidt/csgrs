@@ -291,11 +291,21 @@ pub(super) fn intersect(
         a.topology().equation().clone(),
         b.topology().equation().clone(),
     ];
-    let mut candidates = resultant(&original)?;
+    // Distinct roots of one checked slab can meet only at its retained event
+    // incidences. Do not rebuild the opposite branch at an algebraic trim that
+    // the source topology already proves cannot be an interior contact.
+    let topology_boundaries = a.distinct_slab_branch_contacts(b)?;
+    let mut candidates = if topology_boundaries.is_some() {
+        None
+    } else {
+        Some(resultant(&original)?)
+    };
     let mut tangent_supports = original.clone();
-    let mut shared_selected_support = false;
+    let mut shared_selected_support = topology_boundaries.is_some();
     let mut endpoints = false;
-    if polynomial_is_zero(&candidates, policy)? {
+    if let Some(coefficients) = &candidates
+        && polynomial_is_zero(coefficients, policy)?
+    {
         let components = decided(
             hypersolve::bivariate_components::extract_bivariate_system_components(
                 original,
@@ -368,9 +378,12 @@ pub(super) fn intersect(
         // the source containing both factors. Its selected slab ends there.
         // Keep those boundaries as well as isolated residual-system roots.
         endpoints = true;
-        candidates = resultant(&components.residual_equations)?;
+        candidates = Some(resultant(&components.residual_equations)?);
     }
-    let mut abscissas = a.section_abscissas(candidates)?;
+    let mut abscissas = match candidates {
+        Some(coefficients) => a.section_abscissas(coefficients)?,
+        None => topology_boundaries.expect("complete checked slab incidence"),
+    };
     if endpoints {
         abscissas.extend([low.clone(), high.clone()]);
     }

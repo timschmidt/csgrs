@@ -17,6 +17,18 @@
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
+- Reuse exact finite abscissa ranges, complete source-side separation proofs and
+  checked slab event incidence when intersecting retained polynomial branches
+  and generated chords. Endpoint contacts keep their tangent evidence;
+  independently reconstructed equal topology does not require pointer identity.
+  The named Boolean-generated elliptic-corner chamfer now completes through
+  reversed boundary reconstruction and a further Boolean, retaining exact
+  setback equations and original supports. Polynomial region classification
+  tries available exact axis probes before general selected chords, preserving
+  completion of the existing algebraic-similarity Boolean witness. Probes with
+  unresolved crossing behavior at nontransverse contacts try another direction
+  instead of treating a missing tangent certificate as an absent crossing.
+
 - Construct exact trim-only polynomial chamfer cuts from selected circle
   sections, retaining the original corner fields, branch endpoints and generated
   chord parameters. Known selected points can be reused by branch evaluation

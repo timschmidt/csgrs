@@ -9,7 +9,7 @@
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
     "Published package and actual binding consumers for the complete declared domain.",
-    "Polynomial whole-path SVG replay and unrestricted repeated chord setbacks remain open. The original Boolean-generated algebraic-corner region chamfer has not completed within its recorded containment; successful ordinary region cuts do not establish that chain."
+    "Polynomial whole-path SVG replay and unrestricted repeated chord setbacks remain open. The named Boolean-generated algebraic-corner chamfer, boundary reconstruction and further Boolean now have a bounded acceptance witness; that single finite chain does not establish unrestricted operation closure."
   ],
   "fixtures": [
     {
@@ -4519,7 +4519,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The cap at zero offset and attempted nonzero round offset, chord-setback chamfer, circular fillet and finite projection.",
+      "domain": "The original parabola cap at zero offset, its unique trim-only chord-setback chamfer of 1/64 on each support, and attempted nonzero round offset, circular fillet and finite projection.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4532,7 +4532,7 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. Booleans introduce no new supports; winding and the declared fill rule own material and holes. Complete pair incidence and exact selected-field decisions remain prerequisites. General coefficient fields, rational image preimages, nonzero offsets/corners and fresh-process native replay remain open. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. The named chamfer keeps both polynomial supports and introduces one exact line, with both Euclidean chord setbacks measured from the original corner. Reconstruction and further Boolean operations consume the result. Nonzero offsets, circular fillets and finite projection remain typed gaps on this fixture; broader corner closure is not established. Counted work and external timeouts are not total arithmetic or memory bounds.",
       "claims": [
         {
           "stage": "offsets",
@@ -4546,8 +4546,13 @@
         },
         {
           "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The unique original parabola chamfer preserves the exact retained supports and trims, both 1/64 chord setbacks and its generated line; reversed reconstruction and subsequent Boolean consumption preserve the selected subset."
+        },
+        {
+          "stage": "corner_edits",
           "outcome": "unsupported",
-          "assertion": "Polynomial-support fillet and chord-setback chamfer return Unsupported without panic or unchanged-input success."
+          "assertion": "The polynomial-support circular fillet retains its actual Unsupported outcome without panic or unchanged-input success."
         },
         {
           "stage": "evaluation",
@@ -4555,7 +4560,7 @@
           "assertion": "The finite projection adapter reports Unsupported; no fitted output replaces the exact source."
         }
       ],
-      "oracle": "Source root inventory and symmetric-difference identity; unsupported operations retain their actual public typed outcomes.",
+      "oracle": "Source root inventory and zero-offset symmetric-difference identity; y^2=x, exact 1/4096 squared setbacks, the independent straight-support cut (1/4,-31/64), complete oriented support inventory, strict trim inequalities, reconstruction Xor and subset Difference. Remaining unsupported operations retain their actual typed outcomes.",
       "timeout_seconds": 300
     },
     {
@@ -14891,6 +14896,216 @@
         }
       ],
       "oracle": "Original corner and cut equations plus exact setback and branch ordering."
+    },
+    {
+      "id": "selected_chord_side_separation",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_separation_uses_the_whole_branch_and_its_source_chart",
+      "owner": "Hypercurve finite selected-curve incidence and the shared region arrangement; retained Hypersolve slab and root certificates",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected upper/lower parabola branches and opposite-side generated algebraic chords under reversals, reflection and operand exchange.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Exact separation retains complete empty incidence and the original unsplit operands."
+        }
+      ],
+      "oracle": "Whole-slab root order and exact absence of interior separator roots; affine chord endpoint signs establish its strict half-plane."
+    },
+    {
+      "id": "selected_chord_interior_crossings",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_separation_does_not_hide_interior_crossings",
+      "owner": "Hypercurve finite selected-curve incidence and the shared region arrangement; retained Hypersolve slab and root certificates",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Graph y=4x^2-1 against y=alpha, alpha^3=1/128, across the full [-1,1] source slab.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Two interior contacts survive despite opposite sample and chord sides; finite output parameters reevaluate on both original operands."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Two interior contacts survive despite opposite sample and chord sides; finite output parameters reevaluate on both original operands."
+        }
+      ],
+      "oracle": "Independent equations 4x^2=1+alpha and y=alpha, two opposite x signs, tangent classification and parameter replay."
+    },
+    {
+      "id": "selected_chord_algebraic_boundaries",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_clips_at_an_algebraic_boundary_without_merging_nearby_ends",
+      "owner": "Hypercurve finite selected-curve incidence and the shared region arrangement; retained Hypersolve slab and root certificates",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Positive parabola trimmed at (alpha^2,alpha), alpha^3=1/128; horizontal chords ending at alpha^2 plus -2^-80, zero or 2^-80, with reversal/reflection/operand order.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Distinct nearby endpoints are never merged; split counts, tangent signs and returned parameter evaluations agree with exact domain clipping."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Distinct nearby endpoints are never merged; split counts, tangent signs and returned parameter evaluations agree with exact domain clipping."
+        }
+      ],
+      "oracle": "The unique supporting intersection has x=alpha^2 and y=alpha; exact finite endpoint order determines absence, boundary contact or interior chord contact."
+    },
+    {
+      "id": "polynomial_chamfer_slab_incidence",
+      "target": "polynomial_chamfer_corners",
+      "test": "generated_polynomial_trim_reuses_independent_slab_incidence",
+      "owner": "Hypercurve finite selected-curve incidence and the shared region arrangement; retained Hypersolve slab and root certificates",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "An algebraically trimmed elliptic upper branch after a 1/64 chamfer against an independently reconstructed lower branch, under both traversals, reflection and operand exchange.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Exactly one original event contact survives with a certified zero tangent cross sign and reusable parameters, independent of topology allocation identity."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Exactly one original event contact survives with a certified zero tangent cross sign and reusable parameters, independent of topology allocation identity."
+        }
+      ],
+      "oracle": "Distinct ordered roots cannot meet in an open slab. Retained event incidence selects (-1,0), where F_y=0 and F_x=-3 prove one smooth vertical tangent."
+    },
+    {
+      "id": "polynomial_chamfer_region_composition",
+      "target": "polynomial_region_admission",
+      "test": "algebraic_corner_chamfer_preserves_the_region_through_reconstruction_and_boolean",
+      "owner": "Hypercurve finite selected-curve incidence and the shared region arrangement; retained Hypersolve slab and root certificates",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Boolean-clipped elliptic cap y^2<=1+x^3, -1<=x<=0, y<=1/2; exact 1/64 chord setbacks at the algebraic upper corner, reversed reconstruction and a further rectangular intersection.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The generated-corner edit preserves its intended bounded region through boundary reconstruction and a subsequent nontrivial Boolean. This is one completed finite chain, not unrestricted implicit closure."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The generated-corner edit preserves its intended bounded region through boundary reconstruction and a subsequent nontrivial Boolean. This is one completed finite chain, not unrestricted implicit closure."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "The generated-corner edit preserves its intended bounded region through boundary reconstruction and a subsequent nontrivial Boolean. This is one completed finite chain, not unrestricted implicit closure."
+        }
+      ],
+      "oracle": "Independent corner equation x^3=-3/4; exact squared setbacks 1/4096; retained branch ranges and five oriented support pieces describe the clipped convex set. The subsequent rectangle leaves the lower branch over [-3/4,0] and three closing lines."
     }
   ]
 }

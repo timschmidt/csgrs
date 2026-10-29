@@ -513,3 +513,81 @@ fn polynomial_chamfer_cut_points_replay_in_a_fresh_process() {
         String::from_utf8_lossy(&child.stderr)
     );
 }
+
+#[test]
+fn generated_polynomial_trim_reuses_independent_slab_incidence() {
+    let edited = unique(&source(true), q(1, 64), q(1, 64));
+    let upper = &edited.curves()[0];
+    let selected = upper.polynomial_branch().unwrap();
+    let independent = PolynomialCurveSet2::from_topology(
+        selected.topology().clone(),
+        selected.evaluation_config(),
+    )
+    .unwrap();
+    let lower = &independent.curves()[0];
+    assert!(!selected.shares_source(lower.polynomial_branch().unwrap()));
+    let reflection = Similarity2::try_from_real_affine(
+        0.into(),
+        2.into(),
+        2.into(),
+        0.into(),
+        3.into(),
+        1.into(),
+    )
+    .unwrap();
+    for reflected in [false, true] {
+        for reverse_upper in [false, true] {
+            for reverse_lower in [false, true] {
+                let mut upper = upper.clone();
+                let mut lower = lower.clone();
+                let mut expected = CurvePoint2::from(Point2::from_values(-1, 0));
+                if reflected {
+                    upper = upper.transform_similarity(&reflection).unwrap();
+                    lower = lower.transform_similarity(&reflection).unwrap();
+                    expected = hypercurve::CurvePointDefinition2::Similarity {
+                        source: expected,
+                        transform: reflection.clone(),
+                    }
+                    .into_point()
+                    .unwrap();
+                }
+                if reverse_upper {
+                    upper = upper.reversed().unwrap();
+                }
+                if reverse_lower {
+                    lower = lower.reversed().unwrap();
+                }
+                for swapped in [false, true] {
+                    let (a, b) = if swapped {
+                        (&lower, &upper)
+                    } else {
+                        (&upper, &lower)
+                    };
+                    let topology = a.intersection_topology(b).unwrap();
+                    let result = topology.result();
+                    assert!(result.is_complete() && result.overlaps().is_empty());
+                    assert_eq!(result.contacts().len(), 1);
+                    assert_eq!((topology.first().len(), topology.second().len()), (1, 1));
+                    let contact = &result.contacts()[0];
+                    assert!(contact.point().coincides_with(&expected).unwrap());
+                    // F_y=0 but F_x=-3 at (-1,0): one smooth vertical
+                    // tangent on the original support, not a singular node.
+                    assert_eq!(
+                        contact.tangent_cross_sign(),
+                        Some(hyperreal::RealSign::Zero)
+                    );
+                    assert!(!contact.is_certified_transverse());
+                    for (curve, location) in [(a, contact.first()), (b, contact.second())] {
+                        assert!(
+                            curve
+                                .point_at(&location.parameter().unwrap())
+                                .unwrap()
+                                .coincides_with(contact.point())
+                                .unwrap()
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
