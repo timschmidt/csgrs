@@ -2383,6 +2383,59 @@ closure or performance claim is made; full pre-push qualification of this
 increment remains required. This entry supersedes earlier point-query and
 native-parameter gaps only for its demonstrated domain.
 
+**Selected query derivative increment (2026-10-28).**
+Rational source spans now consume source-bound query parameters for derivatives.
+The original native and retained parabola cases and rational quotient case were
+reproduced as Unsupported on source identical to the point increment before
+implementation. Hypercurve reuses its existing rational derivative recurrence:
+it differentiates original source polynomials before evaluating in the selected
+joint field. Point and derivative images share one rational pullback that keeps
+original roots, source recipes and denominator guards. Native spline charts
+apply the kth power of their affine scale; restrictions and reversal keep the
+source parameter convention. This does not complete general parallel or singular
+implicit derivatives or geometric region operations.
+
+Twelve focused witnesses pass. Independent expectations include the parabola
+jet, quotient rule, monomial falling factorials through order nine, factorial
+Mobius derivatives through order six, a knot domain [2,5], explicit one-sided
+knot slopes and similarity linear parts. A polynomial value becoming constant
+at a selected root does not make its source derivative zero. Original poles
+and out-of-domain queries remain invalid even at zero order. A fresh process
+replays a restricted curve and derivative point, then uses the derivative
+coordinates as another evaluation and derivative parameter and saves again.
+
+The initial zero-promotion fixture incorrectly expected proof reuse to fail.
+The retained probe measured two refinements and zero promotions for reuse;
+fresh definition replay plus three derivatives used four refinements and four
+promotions. Both original source/logs remain. The corrected tests preserve
+zero-promotion exact success, require typed refusal of an actual refinement or
+promotion charge, and repeat larger-budget retries without cache poisoning.
+Strict and approximate-policy requests in this exact corpus remain certified.
+The unrepresentable usize::MAX order is an implementation size refusal, not
+claimed configured resource exhaustion. No artificial charge was added.
+
+All 20 affected qualification groups pass: full Hypercurve
+(2,962 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), the original derivative/point/native
+predecessors, six downstream consumer suites, strict MSRV Clippy, minimal checks,
+denied-warning docs, curve fuzz-target lint, the full capability matrix and
+hygiene. Qualification used an isolated checkpoint; after the point increment
+was finalized, only its three receipt files changed. Every implementation/test
+byte matches the qualified source. The seed/base patches, file inventories and
+alignment proof are retained in docs/evidence/2026-10-28-hypercurve-closure-selected-query-derivatives, SHA-256 a2de299ec93bb57265fd466575f7ca4a72fc11b86a4b93a5f8d85b0ef889ccd4, with original
+failures and all commands/logs. Receipt checks run after the final documentation
+edit. No public type or archive format addition is needed for this increment.
+
+Seven original polynomial region offset/corner operations still return
+Unsupported after alignment, while all three controls pass. Shared refinement
+and promotion counts do not bound total arithmetic, coefficient/expression
+size, memory, elapsed time or cancellation. Concurrent test timings do not prove
+a performance improvement. This supersedes the earlier query-derivative gap
+only for its demonstrated domain; the full closure plan and pre-push qualification
+of this new increment remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

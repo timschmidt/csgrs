@@ -1831,8 +1831,11 @@ impl Curve2 {
     /// `[0, 1]`; spline curves use their authored knot domain. Implicit graph
     /// branches use their original first coordinate, including after traversal
     /// reversal. A regular graph point requires nonzero `Fy`; singular-chart
-    /// limits remain typed blockers. Selected circles with represented unit
-    /// frames retain this same source-chart convention. Their represented or
+    /// limits remain typed blockers. Rational spans accept source-bound query
+    /// parameters and return correlated coordinate images. Spline spans retain
+    /// the authored-domain scale at every derivative order. Selected circles
+    /// with represented unit frames retain this same source-chart convention.
+    /// Their represented or
     /// shared polynomial-point parameters return exact coordinate images,
     /// including derivative magnitude, without reconstructing an angular root.
     pub fn derivatives_at(
@@ -1984,6 +1987,10 @@ impl Curve2 {
                     .map_err(invalid)?,
                 family,
             )?;
+            if let Some(query) = local.as_polynomial_query() {
+                curve_evaluation::validate_rational_point(evaluator, &local, family, policy)?;
+                return query.rational_derivatives(evaluator, max_order, &scale, policy);
+            }
             let Some(crate::BezierParameter2::Algebraic(local)) = local.as_bezier_parameter()
             else {
                 return Err(blocked(crate::UncertaintyReason::Unsupported));

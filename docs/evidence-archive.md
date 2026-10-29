@@ -85,6 +85,16 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-query-derivatives-evidence-2026-10-28 branch ends at
+43ed287e44c8d26df3df90621662a9ba81b56a06, adding docs/evidence/2026-10-28-hypercurve-closure-selected-query-derivatives (845 files,
+38,478,490 bytes), SHA-256 a2de299ec93bb57265fd466575f7ca4a72fc11b86a4b93a5f8d85b0ef889ccd4. It records source-preserving rational
+query derivatives, twelve exact/domain/resource/replay witnesses and 20 affected
+qualification groups. Source checkpoints are reconstructable from retained
+base/seed/qualified patches; receipt-only parent alignment preserves every
+implementation byte. Original failures and seven region operation blockers
+remain explicit. Full closure and publication are not claimed. This record is
+unpushed.
+
 The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
 3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
 91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and

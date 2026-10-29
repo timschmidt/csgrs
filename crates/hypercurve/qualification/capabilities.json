@@ -12590,6 +12590,487 @@
       ],
       "oracle": "Independent equations v_minus*v_plus=-u, v_minus+v_plus=0 and u^2=1/8, checked through strict/approximate/strict policy transitions with certified receipts.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "selected_query_derivatives_native_control",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivative_native_control",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Represented parameter 2/3 and a generated cubic-root sum divided by four on C(t)=(t,t^2).",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Generated parameter point satisfies y=x^2; represented derivatives match (1,2t),(0,2),(0,0)."
+        },
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "The generated parameter scaled outside the unit domain is rejected."
+        }
+      ],
+      "oracle": "Source equation and direct elementary derivatives.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_native_parabola",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivative_native_parabola",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t,t^2), t=(cuberoot(2)+cuberoot(3))/4, derivative orders one through three.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Exact correlated vectors equal (1,2t),(0,2),(0,0)."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The first vector coordinate image retains checked point-definition replay."
+        }
+      ],
+      "oracle": "Independent parabola formula and parameter equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_retained_parabola",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivative_retained_parabola",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The parabola restricted at the generated query endpoint, in its original source chart.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The retained endpoint returns all three original-source derivatives."
+        }
+      ],
+      "oracle": "Original parabola derivative formulas, including zero third derivative.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_rational_quotient",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivative_rational_quotient",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t,t^2)/(1+t^2) at the independent cubic-root sum divided by four.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The first vector equals ((1-t^2),2t)/(1+t^2)^2."
+        }
+      ],
+      "oracle": "Independent quotient rule formed through original point queries.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_high_polynomial",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_high_polynomial_jets_differentiate_original_source",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t^3,t^7) at a cubic-root query and an independent cubic-root sum, through order nine.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Original source derivatives equal falling-factorial times powers, including orders above the source degree."
+        }
+      ],
+      "oracle": "Monomial formula; t^3=1/4 does not make the original first derivative zero.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_rational_jets",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_rational_jets_match_closed_form",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t,2t)/(1+t) at the independent cubic-root sum, through order six.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Every derivative matches the factorial closed form with its exact rational denominator."
+        }
+      ],
+      "oracle": "Independent k-th derivative (-1)^(k+1)*k!/(1+t)^(k+1).",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_spline_jets",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_spline_jets_keep_source_scale_and_reversal",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A quadratic NURBS on knot interval [2,5], restricted at 2+3t and traversal-reversed.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Nurbs",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The first three derivatives preserve factors 1/3 and 1/9 in the authored chart."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Native, restricted and reversed traversal return the same source derivatives."
+        }
+      ],
+      "oracle": "Direct chain-rule scaling of (t,t^2).",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_equal_knot",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_equal_knot_uses_requested_side",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A generated query equal to the kink knot of a degree-one NURBS.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Nurbs",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Explicit left/right first derivatives equal (1,0)/(0,2), with zero second derivatives; Automatic retains Boundary."
+        }
+      ],
+      "oracle": "Independent one-sided slopes, checked separately from the Automatic blocker.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_domains_budgets",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_jets_validate_domains_and_retry_budgets",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Zero and finite orders, original denominator pole, out-of-domain query, exhausted refinements, retained proof reuse and policy transitions.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Original poles and out-of-domain requests remain invalid even at zero order."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "A real refinement charge is refused under zero refinement budget."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Zero-promotion reuse and larger refinement retry complete; strict/approximate-policy requests remain certified."
+        }
+      ],
+      "oracle": "Original domain/denominator relations and actual work-kind limits; usize::MAX remains an implementation size refusal.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_replay_budget",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivative_replay_budget_does_not_poison_retry",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Fresh point-definition replay followed by three derivatives, zero promotion and larger retry repeated twice.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Fresh proof construction returns typed promotion exhaustion before publishing derivatives."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Larger retries produce exact original derivatives without poisoning from failed attempts."
+        }
+      ],
+      "oracle": "Explicit denied promotion unit, followed by independent parabola derivatives and selected-parameter equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_cold_replay",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivatives_replay_cold_and_feed_another_operation",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Generated derivative coordinates and retained curve saved/reloaded in a fresh process, then converted into another parameter for point and derivative evaluation.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Original source/parameter and vector definitions survive cold and repeated exact replay."
+        },
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "Replayed derivative coordinates become a valid subsequent evaluation and derivative parameter."
+        }
+      ],
+      "oracle": "Independent parabola formulas and exact endpoint/parameter identities; serialization equality is not the geometric oracle.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "selected_query_derivatives_similarity",
+      "target": "selected_query_derivatives",
+      "test": "selected_query_derivatives_keep_similarity_and_retained_chart",
+      "owner": "Hypercurve rational derivative recurrence, retained query scalar and source-chart dispatch",
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A similarity with rotation, scale two and translation on native and reversed retained parabola sources.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Differentiate the original rational span before evaluating at the selected query. Preserve correlated coordinates, original guards and source-chart derivative factors. This covers the named fixtures only; general parallel, singular implicit and region-operation closure remain open.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Both transformed carriers retain first derivative (-4t,2), second (-4,0) and zero third derivative."
+        }
+      ],
+      "oracle": "Direct multiplication by the similarity linear part; translation contributes no derivative.",
+      "timeout_seconds": 300
     }
   ]
 }

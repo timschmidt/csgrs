@@ -405,7 +405,7 @@ impl Curve2 {
     }
 }
 
-fn validate_rational_point(
+pub(super) fn validate_rational_point(
     source: &RationalBezier2,
     parameter: &CurveParameter2,
     family: CurveFamily2,
@@ -555,6 +555,9 @@ fn rational_derivatives(
     policy: &CurveContext,
 ) -> ExactCurveResult<Vec<CurveVector2>> {
     validate_rational_point(source, parameter, family, policy)?;
+    if let Some(query) = parameter.as_polynomial_query() {
+        return query.rational_derivatives(source, max_order, &Real::one(), policy);
+    }
     if let Some(scalar) = parameter.scalar() {
         return Ok(decided(
             source.derivatives_at_classified(scalar, max_order, policy),
