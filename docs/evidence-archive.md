@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-rational-query-guards-evidence-2026-10-29 branch ends at
+12613042e4442901f1f6afa397a5af9bb22a7be3, adding docs/evidence/2026-10-29-hypercurve-closure-rational-query-guards (553 files,
+18,433,327 bytes), SHA-256 8dd0311b5bd14b8b8502a1c6f267a3bd45317ff8bda41a18549a2105caf4978d. It records preservation of original
+rational quotient guards through scalar recipes and native replay, five named
+witnesses and 20 affected qualification groups. Source checkpoints are
+reconstructable from retained patches and inventories; receipt-only parent
+alignment preserves implementation bytes. The original failure and seven
+region operation blockers remain explicit. This record is unpushed.
+
 The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
 3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
 91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and

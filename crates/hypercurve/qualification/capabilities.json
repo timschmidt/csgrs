@@ -12590,6 +12590,208 @@
       ],
       "oracle": "Independent equations v_minus*v_plus=-u, v_minus+v_plus=0 and u^2=1/8, checked through strict/approximate/strict policy transitions with certified receipts.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "rational_query_guard_value",
+      "target": "rational_query_guards",
+      "test": "rational_quotient_preserves_its_exact_value",
+      "owner": "Hypercurve source-bound rational query arithmetic and replayable scalar recipes",
+      "properties": [
+        "P7",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "At y^3=2, (1/(y+1))/(1/(y^3-3)) satisfies q(y+1)=-1; its replayable scalar recipe retains that value.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational expression domains retain every original nonzero denominator guard. Source edits require revalidation. Named witnesses do not establish universal region/offset/corner closure or a total resource bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The independently derived quotient relation holds before and after scalar-recipe extraction."
+        }
+      ],
+      "oracle": "Independent exact quotient identities, original pole equations, explicit typed outcomes, and exact parabola/parameter equations in the native composition witness.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "rational_query_guard_divisor_pole",
+      "target": "rational_query_guards",
+      "test": "rational_quotient_recipe_rejects_the_original_divisor_pole",
+      "owner": "Hypercurve source-bound rational query arithmetic and replayable scalar recipes",
+      "properties": [
+        "P7",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The same quotient recipe rebound to a valid y^3=3 source must reject the original divisor pole.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational expression domains retain every original nonzero denominator guard. Source edits require revalidation. Named witnesses do not establish universal region/offset/corner closure or a total resource bound.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "The original divisor denominator remains a checked guard, even where the cancelled quotient would be a finite zero."
+        }
+      ],
+      "oracle": "Independent exact quotient identities, original pole equations, explicit typed outcomes, and exact parabola/parameter equations in the native composition witness.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "rational_query_guard_both_guards",
+      "target": "rational_query_guards",
+      "test": "rational_quotients_keep_both_guards_and_shared_denominators",
+      "owner": "Hypercurve source-bound rational query arithmetic and replayable scalar recipes",
+      "properties": [
+        "P7",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Quotients with y^3-3 and y^3-5 denominators, including a shared denominator; selected sources y^3=2,3,4,5 under strict/approximate-requested/strict.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Rational expression domains retain every original nonzero denominator guard. Source edits require revalidation. Named witnesses do not establish universal region/offset/corner closure or a total resource bound.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Both original poles are rejected; a shared denominator still carries its original guard."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Nonpole source edits have independently known values, and all successful decisions remain Certified."
+        }
+      ],
+      "oracle": "Independent exact quotient identities, original pole equations, explicit typed outcomes, and exact parabola/parameter equations in the native composition witness.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "rational_query_guard_retry",
+      "target": "rational_query_guards",
+      "test": "rational_quotient_zero_divisor_and_exhaustion_do_not_become_success",
+      "owner": "Hypercurve source-bound rational query arithmetic and replayable scalar recipes",
+      "properties": [
+        "P7",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A zero divisor on y^3=2; a zero shared work budget for quotient-parameter construction and two larger retries.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational expression domains retain every original nonzero denominator guard. Source edits require revalidation. Named witnesses do not establish universal region/offset/corner closure or a total resource bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "A zero divisor remains typed invalid."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "A required charge is refused before a parameter result is published."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Both larger retries retain the exact quotient and original invalid-pole recipe."
+        }
+      ],
+      "oracle": "Independent exact quotient identities, original pole equations, explicit typed outcomes, and exact parabola/parameter equations in the native composition witness.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "rational_query_guard_native_replay",
+      "target": "rational_query_guards",
+      "test": "rational_quotient_guards_survive_cold_native_replay_and_subdivision",
+      "owner": "Hypercurve source-bound rational query arithmetic and replayable scalar recipes",
+      "properties": [
+        "P7",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t,t^2), with t=1-1/(cuberoot(2)+1), native restriction save/reload in a fresh process, exact split and a second replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational expression domains retain every original nonzero denominator guard. Source edits require revalidation. Named witnesses do not establish universal region/offset/corner closure or a total resource bound.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Cold replay preserves 3t^3-6t^2+6t-2=0, y=t^2, deterministic serialization and retained query recipes."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "The original y^3=3 divisor pole is still rejected after both replays."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The exact split preserves shared endpoints and the final source parameter."
+        }
+      ],
+      "oracle": "Independent exact quotient identities, original pole equations, explicit typed outcomes, and exact parabola/parameter equations in the native composition witness.",
+      "timeout_seconds": 300
     }
   ]
 }

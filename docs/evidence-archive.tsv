@@ -379,6 +379,7 @@ docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-fields	466	10794
 docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-joins	105	6495209	f6d1431299629a7604de444a7c4433db2d5faf3f886db8e45c75817bbe0890ff
 docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points	1576	91256621	cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b
 docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-replay	145	9456865	fb6e286a80355fe74b82833f708652cfdcdef185cb2394b1531693f7d1730316
+docs/evidence/2026-10-29-hypercurve-closure-rational-query-guards	553	18433327	8dd0311b5bd14b8b8502a1c6f267a3bd45317ff8bda41a18549a2105caf4978d
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

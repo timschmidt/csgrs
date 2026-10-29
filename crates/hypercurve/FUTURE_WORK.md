@@ -2383,6 +2383,42 @@ closure or performance claim is made; full pre-push qualification of this
 increment remains required. This entry supersedes earlier point-query and
 native-parameter gaps only for its demonstrated domain.
 
+**Rational quotient guard increment (2026-10-29).**
+A source-bound quotient now preserves the original divisor denominator in its
+exported scalar recipe. The baseline kept the exact value of a/d divided by
+b/e, but exporting a*e/(d*b) discarded e as a guard: rebinding a valid cubic
+source to the original divisor pole incorrectly succeeded. The correction
+retains e in both numerator and denominator. An already shared denominator
+keeps that guard once. Original source selectors, operands and typed failures
+remain authoritative; no new scalar kernel or archive record is introduced.
+
+Five named witnesses pass. They check an independent cubic quotient identity,
+both distinct and shared original guards, a zero divisor, strict/approximate/
+strict certainty, actual refinement-budget refusal and repeated larger retries.
+A fresh process replays a restricted parabola at the selected parameter t,
+proves 3t^3-6t^2+6t-2=0 and y=t^2, subdivides with a shared exact endpoint, then
+saves and reloads again. Replayed recipes still reject the original divisor
+pole. The original failing witness and subsequent fixture compilation error
+remain in the evidence; no assertion or policy was weakened.
+
+All 20 affected qualification groups pass, including full Hypercurve
+(2,955 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), six downstream consumer suites,
+strict MSRV Clippy, minimal builds, denied-warning docs, fuzz-target lint,
+the full capability matrix and hygiene. Only the finalized point parent's
+three receipt files changed after qualification; implementation and fixture
+bytes remain identical. Commands, raw logs, source inventories and patches
+are retained in docs/evidence/2026-10-29-hypercurve-closure-rational-query-guards, SHA-256 8dd0311b5bd14b8b8502a1c6f267a3bd45317ff8bda41a18549a2105caf4978d. Receipt checks follow the final
+documentation edit.
+
+The seven original polynomial region offset/corner blockers remain Unsupported,
+and three controls still pass. Refinement and promotion counters do not bound
+total work, guard-polynomial growth, memory or cancellation. No general speed,
+universal closure or publication claim is made. Complete pre-push qualification
+of this increment remains required.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
