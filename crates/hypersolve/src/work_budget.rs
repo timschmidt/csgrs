@@ -16,7 +16,10 @@
 //! recursive-field refinements, and selected-fiber/local-field promotions.
 //! The shared ordered-field Bernstein isolator, selected-fiber Sturm isolator,
 //! reusable fiber-root refiner, and retained local-field root refinements also
-//! participate. Polynomial, rational, and binary represented-root images charge
+//! participate. Complete ordered-field Sturm discovery charges each dyadic
+//! subdivision, including exclusion of separately emitted exact roots.
+//! Its root counts and coefficient arithmetic are not bounded by that counter.
+//! Polynomial, rational, and binary represented-root images charge
 //! their eliminant constructions; rational maps can reuse a cached eliminant
 //! without a new promotion charge. Constant and affine shortcuts need no
 //! promotion units. Selected-fiber polynomial-image norms, bivariate quotient

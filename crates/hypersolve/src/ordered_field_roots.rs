@@ -5,6 +5,9 @@
 //! field multiplication. An already selected algebraic or radical tower need
 //! not be collapsed into a primitive element to replay a polynomial relation.
 
+mod complete;
+pub use complete::isolate_ordered_field_polynomial_roots_complete;
+
 use std::cmp::Ordering;
 
 use hyperreal::Real;
@@ -89,7 +92,7 @@ pub enum OrderedFieldRootIsolationStatus {
     IdenticallyZero,
     /// A repeated/nonseparable root or speculative sign exceeded this path.
     CompleteFallbackRequired,
-    /// The requested interval was empty or reversed.
+    /// The lower bound is not strictly below the upper bound.
     InvalidInterval,
     /// The enclosing operation budget declined a required subdivision.
     BudgetExhausted,

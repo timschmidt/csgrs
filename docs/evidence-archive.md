@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-field-root-discovery-evidence-2026-10-28 branch ends at
+1fa282786f3adf54016b166024c1886e2b03af43, adding docs/evidence/2026-10-28-hypercurve-closure-selected-field-root-discovery (371 files,
+24,836,942 bytes), SHA-256 2d7816185d4199b16fb59c194500599805dc62ebb230f7f3f6a7ef0f2c15aa8e. It records complete ordered-field
+root discovery, eleven named exact/resource/replay tests and 15 affected
+qualification groups. Original declined discovery cases, reconstruction
+patches and seven geometric region blockers remain explicit. General operation
+closure and publication are not claimed. This record is unpushed.
+
 The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
 3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
 91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and

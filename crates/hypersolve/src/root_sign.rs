@@ -330,7 +330,7 @@ impl RemainderBudget {
     }
 }
 
-fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+pub(crate) fn field_polynomial_sign<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     polynomial: &[C],
     point: &Real,
     field: &mut F,

@@ -2383,6 +2383,51 @@ closure or performance claim is made; full pre-push qualification of this
 increment remains required. This entry supersedes earlier point-query and
 native-parameter gaps only for its demonstrated domain.
 
+**2026-10-28 selected-field root-discovery increment:**
+The original fast isolator declined both t^3-a and (t^3-a)^2 with a^3=2,
+while the original elliptic contact control completed. These outcomes were
+reproduced on the target source before implementation. Hypersolve now supplies
+a separate complete ordered-field discovery entry point using its existing
+Sturm distinct-root count and exact quotient. The bounded Bernstein API keeps
+its existing contract. No new sign kernel or independent coordinate projection
+is introduced.
+
+The new route admits finite polynomial degree, repeated/reducible/nonmonic
+relations, algebraic coefficients, exact boundary and midpoint roots, and
+degree drops. Search ranges require lower < upper, matching the existing
+Bernstein entry point; reversed and zero-width ranges are explicitly invalid. Certified temporary deflation never replaces the original
+equation used by later selection. Nonpoint selectors exclude separately
+reported roots at their endpoints. Ordered subdivision preserves root order
+without approximate sorting. Exact field decisions must complete; this does
+not give arbitrary computable real expressions a decision guarantee.
+
+Eleven named tests include a fresh-process child. Independent expectations
+cover nested cubic relations, the original elliptic curve/distance/side
+equations, multiplicity and endpoint exclusion, field degree drop and root
+joins, 2^-160 separation, zero/rootless/invalid outcomes, degree17 over an
+algebraic field, cold replay and a further construction proving c^63=2.
+Original discovery failures remain archived. Bounded remainder-context refusal
+is distinguished from an actual denied refinement charge. Small-budget runs
+publish no partial list and larger retries succeed repeatedly.
+
+All 15 affected qualification groups pass: full Hypersolve
+(1,280 passed,
+0 ignored), minimal solver tests, selected
+curve/model/native archive consumers, strict four-package MSRV Clippy, denied-
+warning docs and solver fuzz lint, the allocation lifetime control and hygiene.
+The qualified source is reconstructable from retained base/seed/candidate
+patches and file inventories. Only the finalized point parent's three receipt
+files changed during alignment. Commands, logs and source snapshots are in
+docs/evidence/2026-10-28-hypercurve-closure-selected-field-root-discovery, SHA-256 2d7816185d4199b16fb59c194500599805dc62ebb230f7f3f6a7ef0f2c15aa8e. Receipt checks run after the final ledger edit.
+
+Seven original polynomial region offset/corner operations still return
+Unsupported, with their three controls passing. Geometric algorithms do not
+yet consume this new scalar discovery interface. Shared subdivision counts do
+not bound total arithmetic, coefficient growth, memory, elapsed time or
+cancellation. Configured bounded contexts can still request a complete
+fallback. General operation closure and full pre-push verification of this
+increment remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

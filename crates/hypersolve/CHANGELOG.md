@@ -65,6 +65,10 @@
 
 ### Added
 
+- Complete ordered-field root isolation reuses exact Sturm counts for simple
+  and repeated roots, retaining original-equation selectors and shared work
+  accounting. The bounded Bernstein entry point keeps its fallback contract.
+
 - Shared selected-polynomial field/value definitions retain original selectors,
   native radicals and rational coordinates. Strict replay validates every record
   and denominator before publishing outputs, with an explicit graph-node limit.
