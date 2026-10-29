@@ -29,6 +29,11 @@ impl RawRationalMap {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(super) enum RawPlanarPoint {
     Coordinates([Real; 2]),
+    SelectedPolynomialRoot {
+        coefficients: Vec<RawParameter>,
+        interval: [Real; 2],
+        exact_root: Option<Real>,
+    },
     RationalImage {
         source: Box<RawPlanarPoint>,
         map: RawRationalMap,
@@ -82,7 +87,16 @@ impl GraphEncoder {
         &mut self,
         point: &hypercurve::CurvePoint2,
     ) -> Result<RawPlanarPoint, PersistenceError> {
-        Ok(match point.definition().map_err(GeometryError::from)? {
+        // This call-local encoder owns the immutable identities in its memo.
+        // Identity only reuses an encoded definition; it proves no new equality.
+        if let Some((_, raw)) = self
+            .polynomial_roots
+            .iter()
+            .find(|(source, _)| source == point)
+        {
+            return Ok(raw.clone());
+        }
+        let raw = match point.definition().map_err(GeometryError::from)? {
             CurvePointDefinition2::RationalImage { source, map } => RawPlanarPoint::RationalImage {
                 source: Box::new(self.planar_point(&source)?),
                 map: RawRationalMap::from_map(&map),
@@ -99,6 +113,21 @@ impl GraphEncoder {
                 numerators: numerators.map(|p| p.coefficients),
                 denominators: denominators.map(|p| p.coefficients),
             },
+            CurvePointDefinition2::SelectedPolynomialRoot { coefficients, root } => {
+                let coefficients = coefficients
+                    .iter()
+                    .map(|coefficient| {
+                        // Reuse the selected-parameter graph instead of expanding
+                        // repeated coefficient dependencies into an archive tree.
+                        self.curve_parameter(&coefficient.parameter().map_err(GeometryError::from)?)
+                    })
+                    .collect::<Result<_, PersistenceError>>()?;
+                RawPlanarPoint::SelectedPolynomialRoot {
+                    coefficients,
+                    interval: [root.lower, root.upper],
+                    exact_root: root.exact_root,
+                }
+            }
             CurvePointDefinition2::PolynomialFiber {
                 equation,
                 parameter,
@@ -177,7 +206,11 @@ impl GraphEncoder {
                 translation,
                 left_normal,
             },
-        })
+        };
+        if matches!(&raw, RawPlanarPoint::SelectedPolynomialRoot { .. }) {
+            self.polynomial_roots.push((point.clone(), raw.clone()));
+        }
+        Ok(raw)
     }
 }
 
@@ -201,6 +234,35 @@ impl SelectionGraph {
                     sources: [self.planar_point(first)?, self.planar_point(second)?],
                     numerators: numerators.map(hypersolve::BivariatePolynomial::new),
                     denominators: denominators.map(hypersolve::BivariatePolynomial::new),
+                }
+            }
+            RawPlanarPoint::SelectedPolynomialRoot {
+                coefficients,
+                interval: [lower, upper],
+                exact_root,
+            } => {
+                let coefficients = coefficients
+                    .into_iter()
+                    .map(|coefficient| {
+                        let RawParameter::Selected(index) = coefficient else {
+                            return Err(GeometryError::UnrepresentableParameter.into());
+                        };
+                        self.curve_parameter(RawParameter::Selected(index))?
+                            .rational_form_source()
+                            .ok_or(PersistenceError::InvalidReference {
+                                kind: "selected polynomial coefficient",
+                                index,
+                            })
+                    })
+                    .collect::<Result<_, _>>()?;
+                CurvePointDefinition2::SelectedPolynomialRoot {
+                    coefficients,
+                    root: hypersolve::IsolatedRootInterval {
+                        lower,
+                        upper,
+                        exact_root,
+                        distinct_root_count: 1,
+                    },
                 }
             }
             RawPlanarPoint::PolynomialFiber {

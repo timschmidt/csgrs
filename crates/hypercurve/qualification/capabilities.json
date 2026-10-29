@@ -13838,6 +13838,349 @@
       ],
       "oracle": "Independent equations derived from the original nested source, direct rational differentiation and exact point equality; serialized bytes are a separate assertion.",
       "timeout_seconds": 180
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_composition",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_root_preserves_its_equation_and_feeds_geometry",
+      "domain": "Independent positive a,b satisfy 8a^2=1 and 17b^5=1; z^3+a*z-b=0 in (1/2,3/4).",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Definition replay, y^2=x and y=x^2 consume the selected root and recover z."
+        }
+      ],
+      "oracle": "Original source equations, strict monotonicity of the cubic and exact equality with the original selected value."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_repeated",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_keep_repeated_factors_and_opposite_selections",
+      "domain": "(z^2-a)^2 with 8a^2=1,a>0, opposite singleton selectors and a trailing zero.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Both distinct selected roots satisfy z^2=a, sum to zero and retain the original repeated relation."
+        }
+      ],
+      "oracle": "Independent factorization; the broad interval containing both roots is invalid."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_degree17",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_keep_degree_seventeen_and_nonmonic_relations",
+      "domain": "3z^17=a with selected a>0,8a^2=1 and z in (0,1).",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The root satisfies the original nonmonic equation and feeds an exact affine point and inverse query."
+        }
+      ],
+      "oracle": "Original relation and independently derived linear image identity 3X-2Y=5."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_selectors",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_check_exact_roots_and_invalid_selectors",
+      "domain": "Selected coefficient a and a(z-1), including forged exact values/bounds, empty/zero/constant equations and absent roots.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "Only the exact root 1 with matching bounds succeeds; invalid singleton descriptions are rejected."
+        }
+      ],
+      "oracle": "Independent exact value 1 and nonzero equation; interval/root/zero-equation counterexamples."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_near_roots",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_distinguish_close_roots_without_tolerance",
+      "domain": "a(z-1)(z-1-10^-12), selected a>0 and disjoint rational isolators.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The two points remain distinct and their difference is exactly 10^-12."
+        }
+      ],
+      "oracle": "Independently factored polynomial and exact rational separation."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_guards_budget",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_retain_zero_coefficient_guards_and_retry_after_exhaustion",
+      "domain": "z^2-1 with a zero coefficient guarded by y^2-1 at y=2; zero shared work budget and a later unrestricted retry.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The zero budget reports BudgetExhausted; retry succeeds and the retained original guard rejects y=1."
+        }
+      ],
+      "oracle": "Original denominator, exact root 1 and a declared reached shared work limit."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_cold_replay",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_replay_in_a_fresh_process_and_feed_derivatives",
+      "domain": "Positive z^4=1/8 obtained from z^2=a,8a^2=1, serialized as a retained line endpoint.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh-process replay proves the original fourth-power relation and feeds exact rational derivatives; depth limits reject early."
+        }
+      ],
+      "oracle": "Independent fourth-power equation and derivative (1,2z); byte equality is checked separately."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_transforms",
+      "target": "selected_coefficient_roots",
+      "test": "selected_coefficient_roots_survive_restriction_reversal_and_similarity",
+      "domain": "Selected z>0,z^4=1/8 used in C(t)=(t,t^2), restriction, reversal and a rotation with scale two.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Source endpoints, transformed coordinates, definition replay and a further affine construction retain the same selected root with certified certainty."
+        }
+      ],
+      "oracle": "Independent parabola equation and inverse similarity coordinates."
+    },
+    {
+      "owner": "Hypercurve selected coefficient point definitions and native graph replay; Hypersolve common fields, polynomial roots and exact arithmetic",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain the original source coefficient queries, denominator guards and singleton selection through subsequent exact operations. Named witnesses do not establish general implicit-region operations or a total resource bound.",
+      "timeout_seconds": 180,
+      "id": "selected_coefficient_native_validation",
+      "target": "svg_point_replay",
+      "test": "selected_coefficient_root_records_validate_source_guards_and_selection",
+      "domain": "Native tag28 with wrong-kind, self and forward point references, zero denominator, absent or multiple roots, and a valid positive square root.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Malformed references and invalid construction records are rejected even when unused; the valid selector proves z^2=2,z>0."
+        }
+      ],
+      "oracle": "Independently encoded wire records and the original square-root equation."
     }
   ]
 }

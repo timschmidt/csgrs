@@ -408,3 +408,54 @@ fn nearby_exact_selectors_remain_distinct() {
         );
     }
 }
+
+#[test]
+fn selected_field_unit_arithmetic_retains_ancestor_authority_and_guards() {
+    let base = base();
+    let first = select(&base, coefficients(&base, &[-2, 0, 0, 1]), 1, 2);
+    let a = first.generator().unwrap();
+    let second = select(
+        &first,
+        vec![
+            a.scale(&real(-1)).unwrap(),
+            first.constant(real(0)).unwrap(),
+            first.constant(real(1)).unwrap(),
+        ],
+        1,
+        2,
+    );
+    let b = second.generator().unwrap();
+    let zero = first.constant(real(0)).unwrap();
+    let one = first.constant(real(1)).unwrap();
+    for value in [
+        b.add(&zero).unwrap(),
+        zero.add(&b).unwrap(),
+        b.multiply(&one).unwrap(),
+        one.multiply(&b).unwrap(),
+    ] {
+        assert!(value.field().shares_authority(&second));
+        is_zero(&value.subtract(&b).unwrap());
+        is_zero(
+            &power(&value, 6)
+                .subtract(&second.constant(real(2)).unwrap())
+                .unwrap(),
+        );
+    }
+    let product = b.multiply(&zero).unwrap();
+    assert!(product.field().shares_authority(&second));
+    is_zero(&product);
+    assert!(matches!(
+        product.divide(&product, &TestContext::strict()),
+        Err(SelectedPolynomialError::ZeroDenominator)
+    ));
+    assert!(matches!(
+        b.divide(&product, &TestContext::strict()),
+        Err(SelectedPolynomialError::ZeroDenominator)
+    ));
+    is_zero(
+        &second
+            .evaluate_polynomial(&[a.clone(), a.scale(&real(-1)).unwrap()], &real(1))
+            .unwrap(),
+    );
+    assert!(base.evaluate_polynomial(&[a], &real(1)).is_err());
+}

@@ -69,6 +69,7 @@ pub(super) struct GraphEncoder {
     point_sources: HashMap<usize, RawPointSource>,
     pcurve_sources: HashMap<String, usize>,
     pub(super) polynomial_sources: HashMap<String, usize>,
+    pub(super) polynomial_roots: Vec<(hypercurve::CurvePoint2, RawPlanarPoint)>,
 }
 
 impl GraphEncoder {

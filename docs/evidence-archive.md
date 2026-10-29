@@ -85,6 +85,14 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-coefficient-roots-evidence-2026-10-29 branch ends at
+f25a26281d409f115e4a2f8a8a95ab14d4fa3c8c, adding docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots (848 files,
+28,845,538 bytes), SHA-256 b1bd56cb33bf1770f7d27863ebf24ab995eb3fe5ea6fb2d3fdd6053e3641678b. It extends the finalized integrated
+selected-query evidence history. Eight focused curve cases and 25 complete
+qualification groups pass, with native replay, malformed-input and shared
+construction checks. Original missing/slow cases and seven remaining
+region-operation blockers are retained. This record is unpushed.
+
 The local hypercurve-selected-closure-integration-evidence-2026-10-29 branch ends at
 7b14c809b12cef95623e853878286c401c38ac0f, adding docs/evidence/2026-10-29-hypercurve-closure-selected-closure-integration (590 files,
 16,528,148 bytes), SHA-256 1aadc6e3a90206655e2100570527b1f68497ced2f9c3f650ee5d8eb174fa3ae2. Its parent merges all six selected-query

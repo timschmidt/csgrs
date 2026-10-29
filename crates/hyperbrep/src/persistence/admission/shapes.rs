@@ -498,6 +498,9 @@ pub(super) enum PlanarPoint {
         map: RationalMap,
     },
     Coordinates(IgnoredAny),
+    SelectedPolynomialRoot {
+        coefficients: Count,
+    },
     PolynomialFiber {
         equation: Rows,
     },
@@ -549,6 +552,11 @@ impl Record for PlanarPoint {
                 map.admit(budget)
             }
             Self::Coordinates(_) => Ok(()),
+            Self::SelectedPolynomialRoot { coefficients } => {
+                // Source queries are admitted once in the selected-parameter DAG.
+                budget.degree(coefficients.0.saturating_sub(1))?;
+                budget.geometry(coefficients.0)
+            }
             Self::PolynomialFiber { equation } => {
                 budget.degree(equation.rows.saturating_sub(1))?;
                 budget.degree(equation.columns.saturating_sub(1))?;

@@ -273,6 +273,18 @@ impl SelectedPolynomialField {
         )
     }
 
+    /// Evaluates ascending coefficients at an exact represented scalar.
+    /// Coefficients must belong to this field or an admitted ancestor. The
+    /// existing field arithmetic retains their selections and denominator
+    /// proofs; this operation makes no root-selection or nonzero claim.
+    pub fn evaluate_polynomial(
+        &self,
+        coefficients: &[SelectedPolynomialValue],
+        point: &Real,
+    ) -> ArithmeticResult<SelectedPolynomialValue> {
+        self.lift(&evaluate(coefficients, point, self)?)
+    }
+
     /// Adjoins the unique distinct root in the supplied open interval.
     ///
     /// Strict Sturm root counting replays the selector; repeated and reducible
@@ -459,6 +471,22 @@ impl SelectedPolynomialValue {
         }
     }
 
+    fn stored_one(&self) -> bool {
+        match &self.0.coordinates {
+            Coordinates::Recursive(scalar) => {
+                scalar.numerator.is_coefficientwise_stored_one()
+                    && scalar.denominator.is_coefficientwise_stored_one()
+            }
+            Coordinates::Extension {
+                numerator,
+                denominator,
+            } => {
+                matches!(numerator.as_slice(), [one] if one.stored_one())
+                    && matches!(denominator.as_slice(), [one] if one.stored_one())
+            }
+        }
+    }
+
     fn align(&self, other: &Self) -> ArithmeticResult<(SelectedPolynomialField, Self, Self)> {
         match self.field().lift(other) {
             Ok(other) => Ok((self.field().clone(), self.clone(), other)),
@@ -474,6 +502,14 @@ impl SelectedPolynomialValue {
     /// Exact addition through the common ancestor chain.
     pub fn add(&self, other: &Self) -> ArithmeticResult<Self> {
         let (field, left, right) = self.align(other)?;
+        // Values already own their denominator proofs. These structural
+        // identities preserve the aligned field and its selected dependencies.
+        if left.stored_zero() {
+            return Ok(right);
+        }
+        if right.stored_zero() {
+            return Ok(left);
+        }
         match (&left.0.coordinates, &right.0.coordinates) {
             (Coordinates::Recursive(a), Coordinates::Recursive(b)) => field.recursive_value(
                 unavailable(
@@ -510,6 +546,15 @@ impl SelectedPolynomialValue {
     /// Exact multiplication with local defining-relation reduction.
     pub fn multiply(&self, other: &Self) -> ArithmeticResult<Self> {
         let (field, left, right) = self.align(other)?;
+        if left.stored_zero() || right.stored_zero() {
+            return field.constant(Real::zero());
+        }
+        if left.stored_one() {
+            return Ok(right);
+        }
+        if right.stored_one() {
+            return Ok(left);
+        }
         match (&left.0.coordinates, &right.0.coordinates) {
             (Coordinates::Recursive(a), Coordinates::Recursive(b)) => field.recursive_value(
                 unavailable(a.numerator.multiply(&b.numerator))?,

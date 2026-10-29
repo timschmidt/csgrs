@@ -5,6 +5,29 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Polynomial roots with retained coefficient queries
+
+`CurvePointDefinition2::SelectedPolynomialRoot` defines the point `(z, 0)`
+from ascending `CurvePointRationalForm2` coefficients and a singleton root
+selector. Exhaustive matches on the definition enum must handle this variant.
+Keep each original query and its denominator, including zero coefficients;
+extracting independent scalar coordinates is neither required nor equivalent.
+A nonexact selector is an open interval containing exactly one distinct root.
+An exact root must equal both bounds and satisfy a nonzero equation. The supplied
+root-count field is not trusted. Invalid selectors and equations remain errors;
+undecided predicates and reached resource limits remain typed blockers.
+
+Native SVG path graph version 4 adds selected-coefficient point tag 28. Each
+coefficient references a point definition and carries its original numerator
+and denominator. HyperBRep format 14 adds `SelectedPolynomialRoot`, whose
+coefficients reference checked rational-query records in the selected-parameter
+graph. Older readers can reject these new variants; existing records keep their
+meaning and encoding. Replay validates all references, original guards and the
+root selection. Repeated coefficient sources use shared graph dependencies.
+
+This extends exact points and their consumers. It does not establish general
+implicit-region offsets, corner edits or a total work/memory bound.
+
 ## Polynomial fibers over retained query parameters
 
 `CurvePointDefinition2::PolynomialFiber::parameter` now takes `CurveParameter2`

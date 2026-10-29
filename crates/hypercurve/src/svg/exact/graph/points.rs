@@ -19,6 +19,7 @@ pub(super) const DISPLACEMENT_POINT: u8 = 19;
 pub(super) const CHORD_UNIT_TANGENT: u8 = 25;
 pub(super) const RATIONAL_QUERY_PAIR: u8 = 26;
 pub(super) const QUERY_PARAMETER: u8 = 27;
+pub(super) const SELECTED_POLYNOMIAL_ROOT: u8 = 28;
 
 fn depth_overflow() -> SvgError {
     SvgError::SizeOverflow {
@@ -121,6 +122,12 @@ impl GraphWriter {
                                 .as_polynomial_query()
                                 .map(|query| vec![query.query().source])
                                 .unwrap_or_default(),
+                            CurvePointDefinition2::SelectedPolynomialRoot {
+                                coefficients, ..
+                            } => coefficients
+                                .iter()
+                                .map(|coefficient| coefficient.source().clone())
+                                .collect(),
                             CurvePointDefinition2::RationalQueryPair { sources, .. } => {
                                 sources.to_vec()
                             }
@@ -248,6 +255,34 @@ impl GraphWriter {
                     let index = self.begin(POLYNOMIAL_FIBER)?;
                     self.writer.write_u32(parameter)?;
                     self.polynomial(&equation)?;
+                    self.writer.write_real(&root.lower)?;
+                    self.writer.write_real(&root.upper)?;
+                    self.writer.write_bool(root.exact_root.is_some())?;
+                    if let Some(exact) = root.exact_root {
+                        self.writer.write_real(&exact)?;
+                    }
+                    index
+                }
+                CurvePointDefinition2::SelectedPolynomialRoot { coefficients, root } => {
+                    let sources = coefficients
+                        .iter()
+                        .map(|coefficient| self.point_index(coefficient.source()))
+                        .collect::<SvgResult<Vec<_>>>()?;
+                    depth = next_depth(
+                        sources
+                            .iter()
+                            .map(|source| self.point_depths[*source as usize])
+                            .max()
+                            .unwrap_or(0),
+                        self.max_point_depth,
+                    )?;
+                    let index = self.begin(SELECTED_POLYNOMIAL_ROOT)?;
+                    self.writer.write_len(coefficients.len())?;
+                    for (coefficient, source) in coefficients.iter().zip(sources) {
+                        self.writer.write_u32(source)?;
+                        self.polynomial(coefficient.numerator())?;
+                        self.polynomial(coefficient.denominator())?;
+                    }
                     self.writer.write_real(&root.lower)?;
                     self.writer.write_real(&root.upper)?;
                     self.writer.write_bool(root.exact_root.is_some())?;
@@ -598,6 +633,38 @@ pub(super) fn read_definition(
                     exact_root,
                     // This requests a singleton. The point owner proves it;
                     // the archive cannot supply a trusted root-count flag.
+                    distinct_root_count: 1,
+                },
+            }
+        }
+        SELECTED_POLYNOMIAL_ROOT => {
+            let count = reader.read_len()?;
+            let mut coefficients = Vec::new();
+            for _ in 0..count {
+                let index = reader.read_len()?;
+                let source = point_reference(definitions, index)?;
+                depth = depth.max(next_depth(point_depths[index], max_point_depth)?);
+                let numerator = read_polynomial(reader)?;
+                let denominator = read_polynomial(reader)?;
+                coefficients.push(
+                    source
+                        .rational_form(numerator, denominator)
+                        .map_err(SvgError::Exact)?,
+                );
+            }
+            let lower = reader.read_real()?;
+            let upper = reader.read_real()?;
+            let exact_root = if reader.read_bool()? {
+                Some(reader.read_real()?)
+            } else {
+                None
+            };
+            CurvePointDefinition2::SelectedPolynomialRoot {
+                coefficients,
+                root: hypersolve::IsolatedRootInterval {
+                    lower,
+                    upper,
+                    exact_root,
                     distinct_root_count: 1,
                 },
             }

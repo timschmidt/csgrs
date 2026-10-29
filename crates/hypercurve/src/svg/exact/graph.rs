@@ -465,6 +465,7 @@ fn read_definitions(
             | points::CHORD_DISPLACEMENT
             | points::DISPLACEMENT_POINT
             | points::CHORD_UNIT_TANGENT
+            | points::SELECTED_POLYNOMIAL_ROOT
             | points::RATIONAL_QUERY_PAIR
             | points::QUERY_PARAMETER) => {
                 let (definition, depth) = points::read_definition(

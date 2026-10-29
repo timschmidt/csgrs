@@ -2961,3 +2961,60 @@ repeat protected direct-query checks and then complete full circle/board
 geometry, provenance, receipt, continuation and resource gates. The current
 single-board diagnostic run skips the all-board golden comparison and reports
 six release blockers. Broader H17 selection APIs remain a separate experiment.
+
+
+## Selected-coefficient root points (P2/P18-P20/P26/P36)
+
+The selected-coefficient root increment has passed local and downstream qualification. Hypercurve owns
+source-bound coefficient recipes and selected point definitions; Hypersolve
+owns common-field embeddings, exact polynomial evaluation and singleton root
+selection. HyperBRep and SVG retain those definitions through native replay.
+The admitted representation is `(z,0)` for a finite nonzero polynomial whose
+coefficients are retained point queries. An open singleton isolator or a checked
+represented exact root selects z. Original coefficient denominators remain
+part of the source recipe, including zero and trailing coefficients. Repeated
+factors are retained; no degree cap or independent coordinate projection is
+introduced. Broader symbolic coefficients still require exact decisions.
+
+The original missing-API witness combines independent positive selections
+8a^2=1 and 17b^5=1, selects z^3+a*z-b=0, replays the definition, then consumes
+it through y^2=x and y=x^2 and proves equality with z. The first draft exceeded
+its 180-second external test cap. Progress-only diagnostics completed the same
+assertions in 195.59 and 191.30 seconds, with the final equality dominating.
+Reusing certified zero/unit values after field alignment made the unchanged
+fixture complete in 15.62 seconds in the focused run. These are individual raw
+measurements, not a universal performance claim. External timeout is not a
+kernel resource-exhaustion result. Original unsuccessful records are retained.
+
+Focused witnesses also cover repeated/opposite roots, degree seventeen,
+nonmonic equations, exact and invalid selectors, roots separated by 10^-12,
+original pole guards, exhausted-budget retry, and fresh-process SVG replay into
+rational derivatives. Native HyperBRep witnesses check cold further geometry,
+invalid graph references/selectors/guards, metadata limits and repeated shared
+coefficient dependencies. Definition identity only accelerates serialization;
+the encoder owns its memoized inputs until that one encoding finishes.
+
+The current seven implicit-region offset/chamfer/fillet frontier fixtures remain
+unsupported. Circle-section controls on the original polynomial boundaries do
+succeed, including endpoints without a coordinate view. These observations
+motivate the coefficient carrier; they do not complete those operations.
+Promotion and root-refinement counters are not total work, coefficient growth,
+expression size, retained/temporary memory or cancellation bounds. Broad
+qualification, final evidence admission and full pre-push checks are separate
+gates; this entry alone is not implementation evidence.
+
+**2026-10-29 selected-coefficient root admission:** Eight focused curve cases,
+the native wire regression and affected solver/archive cases pass. All 25
+qualification groups pass, including full Hypersolve
+(1,289 passed), Hypercurve
+(2,990 passed), CSGRS
+(691 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs/fuzz manifests, allocation lifetime checks,
+the 325-row capability matrix and hygiene. Ignored cases remain separately
+reported in the raw commands. The finalized integrated predecessor and its
+evidence history are retained; only the three receipt files change afterward.
+
+Evidence: docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots, SHA-256 b1bd56cb33bf1770f7d27863ebf24ab995eb3fe5ea6fb2d3fdd6053e3641678b. Original failures, complete source
+attribution, shared-definition replay, completion costs and the seven remaining
+region-operation blockers are retained. Those blockers are not completed
+support. This local admission does not replace full pre-push qualification.

@@ -2,6 +2,14 @@
 
 ## [0.4.0] - Unreleased
 
+- Retain singleton polynomial roots whose coefficients are exact point queries,
+  including independent selected fields, repeated factors and algebraic data.
+  The generated point keeps every coefficient source and original denominator
+  through further evaluation, rational derivatives and native replay.
+- SVG point graphs and HyperBRep selected-parameter graphs preserve these
+  coefficient dependencies. Replay validates selectors, references and guards;
+  repeated coefficient constructions share archive records.
+
 - Polynomial graph evaluation consumes source-bound rational queries over
   retained selected fields. Dependent fibers preserve their original equation,
   parameter recipe and selector through further queries and native replay;
@@ -82,6 +90,10 @@
   continue to project every coordinate to `f64`.
 
 ### Breaking
+
+- `CurvePointDefinition2` gains `SelectedPolynomialRoot`; exhaustive matches
+  must handle the new variant. SVG point tag 28 and the corresponding HyperBRep
+  planar record require a reader with selected-coefficient root support.
 
 - `CurvePointDefinition2::PolynomialFiber::parameter` is now `CurveParameter2`.
   Convert existing `BezierParameter2` values with `.into()`; borrow their native

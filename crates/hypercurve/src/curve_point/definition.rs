@@ -22,6 +22,17 @@ pub enum CurvePointDefinition2 {
         parameter: CurveParameter2,
         root: hypersolve::IsolatedRootInterval,
     },
+    /// The point `(root, 0)` for a polynomial with ascending coefficients
+    /// supplied as retained rational point queries. Independent coefficient
+    /// fields are joined without projecting coordinates. Every original source
+    /// and denominator remains authoritative, including zero coefficients.
+    /// A nonexact selector must contain exactly one distinct root in its open
+    /// interval; an exact root must equal both bounds and satisfy a nonzero
+    /// equation. Replay ignores the supplied root-count flag.
+    SelectedPolynomialRoot {
+        coefficients: Vec<crate::CurvePointRationalForm2>,
+        root: hypersolve::IsolatedRootInterval,
+    },
     /// Two rational queries, each retaining its original point and pole guard.
     /// Replay joins their selected fields; it never projects independent coordinates.
     RationalQueryPair {
@@ -240,6 +251,13 @@ impl CurvePointDefinition2 {
     fn replay(self, sources_checked: bool) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
+            Self::SelectedPolynomialRoot { coefficients, root } => {
+                crate::polynomial_point::PolynomialPoint2::from_selected_root(
+                    coefficients,
+                    root,
+                    policy,
+                )
+            }
             Self::RationalQueryPair {
                 sources,
                 numerators,

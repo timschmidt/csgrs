@@ -30,6 +30,7 @@ enum PolynomialPointAuthority2 {
 
 mod joint;
 mod selected_fiber;
+mod selected_root;
 use joint::JointQueries2;
 
 impl PolynomialPoint2 {

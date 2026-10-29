@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Evaluate polynomial coefficients from admitted selected fields at represented
+  scalars without projecting their dependencies. Exact arithmetic reuses stored
+  zero and unit identities after field alignment; division still validates its
+  denominator before publishing an admitted value.
+
 - Add configured-depth use of the complete ordered-field Sturm isolator.
   Separation and singleton refinement share the same implementation as the
   unrestricted API. Reached local depth limits return `BudgetExhausted` with
