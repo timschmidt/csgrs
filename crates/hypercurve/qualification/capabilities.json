@@ -9,7 +9,7 @@
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
     "Published package and actual binding consumers for the complete declared domain.",
-    "Polynomial whole-path SVG replay and unrestricted repeated chord setbacks remain open. The named Boolean-generated algebraic-corner chamfer, boundary reconstruction and further Boolean now have a bounded acceptance witness; that single finite chain does not establish unrestricted operation closure."
+    "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
   ],
   "fixtures": [
     {
@@ -4519,7 +4519,7 @@
         "P19",
         "P20"
       ],
-      "domain": "The original parabola cap at zero offset, its unique trim-only chord-setback chamfer of 1/64 on each support, and attempted nonzero round offset, circular fillet and finite projection.",
+      "domain": "The original parabola cap at zero offset, its unique trim-only chord-setback chamfer of 1/64 on each support, nonzero round offset and circular-fillet attempts, and finite projection with chord error 0.001.",
       "origins": [
         "authored",
         "selected_implicit",
@@ -4532,7 +4532,7 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. The named chamfer keeps both polynomial supports and introduces one exact line, with both Euclidean chord setbacks measured from the original corner. Reconstruction and further Boolean operations consume the result. Nonzero offsets, circular fillets and finite projection remain typed gaps on this fixture; broader corner closure is not established. Counted work and external timeouts are not total arithmetic or memory bounds.",
+      "semantics": "Selected graph slabs retain their source equations, root choices, exact domains and traversal in the existing arrangement. The named chamfer keeps both polynomial supports and introduces one exact line, with both Euclidean chord setbacks measured from the original corner. Reconstruction and further Boolean operations consume the result. Finite display projection certifies the original 0.001 chord-error bound while preserving the exact source. Nonzero offsets and circular fillets remain typed gaps on this fixture; broader corner closure is not established. Counted work and external timeouts are not total arithmetic or memory bounds.",
       "claims": [
         {
           "stage": "offsets",
@@ -4556,11 +4556,11 @@
         },
         {
           "stage": "evaluation",
-          "outcome": "unsupported",
-          "assertion": "The finite projection adapter reports Unsupported; no fitted output replaces the exact source."
+          "outcome": "qualified_approximation",
+          "assertion": "One closed profile retains the original cap edge; every remaining chord obeys the independent whole-parabola secant bound including emitted-coordinate errors. The exact source and subsequent zero-offset symmetric-difference identity remain unchanged."
         }
       ],
-      "oracle": "Source root inventory and zero-offset symmetric-difference identity; y^2=x, exact 1/4096 squared setbacks, the independent straight-support cut (1/4,-31/64), complete oriented support inventory, strict trim inequalities, reconstruction Xor and subset Difference. Remaining unsupported operations retain their actual typed outcomes.",
+      "oracle": "Source root inventory and zero-offset symmetric-difference identity; y^2=x, exact 1/4096 squared setbacks, the independent straight-support cut (1/4,-31/64), complete oriented support inventory, strict trim inequalities, reconstruction Xor and subset Difference. Remaining unsupported operations retain their actual typed outcomes. Projection checks exact cap endpoints and every emitted parabola chord using delta_y^2/4 plus both exact endpoint residuals <= 0.001; display chords never replace the retained polynomial source.",
       "timeout_seconds": 300
     },
     {
@@ -15106,6 +15106,350 @@
         }
       ],
       "oracle": "Independent corner equation x^3=-3/4; exact squared setbacks 1/4096; retained branch ranges and five oriented support pieces describe the clipped convex set. The subsequent rectangle leaves the lower branch over [-3/4,0] and three closing lines."
+    },
+    {
+      "id": "polynomial_finite_projection",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_preserves_the_exact_source",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Dyadic parabola on [-1,1], error 0.01.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Exact vertex equation and independent full-arc secant bound; source sharing and subsequent split retain the original curve."
+        }
+      ],
+      "oracle": "Exact vertex equation and independent full-arc secant bound; source sharing and subsequent split retain the original curve.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_projection_waves",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_bounds_waves_between_equal_samples",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Cubic graph with equal endpoints and midpoint, error 0.02.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Original cubic equation at every emitted dyadic vertex and the independent second-derivative bound on every chord; both extrema remain visible."
+        }
+      ],
+      "oracle": "Original cubic equation at every emitted dyadic vertex and the independent second-derivative bound on every chord; both extrema remain visible.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_projection_selected_endpoints",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_handles_selected_trims_and_singular_endpoints",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Selected upper cusp y^2=x^3 trimmed at x=sqrt(1/2), including reversal and a rotated scale.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Finite completion retains exact endpoints and the original polynomial branch through all three views."
+        }
+      ],
+      "oracle": "Finite completion retains exact endpoints and the original polynomial branch through all three views.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_projection_resources",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_exhausts_and_retries_without_partial_output",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Parabola with denied depth, box and shared-work budgets, followed by a larger retry.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Typed failures publish no partial polyline; larger retry completes and reproduces the unbudgeted projection while preserving its exact source."
+        }
+      ],
+      "oracle": "Typed failures publish no partial polyline; larger retry completes and reproduces the unbudgeted projection while preserving its exact source.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_projection_quantization",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_rejects_an_unrepresentable_error_budget",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Parabola translated by 2^60 with requested error 0.01.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "undecided",
+          "assertion": "Exact endpoint-to-emitted-coordinate bounds reject an error smaller than available binary64 spacing instead of enlarging it."
+        }
+      ],
+      "oracle": "Exact endpoint-to-emitted-coordinate bounds reject an error smaller than available binary64 spacing instead of enlarging it.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_projection_maps",
+      "target": "polynomial_projection",
+      "test": "polynomial_projection_transports_original_rational_maps",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Parabola under the retained rational map (x/(2+y),y/(2+y)), error 0.02.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "qualified_approximation",
+          "assertion": "Exact endpoint expectations, unchanged original map and shared-source subdivision accompany certified whole-arc projection."
+        }
+      ],
+      "oracle": "Exact endpoint expectations, unchanged original map and shared-source subdivision accompany certified whole-arc projection.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_svg_maps",
+      "target": "polynomial_projection",
+      "test": "polynomial_svg_replay_preserves_maps_reversal_and_further_restriction",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Rationally mapped parabola followed by rotated scale, translation and reversal.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replay retains map coefficients, similarity and traversal; exact selected evaluations agree, further subdivision shares its source, and re-export is deterministic."
+        }
+      ],
+      "oracle": "Replay retains map coefficients, similarity and traversal; exact selected evaluations agree, further subdivision shares its source, and re-export is deterministic.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_svg_region",
+      "target": "polynomial_projection",
+      "test": "polynomial_filled_svg_replay_reenters_the_shared_arrangement",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Filled cap 0<=x<=1/4 and y^2<=x with two polynomial branches and one authored line. Also a native rectangular hole and a translated disconnected cap.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Retained supporting families, independent exact membership, empty symmetric difference and subsequent empty/union identities validate the replayed region. The compound retains three boundary loops and independently classified material, hole and exterior points."
+        }
+      ],
+      "oracle": "Retained supporting families, independent exact membership, empty symmetric difference and subsequent empty/union identities validate the replayed region. The compound retains three boundary loops and independently classified material, hole and exterior points.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_chamfer_whole_svg",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_replays_in_a_fresh_process_and_reuses_selected_cuts",
+      "owner": "Hypercurve selected polynomial graph enclosures, finite projection and exact SVG graph replay",
+      "properties": [
+        "P8",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P29",
+        "P36"
+      ],
+      "domain": "Original mixed polynomial/generated-chord chamfer with setback 1/64, including a fresh-process consumer.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact selected graphs, trims and original map guards remain authoritative. Finite display output is an explicitly bounded approximation and cannot supply exact geometric evidence. Replay reconstructs the original topology before accepting branch indices and dependencies. Depth, attempted-box, precision and shared-work limits are distinct from total arithmetic, coefficient size, memory and cancellation. This fixture does not claim general implicit-operation closure.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Original selected cut equation, exact setback and parameter order, retained supports, further evaluation and byte-identical SVG re-export; original 180-second bound is unchanged."
+        }
+      ],
+      "oracle": "Original selected cut equation, exact setback and parameter order, retained supports, further evaluation and byte-identical SVG re-export; original 180-second bound is unchanged.",
+      "timeout_seconds": 180
     }
   ]
 }

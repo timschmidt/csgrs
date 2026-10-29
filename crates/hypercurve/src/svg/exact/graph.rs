@@ -16,6 +16,7 @@ use std::collections::HashMap;
 
 mod circles;
 mod points;
+mod polynomial;
 
 pub(super) const PREFIX: &str = "4:";
 const MAGIC: &[u8; 4] = b"HCP4";
@@ -71,6 +72,10 @@ struct GraphWriter {
     max_point_depth: usize,
     query_parameters:
         HashMap<(bool, *const ()), (crate::selected_query_scalar::SelectedQueryScalar2, u32)>,
+    polynomial_sources: HashMap<
+        *const hypersolve::bivariate_topology::BivariateCurveTopology,
+        (crate::PolynomialCurveBranch2, u32),
+    >,
     circles: HashMap<*const (), (crate::bezier_offset::BezierAlgebraicCuspSemicircle2, u32)>,
     circle_parameters: HashMap<
         (u32, *const ()),
@@ -99,6 +104,7 @@ impl GraphWriter {
             max_point_depth,
             query_parameters: HashMap::new(),
             circles: HashMap::new(),
+            polynomial_sources: HashMap::new(),
             circle_parameters: HashMap::new(),
         }
     }
@@ -124,6 +130,9 @@ impl GraphWriter {
     }
 
     fn curve_definition(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        if let Some(branch) = curve.polynomial_branch() {
+            return self.polynomial_branch(branch);
+        }
         if let Some(crate::BezierSplitFragment2::AlgebraicCuspSemicircle(fragment)) =
             curve.retained_fragment()
         {
@@ -242,6 +251,7 @@ impl GraphWriter {
 }
 
 enum Definition {
+    PolynomialSource(crate::PolynomialCurveSet2),
     Curve(Curve2),
     Parameter(BezierParameter2),
     QueryParameter(crate::CurveParameter2),
@@ -490,6 +500,12 @@ fn read_definitions(
                     &point_depths,
                     max_point_depth,
                 )?;
+                point_depth = depth;
+                definition
+            }
+            tag @ (polynomial::POLYNOMIAL_SOURCE | polynomial::POLYNOMIAL_BRANCH) => {
+                let (definition, depth) =
+                    polynomial::read_definition(tag, reader, &definitions, &point_depths)?;
                 point_depth = depth;
                 definition
             }

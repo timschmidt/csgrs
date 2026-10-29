@@ -177,7 +177,10 @@ impl GraphWriter {
             .ok_or_else(|| malformed("exact point dependency was not emitted"))
     }
 
-    fn polynomial(&mut self, polynomial: &hypersolve::BivariatePolynomial) -> SvgResult<()> {
+    pub(super) fn polynomial(
+        &mut self,
+        polynomial: &hypersolve::BivariatePolynomial,
+    ) -> SvgResult<()> {
         self.writer.write_len(polynomial.coefficients.len())?;
         for row in &polynomial.coefficients {
             self.writer.write_reals(row)?;
@@ -500,7 +503,9 @@ fn read_axis(reader: &mut ExactReader<'_>) -> SvgResult<Axis2> {
     }
 }
 
-fn read_polynomial(reader: &mut ExactReader<'_>) -> SvgResult<hypersolve::BivariatePolynomial> {
+pub(super) fn read_polynomial(
+    reader: &mut ExactReader<'_>,
+) -> SvgResult<hypersolve::BivariatePolynomial> {
     let count = reader.read_len()?;
     reader.check_collection_len(count, 4)?;
     let coefficients = (0..count)

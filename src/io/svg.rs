@@ -31,6 +31,10 @@ fn map_svg_error(error: SvgError) -> IoError {
             format: "SVG",
             source: source.into(),
         },
+        SvgError::PolynomialTopology(source) => IoError::Construction {
+            format: "SVG",
+            source: crate::errors::ValidationError::PolynomialTopology(source),
+        },
         SvgError::SizeOverflow { limit } => IoError::SizeOverflow {
             format: "SVG",
             limit,

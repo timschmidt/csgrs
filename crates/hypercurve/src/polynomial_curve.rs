@@ -14,6 +14,9 @@ use hypersolve::{
 };
 use std::cmp::Ordering;
 
+#[path = "polynomial_curve_projection.rs"]
+mod projection;
+
 #[path = "polynomial_curve_differential.rs"]
 mod differential;
 
@@ -99,8 +102,10 @@ struct PolynomialCurveSource2 {
 /// this carrier does not establish general implicit-region closure. Trim-only
 /// Euclidean chord setbacks retain selected circle cuts and generated chord
 /// evidence. Multiple finite candidates keep the existing explicit selection
-/// contract. Nonzero offsets, circular fillets, branch extension and finite
-/// projection of polynomial supports retain their capability blockers.
+/// contract. Finite display projection bounds whole selected subarcs and retains
+/// the exact source; SVG graphs reconstruct the defining topology and trims.
+/// Projection limits do not bound total arithmetic or memory. Nonzero offsets,
+/// circular fillets and branch extension retain their capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -1192,12 +1197,31 @@ impl PolynomialCurveBranch2 {
     }
 
     pub(super) fn bounds(&self) -> ExactCurveResult<Aabb2> {
-        // The entire certified rectangle is conservative for every restriction.
         let domain = self.topology().domain();
-        let mut bounds = Aabb2::new_unchecked(
-            Point2::new(domain.first[0].clone(), domain.second[0].clone()),
-            Point2::new(domain.first[1].clone(), domain.second[1].clone()),
-        );
+        let mut lower = domain.first[0].clone();
+        let mut upper = domain.first[1].clone();
+        // Retained scalar enclosures are exact evidence in the source chart.
+        // A loose or unavailable enclosure keeps the original conservative
+        // side; it never rejects a supported selected parameter.
+        if let Some((start, _)) = self.range.start().scalar_bounds()
+            && crate::classify::compare_reals(start, &lower, &CurveContext::STRICT)
+                == Some(Ordering::Greater)
+        {
+            lower = start.clone();
+        }
+        if let Some((_, end)) = self.range.end().scalar_bounds()
+            && crate::classify::compare_reals(end, &upper, &CurveContext::STRICT)
+                == Some(Ordering::Less)
+        {
+            upper = end.clone();
+        }
+        self.image_box(Aabb2::new_unchecked(
+            Point2::new(lower, domain.second[0].clone()),
+            Point2::new(upper, domain.second[1].clone()),
+        ))
+    }
+
+    fn image_box(&self, mut bounds: Aabb2) -> ExactCurveResult<Aabb2> {
         for map in &self.maps {
             bounds = map.bounds(&bounds)?;
         }
@@ -1218,8 +1242,8 @@ impl PolynomialCurveBranch2 {
 
 impl Curve2 {
     /// Maps a polynomial branch through rational coordinates, retaining its
-    /// source parameter chart and original pole guards. The whole source box
-    /// must certify a nonzero denominator; other carriers report a blocker.
+    /// source parameter chart and original pole guards. The whole selected source
+    /// box must certify a nonzero denominator; other carriers report a blocker.
     /// Injectivity is a separate claim, checked by callers that require it.
     pub fn rational_image(&self, map: &crate::RationalMap2) -> ExactCurveResult<Self> {
         let source = self

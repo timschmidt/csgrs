@@ -183,6 +183,14 @@ pending pre-push status through selected polynomial field replay. Later selected
 query point/parameter and derivative increments are excluded. Exact geometric
 operation closure and hosted publication/deployment are not established here.
 
+The local hypercurve-polynomial-svg-replay-evidence-2026-10-29 branch ends at
+c230c717f4bef74e3f9b7622bfaa65700d57c536, adding docs/evidence/2026-10-29-hypercurve-closure-polynomial-svg-replay (598 files,
+35,611,291 bytes), SHA-256 5b5409589a07d1712338c656e47827ccc10c678662c355d982dd618219f82e4f. It retains the reproduced projection
+and SVG failures, unsuccessful intermediate cases, exact-source replay and
+all 17 passing affected qualification groups. Original repeated chamfer,
+general algebraic closure and full pre-push verification remain open.
+This evidence record is unpushed.
+
 The local integration candidate combines selected polynomial field evidence
 2472aef555210a4222d04fe1b746c8c7ac015be3 and published evidence e784a8ea0b53cc24f3b56a61d63a13e66b9e7701 at 9700b7d8fd1124660c33a1059ebf321e968ce1f3.
 All retained records from both parents remain in the aggregate manifest.

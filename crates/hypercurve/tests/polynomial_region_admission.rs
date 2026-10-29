@@ -880,6 +880,65 @@ fn polynomial_region_zero_offset_keeps_sources_and_remaining_gaps_are_typed() {
             .is_empty()
     );
 
+    let options = hypercurve::FiniteProjectionOptions::try_new(0.001).unwrap();
+    let profiles = source.project_to_finite_profiles(&options).unwrap();
+    assert_eq!(profiles.len(), 1);
+    assert!(profiles[0].holes().is_empty());
+    let ring = profiles[0].material();
+    assert!(ring.is_closed());
+    assert_eq!(ring.chord_error(), options.chord_error());
+    assert_eq!(ring.points().first(), Some(&[0.0, 0.0]));
+    assert_eq!(ring.points().last(), ring.points().first());
+    let error = Real::try_from(options.chord_error()).unwrap();
+    let points: Vec<_> = ring
+        .points()
+        .iter()
+        .map(|point| point.map(|value| Real::try_from(value).unwrap()))
+        .collect();
+    let mut caps = 0;
+    for pair in points.windows(2) {
+        let [[ax, ay], [bx, by]] = pair else {
+            unreachable!()
+        };
+        if ax == &q(1, 4) && bx == &q(1, 4) {
+            assert_eq!(ay, &q(-1, 2));
+            assert_eq!(by, &q(1, 2));
+            caps += 1;
+            continue;
+        }
+        assert_eq!(
+            hyperlimit::compare_reals(by, ay, hyperlimit::PredicatePolicy::STRICT).value(),
+            Some(Ordering::Less)
+        );
+        // Independently parametrize the exact boundary as (y^2, y). The
+        // secant's horizontal deviation is at most (by-ay)^2/4 over its
+        // whole interval. Add the actual binary64 endpoints' horizontal
+        // residuals to bound the emitted chord without sampling the arc.
+        let dy = by - ay;
+        let bound =
+            (&dy * &dy / Real::from(4)).unwrap() + (ax - ay * ay).abs() + (bx - by * by).abs();
+        assert!(matches!(
+            hyperlimit::compare_reals(&bound, &error, hyperlimit::PredicatePolicy::STRICT).value(),
+            Some(Ordering::Less | Ordering::Equal)
+        ));
+    }
+    assert_eq!(caps, 1);
+    let retained = source.boundary_paths().unwrap();
+    for index in [0, 2] {
+        assert!(
+            retained[0].curves()[index]
+                .polynomial_branch()
+                .unwrap()
+                .has_same_parameterization(original[index].polynomial_branch().unwrap())
+        );
+    }
+    assert!(
+        source
+            .boolean_region(&zero, BooleanOp::Xor)
+            .unwrap()
+            .is_empty()
+    );
+
     for error in [
         source
             .offset(q(1, 64), &hypercurve::OffsetCornerStyle2::Round)
@@ -890,11 +949,6 @@ fn polynomial_region_zero_offset_keeps_sources_and_remaining_gaps_are_typed() {
                 1,
                 &hypercurve::CurveFillet2::new(q(1, 64)),
                 hypercurve::CurveCornerMode2::TrimOnly,
-            )
-            .unwrap_err(),
-        source
-            .project_to_finite_profiles(
-                &hypercurve::FiniteProjectionOptions::try_new(0.001).unwrap(),
             )
             .unwrap_err(),
     ] {

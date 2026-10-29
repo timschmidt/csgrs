@@ -22,10 +22,15 @@ use crate::{
 };
 use hyperreal::{Real, RealSign};
 
+#[path = "finite_projection_polynomial.rs"]
+mod polynomial;
+
 /// Options for projecting native curves to finite `f64` polylines.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct FiniteProjectionOptions {
     chord_error: f64,
+    polynomial_max_depth: usize,
+    polynomial_max_boxes: usize,
 }
 
 /// Finite `f64` polyline emitted from a native curve object.
@@ -50,10 +55,25 @@ impl FiniteProjectionOptions {
     /// Constructs projection options with a positive finite chord-error budget.
     pub fn try_new(chord_error: f64) -> CurveResult<Self> {
         if chord_error.is_finite() && chord_error > 0.0 {
-            Ok(Self { chord_error })
+            Ok(Self {
+                chord_error,
+                polynomial_max_depth: 128,
+                polynomial_max_boxes: 65_536,
+            })
         } else {
             Err(CurveError::InvalidFiniteProjectionOptions)
         }
+    }
+
+    /// Bounds polynomial graph projection by subdivision depth and total
+    /// attempted parameter boxes per path. Zero permits a denied-budget probe.
+    /// Defaults are depth 128 and 65,536 boxes. Selected-point enclosures use
+    /// at most 512 refinement steps per attempt; shared solver budgets also
+    /// apply. These limits do not bound coefficient arithmetic or heap bytes.
+    pub const fn with_polynomial_subdivision_limits(mut self, depth: usize, boxes: usize) -> Self {
+        self.polynomial_max_depth = depth;
+        self.polynomial_max_boxes = boxes;
+        self
     }
 
     /// Returns the maximum requested chord error.
@@ -501,8 +521,18 @@ impl CurvePath2 {
             }
         };
         let mut points = Vec::with_capacity(self.curves().len() + 1);
+        let mut polynomial_boxes = 0;
         for curve in self.curves() {
-            if let Some(spans) = curve
+            if let Some(branch) = curve.polynomial_branch() {
+                polynomial::append(
+                    &mut points,
+                    curve,
+                    branch,
+                    options,
+                    policy,
+                    &mut polynomial_boxes,
+                )?;
+            } else if let Some(spans) = curve
                 .restricted_source_spans(policy, crate::CurveOperation2::Evaluation)
                 .map_err(|error| CurveError::Topology(error.to_string()))?
             {
@@ -1056,6 +1086,23 @@ fn project_curve_region_loop(
     boundary
         .replay_connectivity(policy)
         .map_err(|error| CurveError::Topology(error.to_string()))?;
+    if boundary
+        .fragments()
+        .iter()
+        .any(|fragment| matches!(fragment, BezierSplitFragment2::Polynomial(_)))
+    {
+        // Keep polynomial boundaries in the same selected-curve projection
+        // path, including its shared per-path budget and whole-arc certificates.
+        let path = CurvePath2::try_new_raw(boundary.curves().to_vec(), policy)
+            .map_err(polynomial::exact_error)?;
+        let projected = path.project_to_finite_polyline_raw(options, policy)?;
+        if !projected.is_closed() {
+            return Err(CurveError::Topology(
+                "finite region projection requires a closed boundary path".into(),
+            ));
+        }
+        return Ok(projected);
+    }
     let mut points = Vec::with_capacity(boundary.fragments().len() + 1);
     for fragment in boundary.fragments() {
         append_curve_fragment_samples(&mut points, fragment, options, policy)?;

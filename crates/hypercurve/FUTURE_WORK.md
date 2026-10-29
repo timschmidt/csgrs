@@ -3274,3 +3274,43 @@ incidence, splitting, a second exact replay and finite projection under
 strict/approximate/strict policies. Display coordinates never supply the
 incidence or splitting proof. This adds a consumer witness without a new
 geometry algorithm; the existing implementation ledger records this increment.
+
+
+## Polynomial finite projection and whole-branch SVG replay (2026-10-29)
+
+On `eb7ab943b1`, direct finite projection and the original chamfer SVG
+fixture fail as unsupported. Selected graph branches now obtain certified
+whole-arc boxes from an exact interior fiber and nonzero polynomial edge
+signs. Guarded maps transport those boxes; exact capsule tests verify the
+actual emitted binary64 chords. Exact source definitions remain authoritative.
+The witnesses include waves missed by endpoint/midpoint sampling, singular
+endpoints, selected trims, maps, reversal, exhausted-budget retry and a
+quantization limit that must remain undecided.
+
+SVG records retain source equations, domains, topology/evaluation controls,
+selected branch ordinals, exact parameter dependencies, maps and traversal.
+Replay rebuilds topology and checks all definitions, including unused ones.
+Invalid selectors, source references, topology limits and shared-budget
+exhaustion remain typed through CSGRS. Exact trim bounds separate disconnected
+components before general incidence. Native SVG replay retains an uncut
+original native line and its provenance after the same arrangement checks its
+complete source range; ordinary construction keeps its established publication; analytic parallels and selected chords keep their existing carriers. Holes, disconnected material, exact
+XOR, empty continuation and deterministic output are checked separately.
+
+All 17 affected implementation qualification groups pass; six further checks
+correct and regenerate the original projection capability receipt without
+changing implementation bytes. The implementation checks include
+2,029 Hypercurve owner tests,
+18 existing CSGRS export/replay tests,
+2 new typed adapter tests, native BRep
+replay, BRep IO, graphics, strict MSRV Clippy, minimal builds, docs, fuzz checks
+and the selected capability matrix. The focused source run also completes
+the unchanged original and isolated-trim fresh-process fixtures within their
+180-second external caps. Raw records preserve individual timings, peak RSS,
+unsuccessful candidates and ignored-test counts.
+
+Evidence: `docs/evidence/2026-10-29-hypercurve-closure-polynomial-svg-replay`, SHA-256 `5b5409589a07d1712338c656e47827ccc10c678662c355d982dd618219f82e4f`. Default polynomial display limits
+are depth 128 and 65,536 attempted boxes per path, with up to 512 refinements
+per scalar enclosure attempt. These are not total-work or memory bounds.
+General algebraic topology, nonzero implicit offsets/fillets, the original
+repeated polynomial chamfer and complete pre-push qualification remain open.

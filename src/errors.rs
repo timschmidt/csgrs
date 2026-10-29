@@ -69,6 +69,9 @@ pub enum ValidationError {
     /// A native exact curve operation failed, retaining its context and cause.
     #[error("{0}")]
     ExactCurve(#[from] ExactCurveError),
+    /// Polynomial topology reconstruction failed with its original solver cause.
+    #[error("polynomial topology failed: {0:?}")]
+    PolynomialTopology(hypercurve::BivariateTopologyError),
     /// Native contour construction failed, retaining its original diagnostic.
     #[error("{0}")]
     Curve(#[from] CurveError),
@@ -283,6 +286,27 @@ impl ValidationError {
                     ..
                 } => ValidationErrorKind::InvalidInput,
                 _ => ValidationErrorKind::Geometry,
+            },
+            Self::PolynomialTopology(error) => match error {
+                hypercurve::BivariateTopologyError::InvalidDomain
+                | hypercurve::BivariateTopologyError::ParameterOutsideDomain
+                | hypercurve::BivariateTopologyError::ZeroPolynomial => {
+                    ValidationErrorKind::InvalidInput
+                },
+                hypercurve::BivariateTopologyError::UnsupportedCoefficient
+                | hypercurve::BivariateTopologyError::VerticalComponent
+                | hypercurve::BivariateTopologyError::RepeatedComponent
+                | hypercurve::BivariateTopologyError::BoundaryComponent => {
+                    ValidationErrorKind::Unsupported
+                },
+                hypercurve::BivariateTopologyError::DegreeLimit
+                | hypercurve::BivariateTopologyError::RefinementLimit
+                | hypercurve::BivariateTopologyError::BudgetExhausted => {
+                    ValidationErrorKind::ResourceExhausted
+                },
+                hypercurve::BivariateTopologyError::Undecided => {
+                    ValidationErrorKind::Undecided
+                },
             },
             Self::ExactCurve(ExactCurveError::Blocked(blocker)) => match blocker.reason() {
                 hypercurve::UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,

@@ -235,6 +235,7 @@ pub use finite_projection::{
     try_finite_ring_signed_area,
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
+pub use hypersolve::bivariate_topology::BivariateTopologyError;
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
 pub use intersect::{
     ArcArcIntersection, ArcArcIntersectionPoint, CircleCircleRelation, IntersectionKind,

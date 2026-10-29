@@ -17,7 +17,8 @@ pub(super) fn encode_path(
     max_point_depth: usize,
 ) -> SvgResult<String> {
     if path.curves().iter().any(|curve| {
-        curve.source_restriction().is_some()
+        curve.polynomial_branch().is_some()
+            || curve.source_restriction().is_some()
             || curve.analytic_parallel().is_some()
             || matches!(
                 curve.retained_fragment(),

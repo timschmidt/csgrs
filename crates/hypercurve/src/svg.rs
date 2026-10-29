@@ -69,6 +69,8 @@ pub enum SvgError {
     Geometry(String),
     /// Exact arrangement, geometry operation or native replay failed, retaining its cause.
     Exact(ExactCurveError),
+    /// Polynomial topology reconstruction failed before publishing an exact path.
+    PolynomialTopology(hypersolve::bivariate_topology::BivariateTopologyError),
     /// An exact coordinate has an undecided certificate or exhausted its budget.
     Scalar(hyperreal::Problem),
     /// A configured projection, extension-byte or point-definition-depth bound was exceeded.
@@ -86,6 +88,9 @@ impl fmt::Display for SvgError {
             Self::Geometry(detail) => write!(formatter, "SVG geometry conversion failed: {detail}"),
             Self::Exact(error) => write!(formatter, "SVG exact geometry failed: {error}"),
             Self::Scalar(error) => write!(formatter, "SVG exact coordinate failed: {error}"),
+            Self::PolynomialTopology(error) => {
+                write!(formatter, "SVG polynomial topology failed: {error:?}")
+            }
             Self::SizeOverflow { limit } => {
                 write!(
                     formatter,
@@ -1239,8 +1244,17 @@ fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
     CurveString2::try_new(segments).ok()
 }
 
-fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<CurveRegion2> {
-    CurveRegion2::try_from_boundary_paths_with_policy(paths, fill_rule, &CurveContext::STRICT)
+fn region_from_paths(
+    paths: &[CurvePath2],
+    fill_rule: FillRule,
+    preserve_native_lines: bool,
+) -> SvgResult<CurveRegion2> {
+    let construct = if preserve_native_lines {
+        CurveRegion2::replay_boundary_paths_with_policy
+    } else {
+        CurveRegion2::try_from_boundary_paths_with_policy
+    };
+    construct(paths, fill_rule, &CurveContext::STRICT)
         .map(CurveOutcome::into_value)
         .map_err(SvgError::Exact)
 }
@@ -1249,6 +1263,15 @@ fn geometry_from_paths(
     fill_paths: &[CurvePath2],
     stroke_paths: &[CurvePath2],
     context: StyleContext,
+) -> SvgResult<SvgGeometry2> {
+    geometry_from_paths_preserving_native_lines(fill_paths, stroke_paths, context, false)
+}
+
+fn geometry_from_paths_preserving_native_lines(
+    fill_paths: &[CurvePath2],
+    stroke_paths: &[CurvePath2],
+    context: StyleContext,
+    preserve_native_lines: bool,
 ) -> SvgResult<SvgGeometry2> {
     if !context.fills() && !context.strokes() {
         return Ok(SvgGeometry2::empty());
@@ -1278,7 +1301,7 @@ fn geometry_from_paths(
     } else {
         Vec::new()
     };
-    let region = region_from_paths(&transformed_fill, context.fill_rule)?;
+    let region = region_from_paths(&transformed_fill, context.fill_rule, preserve_native_lines)?;
     let mut wires = Vec::new();
     let mut paths = Vec::new();
     for path in transformed_strokes {
@@ -1314,7 +1337,7 @@ fn path_geometry(
                     .map_err(SvgError::Exact)?;
             }
         }
-        return geometry_from_paths(&paths, &paths, context);
+        return geometry_from_paths_preserving_native_lines(&paths, &paths, context, true);
     }
 
     let subpaths = parse_svg_path_data(data)?;

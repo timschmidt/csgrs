@@ -17,6 +17,24 @@
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
+- Native SVG replay retains an uncut original native line and its provenance
+  after the shared arrangement checks its full source range. Ordinary region
+  construction keeps its existing retained carriers and STEP export coverage.
+- Polynomial bounds retain certified source abscissa trims before transporting
+  maps. Disjoint selected supports can therefore bypass unsupported general
+  image-pair incidence without changing their source or using display chords.
+- Project admitted polynomial graph branches through certified whole-arc
+  enclosures, including selected trims, singular endpoints, reversal, retained
+  rational maps and similarities. The exact source remains authoritative;
+  finite coordinates must satisfy the requested error without inflating it
+  to machine spacing. Polynomial subdivision depth and attempted-box limits
+  are explicit, and exhausted attempts permit a larger-budget retry.
+- Native SVG graph tags 29 and 30 retain shared polynomial sources and selected
+  branches. Replay rebuilds topology from equations and domains before checking
+  branch ordinals, exact trims, maps and transforms. `SvgError::PolynomialTopology`
+  preserves the solver's typed reconstruction failure. Older readers reject the
+  new tags; existing native and generated encodings remain readable.
+
 - Reuse exact finite abscissa ranges, complete source-side separation proofs and
   checked slab event incidence when intersecting retained polynomial branches
   and generated chords. Endpoint contacts keep their tangent evidence;

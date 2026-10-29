@@ -235,6 +235,26 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Polynomial branch SVG replay (2026-10-29).** Versions 4 and 5 add shared
+  polynomial source and selected-branch records (tags 29 and 30). The defining
+  equation, original domain, construction/evaluation controls, slab/root
+  indices, selected trims, traversal, rational maps and similarities are kept.
+  Readers rebuild topology and validate every definition, including unused
+  records. Older readers reject these tags; existing records retain their
+  encoding. `SvgError::PolynomialTopology` is a new exhaustive-match arm.
+  CSGRS retains that cause in `ValidationError::PolynomialTopology` and maps
+  its category without converting it into a string or a successful empty result.
+  Polynomial display projection now has a certified chord-error bound and
+  explicit subdivision limits, while exact metadata stays authoritative.
+  Conservative polynomial bounds now clip the source abscissa by certified
+  trims before image transport; this can tighten exported display viewports.
+  Native SVG replay now retains uncut original native lines after the same
+  arrangement checks their complete source ranges. Ordinary region construction
+  retains its established publication; selected chords and analytic parallels
+  preserve their existing carriers.
+  This extends admitted finite-fiber graph branches; it does not complete
+  arbitrary implicit regions, repeated corner edits or total resource bounds.
+
 - **Shared selected-point queries (2026-10-29).** Independent rational queries
   over admitted selected fields can now compose exactly while preserving each
   original selector and denominator guard. Callers that previously handled

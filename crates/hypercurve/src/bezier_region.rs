@@ -2555,7 +2555,22 @@ impl CurveRegion2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurveOutcome<Self>> {
         resolve_certified_operation(policy, |attempt| {
-            Self::regularize_boundary_paths_raw(paths, fill_rule, attempt)
+            Self::regularize_boundary_paths_raw(paths, fill_rule, attempt, false)
+                .map_err(|error| error.with_operation(CurveOperation2::Construction))
+        })
+    }
+
+    /// Revalidates replayed boundaries through the same arrangement while
+    /// retaining uncut native line definitions and their source evidence.
+    /// This is a publication choice after proof, not trusted serialized topology.
+    #[cfg(feature = "svg")]
+    pub(crate) fn replay_boundary_paths_with_policy(
+        paths: &[CurvePath2],
+        fill_rule: FillRule,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurveOutcome<Self>> {
+        resolve_certified_operation(policy, |attempt| {
+            Self::regularize_boundary_paths_raw(paths, fill_rule, attempt, true)
                 .map_err(|error| error.with_operation(CurveOperation2::Construction))
         })
     }

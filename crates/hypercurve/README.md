@@ -573,12 +573,24 @@ exact signatures.
   The named fresh-process annulus retains its joint selected center through
   further round offsets and exact set identities. Metadata is independent of
   display tolerance. Reached byte/depth limits permit larger retries. A zero-root
-  compound imports as canonical empty. Entirely empty documents export with that
-  exact graph and a unit display viewport that adds no geometry. Other generated supports and arbitrary
+  compound imports and exports as canonical empty. Entirely empty documents
+  export with that exact graph and a unit display viewport that adds no
+  geometry. Other generated supports and arbitrary
   implicit-region closure remain open. Sharing covers the compound graph, not
   unrelated SVG elements or scalar expression DAGs. Byte and segment limits do
   not bound all scalar decoding, arithmetic, expression growth, memory or
   cancellation.
+
+Admitted finite-fiber polynomial graph branches also support finite display
+projection and exact SVG replay. Projection encloses each whole connected
+subarc, transports that enclosure through its original maps, and certifies the
+requested error against the emitted binary64 chords. Selected trims, cusp
+endpoints and reversal retain their exact source. `FiniteProjectionOptions`
+sets polynomial subdivision depth and total attempted boxes per path; these
+limits and the shared solver budget do not bound all arithmetic or memory.
+SVG replay reconstructs topology from the original equation and domain, then
+checks branch indices, trims and maps. The named generated-chamfer workflow
+replays in a fresh process; arbitrary implicit-operation closure remains open.
 
 ## Precision, guarantees, and boundaries
 

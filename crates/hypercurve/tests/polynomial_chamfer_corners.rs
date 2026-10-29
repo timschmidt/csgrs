@@ -591,3 +591,56 @@ fn generated_polynomial_trim_reuses_independent_slab_incidence() {
         }
     }
 }
+
+#[cfg(feature = "svg")]
+#[test]
+fn trimmed_polynomial_svg_replays_without_an_untrimmed_viewport() {
+    use hypercurve::{CurveRegion2, SvgGeometry2, export_svg_document, import_svg_document};
+    const INPUT: &str = "HYPERCURVE_TRIMMED_POLYNOMIAL_SVG_REPLAY";
+    fn replay(text: &str) {
+        let geometry = import_svg_document(text).unwrap();
+        let curve = &geometry.paths()[0].curves()[0];
+        assert!(curve.polynomial_branch().is_some());
+        assert_eq!(
+            form(&curve.end(), polynomial(&[&[-1, 0, 1], &[], &[], &[-1]]))
+                .compare_to_real(&Real::zero())
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert_eq!(export_svg_document(&geometry).unwrap(), text);
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        replay(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let chamfer = unique(&source(true), q(1, 64), q(1, 64));
+    let path = CurvePath2::try_new(vec![chamfer.curves()[0].clone()]).unwrap();
+    let text = export_svg_document(&SvgGeometry2::new(
+        CurveRegion2::empty(),
+        vec![],
+        vec![path],
+    ))
+    .unwrap();
+    replay(&text);
+    let file = std::env::temp_dir().join(format!(
+        "hypercurve-trimmed-polynomial-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&file, &text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "trimmed_polynomial_svg_replays_without_an_untrimmed_viewport",
+            "--nocapture",
+        ])
+        .env(INPUT, &file)
+        .output()
+        .unwrap();
+    std::fs::remove_file(file).unwrap();
+    assert!(
+        child.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}

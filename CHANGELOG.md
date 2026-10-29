@@ -6,6 +6,10 @@ Changes since 0.20.1; versions 0.21 and 0.22 were not published. Caller-facing
 migrations, including changed serialized output, are listed in
 [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 
+- SVG import/export consumes retained polynomial graph branches through
+  Hypercurve. Polynomial reconstruction failures retain their native cause in
+  `ValidationError::PolynomialTopology`, including distinct invalid-input,
+  unsupported-representation, undecided and exhausted-resource categories.
 - Planar membership validates inherited topology even for empty regions. Strict
   queries keep typed undecided errors; authorized approximate queries retain
   their consumed certainty through the CSGRS wrapper.

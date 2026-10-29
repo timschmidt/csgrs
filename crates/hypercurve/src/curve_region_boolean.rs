@@ -1636,11 +1636,12 @@ impl CurveRegion2 {
         paths: &[crate::CurvePath2],
         fill_rule: FillRule,
         policy: &CurveContext,
+        preserve_native_lines: bool,
     ) -> ExactCurveResult<Self> {
         let raw = Self::try_from_boundary_paths_raw(paths, policy)?;
         let mut context = CurveRegionBooleanContext::try_new_unary(&raw, policy)?;
         context.data.regularization_fill_rule = Some(fill_rule);
-        context.build_regularized_region()
+        context.build_regularized_region_preserving_native_lines(preserve_native_lines)
     }
 
     /// Collects exact contacts and overlaps between regularized region boundaries.
@@ -3232,6 +3233,13 @@ impl<'a> CurveRegionBooleanContext<'a> {
     }
 
     fn build_regularized_region(&self) -> ExactCurveResult<CurveRegion2> {
+        self.build_regularized_region_preserving_native_lines(false)
+    }
+
+    fn build_regularized_region_preserving_native_lines(
+        &self,
+        preserve_native_lines: bool,
+    ) -> ExactCurveResult<CurveRegion2> {
         if self.data.carriers.is_empty() {
             return CurveRegion2::empty()
                 .with_regularized_filled_left_topology(&self.data.policy)
@@ -3285,10 +3293,33 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 if action == RegionFragmentAction::Discard {
                     continue;
                 }
+                let carrier = &self.data.carriers[carrier_index];
+                let original = &self.data.first.boundary_loops()[carrier.loop_index].fragments()
+                    [carrier.fragment_index];
+                // Axis-aligned native lines use a chord chart during arrangement
+                // predicates. Native replay can retain the original definition
+                // when its full source survives without subdivision. Ordinary
+                // construction keeps its established retained-chord publication.
+                // Analytic parallels and selected endpoints are never materialized.
+                let output = if preserve_native_lines
+                    && splits.len() == 1
+                    && !carrier.reversed
+                    && matches!(carrier.geometry, CurveSupport2::Line(_))
+                    && source_range == carrier.range()
+                    && matches!(
+                        original,
+                        BezierSplitFragment2::Materialized {
+                            curve: BezierSubcurve2::Quadratic(curve),
+                            ..
+                        } if curve.retained_exact_line_image().is_some()
+                    ) {
+                    original
+                } else {
+                    &split.fragment
+                };
                 let fragment = match action {
-                    RegionFragmentAction::Keep => split.fragment.clone(),
-                    RegionFragmentAction::KeepReversed => split
-                        .fragment
+                    RegionFragmentAction::Keep => output.clone(),
+                    RegionFragmentAction::KeepReversed => output
                         .reversed()
                         .map_err(|cause| self.invalid(carrier_index, cause))?,
                     RegionFragmentAction::Discard => unreachable!(),
