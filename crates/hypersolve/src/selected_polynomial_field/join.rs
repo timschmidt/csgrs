@@ -1,6 +1,6 @@
 //! Exact common fields and retained generator correspondences.
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::*;
 use crate::recursive_quadratic_field::{
@@ -130,6 +130,45 @@ impl SelectedPolynomialField {
         }
     }
 
+    fn generator_origin(&self) -> Option<&Self> {
+        match self.0.as_ref() {
+            FieldData::Extension {
+                origin: Some(origin),
+                ..
+            } => Some(&origin.0),
+            _ => None,
+        }
+    }
+
+    /// A source and target can name the same transported generator through
+    /// different joins. Follow only retained, validated construction links;
+    /// absence of a link says nothing about equality of their scalar values.
+    fn corresponding_generator(
+        &self,
+        source: &Self,
+    ) -> ArithmeticResult<Option<SelectedPolynomialValue>> {
+        // The owned fields keep every keyed node alive for this call. Pointer
+        // equality identifies a named proof node, never an unproved equality.
+        let mut sources = HashSet::new();
+        let mut original = Some(source);
+        while let Some(field) = original {
+            sources.insert(Arc::as_ptr(&field.0) as usize);
+            original = field.generator_origin();
+        }
+        let mut target = self;
+        while let FieldData::Extension { parent, .. } = target.0.as_ref() {
+            let mut original = Some(target);
+            while let Some(field) = original {
+                if sources.contains(&(Arc::as_ptr(&field.0) as usize)) {
+                    return Ok(Some(self.lift(&target.generator()?)?));
+                }
+                original = field.generator_origin();
+            }
+            target = parent;
+        }
+        Ok(None)
+    }
+
     fn native_and_path(&self) -> (&RecursiveQuadraticField, Vec<Self>) {
         let mut current = self;
         let mut path = Vec::new();
@@ -254,6 +293,10 @@ impl SelectedPolynomialJoin {
         {
             return Ok(());
         }
+        if let Some(image) = self.field.corresponding_generator(&source)? {
+            self.generators.push(GeneratorEmbedding { source, image });
+            return Ok(());
+        }
         let FieldData::Extension {
             defining, interval, ..
         } = source.0.as_ref()
@@ -265,10 +308,11 @@ impl SelectedPolynomialJoin {
             .iter()
             .map(|coefficient| self.embed_inner(coefficient, &mut memo))
             .collect::<ArithmeticResult<Vec<_>>>()?;
-        let field = self.field.select_strict(
+        let field = self.field.select_strict_with_origin(
             coefficients,
             interval.lower.clone(),
             interval.upper.clone(),
+            Some(source.clone()),
             policy,
         )?;
         self.generators.push(GeneratorEmbedding {

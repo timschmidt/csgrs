@@ -12,6 +12,14 @@
   certificate through retained-support reversals, and cardinal displacements
   preserve the sign of the imported endpoint representation.
 
+- Rational query division retains the original divisor denominator as a pole
+  guard in scalar recipes and native replay, including after cancellation.
+
+- Rational spans evaluate exact derivatives at source-bound query parameters.
+  Derivative images retain their joint source, selected roots and original
+  denominator guards. Nonunit spline charts apply the scale at every order;
+  source restrictions preserve that chart through reversal and native replay.
+
 - Independent rational queries over admitted polynomial-fiber and native point
   fields compose in shared selected fields while retaining their original
   sources, selectors and denominator guards. Their scalar parameters feed

@@ -33,6 +33,11 @@ impl Input {
             Self::Field(v) => match v.0.as_ref() {
                 FieldData::Recursive(field) => vec![Self::NativeField(field.clone())],
                 FieldData::Extension {
+                    parent,
+                    origin: Some(origin),
+                    ..
+                } => vec![Self::Field(parent.clone()), Self::Field(origin.0.clone())],
+                FieldData::Extension {
                     parent, defining, ..
                 } => std::iter::once(Self::Field(parent.clone()))
                     .chain(defining.iter().cloned().map(Self::Value))
@@ -88,6 +93,14 @@ impl Input {
             Self::Field(v) => match v.0.as_ref() {
                 FieldData::Recursive(field) => Node::NativeField {
                     native: id(Self::NativeField(field.clone())),
+                },
+                FieldData::Extension {
+                    parent,
+                    origin: Some(origin),
+                    ..
+                } => Node::JoinedField {
+                    first: id(Self::Field(parent.clone())),
+                    second: id(Self::Field(origin.0.clone())),
                 },
                 FieldData::Extension {
                     parent,

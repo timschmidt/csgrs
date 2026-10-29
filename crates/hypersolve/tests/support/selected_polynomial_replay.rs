@@ -92,6 +92,7 @@ pub fn encode(graph: &SelectedPolynomialDefinition) -> String {
                 lower.to_json(),
                 upper.to_json()
             ]),
+            Node::JoinedField { first, second } => json!(["join", first, second]),
             Node::NativeValue {
                 field,
                 numerator,
@@ -158,6 +159,10 @@ pub fn decode(text: &str) -> SelectedPolynomialDefinition {
                 coefficients: indices(&v[2]),
                 lower: read_real(&v[3]),
                 upper: read_real(&v[4]),
+            },
+            "join" => Node::JoinedField {
+                first: index(&v[1]),
+                second: index(&v[2]),
             },
             "native-value" => Node::NativeValue {
                 field: index(&v[1]),

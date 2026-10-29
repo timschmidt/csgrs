@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-closure-integration-evidence-2026-10-29 branch ends at
+7b14c809b12cef95623e853878286c401c38ac0f, adding docs/evidence/2026-10-29-hypercurve-closure-selected-closure-integration (590 files,
+16,528,148 bytes), SHA-256 1aadc6e3a90206655e2100570527b1f68497ced2f9c3f650ee5d8eb174fa3ae2. Its parent merges all six selected-query
+increment evidence histories and the earlier selected-field publication record.
+Fourteen focused cases and 25 combined qualification groups pass. Original
+derivative/pole failures and seven remaining region-operation blockers are
+retained. General closure and publication of the combined source are not
+claimed. This record is unpushed.
+
 The local hypercurve-selected-query-fibers-evidence-2026-10-29 branch ends at
 081ece0c6fb112e62edeed9e00dc051923d1a342, adding docs/evidence/2026-10-29-hypercurve-closure-selected-query-fibers (723 files,
 24,874,907 bytes), SHA-256 24c4e6fddbed73a91bffa8466b176f8fab26ff22b4abea8749712c8b9f4b380d. It records dependent polynomial fibers
@@ -102,6 +111,34 @@ qualification groups. Original declined discovery cases, reconstruction
 patches and seven geometric region blockers remain explicit. General operation
 closure and publication are not claimed. This record is unpushed.
 
+The local hypercurve-rational-query-guards-evidence-2026-10-29 branch ends at
+12613042e4442901f1f6afa397a5af9bb22a7be3, adding docs/evidence/2026-10-29-hypercurve-closure-rational-query-guards (553 files,
+18,433,327 bytes), SHA-256 8dd0311b5bd14b8b8502a1c6f267a3bd45317ff8bda41a18549a2105caf4978d. It records preservation of original
+rational quotient guards through scalar recipes and native replay, five named
+witnesses and 20 affected qualification groups. Source checkpoints are
+reconstructable from retained patches and inventories; receipt-only parent
+alignment preserves implementation bytes. The original failure and seven
+region operation blockers remain explicit. This record is unpushed.
+
+The local hypercurve-selected-query-derivatives-evidence-2026-10-28 branch ends at
+43ed287e44c8d26df3df90621662a9ba81b56a06, adding docs/evidence/2026-10-28-hypercurve-closure-selected-query-derivatives (845 files,
+38,478,490 bytes), SHA-256 a2de299ec93bb57265fd466575f7ca4a72fc11b86a4b93a5f8d85b0ef889ccd4. It records source-preserving rational
+query derivatives, twelve exact/domain/resource/replay witnesses and 20 affected
+qualification groups. Source checkpoints are reconstructable from retained
+base/seed/qualified patches; receipt-only parent alignment preserves every
+implementation byte. Original failures and seven region operation blockers
+remain explicit. Full closure and publication are not claimed. This record is
+unpushed.
+
+The local hypercurve-selected-join-correspondence-evidence-2026-10-29 branch ends at
+ff5b5ed28c523df708e1eb734869a111fd0d4871, adding docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence (619 files,
+21,592,106 bytes), SHA-256 450fce88ea94d1730595564db3bf8e48f84ca8335e3f0243f7823143c475af21. It records retained selected-field
+generator correspondences, original-guard validation and fresh-process graph
+replay, nine named fixtures and 24 qualification groups. Source checkpoints are
+reconstructable from patches and inventories. Original duplicate-generator and
+cold re-export failures remain explicit, along with seven region-operation
+blockers. This record is unpushed.
+
 The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
 3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
 91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and
@@ -110,6 +147,19 @@ source guards, native-base retention and 24 affected qualification groups.
 Original failures, resource limits and seven remaining region operation
 blockers are retained. Full algebraic closure and publication are not claimed.
 This record is unpushed.
+
+The selected-field publication archive ends at `2f897f1fbaedb6569c0302c5b0485b50e3212ba3` with
+380 records. Its new record `docs/evidence/2026-10-28-hypercurve-closure-selected-field-publication-validation` contains 14,191
+files and 55,660,767 bytes, SHA-256 `3a7a6ffabad06e26c19f33dbeb24f66eb0ac5f3251f2b4f4e52ca5ea55a85164`. It records fresh success for
+all 328 pre-push command groups on `c57653e9963a199e88fdfddac3d60f5ff9b07351`: 131 locally executable workflow
+groups, 196 strict Clippy groups and the CI security audit. All 13 ASan campaigns
+include mutation evidence. Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-28, both
+release/package checks and the hosted-action review are retained. All archive
+digests verify and four historical exclusion receipts remain. Only three receipt
+files differ from the qualified code and are checked separately. This supersedes
+pending pre-push status through selected polynomial field replay. Later selected
+query point/parameter and derivative increments are excluded. Exact geometric
+operation closure and hosted publication/deployment are not established here.
 
 The local integration candidate combines selected polynomial field evidence
 2472aef555210a4222d04fe1b746c8c7ac015be3 and published evidence e784a8ea0b53cc24f3b56a61d63a13e66b9e7701 at 9700b7d8fd1124660c33a1059ebf321e968ce1f3.

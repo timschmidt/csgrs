@@ -76,8 +76,9 @@ impl CurvePointRationalForm2 {
             // Keeping one already shared denominator prevents finite sums
             // (including dot products) from multiplying its degree at every
             // addition. This is structural equality, not a guessed identity.
-            let common_denominator = matches!(operation, Operation::Add | Operation::Subtract)
-                && first.denominator == second.denominator;
+            let same_denominator = first.denominator == second.denominator;
+            let common_denominator =
+                matches!(operation, Operation::Add | Operation::Subtract) && same_denominator;
             let numerator = match operation {
                 Operation::Add if common_denominator => {
                     bivariate_add(&first.numerator, &second.numerator)
@@ -109,6 +110,19 @@ impl CurvePointRationalForm2 {
                     },
                 )
             };
+            // Division by b/e is defined only where the original e is
+            // nonzero. Keep that guard in the replayable denominator even
+            // though algebraic inversion moves e into the numerator. An
+            // already shared denominator retains the same guard once.
+            let (numerator, denominator) =
+                if matches!(operation, Operation::Divide) && !same_denominator {
+                    (
+                        bivariate_multiply(&numerator, &second.denominator),
+                        bivariate_multiply(&denominator, &second.denominator),
+                    )
+                } else {
+                    (numerator, denominator)
+                };
             Ok(Classification::Decided((
                 first.source,
                 numerator,

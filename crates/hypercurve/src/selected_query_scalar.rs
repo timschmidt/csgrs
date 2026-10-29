@@ -211,6 +211,62 @@ impl SelectedQueryScalar2 {
         let basis = curve.homogeneous_power_basis().map_err(|cause| {
             crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Evaluation, cause)
         })?;
+        self.rational_image(
+            &basis.x_numerator,
+            &basis.y_numerator,
+            &basis.weight,
+            policy,
+        )
+    }
+
+    /// Shares the original rational-jet recurrence; only the final values are
+    /// pulled into the correlated query field. The source polynomials being
+    /// differentiated are never reduced by a relation at the selected point.
+    pub(crate) fn rational_derivatives(
+        &self,
+        curve: &crate::RationalBezier2,
+        max_order: usize,
+        chart_scale: &Real,
+        policy: &CurveContext,
+    ) -> crate::ExactCurveResult<Vec<crate::CurveVector2>> {
+        let basis = curve.homogeneous_power_basis().map_err(|cause| {
+            crate::ExactCurveError::invalid_unattributed(crate::CurveOperation2::Evaluation, cause)
+        })?;
+        let mut factor = Real::one();
+        let images = crate::bezier_algebraic_image::map_rational_derivatives_from_power_basis(
+            basis.x_numerator.clone(),
+            basis.y_numerator.clone(),
+            basis.weight.clone(),
+            max_order,
+            Ok,
+            |image| {
+                factor = &factor * chart_scale;
+                let scale = |coefficients: &[Real]| {
+                    coefficients
+                        .iter()
+                        .map(|value| value * &factor)
+                        .collect::<Vec<_>>()
+                };
+                self.rational_image(
+                    &scale(&image.dx_numerator),
+                    &scale(&image.dy_numerator),
+                    &image.denominator,
+                    policy,
+                )
+                .map(crate::CurveVector2::joint)
+                .map(Classification::Decided)
+            },
+        )?;
+        crate::ExactCurveError::decided(crate::CurveOperation2::Evaluation, images)
+    }
+
+    fn rational_image(
+        &self,
+        x_numerator: &[Real],
+        y_numerator: &[Real],
+        denominator: &[Real],
+        policy: &CurveContext,
+    ) -> crate::ExactCurveResult<crate::CurvePoint2> {
         let query = self.query();
         let chart = crate::RationalMap2::new(
             [
@@ -222,17 +278,17 @@ impl SelectedQueryScalar2 {
         let pullback = |coefficients: &[Real]| {
             chart.pullback(
                 &BivariatePolynomial::new(coefficients.iter().map(|c| vec![c.clone()]).collect()),
-                &BivariatePolynomial::new(basis.weight.iter().map(|c| vec![c.clone()]).collect()),
+                &BivariatePolynomial::new(denominator.iter().map(|c| vec![c.clone()]).collect()),
             )
         };
-        let Some((x, xw)) = pullback(&basis.x_numerator) else {
+        let Some((x, xw)) = pullback(x_numerator) else {
             return Err(crate::ExactCurveError::blocked(
                 crate::CurveOperation2::Evaluation,
                 crate::CurveFamily2::RationalBezier,
                 UncertaintyReason::Unsupported,
             ));
         };
-        let Some((y, yw)) = pullback(&basis.y_numerator) else {
+        let Some((y, yw)) = pullback(y_numerator) else {
             return Err(crate::ExactCurveError::blocked(
                 crate::CurveOperation2::Evaluation,
                 crate::CurveFamily2::RationalBezier,

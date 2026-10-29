@@ -2481,6 +2481,199 @@ qualified derivative and guard fixes must be integrated and both original
 witnesses must pass before this work is published. The failed integration
 observations are retained in the same archive; they are not exact successes.
 
+**Rational quotient guard increment (2026-10-29).**
+A source-bound quotient now preserves the original divisor denominator in its
+exported scalar recipe. The baseline kept the exact value of a/d divided by
+b/e, but exporting a*e/(d*b) discarded e as a guard: rebinding a valid cubic
+source to the original divisor pole incorrectly succeeded. The correction
+retains e in both numerator and denominator. An already shared denominator
+keeps that guard once. Original source selectors, operands and typed failures
+remain authoritative; no new scalar kernel or archive record is introduced.
+
+Five named witnesses pass. They check an independent cubic quotient identity,
+both distinct and shared original guards, a zero divisor, strict/approximate/
+strict certainty, actual refinement-budget refusal and repeated larger retries.
+A fresh process replays a restricted parabola at the selected parameter t,
+proves 3t^3-6t^2+6t-2=0 and y=t^2, subdivides with a shared exact endpoint, then
+saves and reloads again. Replayed recipes still reject the original divisor
+pole. The original failing witness and subsequent fixture compilation error
+remain in the evidence; no assertion or policy was weakened.
+
+All 20 affected qualification groups pass, including full Hypercurve
+(2,955 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), six downstream consumer suites,
+strict MSRV Clippy, minimal builds, denied-warning docs, fuzz-target lint,
+the full capability matrix and hygiene. Only the finalized point parent's
+three receipt files changed after qualification; implementation and fixture
+bytes remain identical. Commands, raw logs, source inventories and patches
+are retained in docs/evidence/2026-10-29-hypercurve-closure-rational-query-guards, SHA-256 8dd0311b5bd14b8b8502a1c6f267a3bd45317ff8bda41a18549a2105caf4978d. Receipt checks follow the final
+documentation edit.
+
+The seven original polynomial region offset/corner blockers remain Unsupported,
+and three controls still pass. Refinement and promotion counters do not bound
+total work, guard-polynomial growth, memory or cancellation. No general speed,
+universal closure or publication claim is made. Complete pre-push qualification
+of this increment remains required.
+
+**Selected query derivative increment (2026-10-28).**
+Rational source spans now consume source-bound query parameters for derivatives.
+The original native and retained parabola cases and rational quotient case were
+reproduced as Unsupported on source identical to the point increment before
+implementation. Hypercurve reuses its existing rational derivative recurrence:
+it differentiates original source polynomials before evaluating in the selected
+joint field. Point and derivative images share one rational pullback that keeps
+original roots, source recipes and denominator guards. Native spline charts
+apply the kth power of their affine scale; restrictions and reversal keep the
+source parameter convention. This does not complete general parallel or singular
+implicit derivatives or geometric region operations.
+
+Twelve focused witnesses pass. Independent expectations include the parabola
+jet, quotient rule, monomial falling factorials through order nine, factorial
+Mobius derivatives through order six, a knot domain [2,5], explicit one-sided
+knot slopes and similarity linear parts. A polynomial value becoming constant
+at a selected root does not make its source derivative zero. Original poles
+and out-of-domain queries remain invalid even at zero order. A fresh process
+replays a restricted curve and derivative point, then uses the derivative
+coordinates as another evaluation and derivative parameter and saves again.
+
+The initial zero-promotion fixture incorrectly expected proof reuse to fail.
+The retained probe measured two refinements and zero promotions for reuse;
+fresh definition replay plus three derivatives used four refinements and four
+promotions. Both original source/logs remain. The corrected tests preserve
+zero-promotion exact success, require typed refusal of an actual refinement or
+promotion charge, and repeat larger-budget retries without cache poisoning.
+Strict and approximate-policy requests in this exact corpus remain certified.
+The unrepresentable usize::MAX order is an implementation size refusal, not
+claimed configured resource exhaustion. No artificial charge was added.
+
+All 20 affected qualification groups pass: full Hypercurve
+(2,962 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), the original derivative/point/native
+predecessors, six downstream consumer suites, strict MSRV Clippy, minimal checks,
+denied-warning docs, curve fuzz-target lint, the full capability matrix and
+hygiene. Qualification used an isolated checkpoint; after the point increment
+was finalized, only its three receipt files changed. Every implementation/test
+byte matches the qualified source. The seed/base patches, file inventories and
+alignment proof are retained in docs/evidence/2026-10-28-hypercurve-closure-selected-query-derivatives, SHA-256 a2de299ec93bb57265fd466575f7ca4a72fc11b86a4b93a5f8d85b0ef889ccd4, with original
+failures and all commands/logs. Receipt checks run after the final documentation
+edit. No public type or archive format addition is needed for this increment.
+
+Seven original polynomial region offset/corner operations still return
+Unsupported after alignment, while all three controls pass. Shared refinement
+and promotion counts do not bound total arithmetic, coefficient/expression
+size, memory, elapsed time or cancellation. Concurrent test timings do not prove
+a performance improvement. This supersedes the earlier query-derivative gap
+only for its demonstrated domain; the full closure plan and pre-push qualification
+of this new increment remain open.
+
+**Selected-field join correspondence increment (2026-10-29).**
+Repeated joins now retain the validated correspondence to each original source
+generator. The baseline preserved exact cubic values but appended a duplicate
+generator when consuming its original second operand: depth grew from two to
+three. Immutable construction links now preserve both operands through repeated
+and diamond joins. Independent equal selections remain distinct unless an
+existing validated construction supplies their correspondence.
+
+Definition graphs retain a `JoinedField` operation and replay the original join,
+source selections and coefficient maps. Original denominator checks precede
+native and polynomial ratio reconstruction. Positive ratios keep shared nodes;
+negative ratios normalize exactly, and zero guards remain invalid. The new
+public enum variant and joined-field export representation are documented in
+the solver changelog. Semantic equality and deterministic re-export are separate
+claims; the original failing cold byte comparison remains unchanged.
+
+Nine named witnesses pass, including both original operands, repeated and
+diamond joins, independent equal/opposite/nearby roots, foreign-native fields,
+invalid selectors/references, configured refusal and larger retries, fresh-process
+replay followed by further joins, and negative-denominator controls. All 24
+qualification groups pass: full Hypersolve (1,276
+passed, 0 ignored), minimal solver configuration,
+Hypercurve (2,950 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), six downstream consumer suites,
+strict MSRV Clippy, minimal builds, denied-warning docs and fuzz lint,
+allocation lifetime control, the capability matrix and hygiene.
+
+Only the finalized point parent's three receipts changed after qualification;
+implementation and fixture bytes remain identical. Commands, source inventories,
+patches and raw failures are in docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence, SHA-256 450fce88ea94d1730595564db3bf8e48f84ca8335e3f0243f7823143c475af21. Receipt checks follow
+the final documentation edit. Seven original region offset/corner operations
+remain Unsupported while their three controls pass. The named depth reduction
+is not a general speed or memory result; total work, coefficient growth, retained
+memory and cancellation remain outside the existing counters. General algebraic
+closure and this increment's full pre-push qualification remain open.
+
+**Selected-field publication pre-push qualification (2026-10-28).**
+The frozen source `c57653e9963a199e88fdfddac3d60f5ff9b07351` includes selected polynomial fields, independent-field
+joins, enclosures and exact field replay, together with its earlier qualified
+Hypercurve increments. All 328 required command groups pass in fresh executions:
+131 locally executable workflow groups, 196 strict Clippy groups and the CI
+security audit. The complete inventory includes feature and target combinations,
+tests, documentation, benchmarks, fuzz checks, release/package checks and
+WASM/demo builds. All 13 address-sanitized fuzz campaigns pass with mutation
+evidence. Commands record stable 1.99.1, MSRV 1.95.0 and nightly-2026-10-28.
+
+The source attribution, complete commands/logs and hosted-action review are in
+`docs/evidence/2026-10-28-hypercurve-closure-selected-field-publication-validation`, SHA-256 `3a7a6ffabad06e26c19f33dbeb24f66eb0ac5f3251f2b4f4e52ca5ea55a85164`. No historical outcomes count toward this run.
+All 380 archived records verify; four historical third-party
+archive exclusion receipts remain. This receipt changes three documentation
+files; every other tracked byte matches the qualified revision. Formatting,
+typos, repository budget, diff and archive verification run after receipt edits.
+This supersedes pending pre-push status for the included increments only.
+
+The five GitHub-hosted configuration/upload/deployment actions were inspected
+because they cannot run locally. Local package checks do not establish
+publication or deployment. Concurrent timings do not establish performance
+improvements. The later selected query point/parameter and derivative increments
+are excluded from this candidate. Scalar closure and replay do not complete
+the original polynomial region offset/corner operations; the full exact-closure
+plan and recorded capability gaps remain open.
+
+**2026-10-29 integrated selected-query composition:**
+The individually qualified point, derivative, complete-root, pole-guard,
+join-correspondence and dependent-fiber increments now share one candidate.
+The original generated-fiber control passed, but its parameter was Unsupported
+in rational differentiation, and a derived quotient recipe incorrectly accepted
+an input excluded by the original divisor denominator. Both failures were
+reproduced on the frozen fiber revision and retained before integration.
+
+Four new composition fixtures pass with the original ten fiber cases. For
+u>0, 8u^2=1 and v>0, 16v^3=u, evaluate positive y^2=x at x=v. Its ordinate t
+feeds C(t)=(t,t^2), whose derivatives are independently (1,2t), (0,2) and
+(0,0); a further polynomial evaluation recovers v. The quotient with value
+y-1 keeps the excluded pole y^2-1=0. Cold native replay of the derivative
+proves dx=1, dy>0 and dy^12=2, then completes another polynomial evaluation
+and derivative. Exact equations and semantic equality are distinct from
+deterministic serialization. The two incoming native fiber test constructors
+use the previously documented parameter conversion; their assertions remain.
+
+All 25 combined qualification groups pass, including full Hypersolve
+(1,288 passed), Hypercurve
+(2,981 passed), CSGRS
+(691 passed), six downstream suites, every
+predecessor acceptance target, strict four-package MSRV Clippy, minimal checks,
+strict docs and both fuzz manifests, allocation lifetime controls, capability
+checks and hygiene. Raw commands report ignored tests separately. All six
+predecessor admissions and the earlier selected-field publication receipt are
+retained as code/evidence parents. Only three receipt files change after the
+combined source qualification; receipt checks run after their final edit.
+
+The evidence is in docs/evidence/2026-10-29-hypercurve-closure-selected-closure-integration, SHA-256 1aadc6e3a90206655e2100570527b1f68497ced2f9c3f650ee5d8eb174fa3ae2. It retains the original
+failures, source inventories, patches, compiler settings, completion times and
+peak RSS. The capability catalog preserves every predecessor row. No speedup
+or universal closure claim follows from these measurements.
+
+Seven original implicit-region offset/corner operations remain Unsupported,
+with all three source controls passing. General algebraic region operations,
+singular cases and total work, coefficient, expression, memory and cancellation
+contracts remain open. Full repository pre-push qualification of this combined
+source is still required before publication.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
