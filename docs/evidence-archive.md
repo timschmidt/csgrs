@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The selected-field publication archive ends at `2f897f1fbaedb6569c0302c5b0485b50e3212ba3` with
+380 records. Its new record `docs/evidence/2026-10-28-hypercurve-closure-selected-field-publication-validation` contains 14,191
+files and 55,660,767 bytes, SHA-256 `3a7a6ffabad06e26c19f33dbeb24f66eb0ac5f3251f2b4f4e52ca5ea55a85164`. It records fresh success for
+all 328 pre-push command groups on `c57653e9963a199e88fdfddac3d60f5ff9b07351`: 131 locally executable workflow
+groups, 196 strict Clippy groups and the CI security audit. All 13 ASan campaigns
+include mutation evidence. Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-28, both
+release/package checks and the hosted-action review are retained. All archive
+digests verify and four historical exclusion receipts remain. Only three receipt
+files differ from the qualified code and are checked separately. This supersedes
+pending pre-push status through selected polynomial field replay. Later selected
+query point/parameter and derivative increments are excluded. Exact geometric
+operation closure and hosted publication/deployment are not established here.
+
 The local integration candidate combines selected polynomial field evidence
 2472aef555210a4222d04fe1b746c8c7ac015be3 and published evidence e784a8ea0b53cc24f3b56a61d63a13e66b9e7701 at 9700b7d8fd1124660c33a1059ebf321e968ce1f3.
 All retained records from both parents remain in the aggregate manifest.
