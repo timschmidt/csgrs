@@ -21,6 +21,29 @@ result for current callers.
   pair these embeddings with `RecursiveQuadraticValue::rebased_to_equivalent_base`
   instead. Composing them directly would remove that two-step requirement.
 
+### Unused tensor generators (2026-10-29)
+
+Three acceptance tests fail on `146cc0804f` because exact zero padding
+requires a witness for an unused source axis. The evaluator now scans the
+positive-power slices for stored exact zeros and evaluates the constant slice
+when the axis is unused. It retains the full native field and only caches
+successful exact values. Mixed axis orders and coefficients of `2^-80` check
+that a genuine dependency is never discarded.
+
+The original `2*sqrt(2)-sqrt(8)` fixtures now require a zero witness. A new
+`2*c*sqrt(2)-c*sqrt(8)` fixture retains a genuinely used cubic source and
+checks the exact sign fallback. All 26 local qualification groups pass,
+including 106 native regression tests, full
+Hypersolve (1,293 passed), Hypercurve
+(2,990 passed), CSGRS
+(691 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, docs and fuzz checks, allocation lifetime checks and
+the existing capability matrix. Raw logs distinguish ignored tests.
+
+Evidence: `docs/evidence/2026-10-29-hypercurve-closure-native-tensor-witnesses`, SHA-256 `147e1b34d3a35e74f3961c9f21a0a62fa3007cd4f9f8337aca568ed602e38c67`. Original failures, source patches,
+commands and local cost samples are retained. No repeated-chamfer completion,
+universal closure, total-work bound or publication is claimed by this record.
+
 ## Modular certificates for tower remainders
 
 The H14 lead (a modular/CRT gcd over a selected field, with a maximality

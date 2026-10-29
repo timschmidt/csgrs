@@ -99,6 +99,13 @@ query dependencies. Later selected-circle and polynomial-chamfer experiments
 are excluded. Exact geometric operation closure and hosted publication or
 deployment are not established here.
 
+The local hypercurve-native-tensor-witnesses-evidence-2026-10-29 branch ends at
+e096473fef7ef2e81b36d205e1b88d98511e9ddf, adding docs/evidence/2026-10-29-hypercurve-closure-native-tensor-witnesses (495 files,
+8,620,831 bytes), SHA-256 147e1b34d3a35e74f3961c9f21a0a62fa3007cd4f9f8337aca568ed602e38c67. It records the reproduced unused-axis
+witness failure, its exact correction and all 26 passing local qualification
+groups. General operation closure and full pre-push verification remain open.
+This evidence record is unpushed.
+
 The local hypercurve-selected-coefficient-roots-evidence-2026-10-29 branch ends at
 f25a26281d409f115e4a2f8a8a95ab14d4fa3c8c, adding docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots (848 files,
 28,845,538 bytes), SHA-256 b1bd56cb33bf1770f7d27863ebf24ab995eb3fe5ea6fb2d3fdd6053e3641678b. It extends the finalized integrated

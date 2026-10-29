@@ -34,6 +34,10 @@
   Existing join recipes re-establish the relation during fresh replay; serialized
   coordinate expressions may change. Promotion accounting and typed retry remain.
 
+- Exact scalar witnesses ignore structurally zero tensor padding after selected
+  source reduction. Constants and mixed tensors no longer require witnesses
+  for unused generators; their native fields and source selections stay intact.
+
 - Evaluate polynomial coefficients from admitted selected fields at represented
   scalars without projecting their dependencies. Exact arithmetic reuses stored
   zero and unit identities after field alignment; division still validates its
