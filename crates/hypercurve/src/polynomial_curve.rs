@@ -20,6 +20,9 @@ mod differential;
 #[path = "polynomial_curve_abscissa.rs"]
 mod abscissa;
 
+#[path = "polynomial_curve_selected_circle.rs"]
+mod selected_circle;
+
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
 /// This is a curve collection, not a filled region. Every solver graph arc is
@@ -841,8 +844,9 @@ impl PolynomialCurveBranch2 {
     }
 
     /// Locate a point in the original injective graph chart. The inverse
-    /// similarity recovers only the source abscissa; equality with this
-    /// branch's selected fiber proves incidence, not the support equation alone.
+    /// similarity recovers the source coordinates. A known query point keeps
+    /// its ordinate after an exact equation, branch-rank and full-census proof;
+    /// other parameters use equality with the selected source fiber.
     pub(crate) fn point_parameter(
         &self,
         point: &CurvePoint2,
@@ -852,13 +856,19 @@ impl PolynomialCurveBranch2 {
             // A rational image may have multiple or continuous preimages.
             return Err(blocked(UncertaintyReason::Unsupported));
         }
-        let form = match &self.transform {
+        let (form, ordinate_form) = match &self.transform {
             Some(image) => {
                 let inverse = image.inverse().map_err(invalid)?;
-                let (a, b, _, _, x, _) = inverse.affine_components();
-                [a.clone(), b.clone(), x.clone()]
+                let (a, b, c, d, x, y) = inverse.affine_components();
+                (
+                    [a.clone(), b.clone(), x.clone()],
+                    [c.clone(), d.clone(), y.clone()],
+                )
             }
-            None => [Real::one(), Real::zero(), Real::zero()],
+            None => (
+                [Real::one(), Real::zero(), Real::zero()],
+                [Real::zero(), Real::one(), Real::zero()],
+            ),
         };
         let mut parameter = decided(
             crate::bezier_offset::point_affine_form_parameter(point, &form, policy)
@@ -883,6 +893,29 @@ impl PolynomialCurveBranch2 {
         } else if last.is_eq() {
             parameter = self.range.end().clone();
             self.endpoints[1].clone()
+        } else if parameter.as_polynomial_query().is_some() {
+            let ordinate = crate::bezier_offset::PointFormSource2::new(
+                point.clone(),
+                hypersolve::BivariatePolynomial::new(vec![
+                    vec![ordinate_form[2].clone(), ordinate_form[1].clone()],
+                    vec![ordinate_form[0].clone()],
+                ]),
+                hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+            );
+            let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
+                self.topology().equation(),
+                &parameter,
+                &ordinate,
+                &self.topology().domain().second,
+                policy,
+            )?
+            else {
+                return Ok(None);
+            };
+            if count != self.topology().slabs()[self.slab].arcs().len() {
+                return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+            }
+            return Ok((rank == self.root).then_some(parameter));
         } else {
             self.map_point(self.interior_point(&parameter, policy)?, policy)?
         };
@@ -975,6 +1008,39 @@ impl PolynomialCurveBranch2 {
         value: &CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePoint2> {
+        if self.maps.is_empty()
+            && let Some(query) = value.as_polynomial_query()
+        {
+            let candidate = query.query().source;
+            let retained = (|| {
+                let Some(parameter) = self.point_parameter(&candidate, policy)? else {
+                    return Ok(None);
+                };
+                if decided(
+                    parameter
+                        .cmp_by_refinement(value, policy)
+                        .map_err(invalid)?,
+                )? != Ordering::Equal
+                {
+                    return Ok(None);
+                }
+                Ok(Some(match &self.transform {
+                    Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
+                        candidate,
+                        transform.inverse().map_err(invalid)?,
+                        &policy.retained_object_policy(),
+                    )),
+                    None => candidate,
+                }))
+            })();
+            match retained {
+                Ok(Some(point)) => return Ok(point),
+                Ok(None) => {}
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
+                Err(error) => return Err(error),
+            }
+        }
         let equation = self.topology().equation();
         let report = PolynomialPoint2::query_fiber_roots(
             equation,

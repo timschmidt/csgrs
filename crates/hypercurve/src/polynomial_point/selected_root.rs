@@ -110,3 +110,74 @@ impl PolynomialPoint2 {
         )
     }
 }
+
+impl PolynomialPoint2 {
+    /// Finite roots on a closed chart. `None` denotes an identically zero
+    /// substitution, which the incidence owner must handle as a component.
+    pub(crate) fn selected_root_candidates(
+        coefficients: Vec<CurvePointRationalForm2>,
+        domain: [Real; 2],
+        config: hypersolve::AlgebraicFiberRootIsolationConfig,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<CurvePoint2>>> {
+        let strict = policy.strict_counterpart();
+        let result = field::finish(|| {
+            if coefficients.is_empty() {
+                return Ok(None);
+            }
+            let values = coefficient_values(&coefficients, &strict)?;
+            let mut context = hypersolve::selected_polynomial_field::SelectedPolynomialContext {
+                field: values[0].field().clone(),
+                policy: &strict,
+            };
+            let report = hypersolve::isolate_ordered_field_polynomial_roots_complete_with_config(
+                values.clone(),
+                &domain[0],
+                &domain[1],
+                hypersolve::OrderedFieldRootIsolationConfig {
+                    max_subdivision_depth: config.max_subdivision_depth,
+                    refinement_steps: config.refinement_steps,
+                },
+                &mut context,
+            )?;
+            use hypersolve::OrderedFieldRootIsolationStatus as Status;
+            match report.status {
+                Status::Isolated => {}
+                Status::IdenticallyZero => return Ok(None),
+                Status::BudgetExhausted => {
+                    return Err(FieldError::Uncertain(UncertaintyReason::BudgetExhausted));
+                }
+                Status::InvalidInterval => return Err(FieldError::InvalidSelector),
+                Status::CompleteFallbackRequired => {
+                    return Err(FieldError::Uncertain(UncertaintyReason::Unsupported));
+                }
+            }
+            let points = report
+                .intervals
+                .into_iter()
+                .map(|root| {
+                    let value = selected_root(values.clone(), &root, &strict)?;
+                    let zero = value.field().constant(Real::zero())?;
+                    Ok(Self::from_joint_values(
+                        CurvePointDefinition2::SelectedPolynomialRoot {
+                            coefficients: coefficients.clone(),
+                            root,
+                        },
+                        [value, zero],
+                    ))
+                })
+                .collect::<field::Result<Vec<_>>>()?;
+            Ok(Some(points))
+        });
+        ExactCurveError::decided(
+            CurveOperation2::Intersection,
+            result.map_err(|cause| {
+                ExactCurveError::invalid(
+                    CurveOperation2::Intersection,
+                    crate::CurveFamily2::ImplicitPolynomial,
+                    cause,
+                )
+            })?,
+        )
+    }
+}

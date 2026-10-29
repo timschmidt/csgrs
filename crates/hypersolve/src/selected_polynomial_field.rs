@@ -20,6 +20,9 @@ pub use definition::{
     SelectedPolynomialReplayError, SelectedPolynomialRootDefinition,
 };
 
+mod filter;
+mod normalize;
+
 mod bounds;
 pub use bounds::SelectedPolynomialEnclosure;
 mod join;
@@ -703,6 +706,9 @@ impl SelectedPolynomialValue {
         if self.stored_zero() {
             return Ok(RealSign::Zero);
         }
+        if let Some(sign) = self.sign_from_selection_bounds() {
+            return Ok(sign);
+        }
         match (&self.field().0.as_ref(), &self.0.coordinates) {
             (_, Coordinates::Recursive(scalar)) => match scalar
                 .numerator
@@ -787,28 +793,10 @@ impl<C: SelectedAlgebraContext> OrderedFieldPolynomialContext<SelectedPolynomial
         Ok(self.field.lift(value)?.scale(scale)?)
     }
     fn normalize_positive_scale(&mut self, values: &mut [SelectedPolynomialValue]) {
-        let mut numerators = Vec::with_capacity(values.len());
-        for value in values.iter() {
-            let Coordinates::Recursive(scalar) = &value.0.coordinates else {
-                return;
-            };
-            if !scalar.denominator.is_coefficientwise_stored_one() {
-                return;
-            }
-            numerators.push(scalar.numerator.clone());
-        }
-        RecursiveQuadraticValue::normalize_positive_scale(&mut numerators);
-        for (value, numerator) in values.iter_mut().zip(numerators) {
-            let Coordinates::Recursive(scalar) = &value.0.coordinates else {
-                unreachable!()
-            };
-            *value = SelectedPolynomialValue(Arc::new(ValueData {
-                field: value.field().clone(),
-                coordinates: Coordinates::Recursive(RecursiveQuadraticProjectiveScalar {
-                    numerator,
-                    denominator: scalar.denominator.clone(),
-                }),
-            }));
+        // Optional normalization is atomic. A failed storage construction
+        // leaves the original coefficients and all their proofs unchanged.
+        if let Ok(normalized) = normalize::positive_scale(&self.field, values) {
+            values.clone_from_slice(&normalized);
         }
     }
     fn sign(&mut self, value: &SelectedPolynomialValue) -> Result<Ordering, Self::Error> {
@@ -829,7 +817,7 @@ impl<C: SelectedAlgebraContext> OrderedFieldPolynomialContext<SelectedPolynomial
                 .numerator
                 .bounded_or_exact_real_witness_sign()
                 .map(sign_order),
-            Coordinates::Extension { .. } => None,
+            Coordinates::Extension { .. } => value.sign_from_selection_bounds().map(sign_order),
         })
     }
     fn remainder_elimination_budget(&self) -> Option<usize> {

@@ -459,3 +459,58 @@ fn selected_field_unit_arithmetic_retains_ancestor_authority_and_guards() {
     );
     assert!(base.evaluate_polynomial(&[a], &real(1)).is_err());
 }
+
+#[test]
+fn selector_enclosures_preserve_exact_zero_nearby_signs_and_budget_retry() {
+    let q = base();
+    let first = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);
+    let a = first.generator().unwrap();
+    // A repeated defining factor keeps y^2-a nonzero as a stored polynomial,
+    // while its value at the selected root is exactly zero.
+    let second = select(
+        &first,
+        vec![
+            a.multiply(&a).unwrap(),
+            first.constant(real(0)).unwrap(),
+            a.scale(&real(-2)).unwrap(),
+            first.constant(real(0)).unwrap(),
+            first.constant(real(1)).unwrap(),
+        ],
+        1,
+        2,
+    );
+    let y = second.generator().unwrap();
+    let square = y.multiply(&y).unwrap();
+    let positive = square.add(&second.constant(real(1)).unwrap()).unwrap();
+    let residual = square.subtract(&second.lift(&a).unwrap()).unwrap();
+    let epsilon = (Real::one() / Real::from(1_u128 << 100)).unwrap();
+    let near = residual.add(&second.constant(epsilon).unwrap()).unwrap();
+    let policy = TestContext::approximate();
+    for (value, expected) in [
+        (&positive, RealSign::Positive),
+        (&positive.scale(&real(-1)).unwrap(), RealSign::Negative),
+        (&residual, RealSign::Zero),
+        (&near, RealSign::Positive),
+        (&near.scale(&real(-1)).unwrap(), RealSign::Negative),
+    ] {
+        assert_eq!(
+            value.sign(&policy).unwrap(),
+            Classification::Decided(expected)
+        );
+    }
+    assert_eq!(policy.approximations(), 0);
+    let refused = with_budget(WorkBudget::ZERO, || {
+        assert!(hypersolve::work_budget::consume(WorkKind::RootRefinement, 1).is_err());
+        assert_eq!(
+            positive.sign(&policy).unwrap(),
+            Classification::Uncertain(
+                hypersolve::classification::UncertaintyReason::BudgetExhausted
+            )
+        );
+    });
+    assert!(refused.result.is_err());
+    assert_eq!(
+        positive.sign(&TestContext::strict()).unwrap(),
+        Classification::Decided(RealSign::Positive)
+    );
+}

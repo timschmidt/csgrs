@@ -43,6 +43,34 @@ pub(crate) fn selected_field_fiber(
     parameter
         .validate_policy(policy)
         .map_err(field::FieldError::Context)?;
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Err(field::FieldError::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    let retained = &parameter.data.representations.selected_polynomial;
+    if let Some(values) = retained.get() {
+        return Ok(values.clone());
+    }
+    let values = import_selected_field_fiber(parameter, policy)?;
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Err(field::FieldError::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    // All racing consumers use the retained winner. Failed or exhausted
+    // attempts never populate this representation; policy is checked above.
+    let _ = retained.set(values);
+    Ok(retained
+        .get()
+        .expect("successful import is retained")
+        .clone())
+}
+
+fn import_selected_field_fiber(
+    parameter: &BezierAlgebraicSelectedFiberParameter2,
+    policy: &CurveContext,
+) -> field::Result<[Value; 2]> {
     let (equation, base) = parameter.defining_fiber();
     let x = selected_field_bezier(&BezierParameter2::Algebraic(base.clone()), policy)?;
     let parent = x.field();

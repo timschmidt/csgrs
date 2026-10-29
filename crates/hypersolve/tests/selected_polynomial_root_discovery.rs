@@ -892,3 +892,79 @@ fn complete_discovery_enforces_local_depth_without_partial_roots_or_poisoning_re
     assert_eq!(control.status, Status::Isolated);
     assert_eq!(control.intervals.len(), 2);
 }
+
+#[test]
+fn selected_value_endpoints_count_distinct_roots_without_projection() {
+    use hypersolve::selected_polynomial_field::SelectedPolynomialContext;
+    use hypersolve::{
+        ordered_field_count_roots_between_values as count,
+        ordered_field_polynomial_sign_at_value as sign_at,
+    };
+    let q = base();
+    let field = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);
+    let a = field.generator().unwrap();
+    let one = field.constant(real(1)).unwrap();
+    let minus_two = field.constant(real(-2)).unwrap();
+    let epsilon = field
+        .constant((Real::one() / Real::from(1_u128 << 80)).unwrap())
+        .unwrap();
+    let below = a.subtract(&epsilon).unwrap();
+    let above = a.add(&epsilon).unwrap();
+    // -3(t-a)^2(t+1)^2 retains two distinct roots, both repeated.
+    let factor = [
+        a.scale(&real(-1)).unwrap(),
+        one.subtract(&a).unwrap(),
+        one.clone(),
+    ];
+    let mut polynomial = vec![field.constant(real(0)).unwrap(); 5];
+    for (i, first) in factor.iter().enumerate() {
+        for (j, second) in factor.iter().enumerate() {
+            polynomial[i + j] = polynomial[i + j]
+                .add(&first.multiply(second).unwrap().scale(&real(-3)).unwrap())
+                .unwrap();
+        }
+    }
+    let policy = TestContext::strict();
+    let mut context = SelectedPolynomialContext {
+        field: field.clone(),
+        policy: &policy,
+    };
+    assert_eq!(
+        sign_at(&polynomial, &a, &mut context).unwrap(),
+        std::cmp::Ordering::Equal
+    );
+    for (lower, upper, expected) in [
+        (&minus_two, &below, Some(1)),
+        (&minus_two, &above, Some(2)),
+        (&below, &above, Some(1)),
+        (&minus_two, &a, None),
+        (&a, &above, None),
+        (&above, &below, None),
+        (&a, &a, None),
+    ] {
+        assert_eq!(
+            count(&polynomial, lower, upper, &mut context).unwrap(),
+            expected
+        );
+    }
+    assert_eq!(
+        count(
+            &[field.constant(real(0)).unwrap()],
+            &below,
+            &above,
+            &mut context
+        )
+        .unwrap(),
+        None
+    );
+    assert_eq!(
+        count(
+            &[field.constant(real(-3)).unwrap()],
+            &below,
+            &above,
+            &mut context
+        )
+        .unwrap(),
+        Some(0)
+    );
+}

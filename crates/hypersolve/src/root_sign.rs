@@ -4,7 +4,12 @@
 //! at P's distinct roots. A certified singleton therefore gives one sign.
 //! See Li et al., <https://doi.org/10.1007/s10817-017-9424-6>, Theorem 1.
 
+mod endpoints;
 mod prepared;
+use endpoints::FieldEndpoint;
+pub use endpoints::{
+    ordered_field_count_roots_between_values, ordered_field_polynomial_sign_at_value,
+};
 pub(crate) use prepared::PreparedSturmChain;
 
 use std::cmp::Ordering;
@@ -130,7 +135,10 @@ pub fn ordered_field_sign_at_selected_root<C: Clone, F: OrderedFieldPolynomialCo
     Ok(field_remainder_variations(
         first,
         second,
-        [&interval.lower, &interval.upper],
+        [
+            FieldEndpoint::Real(&interval.lower),
+            FieldEndpoint::Real(&interval.upper),
+        ],
         [lower_sign, upper_sign],
         budget,
         field,
@@ -155,6 +163,18 @@ pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     if sign(&(upper - lower)) != Some(Ordering::Greater) {
         return Ok(None);
     }
+    count_roots_at_endpoints(
+        defining,
+        [FieldEndpoint::Real(lower), FieldEndpoint::Real(upper)],
+        field,
+    )
+}
+
+fn count_roots_at_endpoints<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    defining: &[C],
+    bounds: [FieldEndpoint<'_, C>; 2],
+    field: &mut F,
+) -> Result<Option<usize>, F::Error> {
     let mut first = defining.to_vec();
     field.normalize_positive_scale(&mut first);
     trim_polynomial(&mut first, field)?;
@@ -165,8 +185,8 @@ pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
         return Ok((field.sign(leading)? != Ordering::Equal).then_some(0));
     }
     let previous = [
-        field_polynomial_sign(&first, lower, field)?,
-        field_polynomial_sign(&first, upper, field)?,
+        bounds[0].sign_at(&first, field)?,
+        bounds[1].sign_at(&first, field)?,
     ];
     if previous.contains(&Ordering::Equal) {
         return Ok(None);
@@ -179,7 +199,7 @@ pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
         .collect::<Result<Vec<_>, _>>()?;
     let budget = RemainderBudget::new(field.remainder_elimination_budget());
     Ok(
-        field_remainder_variations(first, second, [lower, upper], previous, budget, field)?
+        field_remainder_variations(first, second, bounds, previous, budget, field)?
             .and_then(|v| v[0].checked_sub(v[1])),
     )
 }
@@ -189,7 +209,7 @@ pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
 fn field_remainder_variations<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     first: Vec<C>,
     second: Vec<C>,
-    bounds: [&Real; 2],
+    bounds: [FieldEndpoint<'_, C>; 2],
     mut previous: [Ordering; 2],
     budget: RemainderBudget,
     field: &mut F,
@@ -197,8 +217,8 @@ fn field_remainder_variations<C: Clone, F: OrderedFieldPolynomialContext<C>>(
     let mut variations = [0_usize; 2];
     Ok(
         visit_signed_remainders(first, second, budget, field, |polynomial, field| {
-            for (endpoint, point) in bounds.into_iter().enumerate() {
-                let current = field_polynomial_sign(polynomial, point, field)?;
+            for (endpoint, point) in bounds.iter().enumerate() {
+                let current = point.sign_at(polynomial, field)?;
                 if current != Ordering::Equal {
                     variations[endpoint] += usize::from(previous[endpoint] != current);
                     previous[endpoint] = current;

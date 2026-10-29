@@ -5,7 +5,7 @@ use crate::selected_field::{self as field, FieldError, Value};
 use hypersolve::OrderedFieldRootIsolationStatus;
 use hypersolve::selected_polynomial_field::SelectedPolynomialContext;
 
-fn resolve<T>(
+pub(super) fn resolve<T>(
     kind: CurveOperation2,
     operation: impl FnOnce() -> field::Result<T>,
 ) -> ExactCurveResult<T> {
@@ -17,7 +17,7 @@ fn resolve<T>(
     )
 }
 
-fn coefficients(
+pub(super) fn coefficients(
     equation: &BivariatePolynomial,
     parameter: &CurveParameter2,
     policy: &CurveContext,

@@ -1866,10 +1866,26 @@ struct BezierSelectedPolynomialImage2 {
     identically_zero_image_relation: bool,
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 struct BezierSelectedFiberRepresentations2 {
     bezier: OnceLock<BezierParameter2>,
     projective: OnceLock<BezierRecursiveProjectiveParameter2>,
+    // One successful import, shared by clones and certified refinements of
+    // this root. Definition replay reconstructs it from the original fiber.
+    selected_polynomial: OnceLock<[crate::selected_field::Value; 2]>,
+}
+
+impl std::fmt::Debug for BezierSelectedFiberRepresentations2 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BezierSelectedFiberRepresentations2")
+            .field("bezier", &self.bezier)
+            .field("projective", &self.projective)
+            .field(
+                "selected_polynomial",
+                &self.selected_polynomial.get().is_some(),
+            )
+            .finish()
+    }
 }
 
 #[derive(Clone, Debug)]
