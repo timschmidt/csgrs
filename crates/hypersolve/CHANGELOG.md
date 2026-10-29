@@ -2,12 +2,26 @@
 
 ## [0.4.0] - Unreleased
 
+- Selected-field joins retain validated source-generator correspondences.
+  Reusing either original operand or a corresponding generator from another
+  join preserves its existing authority instead of adjoining a duplicate root.
+  Definition graphs retain the join recipe and re-establish these relations
+  through strict source and selection replay.
+  Replay validates original rational denominators before retaining shared
+  coordinate nodes, preserving native re-export structure. Negative
+  denominators remain valid after exact sign normalization; zero stays invalid.
+
 - Selected polynomial joins retain the first native base when the ordered
   source union adds no axes and the existing foreign-field embedding adds no
   radical. Subsequent joins preserve polynomial ancestors instead of appending
   those generators again. New radical extensions keep the existing replay path.
 
 ### Breaking
+
+- `SelectedPolynomialDefinitionNode` gains `JoinedField`; exhaustive matches
+  and graph format owners must handle the new operation record. Existing
+  records retain their meanings. Joined fields intentionally export their
+  construction dependencies instead of an unrelated polynomial selection.
 
 - Prepared problem objects are replaced by immediate analysis. The `prepared`
   module and `PreparedProblem`, `PreparedProblemFacts` and

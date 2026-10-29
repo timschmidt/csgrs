@@ -96,7 +96,19 @@ enum FieldData {
         defining: Vec<SelectedPolynomialValue>,
         monic: Vec<SelectedPolynomialValue>,
         interval: IsolatedRootInterval,
+        // A join transported this original generator and revalidated its
+        // singleton selection. This is a construction relation, not a cache.
+        origin: Option<GeneratorOrigin>,
     },
+}
+
+struct GeneratorOrigin(SelectedPolynomialField);
+
+impl std::fmt::Debug for GeneratorOrigin {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        // Do not expand a shared proof graph into a diagnostic tree.
+        f.debug_struct("GeneratorOrigin").finish_non_exhaustive()
+    }
 }
 
 /// A finite rational value retaining its selected field and denominator proof.
@@ -286,6 +298,19 @@ impl SelectedPolynomialField {
         upper: Real,
         policy: &C,
     ) -> Result<Self, SelectedPolynomialError<C::Error>> {
+        self.select_strict_with_origin(coefficients, lower, upper, None, policy)
+    }
+
+    // Only a join supplies an origin, after embedding that source's original
+    // coefficients. The same open singleton below then proves correspondence.
+    fn select_strict_with_origin<C: SelectedAlgebraContext>(
+        &self,
+        coefficients: Vec<SelectedPolynomialValue>,
+        lower: Real,
+        upper: Real,
+        origin: Option<Self>,
+        policy: &C,
+    ) -> Result<Self, SelectedPolynomialError<C::Error>> {
         match policy.real_sign(&(&upper - &lower)) {
             Some(RealSign::Positive) => {}
             Some(_) => return Err(SelectedPolynomialError::InvalidSelector),
@@ -345,6 +370,7 @@ impl SelectedPolynomialField {
             parent: self.clone(),
             defining,
             monic,
+            origin: origin.map(GeneratorOrigin),
             interval: IsolatedRootInterval {
                 lower,
                 upper,

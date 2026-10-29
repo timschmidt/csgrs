@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-join-correspondence-evidence-2026-10-29 branch ends at
+ff5b5ed28c523df708e1eb734869a111fd0d4871, adding docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence (619 files,
+21,592,106 bytes), SHA-256 450fce88ea94d1730595564db3bf8e48f84ca8335e3f0243f7823143c475af21. It records retained selected-field
+generator correspondences, original-guard validation and fresh-process graph
+replay, nine named fixtures and 24 qualification groups. Source checkpoints are
+reconstructable from patches and inventories. Original duplicate-generator and
+cold re-export failures remain explicit, along with seven region-operation
+blockers. This record is unpushed.
+
 The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
 3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
 91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and

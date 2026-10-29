@@ -2383,6 +2383,44 @@ closure or performance claim is made; full pre-push qualification of this
 increment remains required. This entry supersedes earlier point-query and
 native-parameter gaps only for its demonstrated domain.
 
+**Selected-field join correspondence increment (2026-10-29).**
+Repeated joins now retain the validated correspondence to each original source
+generator. The baseline preserved exact cubic values but appended a duplicate
+generator when consuming its original second operand: depth grew from two to
+three. Immutable construction links now preserve both operands through repeated
+and diamond joins. Independent equal selections remain distinct unless an
+existing validated construction supplies their correspondence.
+
+Definition graphs retain a `JoinedField` operation and replay the original join,
+source selections and coefficient maps. Original denominator checks precede
+native and polynomial ratio reconstruction. Positive ratios keep shared nodes;
+negative ratios normalize exactly, and zero guards remain invalid. The new
+public enum variant and joined-field export representation are documented in
+the solver changelog. Semantic equality and deterministic re-export are separate
+claims; the original failing cold byte comparison remains unchanged.
+
+Nine named witnesses pass, including both original operands, repeated and
+diamond joins, independent equal/opposite/nearby roots, foreign-native fields,
+invalid selectors/references, configured refusal and larger retries, fresh-process
+replay followed by further joins, and negative-denominator controls. All 24
+qualification groups pass: full Hypersolve (1,276
+passed, 0 ignored), minimal solver configuration,
+Hypercurve (2,950 passed,
+34 ignored), CSGRS
+(691 passed,
+7 ignored), six downstream consumer suites,
+strict MSRV Clippy, minimal builds, denied-warning docs and fuzz lint,
+allocation lifetime control, the capability matrix and hygiene.
+
+Only the finalized point parent's three receipts changed after qualification;
+implementation and fixture bytes remain identical. Commands, source inventories,
+patches and raw failures are in docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence, SHA-256 450fce88ea94d1730595564db3bf8e48f84ca8335e3f0243f7823143c475af21. Receipt checks follow
+the final documentation edit. Seven original region offset/corner operations
+remain Unsupported while their three controls pass. The named depth reduction
+is not a general speed or memory result; total work, coefficient growth, retained
+memory and cancellation remain outside the existing counters. General algebraic
+closure and this increment's full pre-push qualification remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

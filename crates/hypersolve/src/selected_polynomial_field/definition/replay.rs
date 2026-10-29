@@ -239,6 +239,12 @@ impl Reader<'_> {
                     policy,
                 )?)
             }
+            Node::JoinedField { first, second } => {
+                let first = self.field(*first)?;
+                let second = self.field(*second)?;
+                let joined = exact(first.joined_with(&second, policy)?)?;
+                Admitted::Field(joined.field().clone())
+            }
             Node::NativeValue {
                 field,
                 numerator,
@@ -254,9 +260,18 @@ impl Reader<'_> {
                     native.same_field(&numerator.field())
                         && native.same_field(&denominator.field()),
                 )?;
-                let numerator = field.import_recursive(&numerator)?;
-                let denominator = field.import_recursive(&denominator)?;
-                Admitted::Value(numerator.multiply(&denominator.reciprocal_strict(policy)?)?)
+                // Validate the original denominator before retaining its
+                // ratio. Multiplying by a reconstructed reciprocal loses
+                // the graph's shared coordinate nodes even for positive one.
+                let (numerator, denominator) = match native_sign(&denominator, policy)? {
+                    RealSign::Zero => return Err(SelectedPolynomialError::ZeroDenominator.into()),
+                    RealSign::Positive => (numerator, denominator),
+                    RealSign::Negative => (
+                        unavailable(numerator.scale(&Real::from(-1)))?,
+                        unavailable(denominator.scale(&Real::from(-1)))?,
+                    ),
+                };
+                Admitted::Value(field.recursive_value(numerator, denominator)?)
             }
             Node::PolynomialValue {
                 field,
@@ -275,10 +290,19 @@ impl Reader<'_> {
                         .chain(&denominator)
                         .all(|v| parent.shares_authority(v.field())),
                 )?;
-                let one = vec![parent.constant(Real::one())?];
-                let numerator = field.extension_value(numerator, one.clone())?;
-                let denominator = field.extension_value(denominator, one)?;
-                Admitted::Value(numerator.multiply(&denominator.reciprocal_strict(policy)?)?)
+                let guard = field
+                    .extension_value(denominator.clone(), vec![parent.constant(Real::one())?])?;
+                let (mut numerator, mut denominator) = (numerator, denominator);
+                match guard.sign_strict(policy)? {
+                    RealSign::Zero => return Err(SelectedPolynomialError::ZeroDenominator.into()),
+                    RealSign::Positive => {}
+                    RealSign::Negative => {
+                        for coefficient in numerator.iter_mut().chain(&mut denominator) {
+                            *coefficient = coefficient.scale(&Real::from(-1))?;
+                        }
+                    }
+                }
+                Admitted::Value(field.extension_value(numerator, denominator)?)
             }
         })
     }

@@ -54,6 +54,13 @@ pub enum SelectedPolynomialDefinitionNode {
         lower: Real,
         upper: Real,
     },
+    /// Replays a common-field construction, including its original selected
+    /// generator correspondences. Both references name earlier field records.
+    /// This is an operation recipe, not a trusted equality assertion.
+    JoinedField {
+        first: usize,
+        second: usize,
+    },
     NativeValue {
         field: usize,
         numerator: usize,
