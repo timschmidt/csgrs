@@ -449,6 +449,9 @@ pub(crate) fn rational_point(
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
     validate_rational_point(source, parameter, family, policy)?;
+    if let Some(parameter) = parameter.as_polynomial_query() {
+        return parameter.rational_point(source, policy);
+    }
     if let Some(parameter) = parameter.as_bezier_parameter() {
         return match parameter {
             BezierParameter2::Exact(parameter) => {

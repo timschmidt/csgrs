@@ -300,6 +300,15 @@ fn svg_geometry_error(error: impl fmt::Display) -> SvgError {
     SvgError::Geometry(error.to_string())
 }
 
+fn svg_projection_error(error: crate::CurveError) -> SvgError {
+    match error {
+        crate::CurveError::UncertainFiniteCurveProjection { reason } => SvgError::Exact(
+            ExactCurveError::blocked_unattributed(CurveOperation2::Evaluation, reason),
+        ),
+        other => svg_geometry_error(other),
+    }
+}
+
 fn real(value: f64, name: &'static str) -> SvgResult<Real> {
     Real::try_from(value)
         .map_err(|error| SvgError::MalformedInput(format!("{name} is invalid: {error}")))
@@ -1541,7 +1550,7 @@ pub fn export_svg_document_with_options(
         )?;
         let profiles = match region
             .project_to_finite_profiles_with_policy(&projection, &CurveContext::STRICT)
-            .map_err(svg_geometry_error)?
+            .map_err(svg_projection_error)?
             .into_value()
         {
             Classification::Decided(profiles) => profiles,
@@ -1625,7 +1634,7 @@ fn append_native_path(
     if path.curves().iter().any(|curve| curve.geometry().is_none()) {
         let projected = path
             .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
-            .map_err(svg_geometry_error)?
+            .map_err(svg_projection_error)?
             .into_value();
         if projected.points().len().saturating_sub(1) > options.max_curve_segments {
             return Err(SvgError::SizeOverflow {
@@ -1730,7 +1739,7 @@ fn append_native_path(
                     CurvePath2::try_new(vec![curve.clone()]).map_err(svg_geometry_error)?;
                 let polyline = one_curve
                     .project_to_finite_polyline_with_policy(projection, &CurveContext::STRICT)
-                    .map_err(svg_geometry_error)?
+                    .map_err(svg_projection_error)?
                     .into_value();
                 if polyline.points().len() < 2 {
                     return Err(SvgError::Geometry(

@@ -91,6 +91,8 @@ mod region_nesting;
 mod region_pipeline_tests;
 mod segment;
 mod segment_metric;
+mod selected_field;
+mod selected_query_scalar;
 mod selected_scalar;
 mod self_intersect;
 mod spline_periodic;

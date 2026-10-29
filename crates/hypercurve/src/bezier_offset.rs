@@ -31,11 +31,15 @@ mod parallel_construction;
 mod parallel_pair_sets;
 #[path = "curve_parameter_component.rs"]
 mod parameter_component;
+mod polynomial_field;
 mod rational_form;
+pub(crate) use polynomial_field::*;
 mod recursive_field;
 use recursive_field::foreign_embedding_projective_point;
 #[cfg(test)]
 use recursive_field::recursive_field_retained_parameter_value;
+#[cfg(test)]
+mod projective_gauge_tests;
 mod recursive_quadratic;
 mod represented;
 mod selected_dense;
@@ -13997,7 +14001,8 @@ fn recursive_projective_point_evidence_oriented_side(
     certified_nonzero: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<crate::classify::LineSide>>> {
-    let points = match recursive_projective_evidence_points(&[start, end, point], policy)? {
+    let points = match positive_recursive_projective_evidence_points(&[start, end, point], policy)?
+    {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -14026,7 +14031,7 @@ fn recursive_projective_point_evidence_axis_order(
     axis: Axis2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<std::cmp::Ordering>>> {
-    let points = match recursive_projective_evidence_points(&[first, second], policy)? {
+    let points = match positive_recursive_projective_evidence_points(&[first, second], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -14064,7 +14069,7 @@ pub(crate) fn recursive_projective_point_evidence_equality(
             return Ok(Classification::Decided(Some(false)));
         }
     }
-    let points = match recursive_projective_evidence_points(&[first, second], policy)? {
+    let points = match positive_recursive_projective_evidence_points(&[first, second], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),

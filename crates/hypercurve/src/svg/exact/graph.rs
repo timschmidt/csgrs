@@ -69,6 +69,8 @@ struct GraphWriter {
     displacements: HashMap<*const (), (crate::CurvePoint2, u32)>,
     point_depths: Vec<usize>,
     max_point_depth: usize,
+    query_parameters:
+        HashMap<(bool, *const ()), (crate::selected_query_scalar::SelectedQueryScalar2, u32)>,
     circles: HashMap<*const (), (crate::bezier_offset::BezierAlgebraicCuspSemicircle2, u32)>,
     circle_parameters: HashMap<
         (u32, *const ()),
@@ -95,6 +97,7 @@ impl GraphWriter {
             displacements: HashMap::new(),
             point_depths: Vec::new(),
             max_point_depth,
+            query_parameters: HashMap::new(),
             circles: HashMap::new(),
             circle_parameters: HashMap::new(),
         }
@@ -147,16 +150,12 @@ impl GraphWriter {
             return Ok(index);
         }
         if let Some((source, range, reversed)) = curve.source_restriction() {
-            let Some((start, end)) = range.as_bezier_parameters() else {
-                return Err(SvgError::Unsupported(
-                    "exact SVG source restrictions require a retained Bezier parameter definition"
-                        .into(),
-                ));
-            };
             let source = self.curve(source)?;
-            let start = self.parameter(start)?;
-            let end = self.parameter(end)?;
+            let start = self.scalar_parameter(range.start())?;
+            let end = self.scalar_parameter(range.end())?;
             let index = self.begin(SOURCE_RESTRICTION)?;
+            self.point_depths[index as usize] =
+                self.point_depths[start as usize].max(self.point_depths[end as usize]);
             self.writer.write_u32(source)?;
             self.writer.write_u32(start)?;
             self.writer.write_u32(end)?;
@@ -245,6 +244,7 @@ impl GraphWriter {
 enum Definition {
     Curve(Curve2),
     Parameter(BezierParameter2),
+    QueryParameter(crate::CurveParameter2),
     Parallel(BezierParallel2),
     Point(crate::CurvePoint2),
     Chord(crate::BezierAlgebraicChord2),
@@ -270,6 +270,19 @@ fn parameter_reference(definitions: &[Definition], index: usize) -> SvgResult<&B
         Some(Definition::Parameter(parameter)) => Ok(parameter),
         _ => Err(malformed(
             "exact path extension has an invalid parameter reference",
+        )),
+    }
+}
+
+fn scalar_parameter_reference(
+    definitions: &[Definition],
+    index: usize,
+) -> SvgResult<crate::CurveParameter2> {
+    match definitions.get(index) {
+        Some(Definition::Parameter(parameter)) => Ok(parameter.clone().into()),
+        Some(Definition::QueryParameter(parameter)) => Ok(parameter.clone()),
+        _ => Err(malformed(
+            "exact path extension has an invalid scalar parameter reference",
         )),
     }
 }
@@ -316,7 +329,7 @@ fn read_definitions(
     let count = reader.read_len()?;
     reader.check_collection_len(count, 1)?;
     let mut definitions = Vec::new();
-    let mut point_depths = Vec::new();
+    let mut point_depths: Vec<usize> = Vec::new();
     // Different distances on one serialized source retain one source owner.
     // Regularity belongs to each finite range, not to this unbounded recipe.
     let mut parallel_sources: HashMap<usize, BezierParallel2> = HashMap::new();
@@ -363,12 +376,15 @@ fn read_definitions(
                         "exact path restriction must reference a native source",
                     ));
                 }
-                let start = parameter_reference(&definitions, reader.read_len()?)?.clone();
-                let end = parameter_reference(&definitions, reader.read_len()?)?.clone();
+                let start_index = reader.read_len()?;
+                let end_index = reader.read_len()?;
+                let start = scalar_parameter_reference(&definitions, start_index)?;
+                let end = scalar_parameter_reference(&definitions, end_index)?;
+                point_depth = point_depths[start_index].max(point_depths[end_index]);
                 let reversed = reader.read_bool()?;
                 let range = certified(CurveParameterRange2::try_new_with_policy(
-                    start.into(),
-                    end.into(),
+                    start,
+                    end,
                     &CurveContext::STRICT,
                 ))?;
                 let curve = source.restrict_source(range).map_err(SvgError::Exact)?;
@@ -448,7 +464,9 @@ fn read_definitions(
             | points::SUPPORTING_LINE_POINT
             | points::CHORD_DISPLACEMENT
             | points::DISPLACEMENT_POINT
-            | points::CHORD_UNIT_TANGENT) => {
+            | points::CHORD_UNIT_TANGENT
+            | points::RATIONAL_QUERY_PAIR
+            | points::QUERY_PARAMETER) => {
                 let (definition, depth) = points::read_definition(
                     tag,
                     reader,

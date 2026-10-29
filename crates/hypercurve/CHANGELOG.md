@@ -2,6 +2,32 @@
 
 ## [0.4.0] - Unreleased
 
+- Normalize signed homogeneous point weights before shared orientation and
+  coordinate predicates. Supporting-line intersections transport their tangent
+  certificate through retained-support reversals, and cardinal displacements
+  preserve the sign of the imported endpoint representation.
+
+- Independent rational queries over admitted polynomial-fiber and native point
+  fields compose in shared selected fields while retaining their original
+  sources, selectors and denominator guards. Their scalar parameters feed
+  affine charts, rational-curve evaluation, restrictions and subdivision.
+- Retained-point orientation and circle residuals reuse native shared radical
+  fields before constructing general query pairs, preserving existing fillet
+  and subsequent Boolean completion. Query-pair alignment reuses its common
+  field before an optional semantic point-equality check, preserving exact
+  selected-quintic Boolean composition.
+  Scalar, finite and batched chord predicates reuse certified cardinal-support
+  evidence before joining selected fields, preserving generated-line overlap,
+  restriction and reversal.
+- `CurvePointRationalForm2::parameter` retains a replayable query scalar;
+  `CurveParameter2::rational_form_source` exposes its source recipe. HyperBRep
+  native archives preserve these parameters and joint query points, including
+  original guards and metadata admission before scalar decoding.
+- Native SVG graphs retain query-pair points and source-bound query parameters.
+  Replay validates all source references and original guards, including unused
+  records; definition-depth limits include these dependencies. Finite display
+  projection consumes certified query enclosures without replacing exact data.
+
 - Geometric region queries validate inherited normalization policy before empty
   and cached shortcuts. Native similarity lowering retains that policy on its
   result; authorized approximate queries expose their consumed certainty.
@@ -44,6 +70,17 @@
 
 ### Breaking
 
+- Independent selected-fiber rational queries now compose through distinct
+  retained generators. Callers that handled `Blocked(Unsupported)` for two
+  different selectors can receive an exact result. The opposite-root fixture
+  retains its original geometry and now requires the exact negative product,
+  separate source selections, policy certainty and replayed equations.
+
+- `CurvePointDefinition2` gains `RationalQueryPair`, and `CurveError` gains
+  `UncertainFiniteCurveProjection { reason }`; exhaustive matches must handle
+  them. SVG projection preserves this cause as an `Exact` evaluation blocker.
+  Older native readers reject the new query record tags; existing records
+  retain their encoding.
 - `CurveError` gains `IncompatiblePredicatePolicy`; exhaustive matches must
   handle it. Retained chord and selected-fiber replay validators use this cause
   instead of a generic topology string. Principal operations report it as

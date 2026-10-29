@@ -1,4 +1,4 @@
-//! Correlated plane points in one retained algebraic fiber.
+//! Correlated plane points retain their selected fibers or joint query sources.
 
 use std::cmp::Ordering;
 
@@ -12,15 +12,30 @@ use crate::{
     Point2, Real, UncertaintyReason,
 };
 
-/// Both coordinates keep the same selected base/fiber relation.
+/// Coordinates retain their original selected relations and shared field authority.
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PolynomialPoint2 {
-    base: BezierParameter2,
-    fiber: BezierAlgebraicSelectedFiberParameter2,
+    authority: PolynomialPointAuthority2,
     maps: Vec<std::sync::Arc<crate::RationalMap2>>,
 }
 
+#[derive(Clone, Debug, PartialEq)]
+enum PolynomialPointAuthority2 {
+    Fiber {
+        base: BezierParameter2,
+        fiber: BezierAlgebraicSelectedFiberParameter2,
+    },
+    Queries(std::sync::Arc<JointQueries2>),
+}
+
+mod joint;
+use joint::JointQueries2;
+
 impl PolynomialPoint2 {
+    pub(crate) fn has_query_authority(&self) -> bool {
+        matches!(self.authority, PolynomialPointAuthority2::Queries(_))
+    }
+
     pub(crate) fn has_rational_maps(&self) -> bool {
         !self.maps.is_empty()
     }
@@ -33,7 +48,14 @@ impl PolynomialPoint2 {
         if let Some(map) = self.maps.last() {
             (4, std::sync::Arc::as_ptr(map).cast())
         } else {
-            (7, std::ptr::from_ref(self.fiber.root()).cast())
+            match &self.authority {
+                PolynomialPointAuthority2::Fiber { fiber, .. } => {
+                    (7, std::ptr::from_ref(fiber.root()).cast())
+                }
+                PolynomialPointAuthority2::Queries(queries) => {
+                    (11, std::sync::Arc::as_ptr(queries).cast())
+                }
+            }
         }
     }
 
@@ -42,21 +64,29 @@ impl PolynomialPoint2 {
         polynomial: &BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<hyperreal::RealSign>> {
+        let PolynomialPointAuthority2::Fiber { fiber, .. } = &self.authority else {
+            return crate::selected_field::finish(|| {
+                let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+                crate::selected_field::decided(
+                    self.field_query(polynomial, &one, policy)?.sign(policy)?,
+                )
+            });
+        };
         if self.maps.is_empty() {
-            return self.fiber.predicate_sign(polynomial, policy);
+            return fiber.predicate_sign(polynomial, policy);
         }
         let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
         let Some((numerator, denominator)) = self.pullback(polynomial, &one) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let sign = match self.fiber.predicate_sign(&denominator, policy)? {
+        let sign = match fiber.predicate_sign(&denominator, policy)? {
             Classification::Decided(sign) => sign,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
         if sign == hyperreal::RealSign::Zero {
             return Err(CurveError::ZeroRationalPointDenominator);
         }
-        Ok(self.fiber.predicate_sign(&numerator, policy)?.map(|value| {
+        Ok(fiber.predicate_sign(&numerator, policy)?.map(|value| {
             if sign == hyperreal::RealSign::Negative {
                 match value {
                     hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
@@ -75,17 +105,18 @@ impl PolynomialPoint2 {
         denominator: &BivariatePolynomial,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
+        let PolynomialPointAuthority2::Fiber { fiber, .. } = &self.authority else {
+            return self.joint_parameter(numerator, denominator, policy);
+        };
         if self.maps.is_empty() {
-            return Ok(self
-                .fiber
+            return Ok(fiber
                 .rational_image_in_retained_field(numerator, denominator, policy)?
                 .map(CurveParameter2::from_selected_fiber));
         }
         let Some((numerator, denominator)) = self.pullback(numerator, denominator) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        Ok(self
-            .fiber
+        Ok(fiber
             .rational_image_in_retained_field(&numerator, &denominator, policy)?
             .map(CurveParameter2::from_selected_fiber))
     }
@@ -125,8 +156,10 @@ impl PolynomialPoint2 {
             .into_iter()
             .map(|fiber| {
                 CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(Self {
-                    base: base.clone(),
-                    fiber,
+                    authority: PolynomialPointAuthority2::Fiber {
+                        base: base.clone(),
+                        fiber,
+                    },
                     maps: Vec::new(),
                 })))
             })
@@ -142,10 +175,15 @@ impl PolynomialPoint2 {
                 map: (*map).clone(),
             };
         }
-        crate::CurvePointDefinition2::PolynomialFiber {
-            equation: self.fiber.defining_fiber().0.clone(),
-            parameter: self.base.clone(),
-            root: self.fiber.root().clone(),
+        match &self.authority {
+            PolynomialPointAuthority2::Fiber { base, fiber } => {
+                crate::CurvePointDefinition2::PolynomialFiber {
+                    equation: fiber.defining_fiber().0.clone(),
+                    parameter: base.clone(),
+                    root: fiber.root().clone(),
+                }
+            }
+            PolynomialPointAuthority2::Queries(queries) => queries.definition(),
         }
     }
 
@@ -187,7 +225,8 @@ impl PolynomialPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
-        if self.maps.is_empty() {
+        if self.maps.is_empty() && matches!(self.authority, PolynomialPointAuthority2::Fiber { .. })
+        {
             return Ok(Classification::Decided(self.source_coordinate(axis)));
         }
         let polynomial = match axis {
@@ -202,9 +241,12 @@ impl PolynomialPoint2 {
     }
 
     fn source_coordinate(&self, axis: Axis2) -> CurveParameter2 {
+        let PolynomialPointAuthority2::Fiber { base, fiber } = &self.authority else {
+            unreachable!("native fiber coordinate")
+        };
         match axis {
-            Axis2::X => self.base.clone().into(),
-            Axis2::Y => CurveParameter2::from_selected_fiber(self.fiber.clone()),
+            Axis2::X => base.clone().into(),
+            Axis2::Y => CurveParameter2::from_selected_fiber(fiber.clone()),
         }
     }
 
@@ -254,7 +296,8 @@ impl PolynomialPoint2 {
         [a, b, c]: &[Real; 3],
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
-        if !self.maps.is_empty() {
+        if !self.maps.is_empty() || matches!(self.authority, PolynomialPointAuthority2::Queries(_))
+        {
             return self.rational_parameter(
                 &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
                 &BivariatePolynomial::new(vec![vec![Real::one()]]),
@@ -274,15 +317,17 @@ impl PolynomialPoint2 {
                 .source_coordinate(Axis2::X)
                 .affine_image_unbounded(a, c, policy);
         }
-        if let BezierParameter2::Exact(base) = &self.base {
+        let PolynomialPointAuthority2::Fiber { base, fiber } = &self.authority else {
+            unreachable!("native fiber affine form")
+        };
+        if let BezierParameter2::Exact(base) = base {
             return self.source_coordinate(Axis2::Y).affine_image_unbounded(
                 b,
                 &(a * base + c),
                 policy,
             );
         }
-        Ok(self
-            .fiber
+        Ok(fiber
             .rational_image_in_retained_field(
                 &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
                 &BivariatePolynomial::new(vec![vec![Real::one()]]),
@@ -292,14 +337,17 @@ impl PolynomialPoint2 {
     }
 
     pub(crate) fn bounds(&self, steps: usize, policy: &CurveContext) -> Classification<Aabb2> {
-        let base = self.base.clone().refined_isolating_interval(steps, policy);
+        let PolynomialPointAuthority2::Fiber { base, fiber } = &self.authority else {
+            return self.joint_bounds(steps, policy);
+        };
+        let base = base.clone().refined_isolating_interval(steps, policy);
         let (lower, upper) = match &base {
             BezierParameter2::Exact(value) => (value, value),
             BezierParameter2::Algebraic(value) => {
                 (value.interval().start(), value.interval().end())
             }
         };
-        let fiber = match self.fiber.refined(steps, policy) {
+        let fiber = match fiber.refined(steps, policy) {
             Ok(Classification::Decided(fiber)) => fiber,
             Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
             Err(CurveError::InvalidBezierAlgebraicParameter) => {

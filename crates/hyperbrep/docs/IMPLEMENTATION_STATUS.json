@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-27",
+  "updated_on": "2026-10-28",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -3089,6 +3089,34 @@
       "validation": "The original boundary tensor fixture is promoted to exact success and extended with the upper-boundary counterpart. Restriction, reversal, both pcurves, complete edge-image validation, native archive replay, affine transport/revalidation and subsequent transverse-plane contact pass. An independently constructed rational source-restricted pcurve reproduces the directed endpoint mismatch before the owner fix and passes afterwards, including further restriction and archive replay. Ten solver and six Hypercurve focused witnesses pass; complete local qualification and raw evidence are recorded in the linked Hypercurve ledger. The later transverse-plane query also reproduced a rational-map dispatch blocker; a checked similarity view now reuses the original Hypercurve line-section algorithm without removing the stored maps or denominator guards. General nonlinear/nonuniform maps remain open. The full repository pre-push gate remains separate.",
       "cost_evidence": "This is a completion and correspondence-correctness extension, not a performance-only change. Focused commands retain an external 300-second allowance and raw elapsed observations. Concurrent qualification timings are not a controlled comparison or stable latency claim. Existing adverse performance records are not superseded.",
       "limits": "Vertical/repeated polynomial components, general coefficient fields, complete dual-chart trim arrangements and general curved solid Booleans remain open. The original polynomial, selected topology and multiplicity blockers are preserved. Solver counters and archive metadata limits do not bound total arithmetic, coefficient growth, retained memory or cancellation. Exact graph reconstruction in the separate Hypercurve child-process witness is a diagnostic format, not a new native archive. This increment does not complete all work packages or authorize skipping any pre-push check."
+    },
+    {
+      "id": "selected-query-point-archive-2026-10-28",
+      "work_packages": [
+        "WP05a",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P14",
+        "P16",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P30"
+      ],
+      "change": "Persist Hypercurve RationalQueryPair points and source-bound rational query parameters through the existing planar owner. Add RationalForm selection records and pre-scalar source/degree/row/coefficient admission. Existing archive records keep their encoding; older version-14 readers reject the new additive variants.",
+      "source": [
+        "../src/persistence/planar_points.rs",
+        "../src/persistence/selection.rs",
+        "../src/persistence/admission/shapes.rs",
+        "../tests/selected_query_archive.rs"
+      ],
+      "evidence": "../../hypercurve/FUTURE_WORK.md",
+      "validation": "Named public-model witnesses cover independent cubic-root point relations, rational parabola restrictions, fresh-process replay and further split/save/reload; forged original poles/selectors; exact inclusive record, degree and geometry-element limits before invalid scalar decoding; and larger retries. Commands, observed results, source attribution and full affected local/downstream qualification are recorded in the linked Hypercurve ledger.",
+      "cost_evidence": "No performance claim. The parent candidate first failed the exhaustive point-definition match in strict MSRV Clippy; the complete downstream adapter is included in this increment.",
+      "limits": "Archive structure counters do not bound geometric proof reconstruction, total arithmetic, memory or cancellation. General selected-query derivatives, spatial intersections and solid closure remain open; full pre-push and distribution qualification are separate. This is partial progress on the existing work packages."
     }
   ],
   "work_packages": [

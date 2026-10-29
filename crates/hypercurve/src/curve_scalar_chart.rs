@@ -8,6 +8,16 @@ use crate::{
 };
 
 impl CurveParameter2 {
+    /// Returns a source-bound rational query recipe when this parameter retains one.
+    ///
+    /// The point, selected roots and original denominator travel together. Replay
+    /// through [`crate::CurvePointRationalForm2::parameter`] validates the recipe;
+    /// this view is not an independently materialized coordinate or proof flag.
+    pub fn rational_form_source(&self) -> Option<crate::CurvePointRationalForm2> {
+        self.as_polynomial_query()
+            .map(|parameter| crate::CurvePointRationalForm2::retained_query(parameter.query()))
+    }
+
     /// Borrows a retained affine point definition when it authored this value.
     /// Replaying [`crate::CurvePointAffineForm2::parameter`] reconstructs the
     /// selected field from the same source; this view is not a proof flag.

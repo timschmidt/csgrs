@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Selected polynomial joins retain the first native base when the ordered
+  source union adds no axes and the existing foreign-field embedding adds no
+  radical. Subsequent joins preserve polynomial ancestors instead of appending
+  those generators again. New radical extensions keep the existing replay path.
+
 ### Breaking
 
 - Prepared problem objects are replaced by immediate analysis. The `prepared`

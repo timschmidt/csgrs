@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-polynomial-points-evidence-2026-10-28 branch ends at
+3a6a311a298224770578f5d42ae684f01d642d62, adding docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points (1,576 files,
+91,256,621 bytes), SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b. It records selected query points and
+parameters, cold native replay, restrictions and subsequent operations, exact
+source guards, native-base retention and 24 affected qualification groups.
+Original failures, resource limits and seven remaining region operation
+blockers are retained. Full algebraic closure and publication are not claimed.
+This record is unpushed.
+
 The local integration candidate combines selected polynomial field evidence
 2472aef555210a4222d04fe1b746c8c7ac015be3 and published evidence e784a8ea0b53cc24f3b56a61d63a13e66b9e7701 at 9700b7d8fd1124660c33a1059ebf321e968ce1f3.
 All retained records from both parents remain in the aggregate manifest.

@@ -92,6 +92,7 @@ pub(crate) fn common_point_form_sources(
     if first.source.shares_storage(&second.source) || first.source == second.source {
         return Ok(Classification::Decided([first, second]));
     }
+    let original = [first.clone(), second.clone()];
     for form in [&mut first, &mut second] {
         *form = match point_form_source(&form.source, &form.numerator, &form.denominator, policy)? {
             Classification::Decided(form) => form,
@@ -122,11 +123,58 @@ pub(crate) fn common_point_form_sources(
     } else if constant(&second.numerator) && constant(&second.denominator) {
         second.source = first.source.clone();
     }
-    Ok(match first.source.same_point(&second.source, policy) {
-        Classification::Decided(true) => Classification::Decided([first, second]),
-        Classification::Decided(false) => Classification::Uncertain(UncertaintyReason::Unsupported),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
-    })
+    if first.source.shares_storage(&second.source) || first.source == second.source {
+        return Ok(Classification::Decided([first, second]));
+    }
+    // Equality is only an alignment shortcut here. Query-pair coordinates
+    // already have a common selected-field route; comparing both projected
+    // coordinates first can rebuild an unnecessary tower of root decisions.
+    let query_pair = |point: &CurvePoint2| matches!(&point.0, CurvePointData2::Polynomial(point) if point.has_query_authority());
+    let same_point = if query_pair(&first.source) || query_pair(&second.source) {
+        None
+    } else {
+        Some(first.source.same_point(&second.source, policy))
+    };
+    if same_point == Some(Classification::Decided(true)) {
+        return Ok(Classification::Decided([first, second]));
+    }
+    if same_point
+        == Some(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ))
+    {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
+    match crate::polynomial_point::PolynomialPoint2::from_queries(original, policy)? {
+        Classification::Decided(source) => {
+            let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+            return Ok(Classification::Decided([
+                PointFormSource2::new(
+                    source.clone(),
+                    BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+                    one.clone(),
+                ),
+                PointFormSource2::new(
+                    source,
+                    BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+                    one,
+                ),
+            ]));
+        }
+        Classification::Uncertain(UncertaintyReason::Unsupported) => {}
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    }
+    Ok(
+        match same_point.unwrap_or_else(|| first.source.same_point(&second.source, policy)) {
+            Classification::Decided(true) => Classification::Decided([first, second]),
+            Classification::Decided(false) => {
+                Classification::Uncertain(UncertaintyReason::Unsupported)
+            }
+            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        },
+    )
 }
 
 fn point_form_difference(
@@ -539,6 +587,22 @@ pub(super) fn common_point_circle_residual_sign(
     radius_squared: &Real,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
+    // A native circle contact already retains a compact common field. Use
+    // that authority before constructing general query-pair coordinates.
+    match recursive_projective_point_evidence_circle_residual_sign(
+        point,
+        center,
+        radius_squared,
+        policy,
+    )? {
+        Classification::Decided(Some(sign)) => return Ok(Classification::Decided(sign)),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        Classification::Decided(None) | Classification::Uncertain(_) => {}
+    }
     let [dx, dy] = match common_point_displacement(point, center, policy)? {
         Classification::Decided(forms) => forms,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -620,6 +684,18 @@ pub(super) fn common_point_oriented_side(
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<crate::classify::LineSide>> {
+    // Preserve the original native field, including shared radicals and
+    // compact scalar witnesses, before forming new query-pair coordinates.
+    // General polynomial fields still use the source-bound fallback below.
+    match recursive_projective_point_evidence_oriented_side(start, end, point, false, policy)? {
+        Classification::Decided(Some(side)) => return Ok(Classification::Decided(side)),
+        Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        Classification::Decided(None) | Classification::Uncertain(_) => {}
+    }
     let [ux, uy] = match common_point_displacement(end, start, policy)? {
         Classification::Decided(forms) => forms,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1031,7 +1107,7 @@ pub(crate) fn point_rational_form_parameter(
     }
 }
 
-fn recursive_rational_value(
+pub(super) fn recursive_rational_value(
     source: &CurvePoint2,
     numerator: &BivariatePolynomial,
     denominator: &BivariatePolynomial,

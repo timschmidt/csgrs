@@ -327,6 +327,29 @@ fn join_native<C: SelectedAlgebraContext>(
     }
     let (sources, first_axes, second_axes) =
         recursive_quadratic_source_union(&first_base.sources, &second_base.sources);
+    // Reuse the admitted base when the union adds no source axis. Rebuilding
+    // an identical base here would destroy the first polynomial tower's
+    // ancestry, forcing later consumption of an original operand to append
+    // its generators again. Foreign radicals still use their exact embedding;
+    // a genuinely new native radical may require rebuilding the polynomial path.
+    if sources == first_base.sources && first_axes.iter().copied().eq(0..sources.len()) {
+        let (joined, foreign) = require_native(
+            recursive_embed_foreign_field(
+                second,
+                first_base.clone(),
+                second_axes,
+                first.clone(),
+                policy,
+            )
+            .map_err(SelectedPolynomialError::Context)?,
+        )?;
+        let map = NativeEmbedding {
+            source: second.clone(),
+            target: joined.clone(),
+            map: NativeMap::Foreign(foreign),
+        };
+        return Ok((joined, vec![map]));
+    }
     let embed_speed = |polynomial| {
         dense_tensor_embed_axes(polynomial, sources.len(), &first_axes)
             .and_then(|polynomial| dense_reduce_selected_tuple_relations(polynomial, &sources))

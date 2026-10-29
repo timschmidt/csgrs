@@ -127,16 +127,43 @@ impl CurvePointRationalForm2 {
                 )
                 .map(|sign| sign.map(sign_order));
             }
-            let first = match self.parameter(policy)? {
+            let first = match self.parameter_with_policy(policy)? {
                 Classification::Decided(value) => value,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            let second = match other.parameter(policy)? {
+            let second = match other.parameter_with_policy(policy)? {
                 Classification::Decided(value) => value,
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
             first.cmp_by_refinement(&second, policy)
         })
+    }
+
+    /// Retains this rational value as a source-bound exact scalar parameter.
+    ///
+    /// The original point and denominator remain available for native replay.
+    /// A zero denominator stays invalid even if algebraic cancellation is possible.
+    pub fn parameter(&self) -> ExactCurveResult<crate::CurveParameter2> {
+        resolve(CurveOperation2::Evaluation, |policy| {
+            crate::selected_query_scalar::SelectedQueryScalar2::replay(
+                crate::bezier_offset::PointFormSource2::new(
+                    self.source.clone(),
+                    self.numerator.clone(),
+                    self.denominator.clone(),
+                ),
+                policy,
+            )
+            .map(|value| value.map(crate::CurveParameter2::from_polynomial_query))
+        })
+    }
+
+    pub(crate) fn retained_query(source: crate::bezier_offset::PointFormSource2) -> Self {
+        Self {
+            source: source.source,
+            numerator: source.numerator,
+            denominator: source.denominator,
+            operands: None,
+        }
     }
 
     /// Returns a conservative exact enclosure, with no promised width.
@@ -145,7 +172,7 @@ impl CurvePointRationalForm2 {
     /// The enclosure never replaces that source or becomes point authority.
     pub fn bounds(&self) -> ExactCurveResult<(Real, Real)> {
         resolve(CurveOperation2::Evaluation, |policy| {
-            Ok(match self.parameter(policy)? {
+            Ok(match self.parameter_with_policy(policy)? {
                 Classification::Decided(parameter) => match parameter.scalar_bounds() {
                     Some((lower, upper)) => Classification::Decided((lower.clone(), upper.clone())),
                     None => Classification::Uncertain(crate::UncertaintyReason::Unsupported),
@@ -155,7 +182,7 @@ impl CurvePointRationalForm2 {
         })
     }
 
-    fn parameter(
+    fn parameter_with_policy(
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::CurveParameter2>> {

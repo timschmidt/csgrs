@@ -1,5 +1,17 @@
 # Selected geometry in archive version 14
 
+The additive `RationalQueryPair` planar-point record stores both original point
+sources and their two numerator/denominator pairs. `RationalForm` selected
+parameters retain one point and their original numerator and denominator.
+Hypercurve replays the selected fields and checks every original guard before
+publishing geometry; HyperBRep does not reconstruct independent coordinates.
+Input admission counts both nested point records, every stored polynomial
+axis degree, coefficient and row header before scalar decoding. Older version-14
+readers reject these new variants; existing record encodings are unchanged.
+The named query archive tests cover cold replay, re-export, further subdivision,
+invalid guards/selectors and inclusive metadata limits with larger retries.
+These are planar point/pcurve capabilities, not general solid closure.
+
 The additive `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
 exact root witness. Replay checks the singleton in that same selected field;

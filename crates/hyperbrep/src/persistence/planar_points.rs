@@ -33,6 +33,11 @@ pub(super) enum RawPlanarPoint {
         source: Box<RawPlanarPoint>,
         map: RawRationalMap,
     },
+    RationalQueryPair {
+        sources: Box<[RawPlanarPoint; 2]>,
+        numerators: [Vec<Vec<Real>>; 2],
+        denominators: [Vec<Vec<Real>>; 2],
+    },
     PolynomialFiber {
         equation: Vec<Vec<Real>>,
         parameter: RawParameter,
@@ -81,6 +86,18 @@ impl GraphEncoder {
             CurvePointDefinition2::RationalImage { source, map } => RawPlanarPoint::RationalImage {
                 source: Box::new(self.planar_point(&source)?),
                 map: RawRationalMap::from_map(&map),
+            },
+            CurvePointDefinition2::RationalQueryPair {
+                sources,
+                numerators,
+                denominators,
+            } => RawPlanarPoint::RationalQueryPair {
+                sources: Box::new([
+                    self.planar_point(&sources[0])?,
+                    self.planar_point(&sources[1])?,
+                ]),
+                numerators: numerators.map(|p| p.coefficients),
+                denominators: denominators.map(|p| p.coefficients),
             },
             CurvePointDefinition2::PolynomialFiber {
                 equation,
@@ -174,6 +191,18 @@ impl SelectionGraph {
                 source: self.planar_point(*source)?,
                 map: map.into_map(),
             },
+            RawPlanarPoint::RationalQueryPair {
+                sources,
+                numerators,
+                denominators,
+            } => {
+                let [first, second] = *sources;
+                CurvePointDefinition2::RationalQueryPair {
+                    sources: [self.planar_point(first)?, self.planar_point(second)?],
+                    numerators: numerators.map(hypersolve::BivariatePolynomial::new),
+                    denominators: denominators.map(hypersolve::BivariatePolynomial::new),
+                }
+            }
             RawPlanarPoint::PolynomialFiber {
                 equation,
                 parameter,

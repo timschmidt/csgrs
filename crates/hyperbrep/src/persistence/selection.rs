@@ -33,6 +33,11 @@ pub(super) enum RawPointSource {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawSelection {
+    RationalForm {
+        point: Box<RawPlanarPoint>,
+        numerator: Vec<Vec<Real>>,
+        denominator: Vec<Vec<Real>>,
+    },
     AffineForm {
         point: Box<RawPlanarPoint>,
         coefficients: [Real; 3],
@@ -92,6 +97,16 @@ impl GraphEncoder {
         &mut self,
         parameter: &hypercurve::CurveParameter2,
     ) -> Result<RawParameter, PersistenceError> {
+        if let Some(form) = parameter.rational_form_source() {
+            let point = Box::new(self.planar_point(form.source())?);
+            return Ok(RawParameter::Selected(self.selection(
+                RawSelection::RationalForm {
+                    point,
+                    numerator: form.numerator().coefficients.clone(),
+                    denominator: form.denominator().coefficients.clone(),
+                },
+            )?));
+        }
         if let Some(form) = parameter.affine_form_source() {
             let point = Box::new(self.planar_point(form.source())?);
             return Ok(RawParameter::Selected(self.selection(
@@ -286,6 +301,19 @@ impl SelectionGraph {
                         .map_err(GeometryError::from)?
                         .into()
                 }
+                RawSelection::RationalForm {
+                    point,
+                    numerator,
+                    denominator,
+                } => graph
+                    .planar_point(*point)?
+                    .rational_form(
+                        hypersolve::BivariatePolynomial::new(numerator),
+                        hypersolve::BivariatePolynomial::new(denominator),
+                    )
+                    .map_err(GeometryError::from)?
+                    .parameter()
+                    .map_err(GeometryError::from)?,
                 RawSelection::AffineForm {
                     point,
                     coefficients: [a, b, c],

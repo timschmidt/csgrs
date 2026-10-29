@@ -382,8 +382,17 @@ impl Record for Surface {
 
 #[derive(Deserialize)]
 pub(super) enum Selection {
-    AffineForm { point: Box<PlanarPoint> },
-    Root { polynomial: Count },
+    RationalForm {
+        point: Box<PlanarPoint>,
+        numerator: Rows,
+        denominator: Rows,
+    },
+    AffineForm {
+        point: Box<PlanarPoint>,
+    },
+    Root {
+        polynomial: Count,
+    },
     Image(IgnoredAny),
 }
 impl Record for Selection {
@@ -392,6 +401,19 @@ impl Record for Selection {
             Self::Root { polynomial } => {
                 budget.degree(polynomial.0.saturating_sub(1))?;
                 budget.geometry(polynomial.0)?;
+            }
+            Self::RationalForm {
+                point,
+                numerator,
+                denominator,
+            } => {
+                budget.record()?;
+                point.admit(budget)?;
+                for polynomial in [numerator, denominator] {
+                    budget.degree(polynomial.rows.saturating_sub(1))?;
+                    budget.degree(polynomial.columns.saturating_sub(1))?;
+                    budget.geometry(polynomial.entries())?;
+                }
             }
             Self::AffineForm { point } => {
                 budget.record()?;
@@ -466,6 +488,11 @@ impl Record for RationalMap {
 
 #[derive(Deserialize)]
 pub(super) enum PlanarPoint {
+    RationalQueryPair {
+        sources: Box<[PlanarPoint; 2]>,
+        numerators: [Rows; 2],
+        denominators: [Rows; 2],
+    },
     RationalImage {
         source: Box<PlanarPoint>,
         map: RationalMap,
@@ -500,6 +527,22 @@ pub(super) enum PlanarPoint {
 impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::RationalQueryPair {
+                sources,
+                numerators,
+                denominators,
+            } => {
+                for source in *sources {
+                    budget.record()?;
+                    source.admit(budget)?;
+                }
+                for polynomial in numerators.into_iter().chain(denominators) {
+                    budget.degree(polynomial.rows.saturating_sub(1))?;
+                    budget.degree(polynomial.columns.saturating_sub(1))?;
+                    budget.geometry(polynomial.entries())?;
+                }
+                Ok(())
+            }
             Self::RationalImage { source, map } => {
                 budget.record()?;
                 source.admit(budget)?;

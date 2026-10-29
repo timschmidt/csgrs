@@ -2307,6 +2307,82 @@ queries, circle differentials, rational point images and the later region,
 compound replay, contact and corner increments are excluded from this candidate.
 The full exact-closure plan and outstanding capability gaps remain open.
 
+**Selected polynomial point and parameter increment (2026-10-28).**
+The independent cubic-root query sum now composes in a shared selected field.
+Hypercurve retains both original point queries, selected roots and denominator
+guards; Hypersolve remains the field, sign, join and enclosure authority. The
+new parameter carrier feeds affine charts, rational evaluation, restriction,
+reversal and subdivision without reconstructing independent coordinates.
+Native point/query records replay original sources and guards, including unused
+records. HyperBRep stores these points and rational parameter recipes through
+the same planar authority, counting nested sources and polynomial metadata before
+scalar decoding. Public model witnesses cover cold replay, further subdivision,
+forged guards/selectors and inclusive admission limits with larger retries. Query parameters retain their declared authority after reload,
+so the original-fiber restriction can be saved again. Display sampling consumes checked
+enclosures while exact definitions remain authoritative. Exhausted query
+refinement retains its typed cause through the SVG projection boundary.
+
+The original native point chain initially hit an external 300-second timeout;
+this was not typed geometric exhaustion. A reproduced scalar witness showed
+that an unchanged native source union rebuilt polynomial ancestors. Reusing the
+first native base through the existing foreign-field embedding preserves those
+ancestors when no new radical is introduced. The original point chain and both
+scalar ancestry witnesses now complete. Strict downstream Clippy also caught
+avoidable inline scalar growth. Sharing that immutable scalar behind Arc reduces
+CurveParameter2 from 216 to 56 bytes and its range from 432 to 112 on x86_64 with
+Rust 1.98.1. This does not measure retained heap or execution time. Concurrent
+qualification timings are not performance claims.
+
+Full-suite review also reproduced regressions in two unchanged fillet cases,
+a chamfer-fillet-Boolean composition and a selected-quintic Boolean fixture.
+Native orientation and circle residuals now use their established field
+authority before general query pairing. Query-pair alignment consumes its
+common field before optional coordinate equality, retaining equality as a
+fallback. All four earlier cases and the ten original generated-line cases are included
+in the 30-group focused run, together with the three projective-gauge fixtures
+and four reproduced full-suite regressions. Reversed support intersections now
+transport their tangent sign before positive-weight normalization; cardinal
+imports retain their actual gauge sign. The opposite-fiber capability migration
+preserves the original fixture and requires stronger exact equations, separate
+selectors, policy certainty and replay. Shared scalar, finite and batched chord dispatch
+consumes existing certified cardinal-support evidence before the general
+determinant; original overlap, restriction and reversal retain their meaning.
+Matched parent/candidate/fix observations and the interrupted runs remain
+archived; external timeouts are not typed geometry exhaustion or completion.
+
+The focused witnesses cover the independent cubic-sum polynomial, equal roots,
+2^-160-separated roots, a dependent degree-21 coordinate, original denominator
+failures, exact policy transitions and transforms, rational evaluation, cold
+native replay and further arithmetic. A retained parabola restriction completes
+save/reload, reversal, split and another save/reload in a fresh process.
+Malformed references, original guards, depth/promotion/refinement refusal and
+larger retries remain explicit. Complementary enclosures preserve exact bounds.
+
+All 24 affected qualification groups pass: full solver release
+(1,269 passed, 0 ignored),
+minimal solver tests (1,266 passed), full
+Hypercurve (2,950 passed,
+34 ignored), CSGRS
+(691 passed, 7 ignored),
+six downstream consumer suites, strict MSRV lint, minimal checks, denied-warning
+docs, fuzz-target lint, allocation profiling, the capability matrix and hygiene.
+The archive docs/evidence/2026-10-28-hypercurve-closure-selected-polynomial-points, SHA-256 cf7d597a8f89561195e6748497e678ad3c34a0a3635ce9741df6ff3f5886631b, retains source snapshots, commands,
+logs, original baseline/review failures and the completed witnesses. The public
+point-definition/error additions and rational-parameter recipe API are documented
+in the changelog. HyperBRep documents its additive version-14 records; older
+readers reject new variants while existing record encodings remain unchanged.
+
+Shared promotion/refinement counts and native byte/depth limits do not bound
+total arithmetic, coefficient growth, memory, elapsed time or cancellation.
+Seven original polynomial region offset/corner operations still return
+Unsupported, with all three controls passing on this revision. Three original
+derivative success expectations also return Unsupported at generated query
+parameters; the represented-parameter and evaluation control passes. General
+query parameter derivatives and region/offset/corner closure remain open. No universal
+closure or performance claim is made; full pre-push qualification of this
+increment remains required. This entry supersedes earlier point-query and
+native-parameter gaps only for its demonstrated domain.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

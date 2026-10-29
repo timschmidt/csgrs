@@ -768,10 +768,20 @@ pub(super) fn recursive_projective_evidence_denominator_sign(
             }
             recursive_projective_evidence_denominator_sign(&point.data.source, policy)
         }
+        CurvePoint2(CurvePointData2::AlgebraicChordParallel(point)) => {
+            // Importing a cardinal displacement can reuse a translated
+            // authored algebraic point, including its signed weight. Match
+            // the exact representation chosen by the source importer.
+            if point.data.source.certified_axis_direction().is_some()
+                && let Some(cardinal) = point.strict_cardinal_point_evidence(policy)?
+            {
+                return recursive_projective_evidence_denominator_sign(&cardinal, policy);
+            }
+            Ok(Classification::Decided(RealSign::Positive))
+        }
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
         | CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
         | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
-        | CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
         | CurvePoint2(CurvePointData2::AnalyticParallel(_)) => {
             Ok(Classification::Decided(RealSign::Positive))
         }
@@ -1281,6 +1291,29 @@ pub(super) fn recursive_projective_evidence_points(
         represented.push(point);
     }
     Ok(Classification::Decided(Some(represented)))
+}
+
+/// Imports point evidence for predicates whose homogeneous formulas require
+/// positive denominators. Authored algebraic images can retain negative
+/// weights; transport their existing sign proof before consuming that formula.
+/// The raw importer remains available to consumers that handle signed gauges.
+pub(super) fn positive_recursive_projective_evidence_points(
+    evidence: &[&CurvePoint2],
+    policy: &CurveContext,
+) -> CurveResult<Classification<Option<Vec<BezierRecursiveQuadraticProjectivePoint2>>>> {
+    let points = match recursive_projective_evidence_points(evidence, policy)? {
+        Classification::Decided(Some(points)) => points,
+        other => return Ok(other),
+    };
+    let mut positive = Vec::with_capacity(points.len());
+    for (point, evidence) in points.into_iter().zip(evidence) {
+        let sign = match recursive_projective_evidence_denominator_sign(evidence, policy)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        positive.push(orient_recursive_projective_point_positive(point, sign)?);
+    }
+    Ok(Classification::Decided(Some(positive)))
 }
 
 /// Imports fixed affine points through their selected coordinate witnesses

@@ -1163,6 +1163,22 @@ fn finite_region_parameter_projection(
             },
         );
     }
+    if let Some(parameter) = parameter.as_polynomial_query() {
+        let refined = match parameter.refined(refinement_steps, policy)? {
+            Classification::Decided(refined) => refined,
+            Classification::Uncertain(reason) => {
+                return Err(CurveError::UncertainFiniteCurveProjection { reason });
+            }
+        };
+        let (lower, upper) = refined.isolating_bounds();
+        // This representative is only consumed by the finite display sampler.
+        // The selected query and its original guards remain authoritative.
+        return Ok(FiniteParameterProjection2 {
+            lower: lower.clone(),
+            value: ((lower + upper) / Real::from(2_u8))?,
+            upper: upper.clone(),
+        });
+    }
     if let Some(parameter) = parameter.as_recursive_projective() {
         return match parameter.finite_projection_interval(refinement_steps, policy)? {
             Classification::Decided((lower, value, upper)) => Ok(FiniteParameterProjection2 {
@@ -1212,8 +1228,14 @@ fn finite_retained_point(
             }
             _ => algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy),
         };
-        let Classification::Decided(bounds) = bounds else {
-            continue;
+        let bounds = match bounds {
+            Classification::Decided(bounds) => bounds,
+            Classification::Uncertain(crate::UncertaintyReason::BudgetExhausted) => {
+                return Err(CurveError::UncertainFiniteCurveProjection {
+                    reason: crate::UncertaintyReason::BudgetExhausted,
+                });
+            }
+            Classification::Uncertain(_) => continue,
         };
         let minimum = finite_point(bounds.min())?;
         let maximum = finite_point(bounds.max())?;
@@ -1996,6 +2018,89 @@ fn push_if_new(points: &mut Vec<[f64; 2]>, point: [f64; 2]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn selected_query_projection_keeps_enclosures_and_budget_failure() {
+        use hypersolve::work_budget::{WorkBudget, with_budget};
+        use hypersolve::{BivariatePolynomial, IsolatedRootInterval};
+        let point = |n: i32| {
+            crate::CurvePointDefinition2::PolynomialFiber {
+                equation: BivariatePolynomial::new(vec![
+                    vec![0.into(), 0.into(), 0.into(), 1.into()],
+                    vec![(-1).into()],
+                ]),
+                parameter: BezierParameter2::Exact(n.into()),
+                root: IsolatedRootInterval {
+                    lower: 1.into(),
+                    upper: 2.into(),
+                    exact_root: None,
+                    distinct_root_count: 1,
+                },
+            }
+            .into_point()
+            .unwrap()
+        };
+        let first = point(2);
+        let second = point(3);
+        let y = |point: &CurvePoint2| {
+            point
+                .rational_form(
+                    BivariatePolynomial::new(vec![vec![0.into(), 1.into()]]),
+                    BivariatePolynomial::new(vec![vec![1.into()]]),
+                )
+                .unwrap()
+        };
+        let value = y(&first)
+            .add(&y(&second))
+            .unwrap()
+            .scaled(&(Real::one() / Real::from(4)).unwrap())
+            .unwrap();
+        let Classification::Decided(parameter) =
+            crate::bezier_offset::point_rational_form_parameter(
+                value.source(),
+                value.numerator(),
+                value.denominator(),
+                &CurveContext::STRICT,
+            )
+            .unwrap()
+        else {
+            panic!("the exact selected query must be admitted");
+        };
+        let failed = with_budget(WorkBudget::ZERO, || {
+            assert!(matches!(
+                finite_region_parameter_projection(&parameter, 8, &CurveContext::STRICT),
+                Err(CurveError::UncertainFiniteCurveProjection {
+                    reason: crate::UncertaintyReason::BudgetExhausted,
+                })
+            ));
+        });
+        assert!(failed.result.is_err());
+        let projection =
+            finite_region_parameter_projection(&parameter, 8, &CurveContext::STRICT).unwrap();
+        assert_ne!(
+            value.compare_to_real(&projection.lower).unwrap(),
+            std::cmp::Ordering::Less
+        );
+        assert_ne!(
+            value.compare_to_real(&projection.upper).unwrap(),
+            std::cmp::Ordering::Greater
+        );
+        assert!(projection.value.to_f64_lossy().unwrap() > 0.5);
+        assert!(projection.value.to_f64_lossy().unwrap() < 0.75);
+        let complement = parameter.unit_complement().unwrap();
+        let complement_projection =
+            finite_region_parameter_projection(&complement, 8, &CurveContext::STRICT).unwrap();
+        assert_eq!(complement_projection.lower, Real::one() - projection.upper);
+        assert_eq!(complement_projection.upper, Real::one() - projection.lower);
+        assert_eq!(
+            complement
+                .unit_complement()
+                .unwrap()
+                .compare(&parameter)
+                .unwrap(),
+            std::cmp::Ordering::Equal
+        );
+    }
     use crate::QuadraticBezier2;
     use crate::{CubicBezier2, Curve2, LineSeg2};
 

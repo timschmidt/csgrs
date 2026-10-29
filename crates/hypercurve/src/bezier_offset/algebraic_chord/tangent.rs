@@ -10,17 +10,39 @@ impl BezierAlgebraicChord2 {
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::classify::LineSide>> {
-        if ![self.start(), self.end(), point]
-            .into_iter()
-            .any(|point| {
-                point_retains_joint_field(point)
-                    || matches!(&point.0, CurvePointData2::Endpoint(_) | CurvePointData2::Similarity(_))
-                    || matches!(&point.0, CurvePointData2::AlgebraicChordParallel(point) if point.data.source.certified_unit_tangent().is_some())
-            })
-        {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-        }
         policy.strict_predicate_pass(|| {
+            if let Some(direction) = self.certified_axis_direction()
+                && let Some(side) = self.axis_oriented_side(point, direction, policy)
+            {
+                // A construction-certified cardinal support needs one exact
+                // coordinate comparison. Independent coordinate boxes cannot
+                // recover equality of a selected constant ordinate.
+                match side {
+                    decided @ Classification::Decided(_) => {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-side-kernel",
+                            "cardinal-coordinate-precedence",
+                        );
+                        return Ok(decided);
+                    }
+                    exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        return Ok(exhausted);
+                    }
+                    Classification::Uncertain(_) => {}
+                }
+            }
+            if ![self.start(), self.end(), point]
+                .into_iter()
+                .any(|point| {
+                    point_retains_joint_field(point)
+                        || matches!(&point.0, CurvePointData2::Endpoint(_) | CurvePointData2::Similarity(_))
+                        || matches!(&point.0, CurvePointData2::AlgebraicChordParallel(point) if point.data.source.certified_unit_tangent().is_some())
+                })
+            {
+                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            }
             common_point_oriented_side(self.start(), self.end(), point, policy)
         })
     }
@@ -1955,20 +1977,6 @@ impl BezierAlgebraicChord2 {
                 return Ok(exhausted);
             }
             Classification::Uncertain(_) => {}
-        }
-        if let Some(direction) = self.certified_axis_direction()
-            && let Some(side) = self.axis_oriented_side(point, direction, policy)
-        {
-            // A construction-certified cardinal support needs one exact
-            // coordinate comparison. Independent coordinate boxes cannot
-            // recover equality of a selected constant ordinate.
-            match side {
-                decided @ Classification::Decided(_) => return Ok(decided),
-                exhausted @ Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
-                    return Ok(exhausted);
-                }
-                Classification::Uncertain(_) => {}
-            }
         }
         let procedural_point = matches!(
             point,

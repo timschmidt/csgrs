@@ -20,6 +20,7 @@ use crate::{BezierParameter2, Classification, CurveContext, CurveError, CurveRes
 #[derive(Clone, Debug)]
 pub(crate) enum SelectedScalar2 {
     Bezier(BezierParameter2),
+    Polynomial(std::sync::Arc<crate::selected_query_scalar::SelectedQueryScalar2>),
     SelectedFiber(BezierAlgebraicSelectedFiberParameter2),
     RecursiveProjective(BezierRecursiveProjectiveParameter2),
 }
@@ -28,6 +29,7 @@ impl PartialEq for SelectedScalar2 {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Bezier(first), Self::Bezier(second)) => first == second,
+            (Self::Polynomial(first), Self::Polynomial(second)) => first == second,
             (Self::SelectedFiber(first), Self::SelectedFiber(second)) => first == second,
             (Self::RecursiveProjective(first), Self::RecursiveProjective(second)) => {
                 first == second
@@ -42,7 +44,7 @@ impl SelectedScalar2 {
     pub(crate) fn scalar(&self) -> Option<&Real> {
         match self {
             Self::Bezier(parameter) => parameter.scalar(),
-            Self::SelectedFiber(_) | Self::RecursiveProjective(_) => None,
+            Self::Polynomial(_) | Self::SelectedFiber(_) | Self::RecursiveProjective(_) => None,
         }
     }
 
@@ -63,6 +65,7 @@ impl SelectedScalar2 {
                 policy,
             ),
             Self::RecursiveProjective(parameter) => parameter.polynomial_sign(coefficients, policy),
+            Self::Polynomial(parameter) => parameter.polynomial_sign(coefficients, policy),
         }
     }
 
@@ -73,6 +76,10 @@ impl SelectedScalar2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Ordering>> {
         match (self, other) {
+            (Self::Polynomial(first), second) => first.compare(second, policy),
+            (first, Self::Polynomial(second)) => {
+                Ok(second.compare(first, policy)?.map(Ordering::reverse))
+            }
             (Self::Bezier(first), Self::Bezier(second)) => {
                 first.cmp_by_refinement_with_policy(second, policy)
             }
@@ -106,6 +113,9 @@ impl SelectedScalar2 {
     pub(crate) fn unit_complement(&self) -> Self {
         match self {
             Self::Bezier(parameter) => Self::Bezier(parameter.unit_complement()),
+            Self::Polynomial(parameter) => {
+                Self::Polynomial(std::sync::Arc::new(parameter.unit_complement()))
+            }
             Self::SelectedFiber(parameter) => Self::SelectedFiber(parameter.unit_complement()),
             Self::RecursiveProjective(parameter) => {
                 Self::RecursiveProjective(parameter.unit_complement())
@@ -122,6 +132,7 @@ impl SelectedScalar2 {
                 (parameter.interval().start(), parameter.interval().end())
             }
             Self::SelectedFiber(parameter) => parameter.isolating_bounds(),
+            Self::Polynomial(parameter) => parameter.isolating_bounds(),
             Self::RecursiveProjective(parameter) => parameter.isolating_bounds(),
         }
     }
@@ -133,6 +144,9 @@ impl SelectedScalar2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
+            Self::Polynomial(parameter) => Ok(parameter
+                .refined(refinement_steps, policy)?
+                .map(|value| Self::Polynomial(std::sync::Arc::new(value)))),
             Self::Bezier(parameter) => Ok(Classification::Decided(Self::Bezier(
                 parameter
                     .clone()
@@ -156,6 +170,9 @@ impl SelectedScalar2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
+            Self::Polynomial(parameter) => Ok(parameter
+                .affine_image_unbounded(scale, offset, policy)?
+                .map(|value| Self::Polynomial(std::sync::Arc::new(value)))),
             Self::Bezier(parameter) => Ok(parameter
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::Bezier)),
@@ -177,6 +194,9 @@ impl SelectedScalar2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         match self {
+            Self::Polynomial(parameter) => Ok(parameter
+                .projective_image_unbounded(numerator, denominator, policy)?
+                .map(|value| Self::Polynomial(std::sync::Arc::new(value)))),
             Self::Bezier(parameter) => Ok(parameter
                 .projective_image_unbounded(numerator, denominator, policy)?
                 .map(Self::Bezier)),
@@ -197,6 +217,7 @@ impl SelectedScalar2 {
     ) -> CurveResult<Classification<BezierParameter2>> {
         match self {
             Self::Bezier(parameter) => Ok(Classification::Decided(parameter.clone())),
+            Self::Polynomial(parameter) => parameter.promoted_bezier_parameter_complete(policy),
             Self::SelectedFiber(parameter) => parameter.promoted_bezier_parameter_complete(policy),
             Self::RecursiveProjective(parameter) => {
                 parameter.promoted_bezier_parameter_complete(policy)

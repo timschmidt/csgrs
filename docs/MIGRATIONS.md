@@ -155,6 +155,19 @@ remain an open migration target.
 
 These changes alter represented sets, coordinates, file lengths or checksums.
 
+- **Shared selected-point queries (2026-10-29).** Independent rational queries
+  over admitted selected fields can now compose exactly while preserving each
+  original selector and denominator guard. Callers that previously handled
+  `Blocked(Unsupported)` for different selectors may receive certified results;
+  opposite roots remain distinct. `CurvePointDefinition2::RationalQueryPair`
+  and `CurveError::UncertainFiniteCurveProjection` require new exhaustive-match
+  arms. Native SVG graph tags 26 and 27 retain query-pair points and source-bound
+  query parameters. Older readers reject these tags; existing records keep
+  their encoding. HyperBRep archives retain the corresponding source recipes.
+  Replay validates source references, selectors and original guards, including
+  unused definitions. This capability does not complete general algebraic
+  region operations or their resource envelope.
+
 - **Rational images of selected rational-curve points (2026-10-27).**
   `CurvePoint2::rational_image` accepts native selected rational-curve point
   images and repeated rational maps. Each immutable image shares its original

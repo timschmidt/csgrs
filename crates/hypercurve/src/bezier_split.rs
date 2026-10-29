@@ -141,6 +141,21 @@ impl CurveParameter2 {
         }
     }
 
+    pub(crate) fn from_polynomial_query(
+        parameter: crate::selected_query_scalar::SelectedQueryScalar2,
+    ) -> Self {
+        Self::from_selected_scalar(SelectedScalar2::Polynomial(std::sync::Arc::new(parameter)))
+    }
+
+    pub(crate) fn as_polynomial_query(
+        &self,
+    ) -> Option<&crate::selected_query_scalar::SelectedQueryScalar2> {
+        match &self.data {
+            CurveParameterData2::Scalar(SelectedScalar2::Polynomial(parameter)) => Some(parameter),
+            _ => None,
+        }
+    }
+
     pub(crate) fn from_selected_fiber(parameter: BezierAlgebraicSelectedFiberParameter2) -> Self {
         Self::from_selected_scalar(SelectedScalar2::SelectedFiber(parameter))
     }
@@ -271,7 +286,9 @@ impl CurveParameter2 {
         matches!(
             self.data,
             CurveParameterData2::Scalar(
-                SelectedScalar2::SelectedFiber(_) | SelectedScalar2::RecursiveProjective(_)
+                SelectedScalar2::Polynomial(_)
+                    | SelectedScalar2::SelectedFiber(_)
+                    | SelectedScalar2::RecursiveProjective(_)
             )
         )
     }

@@ -204,19 +204,50 @@ pub fn different_fiber_selectors_do_not_merge() {
         .into_point()
         .unwrap()
     };
-    let negative = point(q(-3, 4), q(-1, 2));
-    let positive = point(q(1, 2), q(3, 4));
-    let result = form(&negative, y()).multiply(&form(&positive, y()));
-    assert!(
-        matches!(result,Err(ExactCurveError::Blocked(ref b)) if b.reason()==UncertaintyReason::Unsupported)
-    );
-    // Constant values can enter either field without identifying the roots.
-    equal(
-        &form(&negative, one())
-            .multiply(&form(&positive, one()))
-            .unwrap(),
-        1.into(),
-    );
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let result = evaluate_under(policy, || {
+            let negative = point(q(-3, 4), q(-1, 2));
+            let positive = point(q(1, 2), q(3, 4));
+            assert!(!negative.coincides_with(&positive).unwrap());
+            let a = form(&negative, y());
+            let b = form(&positive, y());
+            assert_eq!(a.compare_to_real(&Real::zero()).unwrap(), Ordering::Less);
+            assert_eq!(b.compare_to_real(&Real::zero()).unwrap(), Ordering::Greater);
+            // The separately selected roots are -sqrt(u) and +sqrt(u),
+            // with u positive and u^2=1/8. Joining fields must preserve
+            // both selections: their product is -u, never +u.
+            let product = a.multiply(&b).unwrap();
+            assert_eq!(
+                product.compare_to_real(&Real::zero()).unwrap(),
+                Ordering::Less
+            );
+            equal(&product.multiply(&product).unwrap(), q(1, 8));
+            equal(&product.add(&form(&negative, x())).unwrap(), Real::zero());
+            equal(&a.add(&b).unwrap(), Real::zero());
+            let (left, right) = product.operands().unwrap();
+            assert!(left.source().coincides_with(&negative).unwrap());
+            assert!(right.source().coincides_with(&positive).unwrap());
+            assert!(!left.source().coincides_with(right.source()).unwrap());
+            let source = product.source().definition().unwrap().into_point().unwrap();
+            let replayed = source
+                .rational_form(product.numerator().clone(), product.denominator().clone())
+                .unwrap();
+            equal(&replayed.add(&form(&negative, x())).unwrap(), Real::zero());
+            equal(&replayed.multiply(&replayed).unwrap(), q(1, 8));
+            // Constants still enter either field without identifying roots.
+            equal(
+                &form(&negative, one())
+                    .multiply(&form(&positive, one()))
+                    .unwrap(),
+                1.into(),
+            );
+        });
+        assert_eq!(result.certainty(), CurveCertainty::Certified);
+    }
 }
 
 pub fn policy_budget_and_finite_composition_recover() {

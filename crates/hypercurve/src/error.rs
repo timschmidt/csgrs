@@ -138,6 +138,9 @@ impl ExactCurveError {
             CurveError::UnsupportedFiniteCurveProjection { family } => {
                 Self::blocked(operation, family, UncertaintyReason::Unsupported)
             }
+            CurveError::UncertainFiniteCurveProjection { reason } => {
+                Self::blocked(operation, family, reason)
+            }
             CurveError::IncompatiblePredicatePolicy => {
                 Self::blocked(operation, family, UncertaintyReason::Predicate)
             }
@@ -154,6 +157,9 @@ impl ExactCurveError {
         match cause {
             CurveError::UnsupportedFiniteCurveProjection { family } => {
                 Self::blocked(operation, family, UncertaintyReason::Unsupported)
+            }
+            CurveError::UncertainFiniteCurveProjection { reason } => {
+                Self::blocked_unattributed(operation, reason)
             }
             CurveError::IncompatiblePredicatePolicy => {
                 Self::blocked_unattributed(operation, UncertaintyReason::Predicate)
@@ -405,6 +411,11 @@ pub enum CurveError {
         /// Exact family whose geometry is retained without a sampled result.
         family: CurveFamily2,
     },
+    /// A finite display projection could not certify a required exact enclosure.
+    UncertainFiniteCurveProjection {
+        /// Predicate uncertainty or an actually exhausted shared work budget.
+        reason: UncertaintyReason,
+    },
     /// Edge-preview tolerances are negative or non-finite.
     InvalidPreviewOptions,
     /// Retained import record metadata is inconsistent or non-finite.
@@ -452,6 +463,12 @@ impl fmt::Display for CurveError {
         match self {
             Self::UnsupportedFiniteCurveProjection { family } => {
                 write!(f, "finite curve projection is unsupported for {family:?}")
+            }
+            Self::UncertainFiniteCurveProjection { reason } => {
+                write!(
+                    f,
+                    "finite curve projection could not be certified: {reason:?}"
+                )
             }
             Self::IncompatiblePredicatePolicy => {
                 write!(

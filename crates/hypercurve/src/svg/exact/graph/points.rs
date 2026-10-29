@@ -17,6 +17,8 @@ pub(super) const SUPPORTING_LINE_POINT: u8 = 17;
 pub(super) const CHORD_DISPLACEMENT: u8 = 18;
 pub(super) const DISPLACEMENT_POINT: u8 = 19;
 pub(super) const CHORD_UNIT_TANGENT: u8 = 25;
+pub(super) const RATIONAL_QUERY_PAIR: u8 = 26;
+pub(super) const QUERY_PARAMETER: u8 = 27;
 
 fn depth_overflow() -> SvgError {
     SvgError::SizeOverflow {
@@ -53,11 +55,32 @@ impl GraphWriter {
         Ok(index)
     }
 
-    fn point_parameter(&mut self, parameter: &crate::CurveParameter2) -> SvgResult<u32> {
-        let parameter = parameter.as_bezier_parameter().ok_or_else(|| {
-            SvgError::Unsupported("exact point replay requires a retained Bezier parameter".into())
+    pub(super) fn scalar_parameter(
+        &mut self,
+        parameter: &crate::CurveParameter2,
+    ) -> SvgResult<u32> {
+        if let Some(parameter) = parameter.as_bezier_parameter() {
+            return self.parameter(parameter);
+        }
+        let query = parameter.as_polynomial_query().ok_or_else(|| {
+            SvgError::Unsupported(
+                "exact parameter replay requires a retained source definition".into(),
+            )
         })?;
-        self.parameter(parameter)
+        let key = query.replay_storage_key();
+        if let Some((_, index)) = self.query_parameters.get(&key) {
+            return Ok(*index);
+        }
+        let form = query.query();
+        let source = self.point(&form.source)?;
+        let depth = next_depth(self.point_depths[source as usize], self.max_point_depth)?;
+        let index = self.begin(QUERY_PARAMETER)?;
+        self.writer.write_u32(source)?;
+        self.polynomial(&form.numerator)?;
+        self.polynomial(&form.denominator)?;
+        self.point_depths[index as usize] = depth;
+        self.query_parameters.insert(key, (query.clone(), index));
+        Ok(index)
     }
 
     pub(super) fn point(&mut self, point: &CurvePoint2) -> SvgResult<u32> {
@@ -92,6 +115,14 @@ impl GraphWriter {
                         Vec::new()
                     } else {
                         match &definition {
+                            CurvePointDefinition2::Rational { parameter, .. }
+                            | CurvePointDefinition2::Parallel { parameter, .. } => parameter
+                                .as_polynomial_query()
+                                .map(|query| vec![query.query().source])
+                                .unwrap_or_default(),
+                            CurvePointDefinition2::RationalQueryPair { sources, .. } => {
+                                sources.to_vec()
+                            }
                             CurvePointDefinition2::RationalImage { source, .. }
                             | CurvePointDefinition2::Similarity { source, .. } => {
                                 vec![source.clone()]
@@ -176,7 +207,8 @@ impl GraphWriter {
                 }
                 CurvePointDefinition2::Rational { source, parameter } => {
                     let source = self.point_source(&source)?;
-                    let parameter = self.point_parameter(&parameter)?;
+                    let parameter = self.scalar_parameter(&parameter)?;
+                    depth = self.point_depths[parameter as usize];
                     let index = self.begin(RATIONAL_POINT)?;
                     self.writer.write_u32(source)?;
                     self.writer.write_u32(parameter)?;
@@ -198,7 +230,8 @@ impl GraphWriter {
                 }
                 CurvePointDefinition2::Parallel { source, parameter } => {
                     let source = self.parallel(&source)?;
-                    let parameter = self.point_parameter(&parameter)?;
+                    let parameter = self.scalar_parameter(&parameter)?;
+                    depth = self.point_depths[parameter as usize];
                     let index = self.begin(PARALLEL_POINT)?;
                     self.writer.write_u32(source)?;
                     self.writer.write_u32(parameter)?;
@@ -218,6 +251,34 @@ impl GraphWriter {
                     self.writer.write_bool(root.exact_root.is_some())?;
                     if let Some(exact) = root.exact_root {
                         self.writer.write_real(&exact)?;
+                    }
+                    index
+                }
+                CurvePointDefinition2::RationalQueryPair {
+                    sources,
+                    numerators,
+                    denominators,
+                } => {
+                    let sources = sources
+                        .each_ref()
+                        .map(|source| self.point_index(source))
+                        .into_iter()
+                        .collect::<SvgResult<Vec<_>>>()?;
+                    depth = next_depth(
+                        sources
+                            .iter()
+                            .map(|source| self.point_depths[*source as usize])
+                            .max()
+                            .unwrap_or(0),
+                        self.max_point_depth,
+                    )?;
+                    let index = self.begin(RATIONAL_QUERY_PAIR)?;
+                    for ((source, numerator), denominator) in
+                        sources.into_iter().zip(numerators).zip(denominators)
+                    {
+                        self.writer.write_u32(source)?;
+                        self.polynomial(&numerator)?;
+                        self.polynomial(&denominator)?;
                     }
                     index
                 }
@@ -419,6 +480,24 @@ pub(super) fn read_definition(
     max_point_depth: usize,
 ) -> SvgResult<(Definition, usize)> {
     let mut depth = 0;
+    if tag == QUERY_PARAMETER {
+        let index = reader.read_len()?;
+        let source = point_reference(definitions, index)?;
+        let numerator = read_polynomial(reader)?;
+        let denominator = read_polynomial(reader)?;
+        let depth = next_depth(point_depths[index], max_point_depth)?;
+        // Replay the declared query authority even when an older scalar
+        // specialization could evaluate it. Otherwise its source/guard recipe
+        // can be lost and the imported restriction may cease to be exportable.
+        let parameter = certified(crate::selected_query_scalar::SelectedQueryScalar2::replay(
+            crate::bezier_offset::PointFormSource2::new(source.clone(), numerator, denominator),
+            &CurveContext::STRICT,
+        ))?;
+        return Ok((
+            Definition::QueryParameter(crate::CurveParameter2::from_polynomial_query(parameter)),
+            depth,
+        ));
+    }
     let point = match tag {
         CHORD_UNIT_TANGENT => {
             let source = reader.read_len()?;
@@ -468,9 +547,12 @@ pub(super) fn read_definition(
             };
             CurvePointDefinition2::Rational {
                 source: source.clone(),
-                parameter: parameter_reference(definitions, reader.read_len()?)?
-                    .clone()
-                    .into(),
+                parameter: {
+                    let index = reader.read_len()?;
+                    let parameter = scalar_parameter_reference(definitions, index)?;
+                    depth = point_depths[index];
+                    parameter
+                },
             }
         }
         RATIONAL_EXPRESSION => CurvePointDefinition2::RationalExpression {
@@ -485,9 +567,12 @@ pub(super) fn read_definition(
             };
             CurvePointDefinition2::Parallel {
                 source: source.clone(),
-                parameter: parameter_reference(definitions, reader.read_len()?)?
-                    .clone()
-                    .into(),
+                parameter: {
+                    let index = reader.read_len()?;
+                    let parameter = scalar_parameter_reference(definitions, index)?;
+                    depth = point_depths[index];
+                    parameter
+                },
             }
         }
         POLYNOMIAL_FIBER => {
@@ -511,6 +596,23 @@ pub(super) fn read_definition(
                     // the archive cannot supply a trusted root-count flag.
                     distinct_root_count: 1,
                 },
+            }
+        }
+        RATIONAL_QUERY_PAIR => {
+            let mut sources = Vec::with_capacity(2);
+            let mut numerators = Vec::with_capacity(2);
+            let mut denominators = Vec::with_capacity(2);
+            for _ in 0..2 {
+                let index = reader.read_len()?;
+                sources.push(point_reference(definitions, index)?.clone());
+                depth = depth.max(next_depth(point_depths[index], max_point_depth)?);
+                numerators.push(read_polynomial(reader)?);
+                denominators.push(read_polynomial(reader)?);
+            }
+            CurvePointDefinition2::RationalQueryPair {
+                sources: sources.try_into().expect("two sources"),
+                numerators: numerators.try_into().expect("two numerators"),
+                denominators: denominators.try_into().expect("two denominators"),
             }
         }
         RATIONAL_IMAGE => {

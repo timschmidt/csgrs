@@ -20,6 +20,13 @@ pub enum CurvePointDefinition2 {
         parameter: BezierParameter2,
         root: hypersolve::IsolatedRootInterval,
     },
+    /// Two rational queries, each retaining its original point and pole guard.
+    /// Replay joins their selected fields; it never projects independent coordinates.
+    RationalQueryPair {
+        sources: [CurvePoint2; 2],
+        numerators: [hypersolve::BivariatePolynomial; 2],
+        denominators: [hypersolve::BivariatePolynomial; 2],
+    },
     /// A rational plane image with its original denominator guard.
     RationalImage {
         source: CurvePoint2,
@@ -231,6 +238,37 @@ impl CurvePointDefinition2 {
     fn replay(self, sources_checked: bool) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
+            Self::RationalQueryPair {
+                sources,
+                numerators,
+                denominators,
+            } => {
+                let mut queries = Vec::with_capacity(2);
+                for ((source, numerator), denominator) in
+                    sources.into_iter().zip(numerators).zip(denominators)
+                {
+                    let source = if sources_checked {
+                        source
+                    } else {
+                        source.definition()?.into_point()?
+                    };
+                    queries.push(crate::bezier_offset::PointFormSource2::new(
+                        source,
+                        numerator,
+                        denominator,
+                    ));
+                }
+                ExactCurveError::decided(
+                    CurveOperation2::Construction,
+                    crate::polynomial_point::PolynomialPoint2::from_queries(
+                        queries.try_into().expect("two queries"),
+                        policy,
+                    )
+                    .map_err(|cause| {
+                        ExactCurveError::invalid_unattributed(CurveOperation2::Construction, cause)
+                    })?,
+                )
+            }
             Self::RationalImage { source, map } => source.rational_image_with_policy(&map, policy),
             Self::PolynomialFiber {
                 equation,

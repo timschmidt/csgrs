@@ -11995,6 +11995,601 @@
         }
       ],
       "oracle": "The source quadratic cap has x=2t, y=2*h*t*(1-t), h=2^-1024 by the sine-addition identity, area 2*h/3>0 and interior point (1,h/4). The independent positive sign is checked after construction. Exact square controls have bounds [4,6]^2 and area4."
+    },
+    {
+      "id": "polynomial_query_composition",
+      "target": "selected_polynomial_points",
+      "test": "independent_polynomial_point_queries_compose_and_replay",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent positive roots a^3=2 and b^3=3, their sum and subsequent rational arithmetic.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The derived source retains both original point queries."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The sum lies between 2 and 3 and satisfies (s^3-5)^3=162s^3."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Point-definition replay preserves the sum value."
+        }
+      ],
+      "oracle": "Independently derived sum polynomial, exact strict inequalities and replay equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_equal_guards",
+      "target": "selected_polynomial_points",
+      "test": "independent_equal_selections_and_original_denominators_compose",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent equivalent cubic selections and a guarded reciprocal over the cube root of 3.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Independently selected equal roots have zero difference; multiplication retains the nonzero original guard."
+        }
+      ],
+      "oracle": "Exact zero difference and cancellation only after the original denominator is proved nonzero.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_evaluation",
+      "target": "selected_polynomial_points",
+      "test": "selected_query_parameters_feed_affine_and_rational_evaluation",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint cubic-root query parameters, affine charts and the rational quadratic C(t)=(t,t^2).",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Rational evaluation retains t as its x coordinate and proves y=x^2."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replayed point definition coincides with the evaluated point."
+        }
+      ],
+      "oracle": "Exact parameter equality, defining parabola relation and replay incidence.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_high_degree",
+      "target": "selected_polynomial_points",
+      "test": "mixed_algebraic_base_and_independent_fiber_keep_original_relations",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A positive degree-seven base a^7=2 with b^3=a joined to an independent cube root of 3.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The query pair retains the dependent and independent selections."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Coordinates satisfy x^21=2 and y^3=3."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Definition replay preserves the correlated point."
+        }
+      ],
+      "oracle": "Original dependent equations imply the independent degree-21 expectation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_invalid_guard",
+      "target": "selected_polynomial_points",
+      "test": "joint_query_replay_rejects_a_zero_original_guard",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A query-pair definition with a denominator identically zero on its selected source.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Replay rejects the original zero denominator before exposing a point."
+        }
+      ],
+      "oracle": "Typed ZeroRationalPointDenominator; no cancellation can remove the guard.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_budget_retry",
+      "target": "selected_polynomial_points",
+      "test": "independent_query_budget_refusal_does_not_poison_retry",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent cube-root query sum with zero admitted promotions, then a larger retry.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "An actually refused promotion is BudgetExhausted."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A subsequent unrestricted retry completes and proves the sum exceeds 2."
+        }
+      ],
+      "oracle": "Shared budget receipt, typed blocker and exact post-retry inequality. Counters do not bound total arithmetic or memory.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_native_cold",
+      "target": "selected_polynomial_points",
+      "test": "joint_point_native_replay_in_fresh_process_then_further_queries",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A generated line with joint cubic-root endpoints, native SVG replay in a fresh process and further arithmetic.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Both defining cubic relations, source guards and subsequent arithmetic survive cold replay."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The line endpoint retains its exact translated relation."
+        }
+      ],
+      "oracle": "Independent equations x^3=2 and y^3=3, translated endpoint equality, subsequent query cancellation and deterministic re-encoding.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_policy_transform",
+      "target": "selected_polynomial_points",
+      "test": "joint_queries_keep_certainty_across_policy_transitions_and_transforms",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Joint cubic-root points under STRICT, APPROXIMATE_512 and STRICT, exact transformation and definition replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Transformed queries preserve their defining exact relations."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The transformed point replays with Certified receipts under all three policies."
+        }
+      ],
+      "oracle": "Exact transformed relations, semantic point equality and consumed certainty receipts.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_restriction_replay",
+      "target": "selected_polynomial_points",
+      "test": "selected_query_restriction_reconstruction_and_native_replay",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "C(t)=(t,t^2) restricted at t=(cuberoot(2)+cuberoot(3))/4, cold SVG replay, reversal, split and another replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Endpoint parameters, parabola incidence and shared split connectivity remain exact."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Original and split restrictions replay and remain consumable in a fresh process."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Native definition-depth limit one is rejected on export and import."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The default-depth retry completes both native chains."
+        }
+      ],
+      "oracle": "Original parabola equation, exact parameter ordering/equality, endpoint incidence and typed configured-depth failure.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_nearby",
+      "target": "selected_polynomial_points",
+      "test": "nearby_polynomial_queries_remain_distinct_after_join_and_replay",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Positive cube roots of 2 and 2+2^-160, exact difference and query-pair replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The difference stays strictly positive and the cubes differ by exactly 2^-160."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replayed selected queries retain the same positive difference."
+        }
+      ],
+      "oracle": "Strict monotonicity of the positive cubic with exact input separation and original selected equations.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_native_invalid",
+      "target": "svg_point_replay",
+      "test": "rational_query_pair_records_replay_both_sources_and_original_guards",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Native query-pair records with typed, self/forward references and original denominator guards, including unused records.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Bad source references and a zero original denominator are rejected; the valid control imports."
+        }
+      ],
+      "oracle": "Manually authored native records with independently known reference types and zero guard.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_parameter_invalid",
+      "target": "svg_point_replay",
+      "test": "query_parameter_records_validate_references_guards_and_depth_before_use",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Native selected query-parameter records with invalid references/guards and zero definition-depth limit.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Bad references and zero original guards are rejected before use."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Depth zero rejects the valid dependent parameter record."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Default-depth replay succeeds after the refused attempt."
+        }
+      ],
+      "oracle": "Manually authored typed graph records, original denominator proof, exact configured-depth outcome and retry.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "polynomial_query_original_fiber_reexport",
+      "target": "svg_point_replay",
+      "test": "query_parameter_over_original_fiber_survives_reexport",
+      "owner": "Hypercurve selected query points, parameters and native replay; Hypersolve selected-field authority",
+      "properties": [
+        "P14",
+        "P15",
+        "P16",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Native query parameter t=cuberoot(2)/2 over one original polynomial fiber, restricted parabola C(t)=(t,t^2), re-export/reload and subdivision.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "RationalBezier",
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound rational queries with original nonzero guards and selected real branches. Claims cover only the named fixture; no general region, offset or corner completion.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The imported query retains its original authority and can be re-exported and reloaded."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "After replay, splitting retains a shared exact endpoint."
+        }
+      ],
+      "oracle": "Independently authored native records; exact y=x^2 and 4x^3=1, semantic endpoint equality and split connectivity.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "opposite_fiber_query_composition",
+      "target": "joint_form_arithmetic",
+      "test": "different_fiber_selectors_do_not_merge",
+      "owner": "Hypercurve source-bound rational queries and Hypersolve selected-field joins",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "u>0 with u^2=1/8 and separately selected opposite roots v^2=u; product, sum and point-definition replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "A formerly unsupported composition now returns certified exact arithmetic while retaining the two original distinct selectors. No general region or corner closure claim.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Both original operands and distinct selected-root sources remain identifiable."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The roots have opposite signs; their product is negative, its square is 1/8, the product plus u and the root sum are zero."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Point-definition replay retains those defining relations and further exact arithmetic."
+        }
+      ],
+      "oracle": "Independent equations v_minus*v_plus=-u, v_minus+v_plus=0 and u^2=1/8, checked through strict/approximate/strict policy transitions with certified receipts.",
+      "timeout_seconds": 180
     }
   ]
 }

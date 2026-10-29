@@ -108,6 +108,17 @@ dispatch; periodic axes retain their unbounded real semantics. Selected angular 
 images remain unsupported. Bounds retain the planar owner's representation
 limits. See the [surface evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation/README.md).
 
+Selected joint rational-query points and source-bound rational parameters retain
+both original selections and denominator guards in native point/pcurve archives.
+The [query archive witnesses](../tests/selected_query_archive.rs) cover a line
+with independent cubic-root endpoints, a rational parabola restriction, cold
+replay, re-export and further split/replay. Input admission counts nested query
+sources and all stored polynomial rows/coefficients before scalar decoding.
+These entries extend [the version-14 record grammar](SELECTED_ARCHIVE.md);
+qualification and remaining derivative/region gaps are recorded in the linked
+[Hypercurve execution ledger](../../hypercurve/FUTURE_WORK.md). They do not
+establish general spatial intersection or solid closure.
+
 ## Spatial curve carriers
 
 Procedural analytic-parallel pcurves replay quadratic/cubic/homogeneous rational

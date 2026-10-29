@@ -696,10 +696,11 @@ impl BezierAlgebraicChordPairPoint2 {
             // Reuse a common or ancestral exact field when one exists, but
             // keep divergent descendants out of both APPROXIMATE_512 passes;
             // native support determinants below own the terminal decision.
-            policy
-                .strict_predicate_pass(|| recursive_projective_evidence_points(&endpoints, policy))
+            policy.strict_predicate_pass(|| {
+                positive_recursive_projective_evidence_points(&endpoints, policy)
+            })
         } else {
-            recursive_projective_evidence_points(&endpoints, policy)
+            positive_recursive_projective_evidence_points(&endpoints, policy)
         }? {
             Classification::Decided(Some(points)) => points,
             Classification::Decided(None) => {
@@ -767,6 +768,16 @@ impl BezierAlgebraicChordPairPoint2 {
             | BezierAlgebraicChordPairPointLocation2::AnchorOrders {
                 tangent_cross_sign, ..
             } => tangent_cross_sign,
+        };
+        // The cross-sign certificate names the two finite traversals.
+        // The compact line equations above use their retained supports;
+        // transport the sign through either reversal before normalization.
+        let tangent_cross_sign = if self.data.first.retained_support_orientation_is_reversed()
+            ^ self.data.second.retained_support_orientation_is_reversed()
+        {
+            product_sign(tangent_cross_sign, RealSign::Negative)
+        } else {
+            tangent_cross_sign
         };
         let point = match tangent_cross_sign {
             RealSign::Positive => point,
