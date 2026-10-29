@@ -39,6 +39,19 @@ impl CornerSourceFragments2 {
         operation: CurveOperation2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
+        if let Some(branch) = curve.polynomial_branch() {
+            return Ok(Self {
+                fragments: vec![BezierSplitFragment2::Polynomial(Box::new(branch.clone()))],
+                cut_index: 0,
+                cut: cut.into_retained_evidence().ok_or_else(|| {
+                    ExactCurveError::blocked(
+                        operation,
+                        curve.family(),
+                        crate::UncertaintyReason::Unsupported,
+                    )
+                })?,
+            });
+        }
         if let Some(fragment) = curve.retained_fragment() {
             return Ok(Self {
                 fragments: vec![fragment.clone()],

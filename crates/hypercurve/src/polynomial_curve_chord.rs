@@ -352,16 +352,36 @@ fn intersect_certified(
                 Some(branch.source_chart_line_sections(&line, policy)?)
             }
         }
-    } else if branch.has_constant_source_ordinate(policy)? {
-        // Independence of x proves every selected source graph is a straight
-        // support. Endpoint equality selects that constant branch; it is not
-        // used as a substitute for the support proof.
-        let expected = coordinate(&branch_curve.start(), &source_y, policy)?;
-        let start = coordinate(chord.start(), &source_y, policy)?;
-        let end = coordinate(chord.end(), &source_y, policy)?;
-        if order(&start, &end, policy)? == Ordering::Equal {
-            return if order(&start, &expected, policy)? == Ordering::Equal {
-                shared(
+    } else {
+        if branch.has_constant_source_ordinate(policy)? {
+            // Independence of x proves every selected source graph is a straight
+            // support. Endpoint equality selects that constant branch; it is not
+            // used as a substitute for the support proof.
+            let expected = coordinate(&branch_curve.start(), &source_y, policy)?;
+            let start = coordinate(chord.start(), &source_y, policy)?;
+            let end = coordinate(chord.end(), &source_y, policy)?;
+            if order(&start, &end, policy)? == Ordering::Equal {
+                return if order(&start, &expected, policy)? == Ordering::Equal {
+                    shared(
+                        branch_curve,
+                        line_curve,
+                        chord,
+                        source_x,
+                        branch_first,
+                        policy,
+                    )
+                    .map(Some)
+                } else {
+                    // Distinct selected constant ordinates give disjoint entire
+                    // supports, regardless of the finite interval overlap.
+                    Ok(Some(publish(Vec::new(), Vec::new())))
+                };
+            }
+        }
+        match branch.selected_chord_sections(chord, policy)? {
+            Some(points) => Some(PolynomialLineSections2::Isolated(points)),
+            None => {
+                return shared(
                     branch_curve,
                     line_curve,
                     chord,
@@ -369,16 +389,9 @@ fn intersect_certified(
                     branch_first,
                     policy,
                 )
-                .map(Some)
-            } else {
-                // Distinct selected constant ordinates give disjoint entire
-                // supports, regardless of the finite interval overlap.
-                Ok(Some(publish(Vec::new(), Vec::new())))
-            };
+                .map(Some);
+            }
         }
-        return Ok(None);
-    } else {
-        return Ok(None);
     };
     let Some(sections) = sections else {
         return Ok(None);

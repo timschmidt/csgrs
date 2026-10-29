@@ -8,7 +8,8 @@
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
-    "Published package and actual binding consumers for the complete declared domain."
+    "Published package and actual binding consumers for the complete declared domain.",
+    "Polynomial whole-path SVG replay and unrestricted repeated chord setbacks remain open. The original Boolean-generated algebraic-corner region chamfer has not completed within its recorded containment; successful ordinary region cuts do not establish that chain."
   ],
   "fixtures": [
     {
@@ -14557,6 +14558,339 @@
       ],
       "oracle": "Independent selected coordinates and exact incidence; projected display endpoints checked separately.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "selected_chord_crossings",
+      "target": "polynomial_selected_chords",
+      "test": "selected_oblique_chord_intersections_preserve_parameters_and_orientation",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected alpha^3=1/128; line y=x+alpha meets the positive parabola, including reversal, reflected scale-two similarity and both operand orders.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both exact roots, tangent signs and split parameters agree with y^2-y+alpha=0 and remain evaluable."
+        }
+      ],
+      "oracle": "Independent parabola and quadratic contact equations, root sides of y=1/2, determinant orientation and parameter replay."
+    },
+    {
+      "id": "selected_chord_tangency",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_tangency_keeps_the_even_root_and_joint_point",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The line y=(x+alpha^2)/(2alpha), alpha^3=1/128, is tangent to y^2=x.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The even root is retained once with a proved zero tangent cross sign; both split operands consume its selected point."
+        }
+      ],
+      "oracle": "Independent contact (alpha^2,alpha), original source equations and tangent cross product."
+    },
+    {
+      "id": "selected_chord_components",
+      "target": "polynomial_selected_chords",
+      "test": "selected_oblique_component_overlap_does_not_merge_nearby_lines",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected positive branch of y^2=2x^2 for 1<=x<=2, reversed coincident chord and vertical translation by 2^-80.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Common support retains an overlap correspondence whose boundary parameters replay; the nearby translated support remains disjoint."
+        }
+      ],
+      "oracle": "Global line component identity, exact endpoint correspondence and strictly nonzero translation."
+    },
+    {
+      "id": "selected_chord_other_branch_event",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_common_component_keeps_other_branch_endpoint_incidence",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "One line component of y^2=2x^2 meets the other selected branch at the origin.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The contact set contains the original singular event without a false overlap or invented tangent sign."
+        }
+      ],
+      "oracle": "Independent two-line factorization and exact origin incidence on both operands."
+    },
+    {
+      "id": "selected_chord_budget_retry",
+      "target": "polynomial_selected_chords",
+      "test": "selected_chord_incidence_budget_refusal_allows_a_larger_retry",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Cold selected-endpoint chord against the positive parabola, zero shared budget followed by a larger budget.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The denied attempt reports typed exhaustion and a later retry completes both exact contacts."
+        }
+      ],
+      "oracle": "Original parabola equation for each contact and explicit budget outcome; no total-work bound claimed."
+    },
+    {
+      "id": "polynomial_chamfer_selected_cuts",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_retains_algebraic_cuts_through_reversal_and_similarity",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Eight elliptic-branch path cases combining algebraic trimming, reversal and scale-two similarity.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "Exact squared setbacks, retained source equation, strict trim order and path connectivity survive parameter reuse."
+        }
+      ],
+      "oracle": "Original polynomial equation, independently specified setbacks and inverse chart ordering."
+    },
+    {
+      "id": "polynomial_chamfer_outcomes",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_preserves_zero_invalid_empty_and_extension_outcomes",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Zero, negative, oversized and nonzero trim-or-extend chord setbacks on an admitted polynomial path.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "Each input retains its explicit zero-design, invalid, outside-trim or unsupported-extension outcome."
+        }
+      ],
+      "oracle": "Mathematical design-value and closed trim-domain preconditions, including retained zero-setback endpoint identity."
+    },
+    {
+      "id": "polynomial_chamfer_multiple",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_enumerates_multiple_finite_cuts",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The cubic y=8x(2x+1)(x+1), -1<=x<=0, with chord setback 3/4.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "All three finite cut candidates retain their source relation, squared distance and distinct isolating x ranges."
+        }
+      ],
+      "oracle": "Independent cubic equation, distance 9/16 and three disjoint rational brackets."
+    },
+    {
+      "id": "polynomial_chamfer_point_replay",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_cut_points_replay_in_a_fresh_process",
+      "owner": "Hypercurve selected polynomial branches, exact corner reconstruction and existing chord/arrangement authority; Hypersolve selected fields",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A chord between a selected algebraic elliptic-branch corner and its exact chamfer cut, exported through the native SVG point graph.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh replay retains the center selector, cut equation, squared distance, strict parameter order, subsequent branch evaluation and deterministic re-export. Whole polynomial-path replay is not claimed."
+        }
+      ],
+      "oracle": "Original corner and cut equations plus exact setback and branch ordering."
     }
   ]
 }

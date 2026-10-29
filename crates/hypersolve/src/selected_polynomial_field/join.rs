@@ -81,10 +81,13 @@ impl SelectedPolynomialField {
     /// Constructs a common selected field with exact embeddings of both inputs.
     ///
     /// Native recursive fields use their existing source-union and embedding
-    /// authority. Every new polynomial generator replays its original equation
-    /// and selector after transporting its coefficients. This consumes the
-    /// same shared promotion unit as `select`; no total work or memory bound
-    /// follows from that counter. An unavailable proof cannot publish a join.
+    /// authority. After coefficient transport, an existing parent generator
+    /// can prove the original equation and singleton selection. That relation
+    /// permits linear internal reduction while retaining the original source
+    /// and multiplicity. Other generators replay their singleton normally.
+    /// Both routes consume the same shared promotion unit as `select`; no
+    /// total work or memory bound follows from that counter. An unavailable
+    /// correspondence keeps the complete selection route.
     pub fn joined_with<C: SelectedAlgebraContext>(
         &self,
         other: &Self,
@@ -115,6 +118,79 @@ impl SelectedPolynomialField {
             }
             Ok(joined)
         }))
+    }
+
+    /// A transported singleton can already name a generator of the parent.
+    /// Its original selection remains authoritative; the linear relation is
+    /// only a certified internal reduction rule for the new field coordinate.
+    fn existing_generator<C: SelectedAlgebraContext>(
+        &self,
+        coefficients: &[SelectedPolynomialValue],
+        interval: &IsolatedRootInterval,
+        policy: &C,
+    ) -> Result<Option<SelectedPolynomialValue>, SelectedPolynomialError<C::Error>> {
+        let nonnegative = |value: Real| {
+            matches!(
+                policy.real_sign(&value),
+                Some(RealSign::Zero | RealSign::Positive)
+            )
+        };
+        let mut candidate = self;
+        while let FieldData::Extension {
+            parent,
+            interval: bounds,
+            ..
+        } = candidate.0.as_ref()
+        {
+            // Certified disjoint open isolators exclude equality without a
+            // sign query over another polynomial extension.
+            if nonnegative(&interval.lower - &bounds.upper)
+                || nonnegative(&bounds.lower - &interval.upper)
+            {
+                candidate = parent;
+                continue;
+            }
+            let attempt =
+                || -> Result<Option<SelectedPolynomialValue>, SelectedPolynomialError<C::Error>> {
+                    let image = self.lift(&candidate.generator()?)?;
+                    let contained = nonnegative(&bounds.lower - &interval.lower)
+                        && nonnegative(&interval.upper - &bounds.upper);
+                    if !contained
+                        && (image
+                            .subtract(&self.constant(interval.lower.clone())?)?
+                            .sign_strict(policy)?
+                            != RealSign::Positive
+                            || image
+                                .subtract(&self.constant(interval.upper.clone())?)?
+                                .sign_strict(policy)?
+                                != RealSign::Negative)
+                    {
+                        return Ok(None);
+                    }
+                    let mut context = SelectedPolynomialContext {
+                        field: self.clone(),
+                        policy,
+                    };
+                    Ok((crate::ordered_field_polynomial_sign_at_value(
+                        coefficients,
+                        &image,
+                        &mut context,
+                    )? == Ordering::Equal)
+                        .then_some(image))
+                };
+            match attempt() {
+                Ok(Some(image)) => return Ok(Some(image)),
+                Ok(None)
+                | Err(SelectedPolynomialError::Arithmetic(
+                    SelectedPolynomialArithmeticError::ConstructionUnavailable,
+                )) => {}
+                Err(SelectedPolynomialError::Uncertain(reason))
+                    if reason != UncertaintyReason::BudgetExhausted => {}
+                Err(error) => return Err(error),
+            }
+            candidate = parent;
+        }
+        Ok(None)
     }
 
     fn contains_field(&self, source: &Self) -> bool {
@@ -308,13 +384,37 @@ impl SelectedPolynomialJoin {
             .iter()
             .map(|coefficient| self.embed_inner(coefficient, &mut memo))
             .collect::<ArithmeticResult<Vec<_>>>()?;
-        let field = self.field.select_strict_with_origin(
-            coefficients,
-            interval.lower.clone(),
-            interval.upper.clone(),
-            Some(source.clone()),
-            policy,
-        )?;
+        let field = if let Some(image) =
+            self.field
+                .existing_generator(&coefficients, interval, policy)?
+        {
+            // The source field has already proved a unique real root in this
+            // open selector. Exact coefficient transport and the checked
+            // image therefore prove correspondence without another variable.
+            // Keep the original field node and origin for later joins/replay.
+            crate::work_budget::consume(crate::work_budget::WorkKind::AlgebraicPromotion, 1)
+                .map_err(|_| {
+                    SelectedPolynomialError::Uncertain(UncertaintyReason::BudgetExhausted)
+                })?;
+            SelectedPolynomialField(Arc::new(FieldData::Extension {
+                parent: self.field.clone(),
+                defining: coefficients,
+                monic: vec![
+                    image.scale(&Real::from(-1))?,
+                    self.field.constant(Real::one())?,
+                ],
+                interval: interval.clone(),
+                origin: Some(GeneratorOrigin(source.clone())),
+            }))
+        } else {
+            self.field.select_strict_with_origin(
+                coefficients,
+                interval.lower.clone(),
+                interval.upper.clone(),
+                Some(source.clone()),
+                policy,
+            )?
+        };
         self.generators.push(GeneratorEmbedding {
             source,
             image: field.generator()?,

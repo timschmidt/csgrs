@@ -4220,6 +4220,7 @@ fn exact_linear_corner_line(curve: &Curve2) -> Option<&LineSeg2> {
 }
 
 pub(crate) enum ExactCornerCarrier2<'a> {
+    Polynomial(&'a crate::PolynomialCurveBranch2),
     Line(&'a LineSeg2),
     PromotedLine(&'a QuadraticBezier2),
     Arc(&'a CircularArc2),
@@ -5032,6 +5033,9 @@ pub(crate) fn exact_corner_carrier<'a>(
     operation: CurveOperation2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<ExactCornerCarrier2<'a>>> {
+    if let Some(branch) = curve.polynomial_branch() {
+        return Ok(Some(ExactCornerCarrier2::Polynomial(branch)));
+    }
     match curve.geometry() {
         Some(CurveGeometry2::Line(line)) => return Ok(Some(ExactCornerCarrier2::Line(line))),
         Some(CurveGeometry2::QuadraticBezier(source))
@@ -5080,9 +5084,11 @@ pub(crate) fn exact_corner_carrier<'a>(
                 crate::BezierSplitFragment2::SelectedFiber(fragment) => {
                     Some(ExactCornerCarrier2::SelectedFiber(fragment))
                 }
+                crate::BezierSplitFragment2::Polynomial(branch) => {
+                    Some(ExactCornerCarrier2::Polynomial(branch))
+                }
                 crate::BezierSplitFragment2::RetainedBezier { .. }
-                | crate::BezierSplitFragment2::Materialized { .. }
-                | crate::BezierSplitFragment2::Polynomial(_) => None,
+                | crate::BezierSplitFragment2::Materialized { .. } => None,
             }
         }
         Some(CurveGeometry2::CircularArc(arc)) => Some(ExactCornerCarrier2::Arc(arc)),

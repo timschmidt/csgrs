@@ -9,6 +9,12 @@
 - Keep selected polynomial field/value diagnostics shallow so shared coefficient
   towers do not expand into diagnostic trees.
 
+- Prove correspondence between independently selected equal generators before
+  adjoining an independent coordinate. Retain the original relation, selector,
+  multiplicity and source origin while using a certified linear reduction.
+  Existing join recipes re-establish the relation during fresh replay; serialized
+  coordinate expressions may change. Promotion accounting and typed retry remain.
+
 - Evaluate polynomial coefficients from admitted selected fields at represented
   scalars without projecting their dependencies. Exact arithmetic reuses stored
   zero and unit identities after field alignment; division still validates its

@@ -5,6 +5,44 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Reusing selected points and equal field generators
+
+Polynomial branch evaluation may return an already selected point after proving
+its source abscissa, defining equation, ordered branch and complete fiber census.
+It no longer necessarily constructs a fresh `PolynomialFiber` definition. This
+also applies in a retained similarity chart. Callers must use point semantics
+and the returned definition instead of assuming that every branch evaluation
+has one definition variant. Original source selections and denominator guards
+remain authoritative; no coordinates are rounded or independently selected.
+
+Selected-field joins can prove that an independently allocated generator equals
+an existing parent generator. They retain both original defining equations,
+selectors and source identities, and use the proved linear relation internally
+to avoid an independent coordinate axis. Repeated factors remain in the original
+definition. Native `JoinedField` replay validates the source selections and
+re-establishes this relation; there is no serialized equality flag or new tag.
+Coordinate expression shape and serialized bytes can change. Semantic replay
+and deterministic re-export are separate obligations. Promotion accounting
+continues to apply; these changes do not establish a total work or memory bound.
+
+## Polynomial chord setbacks and selected chord incidence
+
+Trim-only chamfers can cut admitted polynomial graph branches at exact Euclidean
+chord setbacks. The selected circle sections retain the corner's shared fields;
+retained branch endpoints and generated chord endpoints keep the same point
+evidence. Existing finite-solution selection, zero-design, invalid-input and
+no-solution outcomes still apply. Nonzero trim-or-extend requests require a
+separate branch-continuation contract and remain explicitly unsupported.
+
+Polynomial incidence consumes finite generated chords with selected endpoints
+in the same source plane or an inverse similarity chart. It validates candidate
+contacts against the original branch and domains, preserves point-based chord
+parameters, and proves common-component identity before reporting overlap.
+Singular tangent signs can remain unclassified even when the contact set is
+complete. These additions do not establish general polynomial offsets, fillets,
+whole-path SVG interchange or unrestricted repeated corner edits. The capability
+matrix and work records distinguish the completed witnesses from those gaps.
+
 ## Polynomial roots with retained coefficient queries
 
 `CurvePointDefinition2::SelectedPolynomialRoot` defines the point `(z, 0)`

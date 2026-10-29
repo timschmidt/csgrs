@@ -402,6 +402,11 @@ impl<'a> PreparedFilletCarrier2<'a> {
         policy: &CurveContext,
     ) -> ExactCurveResult<Self> {
         match carrier {
+            ExactCornerCarrier2::Polynomial(_) => Err(ExactCurveError::blocked(
+                CurveOperation2::Fillet,
+                family,
+                crate::UncertaintyReason::Unsupported,
+            )),
             ExactCornerCarrier2::Line(source) => {
                 let (dx, dy) = source.delta();
                 let (unit_x, unit_y, _) =

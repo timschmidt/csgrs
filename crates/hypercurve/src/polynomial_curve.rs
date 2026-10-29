@@ -23,6 +23,9 @@ mod abscissa;
 #[path = "polynomial_curve_selected_circle.rs"]
 mod selected_circle;
 
+#[path = "polynomial_curve_selected_chord.rs"]
+mod selected_chord;
+
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
 /// This is a curve collection, not a filled region. Every solver graph arc is
@@ -73,8 +76,10 @@ struct PolynomialCurveSource2 {
 /// Generated chords keep point-based parameters when a retained native support
 /// or represented constant abscissa certifies the line in either chart.
 /// Equations independent of the source abscissa also certify constant selected
-/// components without materializing their ordinates. Unrelated general
-/// selected-endpoint supports retain their capability blockers.
+/// components without materializing their ordinates. Other finite generated
+/// chords use exact coefficient-field substitution, original branch selection
+/// and point-based chord parameters. A global component identity and a checked
+/// slab sample establish overlap; singular tangent signs may remain unknown.
 /// A common line component keeps its overlap correspondence; other selected
 /// branches keep their finite contacts with that component. Selected
 /// polynomial pairs also intersect in a shared rational similarity chart,
@@ -91,9 +96,11 @@ struct PolynomialCurveSource2 {
 /// arrangement, retaining these same supports through classification,
 /// Booleans, reconstruction and supported similarities. Those operations
 /// still require complete pair incidence and exact selected-field decisions;
-/// this carrier does not establish general implicit-region closure. Nonzero
-/// offsets, corner edits and finite projection of polynomial supports remain
-/// unsupported.
+/// this carrier does not establish general implicit-region closure. Trim-only
+/// Euclidean chord setbacks retain selected circle cuts and generated chord
+/// evidence. Multiple finite candidates keep the existing explicit selection
+/// contract. Nonzero offsets, circular fillets, branch extension and finite
+/// projection of polynomial supports retain their capability blockers.
 #[derive(Clone, Debug, PartialEq)]
 pub struct PolynomialCurveBranch2 {
     source: Arc<PolynomialCurveSource2>,
@@ -395,7 +402,7 @@ impl PolynomialCurveBranch2 {
         Arc::ptr_eq(&self.source, &other.source)
     }
 
-    pub(super) fn endpoint(&self, start: bool) -> CurvePoint2 {
+    pub(crate) fn endpoint(&self, start: bool) -> CurvePoint2 {
         self.endpoints[usize::from(start == self.reversed)].clone()
     }
 
@@ -1011,34 +1018,51 @@ impl PolynomialCurveBranch2 {
         if self.maps.is_empty()
             && let Some(query) = value.as_polynomial_query()
         {
-            let candidate = query.query().source;
-            let retained = (|| {
-                let Some(parameter) = self.point_parameter(&candidate, policy)? else {
-                    return Ok(None);
-                };
-                if decided(
-                    parameter
-                        .cmp_by_refinement(value, policy)
-                        .map_err(invalid)?,
-                )? != Ordering::Equal
-                {
-                    return Ok(None);
+            let source = query.query().source;
+            // An affine-form parameter can pull back a similarity and retain
+            // its point in the source chart. Try both exact interpretations;
+            // each must prove branch incidence and the requested abscissa.
+            for source_chart in [false, true] {
+                if source_chart && self.transform.is_none() {
+                    continue;
                 }
-                Ok(Some(match &self.transform {
-                    Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
-                        candidate,
-                        transform.inverse().map_err(invalid)?,
-                        &policy.retained_object_policy(),
-                    )),
-                    None => candidate,
-                }))
-            })();
-            match retained {
-                Ok(Some(point)) => return Ok(point),
-                Ok(None) => {}
-                Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
-                Err(error) => return Err(error),
+                let retained = (|| {
+                    let candidate = if source_chart {
+                        self.map_point(source.clone(), policy)?
+                    } else {
+                        source.clone()
+                    };
+                    let Some(parameter) = self.point_parameter(&candidate, policy)? else {
+                        return Ok(None);
+                    };
+                    if decided(
+                        parameter
+                            .cmp_by_refinement(value, policy)
+                            .map_err(invalid)?,
+                    )? != Ordering::Equal
+                    {
+                        return Ok(None);
+                    }
+                    Ok(Some(if source_chart {
+                        source.clone()
+                    } else {
+                        match &self.transform {
+                            Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
+                                candidate,
+                                transform.inverse().map_err(invalid)?,
+                                &policy.retained_object_policy(),
+                            )),
+                            None => candidate,
+                        }
+                    }))
+                })();
+                match retained {
+                    Ok(Some(point)) => return Ok(point),
+                    Ok(None) => {}
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() != UncertaintyReason::BudgetExhausted => {}
+                    Err(error) => return Err(error),
+                }
             }
         }
         let equation = self.topology().equation();

@@ -304,3 +304,64 @@ fn join_budget_refusal_retries_and_ancestor_join_reuses_authority() {
     assert_eq!(reused.usage.promotions, 0);
     assert_eq!(policy.approximations(), 0);
 }
+
+#[test]
+fn equal_join_generators_retain_original_relations_with_linear_coordinates() {
+    use hypersolve::selected_polynomial_field::{
+        SelectedPolynomialDefinition, SelectedPolynomialDefinitionNode as Node,
+    };
+    let q = base();
+    let first = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);
+    // A different allocation and a scaled repeated defining equation select
+    // the same real value. The original multiplicity must remain replayable.
+    let second = select(&q, coefficients(&q, &[-12, 0, 0, 12, 0, 0, -3]), 1, 2);
+    let join = decided(first.joined_with(&second, &TestContext::strict()).unwrap());
+    assert_eq!(join.field().defining_polynomial().unwrap().len(), 7);
+    assert!(join.field().parent().unwrap().shares_authority(&first));
+    let image = join.embed(&second.generator().unwrap()).unwrap();
+    let definition =
+        SelectedPolynomialDefinition::from_values(std::slice::from_ref(&image), 1000).unwrap();
+    let Node::PolynomialValue {
+        numerator,
+        denominator,
+        ..
+    } = &definition.nodes[definition.roots[0]]
+    else {
+        panic!("the original selected field remains retained");
+    };
+    assert_eq!(
+        numerator.len(),
+        1,
+        "a proved existing generator needs no independent coordinate axis"
+    );
+    assert_eq!(denominator.len(), 1);
+    assert!(
+        definition
+            .nodes
+            .iter()
+            .any(|node| matches!(node, Node::JoinedField { .. }))
+    );
+    is_zero(
+        &image
+            .subtract(&join.embed(&first.generator().unwrap()).unwrap())
+            .unwrap(),
+    );
+    is_zero(
+        &power(&image, 3)
+            .subtract(&join.field().constant(real(2)).unwrap())
+            .unwrap(),
+    );
+    let replayed = decided(definition.replay(1000, &TestContext::strict()).unwrap());
+    assert_eq!(replayed.len(), 1);
+    is_zero(
+        &power(&replayed[0], 3)
+            .subtract(&replayed[0].field().constant(real(2)).unwrap())
+            .unwrap(),
+    );
+    let next = root(join.field(), &image, 3);
+    is_zero(
+        &power(&next.generator().unwrap(), 3)
+            .subtract(&next.lift(&image).unwrap())
+            .unwrap(),
+    );
+}

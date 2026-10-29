@@ -17,6 +17,16 @@
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
+- Construct exact trim-only polynomial chamfer cuts from selected circle
+  sections, retaining the original corner fields, branch endpoints and generated
+  chord parameters. Known selected points can be reused by branch evaluation
+  after equation, branch-rank, fiber-census and source-chart validation.
+- Intersect admitted polynomial branches with generated selected-endpoint
+  chords, including similarities, reversed traversal, finite contacts and
+  common-component overlaps. Singular tangent signs remain explicit. The named
+  witnesses do not establish general polynomial offsets, fillets, whole-path
+  SVG replay or unrestricted repeated corner edits.
+
 - Retain singleton polynomial roots whose coefficients are exact point queries,
   including independent selected fields, repeated factors and algebraic data.
   The generated point keeps every coefficient source and original denominator

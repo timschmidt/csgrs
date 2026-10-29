@@ -791,3 +791,148 @@ fn joined_nonunit_quotient_replays_before_dependent_selection() {
     ));
     assert_eq!(context.approximations(), 0);
 }
+
+fn equal_generator_graph() -> SelectedPolynomialDefinition {
+    let a = root(2);
+    let b = root(2);
+    assert!(!a.shares_authority(&b));
+    let join = value(a.joined_with(&b, &TestContext::strict()).unwrap());
+    SelectedPolynomialDefinition::from_values(
+        &[
+            join.embed(&a.generator().unwrap()).unwrap(),
+            join.embed(&b.generator().unwrap()).unwrap(),
+            a.generator().unwrap(),
+            b.generator().unwrap(),
+        ],
+        10000,
+    )
+    .unwrap()
+}
+
+fn verify_equal_generator_graph(
+    graph: &SelectedPolynomialDefinition,
+) -> Vec<SelectedPolynomialValue> {
+    use SelectedPolynomialDefinitionNode as Node;
+    let values = value(graph.replay(10000, &TestContext::strict()).unwrap());
+    assert_eq!(values.len(), 4);
+    for v in &values {
+        cube_is(v, 2);
+    }
+    assert!(!values[2].field().shares_authority(values[3].field()));
+    let Node::PolynomialValue {
+        numerator,
+        denominator,
+        ..
+    } = &graph.nodes[graph.roots[1]]
+    else {
+        panic!("the transported original field remains recorded");
+    };
+    assert_eq!((numerator.len(), denominator.len()), (1, 1));
+    for context in [
+        TestContext::strict(),
+        TestContext::approximate(),
+        TestContext::strict(),
+    ] {
+        let reused =
+            hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+                let join = value(
+                    values[0]
+                        .field()
+                        .joined_with(values[3].field(), &context)
+                        .unwrap(),
+                );
+                assert_eq!(depth(join.field()), 2);
+                cube_is(&join.embed(&values[3]).unwrap(), 2);
+            });
+        assert!(reused.result.is_ok());
+        assert_eq!(reused.usage, hypersolve::work_budget::WorkUsage::default());
+        assert_eq!(context.approximations(), 0);
+    }
+    values
+}
+
+#[test]
+fn equal_generator_reduction_replays_fresh_with_original_selections_and_retries() {
+    const INPUT: &str = "HYPERSOLVE_EQUAL_GENERATOR_REPLAY_INPUT";
+    if let Some(path) = std::env::var_os(INPUT) {
+        let graph = codec::decode(&std::fs::read_to_string(path).unwrap());
+        let values = verify_equal_generator_graph(&graph);
+        let next = SelectedPolynomialDefinition::from_values(&values, 10000).unwrap();
+        assert_eq!(codec::encode(&next), codec::encode(&graph));
+        verify_equal_generator_graph(&next);
+        return;
+    }
+    let a = root(2);
+    let b = root(2);
+    let denied =
+        hypersolve::work_budget::with_budget(hypersolve::work_budget::WorkBudget::ZERO, || {
+            assert!(matches!(
+                a.joined_with(&b, &TestContext::strict()).unwrap(),
+                Classification::Uncertain(
+                    hypersolve::classification::UncertaintyReason::BudgetExhausted
+                )
+            ));
+        });
+    assert!(denied.result.is_err());
+    assert_eq!(denied.usage, hypersolve::work_budget::WorkUsage::default());
+    let retry = hypersolve::work_budget::with_budget(
+        hypersolve::work_budget::WorkBudget {
+            refinements: 1000,
+            promotions: 1,
+        },
+        || value(a.joined_with(&b, &TestContext::strict()).unwrap()),
+    );
+    assert_eq!(retry.usage.promotions, 1);
+    let joined = retry.result.unwrap();
+    cube_is(&joined.embed(&b.generator().unwrap()).unwrap(), 2);
+    let graph = equal_generator_graph();
+    verify_equal_generator_graph(&graph);
+    let mut bad = graph.clone();
+    let source = bad
+        .nodes
+        .iter()
+        .find_map(|node| match node {
+            SelectedPolynomialDefinitionNode::JoinedField { second, .. } => Some(*second),
+            _ => None,
+        })
+        .unwrap();
+    if let SelectedPolynomialDefinitionNode::PolynomialField { lower, upper, .. } =
+        &mut bad.nodes[source]
+    {
+        *lower = real(3);
+        *upper = real(4);
+    } else {
+        panic!("original independent selection");
+    }
+    assert!(matches!(
+        bad.replay(10000, &TestContext::strict()),
+        Err(SelectedPolynomialReplayError::Field(
+            SelectedPolynomialError::NoRoot
+        ))
+    ));
+    let path = std::env::temp_dir().join(format!(
+        "hypersolve-equal-generator-{}-{}.json",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    std::fs::write(&path, codec::encode(&graph)).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "equal_generator_reduction_replays_fresh_with_original_selections_and_retries",
+            "--nocapture",
+        ])
+        .env(INPUT, &path)
+        .output();
+    std::fs::remove_file(path).unwrap();
+    let child = child.unwrap();
+    assert!(
+        child.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}

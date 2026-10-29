@@ -994,6 +994,9 @@ pub(super) fn retained_corner_fragment_trim(
             return Ok(None);
         }
         let source_points = match fragment {
+            BezierSplitFragment2::Polynomial(branch) => {
+                Some([branch.endpoint(!reversed), branch.endpoint(reversed)])
+            }
             BezierSplitFragment2::SelectedFiber(selected) => Some(if reversed {
                 [selected.end_point().clone(), selected.start_point().clone()]
             } else {
@@ -1579,7 +1582,9 @@ pub(super) fn retained_corner_fragment_between_cuts(
         (next_cut, previous_cut)
     };
     let points = match fragment {
-        BezierSplitFragment2::SelectedFiber(_) => Some([lower.point.clone(), upper.point.clone()]),
+        BezierSplitFragment2::SelectedFiber(_) | BezierSplitFragment2::Polynomial(_) => {
+            Some([lower.point.clone(), upper.point.clone()])
+        }
         BezierSplitFragment2::AnalyticParallel(_)
             if lower.parameter.is_retained_scalar() || upper.parameter.is_retained_scalar() =>
         {

@@ -1813,13 +1813,7 @@ impl<'a> CornerCarrierPreparation2<'a> {
             return Ok(());
         }
         match fragment {
-            BezierSplitFragment2::Polynomial(_) => {
-                return Err(ExactCurveError::blocked(
-                    operation,
-                    CurveFamily2::ImplicitPolynomial,
-                    UncertaintyReason::Unsupported,
-                ));
-            }
+            BezierSplitFragment2::Polynomial(_) => {}
 
             BezierSplitFragment2::RetainedBezier { .. } => {
                 self.evidence = if let Some(chord) =
@@ -1889,11 +1883,9 @@ impl<'a> CornerCarrierPreparation2<'a> {
             .fragment
             .expect("a nonnative corner retains its fragment");
         match fragment {
-            BezierSplitFragment2::Polynomial(_) => Err(ExactCurveError::blocked(
-                operation,
-                CurveFamily2::ImplicitPolynomial,
-                UncertaintyReason::Unsupported,
-            )),
+            BezierSplitFragment2::Polynomial(branch) => {
+                Ok(crate::curve::ExactCornerCarrier2::Polynomial(branch))
+            }
 
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 Ok(crate::curve::ExactCornerCarrier2::AlgebraicChord(chord))

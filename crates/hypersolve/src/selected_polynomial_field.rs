@@ -124,8 +124,9 @@ enum FieldData {
         defining: Vec<SelectedPolynomialValue>,
         monic: Vec<SelectedPolynomialValue>,
         interval: IsolatedRootInterval,
-        // A join transported this original generator and revalidated its
-        // singleton selection. This is a construction relation, not a cache.
+        // A join transported this original selection and proved its image,
+        // either by replaying the singleton or by validating an existing
+        // parent generator. This is a construction relation, not a cache.
         origin: Option<GeneratorOrigin>,
     },
 }

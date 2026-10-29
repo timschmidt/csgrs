@@ -231,6 +231,16 @@ pub(super) fn corner_chamfer_cuts(
     policy: &CurveContext,
 ) -> ExactCurveResult<CornerCuts2> {
     match carrier {
+        ExactCornerCarrier2::Polynomial(branch) => polynomial_chamfer_cuts(
+            branch,
+            setback,
+            setback_sign,
+            previous,
+            mode,
+            operation,
+            family,
+            policy,
+        ),
         ExactCornerCarrier2::Line(source) => line_chamfer_cuts(
             source,
             setback,
@@ -335,6 +345,71 @@ pub(super) fn corner_chamfer_cuts(
             policy,
         ),
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn polynomial_chamfer_cuts(
+    branch: &crate::PolynomialCurveBranch2,
+    setback: &Real,
+    setback_sign: RealSign,
+    previous: bool,
+    mode: CurveCornerMode2,
+    operation: CurveOperation2,
+    family: CurveFamily2,
+    policy: &CurveContext,
+) -> ExactCurveResult<CornerCuts2> {
+    let range = branch.parameter_range();
+    let corner_parameter = if previous != branch.is_reversed() {
+        range.end()
+    } else {
+        range.start()
+    };
+    let corner = branch.endpoint(!previous);
+    let mut cuts = CornerCuts2::default();
+    if setback_sign == RealSign::Zero {
+        cuts.push(CornerCut2 {
+            parameter: Some(corner_parameter.clone()),
+            point: corner,
+            placement: CornerPlacement2::Corner,
+        });
+        return Ok(cuts);
+    }
+    // A selected finite branch does not certify its continuation beyond the
+    // authored domain. Do not publish only the trim subset of an extension solve.
+    if mode == CurveCornerMode2::TrimOrExtend {
+        return Err(ExactCurveError::blocked(
+            operation,
+            family,
+            crate::UncertaintyReason::Unsupported,
+        ));
+    }
+    for (parameter, point) in branch
+        .selected_circle_sections(&corner, setback, policy)
+        .map_err(|error| error.with_operation(operation))?
+    {
+        let lower = curve_corner_domain::parameter_order(
+            &parameter,
+            range.start(),
+            operation,
+            family,
+            policy,
+        )?;
+        let upper = curve_corner_domain::parameter_order(
+            &parameter,
+            range.end(),
+            operation,
+            family,
+            policy,
+        )?;
+        if lower.is_gt() && upper.is_lt() {
+            cuts.push(CornerCut2 {
+                parameter: Some(parameter),
+                point,
+                placement: CornerPlacement2::Trim,
+            });
+        }
+    }
+    Ok(cuts)
 }
 
 #[allow(clippy::too_many_arguments)]
