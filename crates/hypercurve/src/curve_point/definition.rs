@@ -14,10 +14,12 @@ pub enum CurvePointDefinition2 {
     Coordinates(Point2),
     /// A singleton of `equation(parameter, y) = 0`, retaining the selected
     /// first parameter and the exact second-coordinate isolator together.
+    /// The parameter may retain a rational query over selected point fields;
+    /// its source relations and denominator guards remain authoritative.
     /// Replay checks the equation and singleton; root-count flags are untrusted.
     PolynomialFiber {
         equation: hypersolve::BivariatePolynomial,
-        parameter: BezierParameter2,
+        parameter: CurveParameter2,
         root: hypersolve::IsolatedRootInterval,
     },
     /// Two rational queries, each retaining its original point and pole guard.
@@ -275,10 +277,11 @@ impl CurvePointDefinition2 {
                 parameter,
                 root,
             } => {
-                let mut points = crate::polynomial_point::PolynomialPoint2::from_fiber(
+                let mut points = crate::polynomial_point::PolynomialPoint2::from_parameter_fiber(
                     equation,
                     parameter,
                     &[root],
+                    policy,
                 )?;
                 points.pop().ok_or_else(|| {
                     ExactCurveError::invalid_unattributed(

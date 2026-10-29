@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Add configured-depth use of the complete ordered-field Sturm isolator.
+  Separation and singleton refinement share the same implementation as the
+  unrestricted API. Reached local depth limits return `BudgetExhausted` with
+  no partial roots, while shared work accounting remains active.
+
 - Selected polynomial joins retain the first native base when the ordered
   source union adds no axes and the existing foreign-field embedding adds no
   radical. Subsequent joins preserve polynomial ancestors instead of appending

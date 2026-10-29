@@ -57,7 +57,8 @@ fn fiber() -> CurvePoint2 {
                 BezierParameterInterval::try_new(1.into(), 2.into()).unwrap(),
             )
             .unwrap(),
-        ),
+        )
+        .into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: q(3, 2),

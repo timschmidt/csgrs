@@ -6,7 +6,10 @@
 //! not be collapsed into a primitive element to replay a polynomial relation.
 
 mod complete;
-pub use complete::isolate_ordered_field_polynomial_roots_complete;
+pub use complete::{
+    isolate_ordered_field_polynomial_roots_complete,
+    isolate_ordered_field_polynomial_roots_complete_with_config,
+};
 
 use std::cmp::Ordering;
 
@@ -65,10 +68,12 @@ pub trait OrderedFieldPolynomialContext<C> {
     }
 }
 
-/// Work limits for division-free ordered-field Bernstein isolation.
+/// Dyadic subdivision and refinement controls for ordered-field root isolation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct OrderedFieldRootIsolationConfig {
-    /// Maximum dyadic subdivision depth before the complete caller fallback.
+    /// Maximum dyadic subdivision depth for a bounded attempt. Bernstein
+    /// requests its complete caller fallback; configured Sturm reports
+    /// `BudgetExhausted` when this limit prevents a required subdivision.
     pub max_subdivision_depth: usize,
     /// Additional dyadic refinements after a variation-one interval is found.
     pub refinement_steps: usize,
@@ -94,7 +99,8 @@ pub enum OrderedFieldRootIsolationStatus {
     CompleteFallbackRequired,
     /// The lower bound is not strictly below the upper bound.
     InvalidInterval,
-    /// The enclosing operation budget declined a required subdivision.
+    /// The enclosing work budget or configured Sturm subdivision-depth limit
+    /// declined a required subdivision. No partial roots are published.
     BudgetExhausted,
 }
 

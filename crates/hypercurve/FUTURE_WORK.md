@@ -2428,6 +2428,59 @@ cancellation. Configured bounded contexts can still request a complete
 fallback. General operation closure and full pre-push verification of this
 increment remain open.
 
+**2026-10-29 dependent polynomial-query fibers:**
+An exact source query v with v>0, 16v^3=u and u>0, 8u^2=1 could not be
+consumed as the abscissa of y^2=x. The original source control passed and
+branch evaluation returned Unsupported on the target revision. Hypercurve
+now retains that query as the base of a polynomial fiber, reusing Hypersolve's
+selected fields and complete Sturm discovery. The point keeps its original
+equation, parameter recipe and selector alongside shared field coordinates.
+Original branch domains, slab root counts and ordering still select the arc.
+
+Ten acceptance cases pass. Independent relations include 2048x^6=1,
+positive-root incidence and a further polynomial evaluation recovering the
+original v. They cover repeated and opposite roots, exact events, degree17,
+mixed authored/generated queries, rational evaluation, trim/reversal/affine
+transport, 1/10^12 separation, certainty, cold native replay and further use.
+HyperBREP archives also replay in a fresh process and feed another exact
+affine point construction. Native-base fixtures retain their geometry and assertions.
+PolynomialFiber.parameter now uses CurveParameter2; CHANGELOG and MIGRATIONS
+document conversions and native query references.
+
+A new zero-depth case exposed an ignored configured limit; the shared Sturm
+implementation now enforces optional per-segment depth before publishing a
+complete result. Exhaustion returns no partial roots and larger retries pass.
+Another reproduced failure attributed invalid construction to Evaluation;
+the diagnostic now retains Construction. Both failures and the original
+unsupported chain remain archived alongside corrected results.
+
+All 25 affected qualification groups pass, including full Hypersolve
+(1,281 passed), Hypercurve
+(2,960 passed), CSGRS
+(691 passed), six downstream suites, strict
+four-package MSRV Clippy, minimal checks, strict docs and both fuzz manifests,
+allocation lifetime controls, capability checks and hygiene. Commands record
+ignored tests separately. The qualified source is reconstructable from
+retained revisions, patches and file inventories; only the finalized parent's
+three receipt files change during alignment. Source, original failures,
+completion times and peak RSS are in docs/evidence/2026-10-29-hypercurve-closure-selected-query-fibers, SHA-256 24c4e6fddbed73a91bffa8466b176f8fab26ff22b4abea8749712c8b9f4b380d.
+Receipt checks run after the final ledger edit. No speedup is claimed.
+
+Seven original region offset/corner operations still return Unsupported with
+three controls passing. Native scalar fibers without source-query recipes,
+more general relative-coefficient geometry and general operation closure remain
+open. Configured depth and refinement counts do not bound total arithmetic,
+coefficient growth, memory, elapsed time or cancellation. This increment still
+requires full pre-push verification before publication.
+
+Two cross-increment witnesses also remain open on this isolated source:
+the generated fiber's parameter is Unsupported in rational differentiation,
+and a derived quotient recipe loses its original divisor pole guard and
+incorrectly accepts that pole. Their source control passes. The separately
+qualified derivative and guard fixes must be integrated and both original
+witnesses must pass before this work is published. The failed integration
+observations are retained in the same archive; they are not exact successes.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The

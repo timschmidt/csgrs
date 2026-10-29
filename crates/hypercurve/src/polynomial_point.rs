@@ -29,6 +29,7 @@ enum PolynomialPointAuthority2 {
 }
 
 mod joint;
+mod selected_fiber;
 use joint::JointQueries2;
 
 impl PolynomialPoint2 {
@@ -179,7 +180,7 @@ impl PolynomialPoint2 {
             PolynomialPointAuthority2::Fiber { base, fiber } => {
                 crate::CurvePointDefinition2::PolynomialFiber {
                     equation: fiber.defining_fiber().0.clone(),
-                    parameter: base.clone(),
+                    parameter: base.clone().into(),
                     root: fiber.root().clone(),
                 }
             }

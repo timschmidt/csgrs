@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Polynomial graph evaluation consumes source-bound rational queries over
+  retained selected fields. Dependent fibers preserve their original equation,
+  parameter recipe and selector through further queries and native replay;
+  branch evaluation honors the configured subdivision-depth limit.
+
 - Normalize signed homogeneous point weights before shared orientation and
   coordinate predicates. Supporting-line intersections transport their tangent
   certificate through retained-support reversals, and cardinal displacements
@@ -69,6 +74,11 @@
   continue to project every coordinate to `f64`.
 
 ### Breaking
+
+- `CurvePointDefinition2::PolynomialFiber::parameter` is now `CurveParameter2`.
+  Convert existing `BezierParameter2` values with `.into()`; borrow their native
+  view with `as_bezier_parameter()` when required. SVG fiber records and HyperBRep
+  planar archives accept retained query-parameter references in that field.
 
 - Independent selected-fiber rational queries now compose through distinct
   retained generators. Callers that handled `Blocked(Unsupported)` for two

@@ -385,7 +385,8 @@ mod tests {
                     BezierParameterInterval::try_new(q(3, 4), Real::one()).unwrap(),
                 )
                 .unwrap(),
-            ),
+            )
+            .into(),
             root: hypersolve::IsolatedRootInterval {
                 lower: 1.into(),
                 upper: 2.into(),

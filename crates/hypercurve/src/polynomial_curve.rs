@@ -48,7 +48,11 @@ struct PolynomialCurveSource2 {
 /// selected algebraic parameter. Fiber pullback preserves that base, the
 /// original denominator guard and the branch's ordered root; subsequent
 /// abscissa queries can reuse the same source without coordinate elimination.
-/// General dependent fibers without such a rational base chart remain blocked.
+/// Source-bound rational queries over retained selected fields also supply
+/// abscissas. Their fibers use the shared ordered-field Sturm solver and retain
+/// the original query, polynomial, singleton and branch ordinal. Native rational
+/// base charts keep their existing pullback path; no global coordinate projection
+/// is required. Geometric point-ordered charts without a scalar recipe remain blocked.
 /// [`Curve2::point_locations`] consumes native and retained points in the
 /// original graph chart and its invertible similarities, preserving closed
 /// selected boundaries. Incidence validates the selected branch, so another
@@ -911,6 +915,9 @@ impl PolynomialCurveBranch2 {
         value: &CurveParameter2,
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePoint2> {
+        if value.as_polynomial_query().is_some() {
+            return self.query_fiber_point(value, policy);
+        }
         let (base, equation, map) = if let Some(base) = value.as_bezier_parameter() {
             (base.clone(), self.topology().equation().clone(), None)
         } else {
@@ -961,6 +968,35 @@ impl PolynomialCurveBranch2 {
             Some(map) => point.rational_image(&map),
             None => Ok(point),
         }
+    }
+
+    fn query_fiber_point(
+        &self,
+        value: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePoint2> {
+        let equation = self.topology().equation();
+        let report = PolynomialPoint2::query_fiber_roots(
+            equation,
+            value,
+            &self.topology().domain().second,
+            self.source.fiber_config,
+            policy,
+        )?;
+        // The source topology proves this census and ordinal on the open slab.
+        // Reject a contradictory fiber instead of choosing another branch.
+        if report.len() != self.topology().slabs()[self.slab].arcs().len() {
+            return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+        }
+        let mut points = PolynomialPoint2::from_parameter_fiber(
+            equation.clone(),
+            value.clone(),
+            &report[self.root..=self.root],
+            policy,
+        )?;
+        points
+            .pop()
+            .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter))
     }
 
     fn map_point(

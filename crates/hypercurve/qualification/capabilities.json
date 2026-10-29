@@ -12590,6 +12590,417 @@
       ],
       "oracle": "Independent equations v_minus*v_plus=-u, v_minus+v_plus=0 and u^2=1/8, checked through strict/approximate/strict policy transitions with certified receipts.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_source_relations",
+      "target": "polynomial_query_fibers",
+      "test": "selected_fiber_abscissa_has_independent_exact_relations",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "u>0, 8u^2=1 and v>0, 16v^3=u; v retains its source query.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The source relations and rational-query parameter survive without a native Bezier scalar view."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_composition",
+      "target": "polynomial_query_fibers",
+      "test": "polynomial_branch_consumes_a_nested_selected_fiber_query",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "The positive branch y^2=x consumes the selected cubic fiber ordinate and its output feeds a second polynomial.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The point satisfies y^2=x, x=v, 2048x^6=1 and y>0."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The source graph has exactly the retained parameter preimage."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Definition replay feeds a further y=x^2 evaluation with the original exact value."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_depth",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fiber_respects_the_configured_subdivision_limit",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "Dependent-fiber discovery with a zero local subdivision-depth limit and an ordinary larger-limit retry.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The reached configured depth limit returns BudgetExhausted before publishing a fiber."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The same selected parameter succeeds with the default depth and satisfies the original equation."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_selectors",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_keep_opposite_roots_repeated_equations_and_exact_events",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "Opposite selected roots of (y^2-x)^2, an exact rational ordinate, and malformed singleton requests.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Repeated equations preserve opposite roots and their zero sum; an exact event remains exact despite untrusted root-count metadata."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "Multiple roots, rootless and zero equations, false exact-root claims and reversed bounds are rejected."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_degree17",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_admit_degree_seventeen_and_feed_rational_geometry",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "A degree-seventeen fiber over a retained degree-six abscissa, then an affine point image.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The original y^17=x relation holds and the output feeds an exact affine point with 3X-2Y=5."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Point-definition replay preserves semantic equality."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_domains",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_preserve_trim_reversal_transform_and_certainty",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "A quotient of correlated coordinates, selected restrictions, wrong-branch incidence, similarity, near-distinct parameters and changed maps.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The selected trim endpoint and reversed endpoint coincide with the evaluated point."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The opposite branch is absent and a 10^-12 abscissa change remains distinct."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Inverse coordinate relations and changed-image queries hold through strict/approximate/strict policy transitions with certified receipts."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_work",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_share_work_limits_and_retry_after_exhaustion",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "Zero shared refinement/promotion allowance followed by an ordinary retry on the same source.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Actual shared work exhaustion remains typed and publishes no complete point."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Retry succeeds and satisfies the original polynomial."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_mixed",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_consume_mixed_authored_and_generated_sources",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "A generated cubic-fiber ordinate plus one quarter of an authored positive sqrt(1/3).",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The root fiber consumes the joint query and retains the exact 1/48 squared remainder."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Definition replay preserves the mixed point."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_cold_replay",
+      "target": "polynomial_query_fibers",
+      "test": "selected_query_fibers_replay_in_a_fresh_process_and_remain_consumable",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "A dependent fiber used by a generated line, exact SVG export and cold child-process replay, then another polynomial evaluation.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh replay preserves defining relations, positive selection, further evaluation and deterministic re-export."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "Zero point-definition-depth export and import reject the nested dependency."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "query_fiber_error_operation",
+      "target": "polynomial_query_fibers",
+      "test": "invalid_query_fiber_preserves_construction_operation",
+      "owner": "Hypercurve polynomial point/source charts; Hypersolve selected fields and ordered-field Sturm isolation",
+      "properties": [
+        "P2",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26"
+      ],
+      "domain": "A rootless polynomial fiber over a retained query parameter.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact source-bound scalar queries and selected polynomial fibers. Native scalar paths remain supported. This does not claim general implicit-region operations or a total arithmetic/memory bound.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "invalid",
+          "assertion": "The error remains Invalid and identifies Construction, matching the public constructor."
+        }
+      ],
+      "oracle": "Independent defining equations, exact sign and branch expectations, original guard/selector rejection, and explicit resource-limit outcomes; equality and serialization assertions are separate.",
+      "timeout_seconds": 180
     }
   ]
 }

@@ -140,7 +140,10 @@ pub fn algebraic_slice_keeps_correlated_noncircular_fiber() {
     else {
         panic!("fiber evidence lost")
     };
-    assert!(matches!(base, BezierParameter2::Algebraic(_)));
+    assert!(matches!(
+        base.as_bezier_parameter(),
+        Some(BezierParameter2::Algebraic(_))
+    ));
     assert_eq!(
         point
             .compare_coordinate(&p(1.into(), 1.into()), Axis2::Y)
@@ -502,10 +505,8 @@ pub fn algebraic_events_and_tiny_loops_preserve_selected_endpoints() {
     for (index, curve) in algebraic.curves().iter().enumerate() {
         assert!(matches!(
             curve.start().definition().unwrap(),
-            CurvePointDefinition2::PolynomialFiber {
-                parameter: BezierParameter2::Algebraic(_),
-                ..
-            }
+            CurvePointDefinition2::PolynomialFiber { parameter, .. }
+                if matches!(parameter.as_bezier_parameter(), Some(BezierParameter2::Algebraic(_)))
         ));
         assert!(
             curve
@@ -573,7 +574,7 @@ pub fn algebraic_events_and_tiny_loops_preserve_selected_endpoints() {
     }
     let invalid = CurvePointDefinition2::PolynomialFiber {
         equation: BivariatePolynomial::new(vec![]),
-        parameter: BezierParameter2::Exact(0.into()),
+        parameter: BezierParameter2::Exact(0.into()).into(),
         root: hypersolve::IsolatedRootInterval {
             lower: 0.into(),
             upper: 1.into(),

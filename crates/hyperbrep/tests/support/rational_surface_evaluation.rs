@@ -308,7 +308,7 @@ pub fn selected_rational_extrusions_and_knot_boundaries() {
             vec![0.into(), 0.into(), 0.into(), 16.into()],
             vec![(-1).into()],
         ]),
-        parameter: BezierParameter2::Exact(q(1, 2)),
+        parameter: BezierParameter2::Exact(q(1, 2)).into(),
         root: hypersolve::IsolatedRootInterval {
             lower: q(1, 4),
             upper: q(3, 8),
@@ -500,7 +500,7 @@ pub fn nurbs_second_span_and_final_endpoint() {
             vec![0.into(), 0.into(), 0.into(), 16.into()],
             vec![(-1).into()],
         ]),
-        parameter: BezierParameter2::Exact(1.into()),
+        parameter: BezierParameter2::Exact(1.into()).into(),
         root: hypersolve::IsolatedRootInterval {
             lower: q(3, 8),
             upper: q(1, 2),

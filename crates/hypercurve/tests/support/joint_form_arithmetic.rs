@@ -35,7 +35,7 @@ fn joint() -> CurvePoint2 {
     // u²=1/8 and 16v³=u, with both positive roots selected together.
     CurvePointDefinition2::PolynomialFiber {
         equation: p(&[&[0, 0, 0, 16], &[-1]]),
-        parameter: base(),
+        parameter: base().into(),
         root: IsolatedRootInterval {
             lower: q(1, 4),
             upper: q(3, 8),
@@ -193,7 +193,7 @@ pub fn different_fiber_selectors_do_not_merge() {
     let point = |lower, upper| {
         CurvePointDefinition2::PolynomialFiber {
             equation: p(&[&[0, 0, 1], &[-1]]),
-            parameter: base(),
+            parameter: base().into(),
             root: IsolatedRootInterval {
                 lower,
                 upper,

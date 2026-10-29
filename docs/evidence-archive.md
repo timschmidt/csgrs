@@ -85,6 +85,15 @@ in this repository.
 
 ## Follow-on records
 
+The local hypercurve-selected-query-fibers-evidence-2026-10-29 branch ends at
+081ece0c6fb112e62edeed9e00dc051923d1a342, adding docs/evidence/2026-10-29-hypercurve-closure-selected-query-fibers (723 files,
+24,874,907 bytes), SHA-256 24c4e6fddbed73a91bffa8466b176f8fab26ff22b4abea8749712c8b9f4b380d. It records dependent polynomial fibers
+over retained selected queries, ten exact/resource/replay cases and 25 affected
+qualification groups. Original unsupported, depth-limit and error-attribution
+failures, reconstruction patches and seven region blockers remain explicit.
+General operation closure and publication are not claimed. This record is
+unpushed.
+
 The local hypercurve-selected-field-root-discovery-evidence-2026-10-28 branch ends at
 1fa282786f3adf54016b166024c1886e2b03af43, adding docs/evidence/2026-10-28-hypercurve-closure-selected-field-root-discovery (371 files,
 24,836,942 bytes), SHA-256 2d7816185d4199b16fb59c194500599805dc62ebb230f7f3f6a7ef0f2c15aa8e. It records complete ordered-field

@@ -1208,10 +1208,8 @@ pub fn sections_survive_context_drop_budgets_and_policies() {
     assert_eq!(topology.second()[0].curves().len(), 2);
     assert!(matches!(
         topology.first()[0].curves()[0].end().definition().unwrap(),
-        CurvePointDefinition2::PolynomialFiber {
-            parameter: BezierParameter2::Exact(_),
-            ..
-        }
+        CurvePointDefinition2::PolynomialFiber { parameter, .. }
+            if matches!(parameter.as_bezier_parameter(), Some(BezierParameter2::Exact(_)))
     ));
 }
 

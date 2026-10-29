@@ -102,7 +102,8 @@ fn svg_adapter_consumes_generated_selected_circle_fillet_and_offsets() {
                 BezierParameterInterval::try_new(q(3, 4), Real::one()).unwrap(),
             )
             .unwrap(),
-        ),
+        )
+        .into(),
         root: IsolatedRootInterval {
             lower: Real::one(),
             upper: Real::from(2),

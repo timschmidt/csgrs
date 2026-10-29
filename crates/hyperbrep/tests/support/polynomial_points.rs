@@ -25,7 +25,8 @@ pub fn polynomial_point_archive_admission_and_replay() {
                 BezierParameterInterval::try_new(1.into(), 2.into()).unwrap(),
             )
             .unwrap(),
-        ),
+        )
+        .into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: (Real::from(3) / Real::from(2)).unwrap(),

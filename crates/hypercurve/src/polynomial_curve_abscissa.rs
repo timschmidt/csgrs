@@ -51,7 +51,10 @@ pub(super) fn pullback(
         };
         return selected_fiber(
             equation,
-            parameter,
+            parameter
+                .as_bezier_parameter()
+                .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?
+                .clone(),
             univariate(&source.numerator)?,
             univariate(&source.denominator)?,
             policy,

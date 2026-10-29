@@ -307,7 +307,8 @@ fn affine_source_identity_survives_refinement_without_a_cycle() {
         equation: selected.data.authority.data.incidence.clone(),
         parameter: BezierParameter2::Algebraic(
             selected.data.authority.data.retained_parameter.clone(),
-        ),
+        )
+        .into(),
         root: selected.data.root.clone(),
     };
     let point = definition.into_point().unwrap();

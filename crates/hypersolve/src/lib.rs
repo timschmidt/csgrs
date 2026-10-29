@@ -297,8 +297,8 @@ pub use ordered_field_roots::{
     OrderedFieldPolynomialContext, OrderedFieldRootIsolationConfig,
     OrderedFieldRootIsolationReport, OrderedFieldRootIsolationStatus,
     isolate_ordered_field_polynomial_roots, isolate_ordered_field_polynomial_roots_complete,
-    ordered_field_polynomial_gcd, ordered_field_polynomial_linear_quotient,
-    ordered_field_polynomial_sign_remainder,
+    isolate_ordered_field_polynomial_roots_complete_with_config, ordered_field_polynomial_gcd,
+    ordered_field_polynomial_linear_quotient, ordered_field_polynomial_sign_remainder,
 };
 pub use polynomial::{
     QuadraticLinearTerm, QuadraticResidual, QuadraticTerm, UnivariateQuadraticResidual,

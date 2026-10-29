@@ -25,7 +25,8 @@ pub fn joint_uv() -> CurvePoint2 {
                 BezierParameterInterval::try_new(q(1, 3), q(1, 2)).unwrap(),
             )
             .unwrap(),
-        ),
+        )
+        .into(),
         root: IsolatedRootInterval {
             lower: q(1, 4),
             upper: q(3, 8),

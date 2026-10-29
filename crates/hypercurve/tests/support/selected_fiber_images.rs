@@ -17,7 +17,7 @@ pub fn source() -> CurvePoint2 {
             vec![0.into(), 0.into(), 0.into(), 1.into()],
             vec![(-1).into()],
         ]),
-        parameter: root(vec![(-2).into(), 0.into(), 1.into()], 1, 2),
+        parameter: root(vec![(-2).into(), 0.into(), 1.into()], 1, 2).into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: (Real::from(3) / Real::from(2)).unwrap(),

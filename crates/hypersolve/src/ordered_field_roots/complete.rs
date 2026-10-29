@@ -13,6 +13,7 @@ struct Node {
     upper: Real,
     count: usize,
     refinements: usize,
+    depth: usize,
     lower_is_removed_root: bool,
     upper_is_removed_root: bool,
 }
@@ -81,10 +82,56 @@ fn deflate<C: Clone, F: OrderedFieldPolynomialContext<C>>(
 /// interval boundaries. Thus the caller can select each nonpoint interval
 /// using its original equation, without discarding multiplicities or guards.
 pub fn isolate_ordered_field_polynomial_roots_complete<C, F>(
+    polynomial: Vec<C>,
+    lower: &Real,
+    upper: &Real,
+    refinement_steps: usize,
+    field: &mut F,
+) -> Result<OrderedFieldRootIsolationReport, F::Error>
+where
+    C: Clone,
+    F: OrderedFieldPolynomialContext<C>,
+{
+    isolate(polynomial, lower, upper, refinement_steps, None, field)
+}
+
+/// Runs the same complete Sturm algorithm with a local subdivision-depth limit.
+///
+/// The configured depth applies to separation and requested refinement in each
+/// segment between discovered exact roots, as for native algebraic fibers.
+/// Discovering an exact root creates new segments; this depth limit is not a
+/// bound on total subdivisions or on arithmetic, coefficient size or memory.
+/// Shared work accounting remains active across all segments and nested calls.
+/// Reaching the depth limit returns `BudgetExhausted` without partial output;
+/// a later larger-limit retry remains valid. The unrestricted entry point keeps
+/// its existing behavior and shares this implementation.
+pub fn isolate_ordered_field_polynomial_roots_complete_with_config<C, F>(
+    polynomial: Vec<C>,
+    lower: &Real,
+    upper: &Real,
+    config: OrderedFieldRootIsolationConfig,
+    field: &mut F,
+) -> Result<OrderedFieldRootIsolationReport, F::Error>
+where
+    C: Clone,
+    F: OrderedFieldPolynomialContext<C>,
+{
+    isolate(
+        polynomial,
+        lower,
+        upper,
+        config.refinement_steps,
+        Some(config.max_subdivision_depth),
+        field,
+    )
+}
+
+fn isolate<C, F>(
     mut polynomial: Vec<C>,
     lower: &Real,
     upper: &Real,
     refinement_steps: usize,
+    depth_limit: Option<usize>,
     field: &mut F,
 ) -> Result<OrderedFieldRootIsolationReport, F::Error>
 where
@@ -144,6 +191,7 @@ where
                 upper: upper.value.clone(),
                 count,
                 refinements: 0,
+                depth: 0,
                 lower_is_removed_root: lower.exact_root,
                 upper_is_removed_root: upper.exact_root,
             }];
@@ -163,6 +211,9 @@ where
                         distinct_root_count: 1,
                     });
                     continue;
+                }
+                if depth_limit.is_some_and(|limit| node.depth >= limit) {
+                    return Ok(finish(Status::BudgetExhausted, Vec::new(), steps));
                 }
                 if crate::work_budget::consume(crate::work_budget::WorkKind::RootRefinement, 1)
                     .is_err()
@@ -202,6 +253,7 @@ where
                     upper: node.upper,
                     count: right_count,
                     refinements,
+                    depth: node.depth.saturating_add(1),
                     lower_is_removed_root: false,
                     upper_is_removed_root: node.upper_is_removed_root,
                 });
@@ -210,6 +262,7 @@ where
                     upper: middle,
                     count: left_count,
                     refinements,
+                    depth: node.depth.saturating_add(1),
                     lower_is_removed_root: node.lower_is_removed_root,
                     upper_is_removed_root: false,
                 });

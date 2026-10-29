@@ -116,7 +116,8 @@ impl GraphWriter {
                     } else {
                         match &definition {
                             CurvePointDefinition2::Rational { parameter, .. }
-                            | CurvePointDefinition2::Parallel { parameter, .. } => parameter
+                            | CurvePointDefinition2::Parallel { parameter, .. }
+                            | CurvePointDefinition2::PolynomialFiber { parameter, .. } => parameter
                                 .as_polynomial_query()
                                 .map(|query| vec![query.query().source])
                                 .unwrap_or_default(),
@@ -242,7 +243,8 @@ impl GraphWriter {
                     parameter,
                     root,
                 } => {
-                    let parameter = self.parameter(&parameter)?;
+                    let parameter = self.scalar_parameter(&parameter)?;
+                    depth = self.point_depths[parameter as usize];
                     let index = self.begin(POLYNOMIAL_FIBER)?;
                     self.writer.write_u32(parameter)?;
                     self.polynomial(&equation)?;
@@ -576,7 +578,9 @@ pub(super) fn read_definition(
             }
         }
         POLYNOMIAL_FIBER => {
-            let parameter = parameter_reference(definitions, reader.read_len()?)?.clone();
+            let index = reader.read_len()?;
+            let parameter = scalar_parameter_reference(definitions, index)?;
+            depth = point_depths[index];
             let equation = read_polynomial(reader)?;
             let lower = reader.read_real()?;
             let upper = reader.read_real()?;

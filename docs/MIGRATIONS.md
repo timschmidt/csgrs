@@ -5,6 +5,25 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Polynomial fibers over retained query parameters
+
+`CurvePointDefinition2::PolynomialFiber::parameter` now takes `CurveParameter2`
+so that a generated selected-field query can become the base of another fiber.
+Wrap existing `BezierParameter2` arguments with `.into()`. Code matching the
+native representation should use `parameter.as_bezier_parameter()`; absence
+of that view does not mean the exact parameter is invalid.
+
+Native SVG path graph version 4 retains its existing fiber record (tag 14),
+whose parameter reference may now name a checked query parameter (tag 27).
+The same source recipe is retained by HyperBRep's planar fiber archive field.
+Readers for the earlier restricted schema can reject these new dependencies;
+they cannot reconstruct them by extracting independent coordinates. Existing
+native-base records retain their geometry and encoding. Replay validates the
+original source guards and root selector, including the retained base field.
+
+This extends selected graph evaluation and point composition. It does not
+establish general implicit-region offsets, corner edits or topology closure.
+
 ## Region query certainty after approximate construction
 
 Geometric queries on `CurveRegion2` retain the policy required by its

@@ -12,7 +12,7 @@ fn polynomial(rows: &[&[i32]]) -> BivariatePolynomial {
 fn cube_point(n: i32) -> CurvePoint2 {
     CurvePointDefinition2::PolynomialFiber {
         equation: polynomial(&[&[0, 0, 0, 1], &[-1]]),
-        parameter: BezierParameter2::Exact(Real::from(n)),
+        parameter: BezierParameter2::Exact(Real::from(n)).into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: 2.into(),
@@ -245,7 +245,7 @@ fn mixed_algebraic_base_and_independent_fiber_keep_original_relations() {
     );
     let point = CurvePointDefinition2::PolynomialFiber {
         equation: polynomial(&[&[0, 0, 0, 1], &[-1]]),
-        parameter: base,
+        parameter: base.into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: 2.into(),
@@ -579,7 +579,7 @@ fn nearby_polynomial_queries_remain_distinct_after_join_and_replay() {
     let first = cube_point(2);
     let second = CurvePointDefinition2::PolynomialFiber {
         equation: polynomial(&[&[0, 0, 0, 1], &[-1]]),
-        parameter: BezierParameter2::Exact(Real::from(2) + &tiny),
+        parameter: BezierParameter2::Exact(Real::from(2) + &tiny).into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: 2.into(),

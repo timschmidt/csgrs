@@ -105,7 +105,7 @@ impl GraphEncoder {
                 root,
             } => RawPlanarPoint::PolynomialFiber {
                 equation: equation.coefficients,
-                parameter: self.curve_parameter(&parameter.into())?,
+                parameter: self.curve_parameter(&parameter)?,
                 interval: [root.lower, root.upper],
                 exact_root: root.exact_root,
             },
@@ -210,7 +210,7 @@ impl SelectionGraph {
                 exact_root,
             } => CurvePointDefinition2::PolynomialFiber {
                 equation: hypersolve::BivariatePolynomial::new(equation),
-                parameter: self.bezier_parameter(parameter)?,
+                parameter: self.curve_parameter(parameter)?,
                 root: hypersolve::IsolatedRootInterval {
                     lower,
                     upper,
@@ -317,7 +317,7 @@ mod tests {
                 vec![0.into(), 0.into(), 0.into(), 1.into()],
                 vec![(-1).into()],
             ]),
-            parameter: base,
+            parameter: base.into(),
             root: hypersolve::IsolatedRootInterval {
                 lower: 1.into(),
                 upper: (Real::from(3) / Real::from(2)).unwrap(),

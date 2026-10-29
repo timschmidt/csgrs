@@ -38,7 +38,8 @@ fn center() -> CurvePoint2 {
                 BezierParameterInterval::try_new(q(3, 4), 1.into()).unwrap(),
             )
             .unwrap(),
-        ),
+        )
+        .into(),
         root: IsolatedRootInterval {
             lower: 1.into(),
             upper: 2.into(),

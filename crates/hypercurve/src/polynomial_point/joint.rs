@@ -1,4 +1,4 @@
-//! Joint query points preserve sources as well as their common scalar field.
+//! Joint point values retain their source recipe and common selected field.
 
 use super::*;
 use crate::bezier_offset::PointFormSource2;
@@ -6,7 +6,7 @@ use crate::selected_field::{self as field, Value};
 use std::sync::Arc;
 
 pub(super) struct JointQueries2 {
-    sources: [PointFormSource2; 2],
+    definition: crate::CurvePointDefinition2,
     values: [Value; 2],
 }
 
@@ -25,18 +25,24 @@ impl PartialEq for JointQueries2 {
 
 impl JointQueries2 {
     pub(super) fn definition(&self) -> crate::CurvePointDefinition2 {
-        crate::CurvePointDefinition2::RationalQueryPair {
-            sources: self.sources.each_ref().map(|query| query.source.clone()),
-            numerators: self.sources.each_ref().map(|query| query.numerator.clone()),
-            denominators: self
-                .sources
-                .each_ref()
-                .map(|query| query.denominator.clone()),
-        }
+        self.definition.clone()
     }
 }
 
 impl PolynomialPoint2 {
+    pub(super) fn from_joint_values(
+        definition: crate::CurvePointDefinition2,
+        values: [Value; 2],
+    ) -> CurvePoint2 {
+        CurvePoint2(CurvePointData2::Polynomial(Arc::new(Self {
+            authority: PolynomialPointAuthority2::Queries(Arc::new(JointQueries2 {
+                definition,
+                values,
+            })),
+            maps: Vec::new(),
+        })))
+    }
+
     pub(crate) fn from_queries(
         sources: [PointFormSource2; 2],
         policy: &CurveContext,
@@ -47,13 +53,12 @@ impl PolynomialPoint2 {
             let first = crate::bezier_offset::selected_field_query(&sources[0], policy)?;
             let second = crate::bezier_offset::selected_field_query(&sources[1], policy)?;
             let values = field::joined(&first, &second, policy)?;
-            Ok(CurvePoint2(CurvePointData2::Polynomial(Arc::new(Self {
-                authority: PolynomialPointAuthority2::Queries(Arc::new(JointQueries2 {
-                    sources,
-                    values,
-                })),
-                maps: Vec::new(),
-            }))))
+            let definition = crate::CurvePointDefinition2::RationalQueryPair {
+                sources: sources.each_ref().map(|query| query.source.clone()),
+                numerators: sources.each_ref().map(|query| query.numerator.clone()),
+                denominators: sources.each_ref().map(|query| query.denominator.clone()),
+            };
+            Ok(Self::from_joint_values(definition, values))
         })
     }
 

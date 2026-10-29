@@ -2029,7 +2029,7 @@ mod tests {
                     vec![0.into(), 0.into(), 0.into(), 1.into()],
                     vec![(-1).into()],
                 ]),
-                parameter: BezierParameter2::Exact(n.into()),
+                parameter: BezierParameter2::Exact(n.into()).into(),
                 root: IsolatedRootInterval {
                     lower: 1.into(),
                     upper: 2.into(),
