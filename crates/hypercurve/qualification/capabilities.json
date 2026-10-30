@@ -7,7 +7,7 @@
     "Native save/reload beyond the demonstrated source and selected generated carriers remains open. Version 5 preserves the named filled-region chains. The selected-circle corner fixtures now complete chamfer or constrained fillet, reconstruction, exact replay and round dilation/contraction; named translated-circle and nonincident-line contacts and rotated overlaps also complete. General independent angular/coefficient fields, other circle frames and arbitrary implicit regions remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, disappearance chains beyond the named circle, polygon and dumbbell witnesses, and all hole/disconnected configurations.",
-    "Total arithmetic, coefficient/system growth and retained-memory limits. Cooperative cancellation is observed only at instrumented work units, so it does not bound uninstrumented arithmetic or elapsed time.",
+    "Total arithmetic, projected-system size and retained-memory limits. Coefficient-growth limits cover only Bareiss, pseudo-quotient and dense tensor constructions, and cooperative cancellation is observed only at instrumented work units; neither bounds uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
   ],
@@ -16544,6 +16544,40 @@
       ],
       "oracle": "An independently assembled boundary from the certified rational PH offset curve and exact sqrt 13 join endpoints.",
       "timeout_seconds": 120
+    },
+    {
+      "id": "coefficient_limit_stalled_stroke",
+      "target": "hypercurve_open_path_compositions",
+      "test": "coefficient_bit_limit_stops_the_stalled_filleted_hyperbola_bevel_stroke",
+      "owner": "Hypersolve work scopes with Bareiss, pseudo-quotient and dense tensor constructions",
+      "properties": [
+        "P19",
+        "P20"
+      ],
+      "domain": "The fillet and bevel stroke of two weight-2/3 hyperbolas that otherwise stalls in dense two-radical signs, under a 1,024-bit coefficient limit.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalQuadraticBezier",
+        "AnalyticParallel",
+        "CircularArc",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An exact coefficient above the scope's bit limit fails the operation with CoefficientGrowth before it is used; no partial region is published.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The stroke returns CoefficientGrowth with limit 1,024 and a larger requested bit length."
+        }
+      ],
+      "oracle": "The public outer receipt of the limit scope.",
+      "timeout_seconds": 180
     }
   ]
 }

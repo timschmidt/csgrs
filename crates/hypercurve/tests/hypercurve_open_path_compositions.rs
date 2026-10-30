@@ -1409,3 +1409,39 @@ fn cancellation_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
     );
     assert_eq!(result.unwrap_err().kind, hypercurve::WorkKind::Cancellation);
 }
+
+/// A coefficient bit limit stops the same stalled stroke deterministically:
+/// its dense two-radical signs build Bareiss and tensor coefficients of
+/// thousands of bits, and the first one above 1,024 bits fails the scope with
+/// `CoefficientGrowth` instead of being used.
+#[test]
+fn coefficient_bit_limit_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
+    let seed = Seed {
+        x: 3,
+        y: 8,
+        edges: vec![
+            Edge {
+                family: 4,
+                dx: 6,
+                dy: -1,
+                outward: -1,
+            },
+            Edge {
+                family: 4,
+                dx: 6,
+                dy: 0,
+                outward: -2,
+            },
+        ],
+        weight: 2,
+    };
+    let outcome = hypersolve::work_budget::with_coefficient_bit_limit(1024, || {
+        hypercurve::evaluate_under(STRICT, || {
+            run_sequence(&seed, &[Step::Fillet(2, 2), Step::Stroke(3, 1)]).is_ok()
+        })
+    });
+    let exceeded = outcome.result.unwrap_err();
+    assert_eq!(exceeded.kind, hypercurve::WorkKind::CoefficientGrowth);
+    assert_eq!(exceeded.limit, 1024);
+    assert!(exceeded.requested > 1024);
+}

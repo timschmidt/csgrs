@@ -287,3 +287,27 @@ other uninstrumented loops still run to completion, so this is not an
 elapsed-time bound. Total arithmetic, coefficient growth and retained-memory
 limits remain open. Cancellation does not cross threads by itself: a worker
 joins a request by entering its own scope with a cloned token.
+
+## Coefficient growth limits (2026-10-30)
+
+Closure-plan M4 also asks for separately defined coefficient-growth limits.
+`with_coefficient_bit_limit` pushes a scope frame with a bit limit;
+`observe_coefficient_bits` checks every enclosing limit, and the outermost one
+exceeded fails with `WorkKind::CoefficientGrowth` for itself and its nested
+scopes, as a smaller inner budget does. Integer polynomial Bareiss entries,
+pseudo-quotient matrix entries and exact rational dense tensor product
+coefficients report their sizes only while a scope is active, and fail through
+their existing "unavailable" outcome.
+
+On the stalled hyperbola bevel stroke, limits of 1,024 and 4,096 bits both fail
+on a 7,950-bit coefficient and 16,384 bits on a 23,826-bit one, each after the
+same 24,238 refinements and 30 promotions (release, Rust 1.99.1; 9.7, 13.7 and
+55.6 s under concurrent load). Unlike cancellation the stopping point does not
+depend on timing. Witnesses: two `work_budget` owner tests, a Bareiss unit test
+(`t^2 - 2^80` fails at 64 bits and succeeds at 128) and
+`coefficient_bit_limit_stops_the_stalled_filleted_hyperbola_bevel_stroke`.
+
+Open: subresultant and Sturm sequences, recursive field arithmetic and scalar
+approximations do not report sizes, so the limit does not bound all coefficient
+growth or memory. Arithmetic work, projected-system size and retained memory
+remain without limits.

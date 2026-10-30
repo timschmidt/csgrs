@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `with_coefficient_bit_limit` and `observe_coefficient_bits`. Integer
+  polynomial Bareiss entries, pseudo-quotient multiplication matrix entries and
+  exact rational dense tensor products report their bit lengths, and one above
+  an active limit fails the scope with `WorkKind::CoefficientGrowth` instead of
+  being used. The bound is deterministic but covers only these constructions;
+  it is not a memory bound.
+
 - Add cooperative cancellation to work-budget scopes. `CancellationToken` can be
   cancelled from any thread; `with_cancellable_budget` then fails the next
   instrumented unit or exhaustion check with `WorkKind::Cancellation` and

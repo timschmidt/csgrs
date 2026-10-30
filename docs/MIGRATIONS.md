@@ -5,6 +5,15 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Coefficient growth limits
+
+`WorkKind` has a new `CoefficientGrowth` variant; exhaustive matches on it must
+handle that case. It appears only inside `work_budget::with_coefficient_bit_limit`
+scopes, when an instrumented construction produces an exact coefficient larger
+than the limit. Such a `BudgetExceeded` reports the limit as `limit` and the
+observed bit length as `requested`. Code that does not enter these scopes sees
+no new outcome.
+
 ## Dilation of regions with holes
 
 `CurveRegion2::offset` with a positive distance now builds the result from the

@@ -1,6 +1,7 @@
 use super::{
     BudgetExceeded, CancellationToken, WorkBudget, WorkKind, WorkUsage, consume, exhaustion,
-    is_active, with_budget, with_cancellable_budget,
+    is_active, observe_coefficient_bits, with_budget, with_cancellable_budget,
+    with_coefficient_bit_limit,
 };
 
 #[test]
@@ -391,4 +392,60 @@ fn cancelled_root_refinement_retries_with_a_new_token() {
     let report = retry.result.unwrap();
     assert_eq!(report.status, IsolatedRootRefinementStatus::Refined);
     assert_eq!(report.refined_interval, baseline.refined_interval);
+}
+
+#[test]
+fn coefficient_bit_limit_denies_larger_coefficients_only() {
+    let outcome = with_coefficient_bit_limit(64, || {
+        observe_coefficient_bits(64).unwrap();
+        consume(WorkKind::RootRefinement, 5).unwrap();
+        assert_eq!(
+            observe_coefficient_bits(65),
+            Err(BudgetExceeded {
+                kind: WorkKind::CoefficientGrowth,
+                limit: 64,
+                used: 0,
+                requested: 65,
+            })
+        );
+        // Later work in the exhausted scope also fails.
+        assert_eq!(
+            consume(WorkKind::RootRefinement, 1).unwrap_err().kind,
+            WorkKind::CoefficientGrowth
+        );
+    });
+    assert_eq!(
+        outcome.result.unwrap_err().kind,
+        WorkKind::CoefficientGrowth
+    );
+    assert_eq!(outcome.usage.refinements, 5);
+    assert_eq!(
+        outcome.result.unwrap_err().to_string(),
+        "coefficient growth limit exceeded: 65 bits against a limit of 64"
+    );
+    // Without a limit, observations are free.
+    assert!(observe_coefficient_bits(u64::MAX).is_ok());
+    assert!(
+        with_budget(WorkBudget::ZERO, || observe_coefficient_bits(u64::MAX))
+            .result
+            .unwrap()
+            .is_ok()
+    );
+}
+
+#[test]
+fn coefficient_bit_limits_nest_like_budgets() {
+    let outcome = with_coefficient_bit_limit(100, || {
+        // A tighter nested limit fails alone.
+        let inner = with_coefficient_bit_limit(10, || observe_coefficient_bits(50));
+        assert_eq!(inner.result.unwrap_err().kind, WorkKind::CoefficientGrowth);
+        assert_eq!(exhaustion(), None);
+        observe_coefficient_bits(50).unwrap();
+        // The enclosing limit applies inside an ordinary nested budget.
+        let nested = with_budget(WorkBudget::UNLIMITED, || observe_coefficient_bits(101));
+        assert_eq!(nested.result.unwrap_err().limit, 100);
+        assert_eq!(exhaustion().unwrap().kind, WorkKind::CoefficientGrowth);
+    });
+    assert_eq!(outcome.result.unwrap_err().limit, 100);
+    assert!(!is_active());
 }

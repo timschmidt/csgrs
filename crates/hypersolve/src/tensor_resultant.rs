@@ -258,6 +258,24 @@ impl DenseTensorPolynomial {
         .then(|| flat_index(&self.dimensions, exponents))
     }
 
+    // Reports the largest exact rational coefficient to an active coefficient
+    // bit limit; an oversized product is unavailable, never truncated.
+    fn within_coefficient_bit_limit(self) -> Option<Self> {
+        if !crate::work_budget::is_active() {
+            return Some(self);
+        }
+        let bits = self
+            .coefficients
+            .iter()
+            .filter_map(Real::exact_rational_ref)
+            .map(|value| value.numerator().bits() + value.denominator().bits())
+            .max()
+            .unwrap_or(0);
+        crate::work_budget::observe_coefficient_bits(bits)
+            .ok()
+            .map(|()| self)
+    }
+
     /// Multiplies two tensors by exact multidimensional convolution.
     pub fn multiply(&self, other: &Self) -> Option<Self> {
         if self.dimensions.len() != other.dimensions.len() {
@@ -294,7 +312,7 @@ impl DenseTensorPolynomial {
                     result.coefficients[target] += product;
                 }
             }
-            return Some(result);
+            return result.within_coefficient_bit_limit();
         }
         let right_terms = embedded_nonzero_terms(other, &target_strides)?;
         for (left_index, left) in left_terms {
@@ -305,7 +323,7 @@ impl DenseTensorPolynomial {
                 result.coefficients[left_index.checked_add(*right_index)?] += left * *right;
             }
         }
-        Some(result)
+        result.within_coefficient_bit_limit()
     }
 
     /// Multiplies by one power of a selected tensor variable.

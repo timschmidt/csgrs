@@ -1549,6 +1549,12 @@ pub(crate) fn determinant_integer_polynomial_matrix(
                 )?;
                 let mut quotient = integer_polynomial_exact_quotient(&numerator, &previous_pivot)?;
                 trim(&mut quotient);
+                if crate::work_budget::is_active() {
+                    let bits = quotient.iter().map(BigInt::bits).max().unwrap_or(0);
+                    if crate::work_budget::observe_coefficient_bits(bits).is_err() {
+                        return None;
+                    }
+                }
                 matrix[row * dimension + column] = quotient;
             }
             matrix[row * dimension + pivot].clear();
@@ -2328,6 +2334,28 @@ mod tests {
             prop_assert!(report.fill_in_positions.is_empty());
             prop_assert!(report.sparse_residual_replay.accepted);
         }
+    }
+
+    #[test]
+    fn determinant_beyond_a_coefficient_bit_limit_is_unavailable() {
+        use crate::work_budget::{WorkKind, with_coefficient_bit_limit};
+        // [[t, 2^40], [2^40, t]] has determinant t^2 - 2^80; the Bareiss
+        // cross term needs 81 bits.
+        let big = BigInt::from(1_u64 << 40);
+        let entries = vec![
+            vec![BigInt::zero(), BigInt::one()],
+            vec![big.clone()],
+            vec![big.clone()],
+            vec![BigInt::zero(), BigInt::one()],
+        ];
+        let expected = vec![-(&big * &big), BigInt::zero(), BigInt::one()];
+        let denied = with_coefficient_bit_limit(64, || {
+            assert_eq!(determinant_integer_polynomial_matrix(&entries, 2), None);
+        });
+        assert_eq!(denied.result.unwrap_err().kind, WorkKind::CoefficientGrowth);
+        let allowed =
+            with_coefficient_bit_limit(128, || determinant_integer_polynomial_matrix(&entries, 2));
+        assert_eq!(allowed.result.unwrap(), Some(expected));
     }
 
     #[test]

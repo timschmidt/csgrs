@@ -701,6 +701,16 @@ fn pseudo_quotient_multiplication_matrix(
             }
             product[power] = BigInt::zero();
         }
+        if crate::work_budget::is_active() {
+            let bits = product[..degree]
+                .iter()
+                .map(BigInt::bits)
+                .max()
+                .unwrap_or(0);
+            if crate::work_budget::observe_coefficient_bits(bits).is_err() {
+                return None;
+            }
+        }
         for row in 0..degree {
             matrix[row * degree + column] = std::mem::take(&mut product[row]);
         }

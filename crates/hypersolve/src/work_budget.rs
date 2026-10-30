@@ -105,6 +105,15 @@
 //! dense tensor products. They report their existing "unavailable" outcome,
 //! never a zero or partial value. Other uninstrumented arithmetic, such as one
 //! large integer product or a scalar refinement, still runs to completion.
+//!
+//! [`with_coefficient_bit_limit`] bounds the size of exact coefficients that
+//! those same constructions produce: Bareiss entries, pseudo-quotient matrix
+//! entries and exact rational dense tensor product coefficients report their
+//! bit length through [`observe_coefficient_bits`], and a larger one fails
+//! with [`WorkKind::CoefficientGrowth`] before it is used. Unlike cancellation
+//! the bound is deterministic. It covers only these constructions: other
+//! coefficient arithmetic, such as subresultant and Sturm sequences or scalar
+//! approximations, is not measured, so it is not a memory bound.
 
 use std::cell::{Cell, RefCell};
 use std::fmt;
@@ -177,12 +186,16 @@ pub enum WorkKind {
     AlgebraicPromotion,
     /// Any further work after the scope's [`CancellationToken`] was cancelled.
     Cancellation,
+    /// An instrumented exact coefficient larger than the scope's bit limit.
+    CoefficientGrowth,
 }
 
 /// A denied work request, before any of its units were performed.
 ///
 /// A [`WorkKind::Cancellation`] failure has zero `limit` and `used`; it
-/// reports only the size of the request that observed the cancellation.
+/// reports only the size of the request that observed the cancellation. A
+/// [`WorkKind::CoefficientGrowth`] failure reports the bit limit as `limit`,
+/// zero `used`, and the observed coefficient's bit length as `requested`.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BudgetExceeded {
     /// Work that the operation attempted to perform.
@@ -208,6 +221,13 @@ impl BudgetExceeded {
 
 impl fmt::Display for BudgetExceeded {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.kind == WorkKind::CoefficientGrowth {
+            return write!(
+                formatter,
+                "coefficient growth limit exceeded: {} bits against a limit of {}",
+                self.requested, self.limit
+            );
+        }
         if self.kind == WorkKind::Cancellation {
             return write!(
                 formatter,
@@ -241,6 +261,7 @@ struct Frame {
     usage: WorkUsage,
     exhausted: Option<BudgetExceeded>,
     cancellation: Option<CancellationToken>,
+    max_coefficient_bits: Option<u64>,
 }
 
 impl Frame {
@@ -248,7 +269,7 @@ impl Frame {
         match kind {
             WorkKind::RootRefinement => (self.budget.refinements, self.usage.refinements),
             WorkKind::AlgebraicPromotion => (self.budget.promotions, self.usage.promotions),
-            WorkKind::Cancellation => (0, 0),
+            WorkKind::Cancellation | WorkKind::CoefficientGrowth => (0, 0),
         }
     }
 
@@ -256,7 +277,7 @@ impl Frame {
         match kind {
             WorkKind::RootRefinement => self.usage.refinements += amount,
             WorkKind::AlgebraicPromotion => self.usage.promotions += amount,
-            WorkKind::Cancellation => {}
+            WorkKind::Cancellation | WorkKind::CoefficientGrowth => {}
         }
     }
 }
@@ -354,7 +375,7 @@ pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
 /// return type. Panic unwinding restores the enclosing scope without refunding
 /// work already admitted by that scope.
 pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> BudgetOutcome<T> {
-    enter(budget, None, operation)
+    enter(budget, None, None, operation)
 }
 
 /// Evaluate one synchronous operation with a work budget and a cancellation token.
@@ -370,12 +391,67 @@ pub fn with_cancellable_budget<T>(
     cancellation: &CancellationToken,
     operation: impl FnOnce() -> T,
 ) -> BudgetOutcome<T> {
-    enter(budget, Some(cancellation.clone()), operation)
+    enter(budget, Some(cancellation.clone()), None, operation)
+}
+
+/// Evaluate one synchronous operation whose instrumented exact coefficients
+/// may not exceed `bits` bits.
+///
+/// The scope admits any number of work units; nest it inside [`with_budget`]
+/// or [`with_cancellable_budget`] to combine limits. An observed coefficient
+/// larger than `bits` fails with [`WorkKind::CoefficientGrowth`] and no value
+/// is published. A nested limit that fails leaves its parent running. See the
+/// [module documentation](self) for the constructions that report sizes.
+pub fn with_coefficient_bit_limit<T>(bits: u64, operation: impl FnOnce() -> T) -> BudgetOutcome<T> {
+    enter(WorkBudget::UNLIMITED, None, Some(bits), operation)
+}
+
+/// Report the bit length of an exact coefficient that an instrumented
+/// construction has produced, before it is used.
+///
+/// Fails, exhausting the outermost scope whose limit it exceeds and every
+/// scope nested in it, when the coefficient is larger than an active limit.
+/// An already exhausted or cancelled scope also fails. Without an active
+/// scope this is a no-op.
+#[inline]
+pub fn observe_coefficient_bits(bits: u64) -> Result<(), BudgetExceeded> {
+    if !is_active() {
+        return Ok(());
+    }
+    FRAMES.with_borrow_mut(|frames| {
+        if let Some(error) = frames.last().and_then(|frame| frame.exhausted) {
+            return Err(error);
+        }
+        if let Some(error) = observe_cancellation(frames, 0) {
+            return Err(error);
+        }
+        let Some(index) = frames
+            .iter()
+            .position(|frame| frame.max_coefficient_bits.is_some_and(|limit| bits > limit))
+        else {
+            return Ok(());
+        };
+        let limit = frames[index].max_coefficient_bits.unwrap_or(0);
+        let error = BudgetExceeded {
+            kind: WorkKind::CoefficientGrowth,
+            limit: usize::try_from(limit).unwrap_or(usize::MAX),
+            used: 0,
+            requested: usize::try_from(bits).unwrap_or(usize::MAX),
+        };
+        for frame in &mut frames[index..] {
+            frame.exhausted.get_or_insert(error);
+        }
+        Err(frames
+            .last()
+            .and_then(|frame| frame.exhausted)
+            .unwrap_or(error))
+    })
 }
 
 fn enter<T>(
     budget: WorkBudget,
     cancellation: Option<CancellationToken>,
+    max_coefficient_bits: Option<u64>,
     operation: impl FnOnce() -> T,
 ) -> BudgetOutcome<T> {
     struct Scope(bool);
@@ -409,6 +485,7 @@ fn enter<T>(
             usage: WorkUsage::default(),
             exhausted,
             cancellation,
+            max_coefficient_bits,
         });
         ACTIVE.with(|active| active.set(true));
     });
