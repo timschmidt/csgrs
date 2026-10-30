@@ -6,7 +6,7 @@
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
     "Native save/reload beyond the demonstrated source and selected generated carriers remains open. Version 5 preserves the named filled-region chains. The selected-circle corner fixtures now complete chamfer or constrained fillet, reconstruction, exact replay and round dilation/contraction; named translated-circle and nonincident-line contacts and rotated overlaps also complete. General independent angular/coefficient fields, other circle frames and arbitrary implicit regions remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
-    "Invalid operands paired with canonical empty, disappearance chains beyond the named circle, polygon and dumbbell witnesses, and all hole/disconnected configurations.",
+    "Invalid operands other than offset options paired with canonical empty, disappearance chains beyond the named circle, polygon, ellipse and dumbbell witnesses, and all hole/disconnected configurations.",
     "Total arithmetic, projected-system size and retained-memory limits. Coefficient-growth limits cover only Bareiss, pseudo-quotient and dense tensor constructions, and cooperative cancellation is observed only at instrumented work units; neither bounds uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
@@ -16577,6 +16577,46 @@
         }
       ],
       "oracle": "The public outer receipt of the limit scope.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "empty_operand_invalid_offset_options",
+      "target": "disappearance_chains",
+      "test": "invalid_offset_options_are_reported_for_empty_regions",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "The canonical empty region and a 2x2 square offset by 1, -1 and 0 with a miter limit of -1, and the empty region with a bevel.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Invalid offset options are rejected for an empty operand exactly as for a nonempty one; a valid style keeps the empty region empty.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "invalid",
+          "assertion": "Each request with a negative miter limit returns ExactCurveError::Invalid, for empty and nonempty operands and at zero distance."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "successful_empty",
+          "assertion": "A bevel offset of the empty region is empty."
+        }
+      ],
+      "oracle": "The public error category and canonical emptiness.",
       "timeout_seconds": 180
     }
   ]

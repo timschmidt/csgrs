@@ -381,3 +381,27 @@ fn elliptical_hole_closes_at_its_minor_semi_axis() {
         );
     }
 }
+
+/// Invalid offset options are reported for the canonical empty region exactly
+/// as for a nonempty one, including at zero distance: an empty operand never
+/// turns an invalid request into a successful empty result.
+#[test]
+fn invalid_offset_options_are_reported_for_empty_regions() {
+    let invalid = OffsetCornerStyle2::Miter {
+        limit: Real::from(-1),
+    };
+    let empty = CurveRegion2::empty();
+    let block = region(&[square(1)]);
+    for (operand, distance) in [
+        (&empty, Real::one()),
+        (&empty, -Real::one()),
+        (&block, Real::one()),
+        (&block, Real::zero()),
+    ] {
+        assert!(matches!(
+            support::under(&STRICT, || operand.offset(distance.clone(), &invalid)),
+            Err(hypercurve::ExactCurveError::Invalid { .. })
+        ));
+    }
+    assert!(offset_with(&empty, Real::one(), &OffsetCornerStyle2::Bevel).is_empty());
+}
