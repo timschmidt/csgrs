@@ -3535,3 +3535,15 @@ minutes. A sample sits in `RecursiveQuadraticValue::sign` through the dense
 two-radical leaves of section 1, reached from algebraic chord/rational pair
 intersections while the second erosion's band difference is built. The
 erosion-composition identity therefore remains unqualified for this region.
+
+Rejected: composing repeated round offsets at region level. Recording each
+round offset's source and distance and recomputing a further same-sign round
+offset from the source by the summed distance is an exact set identity and
+removes this stall. A trial run of the release suite showed it bypasses the
+second offset in at least eleven existing tests that deliberately offset
+generated geometry again, among them
+`repeated_region_offsets_compose_retained_exact_parallels_under_both_policies`
+and `repeated_round_erosion_composes_with_a_single_erosion`; those checks of
+output reuse would pass without exercising it. The stall belongs to the
+consumption of generated parallels and corners, which a shortcut would hide
+rather than fix.
