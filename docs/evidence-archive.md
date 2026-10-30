@@ -199,6 +199,14 @@ affected qualification groups. Original runtime failures, compile-only failed
 attempts and the interrupted review run are retained. Full pre-push and general
 algebraic closure remain open. This evidence record is unpushed.
 
+The local hypercurve-empty-axis-topology-evidence-2026-10-29 branch ends at
+8bb47161714e4af5ff6fcf7127cd8454810b9084, adding docs/evidence/2026-10-29-hypercurve-closure-empty-axis-topology (681 files,
+15,939,734 bytes), SHA-256 87bc3fab2d2ee245cab8b2877f1966e8eeeb563b01c54c60d6679f86d79b447c. It records empty first-coordinate
+topology, native curve and section consumers, eight focused groups and 24 passing
+affected qualification groups. Original runtime failures, the compile-only failed
+probe and the corrected new budget expectation are retained. Full pre-push and
+general algebraic closure remain open. This evidence record is unpushed.
+
 The local hypercurve-selected-chord-composition-evidence-2026-10-29 branch ends at
 b8ffdd329648cd4925e71af88fabe01fe36e6aab, adding docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition (1,345 files,
 44,842,601 bytes), SHA-256 0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3. It records exact selected-field

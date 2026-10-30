@@ -16,6 +16,11 @@
   definition; vertical components and algebraic-coefficient admission remain
   separate capabilities. Configured degree and shared work limits still apply.
 
+- Admit empty topology for first-coordinate-only rational polynomials whose
+  complete closed-domain projection has no source roots. Retain original
+  equations and degree/work controls; actual vertical components keep their
+  typed outcome. Empty fiber queries and native consumers remain exact.
+
 - Normalize invertible native rational quotients and selected-field denominators
   with verified modular or Bezout inverses, retaining nonunit local quotients.
   Proved parent images keep their original relations, multiplicity and selectors.

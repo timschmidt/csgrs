@@ -26,6 +26,10 @@
   defining exponents survive restrictions, reversal, images and native replay.
   Defining exponents do not substitute for winding or local contact order.
 
+- Admit the solver-certified empty zero sets of first-coordinate-only rational
+  polynomials as native curve sets. Source equations and domains survive
+  reconstruction, with no spurious curve or isolated-point component.
+
 - Consume generated chord displacements over selected polynomial endpoints in
   exact point queries. Retain one positive speed relation and the original
   procedural source through reversal, zero distance and native replay. The

@@ -16045,6 +16045,51 @@
       ],
       "oracle": "Independent Euclidean squared-distance equations, original defining power, endpoint connectivity and further incidence.",
       "timeout_seconds": 120
+    },
+    {
+      "id": "implicit_empty_axis_admission",
+      "target": "polynomial_empty_axis",
+      "test": "empty_axis_topology_enters_the_native_curve_set",
+      "owner": "Hypersolve closed projection and fiber census; Hypercurve native polynomial curve sets",
+      "properties": [
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "domain": "x^2+1, x-3 and (x-3)^2 on the rational closed rectangle [-1,1] by [-2,2].",
+      "origins": [
+        "authored",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The original polynomial and domain remain authoritative. A complete closed projection/fiber census proves absence of curve and isolated-point components; native import preserves successful empty geometry. This does not admit live vertical components, general algebraic coefficients or filled-region semantics for arbitrary zero loci. Existing counters and the external timeout are not total arithmetic or memory bounds.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "successful_empty",
+          "assertion": "The complete original-source topology imports as a native PolynomialCurveSet2 with neither curves nor isolated points."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "successful_empty",
+          "assertion": "A subsequent rational fiber query remains empty against the retained original equation."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "successful_empty",
+          "assertion": "Reconstructing topology from the original equation and domain imports as the same exact empty set."
+        }
+      ],
+      "oracle": "For -1<=x<=1, x^2+1>=1, x-3<=-2 and (x-3)^2>=4, independently proving no zero in the entire rectangle.",
+      "timeout_seconds": 60
     }
   ]
 }

@@ -3410,3 +3410,33 @@ implicit offsets, fillets, algebraic coefficients, vertical components and
 curved solid operations remain open. The parallel tiny-source zero-distance
 correction is not included in this source. Failed experiments, compile-only
 attempts and the interrupted review run remain in the evidence record.
+
+## Empty polynomial sources through consumers (2026-10-29)
+
+Empty first-coordinate polynomial topology now enters the native curve set,
+retains its original equation and domain for reconstruction, and accepts further
+fiber queries. Three rational tensor patches with exact heights `u^2+1`, `u-3`
+and `(u-2)^2` over `[0,1]^2` are disjoint from the zero-height plane. Both operand
+orders return successful empty sections. A fresh process validates each native
+archive, repeats the queries, applies a nonsingular affine map, saves/reloads
+and queries again. Exact sign expectations establish disjointness independently;
+deterministic serialization is checked separately. The child-test selector was
+audited on the qualified binary to exclude a zero-test successful exit.
+
+All eight focused groups and all 24 affected qualification groups pass.
+The latter include full Hypersolve (1,311 passed),
+Hypercurve (3,032 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz-target checks, allocation lifetime
+checks, the capability matrix and hygiene. Counts are harness-reported passes;
+logs retain ignored counts. The matrix verifies 354
+advertised outcomes, including explicit blocker witnesses. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-empty-axis-topology`, SHA-256 `87bc3fab2d2ee245cab8b2877f1966e8eeeb563b01c54c60d6679f86d79b447c`. These local admission checks do not establish
+full pre-push qualification or complete general algebraic operation closure.
+
+Original topology/boundary tests and the repeated-chamfer hard case are retained;
+the latter still passes its unchanged 180-second envelope. Compile-only failed
+probes and the incorrect new budget expectation remain in the evidence record.
+Actual vertical components, arbitrary algebraic coefficients and general
+implicit operations remain open. The independent multiplicity and zero-distance
+changes are not included here. No full-solid or performance claim is made.

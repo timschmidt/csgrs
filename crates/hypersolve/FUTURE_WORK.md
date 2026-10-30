@@ -174,3 +174,34 @@ or cancellation. Recorded process RSS and command timings include builds;
 allocation lifetime checks are not a matched multiplicity benchmark. No
 performance improvement is claimed. Arbitrary algebraic coefficients, vertical
 components and the broader exact-closure target remain open.
+
+## Empty first-coordinate polynomial topology (2026-10-29)
+
+Removing an early nonconstant-axis rejection lets the existing exact projection
+and closed-fiber census distinguish an empty rectangle from a live vertical
+component. Every first-coordinate root in the closed domain enters that census;
+an identically zero fiber still returns `VerticalComponent`. The original
+equation, domain checks, root selection and resource controls remain authoritative.
+
+On unchanged `d31ef199c3`, `x^2+1` and `x-3` incorrectly failed on
+`[-1,1] x [-2,2]`. They now return empty topology and accept later fiber queries.
+Seven owner tests include repeated and degree-six sources, algebraic live roots,
+boundary roots, malformed domains, degree limits, zero-budget refusal and retry.
+A one-promotion budget completes the rational census; a mistaken new exhaustion
+expectation is recorded and corrected against the existing budget contract.
+
+All eight focused groups and all 24 affected qualification groups pass.
+The latter include full Hypersolve (1,311 passed),
+Hypercurve (3,032 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz-target checks, allocation lifetime
+checks, the capability matrix and hygiene. Counts are harness-reported passes;
+logs retain ignored counts. The matrix verifies 354
+advertised outcomes, including explicit blocker witnesses. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-empty-axis-topology`, SHA-256 `87bc3fab2d2ee245cab8b2877f1966e8eeeb563b01c54c60d6679f86d79b447c`. These local admission checks do not establish
+full pre-push qualification or complete general algebraic operation closure.
+
+This is empty-support admission. Actual vertical components and algebraic
+coefficient topology remain open. Existing work counters do not bound total
+arithmetic, coefficient growth, retained memory or cancellation. Command timing
+and process RSS include builds; no performance improvement is claimed.

@@ -429,13 +429,9 @@ fn decompose(
         &[-domain.first[0].clone(), Real::one()],
         &[-domain.first[1].clone(), Real::one()],
     );
-    if degree == 1 {
-        // A nonconstant first-only polynomial consists of vertical components.
-        let axis = bivariate_specialize_second(&equation, &Real::zero());
-        if polynomial_trim_structural_zeros(axis).len() > 1 {
-            return Err(BivariateTopologyError::VerticalComponent);
-        }
-    } else {
+    // First-coordinate-only equations also need the closed projection census.
+    // A live root yields an identically zero fiber below; no roots means empty.
+    if degree > 1 {
         let derivative = bivariate_parameter_derivative(&equation, CurveResultantParameter::Second);
         let resultant = resultant_bivariate_polynomial_system(
             &equation,
