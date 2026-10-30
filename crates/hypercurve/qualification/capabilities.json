@@ -16469,6 +16469,81 @@
       ],
       "oracle": "Independently authored rounded squares for the closed cases; for surviving holes, exact Boolean identities between the dilated region and the separately eroded ellipse (disjoint, union equal to the dilated frame).",
       "timeout_seconds": 180
+    },
+    {
+      "id": "ph_convex_offset_identities",
+      "target": "repeated_offset_identities",
+      "test": "ph_region_offsets_obey_convex_disk_identities",
+      "owner": "Hypercurve exact region offsets, analytic parallels and Pythagorean-hodograph specialization",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "The convex region bounded by the PH cubic P(t) = (t - t^3/3, t^2) on [0, 1] and its chord, offset by 1/16, 1/8 and 1/4 with round corners.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CubicBezier",
+        "Line",
+        "AnalyticParallel",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Disk offsets of a convex set compose: two dilations by 1/8 equal one by 1/4, closing by 1/8 returns the set, and dilating by 1/4 then eroding by 1/8 equals dilating by 1/8.",
+      "claims": [
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Both dilation orders and the closing identities hold exactly; the 1/16 erosion is nonempty."
+        }
+      ],
+      "oracle": "Exact set identities of Minkowski operations on convex sets, compared by empty symmetric difference.",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "ph_rational_offset_boundary",
+      "target": "repeated_offset_identities",
+      "test": "ph_dilation_matches_its_rational_offset_boundary",
+      "owner": "Hypercurve exact region offsets, analytic parallels and Pythagorean-hodograph specialization",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "The convex region bounded by the PH cubic P(t) = (t - t^3/3, t^2) on [0, 1] and its chord, offset by 1/16, 1/8 and 1/4 with round corners.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CubicBezier",
+        "RationalBezier",
+        "Line",
+        "CircularArc",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The procedural dilation by 1/8 equals the region bounded by the materialized exact rational PH offset, the chord moved along its unit normal (-3, 2)/sqrt 13 and two round joins.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "The dilated region and the rational-boundary region have an empty symmetric difference."
+        }
+      ],
+      "oracle": "An independently assembled boundary from the certified rational PH offset curve and exact sqrt 13 join endpoints.",
+      "timeout_seconds": 120
     }
   ]
 }

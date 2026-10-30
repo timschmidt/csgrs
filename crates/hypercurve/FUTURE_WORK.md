@@ -3516,3 +3516,22 @@ non-circular holes, take the slower band route even when they survive; their
 cost on larger workloads is unmeasured. Disappearance chains through Bezier,
 conic and implicit holes, invalid operands paired with empty regions, and
 nested islands inside closing holes are not yet in the corpus.
+
+## Pythagorean-hodograph region offsets (2026-10-30)
+
+Closure-plan corpus item "PH curve offset: exact rational specialization
+equals retained parallel; repeat offset with both orientations". The region
+bounded by the PH cubic `P(t) = (t - t^3/3, t^2)` and its chord is convex, so
+disk offsets obey exact identities. `tests/repeated_offset_identities.rs`
+checks that two dilations by 1/8 equal one by 1/4, that closing by 1/8 returns
+the region, and that dilating by 1/4 then eroding by 1/8 equals dilating by
+1/8. It also rebuilds the 1/8 dilation from the materialized rational PH
+offset, the chord moved along `(-3, 2)/sqrt 13` and two round joins, and finds
+an empty symmetric difference with the procedural result. Both pass on the
+current source in about a second; no source change was needed.
+
+Open: eroding the 1/16 erosion by another 1/16 did not finish within 10
+minutes. A sample sits in `RecursiveQuadraticValue::sign` through the dense
+two-radical leaves of section 1, reached from algebraic chord/rational pair
+intersections while the second erosion's band difference is built. The
+erosion-composition identity therefore remains unqualified for this region.
