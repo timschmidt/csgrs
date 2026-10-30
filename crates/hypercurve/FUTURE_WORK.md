@@ -3074,3 +3074,21 @@ SVG region replay. Commands used `cargo +1.98.1 test --locked --release
 run is `1d6d0374d7ab3f61aa5a0a016e761c0ff72f1f15b0f1151fb9e9896d6999ad05`.
 Downstream integration and the complete pre-push matrix remain separate gates;
 this focused review increment does not assert general algebraic closure.
+
+
+## Review: affine selected-query growth (P2/P5/P18-P20/P35/P36)
+
+The first affine scale of a joint selected query y/(1+y) reproduced a
+retained denominator of (1+y)². The affine chart now uses
+N'=scale*N+offset*D and D'=D, preserving the original pole without repeated
+squaring. General projective chart behavior is unchanged.
+
+The maintained witness completes 32 successive maps for each of two offsets,
+checks independent closed-form values and degree-one denominators at every
+step, and rejects y=-1 when rebinding every recipe. A zero-scale constant
+image retains the same exclusion. Strict/approximate/strict policy scopes
+consume certified results. All 51 tests in the five affected query/chart,
+query derivative/fiber and SVG point replay targets passed with release,
+all features and Rust 1.98.1. This measures retained denominator degree, not
+a total work or memory bound. Downstream and full pre-push qualification
+remain pending for the combined review changes.

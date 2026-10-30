@@ -316,3 +316,62 @@ fn rational_quotient_guards_survive_cold_native_replay_and_subdivision() {
         String::from_utf8_lossy(&child.stderr)
     );
 }
+
+fn joint_cube_point() -> CurvePoint2 {
+    CurvePointDefinition2::RationalQueryPair {
+        sources: [Point2::from_values(0, 0).into(), cube_point(2)],
+        numerators: [polynomial(&[&[0]]), polynomial(&[&[0, 1]])],
+        denominators: [polynomial(&[&[1]]), polynomial(&[&[1]])],
+    }
+    .into_point()
+    .unwrap()
+}
+
+#[test]
+fn affine_selected_queries_keep_denominator_degree_values_and_poles() {
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let outcome = evaluate_under(policy, || {
+            let source = joint_cube_point();
+            let original = source
+                .rational_form(polynomial(&[&[0, 1]]), polynomial(&[&[1, 1]]))
+                .unwrap();
+            for offset in [0, -1] {
+                let mut image = original.parameter().unwrap();
+                for iteration in 1..=32 {
+                    image = image.affine_image(&2.into(), &offset.into()).unwrap();
+                    let recipe = image.rational_form_source().unwrap();
+                    // This checks retained representation cost before a later
+                    // iteration could expand an already squared denominator.
+                    assert_eq!(recipe.denominator(), &polynomial(&[&[1, 1]]));
+                    let factor = Real::from(1_u64 << iteration);
+                    let constant = Real::from(offset) * (&factor - Real::one());
+                    let expected = source
+                        .rational_form(
+                            BivariatePolynomial::new(vec![vec![
+                                constant.clone(),
+                                &factor + &constant,
+                            ]]),
+                            polynomial(&[&[1, 1]]),
+                        )
+                        .unwrap();
+                    assert_eq!(recipe.compare(&expected).unwrap(), Ordering::Equal);
+                    assert_pole(&recipe, Point2::from_values(0, -1).into());
+                }
+            }
+            let constant = original
+                .parameter()
+                .unwrap()
+                .affine_image(&Real::zero(), &7.into())
+                .unwrap();
+            let recipe = constant.rational_form_source().unwrap();
+            assert_eq!(recipe.compare_to_real(&7.into()).unwrap(), Ordering::Equal);
+            assert_eq!(recipe.denominator(), &polynomial(&[&[1, 1]]));
+            assert_pole(&recipe, Point2::from_values(0, -1).into());
+        });
+        assert_eq!(outcome.certainty(), CurveCertainty::Certified);
+    }
+}

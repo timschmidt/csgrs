@@ -14307,6 +14307,49 @@
           "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
         }
       ]
+    },
+    {
+      "id": "affine_selected_query_denominator_growth",
+      "target": "rational_query_guards",
+      "test": "affine_selected_queries_keep_denominator_degree_values_and_poles",
+      "owner": "Hypercurve selected query affine charts",
+      "properties": [
+        "P2",
+        "P5",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36"
+      ],
+      "domain": "Joint selected cube-root point query y/(1+y); 32 repeated affine scales with offsets 0 or -1; zero-scale constant control.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "N becomes scale*N+offset*D while D remains the original pole guard, including constant images. General projective charts retain their existing exclusions.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Repeated affine charts retain denominator degree one and match independently derived exact values."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Rebinding every retained recipe at the original y=-1 pole is rejected, including constant images."
+        }
+      ],
+      "oracle": "Closed-form affine iterates and an independently rebound pole; all consumed results remain certified through strict/approximate/strict policy scopes.",
+      "timeout_seconds": 180
     }
   ]
 }

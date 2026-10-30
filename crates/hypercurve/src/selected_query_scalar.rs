@@ -153,11 +153,18 @@ impl SelectedQueryScalar2 {
         offset: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        self.projective_image_unbounded(
-            &[offset.clone(), scale.clone()],
-            &[Real::one(), Real::zero()],
-            policy,
-        )
+        field::finish(|| {
+            let image = field::polynomial(&[offset.clone(), scale.clone()], &self.value()?)?;
+            let query = self.query();
+            // An affine chart introduces no new pole: (s*N + o*D)/D.
+            // Keep D even for a constant image, without squaring its guard.
+            let numerator = bivariate_add(
+                &bivariate_scale(query.numerator, scale),
+                &bivariate_scale(query.denominator.clone(), offset),
+            );
+            let source = PointFormSource2::new(query.source, numerator, query.denominator);
+            Self::new(source, image, policy)
+        })
     }
 
     pub(crate) fn projective_image_unbounded(

@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Keep selected-query denominators unchanged under affine parameter charts,
+  including the original pole guard for constant images.
+
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
