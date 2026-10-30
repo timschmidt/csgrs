@@ -3092,3 +3092,20 @@ query derivative/fiber and SVG point replay targets passed with release,
 all features and Rust 1.98.1. This measures retained denominator degree, not
 a total work or memory bound. Downstream and full pre-push qualification
 remain pending for the combined review changes.
+
+
+## Review: capability catalog capture integrity (P35-P37)
+
+A deterministic rewrite after parsing reproduced a successful capability
+report whose witness came from the original catalog while its digest and
+archive came from the replacement. The driver now captures bytes once,
+parses and hashes those bytes, archives that capture, and compares the final
+catalog against the original digest. A changed catalog invalidates every
+stage claim. This does not claim a filesystem lock or detection of an
+unobserved change followed by restoration.
+
+All 17 evidence-driver tests pass, including the new capture race and the
+existing changed-catalog/binary, missing/ignored/zero-test, failed build,
+timeout and interruption controls. Source-attributed baseline and fixed
+records retain the contradictory original report. The semantic fixture
+catalog and its advertised geometry contracts are unchanged by this driver fix.

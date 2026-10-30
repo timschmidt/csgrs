@@ -7,6 +7,7 @@ outside the source tree. This Unix driver uses only Python's standard library.
 """
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import os
@@ -75,7 +76,11 @@ def unique_keys(pairs):
 
 
 def load_catalog(path):
-    catalog = json.loads(path.read_text(), object_pairs_hook=unique_keys)
+    return parse_catalog(path.read_bytes())
+
+
+def parse_catalog(content):
+    catalog = json.loads(content, object_pairs_hook=unique_keys)
     require(isinstance(catalog, dict) and set(catalog) == {
         "schema_version", "scope", "target_domain", "unqualified_targets", "fixtures",
     }, "unexpected catalog fields")
@@ -223,7 +228,10 @@ def stage_matrix(results, stable):
 
 def run(args):
     catalog_path = args.catalog.resolve()
-    catalog = load_catalog(catalog_path)
+    # One capture owns the parsed claims, digest and archived evidence.
+    catalog_bytes = catalog_path.read_bytes()
+    catalog_digest = hashlib.sha256(catalog_bytes).hexdigest()
+    catalog = parse_catalog(catalog_bytes)
     rows = catalog["fixtures"]
     if args.fixture:
         require(set(args.fixture) <= {row["id"] for row in rows}, "unknown requested fixture")
@@ -240,8 +248,7 @@ def run(args):
             destination.symlink_to(os.readlink(source))
         else:
             shutil.copy2(source, destination)
-    catalog_digest = evidence.digest_file(catalog_path)
-    (output / "catalog.json").write_bytes(catalog_path.read_bytes())
+    (output / "catalog.json").write_bytes(catalog_bytes)
     environment = {**os.environ, "RUST_TEST_THREADS": "1", "CARGO_TERM_COLOR": "never"}
     report = {
         "schema_version": 1, "status": "running", "source_before": before,

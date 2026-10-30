@@ -2,6 +2,7 @@
 """Regression tests for admitting evidence, independent of geometry algorithms."""
 
 import copy
+import hashlib
 import importlib.util
 import json
 import os
@@ -12,6 +13,8 @@ import sys
 import tempfile
 import time
 import unittest
+from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.dont_write_bytecode = True
 DRIVER = Path(__file__).with_name("capability_matrix.py")
@@ -166,6 +169,33 @@ print(json.dumps({'reason': 'compiler-artifact', 'target': {'name': 'fixture', '
     def test_changed_binary_is_rejected(self):
         report = self.check_failure("binary_changed", "binary_changed")
         self.assertFalse(report["evidence_inputs_stable"])
+
+    def test_catalog_rewrite_after_capture_cannot_admit_other_bytes(self):
+        original = self.path.read_bytes()
+        changed = json.loads(original)
+        changed["fixtures"][0]["domain"] = "rewritten after parsing"
+        calls = 0
+
+        def snapshot():
+            nonlocal calls
+            calls += 1
+            if calls == 1:
+                self.path.write_text(json.dumps(changed))
+            return {"untracked_inputs": [], "revision": "controlled"}, [], b""
+
+        args = SimpleNamespace(catalog=self.path, fixture=None,
+                               output=self.root / "report", build_timeout=30)
+        with patch.dict(os.environ, self.fake_tools("pass")), patch.object(
+            matrix.evidence, "source_snapshot", side_effect=snapshot,
+        ):
+            code = matrix.run(args)
+        report = json.loads((args.output / "report.json").read_text())
+        self.assertNotEqual(code, 0)
+        self.assertEqual(report["status"], "evidence_inputs_changed")
+        self.assertEqual(report["catalog_sha256"], hashlib.sha256(original).hexdigest())
+        self.assertEqual((args.output / "catalog.json").read_bytes(), original)
+        self.assertEqual(report["fixtures"][0]["witness"], json.loads(original)["fixtures"][0])
+        self.assertTrue(all(not claims for claims in report["matrix"][0]["stages"].values()))
 
     def test_changed_catalog_invalidates_claims(self):
         result, report = self.invoke("catalog_changed")
