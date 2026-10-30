@@ -342,8 +342,9 @@ fn convex_hole_edge_vanishes_before_the_hole_closes() {
 /// at least the minor semi-axis closes the hole: at distance 1 the eroded
 /// ellipse is its center point. Smaller dilations keep a hole, which must be
 /// exactly the ellipse eroded by the same distance: the two are disjoint and
-/// together fill the dilated frame. Distance 3/4 exceeds the smallest radius
-/// of curvature, 1/2, so the eroded ellipse's raw parallels have swallowtails.
+/// together fill the dilated frame. At distance 1/2, the smallest radius of
+/// curvature, the inner parallel has cusps exactly at the half-arc ends
+/// `(+-2, 0)`; distance 3/4 exceeds it, so the raw parallels have swallowtails.
 #[test]
 fn elliptical_hole_closes_at_its_minor_semi_axis() {
     let unit_disk = region(&[circle(0, 0, 1, false)]);
@@ -367,7 +368,7 @@ fn elliptical_hole_closes_at_its_minor_semi_axis() {
             &region(&[rounded_square(&Real::from(8), &distance)]),
         );
     }
-    for distance in [fraction(1, 4), fraction(3, 4)] {
+    for distance in [fraction(1, 4), fraction(1, 2), fraction(3, 4)] {
         let dilated = offset(&framed, distance.clone());
         let hole = offset(&ellipse, -distance.clone());
         assert!(!hole.is_empty());

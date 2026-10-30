@@ -3483,13 +3483,19 @@ with the separately eroded ellipse.
 
 At exactly the smallest radius of curvature, 1/2, the inner parallel's cusps
 fall on the half-arc endpoints at `(+-2, 0)`. Both the ellipse eroded by 1/2 and
-the framed hole dilated by 1/2 then fail with `Invalid(Offset, RationalBezier,
-Topology("parallel supporting-line root lies outside the unit domain"))`.
-`parallel_line_neighbor_sign` reaches a root equal to a retained range's end,
-where only one side exists; the caller's single-sided path covers only tangents
-certified parallel to the line, and a cusp has no tangent. The input is valid,
-so `Invalid` misreports a missing endpoint-contact rule. Defining contacts at
-retained endpoints for every consumer of that predicate remains open.
+the framed hole dilated by 1/2 failed with `Invalid(Offset, RationalBezier,
+Topology("parallel supporting-line root lies outside the unit domain"))`: the
+band chord meets the parallel at that cusp, the pointwise derivative scale
+`1 - d k` vanishes there, the tangent sign was undecided, and the two-sided
+neighbor fallback has no exterior side within the retained range. Such a root
+now asks the range's singularity analysis whether every parallel cusp and
+source singularity lies at a range end. If so, the interior scale sign is the
+one-sided limit at the cusp, and the contact is classified from the source
+tangent exactly as at an ordinary endpoint; otherwise the previous outcome
+stands. A first version that always used the interior sign was wrong where
+the queried range contains interior cusps:
+`selected_parallel_arrangement_splits_interior_cusps` regularized to an empty
+region. It was replaced before commit. The witness adds distance 1/2.
 
 Open: holes that are neither circular nor convex polygonal, and curved
 non-circular holes, take the slower band route even when they survive; their

@@ -16441,7 +16441,7 @@
         "P18",
         "P19"
       ],
-      "domain": "A 16x16 square frame minus the unit disk scaled by 2 along x, dilated by 1/4, 3/4, 1 and 3/2; the ellipse eroded by 1/4 and 3/4.",
+      "domain": "A 16x16 square frame minus the unit disk scaled by 2 along x, dilated by 1/4, 1/2, 3/4, 1 and 3/2; the ellipse eroded by 1/4, 1/2 and 3/4. At 1/2, the smallest radius of curvature, the inner parallel has cusps at the half-arc ends.",
       "origins": [
         "authored",
         "generated"
@@ -16464,7 +16464,7 @@
         {
           "stage": "booleans",
           "outcome": "exact_success",
-          "assertion": "At 1/4 and 3/4 the dilated region and the eroded ellipse are disjoint and their union equals the rounded frame; the dilation keeps two loops."
+          "assertion": "At 1/4, 1/2 and 3/4 the dilated region and the eroded ellipse are disjoint and their union equals the rounded frame; the dilation keeps two loops."
         }
       ],
       "oracle": "Independently authored rounded squares for the closed cases; for surviving holes, exact Boolean identities between the dilated region and the separately eroded ellipse (disjoint, union equal to the dilated frame).",

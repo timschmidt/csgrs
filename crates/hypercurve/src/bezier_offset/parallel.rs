@@ -5504,6 +5504,7 @@ impl BezierParallel2 {
             |(direction_x, direction_y)| (direction_x.clone(), direction_y.clone()),
         );
         let mut contacts = Vec::with_capacity(parameters.len());
+        let mut endpoint_scale_sign = None;
         for (index, parameter) in parameters.iter().enumerate() {
             if let Some((certified_parameter, direction)) = certified_crossing
                 && parameter.scalar() == Some(certified_parameter)
@@ -5528,15 +5529,61 @@ impl BezierParallel2 {
             // exact oriented-line derivative is `direction x tangent`, so a
             // nonzero sign proves both crossing kind and direction without
             // consulting that exterior germ.
-            let tangent_is_parallel = match self
-                .vector_tangent_cross_and_dot_signs_with_tangent_field(
-                    &parameter.clone().into(),
-                    &tangent_direction_x,
-                    &tangent_direction_y,
-                    tangent_field,
-                    derivative_scale_sign,
-                    policy,
-                )? {
+            let mut tangent_signs = self.vector_tangent_cross_and_dot_signs_with_tangent_field(
+                &parameter.clone().into(),
+                &tangent_direction_x,
+                &tangent_direction_y,
+                tangent_field,
+                derivative_scale_sign,
+                policy,
+            )?;
+            // A cusp at a retained end makes the pointwise scale `1 - d k`
+            // vanish. Without an interior cusp the range's interior sign is
+            // the one-sided limit there, and the source tangent decides.
+            if tangent_signs == Classification::Uncertain(UncertaintyReason::Boundary)
+                && derivative_scale_sign.is_none()
+                && let Some(range) = retained_range
+            {
+                let endpoint = CurveParameter2::from(parameter.clone());
+                let mut at_end = false;
+                for end in [range.start(), range.end()] {
+                    match endpoint.same_value(end, policy)? {
+                        Classification::Decided(equal) => at_end |= equal,
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    }
+                }
+                if at_end {
+                    let sign = match endpoint_scale_sign {
+                        Some(sign) => sign,
+                        None => {
+                            let sign = match self
+                                .derivative_scale_sign_without_interior_cusps(range, policy)?
+                            {
+                                Classification::Decided(sign) => sign,
+                                Classification::Uncertain(reason) => {
+                                    return Ok(Classification::Uncertain(reason));
+                                }
+                            };
+                            endpoint_scale_sign = Some(sign);
+                            sign
+                        }
+                    };
+                    if let Some(sign) = sign {
+                        tangent_signs = self
+                            .vector_tangent_cross_and_dot_signs_with_tangent_field(
+                                &parameter.clone().into(),
+                                &tangent_direction_x,
+                                &tangent_direction_y,
+                                tangent_field,
+                                Some(sign),
+                                policy,
+                            )?;
+                    }
+                }
+            }
+            let tangent_is_parallel = match tangent_signs {
                 Classification::Decided((cross, dot)) => {
                     if cross != RealSign::Zero {
                         if certified_tangent || inferred_tangent {
@@ -6998,6 +7045,53 @@ impl BezierParallel2 {
                     value,
                 )
             })
+    }
+
+    /// The strict sign of the derivative scale `1 - d k` throughout `range`
+    /// when every parallel cusp and source singularity of the range lies at
+    /// one of its ends, and `None` otherwise. The sign is then also the
+    /// one-sided limit at each end, where a cusp makes the scale vanish.
+    fn derivative_scale_sign_without_interior_cusps(
+        &self,
+        range: &CurveParameterRange2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Option<RealSign>>> {
+        let analysis = match self.singularity_analysis_with_policy(range, policy)? {
+            Classification::Decided(analysis) => analysis,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        for event in analysis
+            .parallel_cusps()
+            .iter()
+            .chain(analysis.source_singularities())
+        {
+            let event = CurveParameter2::from(event.clone());
+            let mut at_end = false;
+            for end in [range.start(), range.end()] {
+                match event.same_value(end, policy)? {
+                    Classification::Decided(equal) => at_end |= equal,
+                    Classification::Uncertain(reason) => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                }
+            }
+            if !at_end {
+                return Ok(Classification::Decided(None));
+            }
+        }
+        let interior = match range.strict_interior_scalar(policy)? {
+            Classification::Decided(interior) => interior,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(
+            match self.parallel_derivative_scale_sign_at_exact(&interior, policy)? {
+                Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
+                    Classification::Decided(Some(sign))
+                }
+                Classification::Decided(RealSign::Zero) => Classification::Decided(None),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+        )
     }
 
     /// [`Self::singularity_analysis`] under an explicit predicate policy.
