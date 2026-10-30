@@ -459,3 +459,52 @@ fn repeated_erosion_splits_a_dumbbell_exactly() {
         &offset(&dumbbell, -fraction(3, 2)),
     );
 }
+
+/// An island inside a hole. Dilating the frame shrinks the hole and grows the
+/// island until they meet: at distance 1 an annular gap remains; at distance 2
+/// the island's straight edges coincide with the shrunken hole's edges, leaving
+/// four corner holes, each the square corner minus the island's quarter disk;
+/// at distance 3 everything fills.
+#[test]
+fn island_meets_its_shrinking_hole() {
+    let framed = region(&[square(10), reversed(&square(6)), square(2)]);
+    assert_same_set(
+        "gap",
+        &offset(&framed, Real::one()),
+        &region(&[
+            rounded_square(&Real::from(10), &Real::one()),
+            reversed(&square(5)),
+            rounded_square(&Real::from(2), &Real::one()),
+        ]),
+    );
+    let corner = |sx: i64, sy: i64| {
+        let (a, b, c) = (p(4 * sx, 2 * sy), p(4 * sx, 4 * sy), p(2 * sx, 4 * sy));
+        let even = sx * sy > 0;
+        let path = CurvePath2::try_new(vec![
+            line(&a, &b),
+            line(&b, &c),
+            arc(&c, &a, &p(2 * sx, 2 * sy), even),
+        ])
+        .unwrap();
+        // Counterclockwise for an even number of reflections; holes are clockwise.
+        if even { reversed(&path) } else { path }
+    };
+    let touching = offset(&framed, Real::from(2));
+    assert_eq!(touching.boundary_loops().len(), 5);
+    assert_same_set(
+        "corner holes",
+        &touching,
+        &region(&[
+            rounded_square(&Real::from(10), &Real::from(2)),
+            corner(1, 1),
+            corner(-1, 1),
+            corner(-1, -1),
+            corner(1, -1),
+        ]),
+    );
+    assert_same_set(
+        "filled",
+        &offset(&framed, Real::from(3)),
+        &region(&[rounded_square(&Real::from(10), &Real::from(3))]),
+    );
+}

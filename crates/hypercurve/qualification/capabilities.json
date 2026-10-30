@@ -16695,6 +16695,42 @@
       ],
       "oracle": "Exact symmetric difference against the original and against an independent single dilation by 2; the Minkowski identity (A + B_r) + B_s = A + B_(r+s) fixes the expected set.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "island_in_closing_hole",
+      "target": "disappearance_chains",
+      "test": "island_meets_its_shrinking_hole",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 20x20 square frame with a 12x12 square hole containing a 4x4 square island, dilated by 1, 2 and 3.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The hole shrinks while the island grows; at distance 2 their straight edges coincide and four corner holes remain; at distance 3 everything fills.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Distance 1 leaves the annular gap between a 10x10 hole and the rounded island; distance 2 leaves five loops, the rounded frame and four corner holes each bounded by two lines and a quarter arc about an island corner; distance 3 equals the rounded frame alone."
+        }
+      ],
+      "oracle": "Independently authored exact regions (rounded squares, squares and corner pieces bounded by lines and quarter circles) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
     }
   ]
 }
