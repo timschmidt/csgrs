@@ -1075,11 +1075,7 @@ impl<'a> CurveRegionBooleanContext<'a> {
                             Ok(evidence) if evidence.overlaps().is_empty() => evidence,
                             Ok(_) | Err(_) => continue,
                         };
-                        let mut contacts = evidence
-                            .contacts()
-                            .iter()
-                            .filter(|contact| contact.is_certified_transverse())
-                            .collect::<Vec<_>>();
+                        let mut contacts = evidence.contacts().iter().collect::<Vec<_>>();
                         let mut ordered = true;
                         for index in 1..contacts.len() {
                             let mut cursor = index;
@@ -1111,7 +1107,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
                         if !ordered {
                             continue;
                         }
+                        // Only the first boundary event can border the known
+                        // exterior. Skipping an unresolved event would give a
+                        // later face an unproved zero winding.
+                        contacts.truncate(1);
                         for contact in contacts {
+                            if !contact.is_certified_transverse() {
+                                continue;
+                            }
                             let Some(probe_parameter) =
                                 contact.first_parameter().as_algebraic_chord()
                             else {
@@ -2327,12 +2330,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 };
                 let Some(mut cross_is_positive) = contact.evidence.tangent_cross_is_positive()
                 else {
-                    if order == Ordering::Equal {
-                        last_reason = UncertaintyReason::Boundary;
-                        ambiguous = true;
-                        break;
-                    }
-                    continue;
+                    last_reason = UncertaintyReason::Boundary;
+                    ambiguous = true;
+                    break;
                 };
                 cross_is_positive ^= boundary.reversed;
                 if order == Ordering::Equal {
@@ -2346,7 +2346,9 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     continue;
                 }
                 if !contact.is_certified_transverse() {
-                    continue;
+                    last_reason = UncertaintyReason::Boundary;
+                    ambiguous = true;
+                    break;
                 }
                 for (parameter, _, _) in &crossings {
                     match contact
@@ -2777,11 +2779,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 Vec::<(&CurveParameter2, &CurveParameter2, usize, bool)>::with_capacity(
                     evidence.contacts().len(),
                 );
-            for contact in evidence
-                .contacts()
-                .iter()
-                .filter(|contact| contact.is_certified_transverse())
-            {
+            for contact in evidence.contacts() {
+                if !contact.is_certified_transverse() {
+                    last_reason = UncertaintyReason::Boundary;
+                    continue 'candidate;
+                }
                 let Some(mut cross_is_positive) = contact.evidence.tangent_cross_is_positive()
                 else {
                     last_reason = UncertaintyReason::Predicate;

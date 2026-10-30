@@ -14181,6 +14181,132 @@
         }
       ],
       "oracle": "Independently encoded wire records and the original square-root equation."
+    },
+    {
+      "target": "polynomial_probe_contacts",
+      "owner": "hypercurve shared region arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P35"
+      ],
+      "domain": "Rational implicit parabola and monotone cubic regions with native closing lines; strict finite probe contact accounting.",
+      "origins": [
+        "authored",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Unresolved and stationary probe contacts require a different certified probe; neither absence of a cross sign nor zero cross proves no winding change.",
+      "oracle": "Independent rational inequalities establish the interior points; original exact support, both winding rules and traversal directions are retained.",
+      "timeout_seconds": 180,
+      "id": "parabola_interior_survives_unresolved_probe_contact",
+      "test": "parabola_interior_survives_unresolved_probe_contact",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        }
+      ]
+    },
+    {
+      "target": "polynomial_probe_contacts",
+      "owner": "hypercurve shared region arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P35"
+      ],
+      "domain": "Rational implicit parabola and monotone cubic regions with native closing lines; strict finite probe contact accounting.",
+      "origins": [
+        "authored",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Unresolved and stationary probe contacts require a different certified probe; neither absence of a cross sign nor zero cross proves no winding change.",
+      "oracle": "Independent rational inequalities establish the interior points; original exact support, both winding rules and traversal directions are retained.",
+      "timeout_seconds": 180,
+      "id": "cubic_interior_survives_stationary_probe_crossing",
+      "test": "cubic_interior_survives_stationary_probe_crossing",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        }
+      ]
+    },
+    {
+      "target": "polynomial_probe_contacts",
+      "owner": "hypercurve shared region arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P35"
+      ],
+      "domain": "Rational implicit parabola and monotone cubic regions with native closing lines; strict finite probe contact accounting.",
+      "origins": [
+        "authored",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Unresolved and stationary probe contacts require a different certified probe; neither absence of a cross sign nor zero cross proves no winding change.",
+      "oracle": "Independent rational inequalities establish the interior points; original exact support, both winding rules and traversal directions are retained.",
+      "timeout_seconds": 180,
+      "id": "polynomial_probe_contacts_survive_regularization_and_reconstruction",
+      "test": "polynomial_probe_contacts_survive_regularization_and_reconstruction",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Exact Inside at the independent interior witnesses; regularization/reconstruction preserve the represented region where exercised."
+        }
+      ]
     }
   ]
 }

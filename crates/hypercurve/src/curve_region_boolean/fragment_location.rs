@@ -679,11 +679,14 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let mut crossings =
                 Vec::<(&CurveParameter2, bool, usize)>::with_capacity(evidence.contacts().len());
             let mut ambiguous = false;
-            for contact in evidence
-                .contacts()
-                .iter()
-                .filter(|contact| contact.is_certified_transverse())
-            {
+            for contact in evidence.contacts() {
+                // An unresolved or stationary contact can still cross the
+                // boundary. Without certified contact order, choose a new probe.
+                if !contact.is_certified_transverse() {
+                    last_reason = UncertaintyReason::Boundary;
+                    ambiguous = true;
+                    break;
+                }
                 let Some(mut cross_is_positive) = contact.evidence.tangent_cross_is_positive()
                 else {
                     last_reason = UncertaintyReason::Predicate;

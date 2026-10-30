@@ -3045,3 +3045,32 @@ Evidence: docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots
 attribution, shared-definition replay, completion costs and the seven remaining
 region-operation blockers are retained. Those blockers are not completed
 support. This local admission does not replace full pre-push qualification.
+
+
+## Review: polynomial probe contacts (P12-P19/P35)
+
+On main `8cda1ec`, the region y² <= x <= 1/4 classified (1/8,3/16)
+as Outside, despite 9/256 < 1/8 < 1/4. The region below y=x³+2x on
+[-1,1], closed through (1,-3) and (-1,-3), also classified (1/2,1)
+as Outside with its tight enclosing y interval [-3,3]. The loose [-4,4]
+interval passed and remains a control. The exact expectation is
+-3 < 1 < 9/8. Both wrong answers were reproduced before production edits.
+
+The shared arrangement now retries a probe when a contact lacks certified
+transversality or a nonzero tangent cross. The analogous regularization
+paths preserve those events too. An exterior-face seed uses only the first
+ordered boundary contact, so it cannot skip an unresolved event and assign
+zero winding to a later face. No sampled geometry or approximate predicate
+supplies the missing proof.
+
+Three maintained witnesses cover both original cases and continuation through
+reversal, both fill rules, regularization, boundary reconstruction and exact
+symmetric difference. The affected nine Hypercurve integration targets passed
+233 tests (three existing ignored cases), including polynomial regions,
+Boolean/fuzz, analytic parallels, promotion, strokes, qualified queries and
+SVG region replay. Commands used `cargo +1.98.1 test --locked --release
+--all-features -p hypercurve` with these named targets. Formatting and the
+16 evidence-driver tests passed. The captured source digest for that region
+run is `1d6d0374d7ab3f61aa5a0a016e761c0ff72f1f15b0f1151fb9e9896d6999ad05`.
+Downstream integration and the complete pre-push matrix remain separate gates;
+this focused review increment does not assert general algebraic closure.

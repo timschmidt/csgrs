@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Retry region probes at unresolved or stationary contacts. Such events no longer
+  disappear from winding classification or regularization exterior-face proofs.
+
 - Retain singleton polynomial roots whose coefficients are exact point queries,
   including independent selected fields, repeated factors and algebraic data.
   The generated point keeps every coefficient source and original denominator
