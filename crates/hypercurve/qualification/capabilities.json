@@ -16618,6 +16618,42 @@
       ],
       "oracle": "The public error category and canonical emptiness.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "repeated_erosion_topology_change",
+      "target": "disappearance_chains",
+      "test": "repeated_erosion_splits_a_dumbbell_exactly",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A dumbbell of two 4x4 lobes joined by a width-2 neck, eroded by 1/2 twice, by 1, by 3/4 twice and by 3/2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Repeated erosion splits one component into two at the neck's half-width; erosions compose before and after the split.",
+      "claims": [
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Eroding by 1/2 twice and by 1 both equal the authored two-lobe region with two loops; eroding by 3/4 twice equals eroding by 3/2."
+        }
+      ],
+      "oracle": "Independently authored lobes bounded by lines and unit arcs about the mouth corners meeting at axis cusps, and the composition identity of disk erosions.",
+      "timeout_seconds": 180
     }
   ]
 }

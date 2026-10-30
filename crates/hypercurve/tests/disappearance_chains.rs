@@ -405,3 +405,57 @@ fn invalid_offset_options_are_reported_for_empty_regions() {
     }
     assert!(offset_with(&empty, Real::one(), &OffsetCornerStyle2::Bevel).is_empty());
 }
+
+/// Repeated erosion through a topology change. A dumbbell of two 4x4 lobes
+/// joined by a width-2 neck splits when eroded by 1: each lobe becomes
+/// `[-5, -3] x [-1, 1]` (mirrored) extended toward the mouth by a lens bounded
+/// by unit arcs about the mouth corners `(+-2, +-1)`, which meet at a cusp on
+/// the axis; the remaining neck is the segment `y = 0`, which regularization
+/// removes. Erosions compose, so two steps equal one, before and after the
+/// split.
+#[test]
+fn repeated_erosion_splits_a_dumbbell_exactly() {
+    let dumbbell = region(&[polygon(&[
+        (-6, -2),
+        (-2, -2),
+        (-2, -1),
+        (2, -1),
+        (2, -2),
+        (6, -2),
+        (6, 2),
+        (2, 2),
+        (2, 1),
+        (-2, 1),
+        (-2, 2),
+        (-6, 2),
+    ])]);
+    let lobe = |sign: i64| {
+        let (wall, mouth, tip) = (p(5 * sign, 1), p(3 * sign, 1), p(2 * sign, 0));
+        let (wall_low, mouth_low) = (p(5 * sign, -1), p(3 * sign, -1));
+        let (center_low, center_high) = (p(2 * sign, -1), p(2 * sign, 1));
+        let path = CurvePath2::try_new(vec![
+            line(&wall_low, &mouth_low),
+            arc(&mouth_low, &tip, &center_low, sign < 0),
+            arc(&tip, &mouth, &center_high, sign < 0),
+            line(&mouth, &wall),
+            line(&wall, &wall_low),
+        ])
+        .unwrap();
+        // The left lobe is counterclockwise as written; the mirrored right
+        // lobe is clockwise and is reversed into material.
+        if sign < 0 { path } else { reversed(&path) }
+    };
+    let split = region(&[lobe(-1), lobe(1)]);
+    let half = offset(&dumbbell, -fraction(1, 2));
+    assert_eq!(half.boundary_loops().len(), 1);
+    let twice = offset(&half, -fraction(1, 2));
+    assert_eq!(twice.boundary_loops().len(), 2);
+    assert_same_set("split", &twice, &split);
+    assert_same_set("split", &offset(&dumbbell, -Real::one()), &split);
+    let three_quarters = offset(&dumbbell, -fraction(3, 4));
+    assert_same_set(
+        "composed erosion",
+        &offset(&three_quarters, -fraction(3, 4)),
+        &offset(&dumbbell, -fraction(3, 2)),
+    );
+}
