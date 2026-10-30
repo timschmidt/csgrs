@@ -3497,6 +3497,20 @@ the queried range contains interior cusps:
 `selected_parallel_arrangement_splits_interior_cusps` regularized to an empty
 region. It was replaced before commit. The witness adds distance 1/2.
 
+Exact SVG replay of these outputs preserves the set: the ellipse-hole dilation
+by 1/4 and the dumbbell dilation by 3/2 both replay with an empty symmetric
+difference, and the replayed ellipse result erodes further. Dilating the
+replayed dumbbell result by another 1/2, where each lobe collapses exactly,
+is `Blocked(Offset, Line, RealSign)`, while the same dilation of the
+unreplayed region succeeds with one loop. Its band arrangement compares
+coincident contacts (`algebraic_chord_point_coordinate_order`, circular
+carrier `same_value`) whose equal coordinates were rebuilt as independent
+scalar expressions; strict sign refinement cannot prove their difference
+zero. Replay keeps the geometry but not the shared scalar identity those
+contact decisions used. Interning byte-identical scalar encodings during
+decode did not change the outcome, so the equal values are not serialized
+identically; the replay graph would need to retain their defining relation.
+
 Open: holes that are neither circular nor convex polygonal, and curved
 non-circular holes, take the slower band route even when they survive; their
 cost on larger workloads is unmeasured. Disappearance chains through Bezier,
