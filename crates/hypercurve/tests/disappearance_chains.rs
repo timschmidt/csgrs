@@ -336,3 +336,47 @@ fn convex_hole_edge_vanishes_before_the_hole_closes() {
         ]),
     );
 }
+
+/// An elliptical hole, the disk of radius 1 scaled by 2 along x, in a
+/// square frame. Its inward parallels are nonrational. Dilating the region by
+/// at least the minor semi-axis closes the hole: at distance 1 the eroded
+/// ellipse is its center point. Smaller dilations keep a hole, which must be
+/// exactly the ellipse eroded by the same distance: the two are disjoint and
+/// together fill the dilated frame. Distance 3/4 exceeds the smallest radius
+/// of curvature, 1/2, so the eroded ellipse's raw parallels have swallowtails.
+#[test]
+fn elliptical_hole_closes_at_its_minor_semi_axis() {
+    let unit_disk = region(&[circle(0, 0, 1, false)]);
+    let ellipse = support::under(&STRICT, || {
+        unit_disk.transform_affine(
+            &Real::from(2),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+        )
+    })
+    .unwrap()
+    .into_value();
+    let framed = boolean(&region(&[square(8)]), &ellipse, BooleanOp::Difference);
+    for distance in [Real::one(), fraction(3, 2)] {
+        assert_same_set(
+            "closed ellipse",
+            &offset(&framed, distance.clone()),
+            &region(&[rounded_square(&Real::from(8), &distance)]),
+        );
+    }
+    for distance in [fraction(1, 4), fraction(3, 4)] {
+        let dilated = offset(&framed, distance.clone());
+        let hole = offset(&ellipse, -distance.clone());
+        assert!(!hole.is_empty());
+        assert_eq!(dilated.boundary_loops().len(), 2);
+        assert!(boolean(&dilated, &hole, BooleanOp::Intersection).is_empty());
+        assert_same_set(
+            "surviving ellipse",
+            &boolean(&dilated, &hole, BooleanOp::Union),
+            &region(&[rounded_square(&Real::from(8), &distance)]),
+        );
+    }
+}

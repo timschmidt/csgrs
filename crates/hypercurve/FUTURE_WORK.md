@@ -3475,6 +3475,22 @@ seven new capability rows. Evidence:
 `docs/evidence/2026-10-30-hypercurve-closure-hole-dilation`, SHA-256
 `83b0fba114b363ac0abe6d581361b400127e8c2613d509858ec6a7cab34e0ddb`.
 
+An elliptical hole (the unit disk scaled by 2 along x) also stayed open on the
+previous source when dilated by its minor semi-axis. Its witness checks closing
+at 1 and 3/2 against authored regions, and surviving holes at 1/4 and 3/4,
+where nonrational parallels form swallowtails, through exact Boolean identities
+with the separately eroded ellipse.
+
+At exactly the smallest radius of curvature, 1/2, the inner parallel's cusps
+fall on the half-arc endpoints at `(+-2, 0)`. Both the ellipse eroded by 1/2 and
+the framed hole dilated by 1/2 then fail with `Invalid(Offset, RationalBezier,
+Topology("parallel supporting-line root lies outside the unit domain"))`.
+`parallel_line_neighbor_sign` reaches a root equal to a retained range's end,
+where only one side exists; the caller's single-sided path covers only tangents
+certified parallel to the line, and a cusp has no tangent. The input is valid,
+so `Invalid` misreports a missing endpoint-contact rule. Defining contacts at
+retained endpoints for every consumer of that predicate remains open.
+
 Open: holes that are neither circular nor convex polygonal, and curved
 non-circular holes, take the slower band route even when they survive; their
 cost on larger workloads is unmeasured. Disappearance chains through Bezier,

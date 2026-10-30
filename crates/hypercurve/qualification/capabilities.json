@@ -16427,6 +16427,48 @@
       ],
       "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "elliptical_hole_closing",
+      "target": "disappearance_chains",
+      "test": "elliptical_hole_closes_at_its_minor_semi_axis",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 16x16 square frame minus the unit disk scaled by 2 along x, dilated by 1/4, 3/4, 1 and 3/2; the ellipse eroded by 1/4 and 3/4.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalQuadraticBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "An elliptical hole closes at its minor semi-axis; a smaller dilation keeps a hole equal to the ellipse eroded by the same distance, including beyond the smallest radius of curvature.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Dilations by 1 and 3/2 equal the rounded frame with no hole."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "At 1/4 and 3/4 the dilated region and the eroded ellipse are disjoint and their union equals the rounded frame; the dilation keeps two loops."
+        }
+      ],
+      "oracle": "Independently authored rounded squares for the closed cases; for surviving holes, exact Boolean identities between the dilated region and the separately eroded ellipse (disjoint, union equal to the dilated frame).",
+      "timeout_seconds": 180
     }
   ]
 }
