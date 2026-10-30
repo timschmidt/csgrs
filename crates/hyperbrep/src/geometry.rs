@@ -2095,12 +2095,16 @@ impl SurfaceIntersectionComponents {
 }
 
 /// One exact finite surface/surface intersection curve and its two pcurves.
+///
+/// Set incidence alone does not certify a transverse crossing. Plane/tensor
+/// sections also expose their checked [`Self::polynomial_contact_exponent`].
 #[derive(Clone, Debug)]
 pub struct SurfaceIntersectionCurve {
     curve: Curve3,
     first_pcurve: SurfaceIntersectionPcurve,
     second_pcurve: SurfaceIntersectionPcurve,
     image_certificates: [bool; 2],
+    polynomial_contact_exponent: Option<usize>,
     first_boundary_contacts: SurfaceIntersectionBoundaryContacts,
     second_boundary_contacts: SurfaceIntersectionBoundaryContacts,
 }
@@ -2305,6 +2309,7 @@ impl SurfaceIntersectionCurve {
             first_pcurve,
             second_pcurve,
             image_certificates: [true, true],
+            polynomial_contact_exponent: None,
             first_boundary_contacts: SurfaceIntersectionBoundaryContacts::default(),
             second_boundary_contacts: SurfaceIntersectionBoundaryContacts::default(),
         }
@@ -2539,6 +2544,7 @@ impl SurfaceIntersectionCurve {
                 first_pcurve: self.first_pcurve.subcurve(range.start(), range.end())?,
                 second_pcurve: self.second_pcurve.subcurve(range.start(), range.end())?,
                 image_certificates: self.image_certificates,
+                polynomial_contact_exponent: self.polynomial_contact_exponent,
                 first_boundary_contacts: contacts(&self.first_boundary_contacts),
                 second_boundary_contacts: contacts(&self.second_boundary_contacts),
             })
@@ -2575,6 +2581,7 @@ impl SurfaceIntersectionCurve {
                 first_pcurve,
                 second_pcurve,
                 image_certificates: self.image_certificates,
+                polynomial_contact_exponent: self.polynomial_contact_exponent,
                 first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
                     start: if retain_start {
                         self.first_boundary_contacts.start.clone()
@@ -2612,6 +2619,7 @@ impl SurfaceIntersectionCurve {
                 first_pcurve: self.first_pcurve.reversed()?,
                 second_pcurve: self.second_pcurve.reversed()?,
                 image_certificates: self.image_certificates,
+                polynomial_contact_exponent: self.polynomial_contact_exponent,
                 first_boundary_contacts: SurfaceIntersectionBoundaryContacts {
                     start: self.first_boundary_contacts.end.clone(),
                     end: self.first_boundary_contacts.start.clone(),

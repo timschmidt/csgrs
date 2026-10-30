@@ -3373,3 +3373,40 @@ Logs retain ignored-test counts and local timing/RSS samples. Evidence:
 `docs/evidence/2026-10-29-hypercurve-closure-zero-chord-displacement`, SHA-256 `d9478cf7445392d7d2db9e84efa8e0ca6516fd20f28d041aafb3b49b70833930`. Original failures and source attribution are
 retained. General implicit closure, nonzero tiny-source normalization and full
 pre-push qualification remain separate.
+
+## Repeated polynomial support through consumers (2026-10-29)
+
+Polynomial branches retain their original defining equation, selected fibers
+and factor powers through restriction, reversal, maps and native replay.
+Differentials, incidence, component quotients and projection use the owner's
+checked reduced support. Defining exponent remains separate from winding and
+local singularity or intersection order. Native SVG and BRep encoding retain
+the original polynomial and reconstruct factor evidence without trusted flags.
+
+Eight curve witnesses cover repeated graph jets, circle events, mixed-power
+overlaps and contacts, region admission and reconstruction, fresh-process SVG,
+rational quarter-circle overlap, algebraic selected-chord cuts and a chamfer
+whose generated line is queried again. Five original downstream witnesses
+failed before the consumer changes; their original inputs and assertions remain.
+The existing repeated-chamfer hard case also passes its unchanged 180-second
+envelope. Plane/tensor sections retain even/odd defining exponents, validate
+both pcurve images after cold replay and accept later intersections. Exponent
+parity describes the signed plane value only along regular open arcs with both
+sides in the parameter domain; it does not establish transversality.
+
+All eight focused groups and all 24 affected qualification groups pass.
+The latter include full Hypersolve (1,312 passed),
+Hypercurve (3,039 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz-target checks, allocation lifetime
+checks, the capability matrix and hygiene. Counts are harness-reported passes;
+logs retain ignored counts. The matrix verifies 361
+advertised outcomes, including explicit blocker witnesses. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-polynomial-multiplicities`, SHA-256 `b71cabb2d4267a8bfe032a6f09fe06b479ed2b5f90b40eb0a22cd2310c37e0b3`. These local admission checks do not establish
+full pre-push qualification or complete general algebraic operation closure.
+
+This completes the named rational finite-fiber multiplicity corpus. General
+implicit offsets, fillets, algebraic coefficients, vertical components and
+curved solid operations remain open. The parallel tiny-source zero-distance
+correction is not included in this source. Failed experiments, compile-only
+attempts and the interrupted review run remain in the evidence record.

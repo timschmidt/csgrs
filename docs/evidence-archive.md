@@ -191,6 +191,14 @@ replay and all 21 passing affected qualification groups on the integrated
 source. Full pre-push qualification and general closure remain open.
 This evidence record is unpushed.
 
+The local hypercurve-polynomial-multiplicities-evidence-2026-10-29 branch ends at
+97cfab9d8a078ad182f3031a110df6c35e273e49, adding docs/evidence/2026-10-29-hypercurve-closure-polynomial-multiplicities (817 files,
+24,279,035 bytes), SHA-256 b71cabb2d4267a8bfe032a6f09fe06b479ed2b5f90b40eb0a22cd2310c37e0b3. It records exact repeated-factor
+topology, geometric consumer admission, eight focused groups and 24 passing
+affected qualification groups. Original runtime failures, compile-only failed
+attempts and the interrupted review run are retained. Full pre-push and general
+algebraic closure remain open. This evidence record is unpushed.
+
 The local hypercurve-selected-chord-composition-evidence-2026-10-29 branch ends at
 b8ffdd329648cd4925e71af88fabe01fe36e6aab, adding docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition (1,345 files,
 44,842,601 bytes), SHA-256 0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3. It records exact selected-field

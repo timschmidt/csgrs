@@ -141,3 +141,36 @@ Individual normalization and enclosure experiments did not complete the
 original geometry. Failed attempts, invalid cache attribution and the repaired
 filter-budget regression remain in the archive. New bisections use the shared
 refinement counter; it is not a total arithmetic-work or memory bound.
+
+## Repeated rational polynomial factors (2026-10-29)
+
+Finite-fiber bivariate topology now reduces repeated generic factors with exact
+GCDs of the polynomial and both partial derivatives. Axis content is retained;
+checked reconstruction preserves the original rational unit and factor powers.
+The original equation remains authoritative while geometric consumers use the
+reduced support. Each selected event root keeps all factor memberships, and
+each open-slab branch keeps its defining exponent.
+
+The six original circle, parabola, node, cusp, isolated-point and mixed-power
+witnesses failed with `RepeatedComponent` on clean `6296155cf7`. They now pass,
+with independent Sturm fiber counts, exact incidence, factor reconstruction,
+rootless axis factors, degree refusal, exhaustion during reduction and retry.
+Original zero-polynomial and vertical-component rejections remain unchanged.
+
+All eight focused groups and all 24 affected qualification groups pass.
+The latter include full Hypersolve (1,312 passed),
+Hypercurve (3,039 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz-target checks, allocation lifetime
+checks, the capability matrix and hygiene. Counts are harness-reported passes;
+logs retain ignored counts. The matrix verifies 361
+advertised outcomes, including explicit blocker witnesses. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-polynomial-multiplicities`, SHA-256 `b71cabb2d4267a8bfe032a6f09fe06b479ed2b5f90b40eb0a22cd2310c37e0b3`. These local admission checks do not establish
+full pre-push qualification or complete general algebraic operation closure.
+
+The bounded component path respects configured projection limits. Existing
+work counters do not bound total arithmetic, coefficient growth, retained heap
+or cancellation. Recorded process RSS and command timings include builds;
+allocation lifetime checks are not a matched multiplicity benchmark. No
+performance improvement is claimed. Arbitrary algebraic coefficients, vertical
+components and the broader exact-closure target remain open.

@@ -21,6 +21,11 @@
   origin plus translation. Tiny nonzero directions no longer require a
   normalized speed for zero-distance bounds or exact native SVG replay.
 
+- Consume checked repeated polynomial supports in derivatives, incidence,
+  regions, chord setbacks and projection. Original definitions and per-branch
+  defining exponents survive restrictions, reversal, images and native replay.
+  Defining exponents do not substitute for winding or local contact order.
+
 - Consume generated chord displacements over selected polynomial endpoints in
   exact point queries. Retain one positive speed relation and the original
   procedural source through reversal, zero distance and native replay. The

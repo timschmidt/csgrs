@@ -438,16 +438,21 @@ pub fn explicit_dimension_degeneracy_budget_and_recovery() {
             polynomial(&[&[0], &[1]]),
             BivariateTopologyError::VerticalComponent,
         ),
-        (
-            polynomial(&[&[0, 0, 1]]),
-            BivariateTopologyError::RepeatedComponent,
-        ),
     ] {
         assert_eq!(
             decompose_bivariate_curve(&source, &rectangle, config),
             Err(expected)
         );
     }
+    let repeated = polynomial(&[&[0, 0, 1]]);
+    let topology = build(&repeated, &rectangle);
+    assert_eq!(topology.equation(), &repeated);
+    assert_eq!(topology.events().len(), 2);
+    assert_eq!(incidence(&topology), vec![vec![(0, 1)], vec![(1, 0)]]);
+    assert_eq!(
+        topology.repeated_factorization().unwrap().factors()[0].exponent(),
+        2
+    );
     // The original boundary-component fixture now retains the complete
     // horizontal graph, with the same equation and closed rectangle.
     let boundary = polynomial(&[&[2, 1]]);

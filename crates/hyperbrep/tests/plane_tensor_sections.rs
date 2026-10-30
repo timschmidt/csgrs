@@ -31,3 +31,8 @@ fn disconnected_mixed_and_near_coincident_sections() {
 fn empty_contained_boundary_and_solver_frontier() {
     support::empty_contained_boundary_and_solver_frontier();
 }
+
+#[test]
+fn repeated_section_native_replay_is_cold() {
+    support::repeated_section_native_replay_is_cold();
+}

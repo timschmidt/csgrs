@@ -53,6 +53,11 @@ struct PolynomialCurveSource2 {
 /// The parameter is the first coordinate of the source polynomial, including
 /// after reversal and similarity transforms. Endpoints retain the selected
 /// event fiber; interior points retain the branch's ordered fiber root.
+/// Repeated defining factors retain their original equation and checked
+/// multiplicity groups in the shared topology. [`Self::defining_exponent`]
+/// identifies this open branch's factor power. Geometric differentials and
+/// incidence use its reduced support; winding and endpoint contact orders
+/// remain separate. Native replay reconstructs the factors from the source.
 /// Interior abscissas can also retain a rational source expression over one
 /// selected algebraic parameter. Fiber pullback preserves that base, the
 /// original denominator guard and the branch's ordered root; subsequent
@@ -320,6 +325,24 @@ impl PolynomialCurveBranch2 {
     pub fn topology(&self) -> &BivariateCurveTopology {
         &self.source.topology
     }
+    /// Exponent of this open branch's factor in the original equation.
+    ///
+    /// This defining multiplicity is preserved through restriction, reversal,
+    /// image maps and replay. It is not a local singularity or contact order at
+    /// an endpoint, nor a winding multiplicity for a filled region.
+    pub fn defining_exponent(&self) -> usize {
+        let arc = &self.topology().slabs()[self.slab].arcs()[self.root];
+        match arc.repeated_factor_index() {
+            Some(index) => self
+                .topology()
+                .repeated_factorization()
+                .expect("a checked repeated branch retains its factors")
+                .factors()[index]
+                .exponent(),
+            None => 1,
+        }
+    }
+
     /// Index of the source projection slab.
     pub fn slab_index(&self) -> usize {
         self.slab
@@ -341,7 +364,7 @@ impl PolynomialCurveBranch2 {
     /// and traversal flags do not change the source-coordinate evaluation map;
     /// callers must separately check their requested parameter domains.
     /// Equal definitions take the cheap path. Otherwise, exact divisibility by
-    /// the retained source equation proves equality of both rational images.
+    /// the checked geometric equation proves equality of both rational images.
     /// Failure to obtain that sufficient certificate returns false; it does
     /// not prove distinct images. Composition has no additional total-work or
     /// coefficient-size bound.
@@ -367,8 +390,11 @@ impl PolynomialCurveBranch2 {
             // Every original denominator was certified over the whole source
             // box at construction. Cross multiplication therefore preserves
             // the domain, including removable factors retained by each map.
-            if hypersolve::divide_bivariate_polynomial_exact(&residual, self.topology().equation())
-                .is_none()
+            if hypersolve::divide_bivariate_polynomial_exact(
+                &residual,
+                self.topology().geometric_equation(),
+            )
+            .is_none()
             {
                 return false;
             }
@@ -593,7 +619,7 @@ impl PolynomialCurveBranch2 {
             let slope = (&dy / &dx).map_err(|cause| invalid(cause.into()))?;
             let offset = y0 - &slope * x0;
             let mut substituted = bivariate_substitute_second_equal_affine_first(
-                self.topology().equation(),
+                self.topology().geometric_equation(),
                 &slope,
                 &offset,
             );
@@ -612,7 +638,7 @@ impl PolynomialCurveBranch2 {
                     vec![-slope.clone()],
                 ]);
                 let residual = hypersolve::divide_bivariate_polynomial_exact(
-                    self.topology().equation(),
+                    self.topology().geometric_equation(),
                     &component,
                 )
                 .ok_or_else(|| blocked(UncertaintyReason::Predicate))?;
@@ -636,7 +662,7 @@ impl PolynomialCurveBranch2 {
             forms.get_or_init(|| {
                 let equation = residual_equation
                     .as_ref()
-                    .unwrap_or_else(|| self.topology().equation());
+                    .unwrap_or_else(|| self.topology().geometric_equation());
                 let fy = derivative(equation, CurveResultantParameter::Second);
                 // Where F_y != 0, t x d has the sign of (dy F_y + dx F_x) F_y;
                 // for a vertical line, that of dy.
@@ -780,7 +806,13 @@ impl PolynomialCurveBranch2 {
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        for row in self.topology().equation().coefficients.iter().skip(1) {
+        for row in self
+            .topology()
+            .geometric_equation()
+            .coefficients
+            .iter()
+            .skip(1)
+        {
             if !polynomial_is_zero(row, policy)? {
                 return Ok(false);
             }
@@ -789,7 +821,7 @@ impl PolynomialCurveBranch2 {
     }
 
     /// Selects a caller-certified global factor on this original graph arc.
-    /// Its simple open-fiber root cannot change factor inside the source slab.
+    /// Its reduced open-fiber root cannot change factor inside the source slab.
     pub(crate) fn selects_component(
         &self,
         component: &hypersolve::BivariatePolynomial,
@@ -1031,7 +1063,7 @@ impl PolynomialCurveBranch2 {
             return Err(blocked(UncertaintyReason::Predicate));
         }
         // Projection completeness proves every open fiber has the same ordered
-        // simple roots. A contradictory census must never select a different arc.
+        // distinct roots. A contradictory census must never select a different arc.
         if report.intervals.len() != self.topology().slabs()[self.slab].arcs().len() {
             return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
         }

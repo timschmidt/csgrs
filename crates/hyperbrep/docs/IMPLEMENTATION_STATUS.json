@@ -3149,6 +3149,38 @@
       "validation": "All 684 HyperBRep all-feature tests, 127 downstream IO tests and 23 minimal-feature archive tests pass in release on Rust 1.98.1. Native all-target strict Clippy passes for all/minimal features on MSRV 1.95.0. Library WASM check and strict Clippy pass on installed stable; explicit 1.95/1.98 WASM attempts lack the target component and remain recorded. Documentation with warnings denied and formatting checks pass. Wrong-type, self, forward and missing references fail typed; original forged selectors and poles remain rejected. The oblique selected-chord displacement passes independent incidence, split, second replay and finite projection under strict/approximate/strict policies. Full workflow pre-push qualification remains separate.",
       "cost_evidence": "At chord-displacement depths 3/6, native wire sizes fall from 16547/129667 to 5088/7707 bytes with independent exact endpoint/midpoint checks. The original 12-level selected-coefficient graph completes import/export/validate/export/drop on a 256 KiB thread stack. A flat 64-level graph with JSON depth 11 previously aborted on that stack; default dependency depth 64 now rejects observed depth 65 before exact scalar decoding. Raising the limit to 256 on a 2 MiB stack completes the original graph, independent value relation and deterministic re-export.",
       "limits": "The depth bound covers the selected-definition graph, not every inline geometry graph, native stack, total work, coefficient growth or heap. Higher limits require appropriate execution resources. Source-preserving graph replay does not complete general geometry or solid closure. Version 14 has no compatibility reader; the three original cone fixtures change only their format header, and tight record quotas explicitly count definitions plus encoded reference uses. Original failed runtime, compilation and migration-test attempts remain retained."
+    },
+    {
+      "id": "plane-tensor-repeated-factors-2026-10-29",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP06",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P36"
+      ],
+      "change": "Consume checked repeated polynomial support in plane/tensor sections while retaining original source powers and exposing the defining exponent. Restrictions, reversal and operand exchange preserve this evidence. Exponent parity is distinct from transversality and singular contact order.",
+      "source": [
+        "../src/geometry.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../tests/support/plane_tensor_sections.rs",
+        "../../hypersolve/src/bivariate_topology/multiplicity.rs"
+      ],
+      "evidence": "../../hypercurve/FUTURE_WORK.md",
+      "validation": "Eight focused groups and 24 affected groups pass, including the eight plane/tensor section groups, fresh-process native replay, original even and added odd repeated contacts, both pcurve images, restriction/reversal/affine replay and subsequent intersection. Full BRep reports 680 passed; BRep IO reports 127 passed. The linked ledger records commands, source attribution, all downstream checks and the evidence digest.",
+      "cost_evidence": "No speedup claim. Command timing and maximum process RSS include compilation; existing allocation lifetime tests do not measure a matched repeated-factor workload.",
+      "limits": "Rational finite-fiber repeated-factor admission does not complete vertical components, arbitrary algebraic coefficients, general surface intersections, trimmed solids or total resource bounds. Native pcurves reconstruct source-factor evidence; no new trusted archive flag or format is added. All work-package statuses and the general closure target remain open/in-progress. Full pre-push qualification is separate."
     }
   ],
   "work_packages": [

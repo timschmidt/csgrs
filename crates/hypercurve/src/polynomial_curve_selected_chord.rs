@@ -149,7 +149,7 @@ impl PolynomialCurveBranch2 {
         }
         let section = self
             .topology()
-            .equation()
+            .geometric_equation()
             .coefficients
             .iter()
             .map(|row| row.first().cloned().unwrap_or_else(Real::zero))
@@ -222,11 +222,11 @@ impl PolynomialCurveBranch2 {
         let dx = bx.subtract(&ax)?;
         let dy = by.subtract(&ay)?;
         let fx = bivariate_parameter_derivative(
-            self.topology().equation(),
+            self.topology().geometric_equation(),
             CurveResultantParameter::First,
         );
         let fy = bivariate_parameter_derivative(
-            self.topology().equation(),
+            self.topology().geometric_equation(),
             CurveResultantParameter::Second,
         );
         let tangent = |point: &CurvePoint2| -> ExactCurveResult<Option<RealSign>> {
@@ -283,7 +283,7 @@ impl PolynomialCurveBranch2 {
             }
         }
         let coefficients = substitute(
-            self.topology().equation(),
+            self.topology().geometric_equation(),
             &start,
             &[ax.clone(), dx.clone()],
             &[ay.clone(), dy.clone()],

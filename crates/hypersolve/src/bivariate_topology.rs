@@ -10,9 +10,10 @@
 //!
 //! This is a set-topology package, not a planar geometry carrier or an
 //! intersection multiplicity classifier. The exact defining polynomial is
-//! retained for those consumers. Horizontal boundary components remain in
-//! the closed fibers; vertical components and repeated generic fibers have
-//! explicit blockers.
+//! retained for those consumers. Repeated factors retain a checked exact
+//! factorization while topology uses their reduced support. Horizontal boundary
+//! components remain in the closed fibers; vertical components have an explicit
+//! blocker.
 //! Degree and refinement controls, and the shared work budget, do not bound
 //! every scalar operation, coefficient bit size, allocation or elapsed time.
 
@@ -42,6 +43,9 @@ use crate::root_isolation::{
     refine_isolated_univariate_polynomial_interval, square_free_part,
 };
 use crate::work_budget::{self, WorkKind};
+
+mod multiplicity;
+pub use multiplicity::{BivariateMultiplicityFactor, BivariateRepeatedFactorization};
 
 const STRICT: PredicatePolicy = PredicatePolicy::STRICT;
 const FIRST: CurveResultantParameter = CurveResultantParameter::First;
@@ -92,7 +96,8 @@ pub enum BivariateTopologyError {
     ZeroPolynomial,
     /// A complete vertical fiber vanishes; component extraction is required.
     VerticalComponent,
-    /// The generic fiber and its derivative share a component.
+    /// Legacy blocker for a repeated generic fiber. The checked decomposition
+    /// now reduces repeated factors and retains their exact defining exponents.
     RepeatedComponent,
     /// Legacy blocker for an entire horizontal boundary belonging to the curve.
     /// The checked decomposition now retains these finite-fiber components.
@@ -112,6 +117,7 @@ pub enum BivariateTopologyError {
 pub struct BivariateCurveFiber {
     parameter: AlgebraicRootRepresentation,
     roots: Vec<IsolatedRootInterval>,
+    factor_indices: Option<Vec<Vec<usize>>>,
 }
 
 impl BivariateCurveFiber {
@@ -124,6 +130,15 @@ impl BivariateCurveFiber {
     pub fn roots(&self) -> &[IsolatedRootInterval] {
         &self.roots
     }
+
+    /// Multiplicity-factor indices for each selected root, in root order.
+    ///
+    /// Present exactly when the topology retained a repeated factorization.
+    /// Several factors may meet at an event, including an isolated point.
+    /// These are defining-factor memberships, not local intersection orders.
+    pub fn repeated_factor_indices(&self) -> Option<&[Vec<usize>]> {
+        self.factor_indices.as_deref()
+    }
 }
 
 /// One ordered branch over an open interval between consecutive events.
@@ -131,6 +146,7 @@ impl BivariateCurveFiber {
 pub struct BivariateCurveArc {
     left_root: usize,
     right_root: usize,
+    factor_index: Option<usize>,
 }
 
 impl BivariateCurveArc {
@@ -142,6 +158,13 @@ impl BivariateCurveArc {
     /// Root ordinal in the slab's right event fiber.
     pub fn right_root(&self) -> usize {
         self.right_root
+    }
+
+    /// Index of this open branch's factor in the topology's repeated
+    /// factorization, when one was required. A checked slab cannot cross a
+    /// different factor before its event boundary.
+    pub const fn repeated_factor_index(&self) -> Option<usize> {
+        self.factor_index
     }
 }
 
@@ -224,6 +247,7 @@ impl BivariateConnectionStrip {
 #[derive(Clone, Debug, PartialEq)]
 pub struct BivariateCurveTopology {
     equation: BivariatePolynomial,
+    repeated: Option<BivariateRepeatedFactorization>,
     domain: BivariateCurveDomain,
     config: BivariateTopologyConfig,
     projection: Vec<Real>,
@@ -243,6 +267,26 @@ impl BivariateCurveTopology {
     /// Original equation with coefficients normalized exactly to rationals.
     pub fn equation(&self) -> &BivariatePolynomial {
         &self.equation
+    }
+
+    /// Equation used for geometric topology and differential queries.
+    ///
+    /// When generic fibers are repeated, this is their checked square-free
+    /// support. The original defining multiplicities remain in [`Self::equation`]
+    /// and [`Self::repeated_factorization`]. Otherwise the original is reused;
+    /// this does not assert that every factor outside the domain is square-free.
+    pub fn geometric_equation(&self) -> &BivariatePolynomial {
+        self.repeated
+            .as_ref()
+            .map_or(&self.equation, |f| f.support())
+    }
+
+    /// Checked multiplicity evidence when repeated generic fibers were reduced.
+    ///
+    /// `None` means the original equation already admitted finite-fiber topology
+    /// without this reduction; it is not a claim of global square-freeness.
+    pub fn repeated_factorization(&self) -> Option<&BivariateRepeatedFactorization> {
+        self.repeated.as_ref()
     }
 
     /// Complete queried domain.
@@ -294,9 +338,16 @@ impl BivariateCurveTopology {
                 return Err(BivariateTopologyError::ParameterOutsideDomain);
             }
             let parameter = AlgebraicRootRepresentation::from_exact_value(&parameter);
+            let roots = isolate(&self.equation, &parameter, &self.domain.second, config)?;
+            let factor_indices = self
+                .repeated
+                .as_ref()
+                .map(|f| multiplicity::root_factors(f, &parameter, &roots))
+                .transpose()?;
             Ok(BivariateCurveFiber {
-                roots: isolate(&self.equation, &parameter, &self.domain.second, config)?,
+                roots,
                 parameter,
+                factor_indices,
             })
         })();
         if work_budget::exhaustion().is_some() {
@@ -406,7 +457,15 @@ fn decompose(
             _ => return Err(BivariateTopologyError::Undecided),
         }
         if is_zero(&resultant.resultant_coefficients) {
-            return Err(BivariateTopologyError::RepeatedComponent);
+            let repeated = multiplicity::factor(&equation, config)?;
+            let mut topology = decompose(repeated.support(), &domain, config)?;
+            if topology.repeated.is_some() {
+                return Err(BivariateTopologyError::Undecided);
+            }
+            multiplicity::assign(&mut topology, &repeated)?;
+            topology.equation = equation;
+            topology.repeated = Some(repeated);
+            return Ok(topology);
         }
         add_projection(&mut projection, &resultant.resultant_coefficients, config)?;
         let leading: Vec<_> = equation
@@ -468,6 +527,7 @@ fn decompose(
             Ok(BivariateCurveFiber {
                 roots: isolate(&equation, &parameter, &domain.second, config.fiber)?,
                 parameter,
+                factor_indices: None,
             })
         })
         .collect::<Result<Vec<_>, BivariateTopologyError>>()?;
@@ -510,6 +570,7 @@ fn decompose(
             .map(|(left_root, right_root)| BivariateCurveArc {
                 left_root,
                 right_root,
+                factor_index: None,
             })
             .collect();
         slabs.push(BivariateCurveSlab {
@@ -521,6 +582,7 @@ fn decompose(
     }
     Ok(BivariateCurveTopology {
         equation,
+        repeated: None,
         domain,
         config,
         projection,

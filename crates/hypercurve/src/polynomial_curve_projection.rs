@@ -77,7 +77,7 @@ impl PolynomialCurveBranch2 {
             lower: anchor.clone(),
             upper: anchor.clone(),
         };
-        let equation = self.topology().equation();
+        let equation = self.topology().geometric_equation();
         // At most twice the ordinate degree can make an edge pass through
         // another root of the anchor fiber. The admitted finite fiber is not
         // identically zero. Try distinct positive margins inside the requested

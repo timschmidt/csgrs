@@ -161,7 +161,7 @@ impl PolynomialCurveBranch2 {
         let mut contacts = Vec::new();
         for left in [false, true] {
             let coefficients = coefficients(
-                self.topology().equation(),
+                self.topology().geometric_equation(),
                 &local_center,
                 &local_radius,
                 left,

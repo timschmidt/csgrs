@@ -288,8 +288,8 @@ pub(super) fn intersect(
     }
 
     let original = [
-        a.topology().equation().clone(),
-        b.topology().equation().clone(),
+        a.topology().geometric_equation().clone(),
+        b.topology().geometric_equation().clone(),
     ];
     // Distinct roots of one checked slab can meet only at its retained event
     // incidences. Do not rebuild the opposite branch at an algebraic trim that
@@ -325,7 +325,7 @@ pub(super) fn intersect(
             let p = first.point_at_with_policy(&sample, policy)?.into_value();
             let q = second.point_at_with_policy(&sample, policy)?.into_value();
             if decided(p.same_point(&q, policy))? {
-                // Each original slab has only simple open-fiber roots. The
+                // Each checked geometric support has simple open-fiber roots. The
                 // same selected common root cannot separate before an event.
                 let (start, end) = if first.source_traversal_is_reversed() {
                     (high, low)

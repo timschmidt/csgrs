@@ -106,11 +106,14 @@ pub(super) fn intersect(
             source_scale: Real::one(),
             source_offset: Real::zero(),
         })?;
-        curves.push(SurfaceIntersectionCurve::from_certified_exact_pcurves(
-            curve,
-            projected,
-            uv.clone(),
-        )?);
+        let mut section =
+            SurfaceIntersectionCurve::from_certified_exact_pcurves(curve, projected, uv.clone())?;
+        section.polynomial_contact_exponent = Some(
+            uv.polynomial_branch()
+                .expect("topology supplies a selected graph")
+                .defining_exponent(),
+        );
+        curves.push(section);
     }
     let plane = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
     let mut points = set
@@ -195,8 +198,11 @@ impl Surface {
             v: image.v.clone(),
         };
         let (equation, map) = pullback(&plane, surface)?;
-        if hypersolve::divide_bivariate_polynomial_exact(&equation, branch.topology().equation())
-            .is_none()
+        if hypersolve::divide_bivariate_polynomial_exact(
+            &equation,
+            branch.topology().geometric_equation(),
+        )
+        .is_none()
         {
             return Ok(false);
         }
@@ -211,5 +217,20 @@ impl Surface {
             source_offset: -offset * inverse,
         };
         image.parameterization_equals(&expected)
+    }
+}
+
+impl SurfaceIntersectionCurve {
+    /// Defining-factor exponent of a checked plane/tensor pullback branch.
+    ///
+    /// Where both sides of a regular open arc belong to the parameter domain,
+    /// even exponents keep the signed plane value on the same side and odd
+    /// exponents change side. An exponent above one does not
+    /// certify transversality. This is not a local order at a singular endpoint.
+    /// `None` means this evidence was not established for the construction.
+    /// Restrictions, reversal and operand exchange preserve it. Native pcurves
+    /// retain the source polynomial and reconstruct its factor evidence on replay.
+    pub const fn polynomial_contact_exponent(&self) -> Option<usize> {
+        self.polynomial_contact_exponent
     }
 }

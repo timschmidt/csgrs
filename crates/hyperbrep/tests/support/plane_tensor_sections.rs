@@ -749,19 +749,78 @@ pub fn empty_contained_boundary_and_solver_frontier() {
             Real::one(),
             "upper-boundary-section",
         ),
+        (
+            polynomial(vec![vec![q(1, 4), (-1).into(), 1.into()]]),
+            q(1, 2),
+            "repeated-tangent-section",
+        ),
+        (
+            polynomial(vec![vec![q(-1, 8), q(3, 4), q(-3, 2), 1.into()]]),
+            q(1, 2),
+            "repeated-cubic-section",
+        ),
     ] {
         let surface = tensor([x(), y(), equation], one());
         let sections = branches(plane().intersect_surface(&surface).unwrap());
         assert_eq!(sections.len(), 1);
         let section = &sections[0];
+        let exponent = match tag {
+            "repeated-tangent-section" => 2,
+            "repeated-cubic-section" => 3,
+            _ => 1,
+        };
+        assert_eq!(section.polynomial_contact_exponent(), Some(exponent));
+        let swapped = branches(surface.intersect_surface(&plane()).unwrap());
+        assert_eq!(swapped[0].polynomial_contact_exponent(), Some(exponent));
+        let materialized = section.second_pcurve().materialize().unwrap();
+        assert_eq!(
+            materialized
+                .curve()
+                .polynomial_branch()
+                .unwrap()
+                .defining_exponent(),
+            exponent
+        );
+        if exponent > 1 {
+            // F=(v-1/2)^m keeps its sign for even m and changes sign for odd m.
+            // Neither higher-order contact is a transverse intersection.
+            for (v, odd_side) in [(q(1, 4), Ordering::Less), (q(3, 4), Ordering::Greater)] {
+                let point = surface
+                    .point_at(&hypercurve::Point2::new(q(1, 2), v).into())
+                    .unwrap();
+                let expected = if exponent % 2 == 0 {
+                    Ordering::Greater
+                } else {
+                    odd_side
+                };
+                assert_eq!(
+                    point
+                        .compare_linear_form(&Vector3::z(), &Real::zero())
+                        .unwrap(),
+                    expected
+                );
+            }
+        }
         check_correspondence(section, &plane(), &surface);
         let restricted = section
             .subcurve(&q(1, 4), &q(3, 4))
             .unwrap()
             .reversed()
             .unwrap();
+        assert_eq!(restricted.polynomial_contact_exponent(), Some(exponent));
         check_correspondence(&restricted, &plane(), &surface);
         let restored = model_and_replay(&[restricted], &surface, tag);
+        for pcurve in restored.pcurves() {
+            assert_eq!(
+                pcurve
+                    .geometry()
+                    .curve()
+                    .polynomial_branch()
+                    .unwrap()
+                    .defining_exponent(),
+                exponent
+            );
+        }
         let cutting = Surface::plane(
             Point3::new(q(1, 2), 0.into(), 0.into()),
             Vector3::y(),
@@ -789,19 +848,97 @@ pub fn empty_contained_boundary_and_solver_frontier() {
             );
         }
     }
-    for (equation, expected) in [
-        (
-            polynomial(vec![vec![q(-1, 2)], vec![1.into()]]),
-            BivariateTopologyError::VerticalComponent,
-        ),
-        (
-            polynomial(vec![vec![q(1, 4), (-1).into(), 1.into()]]),
-            BivariateTopologyError::RepeatedComponent,
-        ),
-    ] {
-        let surface = tensor([x(), y(), equation], one());
-        assert!(
-            matches!(plane().intersect_surface(&surface),Err(GeometryError::PolynomialTopology(error)) if error==expected)
+    let equation = polynomial(vec![vec![q(-1, 2)], vec![1.into()]]);
+    let surface = tensor([x(), y(), equation], one());
+    assert!(matches!(
+        plane().intersect_surface(&surface),
+        Err(GeometryError::PolynomialTopology(
+            BivariateTopologyError::VerticalComponent
+        ))
+    ));
+}
+
+pub fn repeated_section_native_replay_is_cold() {
+    const INPUT: &str = "HYPERBREP_MULTIPLICITY_REPLAY_INPUT";
+    fn consume(text: &str) {
+        let model = RawModel::from_json(text, &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(model.to_json().unwrap(), text);
+        let pcurves = model.pcurves().collect::<Vec<_>>();
+        assert_eq!(pcurves.len(), 2);
+        for pcurve in pcurves {
+            let branch = pcurve.geometry().curve().polynomial_branch().unwrap();
+            assert_eq!(branch.defining_exponent(), 2);
+            let factors = branch.topology().repeated_factorization().unwrap();
+            assert_eq!(factors.factors().len(), 1);
+            assert_eq!(factors.factors()[0].exponent(), 2);
+        }
+        // This untrimmed section retains the original u parameter on [0,1].
+        revalidate_recorded_images(
+            &model,
+            &[(1.into(), 0.into()), (1.into(), 0.into())],
+            "cold-repeated-section",
         );
+        let cutting = Surface::plane(
+            Point3::new(q(1, 2), 0.into(), 0.into()),
+            Vector3::y(),
+            Vector3::z(),
+        )
+        .unwrap();
+        for curve in model.curves() {
+            let CurveSurfaceIntersection::Points(contacts) =
+                cutting.intersect_curve(curve.geometry()).unwrap()
+            else {
+                panic!("one transverse plane contact after cold replay");
+            };
+            assert_eq!(contacts.len(), 1);
+            assert!(
+                contacts[0]
+                    .point
+                    .coincides_with(&Point3::new(q(1, 2), q(1, 2), 0.into()).into())
+                    .unwrap()
+            );
+        }
     }
+    if let Some(path) = std::env::var_os(INPUT) {
+        consume(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let surface = tensor(
+        [
+            x(),
+            y(),
+            polynomial(vec![vec![q(1, 4), (-1).into(), 1.into()]]),
+        ],
+        one(),
+    );
+    let sections = branches(plane().intersect_surface(&surface).unwrap());
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].polynomial_contact_exponent(), Some(2));
+    let model = model_and_replay(&sections, &surface, "repeated-section-cold-source");
+    let text = model.to_json().unwrap();
+    consume(&text);
+    let path = std::env::temp_dir().join(format!(
+        "hyperbrep-multiplicities-{}.json",
+        std::process::id()
+    ));
+    std::fs::write(&path, text).unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "repeated_section_native_replay_is_cold",
+            "--nocapture",
+        ])
+        .env(INPUT, &path)
+        .output()
+        .unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert!(
+        result.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
 }

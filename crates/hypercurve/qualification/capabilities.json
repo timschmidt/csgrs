@@ -15709,6 +15709,342 @@
       ],
       "oracle": "A fresh process rebuilds the original selected displacement and source, verifies zero distance and original exact endpoint identities, and exports it again. The unwrapped source remains a successful control.",
       "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_jets",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_graph_keeps_geometric_jets_and_transverse_contacts",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "Powers 2 and 3 of y-x\u00b2 on [-1,1]\u00d7[-2,2], both traversals and a transverse authored line.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "The first two derivatives are exactly (1,2x) and (0,2)."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Two certified transverse contacts and three retained pieces re-enter incidence."
+        }
+      ],
+      "oracle": "Independent polynomial derivative vectors, known rational line cuts and original source/exponent assertions.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_events",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_circle_keeps_vertical_event_tangents",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "The cube of x\u00b2+y\u00b2-1 on [-1,1]\u00d7[-2,2], both selected semicircles and vertical event tangents.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "One-sided event tangents have zero abscissa and the independently expected ordinate sign."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Subdivision retains the original cubic power and defining exponent."
+        }
+      ],
+      "oracle": "Known circle tangent directions, selected branch identity and exact endpoint connectivity.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_components",
+      "target": "polynomial_multiplicities",
+      "test": "mixed_factor_powers_preserve_component_overlaps_and_other_contacts",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "(y-x\u00b2)\u00b2(y-x)\u00b3 on [-1,1]\u00d7[-2,2] intersected with its authored diagonal component.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Retain two overlap pieces and the three incident finite endpoint contacts on the other branches."
+        }
+      ],
+      "oracle": "Independent equation x\u00b2=x restricts finite contacts to (0,0) or (1,1); original powers remain retained.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_regions",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_boundary_uses_the_same_filled_set_and_arrangement",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "Squared y\u00b2-x parabola branches with a vertical connector bounding 0<=x<=1/4 and y\u00b2<=x.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The selected squared boundary enters CurveRegion2."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "XOR with the independently authored reduced boundary is empty; difference, reconstruction and empty-union recovery compose."
+        }
+      ],
+      "oracle": "Exact factor identity, independently specified region inequalities, retained boundary equations and filled-set identities.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_replay",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_source_replays_in_a_fresh_process_and_composes",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "The squared-parabola filled region, native SVG graph export and fresh-process import followed by Boolean operations.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process reconstructs original equations, factor exponents and region topology before further operations."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "The replayed region consumes the reduced region and empty results in further set operations."
+        }
+      ],
+      "oracle": "Original polynomial and exponents, exact source relation y\u00b2=x, independent region inequalities, set identities and separate deterministic re-export.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_rational",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_circle_consumes_an_authored_rational_overlap",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "The square of the unit circle, its lower graph and an authored rational quadratic quarter-circle.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalQuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One selected overlap retains exact parameter correspondence in both operand orders; its reconstruction remains intersectable."
+        }
+      ],
+      "oracle": "Independent rational quarter-circle formula and exact endpoint correspondences on the same circle support.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "polynomial_multiplicity_chords",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_parabola_consumes_a_generated_selected_chord",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "The squared positive y\u00b2=x branch and a generated chord y=x+alpha with 128alpha\u00b3=1.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both transverse contacts complete on the original selected parabola and chord fields."
+        }
+      ],
+      "oracle": "Original equations y\u00b2=x and 128(y-x)\u00b3=1, exact selected parameters, contact transversality and original source exponent.",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "polynomial_multiplicity_corners",
+      "target": "polynomial_multiplicities",
+      "test": "repeated_branch_chamfer_retains_circle_setback_and_source",
+      "owner": "Hypersolve factorization and selected incidence; Hypercurve geometric supports and shared arrangement",
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P36"
+      ],
+      "domain": "The squared branch y\u00b2=1+x\u00b3 restricted to [-1,0], an authored horizontal connector and chord setbacks 1/8.",
+      "origins": [
+        "authored",
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Original defining factors and their selected-root memberships are retained; geometric support reduction does not reinterpret winding or local intersection multiplicity. This named rational finite-fiber corpus does not complete algebraic coefficients, vertical components or general implicit operations. Timeout is external containment, not a total arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "A unique trim-only straight chamfer keeps exact squared Euclidean setbacks 1/64."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "The original repeated support and generated chord remain adjacent exact intersection operands."
+        }
+      ],
+      "oracle": "Independent Euclidean squared-distance equations, original defining power, endpoint connectivity and further incidence.",
+      "timeout_seconds": 120
     }
   ]
 }

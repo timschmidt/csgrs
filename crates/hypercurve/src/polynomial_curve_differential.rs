@@ -159,7 +159,7 @@ impl PolynomialCurveBranch2 {
         if max_order == 0 {
             return Ok(result);
         }
-        let d = GraphDifferential::new(self.topology().equation());
+        let d = GraphDifferential::new(self.topology().geometric_equation());
         if point
             .rational_form(d.fy.clone(), one())?
             .compare_to_real(&Real::zero())?
@@ -203,7 +203,7 @@ impl PolynomialCurveBranch2 {
     pub fn tangent_direction_at(&self, value: &CurveParameter2) -> ExactCurveResult<CurveVector2> {
         let policy = crate::policy::principal_context();
         let point = self.differential_source_point(value, &policy)?;
-        let d = GraphDifferential::new(self.topology().equation());
+        let d = GraphDifferential::new(self.topology().geometric_equation());
         let zero = Real::zero();
         let fy_order = point
             .rational_form(d.fy.clone(), one())?

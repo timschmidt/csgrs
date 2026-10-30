@@ -257,7 +257,7 @@ pub(super) fn intersect(
             Some(inverse) => rational.transform_similarity(inverse),
             None => rational,
         };
-        let section = Section::new(branch.topology().equation(), &rational)?;
+        let section = Section::new(branch.topology().geometric_equation(), &rational)?;
         let range = if matches!(span.fragment, BezierSplitFragment2::Materialized { .. }) {
             CurveParameterRange2::unit()
         } else {

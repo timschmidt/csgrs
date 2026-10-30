@@ -9,6 +9,13 @@
 - Keep selected polynomial field/value diagnostics shallow so shared coefficient
   towers do not expand into diagnostic trees.
 
+- Reduce repeated rational bivariate factors for finite-fiber topology while
+  retaining the original polynomial, its exact scalar and factor exponents.
+  Checked selected-root and open-branch memberships preserve multiplicities
+  separately from the reduced support. Native consumers replay the original
+  definition; vertical components and algebraic-coefficient admission remain
+  separate capabilities. Configured degree and shared work limits still apply.
+
 - Normalize invertible native rational quotients and selected-field denominators
   with verified modular or Bezout inverses, retaining nonunit local quotients.
   Proved parent images keep their original relations, multiplicity and selectors.
