@@ -3526,13 +3526,19 @@ with one dilation by 2; it fails on the previous source with the blocker
 above. Tangent contacts are not serialized: they reference parallel
 constructions that would need their own checked records, and this witness
 does not need them. Version 3 single-path metadata still writes native
-controls only. HyperBRep persistence of circular conics is unexamined.
+controls only. HyperBRep's `RawPcurve` likewise stores a rational
+quadratic's controls and weights only, so its persistence drops the circle
+too; no HyperBRep operation witness consumes the circle yet.
+Evidence: `docs/evidence/2026-10-30-hypercurve-closure-replayed-circle-certificates`,
+SHA-256 `c614c3ad18e784cb1f82867124ddc401e19ac475f554f82d284774bb9eed5dc3`.
 
 Open: holes that are neither circular nor convex polygonal, and curved
 non-circular holes, take the slower band route even when they survive; their
 cost on larger workloads is unmeasured. Disappearance chains through Bezier,
-conic and implicit holes, invalid operands paired with empty regions, and
-nested islands inside closing holes are not yet in the corpus.
+conic and implicit holes, and invalid operands other than offset options
+paired with empty regions, are not yet in the corpus. Invalid offset options
+on canonical empty regions and an island meeting its shrinking hole
+(`island_meets_its_shrinking_hole`) now are.
 
 ## Pythagorean-hodograph region offsets (2026-10-30)
 
