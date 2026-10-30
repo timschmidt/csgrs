@@ -417,6 +417,62 @@ impl RationalQuadraticBezier2 {
         self.circular_conic.as_ref()
     }
 
+    /// Re-establishes a replayed circle certificate from the curve itself.
+    ///
+    /// The homogeneous parameterization lies on the circle iff
+    /// `|X - c W|^2 - r^2 W^2` vanishes identically. With
+    /// `G_ij = w_i w_j ((P_i - c) . (P_j - c) - r^2)`, its degree-four
+    /// Bernstein coefficients are proportional to `G_00`, `G_01`,
+    /// `G_02 + 2 G_11`, `G_12` and `G_22`. `Decided(None)` refutes the
+    /// certificate. Tangent contacts are construction evidence that this
+    /// identity does not re-establish, so none are attached.
+    pub(crate) fn with_checked_circle_certificate(
+        &self,
+        center: Point2,
+        radius_squared: Real,
+        policy: &CurveContext,
+    ) -> Classification<Option<Self>> {
+        match real_sign(&radius_squared, policy) {
+            Some(RealSign::Positive) => {}
+            Some(_) => return Classification::Decided(None),
+            None => return Classification::Uncertain(UncertaintyReason::RealSign),
+        }
+        let controls = [
+            (&self.start, &self.start_weight),
+            (&self.control, &self.control_weight),
+            (&self.end, &self.end_weight),
+        ];
+        let g = |i: usize, j: usize| {
+            let ((first, first_weight), (second, second_weight)) = (controls[i], controls[j]);
+            let dot = (first.x() - center.x()) * (second.x() - center.x())
+                + (first.y() - center.y()) * (second.y() - center.y());
+            first_weight * second_weight * (dot - &radius_squared)
+        };
+        let coefficients = [
+            g(0, 0),
+            g(0, 1),
+            g(0, 2) + Real::from(2) * g(1, 1),
+            g(1, 2),
+            g(2, 2),
+        ];
+        for coefficient in &coefficients {
+            match is_zero(coefficient, policy) {
+                Some(true) => {}
+                Some(false) => return Classification::Decided(None),
+                None => return Classification::Uncertain(UncertaintyReason::RealSign),
+            }
+        }
+        let circle = Arc::new(RationalQuadraticCircle2 {
+            center,
+            radius_squared,
+            tangent_contacts: None,
+        });
+        Classification::Decided(Some(self.clone().with_retained_conic_provenance(
+            Some(circle.implicit_coefficients()),
+            Some(circle),
+        )))
+    }
+
     pub(crate) fn with_retained_conic_provenance(
         mut self,
         implicit_quadratic_conic: Option<Arc<[Real; 6]>>,

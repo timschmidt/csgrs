@@ -827,3 +827,55 @@ fn qualified_empty_boolean_batches_keep_each_result_receipt() {
         }
     }
 }
+
+/// Dilating a frame around a dumbbell hole by 3/2 closes the channel and
+/// leaves two lobe holes bounded by lines and circular joins about the
+/// channel corners. Replay keeps each join's circle (center and radius),
+/// rechecked against its native rational quadratic. A further dilation by
+/// 1/2 then decides the exact collapse of both lobes, as one dilation by 2
+/// does. Without the circle the replayed joins fell back to general conic
+/// offsets whose coincident contacts were undecided.
+#[test]
+fn replayed_circular_joins_support_further_offsets_through_collapse() {
+    let corners = [
+        (-6, 2),
+        (-2, 2),
+        (-2, 1),
+        (2, 1),
+        (2, 2),
+        (6, 2),
+        (6, -2),
+        (2, -2),
+        (2, -1),
+        (-2, -1),
+        (-2, -2),
+        (-6, -2),
+    ];
+    let dumbbell = CurvePath2::try_new(
+        (0..corners.len())
+            .map(|i| {
+                let ((x0, y0), (x1, y1)) = (corners[i], corners[(i + 1) % corners.len()]);
+                Curve2::try_line(point(x0, y0).into(), point(x1, y1).into()).unwrap()
+            })
+            .collect(),
+    )
+    .unwrap();
+    let framed = geometry(&[rectangle(-10, -10, 20, 20), dumbbell])
+        .region()
+        .clone();
+    let dilated = framed.offset(q(3, 2), &OffsetCornerStyle2::Round).unwrap();
+    assert_eq!(dilated.boundary_loops().len(), 3);
+    let text = export_svg_document(&SvgGeometry2::new(dilated.clone(), vec![], vec![])).unwrap();
+    let restored = import_svg_document(&text).unwrap().region().clone();
+    assert_same_set(&restored, &dilated);
+    let further = restored
+        .offset(q(1, 2), &OffsetCornerStyle2::Round)
+        .unwrap();
+    assert_eq!(further.boundary_loops().len(), 1);
+    assert_same_set(
+        &further,
+        &framed
+            .offset(Real::from(2), &OffsetCornerStyle2::Round)
+            .unwrap(),
+    );
+}

@@ -3503,15 +3503,30 @@ Exact SVG replay of these outputs preserves the set: the ellipse-hole dilation
 by 1/4 and the dumbbell dilation by 3/2 both replay with an empty symmetric
 difference, and the replayed ellipse result erodes further. Dilating the
 replayed dumbbell result by another 1/2, where each lobe collapses exactly,
-is `Blocked(Offset, Line, RealSign)`, while the same dilation of the
-unreplayed region succeeds with one loop. Its band arrangement compares
-coincident contacts (`algebraic_chord_point_coordinate_order`, circular
-carrier `same_value`) whose equal coordinates were rebuilt as independent
-scalar expressions; strict sign refinement cannot prove their difference
-zero. Replay keeps the geometry but not the shared scalar identity those
-contact decisions used. Interning byte-identical scalar encodings during
-decode did not change the outcome, so the equal values are not serialized
-identically; the replay graph would need to retain their defining relation.
+was `Blocked(Offset, Line, RealSign)`, while the same dilation of the
+unreplayed region succeeds with one loop. The cause was the joins' circle
+certificate, not scalar sharing. Each join is a rational quadratic that
+retains its circle (center, radius squared, tangent contacts); the graph wrote
+only the native controls and weights. Without the circle, further offsets of
+the replayed joins used general conic machinery: the undecided contact
+comparisons held scalars of 1 to 128 MB once serialized. Interning decoded
+scalars or whole points by their bytes did not help. Recognizing the circle
+again from the controls gives center expressions of about 500 KB and stays
+blocked. Attaching the original center and radius alone, without tangent
+contacts, completes the dilation.
+
+Graph tag 31 now carries a circular rational quadratic with its center and
+radius squared. Replay re-establishes the circle only after proving that the
+homogeneous parameterization satisfies `|X - cW|^2 = r^2 W^2` identically: five
+exact zero tests on the degree-four Bernstein coefficients, and `r^2 > 0`. A
+refuted certificate is malformed input; an undecided one is a typed blocker.
+`replayed_circular_joins_support_further_offsets_through_collapse`
+(`svg_region_replay`) replays the 3/2 dilation, dilates it by 1/2 and compares
+with one dilation by 2; it fails on the previous source with the blocker
+above. Tangent contacts are not serialized: they reference parallel
+constructions that would need their own checked records, and this witness
+does not need them. Version 3 single-path metadata still writes native
+controls only. HyperBRep persistence of circular conics is unexamined.
 
 Open: holes that are neither circular nor convex polygonal, and curved
 non-circular holes, take the slower band route even when they survive; their

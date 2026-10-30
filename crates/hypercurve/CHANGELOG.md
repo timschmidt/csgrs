@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Keep circle certificates through exact SVG graph replay. A rational
+  quadratic that retains its circle now writes graph definition tag 31 with
+  the center and radius squared; import checks the circle identity exactly
+  before attaching it. Replayed round joins again support further offsets
+  that depend on their circles. Older readers reject documents containing
+  the new tag.
+
 - Fix dilation of regions with holes. A hole dilated to or past its
   half-width, a channel that should close between surviving parts of a hole,
   or a convex hole edge that vanishes first stayed open because the crossed

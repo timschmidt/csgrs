@@ -571,7 +571,10 @@ exact signatures.
   checks every definition and closed path before reconstructing the region
   through the existing arrangement; stored roles or success flags are unnecessary.
   The named fresh-process annulus retains its joint selected center through
-  further round offsets and exact set identities. Metadata is independent of
+  further round offsets and exact set identities. A rational quadratic that
+  retains its supporting circle replays it only after an exact check of the
+  circle identity, so replayed round joins keep supporting further offsets;
+  their tangent contacts are not serialized. Metadata is independent of
   display tolerance. Reached byte/depth limits permit larger retries. A zero-root
   compound imports and exports as canonical empty. Entirely empty documents
   export with that exact graph and a unit display viewport that adds no

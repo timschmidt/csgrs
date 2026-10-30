@@ -16654,6 +16654,47 @@
       ],
       "oracle": "Independently authored lobes bounded by lines and unit arcs about the mouth corners meeting at axis cusps, and the composition identity of disk erosions.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "replayed_circular_join_further_offset",
+      "target": "svg_region_replay",
+      "test": "replayed_circular_joins_support_further_offsets_through_collapse",
+      "owner": "Hypercurve native SVG graph codec, retained rational-quadratic circle certificates and exact region offsets",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A 20x20 square frame with a dumbbell hole of two 4x4 lobes and a width-2 channel, dilated by 3/2, replayed through version 5 metadata, then dilated by 1/2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "RationalQuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Graph metadata retains each round join's circle center and radius squared; import attaches them only after the exact circle identity of the native rational quadratic is proved. Tangent contacts are not serialized.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The replayed 3/2 dilation has an empty symmetric difference with the original."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Dilating the replayed region by 1/2 collapses both lobes, leaving one loop equal to the direct dilation by 2."
+        }
+      ],
+      "oracle": "Exact symmetric difference against the original and against an independent single dilation by 2; the Minkowski identity (A + B_r) + B_s = A + B_(r+s) fixes the expected set.",
+      "timeout_seconds": 300
     }
   ]
 }

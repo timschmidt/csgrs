@@ -327,6 +327,16 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   wire version. Other frame and point-image carriers and general region admission
   remain open; these fixtures do not establish universal operation closure.
 
+- **Exact SVG circle certificates (2026-10-30).** Graph metadata (versions 4
+  and 5) writes a rational quadratic that retains its supporting circle as
+  definition tag 31: the native curve, then the center and radius squared.
+  Import attaches the circle only after five exact zero tests prove that the
+  curve lies on it, and requires a positive radius squared; a refuted
+  certificate is malformed and an undecided one is a typed blocker. Tangent
+  contacts stay unserialized. Filled exports with round joins change bytes, and
+  older Hypercurve readers reject them as an unknown definition tag. Version 3
+  single-path metadata is unchanged.
+
 - **Exact filled-region SVG replay (2026-10-27).** Filled exports now carry
   version 5 compound path roots over the existing checked definition graph.
   One SVG path contains all regularized material/hole boundaries with even-odd

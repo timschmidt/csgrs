@@ -14,6 +14,8 @@ use crate::{
 };
 use std::collections::HashMap;
 
+#[cfg(test)]
+mod circle_certificate_tests;
 mod circles;
 mod points;
 mod polynomial;
@@ -29,6 +31,7 @@ const PARAMETER_IMAGE: u8 = 3;
 const SOURCE_RESTRICTION: u8 = 4;
 const PARALLEL_SUPPORT: u8 = 5;
 const PARALLEL_RANGE: u8 = 6;
+const CIRCULAR_CONIC: u8 = 31;
 
 pub(super) fn encode_path(
     path: &CurvePath2,
@@ -180,8 +183,23 @@ impl GraphWriter {
         if let Some(index) = self.sources.get(&key) {
             return Ok(*index);
         }
-        let index = self.begin(NATIVE_CURVE)?;
+        // A retained circle is construction evidence, not a cache: later
+        // offsets use its exact center and radius instead of reconstructing
+        // them from the controls. Replay checks it against the native curve.
+        let circle = match geometry {
+            CurveGeometry2::RationalQuadraticBezier(conic) => conic.retained_circular_conic(),
+            _ => None,
+        };
+        let index = self.begin(if circle.is_some() {
+            CIRCULAR_CONIC
+        } else {
+            NATIVE_CURVE
+        })?;
         self.writer.write_curve(curve)?;
+        if let Some(circle) = circle {
+            self.writer.write_point(&circle.center)?;
+            self.writer.write_real(&circle.radius_squared)?;
+        }
         self.sources.insert(key, index);
         Ok(index)
     }
@@ -347,6 +365,23 @@ fn read_definitions(
         let mut point_depth = 0;
         let definition = match reader.read_u8()? {
             NATIVE_CURVE => Definition::Curve(reader.read_curve()?),
+            CIRCULAR_CONIC => {
+                let curve = reader.read_curve()?;
+                let Some(CurveGeometry2::RationalQuadraticBezier(conic)) = curve.geometry() else {
+                    return Err(malformed(
+                        "exact circle certificate requires a rational quadratic",
+                    ));
+                };
+                let center = reader.read_point()?;
+                let radius_squared = reader.read_real()?;
+                let conic = certified(Ok(conic.with_checked_circle_certificate(
+                    center,
+                    radius_squared,
+                    &CurveContext::STRICT,
+                )))?
+                .ok_or_else(|| malformed("exact circle certificate does not hold for its curve"))?;
+                Definition::Curve(Curve2::from(conic))
+            }
             SCALAR_PARAMETER => Definition::Parameter(BezierParameter2::Exact(reader.read_real()?)),
             SELECTED_ROOT => {
                 let coefficients = reader.read_reals()?;
