@@ -3209,3 +3209,25 @@ exports/reimports a filled triangle and proves the symmetric difference empty.
 No structural-closure implementation was changed. Fourteen focused SVG and
 adapter cases pass, alongside the broader 155-check solver/SVG run described
 above. Final combined downstream and pre-push qualification remains pending.
+
+
+## Review: quotient and oblique displacement compositions (P2/P6/P8/P9/P15/P18-P20/P26/P35)
+
+The selected sqrt(2) component of (x²-2)(x-3) joins an independent cube root
+of three. Division by x-3 succeeds locally even though that divisor has no
+global inverse modulo the reducible equation. Native value replay preserves
+q(x-3)=b and the original relation; a subsequent positive selection satisfies
+z²+q=0. Replacing the quotient denominator with a correctly typed earlier
+parent-field zero is rejected as ZeroDenominator. This new composition passes
+without a production change. Its first fixture incorrectly treated every
+cubic ancestor as the original relation; matching all original coefficients
+corrects that assertion and retains the failing attempt in the evidence.
+
+A degree-seven selected chord displacement is transported by the oblique
+similarity (3,-4;4,3) and translation (2,-1), then reloaded from exact SVG.
+Independently constructed selected coordinates prove both endpoints and a
+midpoint. Incidence, splitting, another replay and explicitly lossy finite
+projection succeed under strict/approximate/strict scopes with certified
+consumed decisions. Projected values never supply an exact incidence decision.
+All 11 selected join-retention and 15 SVG point-replay cases pass. Broader
+composition coverage and the archive sharing/depth fix remain separate work.

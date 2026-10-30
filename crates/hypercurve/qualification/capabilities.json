@@ -14509,6 +14509,54 @@
       ],
       "oracle": "Structural inequality, exact coincidence and symmetric-difference emptiness.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "oblique_selected_chord_displacement_replay",
+      "target": "svg_point_replay",
+      "test": "oblique_chord_displacement_replays_before_independent_split_and_projection",
+      "owner": "Hypercurve selected chord similarity, incidence and SVG",
+      "properties": [
+        "P8",
+        "P9",
+        "P15",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P35"
+      ],
+      "domain": "Degree-seven selected origin, (3,4) chord displacement and similarity (3,-4;4,3) with translation (2,-1).",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Exact retained definitions remain authoritative through similarity/replay and subsequent operations; finite projection is a terminal display view.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Replayed endpoints equal independent algebraic affine forms; deterministic re-export remains separate."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Independent selected midpoint has one incident location."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Exact split endpoints survive another replay before finite projection."
+        }
+      ],
+      "oracle": "Independent selected coordinates and exact incidence; projected display endpoints checked separately.",
+      "timeout_seconds": 180
     }
   ]
 }

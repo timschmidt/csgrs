@@ -1173,3 +1173,100 @@ fn selected_coefficient_root_records_validate_source_guards_and_selection() {
         Ordering::Greater
     );
 }
+
+#[test]
+fn oblique_chord_displacement_replays_before_independent_split_and_projection() {
+    let beta: CurveParameter2 = selected(7).into();
+    let source =
+        Curve2::try_line(at(&beta, 0.into(), 0.into()), at(&beta, 3.into(), 4.into())).unwrap();
+    let displaced = |at_end| {
+        CurvePointDefinition2::ChordDisplacement {
+            source: source.clone(),
+            origin: None,
+            at_end,
+            distance: q(5, 2),
+            translation: [q(7, 3), q(-1, 2)],
+            left_normal: false,
+        }
+        .into_point()
+        .unwrap()
+    };
+    let transform = Similarity2::try_from_real_affine(
+        3.into(),
+        (-4).into(),
+        4.into(),
+        3.into(),
+        2.into(),
+        (-1).into(),
+    )
+    .unwrap();
+    let curve = Curve2::try_line(displaced(false), displaced(true))
+        .unwrap()
+        .transform_similarity(&transform)
+        .unwrap();
+    let text = document(CurvePath2::try_new(vec![curve]).unwrap());
+    for policy in [
+        PredicatePolicy::STRICT,
+        PredicatePolicy::APPROXIMATE_512,
+        PredicatePolicy::STRICT,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let replay = import_svg_document(&text).unwrap();
+            let curve = &replay.paths()[0].curves()[0];
+            // Independent coefficients of S(beta+23/6,3/2), with
+            // displacement vector S(3,4)=(-7,24), not transformed wrappers.
+            let independent: CurveParameter2 = selected(7).into();
+            let expected = |x, y| independent.affine_point(3.into(), x, 4.into(), y).unwrap();
+            assert!(
+                curve
+                    .start()
+                    .coincides_with(&expected(q(15, 2), q(113, 6)))
+                    .unwrap()
+            );
+            assert!(
+                curve
+                    .end()
+                    .coincides_with(&expected(q(1, 2), q(257, 6)))
+                    .unwrap()
+            );
+            let midpoint = expected(4.into(), q(185, 6));
+            let CurvePointLocations2::Locations(locations) =
+                curve.point_locations(&midpoint).unwrap()
+            else {
+                panic!("one independent incident point")
+            };
+            assert_eq!(locations.len(), 1);
+            let (first, second) = curve
+                .split_at(locations[0].parameter().unwrap().clone())
+                .unwrap();
+            assert!(first.end().coincides_with(&midpoint).unwrap());
+            assert!(second.start().coincides_with(&midpoint).unwrap());
+            let path = CurvePath2::try_new(vec![first, second]).unwrap();
+            let projection = path
+                .project_to_finite_polyline(
+                    &hypercurve::FiniteProjectionOptions::try_new(1e-6).unwrap(),
+                )
+                .unwrap();
+            let b = 0.5_f64.powf(1.0 / 7.0);
+            let endpoints = [
+                projection.points().first().unwrap(),
+                projection.points().last().unwrap(),
+            ];
+            for (point, [x, y]) in endpoints.into_iter().zip([
+                [3.0 * b + 7.5, 4.0 * b + 113.0 / 6.0],
+                [3.0 * b + 0.5, 4.0 * b + 257.0 / 6.0],
+            ]) {
+                assert!((point[0] - x).abs() < 1e-10 && (point[1] - y).abs() < 1e-10);
+            }
+            let again = import_svg_document(&document(path)).unwrap();
+            assert!(
+                again.paths()[0].curves()[0]
+                    .end()
+                    .coincides_with(&midpoint)
+                    .unwrap()
+            );
+            assert_eq!(document(replay.paths()[0].clone()), text);
+        });
+        assert_eq!(outcome.certainty(), CurveCertainty::Certified);
+    }
+}

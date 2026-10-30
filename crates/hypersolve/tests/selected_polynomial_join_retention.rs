@@ -651,3 +651,143 @@ fn shared_selected_field_and_value_diagnostics_are_shallow() {
         "shared tower diagnostics must stay bounded: {samples:?}"
     );
 }
+
+#[test]
+fn joined_nonunit_quotient_replays_before_dependent_selection() {
+    let context = TestContext::strict();
+    let base = root(2).parent().unwrap().clone();
+    // P=(x²-2)(x-3). At the selected sqrt(2), x-3 is nonzero;
+    // at the other component x=3 it vanishes, so it has no global inverse.
+    let relation = [6, -2, -3, 1];
+    let first = value(
+        base.select(
+            relation
+                .into_iter()
+                .map(|x| base.constant(real(x)).unwrap())
+                .collect(),
+            real(1),
+            (real(3) / real(2)).unwrap(),
+            &context,
+        )
+        .unwrap(),
+    );
+    let second = root(3);
+    let joined = value(first.joined_with(&second, &context).unwrap());
+    let a = joined.embed(&first.generator().unwrap()).unwrap();
+    let b = joined.embed(&second.generator().unwrap()).unwrap();
+    let divisor = a
+        .subtract(&joined.field().constant(real(3)).unwrap())
+        .unwrap();
+    assert_eq!(
+        value(divisor.sign(&context).unwrap()),
+        hyperreal::RealSign::Negative
+    );
+    let quotient = value(b.divide(&divisor, &context).unwrap());
+    let zero_coefficient = joined.field().parent().unwrap().constant(real(0)).unwrap();
+    // Place the correctly typed zero before the quotient so tampering tests
+    // denominator validation, not a forward-reference or field-type rejection.
+    let graph =
+        SelectedPolynomialDefinition::from_values(&[zero_coefficient, quotient, a, b], 10000)
+            .unwrap();
+    let wire = codec::encode(&graph);
+    let replayed = value(codec::decode(&wire).replay(10000, &context).unwrap());
+    let [_, q, a, b] = replayed.as_slice() else {
+        panic!("four values")
+    };
+    let d = a.subtract(&a.field().constant(real(3)).unwrap()).unwrap();
+    assert_eq!(
+        value(
+            q.multiply(&d)
+                .unwrap()
+                .subtract(b)
+                .unwrap()
+                .sign(&context)
+                .unwrap()
+        ),
+        hyperreal::RealSign::Zero
+    );
+    assert_eq!(
+        value(
+            a.multiply(a)
+                .unwrap()
+                .subtract(&a.field().constant(real(2)).unwrap())
+                .unwrap()
+                .sign(&context)
+                .unwrap()
+        ),
+        hyperreal::RealSign::Zero
+    );
+    cube_is(b, 3);
+    let dependent = value(
+        q.field()
+            .select(
+                vec![
+                    q.clone(),
+                    q.field().constant(real(0)).unwrap(),
+                    q.field().constant(real(1)).unwrap(),
+                ],
+                real(0),
+                real(2),
+                &context,
+            )
+            .unwrap(),
+    );
+    let z = dependent.generator().unwrap();
+    assert_eq!(
+        value(
+            z.multiply(&z)
+                .unwrap()
+                .add(q)
+                .unwrap()
+                .sign(&context)
+                .unwrap()
+        ),
+        hyperreal::RealSign::Zero
+    );
+    assert_eq!(
+        value(z.sign(&context).unwrap()),
+        hyperreal::RealSign::Positive
+    );
+    let mut field = Some(a.field());
+    let mut retained = false;
+    while let Some(next) = field {
+        if let Some(coefficients) = next.defining_polynomial()
+            && coefficients.len() == relation.len()
+        {
+            let original = coefficients
+                .iter()
+                .zip(relation)
+                .all(|(coefficient, expected)| {
+                    value(
+                        coefficient
+                            .subtract(&coefficient.field().constant(real(expected)).unwrap())
+                            .unwrap()
+                            .sign(&context)
+                            .unwrap(),
+                    ) == hyperreal::RealSign::Zero
+                });
+            retained |= original;
+        }
+        field = next.parent();
+    }
+    assert!(
+        retained,
+        "the original reducible relation remains authoritative"
+    );
+    let mut tampered = codec::decode(&wire);
+    let zero = tampered.roots[0];
+    let output = tampered.roots[1];
+    let SelectedPolynomialDefinitionNode::PolynomialValue { denominator, .. } =
+        &mut tampered.nodes[output]
+    else {
+        panic!("joined polynomial quotient")
+    };
+    *denominator = vec![zero];
+    assert!(matches!(
+        tampered.replay(10000, &context),
+        Err(SelectedPolynomialReplayError::Field(
+            SelectedPolynomialError::ZeroDenominator
+        ))
+    ));
+    assert_eq!(context.approximations(), 0);
+}
