@@ -426,6 +426,7 @@ impl RationalQuadraticBezier2 {
     /// `G_02 + 2 G_11`, `G_12` and `G_22`. `Decided(None)` refutes the
     /// certificate. Tangent contacts are construction evidence that this
     /// identity does not re-establish, so none are attached.
+    #[cfg(feature = "svg")]
     pub(crate) fn with_checked_circle_certificate(
         &self,
         center: Point2,
