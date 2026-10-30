@@ -1536,6 +1536,11 @@ pub(crate) fn determinant_integer_polynomial_matrix(
         let pivot_value = matrix[pivot * dimension + pivot].clone();
         for row in pivot + 1..dimension {
             for column in pivot + 1..dimension {
+                // A cancelled or exhausted scope stops between entry updates;
+                // the unavailable determinant is never a zero result.
+                if crate::work_budget::exhaustion().is_some() {
+                    return None;
+                }
                 let numerator = cross_difference(
                     &pivot_value,
                     &matrix[row * dimension + column],
@@ -2323,5 +2328,48 @@ mod tests {
             prop_assert!(report.fill_in_positions.is_empty());
             prop_assert!(report.sparse_residual_replay.accepted);
         }
+    }
+
+    #[test]
+    fn cancelled_polynomial_determinant_is_unavailable_not_zero() {
+        use crate::work_budget::{
+            CancellationToken, WorkBudget, WorkKind, with_budget, with_cancellable_budget,
+        };
+        // [[t, 1, 0], [1, t, 1], [0, 1, t]] has determinant t^3 - 2t.
+        let int = |values: &[i64]| values.iter().copied().map(BigInt::from).collect::<Vec<_>>();
+        let entries = vec![
+            int(&[0, 1]),
+            int(&[1]),
+            int(&[]),
+            int(&[1]),
+            int(&[0, 1]),
+            int(&[1]),
+            int(&[]),
+            int(&[1]),
+            int(&[0, 1]),
+        ];
+        let expected = int(&[0, -2, 0, 1]);
+        assert_eq!(
+            determinant_integer_polynomial_matrix(&entries, 3),
+            Some(expected.clone())
+        );
+        let token = CancellationToken::new();
+        token.cancel();
+        // The determinant itself reports unavailability, never a zero value.
+        let cancelled = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+            assert_eq!(determinant_integer_polynomial_matrix(&entries, 3), None);
+        });
+        assert_eq!(cancelled.result.unwrap_err().kind, WorkKind::Cancellation);
+        // An exhausted scope stops too, before charging any new unit.
+        let exhausted = with_budget(WorkBudget::ZERO, || {
+            assert!(crate::work_budget::consume(WorkKind::RootRefinement, 1).is_err());
+            assert_eq!(determinant_integer_polynomial_matrix(&entries, 3), None);
+        });
+        assert_eq!(exhausted.result.unwrap_err().kind, WorkKind::RootRefinement);
+        let fresh =
+            with_cancellable_budget(WorkBudget::UNLIMITED, &CancellationToken::new(), || {
+                determinant_integer_polynomial_matrix(&entries, 3)
+            });
+        assert_eq!(fresh.result.unwrap(), Some(expected));
     }
 }

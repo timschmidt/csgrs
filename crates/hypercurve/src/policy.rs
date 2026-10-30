@@ -199,6 +199,69 @@ pub fn evaluate_with_budget<T>(
     hypersolve::work_budget::with_budget(budget, || evaluate_under(policy, evaluate))
 }
 
+/// Evaluate under an explicit predicate policy, shared work budget and
+/// cooperative cancellation request.
+///
+/// This is [`evaluate_with_budget`] with a [`crate::CancellationToken`] that
+/// another thread may cancel. A cancelled evaluation reports
+/// [`crate::WorkKind::Cancellation`] in the outer result and publishes no
+/// value; it is never an approximate or partial success. Cancellation is
+/// observed at instrumented work units, so it is not a wall-clock deadline.
+/// A retry needs a new token. Pass [`crate::WorkBudget::UNLIMITED`] to limit
+/// the evaluation by cancellation alone.
+///
+/// ```
+/// use hypercurve::{
+///     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
+///     BezierParameterPolynomial, CancellationToken, PredicatePolicy, Real, WorkBudget, WorkKind,
+///     evaluate_with_cancellable_budget,
+/// };
+///
+/// // The root of 2t^2 - 1 in [2/3, 3/4] is 1/sqrt(2); ordering it against a
+/// // nearby rational needs root refinement.
+/// let polynomial = BezierParameterPolynomial::try_new_power_basis(
+///     [-1, 0, 2].into_iter().map(Real::from).collect(),
+/// )?;
+/// let interval = BezierParameterInterval::try_new(
+///     (Real::from(2) / Real::from(3))?,
+///     (Real::from(3) / Real::from(4))?,
+/// )?;
+/// let root = BezierParameter2::Algebraic(BezierAlgebraicParameter2::try_isolate(
+///     polynomial, interval,
+/// )?);
+/// let nearby = BezierParameter2::Exact((Real::from(353_553) / Real::from(500_000))?);
+/// let compare = || nearby.cmp_by_refinement(&root);
+///
+/// let cancelled = CancellationToken::new();
+/// cancelled.cancel();
+/// let attempt = evaluate_with_cancellable_budget(
+///     PredicatePolicy::STRICT,
+///     WorkBudget::UNLIMITED,
+///     &cancelled,
+///     compare,
+/// );
+/// assert_eq!(attempt.result.unwrap_err().kind, WorkKind::Cancellation);
+///
+/// let retry = evaluate_with_cancellable_budget(
+///     PredicatePolicy::STRICT,
+///     WorkBudget::UNLIMITED,
+///     &CancellationToken::new(),
+///     compare,
+/// );
+/// assert!(retry.result?.certified().is_some());
+/// # Ok::<(), Box<dyn std::error::Error>>(())
+/// ```
+pub fn evaluate_with_cancellable_budget<T>(
+    policy: hyperlimit::PredicatePolicy,
+    budget: crate::WorkBudget,
+    cancellation: &crate::CancellationToken,
+    evaluate: impl FnOnce() -> T,
+) -> crate::BudgetOutcome<Provisional<T>> {
+    hypersolve::work_budget::with_cancellable_budget(budget, cancellation, || {
+        evaluate_under(policy, evaluate)
+    })
+}
+
 /// The policy of a principal operation on this thread: STRICT, or
 /// `APPROXIMATE_512` inside [`provisional`]. Inside
 /// [`CurvePreviewOptions::evaluate`] it is the adapter's edge-preview context.

@@ -278,8 +278,14 @@ impl DenseTensorPolynomial {
         let target_strides = row_major_strides(&dimensions)?;
         let left_terms = embedded_nonzero_terms(self, &target_strides)?;
         let mut result = Self::zero(dimensions)?;
+        // A cancelled or exhausted scope stops between rows of the product;
+        // the unavailable product is never published as a partial sum.
+        let interrupted = || crate::work_budget::exhaustion().is_some();
         if std::ptr::eq(self, other) {
             for (position, (left_index, left)) in left_terms.iter().enumerate() {
+                if interrupted() {
+                    return None;
+                }
                 result.coefficients[left_index.checked_add(*left_index)?] += *left * *left;
                 for (right_index, right) in &left_terms[position + 1..] {
                     let target = left_index.checked_add(*right_index)?;
@@ -292,6 +298,9 @@ impl DenseTensorPolynomial {
         }
         let right_terms = embedded_nonzero_terms(other, &target_strides)?;
         for (left_index, left) in left_terms {
+            if interrupted() {
+                return None;
+            }
             for (right_index, right) in &right_terms {
                 result.coefficients[left_index.checked_add(*right_index)?] += left * *right;
             }

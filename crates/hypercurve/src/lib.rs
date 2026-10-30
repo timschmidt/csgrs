@@ -236,7 +236,9 @@ pub use finite_projection::{
 };
 pub use fragment::{ContourFragment, ContourFragmentSet};
 pub use hypersolve::bivariate_topology::BivariateTopologyError;
-pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
+pub use hypersolve::work_budget::{
+    BudgetExceeded, BudgetOutcome, CancellationToken, WorkBudget, WorkKind, WorkUsage,
+};
 pub use intersect::{
     ArcArcIntersection, ArcArcIntersectionPoint, CircleCircleRelation, IntersectionKind,
     LineArcIntersection, LineArcIntersectionPoint, LineArcOrder, LineCircleRelation,
@@ -248,7 +250,7 @@ pub use offset::{OffsetCap, OffsetCornerStyle2};
 pub use point::Point2;
 pub use policy::{
     CurveCertainty, CurvePreviewOptions, Provisional, evaluate_under, evaluate_with_budget,
-    provisional,
+    evaluate_with_cancellable_budget, provisional,
 };
 pub(crate) use policy::{CurveContext, CurveOutcome};
 pub use polynomial_spline::PolynomialSplineCurve2;

@@ -2,6 +2,14 @@
 
 ## [0.4.0] - Unreleased
 
+- Add cooperative cancellation to work-budget scopes. `CancellationToken` can be
+  cancelled from any thread; `with_cancellable_budget` then fails the next
+  instrumented unit or exhaustion check with `WorkKind::Cancellation` and
+  publishes no value. Outer tokens stop nested scopes; inner tokens do not
+  poison their parents. `WorkBudget::UNLIMITED` bounds a scope by cancellation
+  alone. Cancellation is not a wall-clock deadline: uninstrumented arithmetic
+  between checks still runs to completion.
+
 - Reuse one prepared Sturm chain for complete root-isolation counts until the
   temporary polynomial changes by exact deflation, preserving remainder and
   refinement limits.

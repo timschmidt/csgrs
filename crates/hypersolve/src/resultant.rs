@@ -684,6 +684,10 @@ fn pseudo_quotient_multiplication_matrix(
             product[column + power] = coefficient.clone();
         }
         for power in (degree..product_len).rev() {
+            // Stop a cancelled or exhausted scope between elimination steps.
+            if crate::work_budget::exhaustion().is_some() {
+                return None;
+            }
             let eliminand = product[power].clone();
             let shift = power - degree;
             if !leading.is_one() {
@@ -734,6 +738,10 @@ fn pseudo_quotient_multiplication_matrix_real(
             product[column + power] = coefficient.clone();
         }
         for power in (degree..product_len).rev() {
+            // Stop a cancelled or exhausted scope between elimination steps.
+            if crate::work_budget::exhaustion().is_some() {
+                return None;
+            }
             let eliminand = product[power].clone();
             let shift = power - degree;
             if leading != &Real::one() {

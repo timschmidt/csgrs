@@ -5,6 +5,17 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Cooperative cancellation of budgeted work
+
+`WorkKind` has a new `Cancellation` variant; exhaustive matches on it must
+handle that case. It appears only in scopes entered with
+`work_budget::with_cancellable_budget` or Hypercurve's
+`evaluate_with_cancellable_budget`, after their `CancellationToken` is
+cancelled. Such a `BudgetExceeded` has zero `limit` and `used`. Code that only
+uses `with_budget` or `evaluate_with_budget` sees no new outcome. Inner
+operations report a cancelled request through their existing budget-exhausted
+blockers; the outer result's kind distinguishes it from a reached limit.
+
 ## Reusing selected points and equal field generators
 
 Polynomial branch evaluation may return an already selected point after proving

@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `evaluate_with_cancellable_budget` and re-export `CancellationToken`.
+  A cancelled evaluation reports `WorkKind::Cancellation`, publishes no
+  partial result, and leaves no cached blocker that prevents a retry.
+
 - Preserve typed exact failures from SVG region arrangement and region union
   through the public importer and its adapters.
 

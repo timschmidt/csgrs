@@ -2250,7 +2250,13 @@ pub fn dense_positive_square_root_sum_sign<C: SelectedAlgebraContext>(
             "dense-positive-root-sign-blocker",
             "magnitude-construction",
         );
-        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        return Ok(Classification::Uncertain(
+            if crate::work_budget::exhaustion().is_some() {
+                UncertaintyReason::BudgetExhausted
+            } else {
+                UncertaintyReason::Unsupported
+            },
+        ));
     };
     let magnitude_sign = dense_polynomial_tuple_sign(&magnitude, sources, policy)?;
     Ok(positive_root_sum_sign_from_components(

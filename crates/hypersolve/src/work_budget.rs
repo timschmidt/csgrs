@@ -84,9 +84,32 @@
 //! Scopes are thread-local and restore on return and unwinding. They do not
 //! follow a future or propagate to spawned threads; configure each synchronous
 //! worker explicitly.
+//!
+//! A scope can also carry a [`CancellationToken`]. Cancellation is cooperative:
+//! the computing thread observes it at its next admitted unit or exhaustion
+//! check, never inside one exact arithmetic step, so the delay before an
+//! instrumented operation stops is bounded by its longest uninstrumented
+//! stretch, not by a time limit. A cancelled scope then behaves as an exhausted
+//! one with [`WorkKind::Cancellation`]: it publishes no value and its callers
+//! unwind through their ordinary typed resource failures. Cancelling an
+//! enclosing scope's token stops every nested scope; cancelling a nested
+//! scope's token leaves its parent free to continue. Tokens are `Send` and
+//! `Sync`, so another thread may cancel, and a worker can join the same request
+//! by entering its own scope with a clone. A cancelled token stays cancelled;
+//! a retry uses a new token and repeats the work its earlier attempt had not
+//! retained as a proof.
+//!
+//! Some long loops charge no units but still observe [`exhaustion`] between
+//! steps, so cancelled or exhausted scopes leave them promptly: integer
+//! polynomial Bareiss determinants, pseudo-quotient multiplication matrices and
+//! dense tensor products. They report their existing "unavailable" outcome,
+//! never a zero or partial value. Other uninstrumented arithmetic, such as one
+//! large integer product or a scalar refinement, still runs to completion.
 
 use std::cell::{Cell, RefCell};
 use std::fmt;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Maximum admitted work of each kind in a synchronous operation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -103,6 +126,37 @@ impl WorkBudget {
         refinements: 0,
         promotions: 0,
     };
+
+    /// Admit any number of instrumented units, for scopes that are limited only
+    /// by a [`CancellationToken`].
+    pub const UNLIMITED: Self = Self {
+        refinements: usize::MAX,
+        promotions: usize::MAX,
+    };
+}
+
+/// A cooperative request to stop one or more budgeted operations.
+///
+/// Clones share the request. See the [module documentation](self) for when
+/// cancellation is observed and how it nests.
+#[derive(Clone, Debug, Default)]
+pub struct CancellationToken(Arc<AtomicBool>);
+
+impl CancellationToken {
+    /// A token that has not been cancelled.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Request that every scope carrying this token stop at its next check.
+    pub fn cancel(&self) {
+        self.0.store(true, Ordering::Release);
+    }
+
+    /// Whether [`cancel`](Self::cancel) has been called on this token or a clone.
+    pub fn is_cancelled(&self) -> bool {
+        self.0.load(Ordering::Acquire)
+    }
 }
 
 /// Actual work admitted by a budget, including nested operations.
@@ -121,9 +175,14 @@ pub enum WorkKind {
     RootRefinement,
     /// One algebraic projection/promotion attempt.
     AlgebraicPromotion,
+    /// Any further work after the scope's [`CancellationToken`] was cancelled.
+    Cancellation,
 }
 
 /// A denied work request, before any of its units were performed.
+///
+/// A [`WorkKind::Cancellation`] failure has zero `limit` and `used`; it
+/// reports only the size of the request that observed the cancellation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct BudgetExceeded {
     /// Work that the operation attempted to perform.
@@ -136,8 +195,26 @@ pub struct BudgetExceeded {
     pub requested: usize,
 }
 
+impl BudgetExceeded {
+    const fn cancelled(requested: usize) -> Self {
+        Self {
+            kind: WorkKind::Cancellation,
+            limit: 0,
+            used: 0,
+            requested,
+        }
+    }
+}
+
 impl fmt::Display for BudgetExceeded {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.kind == WorkKind::Cancellation {
+            return write!(
+                formatter,
+                "work cancelled; {} more units requested",
+                self.requested
+            );
+        }
         write!(
             formatter,
             "{:?} budget exhausted: {} of {} units used; {} more requested",
@@ -163,6 +240,7 @@ struct Frame {
     budget: WorkBudget,
     usage: WorkUsage,
     exhausted: Option<BudgetExceeded>,
+    cancellation: Option<CancellationToken>,
 }
 
 impl Frame {
@@ -170,6 +248,7 @@ impl Frame {
         match kind {
             WorkKind::RootRefinement => (self.budget.refinements, self.usage.refinements),
             WorkKind::AlgebraicPromotion => (self.budget.promotions, self.usage.promotions),
+            WorkKind::Cancellation => (0, 0),
         }
     }
 
@@ -177,8 +256,25 @@ impl Frame {
         match kind {
             WorkKind::RootRefinement => self.usage.refinements += amount,
             WorkKind::AlgebraicPromotion => self.usage.promotions += amount,
+            WorkKind::Cancellation => {}
         }
     }
+}
+
+// The outermost cancelled scope exhausts itself and every nested scope; its
+// parents are unaffected, as with a smaller inner budget.
+fn observe_cancellation(frames: &mut [Frame], requested: usize) -> Option<BudgetExceeded> {
+    let index = frames.iter().position(|frame| {
+        frame
+            .cancellation
+            .as_ref()
+            .is_some_and(CancellationToken::is_cancelled)
+    })?;
+    let error = BudgetExceeded::cancelled(requested);
+    for frame in &mut frames[index..] {
+        frame.exhausted.get_or_insert(error);
+    }
+    frames.last().and_then(|frame| frame.exhausted)
 }
 
 std::thread_local! {
@@ -202,7 +298,12 @@ pub fn exhaustion() -> Option<BudgetExceeded> {
     if !is_active() {
         return None;
     }
-    FRAMES.with_borrow(|frames| frames.last().and_then(|frame| frame.exhausted))
+    FRAMES.with_borrow_mut(|frames| {
+        frames
+            .last()
+            .and_then(|frame| frame.exhausted)
+            .or_else(|| observe_cancellation(frames, 0))
+    })
 }
 
 /// Admit work before performing it, charging every active enclosing budget.
@@ -219,6 +320,9 @@ pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
     }
     FRAMES.with_borrow_mut(|frames| {
         if let Some(error) = frames.last().and_then(|frame| frame.exhausted) {
+            return Err(error);
+        }
+        if let Some(error) = observe_cancellation(frames, amount) {
             return Err(error);
         }
         for index in 0..frames.len() {
@@ -250,6 +354,30 @@ pub fn consume(kind: WorkKind, amount: usize) -> Result<(), BudgetExceeded> {
 /// return type. Panic unwinding restores the enclosing scope without refunding
 /// work already admitted by that scope.
 pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> BudgetOutcome<T> {
+    enter(budget, None, operation)
+}
+
+/// Evaluate one synchronous operation with a work budget and a cancellation token.
+///
+/// This is [`with_budget`] with cooperative cancellation: once `cancellation`
+/// is cancelled, from any thread, the operation's next admitted unit or
+/// exhaustion check fails with [`WorkKind::Cancellation`] and no value is
+/// published. A value completed before any check observed the request is
+/// returned normally. Use [`WorkBudget::UNLIMITED`] to bound the operation by
+/// cancellation alone.
+pub fn with_cancellable_budget<T>(
+    budget: WorkBudget,
+    cancellation: &CancellationToken,
+    operation: impl FnOnce() -> T,
+) -> BudgetOutcome<T> {
+    enter(budget, Some(cancellation.clone()), operation)
+}
+
+fn enter<T>(
+    budget: WorkBudget,
+    cancellation: Option<CancellationToken>,
+    operation: impl FnOnce() -> T,
+) -> BudgetOutcome<T> {
     struct Scope(bool);
 
     impl Scope {
@@ -280,6 +408,7 @@ pub fn with_budget<T>(budget: WorkBudget, operation: impl FnOnce() -> T) -> Budg
             budget,
             usage: WorkUsage::default(),
             exhausted,
+            cancellation,
         });
         ACTIVE.with(|active| active.set(true));
     });

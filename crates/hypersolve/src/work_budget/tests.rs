@@ -1,5 +1,6 @@
 use super::{
-    BudgetExceeded, WorkBudget, WorkKind, WorkUsage, consume, exhaustion, is_active, with_budget,
+    BudgetExceeded, CancellationToken, WorkBudget, WorkKind, WorkUsage, consume, exhaustion,
+    is_active, with_budget, with_cancellable_budget,
 };
 
 #[test]
@@ -223,4 +224,171 @@ fn native_root_refinements_share_the_outer_operation_budget() {
             (Real::one() / Real::from(4)).unwrap()
         );
     }
+}
+
+#[test]
+fn cancelled_token_denies_work_and_publishes_no_value() {
+    let token = CancellationToken::new();
+    token.cancel();
+    let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+        assert_eq!(
+            consume(WorkKind::RootRefinement, 3),
+            Err(BudgetExceeded {
+                kind: WorkKind::Cancellation,
+                limit: 0,
+                used: 0,
+                requested: 3,
+            })
+        );
+        // Every later request, of either kind, observes the same failure.
+        assert_eq!(
+            consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind,
+            WorkKind::Cancellation
+        );
+        assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+        true
+    });
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage, WorkUsage::default());
+    assert!(!is_active());
+    assert_eq!(
+        outcome.result.unwrap_err().to_string(),
+        "work cancelled; 3 more units requested"
+    );
+}
+
+#[test]
+fn cancellation_during_an_operation_stops_its_next_check() {
+    let token = CancellationToken::new();
+    let outcome = with_cancellable_budget(
+        WorkBudget {
+            refinements: 10,
+            promotions: 10,
+        },
+        &token,
+        || {
+            consume(WorkKind::RootRefinement, 2).unwrap();
+            assert_eq!(exhaustion(), None);
+            token.cancel();
+            // A caller that only polls exhaustion still stops.
+            assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+            assert_eq!(
+                consume(WorkKind::AlgebraicPromotion, 1).unwrap_err().kind,
+                WorkKind::Cancellation
+            );
+        },
+    );
+    assert_eq!(outcome.result.unwrap_err().requested, 0);
+    assert_eq!(
+        outcome.usage,
+        WorkUsage {
+            refinements: 2,
+            promotions: 0
+        }
+    );
+}
+
+#[test]
+fn outer_cancellation_stops_nested_scopes_but_inner_cancellation_does_not_poison_the_parent() {
+    let outer = CancellationToken::new();
+    let outcome = with_cancellable_budget(WorkBudget::UNLIMITED, &outer, || {
+        let inner_token = CancellationToken::new();
+        let inner = with_cancellable_budget(WorkBudget::UNLIMITED, &inner_token, || {
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            inner_token.cancel();
+            consume(WorkKind::RootRefinement, 1)
+        });
+        assert_eq!(inner.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(inner.usage.refinements, 1);
+        // The parent keeps working and its usage includes the nested unit.
+        assert_eq!(exhaustion(), None);
+        consume(WorkKind::RootRefinement, 1).unwrap();
+        // An ordinary nested budget still sees the enclosing token.
+        let nested = with_budget(WorkBudget::UNLIMITED, || {
+            consume(WorkKind::RootRefinement, 1).unwrap();
+            outer.cancel();
+            consume(WorkKind::RootRefinement, 1)
+        });
+        assert_eq!(nested.result.unwrap_err().kind, WorkKind::Cancellation);
+        assert_eq!(exhaustion().unwrap().kind, WorkKind::Cancellation);
+    });
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage.refinements, 3);
+    assert!(!is_active());
+}
+
+#[test]
+fn cancellation_from_another_thread_reaches_a_running_operation() {
+    use std::sync::{Arc, Barrier};
+
+    let token = CancellationToken::new();
+    let started = Arc::new(Barrier::new(2));
+    let cancelled = Arc::new(Barrier::new(2));
+    let worker = {
+        let token = token.clone();
+        let (started, cancelled) = (Arc::clone(&started), Arc::clone(&cancelled));
+        std::thread::spawn(move || {
+            with_cancellable_budget(WorkBudget::UNLIMITED, &token, || {
+                consume(WorkKind::RootRefinement, 1).unwrap();
+                started.wait();
+                cancelled.wait();
+                let mut admitted = 1;
+                while consume(WorkKind::RootRefinement, 1).is_ok() {
+                    admitted += 1;
+                }
+                admitted
+            })
+        })
+    };
+    started.wait();
+    token.cancel();
+    cancelled.wait();
+    let outcome = worker.join().unwrap();
+    assert_eq!(outcome.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(outcome.usage.refinements, 1);
+    // The caller's thread never entered a scope.
+    assert!(!is_active());
+}
+
+#[test]
+fn cancelled_root_refinement_retries_with_a_new_token() {
+    use crate::{
+        IsolatedRootInterval, IsolatedRootRefinementStatus, PredicatePolicy, RootIsolationConfig,
+        refine_isolated_univariate_polynomial_interval,
+    };
+    use hyperreal::Real;
+
+    let polynomial = [Real::from(-2), Real::zero(), Real::one()];
+    let interval = IsolatedRootInterval {
+        lower: Real::one(),
+        upper: Real::from(2),
+        exact_root: None,
+        distinct_root_count: 1,
+    };
+    let refine = || {
+        refine_isolated_univariate_polynomial_interval(
+            &polynomial,
+            &interval,
+            RootIsolationConfig {
+                policy: PredicatePolicy::STRICT,
+                max_interval_width: None,
+                max_refinement_steps: 3,
+            },
+        )
+    };
+    let baseline = refine();
+    assert_eq!(baseline.status, IsolatedRootRefinementStatus::Refined);
+
+    let cancelled = CancellationToken::new();
+    cancelled.cancel();
+    let denied = with_cancellable_budget(WorkBudget::UNLIMITED, &cancelled, refine);
+    assert_eq!(denied.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(denied.usage, WorkUsage::default());
+
+    let fresh = CancellationToken::new();
+    let retry = with_cancellable_budget(WorkBudget::UNLIMITED, &fresh, refine);
+    assert_eq!(retry.usage.refinements, 3);
+    let report = retry.result.unwrap();
+    assert_eq!(report.status, IsolatedRootRefinementStatus::Refined);
+    assert_eq!(report.refined_interval, baseline.refined_interval);
 }

@@ -2,9 +2,9 @@ use std::cmp::Ordering;
 
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-    BezierParameterPolynomial, BudgetExceeded, Curve2, CurveCertainty, ExactCurveError, Point2,
-    PredicatePolicy, RationalBezier2, Real, UncertaintyReason, WorkBudget, WorkKind, WorkUsage,
-    evaluate_with_budget,
+    BezierParameterPolynomial, BudgetExceeded, CancellationToken, Curve2, CurveCertainty,
+    ExactCurveError, Point2, PredicatePolicy, RationalBezier2, Real, UncertaintyReason, WorkBudget,
+    WorkKind, WorkUsage, evaluate_with_budget, evaluate_with_cancellable_budget,
 };
 
 fn rational(numerator: i32, denominator: i32) -> Real {
@@ -184,4 +184,107 @@ fn polynomial_isolation_shares_a_total_subdivision_budget() {
         complete.result.unwrap().certified().unwrap().unwrap(),
         expected
     );
+}
+
+fn crossing_rational_cubics() -> (Curve2, Curve2) {
+    let curve = |points: [(i32, i32); 4]| {
+        Curve2::from(
+            RationalBezier2::try_new(
+                points
+                    .into_iter()
+                    .map(|(x, y)| Point2::from_values(x, y))
+                    .collect(),
+                [1, 2, 2, 1].into_iter().map(Real::from).collect(),
+            )
+            .unwrap(),
+        )
+    };
+    (
+        curve([(0, 0), (0, 1), (1, 0), (1, 1)]),
+        curve([(0, 1), (0, 0), (1, 1), (1, 0)]),
+    )
+}
+
+#[test]
+fn cancelled_intersections_publish_nothing_and_retry_with_a_new_token() {
+    let (first, second) = crossing_rational_cubics();
+    let cancelled = CancellationToken::new();
+    cancelled.cancel();
+    let denied = evaluate_with_cancellable_budget(
+        PredicatePolicy::STRICT,
+        WorkBudget::UNLIMITED,
+        &cancelled,
+        || {
+            // Inner consumers see an ordinary resource blocker, never contacts.
+            match first.intersect_curve(&second) {
+                Ok(partial) => {
+                    assert!(!partial.is_complete());
+                    assert!(partial.contacts().is_empty());
+                }
+                Err(ExactCurveError::Blocked(blocker)) => {
+                    assert_eq!(blocker.reason(), UncertaintyReason::BudgetExhausted);
+                }
+                Err(other) => panic!("unexpected failure {other:?}"),
+            }
+        },
+    );
+    assert_eq!(denied.result.unwrap_err().kind, WorkKind::Cancellation);
+    assert_eq!(denied.usage, WorkUsage::default());
+    // A cancelled attempt leaves no cached blocker on these curves.
+    let retry = evaluate_with_cancellable_budget(
+        PredicatePolicy::STRICT,
+        WorkBudget::UNLIMITED,
+        &CancellationToken::new(),
+        || first.intersect_curve(&second),
+    );
+    assert!(retry.usage.promotions > 0);
+    let retry = retry.result.unwrap().certified().unwrap().unwrap();
+    assert!(retry.is_complete());
+    // Equal x parameters reduce y=1-y to (2t-1)(7t^2-7t+1)=0.
+    assert_eq!(retry.contacts().len(), 3);
+    let (fresh_first, fresh_second) = crossing_rational_cubics();
+    let expected = fresh_first.intersect_curve(&fresh_second).unwrap();
+    assert_eq!(retry.contacts(), expected.contacts());
+    assert_eq!(retry.overlaps(), expected.overlaps());
+}
+
+/// Another thread cancels while fresh intersections run. Each attempt either
+/// observes the request and publishes nothing, or completed first with the
+/// independent expected contacts; it never publishes a partial result.
+#[test]
+fn concurrent_cancellation_never_publishes_a_partial_intersection() {
+    let (first, second) = crossing_rational_cubics();
+    let expected = first.intersect_curve(&second).unwrap();
+    let mut outcomes = [0_usize; 2];
+    for delay in [0_u64, 1, 5, 20] {
+        let token = CancellationToken::new();
+        let worker = {
+            let token = token.clone();
+            std::thread::spawn(move || {
+                let (first, second) = crossing_rational_cubics();
+                evaluate_with_cancellable_budget(
+                    PredicatePolicy::STRICT,
+                    WorkBudget::UNLIMITED,
+                    &token,
+                    || first.intersect_curve(&second),
+                )
+            })
+        };
+        std::thread::sleep(std::time::Duration::from_millis(delay));
+        token.cancel();
+        let outcome = worker.join().unwrap();
+        match outcome.result {
+            Err(exceeded) => {
+                assert_eq!(exceeded.kind, WorkKind::Cancellation);
+                outcomes[0] += 1;
+            }
+            Ok(provisional) => {
+                let actual = provisional.certified().unwrap().unwrap();
+                assert!(actual.is_complete());
+                assert_eq!(actual.contacts(), expected.contacts());
+                outcomes[1] += 1;
+            }
+        }
+    }
+    assert_eq!(outcomes.iter().sum::<usize>(), 4);
 }

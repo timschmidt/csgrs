@@ -1342,3 +1342,70 @@ fn corner_seed(first: u8) -> Seed {
         weight: 1,
     }
 }
+
+/// Cooperative cancellation reaches the stalled bevel stroke of a filleted
+/// hyperbola pair above. Its band regularization spends minutes in dense
+/// two-radical signs: tensor products, pseudo-quotient matrices and Bareiss
+/// determinants that admit no counted work units. Those loops observe the
+/// request between steps, so the operation reports `Cancellation` promptly
+/// instead of finishing its current sign.
+#[test]
+fn cancellation_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
+    use std::sync::mpsc;
+    use std::time::{Duration, Instant};
+
+    let token = hypercurve::CancellationToken::new();
+    let (sender, receiver) = mpsc::channel();
+    {
+        let token = token.clone();
+        std::thread::Builder::new()
+            .stack_size(256 << 20)
+            .spawn(move || {
+                let seed = Seed {
+                    x: 3,
+                    y: 8,
+                    edges: vec![
+                        Edge {
+                            family: 4,
+                            dx: 6,
+                            dy: -1,
+                            outward: -1,
+                        },
+                        Edge {
+                            family: 4,
+                            dx: 6,
+                            dy: 0,
+                            outward: -2,
+                        },
+                    ],
+                    weight: 2,
+                };
+                let outcome = hypercurve::evaluate_with_cancellable_budget(
+                    STRICT,
+                    hypercurve::WorkBudget::UNLIMITED,
+                    &token,
+                    || run_sequence(&seed, &[Step::Fillet(2, 2), Step::Stroke(3, 1)]).is_ok(),
+                );
+                let _ = sender.send((
+                    outcome.result.map(|value| value.into_unverified()),
+                    Instant::now(),
+                ));
+            })
+            .unwrap();
+    }
+    // Release replies take well under a second. Without checkpoints in those
+    // loops the same request took 21 s at this point, and never returned
+    // within twenty minutes when issued after one minute.
+    let bound = Duration::from_secs(if cfg!(debug_assertions) { 60 } else { 10 });
+    std::thread::sleep(Duration::from_secs(3));
+    let cancelled = Instant::now();
+    token.cancel();
+    let (result, finished) = receiver
+        .recv_timeout(bound)
+        .expect("the stroke did not observe cancellation within its bound");
+    eprintln!(
+        "cancellation latency {:?}",
+        finished.saturating_duration_since(cancelled)
+    );
+    assert_eq!(result.unwrap_err().kind, hypercurve::WorkKind::Cancellation);
+}

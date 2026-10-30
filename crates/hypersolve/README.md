@@ -28,7 +28,7 @@ This README describes crate version `0.3.1`.
 | `AffineResidual`, `QuadraticResidual`, `UnivariateQuadraticResidual` | Recognized exact subproblems |
 | `CandidateCertificationReport`, `CandidateDomainReport` | Candidate proof, violation, uncertainty, and domain evidence |
 | `AlgebraicRootRepresentation` | Isolated exact algebraic root carrier |
-| `work_budget::{WorkBudget, BudgetOutcome, BudgetExceeded}` | Shared synchronous refinement/promotion accounting with typed exhaustion |
+| `work_budget::{WorkBudget, BudgetOutcome, BudgetExceeded, CancellationToken}` | Shared synchronous refinement/promotion accounting with typed exhaustion and cooperative cancellation |
 | `SolverConfig`, `SolverState`, `SolveReport` | Explicit proposal-engine state and diagnostics |
 | `SketchSolveProblem`, `SketchConstraintBuildReport` | Sketch-specific equation construction and reports |
 
@@ -49,8 +49,11 @@ instrumentation and does not change the mathematical API.
 promotion attempts across nested synchronous operations. Exhaustion is a typed
 resource failure and never authorizes approximation. The counters do not yet
 cover every solver path or bound scalar arithmetic, coefficient sizes,
-allocation, or elapsed time. See the [module contract](src/work_budget.rs) for
-the current coverage, cache behavior, and thread-local scope rules.
+allocation, or elapsed time. `work_budget::with_cancellable_budget` adds a
+`CancellationToken` that another thread can cancel; the operation stops at its
+next instrumented unit with a typed `Cancellation` failure. See the
+[module contract](src/work_budget.rs) for the current coverage, cache behavior,
+and thread-local scope rules.
 
 ## Quick start
 

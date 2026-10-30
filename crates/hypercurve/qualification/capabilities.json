@@ -7,7 +7,7 @@
     "Native save/reload beyond the demonstrated source and selected generated carriers remains open. Version 5 preserves the named filled-region chains. The selected-circle corner fixtures now complete chamfer or constrained fillet, reconstruction, exact replay and round dilation/contraction; named translated-circle and nonincident-line contacts and rotated overlaps also complete. General independent angular/coefficient fields, other circle frames and arbitrary implicit regions remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
-    "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
+    "Total arithmetic, coefficient/system growth and retained-memory limits. Cooperative cancellation is observed only at instrumented work units, so it does not bound uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
   ],
@@ -16090,6 +16090,75 @@
       ],
       "oracle": "For -1<=x<=1, x^2+1>=1, x-3<=-2 and (x-3)^2>=4, independently proving no zero in the entire rectangle.",
       "timeout_seconds": 60
+    },
+    {
+      "id": "cancelled_intersection_retry",
+      "target": "work_budget",
+      "test": "cancelled_intersections_publish_nothing_and_retry_with_a_new_token",
+      "owner": "Hypersolve shared work scopes and Hypercurve explicit evaluation scopes",
+      "properties": [
+        "P15",
+        "P17",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two crossing weight-(1,2,2,1) rational cubic Bezier curves whose three contacts satisfy (2t-1)(7t^2-7t+1)=0, under a cancellable unlimited work scope.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Cancellation is cooperative: it is observed at instrumented work units, publishes no value and is reported as WorkKind::Cancellation. It is not an elapsed-time, total-arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exhausted",
+          "assertion": "A cancelled token denies the first instrumented unit; the inner intersection reports only a budget-exhausted blocker and the outer receipt is Cancellation with zero admitted usage."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "A retry on the same curves with a new token completes all three certified contacts, equal to a fresh independent intersection."
+        }
+      ],
+      "oracle": "The public outer receipt kind, admitted usage, and contacts equal to an independent fresh unbudgeted intersection of newly constructed curves.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "concurrent_cancelled_intersection",
+      "target": "work_budget",
+      "test": "concurrent_cancellation_never_publishes_a_partial_intersection",
+      "owner": "Hypersolve shared work scopes and Hypercurve explicit evaluation scopes",
+      "properties": [
+        "P15",
+        "P17",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two crossing weight-(1,2,2,1) rational cubic Bezier curves whose three contacts satisfy (2t-1)(7t^2-7t+1)=0, under a cancellable unlimited work scope.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Cancellation is cooperative: it is observed at instrumented work units, publishes no value and is reported as WorkKind::Cancellation. It is not an elapsed-time, total-arithmetic or memory bound.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Each attempt cancelled from another thread either reports Cancellation or has already completed with the independent expected contacts; no partial result is published."
+        }
+      ],
+      "oracle": "The public outer receipt kind, admitted usage, and contacts equal to an independent fresh unbudgeted intersection of newly constructed curves.",
+      "timeout_seconds": 300
     }
   ]
 }

@@ -36,7 +36,7 @@ This README describes crate version `0.3.1`.
 | `CurveString2`, `CurvePath2`, `Contour2` | Connected open strings, general paths, and closed line/arc contours |
 | `CurveRegion2` | Native mixed-family filled planar region |
 | `provisional`, `evaluate_under`, `Provisional<T>`, `CurvePreviewOptions`, `Classification<T>` | Explicitly qualified approximate evaluation, its certainty-carrying result, lossy preview adapter, and decided/uncertain result |
-| `evaluate_with_budget`, `WorkBudget`, `BudgetOutcome<T>`, `BudgetExceeded` | Shared operation work limits, admitted usage, and typed resource exhaustion |
+| `evaluate_with_budget`, `evaluate_with_cancellable_budget`, `WorkBudget`, `BudgetOutcome<T>`, `BudgetExceeded`, `CancellationToken` | Shared operation work limits, admitted usage, typed resource exhaustion, and cooperative cancellation |
 | `CurveError`, `ExactCurveError` | Construction and exact-topology failure information |
 
 `CurveRegion2` is the sole public filled-region carrier. Native line/arc
