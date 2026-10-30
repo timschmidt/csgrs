@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Preserve typed exact failures from SVG region arrangement and region union
+  through the public importer and its adapters.
+
 - Share polynomial-point map ancestry across retained prefixes, with iterative
   comparison and cleanup and unchanged native definitions.
 

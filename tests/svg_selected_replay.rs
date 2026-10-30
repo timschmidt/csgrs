@@ -90,3 +90,41 @@ fn invalid_native_selector_keeps_its_typed_cause_at_the_svg_adapter() {
         ValidationError::ExactCurve(ExactCurveError::Invalid { .. })
     ));
 }
+
+#[test]
+fn svg_arrangement_failure_keeps_its_exact_budget_cause_at_the_adapter() {
+    use hypersolve::work_budget::{WorkBudget, with_budget};
+    let document =
+        "<svg xmlns='http://www.w3.org/2000/svg'><path d='M0 0 C0 3 3 -3 3 0 Z'/></svg>";
+    let denied = with_budget(
+        WorkBudget {
+            refinements: 0,
+            promotions: 4096,
+        },
+        || {
+            let error = import_svg(document).unwrap_err();
+            let IoError::Construction {
+                format: "SVG",
+                source,
+            } = error
+            else {
+                panic!("typed SVG arrangement failure required: {error:?}");
+            };
+            assert!(
+                matches!(source, ValidationError::ExactCurve(ExactCurveError::Blocked(ref blocker)) if blocker.reason()==hypercurve::UncertaintyReason::BudgetExhausted)
+            );
+        },
+    );
+    let exhausted = denied.result.unwrap_err();
+    assert_eq!(exhausted.limit, 0);
+    assert_eq!(exhausted.used, 0);
+    let retry = with_budget(
+        WorkBudget {
+            refinements: 16,
+            promotions: 4096,
+        },
+        || import_svg(document),
+    );
+    let (region, wires, paths) = retry.result.unwrap().unwrap();
+    assert!(!region.is_empty() && wires.is_empty() && paths.is_empty());
+}

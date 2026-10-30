@@ -67,7 +67,7 @@ pub enum SvgError {
     Unsupported(String),
     /// Exact geometry construction, transformation, or Boolean failure.
     Geometry(String),
-    /// Exact native-definition replay failed, retaining its typed context and cause.
+    /// Exact arrangement, geometry operation or native replay failed, retaining its cause.
     Exact(ExactCurveError),
     /// An exact coordinate has an undecided certificate or exhausted its budget.
     Scalar(hyperreal::Problem),
@@ -84,7 +84,7 @@ impl fmt::Display for SvgError {
             Self::MalformedInput(detail) => write!(formatter, "malformed SVG input: {detail}"),
             Self::Unsupported(detail) => write!(formatter, "unsupported SVG input: {detail}"),
             Self::Geometry(detail) => write!(formatter, "SVG geometry conversion failed: {detail}"),
-            Self::Exact(error) => write!(formatter, "SVG exact replay failed: {error}"),
+            Self::Exact(error) => write!(formatter, "SVG exact geometry failed: {error}"),
             Self::Scalar(error) => write!(formatter, "SVG exact coordinate failed: {error}"),
             Self::SizeOverflow { limit } => {
                 write!(
@@ -264,7 +264,7 @@ impl SvgGeometry2 {
             self.region = self
                 .region
                 .boolean_region_raw(&other.region, BooleanOp::Union, &CurveContext::STRICT)
-                .map_err(svg_geometry_error)?;
+                .map_err(SvgError::Exact)?;
         }
         self.wires.append(&mut other.wires);
         self.paths.append(&mut other.paths);
@@ -1242,7 +1242,7 @@ fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
 fn region_from_paths(paths: &[CurvePath2], fill_rule: FillRule) -> SvgResult<CurveRegion2> {
     CurveRegion2::try_from_boundary_paths_with_policy(paths, fill_rule, &CurveContext::STRICT)
         .map(CurveOutcome::into_value)
-        .map_err(svg_geometry_error)
+        .map_err(SvgError::Exact)
 }
 
 fn geometry_from_paths(

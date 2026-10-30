@@ -14431,6 +14431,84 @@
       ],
       "oracle": "Independent algebraic relations, actual live allocator bytes/counts and native byte comparison; no arbitrary-workload memory bound.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "svg_arrangement_typed_budget_failure",
+      "target": "svg_arrangement_errors",
+      "test": "svg_region_arrangement_preserves_typed_exhaustion_and_retry",
+      "owner": "Hypercurve SVG region arrangement",
+      "properties": [
+        "P6",
+        "P12",
+        "P14",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P35"
+      ],
+      "domain": "Closed cubic cap imported with root-refinement limits zero, one and sixteen.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CubicBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Typed exact arrangement errors survive SVG import; actual work exhaustion differs from successful geometry.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exhausted",
+          "assertion": "Reached zero/one refinement limits retain an Exact BudgetExhausted blocker."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A larger retry succeeds; independent interior membership survives native replay."
+        }
+      ],
+      "oracle": "Reached budget receipt and exact cubic interior coordinates.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "svg_identity_similarity_geometric_closure",
+      "target": "svg_arrangement_errors",
+      "test": "identity_similarity_endpoint_retains_geometric_svg_closure",
+      "owner": "Hypercurve geometric endpoint closure and native SVG",
+      "properties": [
+        "P12",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P35"
+      ],
+      "domain": "Filled triangle whose final endpoint retains an identity Similarity wrapper over its start.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Structural endpoint inequality does not defeat certified geometric closure. Already satisfied on the reviewed revision.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native export/import preserves independent interior membership and exact empty XOR."
+        }
+      ],
+      "oracle": "Structural inequality, exact coincidence and symmetric-difference emptiness.",
+      "timeout_seconds": 180
     }
   ]
 }

@@ -1870,7 +1870,7 @@ removed earlier temporary runs; recovery provenance and the fresh runs are
 archived, and lost attempts are not credited. The interrupted nested-workspace
 attempt is retained, followed by a complete rerun outside the outer workspace.
 
-Zero-root native graphs represent canonical empty regions, but whole empty-document export still has its separate finite-display-bounds contract. Byte and depth limits are not total-work or memory bounds. Large erosion remains the following contact increment; general algebraic interchange and package delivery are not claimed. Shared refinement counters, external timeouts and process peak
+At this historical revision, zero-root native graphs represented canonical empty regions while whole empty-document export still refused finite bounds. The Empty native replay increment below resolved that limitation. Byte and depth limits are not total-work or memory bounds. Large erosion remains the following contact increment; general algebraic interchange and package delivery are not claimed. Shared refinement counters, external timeouts and process peak
 RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
@@ -1939,7 +1939,7 @@ Strict, approximate-requested and strict erosion/replay/XOR chains were certifie
 The archived probe includes the initial insufficient-budget attempt; exhaustion
 is distinct from completed geometry.
 
-Six fresh probes on this source still fail whole empty-document export or inherited empty-topology replay/projection. Their source-attributed programs are archived as a separate follow-on frontier. This is a bounded completion envelope for the named shared-field circles and corner chains. General independent coefficient fields, nonrepresented circle frames, arbitrary algebraic curve operations, complete cancellation and total arithmetic/memory bounds remain open. Shared refinement counters, external timeouts and process peak
+Six fresh probes on this source still fail whole empty-document export or inherited empty-topology replay/projection. These historical failures were resolved by the following Empty native replay increment. Their source-attributed programs are archived as a separate follow-on frontier. This is a bounded completion envelope for the named shared-field circles and corner chains. General independent coefficient fields, nonrepresented circle frames, arbitrary algebraic curve operations, complete cancellation and total arithmetic/memory bounds remain open. Shared refinement counters, external timeouts and process peak
 RSS do not establish total-work, expression-growth, retained-memory or
 cancellation bounds. No comparative performance or universal closure claim is
 made. Full pre-push validation and delivery remain pending for this increment.
@@ -3190,3 +3190,22 @@ checks then passed. All 155 broader affected checks also pass, including the
 polynomial regions and SVG consumers. Strict all-target/all-feature lints pass
 for Hypersolve, Hypercurve and HyperBRep on MSRV 1.95.0. Tests used release,
 all features and Rust 1.98.1. Full pre-push qualification remains pending.
+
+
+## Review: typed SVG arrangement failures (P6/P12/P14/P18-P20/P26/P35)
+
+A cubic-cap import under actually reached zero/one root-refinement limits
+returned a Geometry string instead of its exact BudgetExhausted blocker.
+Boundary arrangement and union of imported regions now preserve SvgError::Exact;
+the existing CSGRS adapter retains that cause as IoError::Construction.
+Larger-budget import succeeds and its independent interior point remains
+Inside after native export and reimport. Empty-document export documentation
+now describes the existing zero-root graph and unit display viewport; the
+historical ledger identifies the increment that resolved its earlier refusal.
+
+The identity-Similarity endpoint regression already passed before production
+edits. It retains structurally different, exactly coincident closing endpoints,
+exports/reimports a filled triangle and proves the symmetric difference empty.
+No structural-closure implementation was changed. Fourteen focused SVG and
+adapter cases pass, alongside the broader 155-check solver/SVG run described
+above. Final combined downstream and pre-push qualification remains pending.

@@ -573,8 +573,8 @@ exact signatures.
   The named fresh-process annulus retains its joint selected center through
   further round offsets and exact set identities. Metadata is independent of
   display tolerance. Reached byte/depth limits permit larger retries. A zero-root
-  compound imports as canonical empty; exporting an entirely empty document still
-  reports the existing finite-bounds error. Other generated supports and arbitrary
+  compound imports as canonical empty. Entirely empty documents export with that
+  exact graph and a unit display viewport that adds no geometry. Other generated supports and arbitrary
   implicit-region closure remain open. Sharing covers the compound graph, not
   unrelated SVG elements or scalar expression DAGs. Byte and segment limits do
   not bound all scalar decoding, arithmetic, expression growth, memory or
