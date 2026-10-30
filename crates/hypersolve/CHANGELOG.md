@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Reuse one prepared Sturm chain for complete root-isolation counts until the
+  temporary polynomial changes by exact deflation, preserving remainder and
+  refinement limits.
+
 - Keep selected polynomial field/value diagnostics shallow so shared coefficient
   towers do not expand into diagnostic trees.
 

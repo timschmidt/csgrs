@@ -3165,3 +3165,28 @@ all-feature Hypercurve/Hypersolve Clippy passes on MSRV 1.95.0. The first
 Clippy attempt used 1.98.1, whose component is unavailable; that tool failure
 remains recorded. Downstream integration, archive graph depth and full
 pre-push qualification remain separate gates.
+
+
+## Review: prepared ordered-field Sturm counts (P2/P4-P6/P8/P10/P35/P36)
+
+Complete isolation rebuilt its signed remainder sequence 9, 19 and 19 times
+for the retained degree-two, degree-three and repeated degree-six witnesses.
+One operation-owned chain per temporary polynomial now requires 1, 2 and 2
+preparations. Exact midpoint deflation discards that chain and prepares the
+quotient anew. The requested subdivision counts remain 8, 17 and 17.
+Independent root expectations and original-equation endpoint exclusions pass.
+
+One shared signed-remainder recurrence serves retained chains and streaming
+one-shot sign/count queries. The isolator retains the sequence's coefficient
+vectors; this trades temporary storage for repeated arithmetic and does not
+claim a total work or memory bound. The original equation, field authority,
+positive scaling and per-chain remainder limit remain authoritative. Reached
+refinement budgets publish no partial roots, and a larger retry succeeds.
+
+The initial two-target reproduction captured both the preparation excess and
+the separate SVG typed-error failure. Sixteen focused solver/SVG/adapter
+checks then passed. All 155 broader affected checks also pass, including the
+36 signed-root/ordered-field unit cases, selected-field discovery/replay,
+polynomial regions and SVG consumers. Strict all-target/all-feature lints pass
+for Hypersolve, Hypercurve and HyperBRep on MSRV 1.95.0. Tests used release,
+all features and Rust 1.98.1. Full pre-push qualification remains pending.

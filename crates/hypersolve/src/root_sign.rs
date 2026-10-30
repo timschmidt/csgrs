@@ -4,6 +4,9 @@
 //! at P's distinct roots. A certified singleton therefore gives one sign.
 //! See Li et al., <https://doi.org/10.1007/s10817-017-9424-6>, Theorem 1.
 
+mod prepared;
+pub(crate) use prepared::PreparedSturmChain;
+
 use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
@@ -184,30 +187,48 @@ pub fn ordered_field_count_roots<C: Clone, F: OrderedFieldPolynomialContext<C>>(
 // Shared signed remainder chain for root counting and selected-root signs.
 // Strictly positive pseudo-remainder scales preserve both Sturm variations.
 fn field_remainder_variations<C: Clone, F: OrderedFieldPolynomialContext<C>>(
-    mut first: Vec<C>,
-    mut second: Vec<C>,
+    first: Vec<C>,
+    second: Vec<C>,
     bounds: [&Real; 2],
     mut previous: [Ordering; 2],
-    mut budget: RemainderBudget,
+    budget: RemainderBudget,
     field: &mut F,
 ) -> Result<Option<[usize; 2]>, F::Error> {
     let mut variations = [0_usize; 2];
+    Ok(
+        visit_signed_remainders(first, second, budget, field, |polynomial, field| {
+            for (endpoint, point) in bounds.into_iter().enumerate() {
+                let current = field_polynomial_sign(polynomial, point, field)?;
+                if current != Ordering::Equal {
+                    variations[endpoint] += usize::from(previous[endpoint] != current);
+                    previous[endpoint] = current;
+                }
+            }
+            Ok(())
+        })?
+        .map(|()| variations),
+    )
+}
+
+// One recurrence serves both streaming queries and retained isolation chains.
+// The caller has normalized first; every subsequent polynomial is visited once.
+fn visit_signed_remainders<C: Clone, F: OrderedFieldPolynomialContext<C>>(
+    mut first: Vec<C>,
+    mut second: Vec<C>,
+    mut budget: RemainderBudget,
+    field: &mut F,
+    mut visit: impl FnMut(&[C], &mut F) -> Result<(), F::Error>,
+) -> Result<Option<()>, F::Error> {
     loop {
         field.normalize_positive_scale(&mut second);
         trim_polynomial(&mut second, field)?;
         if second.is_empty() {
-            return Ok(Some(variations));
+            return Ok(Some(()));
         }
-        for (endpoint, point) in bounds.into_iter().enumerate() {
-            let current = field_polynomial_sign(&second, point, field)?;
-            if current != Ordering::Equal {
-                variations[endpoint] += usize::from(previous[endpoint] != current);
-                previous[endpoint] = current;
-            }
-        }
+        visit(&second, field)?;
         // A constant, including the retained zero coefficient, ends the chain.
         if second.len() == 1 {
-            return Ok(Some(variations));
+            return Ok(Some(()));
         }
         if !budget.spend(&first, &second) {
             return Ok(None);

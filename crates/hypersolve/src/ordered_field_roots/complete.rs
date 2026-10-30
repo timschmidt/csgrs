@@ -1,7 +1,7 @@
 //! Distinct-root isolation using the shared ordered-field Sturm authority.
 
 use super::*;
-use crate::root_sign::{field_polynomial_sign, ordered_field_count_roots};
+use crate::root_sign::{PreparedSturmChain, field_polynomial_sign};
 
 struct Boundary {
     value: Real,
@@ -171,6 +171,9 @@ where
     }
     let mut steps = 0_usize;
     'restart: loop {
+        let Some(chain) = PreparedSturmChain::new(&polynomial, field)? else {
+            return Ok(finish(Status::CompleteFallbackRequired, Vec::new(), steps));
+        };
         // Discovering a represented root restarts with its exact quotient.
         // Boundaries remain ordered by certified dyadic subdivision, so no
         // approximate scalar comparison is needed to order the result.
@@ -181,9 +184,7 @@ where
             if lower.exact_root {
                 intervals.push(exact_interval(&lower.value));
             }
-            let Some(count) =
-                ordered_field_count_roots(&polynomial, &lower.value, &upper.value, field)?
-            else {
+            let Some(count) = chain.count(&lower.value, &upper.value, field)? else {
                 return Ok(finish(Status::CompleteFallbackRequired, Vec::new(), steps));
             };
             let mut stack = vec![Node {
@@ -235,9 +236,7 @@ where
                     );
                     continue 'restart;
                 }
-                let Some(left_count) =
-                    ordered_field_count_roots(&polynomial, &node.lower, &middle, field)?
-                else {
+                let Some(left_count) = chain.count(&node.lower, &middle, field)? else {
                     return Ok(finish(Status::CompleteFallbackRequired, Vec::new(), steps));
                 };
                 let Some(right_count) = node.count.checked_sub(left_count) else {
