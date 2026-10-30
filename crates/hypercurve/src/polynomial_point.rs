@@ -1,6 +1,6 @@
 //! Correlated plane points retain their selected fibers or joint query sources.
 
-use std::cmp::Ordering;
+use std::{cmp::Ordering, sync::Arc};
 
 use hypersolve::{BivariatePolynomial, IsolatedRootInterval};
 
@@ -16,7 +16,55 @@ use crate::{
 #[derive(Clone, Debug, PartialEq)]
 pub(crate) struct PolynomialPoint2 {
     authority: PolynomialPointAuthority2,
-    maps: Vec<std::sync::Arc<crate::RationalMap2>>,
+    maps: Option<Arc<PointMap>>,
+}
+
+/// One immutable map application shares its complete preceding ancestry.
+struct PointMap {
+    parent: Option<Arc<Self>>,
+    map: crate::RationalMap2,
+}
+
+impl std::fmt::Debug for PointMap {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PointMap")
+            .field("map", &self.map)
+            .field("has_parent", &self.parent.is_some())
+            .finish_non_exhaustive()
+    }
+}
+
+impl PartialEq for PointMap {
+    fn eq(&self, other: &Self) -> bool {
+        let (mut first, mut second) = (self, other);
+        loop {
+            if std::ptr::eq(first, second) {
+                return true;
+            }
+            if first.map != second.map {
+                return false;
+            }
+            match (first.parent.as_deref(), second.parent.as_deref()) {
+                (Some(a), Some(b)) => (first, second) = (a, b),
+                (None, None) => return true,
+                _ => return false,
+            }
+        }
+    }
+}
+
+impl Drop for PointMap {
+    fn drop(&mut self) {
+        // Releasing the last retained prefix must not recurse through every
+        // ancestor. A still-shared ancestor remains owned by its other users.
+        let mut parent = self.parent.take();
+        while let Some(ancestor) = parent.take() {
+            let Some(mut node) = Arc::into_inner(ancestor) else {
+                break;
+            };
+            parent = node.parent.take();
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -39,7 +87,7 @@ impl PolynomialPoint2 {
     }
 
     pub(crate) fn has_rational_maps(&self) -> bool {
-        !self.maps.is_empty()
+        self.maps.is_some()
     }
 
     /// Prefix views may have different wrapper allocations while retaining the
@@ -47,7 +95,7 @@ impl PolynomialPoint2 {
     /// keeps either key alive for the duration of one native export.
     #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> (u8, *const ()) {
-        if let Some(map) = self.maps.last() {
+        if let Some(map) = self.maps.as_ref() {
             (4, std::sync::Arc::as_ptr(map).cast())
         } else {
             match &self.authority {
@@ -74,7 +122,7 @@ impl PolynomialPoint2 {
                 )
             });
         };
-        if self.maps.is_empty() {
+        if self.maps.is_none() {
             return fiber.predicate_sign(polynomial, policy);
         }
         let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
@@ -110,7 +158,7 @@ impl PolynomialPoint2 {
         let PolynomialPointAuthority2::Fiber { fiber, .. } = &self.authority else {
             return self.joint_parameter(numerator, denominator, policy);
         };
-        if self.maps.is_empty() {
+        if self.maps.is_none() {
             return Ok(fiber
                 .rational_image_in_retained_field(numerator, denominator, policy)?
                 .map(CurveParameter2::from_selected_fiber));
@@ -162,19 +210,19 @@ impl PolynomialPoint2 {
                         base: base.clone(),
                         fiber,
                     },
-                    maps: Vec::new(),
+                    maps: None,
                 })))
             })
             .collect())
     }
 
     pub(crate) fn definition(&self) -> crate::CurvePointDefinition2 {
-        if !self.maps.is_empty() {
+        if let Some(map) = &self.maps {
             let mut source = self.clone();
-            let map = source.maps.pop().expect("nonempty map chain");
+            source.maps = map.parent.clone();
             return crate::CurvePointDefinition2::RationalImage {
                 source: CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(source))),
-                map: (*map).clone(),
+                map: map.map.clone(),
             };
         }
         match &self.authority {
@@ -191,8 +239,16 @@ impl PolynomialPoint2 {
 
     pub(crate) fn mapped(&self, map: &crate::RationalMap2) -> CurvePoint2 {
         let mut point = self.clone();
-        point.maps.push(std::sync::Arc::new(map.clone()));
+        point.maps = Some(Arc::new(PointMap {
+            parent: self.maps.clone(),
+            map: map.clone(),
+        }));
         CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(point)))
+    }
+
+    fn map_ancestry(&self) -> impl Iterator<Item = &crate::RationalMap2> {
+        std::iter::successors(self.maps.as_deref(), |node| node.parent.as_deref())
+            .map(|node| &node.map)
     }
 
     fn pullback(
@@ -201,7 +257,7 @@ impl PolynomialPoint2 {
         denominator: &BivariatePolynomial,
     ) -> Option<(BivariatePolynomial, BivariatePolynomial)> {
         let mut pair = (numerator.clone(), denominator.clone());
-        for map in self.maps.iter().rev() {
+        for map in self.map_ancestry() {
             pair = map.pullback(&pair.0, &pair.1)?;
         }
         Some(pair)
@@ -214,7 +270,7 @@ impl PolynomialPoint2 {
     ) -> Option<crate::bezier_offset::PointFormSource2> {
         let (numerator, denominator) = self.pullback(numerator, denominator)?;
         let mut source = self.clone();
-        source.maps.clear();
+        source.maps = None;
         Some(crate::bezier_offset::PointFormSource2::new(
             CurvePoint2(CurvePointData2::Polynomial(std::sync::Arc::new(source))),
             numerator,
@@ -227,7 +283,7 @@ impl PolynomialPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
-        if self.maps.is_empty() && matches!(self.authority, PolynomialPointAuthority2::Fiber { .. })
+        if self.maps.is_none() && matches!(self.authority, PolynomialPointAuthority2::Fiber { .. })
         {
             return Ok(Classification::Decided(self.source_coordinate(axis)));
         }
@@ -298,8 +354,7 @@ impl PolynomialPoint2 {
         [a, b, c]: &[Real; 3],
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameter2>> {
-        if !self.maps.is_empty() || matches!(self.authority, PolynomialPointAuthority2::Queries(_))
-        {
+        if self.maps.is_some() || matches!(self.authority, PolynomialPointAuthority2::Queries(_)) {
             return self.rational_parameter(
                 &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
                 &BivariatePolynomial::new(vec![vec![Real::one()]]),
@@ -362,7 +417,7 @@ impl PolynomialPoint2 {
             Point2::new(lower.clone(), bottom.clone()),
             Point2::new(upper.clone(), top.clone()),
         );
-        for map in &self.maps {
+        for map in self.map_ancestry().collect::<Vec<_>>().into_iter().rev() {
             let Ok(image) = map.bounds(&bounds) else {
                 return Classification::Uncertain(UncertaintyReason::Predicate);
             };

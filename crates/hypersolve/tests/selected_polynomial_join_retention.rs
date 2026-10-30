@@ -589,3 +589,65 @@ fn replay_preserves_valid_negative_native_and_polynomial_denominators() {
     let again = value(normalized.replay(normalized.nodes.len(), &context).unwrap());
     cube_is(&again[2], -2);
 }
+
+struct BoundedDebug {
+    bytes: usize,
+    limit: usize,
+}
+impl std::fmt::Write for BoundedDebug {
+    fn write_str(&mut self, text: &str) -> std::fmt::Result {
+        self.bytes += text.len();
+        if self.bytes > self.limit {
+            Err(std::fmt::Error)
+        } else {
+            Ok(())
+        }
+    }
+}
+fn diagnostic_size(value: &impl std::fmt::Debug) -> (usize, bool) {
+    let mut writer = BoundedDebug {
+        bytes: 0,
+        limit: 2048,
+    };
+    let completed = std::fmt::write(&mut writer, format_args!("{value:?}")).is_ok();
+    (writer.bytes, completed)
+}
+#[test]
+fn shared_selected_field_and_value_diagnostics_are_shallow() {
+    let context = TestContext::strict();
+    let mut field = root(2);
+    let mut samples = Vec::new();
+    for depth in 0..=3 {
+        let generator = field.generator().unwrap();
+        samples.push((depth, diagnostic_size(&field), diagnostic_size(&generator)));
+        if depth != 3 {
+            let coefficients = vec![
+                generator.scale(&real(-1)).unwrap(),
+                field.constant(real(0)).unwrap(),
+                field.constant(real(1)).unwrap(),
+            ];
+            field = value(
+                field
+                    .select(coefficients, real(1), real(2), &context)
+                    .unwrap(),
+            );
+            let next = field.generator().unwrap();
+            assert_eq!(
+                next.multiply(&next)
+                    .unwrap()
+                    .subtract(&field.lift(&generator).unwrap())
+                    .unwrap()
+                    .sign(&context)
+                    .unwrap(),
+                Classification::Decided(hyperreal::RealSign::Zero)
+            );
+        }
+    }
+    eprintln!(
+        "selected diagnostics (depth, field(bytes,complete), value(bytes,complete)): {samples:?}"
+    );
+    assert!(
+        samples.iter().all(|(_, f, v)| f.1 && v.1),
+        "shared tower diagnostics must stay bounded: {samples:?}"
+    );
+}

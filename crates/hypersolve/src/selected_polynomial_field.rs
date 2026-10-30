@@ -85,8 +85,33 @@ type ArithmeticResult<T> = Result<T, SelectedPolynomialArithmeticError>;
 type ExactResult<T, E> = Result<Classification<T>, SelectedPolynomialError<E>>;
 
 /// An admitted coefficient field or one selected polynomial extension.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SelectedPolynomialField(Arc<FieldData>);
+
+impl std::fmt::Debug for SelectedPolynomialField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("SelectedPolynomialField");
+        match self.0.as_ref() {
+            FieldData::Recursive(_) => {
+                debug.field("kind", &"recursive");
+            }
+            FieldData::Extension {
+                defining,
+                interval,
+                origin,
+                ..
+            } => {
+                debug
+                    .field("kind", &"extension")
+                    .field("degree", &defining.len().saturating_sub(1))
+                    .field("exact_root", &interval.exact_root.is_some())
+                    .field("has_origin", &origin.is_some());
+            }
+        }
+        // Parent selections and coefficient values form a shared graph.
+        debug.finish_non_exhaustive()
+    }
+}
 
 #[derive(Debug)]
 enum FieldData {
@@ -112,8 +137,30 @@ impl std::fmt::Debug for GeneratorOrigin {
 }
 
 /// A finite rational value retaining its selected field and denominator proof.
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SelectedPolynomialValue(Arc<ValueData>);
+
+impl std::fmt::Debug for SelectedPolynomialValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut debug = f.debug_struct("SelectedPolynomialValue");
+        debug.field("field", &self.0.field);
+        match &self.0.coordinates {
+            Coordinates::Recursive(_) => {
+                debug.field("kind", &"recursive");
+            }
+            Coordinates::Extension {
+                numerator,
+                denominator,
+            } => {
+                debug
+                    .field("numerator_terms", &numerator.len())
+                    .field("denominator_terms", &denominator.len());
+            }
+        }
+        // Never expand repeated parent values into a diagnostic tree.
+        debug.finish_non_exhaustive()
+    }
+}
 
 #[derive(Debug)]
 struct ValueData {

@@ -3133,3 +3133,35 @@ larger-retry controls remain. One incomplete installer run was canceled and
 one missing-wrapper compile failure was corrected before the passing run;
 those records remain retained. Downstream and full pre-push checks are
 separate combined-review gates.
+
+
+## Review: retained map ancestry and diagnostics (P2/P5/P18-P20/P26/P36)
+
+Retaining every prefix of 128 and 512 rational translations of a selected
+cube-root fiber reproduced 198,720 and 2,367,552 live heap bytes, respectively.
+Immutable shared map ancestry uses 67,600 and 270,352 bytes on the same
+workload. Live allocation counts changed from 1,281/5,121 to 1,153/4,609.
+The maintained allocator witness also checks x=n+2 and y³=2 independently,
+and releases the retained prefixes on a 128 KiB thread stack. An iterative
+structural comparison preserves equality behavior; pointer equality supplies
+only a positive identity shortcut. Bounds may still use a temporary linear
+list of borrowed map references.
+
+Exact native exports before and after this representation change are identical
+for 4, 8 and 16 retained spans (4,828, 8,253 and 15,110 bytes). Re-import and
+re-export preserve those bytes; separate existing replay tests retain semantic
+checks. Heap accounting and wire size are distinct measurements. Neither
+establishes a bound on arbitrary algebraic arithmetic or construction depth.
+
+A bounded diagnostic writer reproduced field/value Debug output exceeding
+2,048 bytes at each tested depth. Shallow diagnostics now use 98/179 bytes
+at depths zero through three, while independent square relations validate
+each dependent selection. Diagnostics retain kind, degree and coordinate
+shape without recursively formatting parent fields or coefficients.
+
+All 106 affected map, order, incidence, query, SVG replay and selected-field
+checks pass with release/all features on Rust 1.98.1. Strict all-target,
+all-feature Hypercurve/Hypersolve Clippy passes on MSRV 1.95.0. The first
+Clippy attempt used 1.98.1, whose component is unavailable; that tool failure
+remains recorded. Downstream integration, archive graph depth and full
+pre-push qualification remain separate gates.

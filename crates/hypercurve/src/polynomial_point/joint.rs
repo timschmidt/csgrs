@@ -39,7 +39,7 @@ impl PolynomialPoint2 {
                 definition,
                 values,
             })),
-            maps: Vec::new(),
+            maps: None,
         })))
     }
 

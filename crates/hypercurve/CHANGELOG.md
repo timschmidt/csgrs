@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Share polynomial-point map ancestry across retained prefixes, with iterative
+  comparison and cleanup and unchanged native definitions.
+
 - Reuse successful rational-image signs within one query, retaining original
   pole and policy checks without repeated numerator/denominator traversal.
 

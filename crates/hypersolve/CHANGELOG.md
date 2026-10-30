@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Keep selected polynomial field/value diagnostics shallow so shared coefficient
+  towers do not expand into diagnostic trees.
+
 - Evaluate polynomial coefficients from admitted selected fields at represented
   scalars without projecting their dependencies. Exact arithmetic reuses stored
   zero and unit identities after field alignment; division still validates its

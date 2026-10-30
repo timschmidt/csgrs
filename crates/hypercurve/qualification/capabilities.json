@@ -14389,6 +14389,48 @@
       ],
       "oracle": "Independent original query plus dispatch counts, rather than refinement-budget usage.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "retained_polynomial_map_prefix_sharing",
+      "target": "polynomial_map_sharing",
+      "test": "retained_polynomial_map_prefix_allocations_grow_linearly",
+      "owner": "Hypercurve polynomial point ancestry",
+      "properties": [
+        "P2",
+        "P5",
+        "P18",
+        "P19",
+        "P20",
+        "P26",
+        "P36"
+      ],
+      "domain": "All 128/512 retained translation prefixes of x=2,y^3=2, with 4/8/16-span native SVG replay.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Immutable map applications share ancestry; source authority and map order remain exact. Cleanup is iterative over uniquely owned ancestry.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Independent x=n+2 and y^3=2 relations hold, with measured live heap bytes and allocations bounded linearly on the named sizes."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Named native exports replay deterministically; retained prefix cleanup completes on a 128 KiB stack."
+        }
+      ],
+      "oracle": "Independent algebraic relations, actual live allocator bytes/counts and native byte comparison; no arbitrary-workload memory bound.",
+      "timeout_seconds": 180
     }
   ]
 }
