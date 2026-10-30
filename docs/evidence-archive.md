@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The selected-query publication archive ends at `9d6ba586579aeacb8b60c39f05f7fab71e27f2ef` with
+389 records. Its new record `docs/evidence/2026-10-29-hypercurve-closure-selected-query-publication-validation` contains 25,449
+files and 51,885,989 bytes, SHA-256 `16bb2f370d87339a407032aabf6cf47d15e64195bc228f497e1839693a08dc37`. It records fresh success for
+all 328 pre-push command groups on `146cc0804f478833decc8cda2b9bb66c4529e971`: 131 locally executable workflow
+groups, 196 strict Clippy groups and the CI security audit. All 13 ASan campaigns
+include mutation evidence. Stable 1.99.1, MSRV 1.95.0, nightly-2026-10-29, both
+release/package checks and the hosted-action review are retained. All archive
+digests verify and four historical exclusion receipts remain. Only three receipt
+files differ from the qualified code and are checked separately. This supersedes
+pending pre-push status through selected-coefficient roots and their integrated
+query dependencies. Later selected-circle and polynomial-chamfer experiments
+are excluded. Exact geometric operation closure and hosted publication or
+deployment are not established here.
+
 The local hypercurve-selected-coefficient-roots-evidence-2026-10-29 branch ends at
 f25a26281d409f115e4a2f8a8a95ab14d4fa3c8c, adding docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots (848 files,
 28,845,538 bytes), SHA-256 b1bd56cb33bf1770f7d27863ebf24ab995eb3fe5ea6fb2d3fdd6053e3641678b. It extends the finalized integrated

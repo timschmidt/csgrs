@@ -2674,6 +2674,33 @@ singular cases and total work, coefficient, expression, memory and cancellation
 contracts remain open. Full repository pre-push qualification of this combined
 source is still required before publication.
 
+**Selected-query publication pre-push qualification (2026-10-29).**
+The frozen source `146cc0804f478833decc8cda2b9bb66c4529e971` includes selected polynomial query points and
+parameters, derivatives, rational denominator guards, join correspondence,
+query fibers, selected-coefficient roots and exact replay, together with its
+earlier qualified Hypercurve increments. All 328 required command groups pass in fresh executions:
+131 locally executable workflow groups, 196 strict Clippy groups and the CI
+security audit. The complete inventory includes feature and target combinations,
+tests, documentation, benchmarks, fuzz checks, release/package checks and
+WASM/demo builds. All 13 address-sanitized fuzz campaigns pass with mutation
+evidence. Commands record stable 1.99.1, MSRV 1.95.0 and nightly-2026-10-29.
+
+The source attribution, complete commands/logs and hosted-action review are in
+`docs/evidence/2026-10-29-hypercurve-closure-selected-query-publication-validation`, SHA-256 `16bb2f370d87339a407032aabf6cf47d15e64195bc228f497e1839693a08dc37`. No historical outcomes count toward this run.
+All 389 archived records verify; four historical third-party
+archive exclusion receipts remain. This receipt changes three documentation
+files; every other tracked byte matches the qualified revision. Formatting,
+typos, repository budget, diff and archive verification run after receipt edits.
+This supersedes pending pre-push status for the included increments only.
+
+The five GitHub-hosted configuration/upload/deployment actions were inspected
+because they cannot run locally. Local package checks do not establish
+publication or deployment. Concurrent timings do not establish performance
+improvements. The later selected-circle and polynomial-chamfer experiments are
+excluded from this candidate. Scalar closure and replay do not complete the
+original polynomial region offset/corner operations; the full exact-closure
+plan and recorded capability gaps remain open.
+
 **Open, in dependency order:**
 - **Split cost, remaining contact reuse.** R05 (2026-10-25) tested evaluating
   each cut once and sharing its selected point between adjacent pieces. The
