@@ -17,6 +17,11 @@
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
+- Consume generated chord displacements over selected polynomial endpoints in
+  exact point queries. Retain one positive speed relation and the original
+  procedural source through reversal, zero distance and native replay. The
+  original two-step polynomial chamfer now completes within its 180 s fixture.
+
 - Native SVG replay retains an uncut original native line and its provenance
   after the shared arrangement checks its full source range. Ordinary region
   construction keeps its existing retained carriers and STEP export coverage.

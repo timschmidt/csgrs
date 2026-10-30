@@ -47,6 +47,11 @@
 //! root-refinement unit per new bound comparison. Existing checked bounds and
 //! structural zeros can be reused without a new comparison. This count does
 //! not bound the algebraic work inside a sign decision.
+//! Optional selected-field sign filters additionally charge each performed
+//! selected-root bisection, including nested coefficient selections. Native
+//! source refinement keeps its existing shared accounting and evidence reuse.
+//! Rational-coefficient queries retain the exact remainder path without these
+//! optional refinements. The counters still do not bound coefficient arithmetic.
 //!
 //! One promotion unit admits one instrumented projection entry, regardless of
 //! its degree or number of eliminated axes; root subdivisions performed inside

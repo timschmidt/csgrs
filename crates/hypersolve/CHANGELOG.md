@@ -9,6 +9,13 @@
 - Keep selected polynomial field/value diagnostics shallow so shared coefficient
   towers do not expand into diagnostic trees.
 
+- Normalize invertible native rational quotients and selected-field denominators
+  with verified modular or Bezout inverses, retaining nonunit local quotients.
+  Proved parent images keep their original relations, multiplicity and selectors.
+  Strict sign filters refine selected roots over guarded coefficient enclosures;
+  rational coefficients keep their existing exact remainder path and work cost.
+  Original source graphs survive enclosure, repeated reciprocals and fresh replay.
+
 - Prove correspondence between independently selected equal generators before
   adjoining an independent coordinate. Retain the original relation, selector,
   multiplicity and source origin while using a certified linear reduction.

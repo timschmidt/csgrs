@@ -183,6 +183,15 @@ pending pre-push status through selected polynomial field replay. Later selected
 query point/parameter and derivative increments are excluded. Exact geometric
 operation closure and hosted publication/deployment are not established here.
 
+The local hypercurve-selected-chord-composition-evidence-2026-10-29 branch ends at
+b8ffdd329648cd4925e71af88fabe01fe36e6aab, adding docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition (1,345 files,
+44,842,601 bytes), SHA-256 0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3. It records exact selected-field
+normalization, normalized chord queries, the original repeated chamfer within
+its unchanged 180-second limit, four focused groups and 27 passing affected
+qualification groups. Failed experiments and the separate zero-distance bounds
+gap remain explicit. Full pre-push qualification and general algebraic closure
+remain open. This evidence record is unpushed.
+
 The local hypercurve-polynomial-svg-replay-evidence-2026-10-29 branch ends at
 c230c717f4bef74e3f9b7622bfaa65700d57c536, adding docs/evidence/2026-10-29-hypercurve-closure-polynomial-svg-replay (598 files,
 35,611,291 bytes), SHA-256 5b5409589a07d1712338c656e47827ccc10c678662c355d982dd618219f82e4f. It retains the reproduced projection

@@ -514,3 +514,160 @@ fn selector_enclosures_preserve_exact_zero_nearby_signs_and_budget_retry() {
         Classification::Decided(RealSign::Positive)
     );
 }
+
+#[path = "support/selected_polynomial_replay.rs"]
+mod inverse_codec;
+
+#[test]
+fn polynomial_inverse_over_selected_coefficients_keeps_replay() {
+    use hypersolve::selected_polynomial_field::SelectedPolynomialDefinition;
+    let q = base();
+    let parent = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);
+    let a = parent.generator().unwrap();
+    for repeated in [false, true] {
+        let mut equation = coefficients(&parent, &[0, 0, 0, 1]);
+        equation[0] = a.scale(&real(-1)).unwrap();
+        if repeated {
+            equation = coefficients(&parent, &[0, 0, 0, 0, 0, 0, 1]);
+            equation[0] = power(&a, 2);
+            equation[3] = a.scale(&real(-2)).unwrap();
+        }
+        let degree = equation.len() - 1;
+        let selected = select(&parent, equation, 1, 2);
+        let t = selected.generator().unwrap();
+        let one = selected.constant(real(1)).unwrap();
+        for sign in [-1, 1] {
+            let denominator = power(&t, 2).add(&one).unwrap().scale(&real(sign)).unwrap();
+            let inverse = decided(one.divide(&denominator, &TestContext::strict()).unwrap());
+            assert!(inverse.field().shares_authority(&selected));
+            assert_eq!(selected.defining_polynomial().unwrap().len(), degree + 1);
+            // (t^2+1)(t^4-t^2+1)=t^6+1=a^2+1, independently of
+            // the inverse's polynomial basis or the original multiplicity.
+            let scale = selected.lift(&power(&a, 2)).unwrap().add(&one).unwrap();
+            let expected = power(&t, 4)
+                .subtract(&power(&t, 2))
+                .unwrap()
+                .add(&one)
+                .unwrap()
+                .scale(&real(sign))
+                .unwrap();
+            is_zero(
+                &inverse
+                    .multiply(&scale)
+                    .unwrap()
+                    .subtract(&expected)
+                    .unwrap(),
+            );
+            is_zero(
+                &inverse
+                    .multiply(&denominator)
+                    .unwrap()
+                    .subtract(&one)
+                    .unwrap(),
+            );
+            let graph = SelectedPolynomialDefinition::from_values(
+                &[t.clone(), denominator, inverse, selected.lift(&a).unwrap()],
+                10000,
+            )
+            .unwrap();
+            eprintln!(
+                "inverse repeated={repeated} sign={sign} graph_nodes={}",
+                graph.nodes.len()
+            );
+            let path = std::env::temp_dir().join(format!(
+                "hypersolve-field-inverse-{}-{}-{sign}-{repeated}.json",
+                std::process::id(),
+                std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos(),
+            ));
+            std::fs::write(&path, inverse_codec::encode(&graph)).unwrap();
+            let child = std::process::Command::new(std::env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "selected_polynomial_inverse_replay_child",
+                    "--nocapture",
+                ])
+                .env("HYPERSOLVE_FIELD_INVERSE_REPLAY", &path)
+                .output();
+            std::fs::remove_file(path).unwrap();
+            let child = child.unwrap();
+            assert!(
+                child.status.success(),
+                "{}{}",
+                String::from_utf8_lossy(&child.stdout),
+                String::from_utf8_lossy(&child.stderr)
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_polynomial_inverse_replay_child() {
+    let Some(path) = std::env::var_os("HYPERSOLVE_FIELD_INVERSE_REPLAY") else {
+        return;
+    };
+    let graph = inverse_codec::decode(&std::fs::read_to_string(path).unwrap());
+    let values = decided(graph.replay(10000, &TestContext::strict()).unwrap());
+    let [t, denominator, inverse, a] = values.as_slice() else {
+        panic!("four retained values");
+    };
+    let one = t.field().constant(real(1)).unwrap();
+    is_zero(&power(t, 3).subtract(a).unwrap());
+    is_zero(
+        &power(a, 3)
+            .subtract(&t.field().constant(real(2)).unwrap())
+            .unwrap(),
+    );
+    is_zero(
+        &inverse
+            .multiply(denominator)
+            .unwrap()
+            .subtract(&one)
+            .unwrap(),
+    );
+    let divisor = inverse.add(&one).unwrap();
+    let next = decided(one.divide(&divisor, &TestContext::strict()).unwrap());
+    is_zero(&next.multiply(&divisor).unwrap().subtract(&one).unwrap());
+}
+
+#[test]
+fn polynomial_reciprocal_composition_retains_its_original_field() {
+    let q = base();
+    let parent = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);
+    let a = parent.generator().unwrap();
+    let mut equation = coefficients(&parent, &[0, 0, 0, 1]);
+    equation[0] = a.scale(&real(-1)).unwrap();
+    let field = select(&parent, equation, 1, 2);
+    let t = field.generator().unwrap();
+    let one = field.constant(real(1)).unwrap();
+    let fibonacci = [0, 1, 1, 2, 3, 5, 8, 13, 21, 34];
+    let mut value = t.clone();
+    for step in 1..=8 {
+        value = decided(
+            one.divide(&value.add(&one).unwrap(), &TestContext::strict())
+                .unwrap(),
+        );
+        let numerator = t
+            .scale(&real(fibonacci[step - 1]))
+            .unwrap()
+            .add(&field.constant(real(fibonacci[step])).unwrap())
+            .unwrap();
+        let denominator = t
+            .scale(&real(fibonacci[step]))
+            .unwrap()
+            .add(&field.constant(real(fibonacci[step + 1])).unwrap())
+            .unwrap();
+        is_zero(
+            &value
+                .multiply(&denominator)
+                .unwrap()
+                .subtract(&numerator)
+                .unwrap(),
+        );
+        assert!(value.field().shares_authority(&field));
+    }
+    assert!(field.parent().unwrap().shares_authority(&parent));
+    assert_eq!(field.defining_polynomial().unwrap().len(), 4);
+}

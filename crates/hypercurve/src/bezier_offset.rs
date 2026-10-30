@@ -4731,6 +4731,9 @@ struct BezierAlgebraicChordParallelData2 {
     direction: BezierAlgebraicChordUnitDisplacement2,
     policy: CurveContext,
     recursive_points: OnceLock<[BezierRecursiveQuadraticProjectivePoint2; 2]>,
+    // A strict derived representation shares the original immutable construction.
+    // Failed or exhausted attempts never populate this cache.
+    selected_points: OnceLock<[[crate::selected_field::Value; 2]; 2]>,
 }
 
 struct BezierAlgebraicChordParallelRecursiveFrame2 {

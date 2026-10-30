@@ -2646,6 +2646,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 },
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end,
         }))
@@ -2684,6 +2685,7 @@ impl BezierAlgebraicChordParallelPoint2 {
             direction: BezierAlgebraicChordUnitDisplacement2::LeftNormal,
             policy: policy.retained_object_policy(),
             recursive_points: OnceLock::new(),
+            selected_points: OnceLock::new(),
         });
         (
             Self {
@@ -2710,6 +2712,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end,
         }
@@ -2731,6 +2734,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 direction: BezierAlgebraicChordUnitDisplacement2::LeftNormal,
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end: false,
         }
@@ -2752,6 +2756,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 direction: BezierAlgebraicChordUnitDisplacement2::Tangent,
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end: false,
         }
@@ -4418,6 +4423,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 direction: self.data.direction,
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end: self.at_end,
         })
@@ -4465,6 +4471,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                 direction: self.data.direction,
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
+                selected_points: OnceLock::new(),
             }),
             at_end: self.at_end,
         }))

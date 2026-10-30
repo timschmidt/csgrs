@@ -3,8 +3,8 @@
 //! Expected signs come from independently built `Real` closed forms under
 //! STRICT predicates, or from equalities known by construction (for example
 //! `2*sqrt(2) == sqrt(8)` and `sqrt(c^2) == c` for positive `c`). Values over
-//! `2^(1/3)` have no compact witness, so they exercise the dense interval,
-//! norm and projected-zero authorities rather than scalar replay.
+//! `2^(1/3)` that still use that axis have no compact witness, so they
+//! exercise the dense interval, norm and projected-zero authorities.
 
 #[path = "support/recursive_quadratic.rs"]
 #[allow(dead_code)]
@@ -33,7 +33,7 @@ fn cube(field: &RecursiveQuadraticField) -> RecursiveQuadraticValue {
 }
 
 /// `2*sqrt2 - sqrt8` over the cube-root tuple: zero by construction, with
-/// no stored cancellation and no compact scalar witness.
+/// no coefficientwise stored cancellation. The source axis cancels exactly.
 fn hidden_zero(field: &RecursiveQuadraticField) -> RecursiveQuadraticValue {
     let first = axis_value(
         field,
@@ -221,13 +221,16 @@ fn bounded_signs_separate_transverse_values_only() {
         below.bounded_or_exact_real_witness_sign(),
         Some(RealSign::Negative)
     );
-    // A hidden zero never separates to a nonzero sign and has no witness.
+    // The unused source axis cancels, exposing the exact zero witness.
     let zero = hidden_zero(&field_with_dependent_speeds());
     assert!(matches!(
         zero.bounded_interval_sign(0..=16),
         None | Some(RealSign::Zero)
     ));
-    assert_eq!(zero.exact_real_witness_sign_through(-128), None);
+    assert_eq!(
+        zero.exact_real_witness_sign_through(-128),
+        Some(RealSign::Zero)
+    );
     // A structural zero is decided without refinement.
     let stored = field.constant(Real::zero()).unwrap();
     assert_eq!(
@@ -306,7 +309,8 @@ fn hidden_base_zeros_are_decided_exactly() {
     let field = field_with_dependent_speeds();
     let zero = hidden_zero(&field);
     assert!(!zero.is_structurally_zero());
-    assert!(zero.exact_real_value_with_retained_witnesses().is_none());
+    assert_value(&zero, &real(0));
+    assert!(zero.field().same_field(&field));
     assert_sign(zero.sign(&policy), RealSign::Zero);
     // An approximate context first completes the strict replay; no
     // approximation may be consumed for an exactly decidable zero.
@@ -320,6 +324,23 @@ fn hidden_base_zeros_are_decided_exactly() {
     );
     // A bounded pass may decline, but never guesses a nonzero sign.
     assert_zero_or_undecided(policy.bounded_exact_predicate_pass(|| zero.sign(&policy)));
+}
+
+#[test]
+fn hidden_base_zeros_with_used_source_axes_retain_exact_sign_fallback() {
+    let field = field_with_dependent_speeds();
+    // 2*c*sqrt(2) - c*sqrt(8) is zero, but both coefficients still use c.
+    let zero = hidden_zero(&field).multiply(&cube(&field)).unwrap();
+    assert!(!zero.is_structurally_zero());
+    assert!(zero.exact_real_value_with_retained_witnesses().is_none());
+    assert!(zero.real_witness().get().is_none());
+    let policy = TestContext::strict();
+    assert_sign(zero.sign(&policy), RealSign::Zero);
+    assert_sign(
+        zero.sign_with_projected_zero_fallback(&policy),
+        RealSign::Zero,
+    );
+    assert!(zero.field().same_field(&field));
 }
 
 #[test]

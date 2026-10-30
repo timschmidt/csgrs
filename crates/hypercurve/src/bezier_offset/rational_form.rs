@@ -56,11 +56,7 @@ pub(crate) fn point_retains_joint_field(point: &CurvePoint2) -> bool {
             }
             _ => false,
         },
-        CurvePointData2::AlgebraicChordParallel(point)
-            if point.data.source.certified_unit_tangent().is_some() =>
-        {
-            point_retains_joint_field(point.source_endpoint())
-        }
+        CurvePointData2::AlgebraicChordParallel(point) => point.uses_selected_field(),
         CurvePointData2::AlgebraicCuspChordDerived(point) => {
             point
                 .data
@@ -129,7 +125,10 @@ pub(crate) fn common_point_form_sources(
     // Equality is only an alignment shortcut here. Query-pair coordinates
     // already have a common selected-field route; comparing both projected
     // coordinates first can rebuild an unnecessary tower of root decisions.
-    let query_pair = |point: &CurvePoint2| matches!(&point.0, CurvePointData2::Polynomial(point) if point.has_query_authority());
+    let query_pair = |point: &CurvePoint2| {
+        matches!(&point.0, CurvePointData2::Polynomial(point) if point.has_query_authority())
+            || matches!(&point.0, CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field())
+    };
     let same_point = if query_pair(&first.source) || query_pair(&second.source) {
         None
     } else {
@@ -1087,6 +1086,14 @@ impl<'a> PointSignScope<'a> {
                 Classification::Decided,
             )),
             CurvePointData2::Polynomial(point) => point.polynomial_sign(polynomial, policy),
+            CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
+                crate::selected_field::finish(|| {
+                    let values = point.selected_field_values(policy)?;
+                    crate::selected_field::decided(
+                        crate::selected_field::bivariate(polynomial, &values)?.sign(policy)?,
+                    )
+                })
+            }
             CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
                 Classification::Decided(Some(point)) => self.polynomial_sign(&point, polynomial),
                 Classification::Decided(None) => {
@@ -1152,6 +1159,20 @@ pub(crate) fn point_rational_form_parameter(
         )),
         CurvePointData2::Polynomial(point) => {
             point.rational_parameter(numerator, denominator, policy)
+        }
+        CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
+            crate::selected_field::finish(|| {
+                let value = crate::selected_field::query(
+                    [numerator, denominator],
+                    &point.selected_field_values(policy)?,
+                    policy,
+                )?;
+                let query =
+                    PointFormSource2::new(source.clone(), numerator.clone(), denominator.clone());
+                Ok(CurveParameter2::from_polynomial_query(
+                    crate::selected_query_scalar::SelectedQueryScalar2::new(query, value, policy)?,
+                ))
+            })
         }
         CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
             Classification::Decided(Some(point)) => {

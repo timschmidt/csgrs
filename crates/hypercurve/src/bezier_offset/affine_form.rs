@@ -138,6 +138,14 @@ pub(crate) fn point_affine_form_parameter(
                 policy,
             );
         }
+        CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
+            return point_rational_form_parameter(
+                source,
+                &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+                &BivariatePolynomial::new(vec![vec![Real::one()]]),
+                policy,
+            );
+        }
         CurvePointData2::Polynomial(point) => {
             return Ok(point
                 .affine_parameter(&[a.clone(), b.clone(), c.clone()], policy)?

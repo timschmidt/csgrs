@@ -21,7 +21,9 @@ pub use definition::{
 };
 
 mod filter;
+mod inverse;
 mod normalize;
+mod witness;
 
 mod bounds;
 pub use bounds::SelectedPolynomialEnclosure;
@@ -425,10 +427,14 @@ impl SelectedPolynomialField {
             .last()
             .expect("a nonconstant relation has a leading term");
         let inverse = leading.reciprocal_strict(policy)?;
-        let monic = reduced
+        let mut monic = reduced
             .iter()
             .map(|value| value.multiply(&inverse))
             .collect::<ArithmeticResult<Vec<_>>>()?;
+        if let Some(image) = witness::parent_image(self, &defining, &monic, &lower, &upper, policy)?
+        {
+            monic = vec![image.scale(&Real::from(-1))?, self.constant(Real::one())?];
+        }
         Ok(Self(Arc::new(FieldData::Extension {
             parent: self.clone(),
             defining,
@@ -453,12 +459,14 @@ impl SelectedPolynomialField {
         let mut pair = [numerator, denominator];
         RecursiveQuadraticValue::normalize_positive_scale(&mut pair);
         let [numerator, denominator] = pair;
+        let scalar = RecursiveQuadraticProjectiveScalar {
+            numerator,
+            denominator,
+        };
+        let scalar = scalar.normalized_rational_quotient().unwrap_or(scalar);
         Ok(SelectedPolynomialValue(Arc::new(ValueData {
             field: self.clone(),
-            coordinates: Coordinates::Recursive(RecursiveQuadraticProjectiveScalar {
-                numerator,
-                denominator,
-            }),
+            coordinates: Coordinates::Recursive(scalar),
         })))
     }
 
@@ -669,6 +677,18 @@ impl SelectedPolynomialValue {
             RealSign::Positive => Real::one(),
             RealSign::Negative => Real::from(-1),
         };
+        // A global inverse can keep the selected quotient compact. Nonunits
+        // elsewhere retain their original local quotient and denominator proof.
+        match inverse::reciprocal(self, policy) {
+            Ok(Some(value)) => return Ok(value),
+            Ok(None)
+            | Err(SelectedPolynomialError::Arithmetic(
+                SelectedPolynomialArithmeticError::ConstructionUnavailable,
+            )) => {}
+            Err(SelectedPolynomialError::Uncertain(reason))
+                if reason != UncertaintyReason::BudgetExhausted => {}
+            Err(error) => return Err(error),
+        }
         Ok(match &self.0.coordinates {
             Coordinates::Recursive(scalar) => self.field().recursive_value(
                 unavailable(scalar.denominator.scale(&scale))?,
@@ -710,6 +730,24 @@ impl SelectedPolynomialValue {
         if let Some(sign) = self.sign_from_selection_bounds() {
             return Ok(sign);
         }
+        if let Coordinates::Extension { numerator, .. } = &self.0.coordinates {
+            if let [constant] = numerator.as_slice() {
+                return constant.sign_strict(policy);
+            }
+            if !self.has_rational_sign_coefficients() {
+                for steps in [4, 8, 16, 32] {
+                    let sign = self.sign_from_refined_selection_bounds(steps);
+                    if crate::work_budget::exhaustion().is_some() {
+                        return Err(SelectedPolynomialError::Uncertain(
+                            UncertaintyReason::BudgetExhausted,
+                        ));
+                    }
+                    if let Some(sign) = sign {
+                        return Ok(sign);
+                    }
+                }
+            }
+        }
         match (&self.field().0.as_ref(), &self.0.coordinates) {
             (_, Coordinates::Recursive(scalar)) => match scalar
                 .numerator
@@ -730,9 +768,6 @@ impl SelectedPolynomialValue {
                 },
                 Coordinates::Extension { numerator, .. },
             ) => {
-                if let [constant] = numerator.as_slice() {
-                    return constant.sign_strict(policy);
-                }
                 let mut context = SelectedPolynomialContext {
                     field: parent.clone(),
                     policy,

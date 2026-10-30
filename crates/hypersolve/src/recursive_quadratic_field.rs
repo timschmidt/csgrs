@@ -1096,7 +1096,27 @@ impl RecursiveQuadraticValue {
                 let stride = polynomial.dimensions()[axis + 1..]
                     .iter()
                     .try_fold(1_usize, |stride, dimension| stride.checked_mul(*dimension))?;
-                let value = values[axis].as_ref()?;
+                let Some(value) = values[axis].as_ref() else {
+                    // Positive powers with stored zero coefficients do not
+                    // depend on this generator, even when the tensor retains
+                    // its full axis dimension after selected-root reduction.
+                    let start = base_index.checked_add(stride)?;
+                    let end = base_index
+                        .checked_add(polynomial.dimensions()[axis].checked_mul(stride)?)?;
+                    if polynomial
+                        .coefficients()
+                        .get(start..end)?
+                        .iter()
+                        .all(|coefficient| {
+                            coefficient
+                                .exact_rational_ref()
+                                .is_some_and(|value| value.is_zero())
+                        })
+                    {
+                        return evaluate_axis(polynomial, values, axis + 1, base_index);
+                    }
+                    return None;
+                };
                 let mut result = Real::zero();
                 for power in (0..polynomial.dimensions()[axis]).rev() {
                     result = result * value
@@ -3118,6 +3138,70 @@ pub struct RecursiveQuadraticProjectiveScalar {
 }
 
 impl RecursiveQuadraticProjectiveScalar {
+    /// Optionally removes a globally invertible rational polynomial denominator
+    /// over one native source. The shared modular helper checks its Bezout
+    /// identity against the unchanged defining equation before publication.
+    /// Nonunits on other components retain their valid selected-local quotient.
+    pub(crate) fn normalized_rational_quotient(&self) -> Option<Self> {
+        if self.denominator.is_coefficientwise_stored_one() {
+            return None;
+        }
+        let (
+            RecursiveQuadraticValueData::Base {
+                field,
+                expression: numerator,
+                ..
+            },
+            RecursiveQuadraticValueData::Base {
+                field: denominator_field,
+                expression: denominator,
+                ..
+            },
+        ) = (self.numerator.data.as_ref(), self.denominator.data.as_ref())
+        else {
+            return None;
+        };
+        if !Arc::ptr_eq(field, denominator_field) || field.sources.len() != 1 {
+            return None;
+        }
+        let stored_zero = |polynomial: &DenseTensorPolynomial| {
+            polynomial.coefficients().iter().all(|coefficient| {
+                coefficient
+                    .exact_rational_ref()
+                    .is_some_and(|value| value.is_zero())
+            })
+        };
+        if [numerator, denominator].iter().any(|expression| {
+            ![&expression.first, &expression.second, &expression.product]
+                .iter()
+                .all(|polynomial| stored_zero(polynomial))
+        }) {
+            return None;
+        }
+        let modulus = &field.sources[0].polynomial_coefficients;
+        let inverse = match denominator.rational.coefficients() {
+            [constant] if constant.exact_rational_ref().is_some() => {
+                vec![(Real::one() / constant).ok()?]
+            }
+            coefficients => crate::integer_interpolation::rational_polynomial_inverse_modulo(
+                coefficients,
+                modulus,
+            )?,
+        };
+        let coefficients = crate::integer_interpolation::rational_polynomial_product_modulo(
+            numerator.rational.coefficients(),
+            &inverse,
+            modulus,
+        )?;
+        let mut expression = numerator.clone();
+        expression.rational =
+            DenseTensorPolynomial::try_new(vec![coefficients.len()], coefficients)?;
+        Some(Self {
+            numerator: RecursiveQuadraticValue::from_base(field.clone(), expression)?,
+            denominator: RecursiveQuadraticField::Base(field.clone()).constant(Real::one())?,
+        })
+    }
+
     pub fn interval(&self, refinement_steps: usize) -> Option<RealInterval> {
         self.numerator
             .interval(refinement_steps)?

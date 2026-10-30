@@ -8,6 +8,7 @@ mod points;
 mod rational_kernel;
 #[cfg(feature = "svg")]
 mod replay;
+mod selected_points;
 mod tangent;
 
 impl BezierAlgebraicChord2 {

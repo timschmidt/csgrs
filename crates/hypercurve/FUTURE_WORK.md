@@ -3314,3 +3314,35 @@ are depth 128 and 65,536 attempted boxes per path, with up to 512 refinements
 per scalar enclosure attempt. These are not total-work or memory bounds.
 General algebraic topology, nonzero implicit offsets/fillets, the original
 repeated polynomial chamfer and complete pre-push qualification remain open.
+
+## Repeated selected polynomial chamfer (2026-10-29)
+
+The original second chamfer of the elliptic path now completes in
+63.20 seconds in its unchanged 180-second external
+envelope, including the recorded Cargo invocation. Its exact squared setbacks,
+generated-line collinearity and traversal, original cut-parameter reuse and
+four-piece connectivity assertions pass. Earlier timeout and typed unsupported
+outcomes remain preserved; this is a completion result, not a matched speedup.
+
+Generated normalized chord points now expose queries over their shared selected
+source field, with one positive speed relation `s^2 = dx^2 + dy^2`. The original
+procedural construction remains authoritative. Both coordinates and endpoint
+queries share successful derived values; policy mismatch and exhausted work
+are checked before reuse. Failed attempts do not enter the cache. Tests cover
+signed tangent and normal setbacks, reversal, translation, explicit origins,
+zero distance, original denominator guards and fresh-process native SVG replay.
+
+All four focused groups and all 27 affected qualification groups pass.
+The latter include full Hypersolve (1,304 passed),
+Hypercurve (3,031 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz checks, allocation lifetime checks,
+the capability matrix and hygiene. Logs retain ignored-test counts. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition`, SHA-256 `0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3`. These are local admission checks; full pre-push
+qualification and package publication are separate.
+
+This establishes the named two-chamfer path and query corpus, not arbitrary
+implicit offsets, fillets or universal finite composition. A separate probe on
+an exact direction of size `2^-1100` reproduces a pre-existing zero-distance
+bounds/export blocker; its unchanged owner and follow-up are retained in the
+record. That gap is not credited as completed by these tests.

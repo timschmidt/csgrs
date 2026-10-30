@@ -110,3 +110,34 @@ The answer is honest but incomplete. `tests/represented_roots.rs`
 (`nearly_vanishing_denominators_are_never_misclassified`) accepts either the
 correct value or `Predicate`. A deeper refinement schedule, or an exact
 algebraic sign for the denominator, would decide these cases.
+
+## Selected-field chord composition (2026-10-29)
+
+The original second polynomial chamfer exposed repeated quotient expansion and
+a later selected-scalar enclosure stall. Unit quotients now use exact Bezout
+inverses modulo retained relations; nonunit quotients keep their original local
+representation. Optional parent images retain and validate the original
+equations and selectors. Exact interval filters refine selected roots only
+when endpoint signs certify a bracket, preserve denominator guards, and leave
+zero or unresolved signs to the complete exact path. Rational sign queries
+retain their earlier remainder path and resource behavior.
+
+The maintained 405-node scalar capture replays in a fresh process and proves
+`-1 < value < 0`; independent rational interval arithmetic checks that claim.
+Zero-budget refusal permits a larger retry. Original six-refinement budget
+regressions remain unchanged. The unused-tensor witness correction from local
+`b6ec1de05f` is included with its original zero and nonzero dependency tests.
+
+All four focused groups and all 27 affected qualification groups pass.
+The latter include full Hypersolve (1,304 passed),
+Hypercurve (3,031 passed), CSGRS
+(693 passed), six downstream suites, strict MSRV
+Clippy, minimal builds, strict docs and fuzz checks, allocation lifetime checks,
+the capability matrix and hygiene. Logs retain ignored-test counts. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition`, SHA-256 `0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3`. These are local admission checks; full pre-push
+qualification and package publication are separate.
+
+Individual normalization and enclosure experiments did not complete the
+original geometry. Failed attempts, invalid cache attribution and the repaired
+filter-budget regression remain in the archive. New bisections use the shared
+refinement counter; it is not a total arithmetic-work or memory bound.

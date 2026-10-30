@@ -9,7 +9,7 @@
     "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth, retained-memory limits and cooperative cancellation.",
     "Published package and actual binding consumers for the complete declared domain.",
-    "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
+    "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
   ],
   "fixtures": [
     {
@@ -15450,6 +15450,191 @@
       ],
       "oracle": "Original selected cut equation, exact setback and parameter order, retained supports, further evaluation and byte-identical SVG re-export; original 180-second bound is unchanged.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "polynomial_chamfer_repeat",
+      "target": "polynomial_chamfer_corners",
+      "test": "polynomial_chamfer_consumes_its_generated_chord_in_a_second_edit",
+      "owner": "Hypercurve normalized chord point queries and source reconstruction; Hypersolve shared selected-field arithmetic and strict signs",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Algebraically trimmed elliptic branch followed by 1/64 then 1/512 Euclidean chord setbacks; second edit consumes the first generated line.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "Four connected retained pieces; exact original curve equation, both setback distances, source-parameter reuse, generated-line collinearity and forward progress."
+        }
+      ],
+      "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
+    },
+    {
+      "id": "selected_chord_displacement_queries",
+      "target": "selected_chord_displacements",
+      "test": "selected_chord_displacements_keep_distance_side_and_reversal",
+      "owner": "Hypercurve normalized chord point queries and source reconstruction; Hypersolve shared selected-field arithmetic and strict signs",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "A=(0,alpha), B=(1,alpha^2), alpha^3=2; both endpoints, tangent/left-normal displacement 0 or +/-1/8, translation, both traversals and cold point-definition replay.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 60,
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Exact squared distance, zero cross/dot relation and signed tangent/normal side retain the original selected source."
+        }
+      ],
+      "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
+    },
+    {
+      "id": "selected_chord_displacement_retry",
+      "target": "selected_chord_displacements",
+      "test": "selected_chord_displacement_budget_refusal_keeps_retry_available",
+      "owner": "Hypercurve normalized chord point queries and source reconstruction; Hypersolve shared selected-field arithmetic and strict signs",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Cold normalized point over selected cubic endpoints, zero work budget followed by 10000 shared refinement and promotion units.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 60,
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Typed exhaustion before publication; the same object then completes exact distance and orientation without a poisoned cache."
+        }
+      ],
+      "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
+    },
+    {
+      "id": "selected_chord_displacement_replay",
+      "target": "selected_chord_displacements",
+      "test": "selected_chord_displacements_replay_in_a_fresh_process",
+      "owner": "Hypercurve normalized chord point queries and source reconstruction; Hypersolve shared selected-field arithmetic and strict signs",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Selected cubic-endpoint line and its translated normal-displaced endpoints exported to exact SVG, imported in a fresh process, and consumed by further exact rational queries and a signed tangent construction.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 180,
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Re-establish original endpoint and positive speed relations; independent distance and side identities hold after fresh replay and further construction."
+        }
+      ],
+      "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
+    },
+    {
+      "id": "selected_chord_displacement_origins",
+      "target": "selected_chord_displacements",
+      "test": "selected_chord_displacement_keeps_explicit_origin_and_pole_guards",
+      "owner": "Hypercurve normalized chord point queries and source reconstruction; Hypersolve shared selected-field arithmetic and strict signs",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Explicit origin distinct from both selected chord endpoints, translation, zero and positive tangent distances, and a zero numerator paired with a zero denominator.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Retain original selected supports, point dependencies, domains and typed outcomes. These bounded witnesses do not establish arbitrary implicit operation closure or a total resource bound.",
+      "timeout_seconds": 60,
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Explicit origin and zero-distance meaning survive; nonzero displacement has exact distance and forward side; zero rational denominator remains invalid."
+        }
+      ],
+      "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
     }
   ]
 }

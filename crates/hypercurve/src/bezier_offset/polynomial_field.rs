@@ -147,6 +147,15 @@ pub(crate) fn selected_field_query(
     if let CurvePointData2::Polynomial(point) = &pulled.source.0 {
         return point.field_query(&pulled.numerator, &pulled.denominator, policy);
     }
+    if let CurvePointData2::AlgebraicChordParallel(point) = &pulled.source.0
+        && point.uses_selected_field()
+    {
+        return field::query(
+            [&pulled.numerator, &pulled.denominator],
+            &point.selected_field_values(policy)?,
+            policy,
+        );
+    }
     let value = field::available(field::curve(
         super::rational_form::recursive_rational_value(
             &pulled.source,
