@@ -3346,3 +3346,30 @@ implicit offsets, fillets or universal finite composition. A separate probe on
 an exact direction of size `2^-1100` reproduces a pre-existing zero-distance
 bounds/export blocker; its unchanged owner and follow-up are retained in the
 record. That gap is not credited as completed by these tests.
+
+## Zero-distance chord bounds (2026-10-29)
+
+This closes the separate bounds/export gap recorded by the preceding selected
+chord admission. On clean `6296155cf7`, both new tests fail with `Ordering`
+for a nonzero direction `(2^-1100, 2^-1100)`: the original line exports, while
+a zero-distance displacement requires an unnecessary unit direction. After
+source and policy validation, bounds now translate the original endpoint or
+explicit origin enclosure directly when the distance is exactly zero.
+The original definition remains authoritative and nonzero-distance guards
+remain unchanged. No new cache or retained carrier is introduced.
+
+Tests cover rational and selected cubic coordinates, both directions and
+endpoints, reversal, explicit origins and translation. Fresh-process SVG replay
+retains the original source and displacement, checks exact source endpoint
+identities, and exports again. Bounds use the independent zero-distance
+identity; display coordinates and serialized bytes are not equality oracles.
+
+All 21 affected groups pass on the combined source after `d31ef199c3`,
+including the new and prior displacement witnesses, the original repeated
+chamfer within 180 seconds, full Hypercurve (3,033
+passed), modeling export consumers, six downstream suites, strict MSRV Clippy,
+minimal builds, strict docs/fuzz checks and the selected capability matrix.
+Logs retain ignored-test counts and local timing/RSS samples. Evidence:
+`docs/evidence/2026-10-29-hypercurve-closure-zero-chord-displacement`, SHA-256 `d9478cf7445392d7d2db9e84efa8e0ca6516fd20f28d041aafb3b49b70833930`. Original failures and source attribution are
+retained. General implicit closure, nonzero tiny-source normalization and full
+pre-push qualification remain separate.

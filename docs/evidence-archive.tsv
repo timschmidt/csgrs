@@ -390,6 +390,7 @@ docs/evidence/2026-10-29-hypercurve-closure-selected-coefficient-roots	848	28845
 docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence	619	21592106	450fce88ea94d1730595564db3bf8e48f84ca8335e3f0243f7823143c475af21
 docs/evidence/2026-10-29-hypercurve-closure-selected-query-fibers	723	24874907	24c4e6fddbed73a91bffa8466b176f8fab26ff22b4abea8749712c8b9f4b380d
 docs/evidence/2026-10-29-hypercurve-closure-selected-query-publication-validation	25449	51885989	16bb2f370d87339a407032aabf6cf47d15e64195bc228f497e1839693a08dc37
+docs/evidence/2026-10-29-hypercurve-closure-zero-chord-displacement	135	7749436	d9478cf7445392d7d2db9e84efa8e0ca6516fd20f28d041aafb3b49b70833930
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

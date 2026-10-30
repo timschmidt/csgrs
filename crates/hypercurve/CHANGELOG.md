@@ -17,6 +17,10 @@
 - Retry region probes at unresolved or stationary contacts. Such events no longer
   disappear from winding classification or regularization exterior-face proofs.
 
+- Enclose zero chord displacements from the original endpoint or explicit
+  origin plus translation. Tiny nonzero directions no longer require a
+  normalized speed for zero-distance bounds or exact native SVG replay.
+
 - Consume generated chord displacements over selected polynomial endpoints in
   exact point queries. Retain one positive speed relation and the original
   procedural source through reversal, zero distance and native replay. The

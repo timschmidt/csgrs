@@ -183,6 +183,14 @@ pending pre-push status through selected polynomial field replay. Later selected
 query point/parameter and derivative increments are excluded. Exact geometric
 operation closure and hosted publication/deployment are not established here.
 
+The local hypercurve-zero-chord-displacement-evidence-2026-10-29 branch ends at
+4a5af6b4f17d935946ee3a729f7aed5751aadeb5, adding docs/evidence/2026-10-29-hypercurve-closure-zero-chord-displacement (135 files,
+7,749,436 bytes), SHA-256 d9478cf7445392d7d2db9e84efa8e0ca6516fd20f28d041aafb3b49b70833930. It retains both original zero-distance
+bounds/replay failures, the origin-enclosure correction, fresh-process native
+replay and all 21 passing affected qualification groups on the integrated
+source. Full pre-push qualification and general closure remain open.
+This evidence record is unpushed.
+
 The local hypercurve-selected-chord-composition-evidence-2026-10-29 branch ends at
 b8ffdd329648cd4925e71af88fabe01fe36e6aab, adding docs/evidence/2026-10-29-hypercurve-closure-selected-chord-composition (1,345 files,
 44,842,601 bytes), SHA-256 0e16db489d3a194f55c9d7763a8ab6ae21184fe6ce7d4f5be0969cc003967ca3. It records exact selected-field

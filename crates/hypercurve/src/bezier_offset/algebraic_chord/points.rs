@@ -4502,7 +4502,6 @@ impl BezierAlgebraicChordParallelPoint2 {
         if !self.accepts_policy(policy) || self.data.source.validate_policy(policy).is_err() {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        let [source_start, source_end] = self.source_direction_endpoints(policy);
         let endpoint_bounds = |point| {
             if local_only {
                 algebraic_chord_endpoint_local_bounds_refined(point, refinement_steps, policy)
@@ -4510,6 +4509,27 @@ impl BezierAlgebraicChordParallelPoint2 {
                 algebraic_chord_endpoint_bounds_refined(point, refinement_steps, policy)
             }
         };
+        if self.data.distance.definitely_zero() {
+            // Zero displacement is the translated origin. A conservative box
+            // must not require a unit direction (or its nonzero speed bound).
+            let origin = match endpoint_bounds(self.source_endpoint()) {
+                Classification::Decided(origin) => origin,
+                Classification::Uncertain(reason) => {
+                    return Classification::Uncertain(reason);
+                }
+            };
+            return Classification::Decided(Aabb2::new_unchecked(
+                Point2::new(
+                    origin.min_x() + &self.data.translation_x,
+                    origin.min_y() + &self.data.translation_y,
+                ),
+                Point2::new(
+                    origin.max_x() + &self.data.translation_x,
+                    origin.max_y() + &self.data.translation_y,
+                ),
+            ));
+        }
+        let [source_start, source_end] = self.source_direction_endpoints(policy);
         let (start, end) = match (endpoint_bounds(source_start), endpoint_bounds(source_end)) {
             (Classification::Decided(start), Classification::Decided(end)) => (start, end),
             _ => {

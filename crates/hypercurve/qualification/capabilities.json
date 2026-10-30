@@ -15635,6 +15635,80 @@
         }
       ],
       "oracle": "Original defining polynomial and retained positive speed selection; independently specified squared distances, cross/dot identities, signed traversal, pole guards and fresh replay."
+    },
+    {
+      "id": "zero_chord_displacement_bounds",
+      "target": "zero_chord_displacements",
+      "test": "zero_displacement_bounds_preserve_origin_translation_and_reversal",
+      "owner": "Hypercurve normalized chord point conservative bounds and exact SVG replay",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P36"
+      ],
+      "domain": "Admitted exact lines with direction (2^-1100,2^-1100), rational or selected cube-root coordinates, zero tangent/normal displacement, endpoint or explicit origin and exact translation.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Zero distance retains the selected origin plus translation without requiring a normal. Policy and source admission still apply. Original definitions remain authoritative; finite display output does not establish exact equality. Nonzero tiny-source normalization is outside this fixture.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Exact bounds equal the chosen original endpoint or explicit origin bounds plus the exact translation, for rational and selected cubic coordinates, both directions and traversal reversal."
+        }
+      ],
+      "oracle": "Exact bounds equal the chosen original endpoint or explicit origin bounds plus the exact translation, for rational and selected cubic coordinates, both directions and traversal reversal.",
+      "timeout_seconds": 60
+    },
+    {
+      "id": "zero_chord_displacement_replay",
+      "target": "zero_chord_displacements",
+      "test": "zero_displacement_of_a_tiny_selected_chord_replays_in_a_fresh_process",
+      "owner": "Hypercurve normalized chord point conservative bounds and exact SVG replay",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P36"
+      ],
+      "domain": "Admitted exact lines with direction (2^-1100,2^-1100), rational or selected cube-root coordinates, zero tangent/normal displacement, endpoint or explicit origin and exact translation.",
+      "origins": [
+        "authored",
+        "generated",
+        "selected_implicit"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Zero distance retains the selected origin plus translation without requiring a normal. Policy and source admission still apply. Original definitions remain authoritative; finite display output does not establish exact equality. Nonzero tiny-source normalization is outside this fixture.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process rebuilds the original selected displacement and source, verifies zero distance and original exact endpoint identities, and exports it again. The unwrapped source remains a successful control."
+        }
+      ],
+      "oracle": "A fresh process rebuilds the original selected displacement and source, verifies zero distance and original exact endpoint identities, and exports it again. The unwrapped source remains a successful control.",
+      "timeout_seconds": 60
     }
   ]
 }
