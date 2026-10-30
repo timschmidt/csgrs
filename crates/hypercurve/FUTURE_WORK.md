@@ -3440,3 +3440,43 @@ probes and the incorrect new budget expectation remain in the evidence record.
 Actual vertical components, arbitrary algebraic coefficients and general
 implicit operations remain open. The independent multiplicity and zero-distance
 changes are not included here. No full-solid or performance claim is made.
+
+## Dilation of regions with holes (2026-10-30)
+
+Closure-plan corpus item: holes, disappearing features and canonical empty
+identities (P12-P14, P17-P19). On `08556d2d10`, positive `CurveRegion2::offset`
+used the raw boundary walk for every region. A hole whose inward parallels
+cross keeps its orientation after trimming, so winding regularization kept it.
+An annulus dilated by its hole radius failed with a topology error; dilated
+further it kept a reversed hole (area 20 pi instead of 81/4 pi). Square, slot
+and cut-corner holes stayed open past their half-width, and a dumbbell hole's
+channel never closed. These were wrong answers, not blockers. Material erosion
+past the inradius and a closing slot in a material loop were already correct.
+
+Positive offsets of regions with holes now apply the exact boundary bands by
+union, as contraction applies them by difference. Two exact certificates keep
+the walk for holes that provably survive: one supporting circle with
+`r^2 > d^2`, or a strictly convex polygon whose shifted edges all keep positive
+length. Undecided signs fall back to the bands. Bands for every hole cost 6-28
+times the walk on surviving holes; with the certificates the measured circular,
+square and annular cases match the base within noise.
+
+Seven witnesses in `tests/disappearance_chains.rs` compare against
+independently authored exact regions, including lobe boundaries with `sqrt 2`
+and `sqrt(5)/2` endpoints. Four fail on the base; three controls (empty
+composition, a vanishing disconnected component, corner styles on a surviving
+hole) pass on both.
+
+Final checks on `9617bf0eac`: formatting; strict Clippy with all targets and
+features on 1.99.1 (Hypercurve, HyperBRep) and MSRV 1.95.0 (Hypercurve); the
+full Hypercurve release suite (3,063 passed, 34 existing ignored); HyperCircuit
+(105) and HyperDRC (1,670) release suites; the capability guard tests and all
+seven new capability rows. Evidence:
+`docs/evidence/2026-10-30-hypercurve-closure-hole-dilation`, SHA-256
+`83b0fba114b363ac0abe6d581361b400127e8c2613d509858ec6a7cab34e0ddb`.
+
+Open: holes that are neither circular nor convex polygonal, and curved
+non-circular holes, take the slower band route even when they survive; their
+cost on larger workloads is unmeasured. Disappearance chains through Bezier,
+conic and implicit holes, invalid operands paired with empty regions, and
+nested islands inside closing holes are not yet in the corpus.

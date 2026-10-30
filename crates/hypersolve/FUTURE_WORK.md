@@ -271,6 +271,16 @@ budget. Evidence: `docs/evidence/2026-10-30-hypercurve-closure-cooperative-cance
 SHA-256 `60e5aed4a6cd2d66120be39eaa3bcbd7ec9c6d931fcf5d4a1741191043436d96`.
 No performance improvement is claimed.
 
+A sweep over the 24 ignored composition workloads, cancelled after 20 s,
+returned `Cancellation` from 21 of them within 8 s and from two more in 19 and
+32 s; one completed first. `miter_stroke_of_a_filleted_heavy_rational_cubic_completes`
+was still running 30 s after the request. Its samples, and those of the 32 s
+case, sit in Hyperreal's recursive `Computable` approximation under Bareiss
+pivot signs. Hyperreal's per-value abort signal returns placeholder zeros for
+discarded results, so it is not a sound operation-wide interrupt for shared
+values. Evidence: `docs/evidence/2026-10-30-hypercurve-closure-cancellation-sweep`,
+SHA-256 `b2cf2680abf5a20c7efb01b53c9b1feb98ce9cb655e58754e7bd81523d1c1005`.
+
 Remaining limits: cancellation is observed only at instrumented units and
 these checkpoints. One large integer product, scalar precision refinement and
 other uninstrumented loops still run to completion, so this is not an

@@ -394,7 +394,9 @@ docs/evidence/2026-10-29-hypercurve-closure-selected-join-correspondence	619	215
 docs/evidence/2026-10-29-hypercurve-closure-selected-query-fibers	723	24874907	24c4e6fddbed73a91bffa8466b176f8fab26ff22b4abea8749712c8b9f4b380d
 docs/evidence/2026-10-29-hypercurve-closure-selected-query-publication-validation	25449	51885989	16bb2f370d87339a407032aabf6cf47d15e64195bc228f497e1839693a08dc37
 docs/evidence/2026-10-29-hypercurve-closure-zero-chord-displacement	135	7749436	d9478cf7445392d7d2db9e84efa8e0ca6516fd20f28d041aafb3b49b70833930
+docs/evidence/2026-10-30-hypercurve-closure-cancellation-sweep	37	69784	b2cf2680abf5a20c7efb01b53c9b1feb98ce9cb655e58754e7bd81523d1c1005
 docs/evidence/2026-10-30-hypercurve-closure-cooperative-cancellation	32	1523655	60e5aed4a6cd2d66120be39eaa3bcbd7ec9c6d931fcf5d4a1741191043436d96
+docs/evidence/2026-10-30-hypercurve-closure-hole-dilation	29	1505372	83b0fba114b363ac0abe6d581361b400127e8c2613d509858ec6a7cab34e0ddb
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775
