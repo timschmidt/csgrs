@@ -228,3 +228,52 @@ This is empty-support admission. Actual vertical components and algebraic
 coefficient topology remain open. Existing work counters do not bound total
 arithmetic, coefficient growth, retained memory or cancellation. Command timing
 and process RSS include builds; no performance improvement is claimed.
+
+## Cooperative cancellation (2026-10-30)
+
+Closure-plan M4 requires cooperative cancellation that releases temporary
+state and does not poison a retry. Before this change, `work_budget` had no
+cancellation. A request could only take the form of a reached unit limit, and
+the stalled Hypercurve bevel stroke of a filleted hyperbola pair spends minutes
+in loops that charge no units.
+
+`CancellationToken`, `with_cancellable_budget` and `WorkBudget::UNLIMITED`
+add a thread-safe request to the existing scope stack. The next admitted unit
+or `exhaustion()` check observes it as `WorkKind::Cancellation`, and the scope
+publishes no value. Outer tokens stop nested scopes; nested tokens leave their
+parents running. Integer polynomial Bareiss determinants, pseudo-quotient
+multiplication matrices and dense tensor products now check `exhaustion()`
+between steps and return their existing "unavailable" outcome. Dense
+square-root sum signs label that outcome `BudgetExhausted` rather than
+`Unsupported`. Hypercurve exposes `evaluate_with_cancellable_budget`.
+
+Measured on the stalled stroke (release, Rust 1.99.1): before these
+checkpoints, a request issued after 60 s had not been honored after 21 minutes,
+and one issued after 3 s took 21 s. With them, requests issued after 3, 5, 20,
+60 and 150 s returned `Cancellation` within 0.16-0.45 s. A counting allocator
+shows warm cancelled attempts leave 24-2,520 bytes of a 4.7 MB peak; the first
+attempts initialize about 1.2 MiB of bounded process-wide tables.
+
+Witnesses: five `work_budget` owner tests (pre-cancelled, mid-operation,
+nesting, another thread, cancelled native refinement then retry), the Bareiss
+unit test, `cancelled_intersections_publish_nothing_and_retry_with_a_new_token`,
+`concurrent_cancellation_never_publishes_a_partial_intersection`,
+`cancellation_stops_the_stalled_filleted_hyperbola_bevel_stroke` and
+`cancelled_stalled_stroke_releases_its_temporary_heap`. The stalled-stroke
+witness fails its 10 s bound without the three checkpoint sites.
+
+Final checks on `a605f5748f`: formatting; Clippy with `-D warnings`, all
+targets and features, on 1.99.1 (Hypersolve, Hypercurve, HyperBRep) and MSRV
+1.95.0 (Hypersolve, Hypercurve); full Hypersolve (1,329 passed); full
+Hypercurve release (3,056 passed, 34 existing ignored); a workspace check of
+all targets and features; both new capability rows; typos and the repository
+budget. Evidence: `docs/evidence/2026-10-30-hypercurve-closure-cooperative-cancellation`,
+SHA-256 `60e5aed4a6cd2d66120be39eaa3bcbd7ec9c6d931fcf5d4a1741191043436d96`.
+No performance improvement is claimed.
+
+Remaining limits: cancellation is observed only at instrumented units and
+these checkpoints. One large integer product, scalar precision refinement and
+other uninstrumented loops still run to completion, so this is not an
+elapsed-time bound. Total arithmetic, coefficient growth and retained-memory
+limits remain open. Cancellation does not cross threads by itself: a worker
+joins a request by entering its own scope with a cloned token.
