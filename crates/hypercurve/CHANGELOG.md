@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Fix dilation of regions with holes. A hole dilated to or past its
+  half-width, a channel that should close between surviving parts of a hole,
+  or a convex hole edge that vanishes first stayed open because the crossed
+  parallels kept the hole's winding. Such regions now use the exact boundary
+  bands, as contraction does. Circular and strictly convex polygonal holes
+  certified to survive keep the boundary walk.
+
 - Add `evaluate_with_cancellable_budget` and re-export `CancellationToken`.
   A cancelled evaluation reports `WorkKind::Cancellation`, publishes no
   partial result, and leaves no cached blocker that prevents a retry.

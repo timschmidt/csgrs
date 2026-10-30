@@ -4800,17 +4800,9 @@ impl CurveRegion2 {
         distance: &Real,
         corner_style: &OffsetCornerStyle2,
         filled_sides: &[bool],
+        roles: Vec<CurveRegionLoopRole>,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<Self>> {
-        let roles = match self
-            .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
         // The input is a normalized filled boundary. Its authored fill rule
         // has already been consumed. The offset walk can cover an interior
         // face more than once around a fold; parity would incorrectly turn
@@ -5023,17 +5015,47 @@ impl CurveRegion2 {
             ));
         }
         if distance_positive {
+            let roles = match self
+                .loop_roles_raw(policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
+            {
+                Classification::Decided(roles) => roles,
+                Classification::Uncertain(reason) => {
+                    return Ok(Classification::Uncertain(reason));
+                }
+            };
             // Dilation is represented most compactly by its complete offset
-            // boundary walk. The authoritative unary arrangement regularizes
-            // concave self-contacts and composes holes in one pass. Boundary
-            // bands remain the contraction path because they encode medial
-            // collapse as exact set subtraction instead of raw winding.
-            return self.offset_exact_boundary_walk_raw(
-                &distance,
-                corner_style,
-                filled_sides,
-                policy,
-            );
+            // boundary walk, whose unary arrangement regularizes concave
+            // self-contacts of material loops. A hole that closes past its
+            // medial axis, wholly or in a channel, leaves a folded raw loop
+            // that keeps the hole's orientation and so its negative winding;
+            // the walk would report it as a surviving hole. Such holes use the
+            // boundary bands, which encode medial collapse as exact set union
+            // just as they encode it as subtraction for contraction. A circular
+            // or convex polygonal hole that is certified to survive shrinks
+            // without folding, so it keeps the cheaper walk.
+            let walk_is_exact =
+                roles
+                    .iter()
+                    .zip(&self.data.boundary_loops)
+                    .all(|(role, boundary_loop)| {
+                        *role == CurveRegionLoopRole::Material
+                            || hole_loop_is_circle_wider_than(boundary_loop, &distance, policy)
+                            || hole_loop_is_convex_polygon_wider_than(
+                                boundary_loop,
+                                &distance,
+                                policy,
+                            )
+                    });
+            if walk_is_exact {
+                return self.offset_exact_boundary_walk_raw(
+                    &distance,
+                    corner_style,
+                    filled_sides,
+                    roles,
+                    policy,
+                );
+            }
         }
 
         // Union the exact span and corner bands first, then apply the complete
@@ -7651,4 +7673,136 @@ fn certified_measurement<T>(value: T) -> CurveOutcome<Classification<Option<T>>>
         Classification::Decided(Some(value)),
         CurveCertainty::Certified,
     )
+}
+
+/// Whether a hole loop is one circle whose radius exceeds `distance`. Its
+/// dilation is then the concentric circle of radius `r - distance`, which the
+/// boundary walk represents exactly. Any other loop, an undecided comparison
+/// or an inspection failure returns false and selects the general route.
+fn hole_loop_is_circle_wider_than(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> bool {
+    let equal =
+        |left: &Real, right: &Real| real_sign(&(left - right), policy) == Some(RealSign::Zero);
+    let mut circle: Option<(Point2, Real)> = None;
+    for fragment in boundary_loop.fragments() {
+        // A retained supporting-circle certificate already names the circle;
+        // other fragments go through the general native arc recognizer.
+        let (center, radius_squared) = match fragment {
+            BezierSplitFragment2::Materialized {
+                curve: BezierSubcurve2::RationalQuadratic(curve),
+                ..
+            } if curve.retained_circular_conic().is_some() => {
+                let support = curve.retained_circular_conic().expect("checked above");
+                (support.center.clone(), support.radius_squared.clone())
+            }
+            _ => {
+                let Ok(Classification::Decided(Segment2::Arc(arc))) =
+                    retained_native_fragment_segment(fragment, policy)
+                else {
+                    return false;
+                };
+                (arc.center().clone(), arc.radius_squared_ref().clone())
+            }
+        };
+        match &circle {
+            None => circle = Some((center, radius_squared)),
+            Some((first_center, first_radius_squared)) => {
+                if !equal(first_center.x(), center.x())
+                    || !equal(first_center.y(), center.y())
+                    || !equal(first_radius_squared, &radius_squared)
+                {
+                    return false;
+                }
+            }
+        }
+    }
+    circle.is_some_and(|(_, radius_squared)| {
+        real_sign(&(radius_squared - distance * distance), policy) == Some(RealSign::Positive)
+    })
+}
+
+/// Whether a hole loop is a strictly convex polygon whose inward parallels at
+/// `distance` all keep positive length in their original direction. The
+/// inward offset of a convex polygon is the intersection of its shifted edge
+/// half-planes; when no trimmed edge vanishes or reverses, the boundary walk's
+/// loop is exactly that polygon. Any other loop, an undecided sign or an
+/// inspection failure returns false and selects the general route.
+fn hole_loop_is_convex_polygon_wider_than(
+    boundary_loop: &CurveRegionBoundaryLoop2,
+    distance: &Real,
+    policy: &CurveContext,
+) -> bool {
+    let positive = |value: &Real| real_sign(value, policy) == Some(RealSign::Positive);
+    let cross = |a: &(Real, Real), b: &(Real, Real)| &a.0 * &b.1 - &a.1 * &b.0;
+    let mut starts = Vec::new();
+    let mut directions = Vec::new();
+    for fragment in boundary_loop.fragments() {
+        let Ok(Classification::Decided(Segment2::Line(line))) =
+            retained_native_fragment_segment(fragment, policy)
+        else {
+            return false;
+        };
+        let (start, end) = (line.start(), line.end());
+        starts.push((start.x().clone(), start.y().clone()));
+        directions.push((end.x() - start.x(), end.y() - start.y()));
+    }
+    let count = directions.len();
+    if count < 3 {
+        return false;
+    }
+    // A simple loop whose turns all share one strict sign is convex; that sign
+    // is its orientation.
+    let turn = |index: usize| cross(&directions[index], &directions[(index + 1) % count]);
+    let counterclockwise = positive(&turn(0));
+    if !(0..count).all(|index| {
+        let turn = turn(index);
+        if counterclockwise {
+            positive(&turn)
+        } else {
+            positive(&-turn)
+        }
+    }) {
+        return false;
+    }
+    // Each edge line moves by `distance` along its unit normal into the hole.
+    let mut shifted = Vec::with_capacity(count);
+    for ((x, y), (dx, dy)) in starts.iter().zip(&directions) {
+        let Ok(length) = (dx * dx + dy * dy).sqrt() else {
+            return false;
+        };
+        let Ok(scale) = distance / &length else {
+            return false;
+        };
+        let (nx, ny) = if counterclockwise {
+            (-dy.clone(), dx.clone())
+        } else {
+            (dy.clone(), -dx.clone())
+        };
+        shifted.push((x + &nx * &scale, y + &ny * &scale));
+    }
+    // Corner `index` is where shifted edge `index - 1` meets shifted edge `index`.
+    let mut corners = Vec::with_capacity(count);
+    for index in 0..count {
+        let previous = (index + count - 1) % count;
+        let delta = (
+            &shifted[index].0 - &shifted[previous].0,
+            &shifted[index].1 - &shifted[previous].1,
+        );
+        let Ok(parameter) = cross(&delta, &directions[index]) / turn(previous) else {
+            return false;
+        };
+        corners.push((
+            &shifted[previous].0 + &directions[previous].0 * &parameter,
+            &shifted[previous].1 + &directions[previous].1 * &parameter,
+        ));
+    }
+    (0..count).all(|index| {
+        let next = (index + 1) % count;
+        let along = &(&corners[next].0 - &corners[index].0) * &directions[index].0
+            + &(&corners[next].1 - &corners[index].1) * &directions[index].1;
+        positive(&along)
+    })
 }

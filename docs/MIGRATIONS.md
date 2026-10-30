@@ -5,6 +5,21 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Dilation of regions with holes
+
+`CurveRegion2::offset` with a positive distance now builds the result from the
+exact boundary bands, as contraction already did, when a region has a hole
+that is not certified to survive. The previous boundary walk kept a hole whose
+parallels had crossed: an annulus, square or slot hole dilated to or beyond its
+half-width, a channel that should close between two surviving lobes, or a
+convex hole edge that vanishes first. Those results were wrong and are now
+correct. Circular holes wider than the distance, and strictly convex polygonal
+holes whose shifted edges all keep positive length, still use the walk and
+their existing representation, as do hole-free regions. Other dilations with
+holes describe the same set as before when that set was already correct, but
+their boundary may be split or ordered differently, so serialized bytes can
+change.
+
 ## Cooperative cancellation of budgeted work
 
 `WorkKind` has a new `Cancellation` variant; exhaustive matches on it must

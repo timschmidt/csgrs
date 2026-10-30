@@ -6,7 +6,7 @@
     "General algebraic coefficients and arbitrary-degree implicit region admission and operations.",
     "Native save/reload beyond the demonstrated source and selected generated carriers remains open. Version 5 preserves the named filled-region chains. The selected-circle corner fixtures now complete chamfer or constrained fillet, reconstruction, exact replay and round dilation/contraction; named translated-circle and nonincident-line contacts and rotated overlaps also complete. General independent angular/coefficient fields, other circle frames and arbitrary implicit regions remain open.",
     "Complete nonrational ellipse, parabola and PH offset chains, singular events and overlap correspondences.",
-    "Invalid operands paired with canonical empty, full disappearance chains and all hole/disconnected configurations.",
+    "Invalid operands paired with canonical empty, disappearance chains beyond the named circle, polygon and dumbbell witnesses, and all hole/disconnected configurations.",
     "Total arithmetic, coefficient/system growth and retained-memory limits. Cooperative cancellation is observed only at instrumented work units, so it does not bound uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
@@ -16159,6 +16159,274 @@
       ],
       "oracle": "The public outer receipt kind, admitted usage, and contacts equal to an independent fresh unbudgeted intersection of newly constructed curves.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "disappearing_disk_empty_composition",
+      "target": "disappearance_chains",
+      "test": "eroded_disk_disappears_and_its_empty_result_composes",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A native disk of radius 2 eroded by 5/2 and by exactly 2, then combined with an authored square.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CircularArc",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Erosion past or exactly to the inradius is the canonical empty region, which is the identity or absorbing operand of each Boolean, stays empty under offsets and reconstructs from no boundary paths.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "successful_empty",
+          "assertion": "Both erosions return the canonical empty region."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Union, intersection, both differences and XOR with the square equal their exact identities in both operand orders."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "successful_empty",
+          "assertion": "The empty result exports no boundary paths and rebuilds as empty."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "disappearing_annulus_hole",
+      "target": "disappearance_chains",
+      "test": "dilation_fills_a_hole_that_erosion_does_not_restore",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "An annulus with radii 1 and 3 dilated by 1/2, by exactly the hole radius and by 2, then eroded back.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Dilation fills a hole at and past its radius; erosion afterwards gives a disk, not the annulus.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Dilations by 1 and 2 equal disks of radius 4 and 5; the 1/2 dilation keeps area 12 pi."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Eroding each filled disk back gives the radius-3 disk, which differs from the annulus."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "disappearing_component",
+      "target": "disappearance_chains",
+      "test": "erosion_removes_one_disconnected_component",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "Disjoint native disks of radii 1 and 3 eroded by 2 and dilated back by 2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Erosion removes one component of a disconnected region; dilation restores only the surviving one.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "The erosion equals the radius-1 disk about the larger center."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Dilating back equals the radius-3 disk alone."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "disappearing_polygonal_holes",
+      "target": "disappearance_chains",
+      "test": "polygonal_holes_close_at_and_past_their_half_width",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 16x16 square frame with a 2x2 square hole or a 6x2 slot hole, dilated by 1/2, 1 and 2 with round corners.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A polygonal hole closes once the dilation reaches its half-width, although its raw parallels cross and keep the hole's orientation.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Dilations by 1 and 2 equal the rounded outer square with no hole; the 1/2 dilation keeps two loops."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "surviving_hole_corner_styles",
+      "target": "disappearance_chains",
+      "test": "surviving_hole_keeps_each_corner_style",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 10x10 square frame with a 4x4 square hole dilated by 1 with round, miter (limit 4) and bevel corners.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Dilation of a region with a surviving hole keeps sharp hole corners and the requested outer corner convention.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Each style equals its authored outer boundary with the 2x2 hole."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "dumbbell_hole_channel",
+      "target": "disappearance_chains",
+      "test": "dumbbell_hole_channel_closes_while_its_lobes_survive",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 20x20 square frame with a dumbbell hole of two 4x4 lobes and a width-2 channel, dilated by 3/2 and by 2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The channel closes while each lobe survives as the points at distance at least 3/2 from the hole boundary; at distance 2 the lobes collapse to points and vanish.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "The 3/2 dilation equals the rounded frame minus two lobes bounded by lines and arcs of radius 3/2 about the channel-mouth corners, with three boundary loops; the 2 dilation equals the rounded frame alone."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "convex_hole_vanishing_edge",
+      "target": "disappearance_chains",
+      "test": "convex_hole_edge_vanishes_before_the_hole_closes",
+      "owner": "Hypercurve exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "A 16x16 square frame with an 8x8 square hole whose corner is cut by the edge from (4,3) to (3,4), dilated by 1 and by 2.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "A convex hole edge that vanishes before the hole closes is removed; a surviving cut edge keeps its exact algebraic endpoints.",
+      "claims": [
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Distance 1 equals the rounded frame minus the hole with corners (3, 4 - sqrt 2) and (4 - sqrt 2, 3); distance 2 equals the rounded frame minus the 4x4 square."
+        }
+      ],
+      "oracle": "Independently authored exact regions (circles, rounded squares, polygons and algebraic lobe boundaries with sqrt 2 and sqrt(5)/2 endpoints) compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
     }
   ]
 }
