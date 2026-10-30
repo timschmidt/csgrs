@@ -89,6 +89,13 @@ impl GraphEncoder {
         &mut self,
         point: &hypercurve::CurvePoint2,
     ) -> Result<RawPlanarPoint, PersistenceError> {
+        super::grow_stack(|| self.planar_point_unbounded(point))
+    }
+
+    fn planar_point_unbounded(
+        &mut self,
+        point: &hypercurve::CurvePoint2,
+    ) -> Result<RawPlanarPoint, PersistenceError> {
         // This call-local encoder owns the immutable identities in its memo.
         // Identity only reuses an encoded definition; it proves no new equality.
         if let Some((_, index)) = self
@@ -218,6 +225,13 @@ impl GraphEncoder {
 
 impl SelectionGraph {
     pub(super) fn planar_point(
+        &self,
+        raw: RawPlanarPoint,
+    ) -> Result<hypercurve::CurvePoint2, PersistenceError> {
+        super::grow_stack(|| self.planar_point_unbounded(raw))
+    }
+
+    fn planar_point_unbounded(
         &self,
         raw: RawPlanarPoint,
     ) -> Result<hypercurve::CurvePoint2, PersistenceError> {

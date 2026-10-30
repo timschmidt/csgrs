@@ -26,6 +26,14 @@ mod polynomial;
 use polynomial::{RawPolynomialBranch, RawPolynomialSource};
 mod selection;
 mod spatial_points;
+
+// Selected point and parameter definitions recurse once per dependency level
+// when they are encoded or replayed. Grow the stack on demand so admitted
+// graph depth, not the caller's thread stack or the build profile's frame
+// sizes, bounds those walks.
+fn grow_stack<T>(walk: impl FnOnce() -> T) -> T {
+    stacker::maybe_grow(64 * 1024, 1024 * 1024, walk)
+}
 use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 use spatial_points::{RawSpatialPoint, RawSurfacePoint};

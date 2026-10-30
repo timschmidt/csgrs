@@ -100,6 +100,13 @@ impl GraphEncoder {
         &mut self,
         parameter: &hypercurve::CurveParameter2,
     ) -> Result<RawParameter, PersistenceError> {
+        super::grow_stack(|| self.curve_parameter_unbounded(parameter))
+    }
+
+    fn curve_parameter_unbounded(
+        &mut self,
+        parameter: &hypercurve::CurveParameter2,
+    ) -> Result<RawParameter, PersistenceError> {
         if let Some(form) = parameter.rational_form_source() {
             let point = Box::new(self.planar_point(form.source())?);
             return Ok(RawParameter::Selected(self.selection(
@@ -403,6 +410,13 @@ impl SelectionGraph {
     }
 
     pub(super) fn curve_parameter(
+        &self,
+        raw: RawParameter,
+    ) -> Result<hypercurve::CurveParameter2, PersistenceError> {
+        super::grow_stack(|| self.curve_parameter_unbounded(raw))
+    }
+
+    fn curve_parameter_unbounded(
         &self,
         raw: RawParameter,
     ) -> Result<hypercurve::CurveParameter2, PersistenceError> {
