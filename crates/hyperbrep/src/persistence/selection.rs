@@ -32,7 +32,9 @@ pub(super) enum RawPointSource {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
-enum RawSelection {
+pub(super) enum RawSelection {
+    PlanarPoint(Box<RawPlanarPoint>),
+    Chord(Box<[RawPlanarPoint; 2]>),
     RationalForm {
         point: Box<RawPlanarPoint>,
         numerator: Vec<Vec<Real>>,
@@ -69,7 +71,7 @@ pub(super) struct GraphEncoder {
     point_sources: HashMap<usize, RawPointSource>,
     pcurve_sources: HashMap<String, usize>,
     pub(super) polynomial_sources: HashMap<String, usize>,
-    pub(super) polynomial_roots: Vec<(hypercurve::CurvePoint2, RawPlanarPoint)>,
+    pub(super) planar_points: Vec<(hypercurve::CurvePoint2, usize)>,
 }
 
 impl GraphEncoder {
@@ -160,7 +162,7 @@ impl GraphEncoder {
         })
     }
 
-    fn selection(&mut self, raw: RawSelection) -> Result<usize, PersistenceError> {
+    pub(super) fn selection(&mut self, raw: RawSelection) -> Result<usize, PersistenceError> {
         let key = serde_json::to_string(&raw)
             .map_err(|error| PersistenceError::Json(error.to_string()))?;
         if let Some(index) = self.selections.get(&key) {
@@ -208,10 +210,13 @@ impl GraphEncoder {
             && curve.geometry().is_none()
             && curve.source_restriction().is_none()
         {
-            return Ok(RawPcurve::Chord {
-                start: Box::new(self.planar_point(&curve.start())?),
-                end: Box::new(self.planar_point(&curve.end())?),
-            });
+            let endpoints = [
+                self.planar_point(&curve.start())?,
+                self.planar_point(&curve.end())?,
+            ];
+            return Ok(RawPcurve::ChordReference(
+                self.selection(RawSelection::Chord(Box::new(endpoints)))?,
+            ));
         }
         if let Some(view) = curve.analytic_parallel() {
             return Ok(RawPcurve::AnalyticParallel(Box::new(RawParallelPcurve {
@@ -247,8 +252,14 @@ impl GraphEncoder {
     }
 }
 
+enum SelectedGeometry {
+    Parameter(hypercurve::CurveParameter2),
+    Point(hypercurve::CurvePoint2),
+    Chord(Curve2),
+}
+
 pub(super) struct SelectionGraph {
-    parameters: Vec<hypercurve::CurveParameter2>,
+    definitions: Vec<SelectedGeometry>,
     point_sources: Vec<Curve3>,
     pub(super) pcurve_sources: Vec<Curve2>,
     pub(super) polynomial_sources: Vec<hypercurve::PolynomialCurveSet2>,
@@ -257,7 +268,7 @@ pub(super) struct SelectionGraph {
 impl SelectionGraph {
     pub(super) fn validate(raw: RawSelectionGraph) -> Result<Self, PersistenceError> {
         let mut graph = Self {
-            parameters: Vec::with_capacity(raw.parameters.len()),
+            definitions: Vec::with_capacity(raw.parameters.len()),
             point_sources: Vec::new(),
             pcurve_sources: Vec::new(),
             polynomial_sources: raw
@@ -270,6 +281,21 @@ impl SelectionGraph {
         for selection in raw.parameters {
             let is_root = matches!(&selection, RawSelection::Root { .. });
             let value = match selection {
+                RawSelection::PlanarPoint(point) => {
+                    let point = graph.planar_point(*point)?;
+                    graph.definitions.push(SelectedGeometry::Point(point));
+                    roots.push(false);
+                    continue;
+                }
+                RawSelection::Chord(points) => {
+                    let [start, end] = *points;
+                    let chord =
+                        Curve2::try_line(graph.planar_point(start)?, graph.planar_point(end)?)
+                            .map_err(GeometryError::from)?;
+                    graph.definitions.push(SelectedGeometry::Chord(chord));
+                    roots.push(false);
+                    continue;
+                }
                 RawSelection::Root {
                     polynomial,
                     interval: [start, end],
@@ -295,7 +321,8 @@ impl SelectionGraph {
                             index: root,
                         });
                     }
-                    graph.parameters[root]
+                    graph
+                        .curve_parameter(RawParameter::Selected(root))?
                         .as_bezier_parameter()
                         .ok_or(GeometryError::UnrepresentableParameter)?
                         .projective_image(&numerator, &denominator)
@@ -324,7 +351,7 @@ impl SelectionGraph {
                     .parameter()
                     .map_err(GeometryError::from)?,
             };
-            graph.parameters.push(value);
+            graph.definitions.push(SelectedGeometry::Parameter(value));
             roots.push(is_root);
         }
         for raw in raw.pcurve_sources {
@@ -348,6 +375,29 @@ impl SelectionGraph {
         Ok(graph)
     }
 
+    pub(super) fn point_reference(
+        &self,
+        index: usize,
+    ) -> Result<hypercurve::CurvePoint2, PersistenceError> {
+        match self.definitions.get(index) {
+            Some(SelectedGeometry::Point(point)) => Ok(point.clone()),
+            _ => Err(PersistenceError::InvalidReference {
+                kind: "planar point",
+                index,
+            }),
+        }
+    }
+
+    pub(super) fn chord_reference(&self, index: usize) -> Result<Curve2, PersistenceError> {
+        match self.definitions.get(index) {
+            Some(SelectedGeometry::Chord(curve)) => Ok(curve.clone()),
+            _ => Err(PersistenceError::InvalidReference {
+                kind: "chord",
+                index,
+            }),
+        }
+    }
+
     pub(super) fn parameter(&self, raw: RawParameter) -> Result<Parameter, PersistenceError> {
         Ok(Parameter::from_curve(&self.curve_parameter(raw)?)?)
     }
@@ -358,15 +408,17 @@ impl SelectionGraph {
     ) -> Result<hypercurve::CurveParameter2, PersistenceError> {
         match raw {
             RawParameter::Scalar(value) => Ok(value.into()),
-            RawParameter::Selected(index) => {
-                self.parameters
-                    .get(index)
-                    .cloned()
-                    .ok_or(PersistenceError::InvalidReference {
-                        kind: "selected parameter",
-                        index,
-                    })
-            }
+            RawParameter::Selected(index) => self
+                .definitions
+                .get(index)
+                .and_then(|value| match value {
+                    SelectedGeometry::Parameter(value) => Some(value.clone()),
+                    _ => None,
+                })
+                .ok_or(PersistenceError::InvalidReference {
+                    kind: "selected parameter",
+                    index,
+                }),
         }
     }
 

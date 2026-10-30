@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{Curve2, CurvePoint2, Point2 as Uv};
 use std::cmp::Ordering;
@@ -359,7 +361,7 @@ pub fn selected_domains_and_archive_admission() {
         .unwrap();
     let model = builder.finish().unwrap();
     let raw: serde_json::Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
-    assert_eq!(raw["version"], 14);
+    assert_eq!(raw["version"], 15);
     let mut old = raw.clone();
     old["version"] = 10.into();
     assert!(matches!(
@@ -428,15 +430,15 @@ pub fn selected_domains_and_archive_admission() {
         builder.curve(curve).unwrap();
         let model = builder.finish().unwrap();
         let mut raw: serde_json::Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
-        let record = raw["curves"][0]
-            .as_object_mut()
-            .unwrap()
-            .values_mut()
-            .next()
-            .unwrap();
-        let image = &mut record["origin"]["SurfaceImage"];
-        assert!(image["parameter"].get("PolynomialFiber").is_some());
-        image["source"]["Plane"]["origin"][0] = "invalid scalar behind sweep origin gate".into();
+        let kind = raw["curves"][0].as_object().unwrap().keys().next().unwrap();
+        let image_path = format!("/curves/0/{kind}/origin/SurfaceImage");
+        assert!(
+            archive_graph::at(&raw, &format!("{image_path}/parameter"))
+                .get("PolynomialFiber")
+                .is_some()
+        );
+        archive_graph::at_mut(&mut raw, &image_path)["source"]["Plane"]["origin"][0] =
+            "invalid scalar behind sweep origin gate".into();
         assert!(matches!(
             RawModel::from_json(
                 &raw.to_string(),
@@ -454,8 +456,10 @@ pub fn selected_domains_and_archive_admission() {
         replay(&model);
     }
     let mut wrong_selector = raw;
-    wrong_selector["vertices"][0]["SurfaceImage"]["parameter"]["PolynomialFiber"]["interval"] =
-        serde_json::json!([Real::from(3), Real::from(4)]);
+    archive_graph::at_mut(
+        &mut wrong_selector,
+        "/vertices/0/SurfaceImage/parameter/PolynomialFiber",
+    )["interval"] = serde_json::json!([Real::from(3), Real::from(4)]);
     assert!(matches!(
         RawModel::from_json(&wrong_selector.to_string(), &ArchiveLimits::default())
             .unwrap()

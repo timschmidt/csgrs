@@ -7,7 +7,7 @@ use super::PersistenceError;
 /// Caller-selected bounds checked before exact scalar/geometry deserialization.
 ///
 /// Syntax limits count the borrowed input, including unknown fields. Record
-/// limits inspect version 14 metadata without decoding coordinate values.
+/// limits inspect version 15 metadata without decoding coordinate values.
 /// They do not bound scalar arithmetic, allocations during scalar
 /// reconstruction, geometry validation, elapsed time, or native stack usage.
 /// Increasing a limit permits retry without changing exact geometry semantics.
@@ -18,12 +18,17 @@ pub struct ArchiveLimits {
     pub input_bytes: usize,
     /// Maximum simultaneous open JSON objects and arrays; the root counts as one.
     pub nesting_depth: usize,
+    /// Maximum logical dependency depth within the selected-definition graph.
+    /// Leaves have depth zero. Point constructions, queries and chords add one;
+    /// references reuse the referenced depth. This differs from JSON nesting.
+    pub dependency_depth: usize,
     /// Maximum opening containers, strings (including keys), and primitive values.
     ///
     /// Closing brackets, commas, colons and whitespace do not count. A quoted
     /// string or a number/boolean/null lexeme counts once, regardless of length.
     pub tokens: usize,
     /// Total topology/geometry records, selected parameters and source records.
+    /// Shared point/chord definitions and their encoded reference occurrences count.
     /// Inline extrusion/revolution profiles, rotation origins and
     /// analytic-parallel sources count as additional geometry records.
     pub records: usize,
@@ -47,7 +52,8 @@ pub struct ArchiveLimits {
 }
 
 impl Default for ArchiveLimits {
-    /// Allows 16 MiB, 1,024 nested containers, 1,000,000 syntax tokens,
+    /// Allows 16 MiB, 1,024 nested containers, selected dependency depth 64,
+    /// 1,000,000 syntax tokens,
     /// 250,000 records, degree 256, individual solver controls of 1,024,
     /// and 1,000,000 geometry elements and
     /// variable topology references each.
@@ -56,6 +62,7 @@ impl Default for ArchiveLimits {
         Self {
             input_bytes: 16 * 1024 * 1024,
             nesting_depth: 1024,
+            dependency_depth: 64,
             tokens: 1_000_000,
             records: 250_000,
             degree: 256,
@@ -73,6 +80,8 @@ pub enum ArchiveResource {
     InputBytes,
     /// Simultaneously open JSON containers.
     NestingDepth,
+    /// Longest logical dependency path in the selected-definition graph.
+    DependencyDepth,
     /// JSON containers, strings and primitive lexemes.
     Tokens,
     /// Topology/geometry and selected-graph records, including inline profiles.

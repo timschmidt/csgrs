@@ -30,7 +30,7 @@ use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 use spatial_points::{RawSpatialPoint, RawSurfacePoint};
 
-const FORMAT_VERSION: u32 = 14;
+const FORMAT_VERSION: u32 = 15;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -645,6 +645,7 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    ChordReference(usize),
     PolynomialBranch(Box<RawPolynomialBranch>),
     Chord {
         start: Box<RawPlanarPoint>,
@@ -702,7 +703,8 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         }
         RawPcurve::QuadraticBezier(points) => points[0] = start,
         RawPcurve::CubicBezier(points) => points[0] = start,
-        RawPcurve::PolynomialBranch(_)
+        RawPcurve::ChordReference(_)
+        | RawPcurve::PolynomialBranch(_)
         | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
@@ -729,7 +731,8 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         }
         RawPcurve::QuadraticBezier(points) => points[2] = end,
         RawPcurve::CubicBezier(points) => points[3] = end,
-        RawPcurve::PolynomialBranch(_)
+        RawPcurve::ChordReference(_)
+        | RawPcurve::PolynomialBranch(_)
         | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
@@ -1382,6 +1385,7 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::ChordReference(index) => graph.chord_reference(index),
         RawPcurve::PolynomialBranch(branch) => branch.into_curve(graph),
         RawPcurve::Chord { start, end } => Ok(Curve2::try_line(
             graph.planar_point(*start)?,

@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval, BezierParameterPolynomial,
@@ -398,8 +400,10 @@ pub fn rational_surface_policy_and_admission() {
         }))
     ));
     let mut bad_selector = raw;
-    bad_selector["vertices"][0]["SurfaceImage"]["parameter"]["PolynomialFiber"]["interval"] =
-        serde_json::json!([Real::from(3), Real::from(4)]);
+    archive_graph::at_mut(
+        &mut bad_selector,
+        "/vertices/0/SurfaceImage/parameter/PolynomialFiber",
+    )["interval"] = serde_json::json!([Real::from(3), Real::from(4)]);
     assert!(matches!(
         RawModel::from_json(&bad_selector.to_string(), &ArchiveLimits::default())
             .unwrap()

@@ -149,7 +149,7 @@ fn raw_import_rejects_invalid_references_during_validation() {
 #[test]
 fn raw_import_handles_deep_untrusted_json_on_a_growing_stack() {
     let mut json = String::from(
-        r#"{"version":14,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[],"polynomial_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
+        r#"{"version":15,"selection":{"parameters":[],"point_sources":[],"pcurve_sources":[],"polynomial_sources":[]},"vertices":[],"curves":[],"pcurves":[],"surfaces":[],"edges":[],"edge_uses":[],"wires":[],"faces":[],"shells":[],"solids":[],"ignored":"#,
     );
     for _ in 0..512 {
         json.push('[');
@@ -388,6 +388,10 @@ fn raw_import_revalidates_nonplanar_geometry_fields() {
 
 #[test]
 fn format_envelope_rejects_old_versions_before_decoding_their_schema() {
+    assert!(matches!(
+        ImportedModel::from_json(r#"{"version":14}"#, &crate::ArchiveLimits::default()),
+        Err(PersistenceError::UnsupportedVersion(14))
+    ));
     assert!(matches!(
         ImportedModel::from_json(r#"{"version":8}"#, &crate::ArchiveLimits::default()),
         Err(PersistenceError::UnsupportedVersion(8))

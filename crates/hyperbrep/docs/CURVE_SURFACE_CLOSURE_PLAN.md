@@ -156,14 +156,14 @@ The restriction is deeper than changing coordinates automatically: lifting the U
 | Generic stitching | Important paths still demand materialized points and Real-valued trim endpoints |
 | Solid admission | Curved shells still require family/construction certificates; general compositional embedding remains open |
 | Solid modeling edits | General offset, shelling/thickening, fillet and chamfer APIs are planned, rather than exported completed operations |
-| Native persistence | Version 14 retains polynomial branches, planar lifts, selected points and parallel pcurves; general spatial relation replay remains a target |
+| Native persistence | Version 15 retains polynomial branches, planar lifts, selected points and parallel pcurves; general spatial relation replay remains a target |
 | Resources | Shared refinement/promotion scopes and archive input limits exist; complete work, heap and cancellation coverage does not |
 
 The carrier inventory comes from `Curve3Kind` and `SurfaceKind`, not an assumption that every listed family is accepted by every operation. The spatial curve list includes AffineImage, Rotation, Translation, PlanarImage, Line, RationalBezier, Nurbs, CircleArc and EllipseArc. A planar lift can already carry a nonrational Hypercurve polynomial branch or analytic parallel. [R1, R2]
 
 The plane/tensor fallback is a substantial existing foundation. It pulls the plane equation into UV, decomposes the entire parameter rectangle, retains isolated points and all admitted branches, certifies the projected image, then returns a spatial planar lift with both pcurves. Tests include an interior closed loop, disconnected and singular sections, a folded-image refusal, and resource recovery. Its whole-rectangle injectivity prerequisite and finite-fiber solver restrictions remain real limits. General NURBS and patch-pair support cannot be inferred from this increment. [R3, R15, R16]
 
-Do not plan to introduce exact normals, selected points, or native polynomial replay from scratch. These exist. The remaining work is their consumption across broader fields, angular and singular charts, nonplanar branches, stitching and subsequent operations. Some older support-matrix statements are superseded by current code and the version-14 archive contract. [R6, R10]
+Do not plan to introduce exact normals, selected points, or native polynomial replay from scratch. These exist. The remaining work is their consumption across broader fields, angular and singular charts, nonplanar branches, stitching and subsequent operations. Some older support-matrix statements are superseded by current code and the [current archive contract](SELECTED_ARCHIVE.md); R10 records its version-14 predecessor. [R6, R10]
 
 The curve/surface dispatcher is narrower than the carrier vocabulary: rational Bézier/NURBS and planar-image curves have plane-section paths, selected circle pairs have specializations, and lines intersect planes, spheres, cylinders and cones. Line/torus and general curve/tensor cases remain unsupported. A new surface-intersection carrier must also support incidence with further curves and surfaces before it can serve as a reusable edge. [R20]
 

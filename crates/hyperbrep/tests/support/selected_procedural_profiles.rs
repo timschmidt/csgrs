@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
@@ -655,6 +657,13 @@ pub fn selected_profile_archives_reject_forged_proofs_and_recover() {
         RawModel::from_json(&value.to_string(), &ArchiveLimits::default())
             .and_then(RawModel::validate)
     };
+    let affine_index = good["selection"]["parameters"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .position(|p| p.get("AffineForm").is_some())
+        .unwrap();
+    let parallel = format!("/selection/parameters/{affine_index}/AffineForm/point/Parallel");
     for mode in 0..7 {
         let mut raw = good.clone();
         match mode {
@@ -674,22 +683,14 @@ pub fn selected_profile_archives_reject_forged_proofs_and_recover() {
                 first_record_mut(&mut raw["selection"], "AffineForm").unwrap()["coefficients"][2] =
                     json!(Real::from(99))
             }
-            4 => {
-                first_record_mut(&mut raw["selection"], "AffineForm").unwrap()["point"]["Parallel"]
-                    ["distance"] = json!(Real::from(2))
-            }
+            4 => archive_graph::at_mut(&mut raw, &parallel)["distance"] = json!(Real::from(2)),
             5 => {
-                first_record_mut(&mut raw["selection"], "AffineForm").unwrap()["point"]["Parallel"]
-                    ["parameter"] = json!({"Selected":1000000})
+                archive_graph::at_mut(&mut raw, &parallel)["parameter"] =
+                    json!({"Selected":1000000})
             }
             _ => {
-                let parameters = raw["selection"]["parameters"].as_array_mut().unwrap();
-                let (index, form) = parameters
-                    .iter_mut()
-                    .enumerate()
-                    .find_map(|(i, p)| p.get_mut("AffineForm").map(|f| (i, f)))
-                    .unwrap();
-                form["point"]["Parallel"]["parameter"] = json!({"Selected":index});
+                archive_graph::at_mut(&mut raw, &parallel)["parameter"] =
+                    json!({"Selected":affine_index});
             }
         }
         let result = admit(&raw);

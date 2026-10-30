@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::{
     ArchiveLimitExceeded, ArchiveLimits, ArchiveResource, BuildError, GeometryError, ModelBuilder,
     Pcurve, PersistenceError, RawModel, Real,
@@ -41,11 +43,12 @@ pub fn polynomial_point_archive_admission_and_replay() {
     let mut builder = ModelBuilder::new();
     builder.pcurve(Pcurve::new(curve)).unwrap();
     let json = builder.finish().unwrap().to_json().unwrap();
-    // One selected root, one pcurve and two endpoint definitions. The
+    // Four graph definitions, two chord endpoint references and one pcurve
+    // reference make seven records. The
     // polynomial stores two row headers and five coefficients; the base adds
     // three coefficients. These limits apply before scalar decoding.
     let exact = ArchiveLimits {
-        records: 4,
+        records: 7,
         degree: 3,
         geometry_elements: 10,
         topology_references: 0,
@@ -73,11 +76,11 @@ pub fn polynomial_point_archive_admission_and_replay() {
     for (limits, resource, expected) in [
         (
             ArchiveLimits {
-                records: 3,
+                records: 6,
                 ..exact
             },
             ArchiveResource::Records,
-            4,
+            7,
         ),
         (
             ArchiveLimits { degree: 2, ..exact },
@@ -103,8 +106,10 @@ pub fn polynomial_point_archive_admission_and_replay() {
     let raw: serde_json::Value = serde_json::from_str(&json).unwrap();
     for axis in 0..2 {
         let mut malformed = raw.clone();
-        let equation =
-            &mut malformed["pcurves"][0]["Chord"]["start"]["PolynomialFiber"]["equation"];
+        let equation = &mut archive_graph::at_mut(
+            &mut malformed,
+            "/pcurves/0/Chord/start/PolynomialFiber",
+        )["equation"];
         *equation = if axis == 0 {
             serde_json::json!([["invalid scalar"], [], [], [], []])
         } else {
@@ -121,7 +126,7 @@ pub fn polynomial_point_archive_admission_and_replay() {
     }
     for forged in [false, true] {
         let mut bad = raw.clone();
-        let definition = &mut bad["pcurves"][0]["Chord"]["start"]["PolynomialFiber"];
+        let definition = archive_graph::at_mut(&mut bad, "/pcurves/0/Chord/start/PolynomialFiber");
         if forged {
             definition["exact_root"] = serde_json::to_value(Real::one()).unwrap();
         } else {

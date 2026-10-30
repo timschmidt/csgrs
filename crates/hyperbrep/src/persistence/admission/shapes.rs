@@ -2,6 +2,9 @@
 
 use super::*;
 
+mod dependency_depth;
+use dependency_depth::Parameter;
+
 pub(super) struct Count(pub(super) usize);
 impl<'de> Deserialize<'de> for Count {
     fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
@@ -177,8 +180,11 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    ChordReference(usize),
     PolynomialBranch {
         maps: RationalMaps,
+        #[serde(default)]
+        range: Option<[Parameter; 2]>,
     },
     Chord {
         start: Box<PlanarPoint>,
@@ -188,8 +194,13 @@ pub(super) enum Pcurve {
     CubicBezier(Count),
     AnalyticParallel {
         source: ParallelSource,
+        #[serde(default)]
+        range: Option<[Parameter; 2]>,
     },
-    SourceRange(IgnoredAny),
+    SourceRange {
+        #[serde(default)]
+        range: Option<[Parameter; 2]>,
+    },
     Line(IgnoredAny),
     CircularArc(IgnoredAny),
     RationalBezier {
@@ -208,7 +219,8 @@ pub(super) enum Pcurve {
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
-            Self::PolynomialBranch { maps } => maps.admit(budget),
+            Self::ChordReference(_) => Ok(()),
+            Self::PolynomialBranch { maps, .. } => maps.admit(budget),
             Self::Chord { start, end } => {
                 budget.record()?;
                 start.admit(budget)?;
@@ -223,11 +235,11 @@ impl Record for Pcurve {
                 budget.degree(3)?;
                 budget.geometry(count.0)
             }
-            Self::AnalyticParallel { source } => {
+            Self::AnalyticParallel { source, .. } => {
                 budget.record()?;
                 source.admit(budget)
             }
-            Self::SourceRange(_) | Self::Line(_) | Self::CircularArc(_) => Ok(()),
+            Self::SourceRange { .. } | Self::Line(_) | Self::CircularArc(_) => Ok(()),
             Self::RationalBezier {
                 homogeneous_controls,
             } => {
@@ -382,6 +394,8 @@ impl Record for Surface {
 
 #[derive(Deserialize)]
 pub(super) enum Selection {
+    PlanarPoint(Box<PlanarPoint>),
+    Chord(Box<[PlanarPoint; 2]>),
     RationalForm {
         point: Box<PlanarPoint>,
         numerator: Rows,
@@ -393,11 +407,28 @@ pub(super) enum Selection {
     Root {
         polynomial: Count,
     },
-    Image(IgnoredAny),
+    Image {
+        #[serde(default)]
+        root: Option<dependency_depth::Index>,
+    },
 }
 impl Record for Selection {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
+        let depth = self.dependency_depth(&budget.dependency_depths);
+        budget.check(
+            ArchiveResource::DependencyDepth,
+            depth,
+            budget.limits.dependency_depth,
+        )?;
+        budget.dependency_depths.push(depth);
         match self {
+            Self::PlanarPoint(point) => point.admit(budget)?,
+            Self::Chord(points) => {
+                for point in *points {
+                    budget.record()?;
+                    point.admit(budget)?;
+                }
+            }
             Self::Root { polynomial } => {
                 budget.degree(polynomial.0.saturating_sub(1))?;
                 budget.geometry(polynomial.0)?;
@@ -419,7 +450,7 @@ impl Record for Selection {
                 budget.record()?;
                 point.admit(budget)?;
             }
-            Self::Image(_) => {}
+            Self::Image { .. } => {}
         }
         Ok(())
     }
@@ -488,6 +519,7 @@ impl Record for RationalMap {
 
 #[derive(Deserialize)]
 pub(super) enum PlanarPoint {
+    Reference(usize),
     RationalQueryPair {
         sources: Box<[PlanarPoint; 2]>,
         numerators: [Rows; 2],
@@ -499,21 +531,29 @@ pub(super) enum PlanarPoint {
     },
     Coordinates(IgnoredAny),
     SelectedPolynomialRoot {
-        coefficients: Count,
+        coefficients: Vec<Parameter>,
     },
     PolynomialFiber {
         equation: Rows,
+        #[serde(default)]
+        parameter: Option<Parameter>,
     },
     Rational {
         homogeneous_controls: Count,
+        #[serde(default)]
+        parameter: Option<Parameter>,
     },
     RationalExpression {
         x_numerator: Count,
         y_numerator: Count,
         denominator: Count,
+        #[serde(default)]
+        parameter: Option<Parameter>,
     },
     Parallel {
         source: ParallelSource,
+        #[serde(default)]
+        parameter: Option<Parameter>,
     },
     Similarity {
         source: Box<PlanarPoint>,
@@ -530,6 +570,7 @@ pub(super) enum PlanarPoint {
 impl Record for PlanarPoint {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::Reference(_) => Ok(()),
             Self::RationalQueryPair {
                 sources,
                 numerators,
@@ -554,16 +595,17 @@ impl Record for PlanarPoint {
             Self::Coordinates(_) => Ok(()),
             Self::SelectedPolynomialRoot { coefficients } => {
                 // Source queries are admitted once in the selected-parameter DAG.
-                budget.degree(coefficients.0.saturating_sub(1))?;
-                budget.geometry(coefficients.0)
+                budget.degree(coefficients.len().saturating_sub(1))?;
+                budget.geometry(coefficients.len())
             }
-            Self::PolynomialFiber { equation } => {
+            Self::PolynomialFiber { equation, .. } => {
                 budget.degree(equation.rows.saturating_sub(1))?;
                 budget.degree(equation.columns.saturating_sub(1))?;
                 budget.geometry(equation.entries())
             }
             Self::Rational {
                 homogeneous_controls,
+                ..
             } => {
                 budget.degree(homogeneous_controls.0.saturating_sub(1))?;
                 budget.geometry(homogeneous_controls.0)
@@ -572,6 +614,7 @@ impl Record for PlanarPoint {
                 x_numerator,
                 y_numerator,
                 denominator,
+                ..
             } => {
                 for count in [x_numerator.0, y_numerator.0, denominator.0] {
                     budget.degree(count.saturating_sub(1))?;
@@ -579,7 +622,7 @@ impl Record for PlanarPoint {
                 }
                 Ok(())
             }
-            Self::Parallel { source } => {
+            Self::Parallel { source, .. } => {
                 budget.record()?;
                 source.admit(budget)
             }

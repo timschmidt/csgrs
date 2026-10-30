@@ -3231,3 +3231,46 @@ projection succeed under strict/approximate/strict scopes with certified
 consumed decisions. Projected values never supply an exact incidence decision.
 All 11 selected join-retention and 15 SVG point-replay cases pass. Broader
 composition coverage and the archive sharing/depth fix remain separate work.
+
+
+## Review: shared BRep dependencies and depth admission (P2/P5/P6/P15/P18-P20/P26/P35/P36)
+
+Repeated selected chord displacements reproduced exponential inline archive
+expansion: depths three/six used 16,547/129,667 bytes. Version 15 interns point
+and generated-chord definitions in the existing selected graph, reducing the
+same outputs to 5,088/7,707 bytes. Independent endpoints and midpoint incidence
+retain exact meaning; deterministic re-export is checked separately. Typed
+backward references reject cycles, missing definitions and wrong node kinds.
+Original selectors, denominator guards and construction relations are replayed.
+
+A sixty-four-level selected-root graph overflowed a 256 KiB thread stack despite
+JSON nesting of only eleven. Metadata now checks logical selected-definition
+depth before scalar decoding. Default limit 64 rejects observed depth 65,
+including a malformed scalar behind the gate; retry with depth 256 on a 2 MiB
+stack completes the original graph. A twelve-level graph completes import,
+export, validation, exact comparison and drop on the smaller stack. These
+measurements do not bound every construction graph, total work, heap or stack.
+The graph retains one depth integer per definition during admission.
+
+The explicit 14→15 migration preserves the three original cone fixtures apart
+from their header. Inline definitions remain valid in version 15; canonical
+export interns them. Exact quota tests count definition records and encoded
+reference occurrences. Existing forged-selector tests now follow the shared
+definitions and preserve their typed-error expectations. There is no version-14
+compatibility reader; the archive contract documents the migration and limits.
+
+All 684 HyperBRep all-feature tests, 127 downstream IO tests and 23 minimal
+archive tests pass in release with Rust 1.98.1. Strict all-target Clippy passes
+for all/minimal features on MSRV 1.95.0. WASM library checking and strict Clippy
+pass on installed stable. Explicit 1.95/1.98 WASM attempts lacked the target
+component; those failures remain recorded. Documentation with warnings denied,
+formatting and whitespace checks pass. The initial full run's five fixture
+failures and the later inline surface assertion are retained with their fixes.
+Full combined workflow qualification and publication remain pending.
+
+The oblique displacement composition above also passes through the public
+HyperBRep archive: independently derived selected endpoints and midpoint,
+incidence, splitting, a second exact replay and finite projection under
+strict/approximate/strict policies. Display coordinates never supply the
+incidence or splitting proof. This adds a consumer witness without a new
+geometry algorithm; the existing implementation ledger records this increment.

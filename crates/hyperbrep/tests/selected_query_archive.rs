@@ -1,3 +1,5 @@
+#[path = "support/archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{
     BezierParameter2, Curve2, CurveParameter2, CurveParameterRange2, CurvePoint2,
@@ -186,12 +188,14 @@ fn selected_query_model_rejects_original_poles_and_invalid_selectors() {
         let mut bad = raw.clone();
         match mode {
             0 => {
-                bad["pcurves"][0]["Chord"]["start"]["RationalQueryPair"]["denominators"][0] =
-                    json!([[Real::zero()]])
+                archive_graph::at_mut(&mut bad, "/pcurves/0/Chord/start/RationalQueryPair")["denominators"]
+                    [0] = json!([[Real::zero()]])
             }
             1 => {
-                bad["pcurves"][0]["Chord"]["start"]["RationalQueryPair"]["sources"][0]["PolynomialFiber"]
-                    ["interval"] = json!([Real::from(3), Real::from(4)])
+                archive_graph::at_mut(
+                    &mut bad,
+                    "/pcurves/0/Chord/start/RationalQueryPair/sources/0/PolynomialFiber",
+                )["interval"] = json!([Real::from(3), Real::from(4)])
             }
             _ => {
                 let query = bad["selection"]["parameters"]
@@ -241,7 +245,7 @@ fn selected_query_archive_metadata_limits_count_sources_and_polynomials() {
         let mut builder = ModelBuilder::new();
         builder.pcurve(Pcurve::new(curve)).unwrap();
         let text = builder.finish().unwrap().to_json().unwrap();
-        let (records, elements) = if scalar { (4, 5) } else { (5, 10) };
+        let (records, elements) = if scalar { (5, 5) } else { (10, 10) };
         let exact = ArchiveLimits {
             records,
             degree: 1,
@@ -256,11 +260,15 @@ fn selected_query_archive_metadata_limits_count_sources_and_polynomials() {
         assert_eq!(restored.to_json().unwrap(), text);
         let mut malformed: Value = serde_json::from_str(&text).unwrap();
         if scalar {
-            malformed["selection"]["parameters"][0]["RationalForm"]["numerator"][0][0] =
-                json!("invalid scalar");
+            malformed["selection"]["parameters"]
+                .as_array_mut()
+                .unwrap()
+                .iter_mut()
+                .find(|node| node.get("RationalForm").is_some())
+                .unwrap()["RationalForm"]["numerator"][0][0] = json!("invalid scalar");
         } else {
-            malformed["pcurves"][0]["Chord"]["start"]["RationalQueryPair"]["numerators"][0][0][0] =
-                json!("invalid scalar");
+            archive_graph::at_mut(&mut malformed, "/pcurves/0/Chord/start/RationalQueryPair")["numerators"]
+                [0][0][0] = json!("invalid scalar");
         }
         let malformed = malformed.to_string();
         assert!(RawModel::from_json(&malformed, &exact).is_err());

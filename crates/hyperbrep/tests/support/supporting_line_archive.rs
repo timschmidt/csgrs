@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{Curve2, CurveError, CurvePointDefinition2, ExactCurveError, Point2 as Uv};
 use serde_json::{Value, json};
@@ -31,10 +33,13 @@ fn replay(json: &str, limits: &ArchiveLimits) -> Model {
 pub fn supporting_line_archive_limits_and_forgery_recover() {
     let json = model().to_json().unwrap();
     let raw: Value = serde_json::from_str(&json).unwrap();
-    assert!(raw["pcurves"][0]["Chord"]["start"]["SupportingLineIntersection"].is_object());
-    // One pcurve, its two endpoint definitions, and four source endpoints.
+    assert!(
+        archive_graph::at(&raw, "/pcurves/0/Chord/start/SupportingLineIntersection").is_object()
+    );
+    // Five coordinate nodes, one intersection node and four source references,
+    // one chord node with two endpoint references, and its pcurve reference.
     let exact = ArchiveLimits {
-        records: 7,
+        records: 14,
         degree: 0,
         geometry_elements: 0,
         topology_references: 0,
@@ -44,14 +49,14 @@ pub fn supporting_line_archive_limits_and_forgery_recover() {
         RawModel::from_json(
             &json,
             &ArchiveLimits {
-                records: 6,
+                records: 13,
                 ..exact
             }
         ),
         Err(PersistenceError::ResourceLimit(ArchiveLimitExceeded {
             resource: ArchiveResource::Records,
-            limit: 6,
-            observed: 7
+            limit: 13,
+            observed: 14
         }))
     ));
     replay(&json, &exact);
@@ -61,7 +66,10 @@ pub fn supporting_line_archive_limits_and_forgery_recover() {
         (2, CurveError::ParallelLineSupports),
     ] {
         let mut bad = raw.clone();
-        let definition = &mut bad["pcurves"][0]["Chord"]["start"]["SupportingLineIntersection"];
+        let definition = archive_graph::at_mut(
+            &mut bad,
+            "/pcurves/0/Chord/start/SupportingLineIntersection",
+        );
         let p = |x: i32, y: i32| json!({"Coordinates":[Real::from(x),Real::from(y)]});
         match mode {
             0 => definition["first"][1] = definition["first"][0].clone(),
@@ -77,8 +85,10 @@ pub fn supporting_line_archive_limits_and_forgery_recover() {
         replay(&json, &exact);
     }
     let mut bad = raw.clone();
-    bad["pcurves"][0]["Chord"]["start"]["SupportingLineIntersection"]["first"][0]["Coordinates"] =
-        json!(["invalid scalar", "invalid scalar"]);
+    archive_graph::at_mut(
+        &mut bad,
+        "/pcurves/0/Chord/start/SupportingLineIntersection/first/0",
+    )["Coordinates"] = json!(["invalid scalar", "invalid scalar"]);
     // Metadata exhaustion wins before exact scalar construction.
     assert!(matches!(
         RawModel::from_json(
@@ -122,7 +132,8 @@ pub fn nested_supporting_line_archives_replay_with_record_limits() {
             ))
             .unwrap();
         let json = builder.finish().unwrap().to_json().unwrap();
-        let records = 3 + 4 * usize::try_from(depth).unwrap();
+        // The last authored endpoint is already a source endpoint after depth one.
+        let records = 8 * usize::try_from(depth).unwrap() + if depth == 1 { 6 } else { 5 };
         let exact = ArchiveLimits {
             records,
             ..ArchiveLimits::default()

@@ -1,18 +1,23 @@
-# Selected geometry in archive version 14
+# Selected geometry in archive version 15
 
-The additive `RationalQueryPair` planar-point record stores both original point
+Version 15 interns planar point and generated chord definitions in the existing
+selection graph. Typed backward references preserve repeated dependencies without
+duplicating recursive trees. Replay still reconstructs every definition and its
+original guards through Hypercurve; references are not serialized proofs.
+
+The `RationalQueryPair` planar-point record stores both original point
 sources and their two numerator/denominator pairs. `RationalForm` selected
 parameters retain one point and their original numerator and denominator.
 Hypercurve replays the selected fields and checks every original guard before
 publishing geometry; HyperBRep does not reconstruct independent coordinates.
 Input admission counts both nested point records, every stored polynomial
-axis degree, coefficient and row header before scalar decoding. Older version-14
-readers reject these new variants; existing record encodings are unchanged.
+axis degree, coefficient and row header before scalar decoding. The point and query payloads retain their original equations and selectors;
+point and chord uses can now refer to shared definitions.
 The named query archive tests cover cold replay, re-export, further subdivision,
 invalid guards/selectors and inclusive metadata limits with larger retries.
 These are planar point/pcurve capabilities, not general solid closure.
 
-The additive `PolynomialFiber` planar-point record stores a bivariate equation,
+The `PolynomialFiber` planar-point record stores a bivariate equation,
 the selected first parameter, the second-coordinate interval and an optional
 exact root witness. Replay checks the singleton in that same selected field;
 there is no serialized certainty or trusted root-count flag. Retained-chord
@@ -29,8 +34,8 @@ definitions described below. Plane/tensor section curves retain both pcurves
 through these carriers. A saved model does not serialize a complete intersection
 query result or certify a trim arrangement.
 
-Version 14 retains authored coordinates and selected curve images in the same
-model. It rejects versions through 13; there is no migration reader.
+Version 15 retains authored coordinates and selected curve images in the same
+model. It rejects versions through 14; there is no migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.
@@ -45,8 +50,9 @@ The caller passes `ArchiveLimits` explicitly. Its defaults and units are:
 | --- | ---: | --- |
 | `input_bytes` | 16 MiB | All UTF-8 bytes, including whitespace and ignored fields |
 | `nesting_depth` | 1,024 | Simultaneously open JSON objects and arrays |
+| `dependency_depth` | 64 | Maximum logical depth within `selection.parameters`: leaves have depth zero; point constructions, queries and chords add one; references reuse the earlier definition's depth |
 | `tokens` | 1,000,000 | Opening containers, quoted strings (including keys), and primitive lexemes |
-| `records` | 250,000 | Topology/geometry arena entries, selected parameters, detached point/pcurve and polynomial sources, inline extrusion/revolution profiles, planar-image sources, rational maps and their nested point sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
+| `records` | 250,000 | Topology/geometry arena entries, selected definitions and encoded point/chord reference occurrences, detached point/pcurve and polynomial sources, inline extrusion/revolution profiles, planar-image sources, rational maps and their nested point sources, translation/rotation origins, affine-form point definitions and analytic-parallel sources |
 | `degree` | 256 | Each declared NURBS axis degree, inferred Bezier axis degree, stored polynomial axis degree, or declared polynomial decomposition axis/projection degree limit |
 | `geometry_elements` | 1,000,000 | Aggregate controls (including polynomial parallel sources), weights, knots, root/point/branch-source and rational-map coefficients, and tensor or polynomial row headers |
 | `solver_steps` | 1,024 | Each declared polynomial-source refinement-round, fiber subdivision-depth or fiber refinement-step limit, considered individually |
@@ -58,8 +64,9 @@ whitespace are not tokens; brackets and escaped quotes inside strings do not
 increase structural depth. This scan precedes any version-specific parsing.
 
 Next, a Serde seed carries one shared budget through record metadata. It reads
-counts and degrees without constructing exact scalars, geometry or collections
-of records. Top-level entries are charged before their payloads are inspected;
+counts, degrees and logical dependencies without constructing exact scalars
+or geometry. It retains one depth integer per selected definition and temporary
+reference summaries for the current record. Top-level entries are charged before their payloads are inspected;
 inline profiles and variable sizes are charged when the enclosing record's
 summary is complete. Detached sources use the same budget as model arenas.
 Successful inputs combine version and metadata admission in one pass. On a
@@ -81,7 +88,7 @@ for malformed dimensions, missing fields, invalid coefficients and references.
 Exhaustion returns `PersistenceError::ResourceLimit(ArchiveLimitExceeded)` with
 the resource, allowance and observed amount. This is the input length, first
 disallowed syntax/record count, declared/inferred degree, or aggregate after a
-record summary. Every limit is inclusive. Retrying with larger limits preserves
+record summary, or the first selected definition exceeding logical depth. Every limit is inclusive. Retrying with larger limits preserves
 the original input and exact result; no data is silently omitted to fit a limit.
 The one-argument API is removed; callers select their limits directly.
 
@@ -94,12 +101,30 @@ only the initial syntax scanner has an allocation-free claim. Native
 prove a safe WASM call stack. See the [syntax admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-admission/README.md)
 and [structural admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-archive-structure/README.md).
 
+The logical-depth pass follows the selected definition DAG before exact scalar
+reconstruction. It is distinct from JSON nesting: a flat dependency chain can
+have small syntax depth. Missing or forward references are rejected by typed
+replay; depth admission does not grant them validity. Top-level inline geometry
+also remains subject to the separate syntax limit. This is a selected-graph
+bound, not a bound on all construction graphs, total work, heap or stack use.
+
+The maintained twelve-level selected-coefficient witness completes import,
+export, validation, independent exact comparison and drop on a 256 KiB thread
+stack. A flat sixty-four-level input (JSON nesting 11) previously overflowed
+that stack. It now reaches `DependencyDepth { limit: 64, observed: 65 }` before
+scalar decoding, including when a scalar payload is malformed. A retry with
+limit 256 and a 2 MiB stack completes that original input and re-export. These
+are measured witnesses, not universal stack guarantees. Repeated chord
+normal-displacement archives at depths three/six shrink from 16,547/129,667 to
+5,088/7,707 bytes while preserving independent endpoint and midpoint relations.
+The [implementation ledger](IMPLEMENTATION_STATUS.json) records qualification.
+
 ## Records and deterministic ordering
 
 The existing topology arrays retain their order and references. Vertices are
 `Coordinates([Real; 3])`, `CurveImage { source, parameter }`, or
 `SurfaceImage { source, parameter }`. A surface image embeds the checked surface
-definition and one complete planar point definition; it does not store independent
+definition and a checked planar point definition or reference; it does not store independent
 UV roots. Nested surface and point records consume admission quotas before scalar
 decoding. Rebuilding the surface and evaluating the UV rechecks frame validity,
 domain membership and the admitted image family. A point source
@@ -118,8 +143,14 @@ pcurve-image, direction and shell certificates. Distinct adjacency, parameter
 maps, split/reflection and forged-record rejection are covered in the
 [closed-edge evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-closed-edges/README.md).
 
-`selection.parameters` contains three node forms:
+`selection.parameters` is a typed definition DAG with these node forms:
 
+- `PlanarPoint(definition)` contains one retained planar point. Point uses may
+  be `Reference(index)` naming an earlier point definition.
+- `Chord([start, end])` contains two retained point definitions or references.
+  Generated-line pcurves use `ChordReference(index)` naming a chord definition.
+- `RationalForm { point, numerator, denominator }` retains a point query and
+  its original denominator, which must be nonzero at the selected point.
 - `Root { polynomial, interval }` supplies ascending power-basis coefficients
   and a singleton isolating interval. It does not supply a trusted root count.
 - `Image { root, numerator, denominator }` supplies a flattened projective map
@@ -135,7 +166,13 @@ maps, split/reflection and forged-record rejection are covered in the
   bytes. Every selected reference must name an earlier node. Replay reconstructs
   the source and shared parameter field; it does not trust precomputed coordinates.
 
-The encoder interns root and chart records by their exact serialized contents.
+Missing, forward, cyclic and wrong-type references fail with typed
+`InvalidReference` errors. A parameter cannot substitute for a point or chord.
+Inline point and chord syntax remains valid within version 15 and is normalized
+to shared definitions on export.
+
+The encoder interns definitions by their exact serialized contents and memoizes
+owned immutable point identities during one export.
 An identity chart references its root directly. This also handles inverse
 NURBS chart transports that retain identity evidence in memory. IDs follow
 first appearance while traversing vertices (including detached sources), model
@@ -171,7 +208,15 @@ Zero equations, invalid rectangles, exhausted construction controls, invalid
 indices/ranges and invalid similarities retain typed failures. Loading alone
 does not prove a valid face or solid; model validation remains required.
 
-This is a breaking format. The 13→14 corpus migration changes only the version
+This is a breaking format. The 14→15 migration of the three retained cone
+fixtures changes only their version header. All original geometry and malformed
+selector/guard controls remain; export may produce shared references. Tight
+record quotas now count shared definitions and their encoded reference uses.
+The new logical-depth default can reject previously unchecked deep graphs;
+callers can explicitly raise it and supply adequate execution resources.
+There is no automatic reader for version 14.
+
+The historical 13→14 corpus migration changed only the version
 header and appends `maps: []` to each existing polynomial-branch definition.
 All other old bytes must match. New rational maps have independent semantic,
 guard, composition and deterministic replay tests. The [section evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-plane-tensor-sections/README.md)

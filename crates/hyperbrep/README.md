@@ -75,7 +75,8 @@ scalar precision, time or memory. Scopes do not propagate to worker threads
 or futures. See [operation scopes](docs/ARCHITECTURE.md#operation-scopes).
 
 Archive input uses `RawModel::from_json(json, &ArchiveLimits::default())` or
-caller-selected byte, nesting, token, record, degree, geometry-element and
+caller-selected byte, nesting, selected-dependency-depth, token, record, degree,
+geometry-element and
 topology-reference limits. Exceeding a limit returns a typed resource error
 before exact-scalar deserialization. `RawModel::validate` then
 reconstructs geometry proofs. Input limits do not bound scalar reconstruction
@@ -735,7 +736,7 @@ It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
 
 Selected geometry archive coverage and remaining replay limits are documented
-in [Archive version 14](docs/SELECTED_ARCHIVE.md).
+in [Archive version 15](docs/SELECTED_ARCHIVE.md).
 
 Conic inverse and curve/surface contact queries preserve distant authored
 angular charts and distinct full-period seam parameters. Retained Boolean
@@ -752,7 +753,7 @@ affine matrix, including sheared retained rotation curves.
 Selected angular/general procedural evaluation and general surface-section
 arrangements remain open. See the [capability and evidence record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-rational-surface-evaluation/README.md).
 
-Archive 14 retains whole native polynomial branches, selected restrictions,
+Archive 15 retains whole native polynomial branches, selected restrictions,
 reversal, similarities and spatial planar lifts. Shared exact equations,
 rectangles and construction/evaluation controls reconstruct the complete source
 graph before branch selection; serialized connectivity is never trusted.
@@ -778,7 +779,7 @@ selected trim endpoints and the original shared parameterization. Whole-image
 model validation checks the defining polynomial identity, including after
 affine transport and cold replay. Hypercurve proves equivalent rational images
 by exact divisibility of their coordinate residuals by the retained equation.
-Archive 14 replays ordered rational images with their original pole guards. These sections do not
+Archive 15 replays ordered rational images with their original pole guards. These sections do not
 yet complete general surface intersections, derivatives at singular events,
 trim arrangements or solid Booleans on those arrangements. Solver degree and
 refinement controls are distinct from total work, memory and cancellation limits.
@@ -807,7 +808,7 @@ admit direction/zero tests, while comparisons against a nonzero scalar still
 need their radical speed magnitude. No successful zero vector substitutes for
 an unresolved tangent. The [section differential record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-section-differentials/README.md)
 separates the admitted domain from these limits and the remaining trim-arrangement
-work. The native archive stays at version 14; vector queries do not change model
+work. That vector-query increment left the then-current version 14 unchanged; vector queries do not change model
 records or add a compatibility decoder.
 
 

@@ -1,3 +1,5 @@
+#[path = "archive_graph.rs"]
+mod archive_graph;
 use hyperbrep::*;
 use hypercurve::{Curve2, Point2 as Uv};
 use std::cmp::Ordering;
@@ -61,7 +63,10 @@ pub fn mixed_fiber_charts_survive_brep_archives_and_transforms() {
             .unwrap();
         for mode in 0..2 {
             let mut bad = raw.clone();
-            let point = &mut bad["selection"]["parameters"][affine_index]["AffineForm"]["point"]["PolynomialFiber"];
+            let point = archive_graph::at_mut(
+                &mut bad,
+                &format!("/selection/parameters/{affine_index}/AffineForm/point/PolynomialFiber"),
+            );
             if mode == 0 {
                 point["interval"] = serde_json::json!([Real::from(3), Real::from(4)]);
             } else {

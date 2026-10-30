@@ -1,6 +1,7 @@
 //! Checked planar source definitions embedded in the selected-parameter DAG.
 
 use super::parallel::RawParallelSource;
+use super::selection::RawSelection;
 use super::*;
 use hypercurve::{CurvePointDefinition2, HomogeneousControl2, Similarity2};
 
@@ -28,6 +29,7 @@ impl RawRationalMap {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub(super) enum RawPlanarPoint {
+    Reference(usize),
     Coordinates([Real; 2]),
     SelectedPolynomialRoot {
         coefficients: Vec<RawParameter>,
@@ -89,12 +91,13 @@ impl GraphEncoder {
     ) -> Result<RawPlanarPoint, PersistenceError> {
         // This call-local encoder owns the immutable identities in its memo.
         // Identity only reuses an encoded definition; it proves no new equality.
-        if let Some((_, raw)) = self
-            .polynomial_roots
+        if let Some((_, index)) = self
+            .planar_points
             .iter()
+            .rev()
             .find(|(source, _)| source == point)
         {
-            return Ok(raw.clone());
+            return Ok(RawPlanarPoint::Reference(*index));
         }
         let raw = match point.definition().map_err(GeometryError::from)? {
             CurvePointDefinition2::RationalImage { source, map } => RawPlanarPoint::RationalImage {
@@ -207,10 +210,9 @@ impl GraphEncoder {
                 left_normal,
             },
         };
-        if matches!(&raw, RawPlanarPoint::SelectedPolynomialRoot { .. }) {
-            self.polynomial_roots.push((point.clone(), raw.clone()));
-        }
-        Ok(raw)
+        let index = self.selection(RawSelection::PlanarPoint(Box::new(raw)))?;
+        self.planar_points.push((point.clone(), index));
+        Ok(RawPlanarPoint::Reference(index))
     }
 }
 
@@ -220,6 +222,7 @@ impl SelectionGraph {
         raw: RawPlanarPoint,
     ) -> Result<hypercurve::CurvePoint2, PersistenceError> {
         let definition = match raw {
+            RawPlanarPoint::Reference(index) => return self.point_reference(index),
             RawPlanarPoint::RationalImage { source, map } => CurvePointDefinition2::RationalImage {
                 source: self.planar_point(*source)?,
                 map: map.into_map(),
@@ -407,6 +410,12 @@ mod tests {
             graph_bytes,
             serde_json::to_string(&encoder.finish()).unwrap()
         );
+        let RawPlanarPoint::Reference(index) = raw else {
+            panic!("shared planar point reference")
+        };
+        let graph_raw: serde_json::Value = serde_json::from_str(&graph_bytes).unwrap();
+        let raw =
+            serde_json::from_value(graph_raw["parameters"][index]["PlanarPoint"].clone()).unwrap();
         let RawPlanarPoint::PolynomialFiber {
             equation,
             parameter,

@@ -114,7 +114,7 @@ The [query archive witnesses](../tests/selected_query_archive.rs) cover a line
 with independent cubic-root endpoints, a rational parabola restriction, cold
 replay, re-export and further split/replay. Input admission counts nested query
 sources and all stored polynomial rows/coefficients before scalar decoding.
-These entries extend [the version-14 record grammar](SELECTED_ARCHIVE.md);
+These entries extend [the version-15 record grammar](SELECTED_ARCHIVE.md);
 qualification and remaining derivative/region gaps are recorded in the linked
 [Hypercurve execution ledger](../../hypercurve/FUTURE_WORK.md). They do not
 establish general spatial intersection or solid closure.
@@ -236,7 +236,7 @@ The complete circle, cubic and projective fixtures supply both consumers.
 Zero vectors, rank-deficient surfaces, invalid UV domains and unavailable field
 joins remain distinct failures. See the [finite acceptance record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials/README.md).
 These queries do not complete singular germs, trim arrangements or curved-solid
-Booleans. The native model archive remains 14.
+Booleans. That increment retained the then-current native archive version 14.
 
 Extrusion-face measurement is exact for line profiles, circles swept normal to
 their plane, and complete rectangular trims of planar rational Bézier/NURBS
@@ -1241,3 +1241,20 @@ source definitions during replay. Versions through 11 are deliberately rejected,
 without an adapter. Source-path native/WASM consumers and preserved complete
 workflows are recorded in the [admission evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-19-rational-surface-evaluation/README.md). Installed
 distributions, full release/push gates and complete BRep modeling remain open.
+
+
+### Shared native point/chord dependencies
+
+Version 15 interns repeated point and generated-chord definitions with typed
+backward references. It preserves original root selectors and denominator
+guards, and rejects cycles, forward references and wrong node kinds. The
+selected-definition dependency-depth limit is independent of JSON nesting and
+runs before scalar decoding. Small-stack replay/export/drop and larger-budget
+retry witnesses cover the reproduced flat-graph overflow; the limit does not
+bound every geometry graph, total work or native stack use. The measured wire
+sizes, resource units and explicit version migration are in the
+[archive contract](SELECTED_ARCHIVE.md); qualification belongs to the existing
+[implementation ledger](IMPLEMENTATION_STATUS.json). Oblique selected-chord
+displacement replay also continues through independently derived incidence,
+splitting, a second native replay and finite projection under strict and
+approximate policies without changing the exact source.

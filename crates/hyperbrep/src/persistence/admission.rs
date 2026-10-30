@@ -19,6 +19,7 @@ pub(super) fn check_records(json: &str, limits: &ArchiveLimits) -> Result<(), Pe
     let mut budget = Budget {
         limits,
         records: 0,
+        dependency_depths: Vec::new(),
         geometry_elements: 0,
         topology_references: 0,
         exceeded: None,
@@ -59,6 +60,7 @@ pub(super) fn check_records(json: &str, limits: &ArchiveLimits) -> Result<(), Pe
 
 struct Budget<'a> {
     limits: &'a ArchiveLimits,
+    dependency_depths: Vec<usize>,
     records: usize,
     geometry_elements: usize,
     topology_references: usize,
