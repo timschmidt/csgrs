@@ -3496,6 +3496,8 @@ stands. A first version that always used the interior sign was wrong where
 the queried range contains interior cusps:
 `selected_parallel_arrangement_splits_interior_cusps` regularized to an empty
 region. It was replaced before commit. The witness adds distance 1/2.
+Evidence: `docs/evidence/2026-10-30-hypercurve-closure-ellipse-endpoint-cusp`,
+SHA-256 `1871b1142e2918a157c88f13bc462328b92bb5a9256bf1adf9c7452d7f145862`.
 
 Exact SVG replay of these outputs preserves the set: the ellipse-hole dilation
 by 1/4 and the dumbbell dilation by 3/2 both replay with an empty symmetric
@@ -3546,4 +3548,6 @@ generated geometry again, among them
 and `repeated_round_erosion_composes_with_a_single_erosion`; those checks of
 output reuse would pass without exercising it. The stall belongs to the
 consumption of generated parallels and corners, which a shortcut would hide
-rather than fix.
+rather than fix. Evidence for this section, including the rejected patch:
+`docs/evidence/2026-10-30-hypercurve-closure-coefficient-limits-and-ph-offsets`,
+SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.

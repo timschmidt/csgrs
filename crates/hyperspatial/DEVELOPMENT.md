@@ -345,6 +345,15 @@ experiment resolves them:
 - Development-oracle versions, coverage, fixture reproducibility and source/data
   license requirements; no external runtime backend is planned.
 - Shared state-transform algebra placement and nonlinear geometry integration.
+- ASan fuzz headroom for extreme inputs. The `inverse_isometric` input
+  `[11, 9, 74, 223, 97, 1]` (an `e^2` tangent and an axis ratio of
+  `pi^2 e sqrt 2 / 2`) takes 0.23 s in a release build and about 9.6 s in the
+  ASan fuzz build, against its 10 s per-input limit. The `jacobi_epsilon`
+  input `[2, 9, 127, 39, 0, 0]` takes about 4.8 s alone in the ASan build
+  (peak RSS 579 MB). On 2026-10-30, directed campaigns on a loaded host timed
+  out on each of them (the second at 14 s); a quiet-host campaign passed the
+  first. No Hyperspatial source or dependency changed in those campaigns.
+  Slower runners need faster paths for such inputs or reviewed timeouts.
 
 Scaffold validation is recorded in the
 [initial admission record](docs/admission/2026-10-18-scaffold.md). It establishes

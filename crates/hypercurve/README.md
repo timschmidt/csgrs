@@ -15,7 +15,7 @@ revolve, sweep, and loft belong in
 [CSGRS](https://github.com/timschmidt/csgrs), while triangle-mesh Boolean work
 belongs in [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hypermesh).
 
-This README describes crate version `0.3.1`.
+This README describes crate version `0.4.0`.
 
 ## Primary types
 

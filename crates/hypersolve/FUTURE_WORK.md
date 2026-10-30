@@ -310,4 +310,6 @@ depend on timing. Witnesses: two `work_budget` owner tests, a Bareiss unit test
 Open: subresultant and Sturm sequences, recursive field arithmetic and scalar
 approximations do not report sizes, so the limit does not bound all coefficient
 growth or memory. Arithmetic work, projected-system size and retained memory
-remain without limits.
+remain without limits. Evidence:
+`docs/evidence/2026-10-30-hypercurve-closure-coefficient-limits-and-ph-offsets`,
+SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.
