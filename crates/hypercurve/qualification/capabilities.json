@@ -14350,6 +14350,45 @@
       ],
       "oracle": "Closed-form affine iterates and an independently rebound pole; all consumed results remain certified through strict/approximate/strict policy scopes.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "nested_identity_image_sign_dispatch",
+      "target": "rational_point_images",
+      "test": "nested_identity_images_use_linear_successful_sign_dispatch",
+      "owner": "Hypercurve rational point sign dispatcher",
+      "properties": [
+        "P4",
+        "P5",
+        "P8",
+        "P9",
+        "P10",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36"
+      ],
+      "domain": "Nested identity images of a degree-seven selected point; x/(2+x) query at depths 0,2,4,8.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "One query owns successful signs keyed by immutable source storage and exact polynomial structure; all guards and retained policy qualification remain authoritative.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The retained query equals its independent original value, with successful sign dispatch counts bounded linearly in tested identity depth."
+        }
+      ],
+      "oracle": "Independent original query plus dispatch counts, rather than refinement-budget usage.",
+      "timeout_seconds": 180
     }
   ]
 }

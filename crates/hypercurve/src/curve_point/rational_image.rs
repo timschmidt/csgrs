@@ -61,13 +61,21 @@ impl RationalPointImage2 {
     /// Every consuming query checks the original guard before cancellation or
     /// field reduction. A failed attempt never becomes retained evidence.
     pub(crate) fn validate(&self, policy: &CurveContext) -> CurveResult<Classification<()>> {
+        if let Classification::Uncertain(reason) = self.validate_policy(policy) {
+            return Ok(Classification::Uncertain(reason));
+        }
+        Self::validate_map(&self.source, &self.map, policy)
+    }
+
+    /// The sign traversal checks the original guard in its own shared scope.
+    pub(crate) fn validate_policy(&self, policy: &CurveContext) -> Classification<()> {
         if !policy.accepts_retained_policy(self.policy) {
-            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
         if self.policy.selects_approximate_512() {
             policy.observe_approximate_512();
         }
-        Self::validate_map(&self.source, &self.map, policy)
+        Classification::Decided(())
     }
 
     pub(crate) fn pullback(

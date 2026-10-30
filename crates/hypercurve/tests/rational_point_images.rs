@@ -360,3 +360,48 @@ fn native_scalar_point_images_retry_after_actual_exhaustion() {
         }
     }
 }
+
+#[test]
+#[cfg(feature = "dispatch-trace")]
+fn nested_identity_images_use_linear_successful_sign_dispatch() {
+    let (source, _) = source_and_independent_circle_point();
+    let identity = RationalMap2::new(
+        [polynomial(&[&[0], &[1]]), polynomial(&[&[0, 1]])],
+        polynomial(&[&[1]]),
+    );
+    let expected = source
+        .rational_form(polynomial(&[&[0], &[1]]), polynomial(&[&[2], &[1]]))
+        .unwrap();
+    let mut point = source;
+    let mut counts = Vec::new();
+    for depth in 0..=8 {
+        if depth != 0 {
+            point = point.rational_image(&identity).unwrap();
+        }
+        if [0, 2, 4, 8].contains(&depth) {
+            hyperreal::dispatch_trace::reset();
+            let query = hyperreal::dispatch_trace::with_recording(|| {
+                point.rational_form(polynomial(&[&[0], &[1]]), polynomial(&[&[2], &[1]]))
+            })
+            .unwrap();
+            let count = hyperreal::dispatch_trace::take_trace().path_count(
+                "hypercurve",
+                "point-polynomial-sign",
+                "dispatch",
+            );
+            assert!(
+                count > 0,
+                "the successful sign dispatcher must be instrumented"
+            );
+            counts.push((depth, count));
+            assert_eq!(query.compare(&expected).unwrap(), Ordering::Equal);
+        }
+    }
+    eprintln!("nested identity sign dispatches: {counts:?}");
+    for (depth, count) in counts {
+        assert!(
+            count <= 4 * (depth + 1),
+            "depth {depth} used {count} successful sign dispatches"
+        );
+    }
+}

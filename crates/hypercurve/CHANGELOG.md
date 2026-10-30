@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Reuse successful rational-image signs within one query, retaining original
+  pole and policy checks without repeated numerator/denominator traversal.
+
 - Keep selected-query denominators unchanged under affine parameter charts,
   including the original pole guard for constant images.
 

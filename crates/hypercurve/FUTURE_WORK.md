@@ -3109,3 +3109,27 @@ existing changed-catalog/binary, missing/ignored/zero-test, failed build,
 timeout and interruption controls. Source-attributed baseline and fixed
 records retain the contradictory original report. The semantic fixture
 catalog and its advertised geometry contracts are unchanged by this driver fix.
+
+
+## Review: rational-image sign traversal (P4/P5/P8-P10/P18-P20/P35/P36)
+
+Instrumentation reproduced 1, 13, 121 and 9,841 successful polynomial-sign
+dispatches for identity-image depths 0, 2, 4 and 8. One query now shares its
+successful signs across original guards and pulled-back numerators and
+denominators. The same witness uses 1, 5, 9 and 17 dispatches and preserves
+exact equality with the independent original x/(2+x) query.
+
+The memo belongs to one query and policy, owns its immutable source points,
+and uses exact polynomial structure plus positive storage identity. It cannot
+establish inequality between different allocations. Ordinary leaf queries
+allocate no memo. Failed or exhausted attempts do not become retained facts;
+all entries are released with the query. The measured linear dispatch count
+does not assert a total work, coefficient growth or heap-byte bound.
+
+All 38 affected rational-image/form/guard, SVG point replay and internal
+policy/guard unit tests passed in release with all features and Rust 1.98.1.
+The original pole, negative-denominator, qualified-source, reached-budget and
+larger-retry controls remain. One incomplete installer run was canceled and
+one missing-wrapper compile failure was corrected before the passing run;
+those records remain retained. Downstream and full pre-push checks are
+separate combined-review gates.

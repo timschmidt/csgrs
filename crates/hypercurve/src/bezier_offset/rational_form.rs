@@ -948,10 +948,7 @@ pub(crate) fn point_rational_denominator_sign(
     denominator: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    match point_polynomial_sign(source, denominator, policy)? {
-        Classification::Decided(RealSign::Zero) => Err(CurveError::ZeroRationalPointDenominator),
-        sign => Ok(sign),
-    }
+    PointSignScope::new(policy).denominator_sign(source, denominator)
 }
 
 pub(crate) fn point_rational_form_sign(
@@ -960,12 +957,7 @@ pub(crate) fn point_rational_form_sign(
     denominator: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let denominator = match point_rational_denominator_sign(source, denominator, policy)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    Ok(point_polynomial_sign(source, numerator, policy)?
-        .map(|sign| product_sign(sign, denominator)))
+    PointSignScope::new(policy).rational_sign(source, numerator, denominator)
 }
 
 fn point_polynomial_sign(
@@ -973,52 +965,153 @@ fn point_polynomial_sign(
     polynomial: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    match &source.0 {
-        CurvePointData2::RationalImage(image) => {
-            let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
-            match image.pullback(polynomial, &one, policy)? {
-                Classification::Decided((numerator, denominator)) => {
-                    point_rational_form_sign(&image.source, &numerator, &denominator, policy)
-                }
-                Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        }
-        CurvePointData2::Exact(point) => Ok(real_sign(
-            &bivariate_evaluate_exact(polynomial, point.x(), point.y()),
+    PointSignScope::new(policy).polynomial_sign(source, polynomial)
+}
+
+/// Successful signs belong to one query and one policy. Owned immutable points
+/// keep storage identities alive; exact polynomial structure completes the key.
+/// Distinct storage never proves inequality. No failure or exhausted attempt is
+/// retained, and dropping the scope releases every entry. Retention follows the
+/// visited query graph, not a fixed heap-byte or total-work bound.
+struct PointSignScope<'a> {
+    policy: &'a CurveContext,
+    memoize: bool,
+    decided: Vec<(CurvePoint2, BivariatePolynomial, RealSign)>,
+}
+
+impl<'a> PointSignScope<'a> {
+    fn new(policy: &'a CurveContext) -> Self {
+        Self {
             policy,
-        )
-        .map_or(
-            Classification::Uncertain(UncertaintyReason::Predicate),
-            Classification::Decided,
-        )),
-        CurvePointData2::Polynomial(point) => point.polynomial_sign(polynomial, policy),
-        CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
-            Classification::Decided(Some(point)) => {
-                point_polynomial_sign(&point, polynomial, policy)
+            memoize: false,
+            decided: Vec::new(),
+        }
+    }
+
+    fn denominator_sign(
+        &mut self,
+        source: &CurvePoint2,
+        denominator: &BivariatePolynomial,
+    ) -> CurveResult<Classification<RealSign>> {
+        match self.polynomial_sign(source, denominator)? {
+            Classification::Decided(RealSign::Zero) => {
+                Err(CurveError::ZeroRationalPointDenominator)
             }
-            Classification::Decided(None) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+            sign => Ok(sign),
+        }
+    }
+
+    fn rational_sign(
+        &mut self,
+        source: &CurvePoint2,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+    ) -> CurveResult<Classification<RealSign>> {
+        let denominator = match self.denominator_sign(source, denominator)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        Ok(self
+            .polynomial_sign(source, numerator)?
+            .map(|sign| product_sign(sign, denominator)))
+    }
+
+    fn polynomial_sign(
+        &mut self,
+        source: &CurvePoint2,
+        polynomial: &BivariatePolynomial,
+    ) -> CurveResult<Classification<RealSign>> {
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        // Ordinary leaf queries allocate no memo. A retained rational image
+        // introduces the repeated guard/numerator/denominator dependencies.
+        self.memoize |= matches!(&source.0, CurvePointData2::RationalImage(_));
+        if self.memoize
+            && let Some((_, _, sign)) = self
+                .decided
+                .iter()
+                .find(|(point, query, _)| point.shares_storage(source) && query == polynomial)
+        {
+            return Ok(Classification::Decided(*sign));
+        }
+        let result = self.dispatch(source, polynomial)?;
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        if self.memoize
+            && let Classification::Decided(sign) = &result
+        {
+            self.decided
+                .push((source.clone(), polynomial.clone(), *sign));
+        }
+        Ok(result)
+    }
+
+    fn dispatch(
+        &mut self,
+        source: &CurvePoint2,
+        polynomial: &BivariatePolynomial,
+    ) -> CurveResult<Classification<RealSign>> {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record("hypercurve", "point-polynomial-sign", "dispatch");
+        let policy = self.policy;
+        match &source.0 {
+            CurvePointData2::RationalImage(image) => {
+                let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+                if let Classification::Uncertain(reason) = image.validate_policy(policy) {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                // The guard, pulled-back numerator and denominator share one
+                // sign scope; validating just the guard still duplicates recursion.
+                if let Classification::Uncertain(reason) =
+                    self.denominator_sign(&image.source, image.map.denominator())?
+                {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                let Some((numerator, denominator)) = image.map.pullback(polynomial, &one) else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                self.rational_sign(&image.source, &numerator, &denominator)
             }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        },
-        CurvePointData2::Similarity(image) => {
-            if !policy.accepts_retained_policy(image.data.policy) {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            point_polynomial_sign(
-                &image.data.source,
-                &pullback(polynomial, &image.data.transform),
+            CurvePointData2::Exact(point) => Ok(real_sign(
+                &bivariate_evaluate_exact(polynomial, point.x(), point.y()),
                 policy,
             )
-        }
-        _ => {
-            let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
-            match recursive_rational_value(source, polynomial, &one, policy)? {
-                Classification::Decided(Some(value)) => value.numerator.sign(policy),
+            .map_or(
+                Classification::Uncertain(UncertaintyReason::Predicate),
+                Classification::Decided,
+            )),
+            CurvePointData2::Polynomial(point) => point.polynomial_sign(polynomial, policy),
+            CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
+                Classification::Decided(Some(point)) => self.polynomial_sign(&point, polynomial),
                 Classification::Decided(None) => {
                     Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+            },
+            CurvePointData2::Similarity(image) => {
+                if !policy.accepts_retained_policy(image.data.policy) {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                self.polynomial_sign(
+                    &image.data.source,
+                    &pullback(polynomial, &image.data.transform),
+                )
+            }
+            _ => {
+                let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+                match recursive_rational_value(source, polynomial, &one, policy)? {
+                    Classification::Decided(Some(value)) => value.numerator.sign(policy),
+                    Classification::Decided(None) => {
+                        Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
+                    }
+                    Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+                }
             }
         }
     }
