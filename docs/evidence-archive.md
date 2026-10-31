@@ -85,6 +85,23 @@ in this repository.
 
 ## Follow-on records
 
+The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` ends at
+`c0edcc75fdd87b3e920471360e68fa17c82e4740` with 402 records. Its new record
+`docs/evidence/2026-10-30-hypercurve-closure-integration-validation` contains 12,457 files and
+29,950,797 bytes, SHA-256 `704e243ec58dc8412419b91c23176286c29199f196ffe254916cf5bc7bedf0da`. It records
+fresh success for all 328 pre-push command groups on
+`d5366c2988a652dbd09c193112211239eea3c142`: 131 locally executable workflow groups, 196
+strict Clippy groups and the CI security audit. All 13 ASan campaigns started
+from an empty fuzz state and include mutation evidence. Stable 1.99.1, MSRV
+1.95.0, nightly-2026-10-29 and both release/package checks are retained; no
+workflow file changed since `146cc0804f`, whose record holds the hosted-action
+review. Six superseded attempts keep their failing logs. All archive digests
+verify and four historical exclusion receipts remain. Only the two archive
+receipt files differ from the qualified code. This branch contains every record
+that the paragraphs below describe as local or unpushed. Exact geometric
+operation closure and hosted publication or deployment are not established
+here.
+
 The selected-query publication archive ends at `9d6ba586579aeacb8b60c39f05f7fab71e27f2ef` with
 389 records. Its new record `docs/evidence/2026-10-29-hypercurve-closure-selected-query-publication-validation` contains 25,449
 files and 51,885,989 bytes, SHA-256 `16bb2f370d87339a407032aabf6cf47d15e64195bc228f497e1839693a08dc37`. It records fresh success for
