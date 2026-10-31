@@ -3540,6 +3540,28 @@ paired with empty regions, are not yet in the corpus. Invalid offset options
 on canonical empty regions and an island meeting its shrinking hole
 (`island_meets_its_shrinking_hole`) now are.
 
+## Parabola offsets and their rational reparameterization (2026-10-30)
+
+Closure-plan corpus item "parabola offset: known rational reparameterization
+versus procedural definition; Boolean and replay". For `C(t) = (t, t^2)`,
+`t = (u^2 - 1) / (4u)` makes `1 + 4t^2` a square, and the unit left normal is
+`(1 - u^2, 2u) / (u^2 + 1)`. `tests/parabola_offset_identities.rs` uses the
+segment `t in [-3/8, 3/8]` (`u in [1/2, 2]`, end normals `(+-3/5, 4/5)`). The
+procedural parallels at -1/4 and 1/8 evaluate exactly to the closed form at
+thirteen rational parameters. Points at distance 1/4 along each closed-form
+normal lie on the 1/4 dilation of the region under the segment's chord, with
+nearer points inside and farther points outside. The convex disk identities
+hold for offsets of 1/8 and 1/4. After version 5 replay, the 1/8 dilation
+supports a difference, a union and an erosion back to the source. All pass on
+the current source in well under a second; no source change was needed.
+Perturbing the closed form by 2^-40 or moving the expected boundary to 1/5
+fails the evaluation and normal tests.
+
+Not established: an exact overlap correspondence between the procedural
+parallel and an independently authored degree-six rational curve of the same
+image; parabola offsets with cusps (distance beyond the vertex radius 1/2);
+chamfers and fillets on these outputs.
+
 ## Pythagorean-hodograph region offsets (2026-10-30)
 
 Closure-plan corpus item "PH curve offset: exact rational specialization

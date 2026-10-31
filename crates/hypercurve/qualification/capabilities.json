@@ -16731,6 +16731,162 @@
       ],
       "oracle": "Independently authored exact regions (rounded squares, squares and corner pieces bounded by lines and quarter circles) compared by an empty exact symmetric difference.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "parabola_parallel_reparameterization",
+      "target": "parabola_offset_identities",
+      "test": "parabola_parallels_match_the_rational_reparameterization",
+      "owner": "Hypercurve analytic quadratic parallels, exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P18"
+      ],
+      "domain": "C(t)=(t,t^2) for t in [-3/8,3/8] as a quadratic Bezier; left parallels at -1/4 and 1/8; t=(u^2-1)/(4u) for u=k/8, k=4..16.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The unit left normal is (1-u^2,2u)/(u^2+1), so the parallel is the degree-six rational curve C(t(u))+delta(1-u^2,2u)/(u^2+1).",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The procedural parallel evaluates exactly to the closed form at all thirteen parameters, both ends included, for both signed distances."
+        }
+      ],
+      "oracle": "An independently derived rational reparameterization with rational coordinates at rational u; exact point equality.",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "parabola_region_convex_identities",
+      "target": "parabola_offset_identities",
+      "test": "parabola_region_offsets_obey_convex_disk_identities",
+      "owner": "Hypercurve analytic quadratic parallels, exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19"
+      ],
+      "domain": "The convex region between the parabola segment and its chord, with round offsets of 1/8 and 1/4.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Disk offsets of a convex set: dilations compose, closing returns the set, and dilation followed by a smaller erosion is the difference dilation.",
+      "claims": [
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Two dilations by 1/8 equal one by 1/4; closing by 1/8 returns the region; dilating by 1/4 then eroding by 1/8 equals dilating by 1/8."
+        }
+      ],
+      "oracle": "Exact Minkowski identities for convex sets, compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "parabola_dilation_normals",
+      "target": "parabola_offset_identities",
+      "test": "parabola_dilation_boundary_follows_the_reparameterization",
+      "owner": "Hypercurve analytic quadratic parallels, exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P13",
+        "P18"
+      ],
+      "domain": "The 1/4 dilation of the parabola region at the thirteen reparameterized normals.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "For a convex set, the nearest point to an exterior point on a boundary normal is the foot of that normal, including at corners whose normal cones contain the end normals.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Points at distance 1/4 along each normal lie on the boundary, at 15/64 inside and at 17/64 outside."
+        }
+      ],
+      "oracle": "Rational points from the closed-form normals; exact point location.",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "parabola_dilation_replay",
+      "target": "parabola_offset_identities",
+      "test": "replayed_parabola_dilation_supports_booleans_and_closing",
+      "owner": "Hypercurve analytic quadratic parallels, exact region offsets and the shared regularized arrangement",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The 1/8 dilation of the parabola region, replayed through version 5 metadata.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier",
+        "AnalyticParallel",
+        "Line",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Replay keeps the generated parallel; subsequent Booleans and offsets consume it.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The replayed dilation equals the original."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "The ring between the replayed dilation and the source is nonempty, and its union with the source is the replayed dilation."
+        },
+        {
+          "stage": "repeated_offsets",
+          "outcome": "exact_success",
+          "assertion": "Eroding the replayed dilation by 1/8 returns the source."
+        }
+      ],
+      "oracle": "Set identities for nested regions and convex closing, compared by an empty exact symmetric difference.",
+      "timeout_seconds": 180
     }
   ]
 }
