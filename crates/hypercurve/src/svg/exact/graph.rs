@@ -19,6 +19,8 @@ mod circle_certificate_tests;
 mod circles;
 mod points;
 mod polynomial;
+#[cfg(test)]
+mod retained_bezier_tests;
 
 pub(super) const PREFIX: &str = "4:";
 const MAGIC: &[u8; 4] = b"HCP4";
@@ -32,6 +34,7 @@ const SOURCE_RESTRICTION: u8 = 4;
 const PARALLEL_SUPPORT: u8 = 5;
 const PARALLEL_RANGE: u8 = 6;
 const CIRCULAR_CONIC: u8 = 31;
+const RETAINED_BEZIER: u8 = 32;
 
 pub(super) fn encode_path(
     path: &CurvePath2,
@@ -145,6 +148,28 @@ impl GraphWriter {
         {
             return self.chord(chord);
         }
+        if let Some(crate::BezierSplitFragment2::RetainedBezier {
+            reversed,
+            start,
+            end,
+            source_curve,
+            ..
+        }) = curve.retained_fragment()
+        {
+            // The source chart and both exact boundaries define the piece;
+            // replay rebuilds its endpoint images with the same splitter.
+            let source = self.native_curve(&Curve2::from(source_curve.clone()))?;
+            let start = self.parameter(start)?;
+            let end = self.parameter(end)?;
+            let index = self.begin(RETAINED_BEZIER)?;
+            self.point_depths[index as usize] =
+                self.point_depths[start as usize].max(self.point_depths[end as usize]);
+            self.writer.write_u32(source)?;
+            self.writer.write_u32(start)?;
+            self.writer.write_u32(end)?;
+            self.writer.write_bool(*reversed)?;
+            return Ok(index);
+        }
         if let Some(view) = curve.analytic_parallel() {
             let Some((start, end)) = view.range().as_bezier_parameters() else {
                 return Err(SvgError::Unsupported(
@@ -183,6 +208,19 @@ impl GraphWriter {
         if let Some(index) = self.sources.get(&key) {
             return Ok(*index);
         }
+        let index = self.native_curve(curve)?;
+        self.sources.insert(key, index);
+        Ok(index)
+    }
+
+    /// Writes one native record without memoizing its address, which may
+    /// belong to a temporary wrapper.
+    fn native_curve(&mut self, curve: &Curve2) -> SvgResult<u32> {
+        let Some(geometry) = curve.geometry() else {
+            return Err(SvgError::Unsupported(
+                "exact SVG metadata does not encode this generated curve definition".into(),
+            ));
+        };
         // A retained circle is construction evidence, not a cache: later
         // offsets use its exact center and radius instead of reconstructing
         // them from the controls. Replay checks it against the native curve.
@@ -200,7 +238,6 @@ impl GraphWriter {
             self.writer.write_point(&circle.center)?;
             self.writer.write_real(&circle.radius_squared)?;
         }
-        self.sources.insert(key, index);
         Ok(index)
     }
 
@@ -490,6 +527,62 @@ fn read_definitions(
                     range,
                     &CurveContext::STRICT,
                 ))?;
+                Definition::Curve(if reversed {
+                    curve.reversed().map_err(SvgError::Exact)?
+                } else {
+                    curve
+                })
+            }
+            RETAINED_BEZIER => {
+                let source = match curve_reference(&definitions, reader.read_len()?)?.geometry() {
+                    Some(CurveGeometry2::QuadraticBezier(curve)) => {
+                        crate::BezierSubcurve2::Quadratic(curve.clone())
+                    }
+                    Some(CurveGeometry2::CubicBezier(curve)) => {
+                        crate::BezierSubcurve2::Cubic(curve.clone())
+                    }
+                    Some(CurveGeometry2::RationalQuadraticBezier(curve)) => {
+                        crate::BezierSubcurve2::RationalQuadratic(curve.clone())
+                    }
+                    Some(CurveGeometry2::RationalBezier(curve)) => {
+                        crate::BezierSubcurve2::Rational(curve.clone())
+                    }
+                    _ => {
+                        return Err(malformed(
+                            "exact retained Bezier range must reference a native Bezier source",
+                        ));
+                    }
+                };
+                let start_index = reader.read_len()?;
+                let end_index = reader.read_len()?;
+                let start = parameter_reference(&definitions, start_index)?.clone();
+                let end = parameter_reference(&definitions, end_index)?.clone();
+                point_depth = point_depths[start_index].max(point_depths[end_index]);
+                let reversed = reader.read_bool()?;
+                let ordered = |first: &BezierParameter2, second: &BezierParameter2| {
+                    certified(first.cmp_by_refinement_with_policy(second, &CurveContext::STRICT))
+                        .map(|order| order == std::cmp::Ordering::Less)
+                };
+                let zero = BezierParameter2::Exact(Real::zero());
+                let one = BezierParameter2::Exact(Real::one());
+                if !ordered(&start, &end)? || ordered(&start, &zero)? || ordered(&one, &end)? {
+                    return Err(SvgError::Exact(ExactCurveError::invalid_unattributed(
+                        CurveOperation2::Construction,
+                        crate::CurveError::InvalidBezierRange,
+                    )));
+                }
+                let range = BezierParameterRange2::new_validated(start, end);
+                let split = certified(source.split_at_parameters_refined(
+                    &range,
+                    &[],
+                    &CurveContext::STRICT,
+                ))?;
+                let [fragment] = split.fragments() else {
+                    return Err(malformed(
+                        "exact retained Bezier range must rebuild one fragment",
+                    ));
+                };
+                let curve = Curve2::from_retained_fragment(fragment.clone());
                 Definition::Curve(if reversed {
                     curve.reversed().map_err(SvgError::Exact)?
                 } else {

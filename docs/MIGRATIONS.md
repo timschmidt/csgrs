@@ -327,6 +327,15 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   wire version. Other frame and point-image carriers and general region admission
   remain open; these fixtures do not establish universal operation closure.
 
+- **Exact SVG retained Bezier ranges (2026-10-31).** Graph metadata (versions
+  4 and 5) writes a curve that keeps an algebraically bounded range of a native
+  Bezier source as definition tag 32: a native source record, two parameter
+  references and the traversal flag. Import requires a polynomial or rational
+  Bezier source and an ordered range inside `[0, 1]`, then rebuilds the piece
+  with the same exact splitter that created it. Such curves previously failed
+  export as an unencoded generated definition. Older Hypercurve readers reject
+  documents containing the tag.
+
 - **Exact SVG circle certificates (2026-10-30).** Graph metadata (versions 4
   and 5) writes a rational quadratic that retains its supporting circle as
   definition tag 31: the native curve, then the center and radius squared.

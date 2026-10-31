@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Replay retained Bezier ranges through exact SVG graph metadata. An arc cut
+  at an algebraic parameter, as a chamfer on an ellipse leaves it, now writes
+  graph definition tag 32 with its native source and exact boundaries; import
+  rebuilds the piece in the source chart with the exact splitter. Older readers
+  reject documents containing the new tag.
+
 - Keep circle certificates through exact SVG graph replay. A rational
   quadratic that retains its circle now writes graph definition tag 31 with
   the center and radius squared; import checks the circle identity exactly

@@ -16887,6 +16887,53 @@
       ],
       "oracle": "Set identities for nested regions and convex closing, compared by an empty exact symmetric difference.",
       "timeout_seconds": 180
+    },
+    {
+      "id": "replayed_retained_ellipse_range",
+      "target": "svg_region_replay",
+      "test": "replayed_chamfered_ellipse_keeps_its_retained_arc_range",
+      "owner": "Hypercurve native SVG graph codec and retained Bezier split fragments",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "The ellipse x^2/4 + y^2 <= 1 cut by x <= 1 and chamfered at one cut corner with chord setbacks 1/8, replayed through version 5 metadata.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "RationalQuadraticBezier",
+        "AnalyticParallel",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The ellipse arc bounded by the algebraic chamfer contact keeps its source conic and exact range; replay rebuilds it with the same exact splitter.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "The replayed region has an empty symmetric difference with the original."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Its difference with the half-plane x <= 0 equals the same difference of the original."
+        },
+        {
+          "stage": "offsets",
+          "outcome": "exact_success",
+          "assertion": "Its round dilation by 1/16 completes and contains the replayed region."
+        }
+      ],
+      "oracle": "Exact symmetric differences against the unreplayed region and the containment identity for dilations.",
+      "timeout_seconds": 300
     }
   ]
 }

@@ -3540,6 +3540,29 @@ paired with empty regions, are not yet in the corpus. Invalid offset options
 on canonical empty regions and an island meeting its shrinking hole
 (`island_meets_its_shrinking_hole`) now are.
 
+## Exact replay of retained Bezier ranges (2026-10-31)
+
+Exporting the ellipse `x^2/4 + y^2 <= 1` cut by `x <= 1` and chamfered with
+chord setbacks 1/8 failed with "exact SVG metadata does not encode this
+generated curve definition". The chamfer meets the ellipse at an algebraic
+parameter, so the remaining arc is a `RetainedBezier` fragment: a native source
+conic and an exact range in its own chart, with no native subcurve. Graph tag 32
+writes the source as a native record and both boundaries as parameter
+references; import checks the source family and that the range is ordered
+inside `[0, 1]`, then rebuilds the piece with `split_at_parameters_refined`, the
+splitter that created it. `replayed_chamfered_ellipse_keeps_its_retained_arc_range`
+(`svg_region_replay`, 15 s) checks an empty symmetric difference after replay,
+a further difference against the original, and a further dilation containing
+the replayed region; it fails on the previous source with the export error.
+`graph/retained_bezier_tests.rs` replays forward and reversed pieces at the
+root of `2t^2 - 1` and rejects descending, empty and out-of-chart ranges and a
+line source.
+
+Open: exporting that region's 1/16 dilation, and the filleted chains, fails with
+"exact circle replay requires a retained chord-normal frame" for generated round
+joins. An XOR between the dilations of the original and the replayed region is
+`Blocked(Boolean, RationalBezier, Ordering)`, although each dilation completes.
+
 ## Closing a chamfered ellipse dilation (2026-10-31)
 
 Closure-plan fixture "noncircular ellipse offset: cut, fillet or chamfer, then

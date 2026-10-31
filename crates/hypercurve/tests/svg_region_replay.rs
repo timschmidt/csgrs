@@ -879,3 +879,82 @@ fn replayed_circular_joins_support_further_offsets_through_collapse() {
             .unwrap(),
     );
 }
+
+/// The ellipse x^2/4 + y^2 <= 1 cut by x <= 1 and chamfered at one cut corner
+/// with chord setbacks 1/8. The chamfer meets the ellipse at an algebraic
+/// parameter, so the remaining ellipse arc is a retained range of its source
+/// conic rather than a native subcurve. Replay keeps that range in the source
+/// chart. The replayed region equals the original, a further difference agrees
+/// with the same difference of the original, and a further dilation contains
+/// the replayed region.
+#[test]
+fn replayed_chamfered_ellipse_keeps_its_retained_arc_range() {
+    let circle = CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(point(1, 0), point(-1, 0), point(0, 0), false).unwrap(),
+        ),
+        Curve2::from(
+            CircularArc2::try_from_center(point(-1, 0), point(1, 0), point(0, 0), false).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let ellipse = geometry(&[circle])
+        .region()
+        .transform_affine(
+            &Real::from(2),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+        )
+        .unwrap();
+    let cut = ellipse
+        .boolean_region(
+            geometry(&[rectangle(-10, -10, 11, 20)]).region(),
+            BooleanOp::Intersection,
+        )
+        .unwrap();
+    let on_cut = |curve: &Curve2| {
+        let one = hypercurve::CurvePoint2::from(point(1, 0));
+        [curve.start(), curve.end()].iter().all(|end| {
+            end.compare_coordinate(&one, hypercurve::Axis2::X).unwrap() == std::cmp::Ordering::Equal
+        })
+    };
+    let vertex = cut.boundary_loops()[0]
+        .curves()
+        .iter()
+        .position(on_cut)
+        .unwrap();
+    let hypercurve::CurveCornerSolutions2::Unique(chamfered) = cut
+        .chamfer_loop_vertex_by_setbacks(
+            0,
+            vertex,
+            q(1, 8),
+            q(1, 8),
+            hypercurve::CurveCornerMode2::TrimOnly,
+        )
+        .unwrap()
+    else {
+        panic!("one chamfer");
+    };
+    let text = export_svg_document(&SvgGeometry2::new(chamfered.clone(), vec![], vec![])).unwrap();
+    let restored = import_svg_document(&text).unwrap().region().clone();
+    assert_same_set(&restored, &chamfered);
+    let half = geometry(&[rectangle(-10, -10, 10, 20)]).region().clone();
+    assert_same_set(
+        &restored
+            .boolean_region(&half, BooleanOp::Difference)
+            .unwrap(),
+        &chamfered
+            .boolean_region(&half, BooleanOp::Difference)
+            .unwrap(),
+    );
+    let further = restored
+        .offset(q(1, 16), &OffsetCornerStyle2::Round)
+        .unwrap();
+    assert_same_set(
+        &further.boolean_region(&restored, BooleanOp::Union).unwrap(),
+        &further,
+    );
+}

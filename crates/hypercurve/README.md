@@ -574,7 +574,9 @@ exact signatures.
   further round offsets and exact set identities. A rational quadratic that
   retains its supporting circle replays it only after an exact check of the
   circle identity, so replayed round joins keep supporting further offsets;
-  their tangent contacts are not serialized. Metadata is independent of
+  their tangent contacts are not serialized. Retained ranges of a native
+  Bezier source, such as an ellipse arc ending at an algebraic chamfer contact,
+  replay in their source chart. Metadata is independent of
   display tolerance. Reached byte/depth limits permit larger retries. A zero-root
   compound imports and exports as canonical empty. Entirely empty documents
   export with that exact graph and a unit display viewport that adds no
