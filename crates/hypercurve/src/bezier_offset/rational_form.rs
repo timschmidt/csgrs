@@ -1139,84 +1139,114 @@ pub(crate) fn point_rational_form_parameter(
     denominator: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<CurveParameter2>> {
-    let sign = match point_rational_denominator_sign(source, denominator, policy)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    match &source.0 {
-        CurvePointData2::RationalImage(image) => {
-            match image.pullback(numerator, denominator, policy)? {
-                Classification::Decided((numerator, denominator)) => {
-                    point_rational_form_parameter(&image.source, &numerator, &denominator, policy)
+    PointSignScope::new(policy).rational_form_parameter(source, numerator, denominator)
+}
+
+impl PointSignScope<'_> {
+    /// Converts a rational query to a parameter in this one scope, so each
+    /// ancestor guard and pulled-back denominator is proved once.
+    fn rational_form_parameter(
+        &mut self,
+        source: &CurvePoint2,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+    ) -> CurveResult<Classification<CurveParameter2>> {
+        let policy = self.policy;
+        let sign = match self.denominator_sign(source, denominator)? {
+            Classification::Decided(sign) => sign,
+            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+        };
+        match &source.0 {
+            CurvePointData2::RationalImage(image) => {
+                // The image's original guard is rechecked in this scope, where
+                // the denominator dispatch above has already proved it; a fresh
+                // scope per ancestor would re-prove every remaining guard.
+                if let Classification::Uncertain(reason) = image.validate_policy(policy) {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                if let Classification::Uncertain(reason) =
+                    self.denominator_sign(&image.source, image.map.denominator())?
+                {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                let Some((numerator, denominator)) = image.map.pullback(numerator, denominator)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                self.rational_form_parameter(&image.source, &numerator, &denominator)
+            }
+            CurvePointData2::Exact(point) => Ok(Classification::Decided(
+                (bivariate_evaluate_exact(numerator, point.x(), point.y())
+                    / bivariate_evaluate_exact(denominator, point.x(), point.y()))?
+                .into(),
+            )),
+            CurvePointData2::Polynomial(point) => {
+                point.rational_parameter(numerator, denominator, policy)
+            }
+            CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
+                crate::selected_field::finish(|| {
+                    let value = crate::selected_field::query(
+                        [numerator, denominator],
+                        &point.selected_field_values(policy)?,
+                        policy,
+                    )?;
+                    let query = PointFormSource2::new(
+                        source.clone(),
+                        numerator.clone(),
+                        denominator.clone(),
+                    );
+                    Ok(CurveParameter2::from_polynomial_query(
+                        crate::selected_query_scalar::SelectedQueryScalar2::new(
+                            query, value, policy,
+                        )?,
+                    ))
+                })
+            }
+            CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
+                Classification::Decided(Some(point)) => {
+                    self.rational_form_parameter(&point, numerator, denominator)
+                }
+                Classification::Decided(None) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
-        }
-        CurvePointData2::Exact(point) => Ok(Classification::Decided(
-            (bivariate_evaluate_exact(numerator, point.x(), point.y())
-                / bivariate_evaluate_exact(denominator, point.x(), point.y()))?
-            .into(),
-        )),
-        CurvePointData2::Polynomial(point) => {
-            point.rational_parameter(numerator, denominator, policy)
-        }
-        CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
-            crate::selected_field::finish(|| {
-                let value = crate::selected_field::query(
-                    [numerator, denominator],
-                    &point.selected_field_values(policy)?,
-                    policy,
-                )?;
-                let query =
-                    PointFormSource2::new(source.clone(), numerator.clone(), denominator.clone());
-                Ok(CurveParameter2::from_polynomial_query(
-                    crate::selected_query_scalar::SelectedQueryScalar2::new(query, value, policy)?,
-                ))
-            })
-        }
-        CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
-            Classification::Decided(Some(point)) => {
-                point_rational_form_parameter(&point, numerator, denominator, policy)
-            }
-            Classification::Decided(None) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        },
-        CurvePointData2::Similarity(image) => {
-            if !policy.accepts_retained_policy(image.data.policy) {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            point_rational_form_parameter(
-                &image.data.source,
-                &pullback(numerator, &image.data.transform),
-                &pullback(denominator, &image.data.transform),
-                policy,
-            )
-        }
-        _ => {
-            let mut value = match recursive_rational_value(source, numerator, denominator, policy)?
-            {
-                Classification::Decided(Some(value)) => value,
-                Classification::Decided(None) => {
+            },
+            CurvePointData2::Similarity(image) => {
+                if !policy.accepts_retained_policy(image.data.policy) {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            if sign == RealSign::Negative {
-                let Some(numerator) = value.numerator.scale(&Real::from(-1)) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                let Some(denominator) = value.denominator.scale(&Real::from(-1)) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                value = RecursiveQuadraticProjectiveScalar {
-                    numerator,
-                    denominator,
-                };
+                self.rational_form_parameter(
+                    &image.data.source,
+                    &pullback(numerator, &image.data.transform),
+                    &pullback(denominator, &image.data.transform),
+                )
             }
-            Ok(BezierRecursiveProjectiveParameter2::new(value, policy)?
-                .map(CurveParameter2::from_recursive_projective))
+            _ => {
+                let mut value =
+                    match recursive_rational_value(source, numerator, denominator, policy)? {
+                        Classification::Decided(Some(value)) => value,
+                        Classification::Decided(None) => {
+                            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                        }
+                        Classification::Uncertain(reason) => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                    };
+                if sign == RealSign::Negative {
+                    let Some(numerator) = value.numerator.scale(&Real::from(-1)) else {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    };
+                    let Some(denominator) = value.denominator.scale(&Real::from(-1)) else {
+                        return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                    };
+                    value = RecursiveQuadraticProjectiveScalar {
+                        numerator,
+                        denominator,
+                    };
+                }
+                Ok(BezierRecursiveProjectiveParameter2::new(value, policy)?
+                    .map(CurveParameter2::from_recursive_projective))
+            }
         }
     }
 }

@@ -405,3 +405,61 @@ fn nested_identity_images_use_linear_successful_sign_dispatch() {
         );
     }
 }
+
+/// Bounds and cross-source comparisons convert the query to a parameter by
+/// pulling it back through every image. That walk must share one sign scope:
+/// a fresh scope per ancestor re-proves each remaining guard and is quadratic
+/// in the image depth.
+#[test]
+#[cfg(feature = "dispatch-trace")]
+fn nested_identity_image_bounds_and_comparisons_use_linear_sign_dispatch() {
+    let (source, _) = source_and_independent_circle_point();
+    let identity = RationalMap2::new(
+        [polynomial(&[&[0], &[1]]), polynomial(&[&[0, 1]])],
+        polynomial(&[&[1]]),
+    );
+    let expected = source
+        .rational_form(polynomial(&[&[0], &[1]]), polynomial(&[&[2], &[1]]))
+        .unwrap();
+    let expected_bounds = expected.bounds().unwrap();
+    let count = |operation: &dyn Fn()| {
+        hyperreal::dispatch_trace::reset();
+        hyperreal::dispatch_trace::with_recording(operation);
+        hyperreal::dispatch_trace::take_trace().path_count(
+            "hypercurve",
+            "point-polynomial-sign",
+            "dispatch",
+        )
+    };
+    let mut point = source;
+    let mut counts = Vec::new();
+    for depth in 0..=16 {
+        if depth != 0 {
+            point = point.rational_image(&identity).unwrap();
+        }
+        if [0, 4, 8, 16].contains(&depth) {
+            let query = point
+                .rational_form(polynomial(&[&[0], &[1]]), polynomial(&[&[2], &[1]]))
+                .unwrap();
+            let bounds = count(&|| {
+                let (lower, upper) = query.bounds().unwrap();
+                assert!(lower <= expected_bounds.1 && expected_bounds.0 <= upper);
+            });
+            let comparison = count(&|| {
+                assert_eq!(query.compare(&expected).unwrap(), Ordering::Equal);
+            });
+            counts.push((depth, bounds, comparison));
+        }
+    }
+    eprintln!("nested identity bounds/comparison sign dispatches: {counts:?}");
+    for (depth, bounds, comparison) in counts {
+        assert!(
+            bounds <= 4 * (depth + 1),
+            "depth {depth} bounds used {bounds}"
+        );
+        assert!(
+            comparison <= 8 * (depth + 1),
+            "depth {depth} comparison used {comparison}"
+        );
+    }
+}
