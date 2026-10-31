@@ -2181,8 +2181,6 @@ impl BezierAnalyticParallelPoint2 {
     pub(crate) fn shares_storage(&self, other: &Self) -> bool {
         Arc::ptr_eq(&self.data, &other.data)
     }
-
-    #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> *const () {
         Arc::as_ptr(&self.data).cast()
     }

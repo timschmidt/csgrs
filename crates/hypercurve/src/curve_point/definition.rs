@@ -109,9 +109,9 @@ impl CurvePoint2 {
         ))
     }
 
-    /// Encoder-local memoization of owned immutable definitions. The encoder
-    /// must retain a clone for every key; this is not mathematical equality.
-    #[cfg(feature = "svg")]
+    /// Encoder- and replay-local memoization of owned immutable definitions.
+    /// The caller must retain a clone for every key; this is not mathematical
+    /// equality.
     pub(crate) fn replay_storage_key(&self) -> Option<(u8, *const ())> {
         match &self.0 {
             CurvePointData2::Exact(point) => Some((0, std::ptr::from_ref(point.x()).cast())),
@@ -249,6 +249,14 @@ impl CurvePointDefinition2 {
     }
 
     fn replay(self, sources_checked: bool) -> ExactCurveResult<CurvePoint2> {
+        self.replay_with(sources_checked, &mut Vec::new())
+    }
+
+    fn replay_with(
+        self,
+        sources_checked: bool,
+        replayed: &mut ReplayedSources,
+    ) -> ExactCurveResult<CurvePoint2> {
         crate::policy::resolve_certified_operation(&CurveContext::STRICT, |policy| match self {
             Self::Coordinates(point) => Ok(point.into()),
             Self::SelectedPolynomialRoot { coefficients, root } => {
@@ -270,7 +278,7 @@ impl CurvePointDefinition2 {
                     let source = if sources_checked {
                         source
                     } else {
-                        source.definition()?.into_point()?
+                        replay_source(&source, replayed)?
                     };
                     queries.push(crate::bezier_offset::PointFormSource2::new(
                         source,
@@ -382,10 +390,10 @@ impl CurvePointDefinition2 {
                 left_normal,
             } => {
                 if !sources_checked {
-                    source.start().definition()?.into_point()?;
-                    source.end().definition()?.into_point()?;
+                    replay_source(&source.start(), replayed)?;
+                    replay_source(&source.end(), replayed)?;
                     if let Some(origin) = &origin {
-                        origin.definition()?.into_point()?;
+                        replay_source(origin, replayed)?;
                     }
                 }
                 let point = crate::BezierAlgebraicChordParallelPoint2::from_replay_definition(
@@ -414,7 +422,7 @@ impl CurvePointDefinition2 {
                 // same strict policy; an arbitrary incompatible source cannot
                 // acquire a stronger claim merely by being wrapped.
                 if !sources_checked {
-                    source.definition()?.into_point()?;
+                    replay_source(&source, replayed)?;
                 }
                 Ok(crate::BezierSimilarityPoint2::new(source, transform, policy).into())
             }
@@ -422,12 +430,12 @@ impl CurvePointDefinition2 {
                 let invalid = |cause| {
                     ExactCurveError::invalid(CurveOperation2::Evaluation, CurveFamily2::Line, cause)
                 };
-                let line = |[start, end]: [CurvePoint2; 2]| {
+                let mut line = |[start, end]: [CurvePoint2; 2]| {
                     // Retain source identity after proving every recursive
                     // definition admissible under the strict replay policy.
                     if !sources_checked {
-                        start.definition()?.into_point()?;
-                        end.definition()?.into_point()?;
+                        replay_source(&start, replayed)?;
+                        replay_source(&end, replayed)?;
                     }
                     ExactCurveError::decided(
                         CurveOperation2::Evaluation,
@@ -448,4 +456,29 @@ impl CurvePointDefinition2 {
         })
         .map(crate::CurveOutcome::into_value)
     }
+}
+
+/// Sources already replayed within one top-level replay, by allocation
+/// identity. Each entry keeps its input alive, so an address cannot be reused
+/// by a different point while the memo exists.
+type ReplayedSources = Vec<((u8, *const ()), CurvePoint2, CurvePoint2)>;
+
+/// Replays a source point's definition once per top-level replay. A source
+/// shared through a construction DAG, such as both endpoints of one chord
+/// under nested displacements, is validated once instead of once per path.
+fn replay_source(
+    point: &CurvePoint2,
+    replayed: &mut ReplayedSources,
+) -> ExactCurveResult<CurvePoint2> {
+    let key = point.replay_storage_key();
+    if let Some(key) = key
+        && let Some((_, _, point)) = replayed.iter().find(|(entry, _, _)| *entry == key)
+    {
+        return Ok(point.clone());
+    }
+    let result = point.definition()?.replay_with(false, replayed)?;
+    if let Some(key) = key {
+        replayed.push((key, point.clone(), result.clone()));
+    }
+    Ok(result)
 }

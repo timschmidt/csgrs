@@ -4734,6 +4734,12 @@ struct BezierAlgebraicChordParallelData2 {
     // A strict derived representation shares the original immutable construction.
     // Failed or exhausted attempts never populate this cache.
     selected_points: OnceLock<[[crate::selected_field::Value; 2]; 2]>,
+    /// Retained conservative endpoint-box outcomes, keyed by endpoint,
+    /// refinement, locality and policy.
+    bounds: Mutex<Vec<((bool, usize, bool, CurveContext), Classification<Aabb2>)>>,
+    /// Whether the origin or source chord retains a joint point field. The
+    /// answer is structural, so nested displacements decide it once per layer.
+    joint_field: OnceLock<bool>,
 }
 
 struct BezierAlgebraicChordParallelRecursiveFrame2 {
@@ -13628,8 +13634,6 @@ impl BezierSimilarityPoint2 {
             .accepts_retained_policy(self.data.policy)
             .then_some((&self.data.source, &self.data.transform))
     }
-
-    #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> *const () {
         Arc::as_ptr(&self.data).cast()
     }

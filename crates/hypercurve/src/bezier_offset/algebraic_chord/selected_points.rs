@@ -40,13 +40,16 @@ fn common_values(values: Vec<Value>, policy: &CurveContext) -> field::Result<Vec
 
 impl BezierAlgebraicChordParallelPoint2 {
     pub(crate) fn uses_selected_field(&self) -> bool {
-        [
-            self.source_endpoint(),
-            self.data.source.start(),
-            self.data.source.end(),
-        ]
-        .into_iter()
-        .any(point_retains_joint_field)
+        // Without an explicit origin the source endpoint is one of the source
+        // chord's endpoints, so the answer is shared by the whole pair.
+        *self.data.joint_field.get_or_init(|| {
+            self.data
+                .source_point
+                .as_deref()
+                .into_iter()
+                .chain([self.data.source.start(), self.data.source.end()])
+                .any(point_retains_joint_field)
+        })
     }
 
     pub(crate) fn selected_field_values(&self, policy: &CurveContext) -> field::Result<[Value; 2]> {

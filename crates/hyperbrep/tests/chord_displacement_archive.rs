@@ -204,7 +204,7 @@ fn a_selected_fillet_cut_replays_through_the_public_brep_archive_before_split() 
 #[test]
 fn repeated_chord_displacements_archive_shared_dependencies_once() {
     let mut sizes = Vec::new();
-    for depth in [3, 6] {
+    for depth in [3, 6, 16] {
         let mut coefficients = vec![Real::zero(); 8];
         coefficients[0] = (-1).into();
         coefficients[7] = 2.into();
@@ -258,10 +258,16 @@ fn repeated_chord_displacements_archive_shared_dependencies_once() {
         assert_eq!(locations.len(), 1);
         sizes.push(text.len());
     }
-    eprintln!("chord dependency wire sizes at depths 3/6: {sizes:?}");
+    eprintln!("chord dependency wire sizes at depths 3/6/16: {sizes:?}");
     assert!(
         sizes[1] <= 3 * sizes[0],
         "doubling the shared dependency depth must not expand an inline binary tree: {sizes:?}"
+    );
+    // The original sixteen-layer case: an inline tree would be 2^10 times
+    // the six-layer size; shared definitions grow linearly with the layers.
+    assert!(
+        sizes[2] <= 3 * sizes[1],
+        "sixteen shared layers must stay linear in depth: {sizes:?}"
     );
 }
 
@@ -378,4 +384,65 @@ fn oblique_displacement_replays_before_independent_incidence_split_and_projectio
         });
         assert_eq!(outcome.certainty(), CurveCertainty::Certified);
     }
+}
+
+/// Thirty-two nested displacements. Each layer's two endpoints share one
+/// source chord, so construction, endpoint bounds and definition replay walk
+/// a two-node-per-layer DAG; expanding it as a tree took about 200 s by
+/// fourteen layers. The archive exceeds the default dependency depth with a
+/// typed limit, and a larger retry replays the exact endpoint.
+#[test]
+fn thirty_two_nested_displacements_build_linearly_and_respect_depth_limits() {
+    let mut coefficients = vec![Real::zero(); 8];
+    coefficients[0] = (-1).into();
+    coefficients[7] = 2.into();
+    let beta: CurveParameter2 = BezierParameter2::Algebraic(
+        BezierAlgebraicParameter2::try_isolate(
+            BezierParameterPolynomial::try_new_power_basis(coefficients).unwrap(),
+            BezierParameterInterval::try_new(q(3, 4), 1.into()).unwrap(),
+        )
+        .unwrap(),
+    )
+    .into();
+    let at = |x, y| beta.affine_point(1.into(), x, 0.into(), y).unwrap();
+    let mut curve = Curve2::try_line(at(0.into(), 0.into()), at(1.into(), 0.into())).unwrap();
+    for _ in 0..32 {
+        let displaced = |at_end| {
+            CurvePointDefinition2::ChordDisplacement {
+                source: curve.clone(),
+                origin: None,
+                at_end,
+                distance: 1.into(),
+                translation: [0.into(), 0.into()],
+                left_normal: true,
+            }
+            .into_point()
+            .unwrap()
+        };
+        curve = Curve2::try_line(displaced(false), displaced(true)).unwrap();
+    }
+    let text = model(curve).to_json().unwrap();
+    match RawModel::from_json(&text, &ArchiveLimits::default()) {
+        Err(PersistenceError::ResourceLimit(ArchiveLimitExceeded {
+            resource: ArchiveResource::DependencyDepth,
+            limit: 64,
+            observed,
+        })) => assert!(observed > 64),
+        other => panic!("the default dependency depth must refuse: {other:?}"),
+    }
+    let limits = ArchiveLimits {
+        dependency_depth: 256,
+        ..ArchiveLimits::default()
+    };
+    let restored = replay(&text, &limits);
+    assert!(
+        restored
+            .pcurves()
+            .next()
+            .unwrap()
+            .curve()
+            .start()
+            .coincides_with(&at(0.into(), 32.into()))
+            .unwrap()
+    );
 }

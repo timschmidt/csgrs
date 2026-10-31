@@ -13,8 +13,6 @@ impl BezierAlgebraicChordPairPoint2 {
             })
         })
     }
-
-    #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> *const () {
         Arc::as_ptr(&self.data).cast()
     }
@@ -2647,12 +2645,12 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end,
         }))
     }
-
-    #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> (bool, *const ()) {
         (self.at_end, Arc::as_ptr(&self.data).cast())
     }
@@ -2686,6 +2684,8 @@ impl BezierAlgebraicChordParallelPoint2 {
             policy: policy.retained_object_policy(),
             recursive_points: OnceLock::new(),
             selected_points: OnceLock::new(),
+            bounds: Mutex::default(),
+            joint_field: OnceLock::new(),
         });
         (
             Self {
@@ -2713,6 +2713,8 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end,
         }
@@ -2735,6 +2737,8 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end: false,
         }
@@ -2757,6 +2761,8 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end: false,
         }
@@ -4424,6 +4430,8 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end: self.at_end,
         })
@@ -4472,6 +4480,8 @@ impl BezierAlgebraicChordParallelPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_points: OnceLock::new(),
                 selected_points: OnceLock::new(),
+                bounds: Mutex::default(),
+                joint_field: OnceLock::new(),
             }),
             at_end: self.at_end,
         }))
@@ -4493,7 +4503,49 @@ impl BezierAlgebraicChordParallelPoint2 {
         self.conservative_bounds_refined_impl(refinement_steps, policy, true)
     }
 
+    /// A displaced point needs both endpoints of its source chord, so nested
+    /// displacements would refine `2^depth` source boxes. Each outcome is
+    /// kept on this immutable construction: a decided box, or a deterministic
+    /// unavailable one (local bounds commonly are). Budget exhaustion, and any
+    /// outcome reached while a budget is exhausted, is never kept, so a later
+    /// larger-budget retry recomputes. Approximate-capable scopes always
+    /// recompute, so their consumed decisions are observed. A box never
+    /// becomes point authority.
     pub(in crate::bezier_offset) fn conservative_bounds_refined_impl(
+        &self,
+        refinement_steps: usize,
+        policy: &CurveContext,
+        local_only: bool,
+    ) -> Classification<Aabb2> {
+        const RETAINED_BOUNDS: usize = 64;
+        // An approximate-capable scope must observe each consumed decision,
+        // so only strict outcomes are shared.
+        if policy.permits_approximate_512() {
+            return self.uncached_conservative_bounds_refined(refinement_steps, policy, local_only);
+        }
+        let key = (self.at_end, refinement_steps, local_only, *policy);
+        if let Some((_, outcome)) = self
+            .data
+            .bounds
+            .lock()
+            .ok()
+            .and_then(|cache| cache.iter().find(|(entry, _)| *entry == key).cloned())
+        {
+            return outcome;
+        }
+        let result =
+            self.uncached_conservative_bounds_refined(refinement_steps, policy, local_only);
+        if result != Classification::Uncertain(UncertaintyReason::BudgetExhausted)
+            && hypersolve::work_budget::exhaustion().is_none()
+            && let Ok(mut cache) = self.data.bounds.lock()
+            && cache.len() < RETAINED_BOUNDS
+        {
+            cache.push((key, result.clone()));
+        }
+        result
+    }
+
+    fn uncached_conservative_bounds_refined(
         &self,
         refinement_steps: usize,
         policy: &CurveContext,

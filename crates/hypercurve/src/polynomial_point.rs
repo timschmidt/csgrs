@@ -94,7 +94,6 @@ impl PolynomialPoint2 {
     /// Prefix views may have different wrapper allocations while retaining the
     /// same immutable map application or selected fiber. An owning point clone
     /// keeps either key alive for the duration of one native export.
-    #[cfg(feature = "svg")]
     pub(crate) fn replay_storage_key(&self) -> (u8, *const ()) {
         if let Some(map) = self.maps.as_ref() {
             (4, std::sync::Arc::as_ptr(map).cast())
