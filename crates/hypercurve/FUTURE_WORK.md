@@ -3562,6 +3562,8 @@ Open: exporting that region's 1/16 dilation, and the filleted chains, fails with
 "exact circle replay requires a retained chord-normal frame" for generated round
 joins. An XOR between the dilations of the original and the replayed region is
 `Blocked(Boolean, RationalBezier, Ordering)`, although each dilation completes.
+Evidence: `docs/evidence/2026-10-31-hypercurve-closure-retained-bezier-replay`,
+SHA-256 `9225b74939384ce6927e3c82d58ec82a7970a864b9738dc9c5f258463d01326a`.
 
 ## Closing a chamfered ellipse dilation (2026-10-31)
 
