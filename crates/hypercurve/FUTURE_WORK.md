@@ -3540,6 +3540,39 @@ paired with empty regions, are not yet in the corpus. Invalid offset options
 on canonical empty regions and an island meeting its shrinking hole
 (`island_meets_its_shrinking_hole`) now are.
 
+## Closing a chamfered ellipse dilation (2026-10-31)
+
+Closure-plan fixture "noncircular ellipse offset: cut, fillet or chamfer, then
+reoffset". The unit disk scaled by 2 along x is dilated by 1/2, cut by x <= 1,
+and chamfered at one cut corner with chord setbacks 1/8. Dilating that region by
+1/16 takes 0.7 s, but eroding the result by 1/16 did not finish in 30 minutes.
+The region is convex, so the closing must equal the chamfered region. Without
+the chamfer, the cut region closes in 22 s and the filleted one in 30 s. The
+plain ellipse cut at x = 1 and chamfered closes in 61 s; a circle analogue in
+0.6 s.
+
+The dilation keeps the chamfer edge as a normal offset of the chamfer chord,
+but no boundary junction shares one point object between adjacent fragments.
+Erosion builds one band per span, so each smooth junction yields two coincident
+normal connectors with different endpoint representations: a selected-circle
+point on the round join, and a chord-parallel point on the edge. The edge's band
+offset composes back to the chamfer chord as zero-distance parallel points.
+No structural relation links these, and the chord pair kernel refines
+recursive-quadratic signs that are zero or costly
+(`pair_sides_by_refinement` -> `recursive_support_tangent_cross_sign`).
+
+Rejected: returning the source chord when composed distances cancel exactly in
+`parallel_left_retained`. Together with sharing algebraic selected-circle
+junction endpoints in `share_exact_offset_band_endpoints`, it completes the
+closing exactly in about 300 s. But it breaks three existing fillet tests that
+require the +1 then -1 round trip to stay procedural, and slows the plain-ellipse
+case to 76-78 s. Sharing alone does not finish within 900 s. Neither change is
+committed. The chain needs retained junction identity in regularized
+boundaries, or band connectors that carry their normal-line relation to the
+span tangent. Even then, single pairs over these fields take 5-50 s, which is M2
+cost work. Evidence: `docs/evidence/2026-10-31-hypercurve-closure-chamfer-closing-gap`,
+SHA-256 `ba2d77dd9550c6ba3d0ba11e69c5770dfd0010fdfebb8758122849f3dbf8cd27`.
+
 ## Parabola offsets and their rational reparameterization (2026-10-30)
 
 Closure-plan corpus item "parabola offset: known rational reparameterization
