@@ -287,11 +287,17 @@ impl DenseTensorPolynomial {
             .zip(&other.dimensions)
             .map(|(left, right)| left.checked_add(*right)?.checked_sub(1))
             .collect::<Option<Vec<_>>>()?;
+        // Scalar shortcuts produce the same coefficients as convolution and
+        // answer to the same coefficient bit limit.
         if self.coefficients.len() == 1 {
-            return other.scale(&self.coefficients[0]);
+            return other
+                .scale(&self.coefficients[0])?
+                .within_coefficient_bit_limit();
         }
         if other.coefficients.len() == 1 {
-            return self.scale(&other.coefficients[0]);
+            return self
+                .scale(&other.coefficients[0])?
+                .within_coefficient_bit_limit();
         }
         let target_strides = row_major_strides(&dimensions)?;
         let left_terms = embedded_nonzero_terms(self, &target_strides)?;
@@ -1495,6 +1501,31 @@ mod tests {
 
     fn real(value: i64) -> Real {
         Real::from(value)
+    }
+
+    #[test]
+    fn scalar_tensor_products_observe_the_coefficient_bit_limit() {
+        use crate::work_budget::{WorkKind, with_coefficient_bit_limit};
+        let large = Real::from(1_i64 << 40);
+        let scalar = DenseTensorPolynomial::try_new(vec![1], vec![large.clone()]).unwrap();
+        let tensor =
+            DenseTensorPolynomial::try_new(vec![2], vec![large.clone(), Real::one()]).unwrap();
+        // Each product has a 2^80 coefficient: 82 numerator and denominator
+        // bits against a 64-bit limit. Every operand order is unavailable.
+        for (left, right) in [
+            (&scalar, &tensor),
+            (&tensor, &scalar),
+            (&scalar, &scalar),
+            (&tensor, &tensor),
+        ] {
+            let outcome = with_coefficient_bit_limit(64, || left.multiply(right));
+            assert_eq!(
+                outcome.result.unwrap_err().kind,
+                WorkKind::CoefficientGrowth
+            );
+            let wide = with_coefficient_bit_limit(128, || left.multiply(right));
+            assert!(wide.result.unwrap().is_some());
+        }
     }
 
     fn selected_sum_polynomial(radical_count: usize) -> DenseTensorPolynomial {
