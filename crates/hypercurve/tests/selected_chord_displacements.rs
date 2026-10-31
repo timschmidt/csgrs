@@ -263,3 +263,189 @@ fn selected_chord_displacement_keeps_explicit_origin_and_pole_guards() {
         ));
     }
 }
+
+/// `|v|^2` and the signed cross and dot of `v` against `source`'s direction,
+/// where `v` is `point - origin - translation`.
+fn relation(
+    source: &Curve2,
+    point: &CurvePoint2,
+    origin: &CurvePoint2,
+    translation: [i32; 2],
+) -> (Ordering, Ordering, CurvePointRationalForm2) {
+    let x = p(&[&[], &[1]]);
+    let y = p(&[&[0, 1]]);
+    let (a, b) = (source.start(), source.end());
+    let dx = form(&b, x.clone()).subtract(&form(&a, x.clone())).unwrap();
+    let dy = form(&b, y.clone()).subtract(&form(&a, y.clone())).unwrap();
+    let vx = form(point, x)
+        .subtract(&form(origin, p(&[&[translation[0]], &[1]])))
+        .unwrap();
+    let vy = form(point, y)
+        .subtract(&form(origin, p(&[&[translation[1], 1]])))
+        .unwrap();
+    let cross = dx
+        .multiply(&vy)
+        .unwrap()
+        .subtract(&dy.multiply(&vx).unwrap())
+        .unwrap();
+    let dot = dx
+        .multiply(&vx)
+        .unwrap()
+        .add(&dy.multiply(&vy).unwrap())
+        .unwrap();
+    let squared = vx
+        .multiply(&vx)
+        .unwrap()
+        .add(&vy.multiply(&vy).unwrap())
+        .unwrap();
+    (
+        cross.compare_to_real(&Real::zero()).unwrap(),
+        dot.compare_to_real(&Real::zero()).unwrap(),
+        squared,
+    )
+}
+
+fn distance_squared(first: &CurvePoint2, second: &CurvePoint2) -> CurvePointRationalForm2 {
+    let x = p(&[&[], &[1]]);
+    let y = p(&[&[0, 1]]);
+    let dx = form(first, x.clone()).subtract(&form(second, x)).unwrap();
+    let dy = form(first, y.clone()).subtract(&form(second, y)).unwrap();
+    dx.multiply(&dx)
+        .unwrap()
+        .add(&dy.multiply(&dy).unwrap())
+        .unwrap()
+}
+
+/// The reflection `(x, y) -> (1 - 2x, 2y)`: scale 2 with reversed orientation.
+fn reflection() -> hypercurve::Similarity2 {
+    hypercurve::Similarity2::try_from_real_affine(
+        Real::from(-2),
+        Real::zero(),
+        Real::zero(),
+        Real::from(2),
+        Real::one(),
+        Real::zero(),
+    )
+    .unwrap()
+}
+
+/// The image of the left-normal displacement by 1/8, translated by (2, -3),
+/// is the displacement of the image line by 1/4 on its right, translated by
+/// the reflected (-4, -6). A chamfer of the image with setback 1/16 is the
+/// image of the original chamfer with setback 1/32.
+fn check_reflected_displacement(line: &Curve2, shifted: &Curve2) {
+    for (point, origin) in [(shifted.start(), line.start()), (shifted.end(), line.end())] {
+        let (cross, dot, squared) = relation(line, &point, &origin, [-4, -6]);
+        assert_eq!(cross, Ordering::Less, "the reflected normal turns right");
+        assert_eq!(dot, Ordering::Equal);
+        assert_eq!(squared.compare_to_real(&q(1, 16)).unwrap(), Ordering::Equal);
+    }
+}
+
+fn chamfer(path: &hypercurve::CurvePath2, setback: Real) -> hypercurve::CurvePath2 {
+    match path
+        .chamfer_vertex_by_setbacks(
+            1,
+            setback.clone(),
+            setback,
+            hypercurve::CurveCornerMode2::TrimOnly,
+        )
+        .unwrap()
+    {
+        hypercurve::CurveCornerSolutions2::Unique(path) => path,
+        other => panic!("one chamfer: {} solutions", other.solutions().len()),
+    }
+}
+
+#[cfg(feature = "svg")]
+#[test]
+fn reflected_translated_displacement_replays_then_chamfers_with_scaled_setbacks() {
+    use hypercurve::{
+        CurvePath2, CurveRegion2, Point2, SvgGeometry2, export_svg_document, import_svg_document,
+    };
+    const INPUT: &str = "HYPERCURVE_REFLECTED_DISPLACEMENT_REPLAY";
+    // The far corner, in the image and in the original: (1 - 2(-2), 2 * 5/2).
+    let far = Point2::from_values(5, 5);
+    let far_source = Point2::new(Real::from(-2), q(5, 2));
+    fn chamfer_and_check(image_line: &Curve2, image_shifted: &Curve2, far: &Point2) -> CurvePath2 {
+        check_reflected_displacement(image_line, image_shifted);
+        let corner = image_shifted.end();
+        let path = CurvePath2::try_new(vec![
+            image_shifted.clone(),
+            Curve2::try_line(corner.clone(), far.clone().into()).unwrap(),
+        ])
+        .unwrap();
+        let cut = chamfer(&path, q(1, 16));
+        let chord = &cut.curves()[1];
+        for end in [chord.start(), chord.end()] {
+            assert_eq!(
+                distance_squared(&end, &corner)
+                    .compare_to_real(&q(1, 256))
+                    .unwrap(),
+                Ordering::Equal
+            );
+        }
+        cut
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        let geometry = import_svg_document(&std::fs::read_to_string(path).unwrap()).unwrap();
+        chamfer_and_check(
+            &geometry.paths()[0].curves()[0],
+            &geometry.paths()[1].curves()[0],
+            &far,
+        );
+        return;
+    }
+    let line = source();
+    let shifted = Curve2::try_line(
+        displaced(&line, true, false, q(1, 8)),
+        displaced(&line, true, true, q(1, 8)),
+    )
+    .unwrap();
+    let image_line = line.transform_similarity(&reflection()).unwrap();
+    let image_shifted = shifted.transform_similarity(&reflection()).unwrap();
+    let cut = chamfer_and_check(&image_line, &image_shifted, &far);
+    // Setback scaling: the image of the original chamfer with setback 1/32.
+    let original = CurvePath2::try_new(vec![
+        shifted.clone(),
+        Curve2::try_line(shifted.end(), far_source.into()).unwrap(),
+    ])
+    .unwrap();
+    let mapped = chamfer(&original, q(1, 32))
+        .transform_similarity(&reflection())
+        .unwrap();
+    for (first, second) in cut.curves().iter().zip(mapped.curves()) {
+        assert!(first.start().coincides_with(&second.start()).unwrap());
+        assert!(first.end().coincides_with(&second.end()).unwrap());
+    }
+    let text = export_svg_document(&SvgGeometry2::new(
+        CurveRegion2::empty(),
+        vec![],
+        vec![
+            CurvePath2::try_new(vec![image_line]).unwrap(),
+            CurvePath2::try_new(vec![image_shifted]).unwrap(),
+        ],
+    ))
+    .unwrap();
+    let file = std::env::temp_dir().join(format!(
+        "hypercurve-reflected-displacement-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&file, text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "reflected_translated_displacement_replays_then_chamfers_with_scaled_setbacks",
+            "--nocapture",
+        ])
+        .env(INPUT, &file)
+        .output();
+    std::fs::remove_file(file).unwrap();
+    let child = child.unwrap();
+    assert!(
+        child.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}
