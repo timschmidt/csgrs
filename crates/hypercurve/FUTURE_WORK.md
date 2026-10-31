@@ -3652,3 +3652,63 @@ consumption of generated parallels and corners, which a shortcut would hide
 rather than fix. Evidence for this section, including the rejected patch:
 `docs/evidence/2026-10-30-hypercurve-closure-coefficient-limits-and-ph-offsets`,
 SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.
+
+## Review: probe contacts, nested displacements and composed chains (2026-10-31)
+
+**Probe-contact regressions.** With the source half of `0a0ada8846`
+reverse-applied, all three `polynomial_probe_contacts` tests still pass, so
+they no longer guard that fix. Forcing each retained-point probe candidate
+individually (exterior corners, the `2n+1` fallbacks and the axis probes) on
+the parabola, its reversal, and both cubic enclosures gives identical results
+under the old filter and the current code: every candidate decides Inside,
+except the tight cubic's corner 0 (the original `y = 2x` probe), which reports
+`Uncertain(Boundary)` in both. The original wrong Outside answers are no longer
+reachable through any single candidate on this revision; the contacts those
+probes meet are now certified transverse, or blocked, before the filter is
+consulted. The temporary candidate hook was removed. No regression test that
+fails on the old filter was found; the fix remains justified by its argument
+(skipping an uncertified contact can drop a crossing), and a witness that
+distinguishes the two filters remains open work.
+
+**Nested chord displacements.** Extending the archive test from depths 3/6 to
+16 took 1134 s. Phase timing showed construction alone was exponential (layer
+14 at 197 s, doubling per layer), with three separate tree expansions of the
+two-node-per-layer construction DAG:
+
+1. `BezierAlgebraicChordParallelPoint2` conservative bounds refined both source
+   endpoints at every layer. Strict-scope outcomes are now kept on the shared
+   pair allocation, keyed by endpoint, refinement steps, locality and policy
+   (at most 64 entries). Deterministic unavailable outcomes are kept, since
+   local bounds are commonly unavailable; budget exhaustion and anything
+   computed while exhausted are not, and approximate-capable scopes always
+   recompute so their consumed decisions are observed.
+2. `uses_selected_field` re-walked `point_retains_joint_field` through every
+   layer on each line construction. The structural answer is now computed
+   once per pair.
+3. Strict definition replay validated each source's definition per path.
+   Sources are now replayed once per top-level replay, memoized by
+   `replay_storage_key` (now available without the `svg` feature) while the
+   memo holds each key's point alive. Selector, denominator, similarity and
+   incidence checks of each construction still run.
+
+Sixteen layers now build in 0.12 s and replay in 0.12 s; the wire sizes
+5088/7707/16437 bytes are unchanged. A new thirty-two-layer test builds the
+chain, receives the typed `DependencyDepth` refusal (limit 64) by default, and
+replays the exact endpoint `(0, 32)` with a depth limit of 256; its logical
+depth is 65. Construction through 48 layers stayed under 0.15 s, so growth is
+linear in these measurements, which do not bound other construction graphs.
+
+**Composed chain.** `selected_chord_displacements` now maps a left-normal
+displacement of a selected-field chord (distance 1/8, translation (2,-3))
+through the orientation-reversing similarity `(x,y) -> (1-2x, 2y)`, checks the
+image is the right-side displacement by 1/4 translated by (-4,-6) through
+exact cross, dot and squared-distance relations, chamfers the image corner with
+setback 1/16 and checks it equals the image of the original chamfer with
+setback 1/32, then exports SVG and repeats the relations and chamfer in a fresh
+process.
+
+Verification on this revision, Rust 1.99.1 release, `--all-features
+--locked`: Hypercurve 3082 passed (34 existing ignored), HyperBRep 687,
+Hypercircuit 354, HyperDRC 1670, all with no failures. Formatting passed;
+strict Clippy on all targets passed for Hypercurve and HyperBRep with all,
+default and no default features. The complete pre-push matrix was not run.
