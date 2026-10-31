@@ -8651,3 +8651,5 @@ mod certified_successor_tests;
 
 #[cfg(test)]
 mod contact_index_tests;
+#[cfg(test)]
+mod oblique_probe_tests;

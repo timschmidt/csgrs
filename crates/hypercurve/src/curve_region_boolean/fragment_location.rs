@@ -2,6 +2,14 @@
 
 use super::*;
 
+#[cfg(test)]
+thread_local! {
+    /// Restricts retained-point probing to one candidate index, so tests can
+    /// replay a probe direction that axis-first ordering would not reach.
+    pub(super) static FORCED_PROBE_CANDIDATE: std::cell::Cell<Option<usize>> =
+        const { std::cell::Cell::new(None) };
+}
+
 impl<'a> CurveRegionBooleanContext<'a> {
     /// Classifies an already split open-curve piece against the other operand.
     /// The local range belongs to its original prepared source span.
@@ -562,6 +570,8 @@ impl<'a> CurveRegionBooleanContext<'a> {
         let prefer_axis_probes = boundary_carriers
             .iter()
             .any(|carrier| matches!(&carrier.geometry, CurveSupport2::Polynomial(_)));
+        #[cfg(test)]
+        let forced_candidate = FORCED_PROBE_CANDIDATE.with(std::cell::Cell::get);
         for candidate_index in 0..ordinary_candidates.saturating_add(4) {
             // Polynomial sections can reuse an already represented coordinate
             // without adjoining both selected endpoint coordinates. Try those
@@ -577,6 +587,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
             } else {
                 candidate_index
             };
+            #[cfg(test)]
+            if forced_candidate.is_some_and(|forced| forced != candidate_index) {
+                continue;
+            }
             let outside = if candidate_index < ordinary_candidates {
                 retained_probe_exterior_candidate(&outer_bounds, candidate_index)
             } else {

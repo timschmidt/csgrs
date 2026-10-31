@@ -3657,18 +3657,21 @@ SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.
 
 **Probe-contact regressions.** With the source half of `0a0ada8846`
 reverse-applied, all three `polynomial_probe_contacts` tests still pass, so
-they no longer guard that fix. Forcing each retained-point probe candidate
-individually (exterior corners, the `2n+1` fallbacks and the axis probes) on
-the parabola, its reversal, and both cubic enclosures gives identical results
-under the old filter and the current code: every candidate decides Inside,
-except the tight cubic's corner 0 (the original `y = 2x` probe), which reports
-`Uncertain(Boundary)` in both. The original wrong Outside answers are no longer
-reachable through any single candidate on this revision; the contacts those
-probes meet are now certified transverse, or blocked, before the filter is
-consulted. The temporary candidate hook was removed. No regression test that
-fails on the old filter was found; the fix remains justified by its argument
-(skipping an uncertified contact can drop a crossing), and a witness that
-distinguishes the two filters remains open work.
+they do not guard that fix. Two independent protections now cover the same
+property: the crossing loop from `0a0ada8846`, and a later guard from
+`70cccec462` that sends any uncertified contact to another probe before the
+loop. Removing either alone changes no result. Removing both makes the
+tight cubic's original corner probe `y = 2x` report Outside for `(1/2, 1)`, yet
+the three integration tests still pass, because axis probes and ray
+classification decide first.
+
+Two library tests now replay each probe candidate alone through a test-only
+candidate selector: none of the 16 indices may misclassify the parabola, its
+reversal or either cubic, at least one must decide each, and the original
+`y = 2x` probe must refuse its odd-order contact. Both pass on this revision
+and with either protection removed; both fail with both removed. A probe
+dump shows the original cubic and parabola probes meet contacts that are not
+certified transverse and have no tangent cross.
 
 **Nested chord displacements.** Extending the archive test from depths 3/6 to
 16 took 1134 s. Phase timing showed construction alone was exponential (layer
@@ -3709,6 +3712,9 @@ process.
 
 Verification on this revision, Rust 1.99.1 release, `--all-features
 --locked`: Hypercurve 3082 passed (34 existing ignored), HyperBRep 687,
-Hypercircuit 354, HyperDRC 1670, all with no failures. Formatting passed;
-strict Clippy on all targets passed for Hypercurve and HyperBRep with all,
-default and no default features. The complete pre-push matrix was not run.
+Hypercircuit 354, HyperDRC 1670, all with no failures (before the probe
+tests and the helper gating below). Strict Clippy without the `svg` feature
+first failed on the chain test's ungated helpers; after gating them, strict
+Clippy on all targets passes for Hypercurve and HyperBRep with all, default
+and no default features, formatting passes, and the probe, chain and
+probe-contact targets pass. The complete pre-push matrix was not run.

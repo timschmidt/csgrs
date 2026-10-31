@@ -264,6 +264,7 @@ fn selected_chord_displacement_keeps_explicit_origin_and_pole_guards() {
     }
 }
 
+#[cfg(feature = "svg")]
 /// `|v|^2` and the signed cross and dot of `v` against `source`'s direction,
 /// where `v` is `point - origin - translation`.
 fn relation(
@@ -305,6 +306,7 @@ fn relation(
     )
 }
 
+#[cfg(feature = "svg")]
 fn distance_squared(first: &CurvePoint2, second: &CurvePoint2) -> CurvePointRationalForm2 {
     let x = p(&[&[], &[1]]);
     let y = p(&[&[0, 1]]);
@@ -316,6 +318,7 @@ fn distance_squared(first: &CurvePoint2, second: &CurvePoint2) -> CurvePointRati
         .unwrap()
 }
 
+#[cfg(feature = "svg")]
 /// The reflection `(x, y) -> (1 - 2x, 2y)`: scale 2 with reversed orientation.
 fn reflection() -> hypercurve::Similarity2 {
     hypercurve::Similarity2::try_from_real_affine(
@@ -329,6 +332,7 @@ fn reflection() -> hypercurve::Similarity2 {
     .unwrap()
 }
 
+#[cfg(feature = "svg")]
 /// The image of the left-normal displacement by 1/8, translated by (2, -3),
 /// is the displacement of the image line by 1/4 on its right, translated by
 /// the reflected (-4, -6). A chamfer of the image with setback 1/16 is the
@@ -342,6 +346,7 @@ fn check_reflected_displacement(line: &Curve2, shifted: &Curve2) {
     }
 }
 
+#[cfg(feature = "svg")]
 fn chamfer(path: &hypercurve::CurvePath2, setback: Real) -> hypercurve::CurvePath2 {
     match path
         .chamfer_vertex_by_setbacks(
