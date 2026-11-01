@@ -1,7 +1,5 @@
 //! Shared rational point images keep construction and pole evidence together.
 
-use hypersolve::BivariatePolynomial;
-
 use crate::{
     Aabb2, Classification, CurveContext, CurveOperation2, CurvePoint2, CurvePointData2,
     CurveResult, ExactCurveError, ExactCurveResult, RationalMap2, UncertaintyReason,
@@ -78,21 +76,6 @@ impl RationalPointImage2 {
         Classification::Decided(())
     }
 
-    pub(crate) fn pullback(
-        &self,
-        numerator: &BivariatePolynomial,
-        denominator: &BivariatePolynomial,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<(BivariatePolynomial, BivariatePolynomial)>> {
-        if let Classification::Uncertain(reason) = self.validate(policy)? {
-            return Ok(Classification::Uncertain(reason));
-        }
-        Ok(self.map.pullback(numerator, denominator).map_or(
-            Classification::Uncertain(UncertaintyReason::Unsupported),
-            Classification::Decided,
-        ))
-    }
-
     pub(crate) fn bounds(&self, steps: usize, policy: &CurveContext) -> Classification<Aabb2> {
         match self.validate(policy) {
             Ok(Classification::Decided(())) => {}
@@ -134,6 +117,7 @@ mod tests {
         Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
         BezierParameterPolynomial, CurveCertainty, Real,
     };
+    use hypersolve::BivariatePolynomial;
     use std::cmp::Ordering;
 
     fn source() -> CurvePoint2 {

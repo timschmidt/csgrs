@@ -463,3 +463,81 @@ fn nested_identity_image_bounds_and_comparisons_use_linear_sign_dispatch() {
         );
     }
 }
+
+/// Cross-source arithmetic pulls each operand back to a common field. The
+/// pullback must check every image guard in one sign scope: a fresh scope per
+/// ancestor re-proves each remaining guard and is quadratic in the image depth.
+#[test]
+#[cfg(feature = "dispatch-trace")]
+fn nested_identity_image_arithmetic_uses_linear_sign_dispatch() {
+    let (source, _) = source_and_independent_circle_point();
+    let identity = RationalMap2::new(
+        [polynomial(&[&[0], &[1]]), polynomial(&[&[0, 1]])],
+        polynomial(&[&[1]]),
+    );
+    let form = |point: &CurvePoint2| {
+        point
+            .rational_form(polynomial(&[&[0], &[1]]), polynomial(&[&[2], &[1]]))
+            .unwrap()
+    };
+    let base = form(&source);
+    let doubled = source
+        .rational_form(polynomial(&[&[0], &[2]]), polynomial(&[&[2], &[1]]))
+        .unwrap();
+    let squared = source
+        .rational_form(
+            polynomial(&[&[0], &[0], &[1]]),
+            polynomial(&[&[4], &[4], &[1]]),
+        )
+        .unwrap();
+    let count = |operation: &dyn Fn()| {
+        hyperreal::dispatch_trace::reset();
+        hyperreal::dispatch_trace::with_recording(operation);
+        hyperreal::dispatch_trace::take_trace().path_count(
+            "hypercurve",
+            "point-polynomial-sign",
+            "dispatch",
+        )
+    };
+    let mut point = source;
+    let mut counts = Vec::new();
+    for depth in 0..=16 {
+        if depth != 0 {
+            point = point.rational_image(&identity).unwrap();
+        }
+        if [0, 4, 8, 16].contains(&depth) {
+            let nested = form(&point);
+            let [sum, difference, product] =
+                <[std::cell::OnceCell<CurvePointRationalForm2>; 3]>::default();
+            let add = count(&|| _ = sum.set(nested.add(&base).unwrap()));
+            let subtract = count(&|| _ = difference.set(nested.subtract(&base).unwrap()));
+            let multiply = count(&|| _ = product.set(base.multiply(&nested).unwrap()));
+            assert_eq!(
+                sum.get().unwrap().compare(&doubled).unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                difference
+                    .get()
+                    .unwrap()
+                    .compare_to_real(&Real::zero())
+                    .unwrap(),
+                Ordering::Equal
+            );
+            assert_eq!(
+                product.get().unwrap().compare(&squared).unwrap(),
+                Ordering::Equal
+            );
+            counts.push((depth, add, subtract, multiply));
+        }
+    }
+    eprintln!("nested identity arithmetic sign dispatches: {counts:?}");
+    for (depth, add, subtract, multiply) in counts {
+        for (name, count) in [("add", add), ("subtract", subtract), ("multiply", multiply)] {
+            assert!(
+                count <= 4 * (depth + 1),
+                "depth {depth} {name} used {count}"
+            );
+        }
+    }
+}

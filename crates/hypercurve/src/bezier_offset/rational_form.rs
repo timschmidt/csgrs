@@ -89,8 +89,11 @@ pub(crate) fn common_point_form_sources(
         return Ok(Classification::Decided([first, second]));
     }
     let original = [first.clone(), second.clone()];
+    // Both pullbacks share one sign scope, so a guard common to the two
+    // operands' ancestors is proved once.
+    let mut scope = PointSignScope::new(policy);
     for form in [&mut first, &mut second] {
-        *form = match point_form_source(&form.source, &form.numerator, &form.denominator, policy)? {
+        *form = match scope.form_source(&form.source, &form.numerator, &form.denominator)? {
             Classification::Decided(form) => form,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
@@ -852,93 +855,115 @@ pub(crate) fn point_form_source(
     denominator: &BivariatePolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<PointFormSource2>> {
-    match &source.0 {
-        CurvePointData2::RationalImage(image) => {
-            match image.pullback(numerator, denominator, policy)? {
-                Classification::Decided((numerator, denominator)) => {
-                    point_form_source(&image.source, &numerator, &denominator, policy)
+    PointSignScope::new(policy).form_source(source, numerator, denominator)
+}
+
+impl PointSignScope<'_> {
+    /// Pulls a query back through every retained image in this one scope. Each
+    /// image's original policy and guard are rechecked here, where the guard
+    /// dispatch has already proved its ancestors; a fresh scope per ancestor
+    /// would re-prove every remaining guard and is quadratic in image depth.
+    fn form_source(
+        &mut self,
+        source: &CurvePoint2,
+        numerator: &BivariatePolynomial,
+        denominator: &BivariatePolynomial,
+    ) -> CurveResult<Classification<PointFormSource2>> {
+        let policy = self.policy;
+        match &source.0 {
+            CurvePointData2::RationalImage(image) => {
+                if let Classification::Uncertain(reason) = image.validate_policy(policy) {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                if let Classification::Uncertain(reason) =
+                    self.denominator_sign(&image.source, image.map.denominator())?
+                {
+                    return Ok(Classification::Uncertain(reason));
+                }
+                let Some((numerator, denominator)) = image.map.pullback(numerator, denominator)
+                else {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                };
+                self.form_source(&image.source, &numerator, &denominator)
+            }
+            CurvePointData2::Polynomial(point) => {
+                Ok(match point.source_query(numerator, denominator) {
+                    Some(query) => Classification::Decided(query),
+                    None => Classification::Uncertain(UncertaintyReason::Unsupported),
+                })
+            }
+            CurvePointData2::Algebraic(image) => {
+                image.rational_query_source(numerator, denominator, policy)
+            }
+            CurvePointData2::Similarity(image) => {
+                if !policy.accepts_retained_policy(image.data.policy) {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                self.form_source(
+                    &image.data.source,
+                    &pullback(numerator, &image.data.transform),
+                    &pullback(denominator, &image.data.transform),
+                )
+            }
+            CurvePointData2::AlgebraicChordParallel(point)
+                if let Some((tangent_x, tangent_y)) =
+                    point.data.source.certified_unit_tangent() =>
+            {
+                if !policy.accepts_retained_policy(point.data.policy) {
+                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+                }
+                point.data.source.validate_policy(policy)?;
+                let (x, y) = match point.data.direction {
+                    BezierAlgebraicChordUnitDisplacement2::Tangent => (tangent_x, tangent_y),
+                    BezierAlgebraicChordUnitDisplacement2::LeftNormal => (-tangent_y, tangent_x),
+                };
+                // This is a temporary query in the displaced point's original
+                // field. Keep the procedural point and its source-normal relation
+                // authoritative for composition and native replay.
+                let transform = Similarity2::try_from_real_affine(
+                    Real::one(),
+                    Real::zero(),
+                    Real::zero(),
+                    Real::one(),
+                    x * &point.data.distance + &point.data.translation_x,
+                    y * &point.data.distance + &point.data.translation_y,
+                )?;
+                self.form_source(
+                    point.source_endpoint(),
+                    &pullback(numerator, &transform),
+                    &pullback(denominator, &transform),
+                )
+            }
+            CurvePointData2::AlgebraicCuspChordDerived(point) => {
+                match derived_circle_point_form(point, numerator, denominator, policy)? {
+                    Classification::Decided(Some(form)) => Ok(Classification::Decided(form)),
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => Ok(
+                        Classification::Uncertain(UncertaintyReason::BudgetExhausted),
+                    ),
+                    Classification::Decided(None) | Classification::Uncertain(_) => {
+                        Ok(Classification::Decided(PointFormSource2::new(
+                            source.clone(),
+                            numerator.clone(),
+                            denominator.clone(),
+                        )))
+                    }
+                }
+            }
+            CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
+                Classification::Decided(Some(point)) => {
+                    self.form_source(&point, numerator, denominator)
+                }
+                Classification::Decided(None) => {
+                    Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
                 }
                 Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-            }
+            },
+            _ => Ok(Classification::Decided(PointFormSource2::new(
+                source.clone(),
+                numerator.clone(),
+                denominator.clone(),
+            ))),
         }
-        CurvePointData2::Polynomial(point) => {
-            Ok(match point.source_query(numerator, denominator) {
-                Some(query) => Classification::Decided(query),
-                None => Classification::Uncertain(UncertaintyReason::Unsupported),
-            })
-        }
-        CurvePointData2::Algebraic(image) => {
-            image.rational_query_source(numerator, denominator, policy)
-        }
-        CurvePointData2::Similarity(image) => {
-            if !policy.accepts_retained_policy(image.data.policy) {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            point_form_source(
-                &image.data.source,
-                &pullback(numerator, &image.data.transform),
-                &pullback(denominator, &image.data.transform),
-                policy,
-            )
-        }
-        CurvePointData2::AlgebraicChordParallel(point)
-            if let Some((tangent_x, tangent_y)) = point.data.source.certified_unit_tangent() =>
-        {
-            if !policy.accepts_retained_policy(point.data.policy) {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-            }
-            point.data.source.validate_policy(policy)?;
-            let (x, y) = match point.data.direction {
-                BezierAlgebraicChordUnitDisplacement2::Tangent => (tangent_x, tangent_y),
-                BezierAlgebraicChordUnitDisplacement2::LeftNormal => (-tangent_y, tangent_x),
-            };
-            // This is a temporary query in the displaced point's original
-            // field. Keep the procedural point and its source-normal relation
-            // authoritative for composition and native replay.
-            let transform = Similarity2::try_from_real_affine(
-                Real::one(),
-                Real::zero(),
-                Real::zero(),
-                Real::one(),
-                x * &point.data.distance + &point.data.translation_x,
-                y * &point.data.distance + &point.data.translation_y,
-            )?;
-            point_form_source(
-                point.source_endpoint(),
-                &pullback(numerator, &transform),
-                &pullback(denominator, &transform),
-                policy,
-            )
-        }
-        CurvePointData2::AlgebraicCuspChordDerived(point) => {
-            match derived_circle_point_form(point, numerator, denominator, policy)? {
-                Classification::Decided(Some(form)) => Ok(Classification::Decided(form)),
-                Classification::Uncertain(UncertaintyReason::BudgetExhausted) => Ok(
-                    Classification::Uncertain(UncertaintyReason::BudgetExhausted),
-                ),
-                Classification::Decided(None) | Classification::Uncertain(_) => {
-                    Ok(Classification::Decided(PointFormSource2::new(
-                        source.clone(),
-                        numerator.clone(),
-                        denominator.clone(),
-                    )))
-                }
-            }
-        }
-        CurvePointData2::Endpoint(endpoint) => match endpoint.resolve(policy)? {
-            Classification::Decided(Some(point)) => {
-                point_form_source(&point, numerator, denominator, policy)
-            }
-            Classification::Decided(None) => {
-                Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
-            }
-            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
-        },
-        _ => Ok(Classification::Decided(PointFormSource2::new(
-            source.clone(),
-            numerator.clone(),
-            denominator.clone(),
-        ))),
     }
 }
 
