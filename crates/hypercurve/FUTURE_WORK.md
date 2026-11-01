@@ -3717,4 +3717,10 @@ tests and the helper gating below). Strict Clippy without the `svg` feature
 first failed on the chain test's ungated helpers; after gating them, strict
 Clippy on all targets passes for Hypercurve and HyperBRep with all, default
 and no default features, formatting passes, and the probe, chain and
-probe-contact targets pass. The complete pre-push matrix was not run.
+probe-contact targets pass.
+
+The complete pre-push matrix then passed on `b2a8c1ac5c`: all 328 command
+groups, including 131 workflow groups, 196 strict Clippy groups and the security
+audit, plus 13 ASan campaigns with mutation evidence that started from an empty
+fuzz state. Evidence: `docs/evidence/2026-11-01-hypercurve-closure-review-validation`,
+SHA-256 `022946f2607e6e1f22d7c2d692e6d88fc69fe12b2980d2070cc72d5a0bbf7586`.

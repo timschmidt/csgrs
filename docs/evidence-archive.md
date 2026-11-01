@@ -85,7 +85,21 @@ in this repository.
 
 ## Follow-on records
 
-The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` ends at
+The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` now ends at
+`16cd8c94db9aeef4d68ccf7a0bc51fbf02925b32` with 405 records. Above `c0edcc75fd` it adds
+`docs/evidence/2026-10-31-hypercurve-closure-chamfer-closing-gap`,
+`docs/evidence/2026-10-31-hypercurve-closure-retained-bezier-replay` and
+`docs/evidence/2026-11-01-hypercurve-closure-review-validation`. The last contains 12,595 files and
+24,642,893 bytes, SHA-256 `022946f2607e6e1f22d7c2d692e6d88fc69fe12b2980d2070cc72d5a0bbf7586`. It records
+fresh success for all 328 pre-push command groups on
+`b2a8c1ac5ccc32fa495f0ad4ef46d8c967c55dd7`: the outside-review fixes for tensor coefficient
+limits, sign scopes, nested chord displacements and probe contacts. All 13 ASan campaigns
+started from an empty fuzz state and include mutation evidence. The driver is byte-identical to
+the previous record's, and no workflow, toolchain, manifest or lock file changed since
+`d463ef96a5`. There were no failed attempts. Exact geometric operation closure and hosted
+publication or deployment are not established here.
+
+Before these additions, the branch ended at
 `c0edcc75fdd87b3e920471360e68fa17c82e4740` with 402 records. Its new record
 `docs/evidence/2026-10-30-hypercurve-closure-integration-validation` contains 12,457 files and
 29,950,797 bytes, SHA-256 `704e243ec58dc8412419b91c23176286c29199f196ffe254916cf5bc7bedf0da`. It records
