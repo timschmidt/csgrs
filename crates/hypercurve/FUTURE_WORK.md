@@ -3724,3 +3724,46 @@ groups, including 131 workflow groups, 196 strict Clippy groups and the security
 audit, plus 13 ASan campaigns with mutation evidence that started from an empty
 fuzz state. Evidence: `docs/evidence/2026-11-01-hypercurve-closure-review-validation`,
 SHA-256 `022946f2607e6e1f22d7c2d692e6d88fc69fe12b2980d2070cc72d5a0bbf7586`.
+
+## Review: cross-source arithmetic sign scopes and an off-diagonal chain (2026-11-01)
+
+**Arithmetic pullback.** An outside review traced from the source a path that
+`7a8e04b545` missed. Cross-source `add`, `subtract` and `multiply` align their
+operands through `common_point_form_sources`, then `point_form_source`. That
+path pulled a query back through each rational image with
+`RationalPointImage2::pullback`. Each pullback validated the image guard in a
+fresh `PointSignScope`, which re-proved every ancestor guard, so successful
+traversal was quadratic in image depth. A new dispatch-count test,
+`nested_identity_image_arithmetic_uses_linear_sign_dispatch`, reproduced it.
+It combines a query on `n` nested identity images with a query on the
+original source. Before the fix, each operation took 1, 11, 37 and 137
+successful sign dispatches at depths 0, 4, 8 and 16 (`n(n+1)/2 + 1`).
+
+The pullback now runs in one scope, shared by both operands, and rechecks each
+image's original policy and guard there. This is the same structure as
+`rational_form_parameter`. The original pole and policy checks remain at every
+level, and exhaustion is still reported, never retained. The counts are now 1,
+5, 9 and 17, the same as the bounds and comparison counts. The test also checks
+the exact sum, zero difference and product. The unused
+`RationalPointImage2::pullback` was removed.
+
+**Off-diagonal chain.** The earlier reflection witness used a diagonal map.
+`swapped_reflection_of_explicit_origin_displacement_replays_then_chamfers`
+uses `T(x, y) = (2y + 3, 2x + 1)`, which swaps the axes, scales by 2 and has
+determinant -4. It applies `T` to left-normal displacements by 1/8 with
+explicit origins `(3, -1)` and `(5, 4)` and translation `(2, -3)`. In the image
+it checks:
+- each point minus `T(origin)` minus `(-6, 4)` has squared length 1/16;
+- that offset is orthogonal to the image line and on its right;
+- a chamfer with setback 1/16 has chord ends at squared distance 1/256 from the
+  corner;
+- that chamfer equals the image of the original chamfer with setback 1/32.
+It then exports SVG and repeats the relations and the chamfer in a fresh
+process.
+
+Verification on this change, Rust 1.99.1, `--locked`:
+- strict Clippy (`-D warnings`, all targets) passes for Hypercurve with all,
+  default, no default and `dispatch-trace` features;
+- release `--all-features` tests: Hypercurve 3086 passed (34 existing ignored),
+  HyperBRep 687, Hypercircuit 354, HyperDRC 1670, with no failures;
+- formatting passes.
