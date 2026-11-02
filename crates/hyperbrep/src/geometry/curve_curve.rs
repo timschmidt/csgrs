@@ -57,7 +57,10 @@ impl Curve3 {
     /// common plane, and a line crossing a planar image's plane is located on
     /// it. Lines against circular or elliptic arcs solve one exact quadratic
     /// (coplanar) or locate the single plane crossing, with arc parameters from
-    /// the arc's exact point location. Noncoplanar rational Bézier/NURBS pairs
+    /// the arc's exact point location. Circular arcs meet on their radical line
+    /// (coplanar) or on the line of their planes (otherwise), with both arc
+    /// parameters exact; coincident circles stay typed. Noncoplanar rational
+    /// Bézier/NURBS pairs
     /// are intersected through an
     /// exact planar projection whose candidates are confirmed by exact spatial
     /// coincidence. A rational curve lying along a line, spatial overlaps of
@@ -88,6 +91,11 @@ impl Curve3 {
                     }
                 }
                 _ => {}
+            }
+            if let (CurveGeometry3::CircleArc(first), CurveGeometry3::CircleArc(second)) =
+                (&self.data.geometry, &other.data.geometry)
+            {
+                return intersect_circles(self, first, other, second);
             }
             if let Some(result) = intersect_coplanar(self, other)? {
                 return Ok(result);
@@ -838,6 +846,102 @@ fn intersect_line_conic(
                 second: visit,
                 point: point.clone().into(),
             });
+        }
+    }
+    sort_by_first(&mut points);
+    Ok(if points.is_empty() {
+        CurveCurveIntersection::None
+    } else {
+        CurveCurveIntersection::Points(points)
+    })
+}
+
+/// Two circular arcs. Common points lie on a line: the radical line of
+/// coplanar circles, or the intersection line of their planes. That line is
+/// intersected exactly with the first circle, candidates are kept only on the
+/// second circle, and both arc parameters come from exact point location.
+fn intersect_circles(
+    first_curve: &Curve3,
+    first: &EllipseArc3,
+    second_curve: &Curve3,
+    second: &EllipseArc3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let zero = |value: &Real| -> GeometryResult<bool> {
+        Ok(order(value, &Real::zero())? == Ordering::Equal)
+    };
+    let n1 = first.x.cross(&first.y);
+    let n2 = second.x.cross(&second.y);
+    let (r1, r2) = (&first.x_radius, &second.x_radius);
+    let between = &second.center - &first.center;
+    let direction = n1.cross(&n2);
+    let (origin, along) = if zero(&direction.norm_squared())? {
+        // Parallel planes: distinct planes miss; coplanar circles meet on the
+        // radical line 2 (c2 - c1)·(p - c1) = |c2 - c1|^2 + r1^2 - r2^2.
+        if !zero(&n1.dot(&between))? {
+            return Ok(CurveCurveIntersection::None);
+        }
+        let distance = between.norm_squared();
+        if zero(&distance)? {
+            return if order(r1, r2)? == Ordering::Equal {
+                Err(GeometryError::UnsupportedIntersection)
+            } else {
+                Ok(CurveCurveIntersection::None)
+            };
+        }
+        let lambda = ((&distance + r1 * r1 - r2 * r2) / (Real::from(2) * &distance))
+            .map_err(GeometryError::Numeric)?;
+        (
+            first.center.clone() + between.clone() * lambda,
+            n1.cross(&between),
+        )
+    } else {
+        // The point of both planes nearest the origin, from n_i·p = d_i.
+        let d1 = n1.dot(&Vector3::from(first.center.clone()));
+        let d2 = n2.dot(&Vector3::from(second.center.clone()));
+        let (n11, n22, n12) = (n1.norm_squared(), n2.norm_squared(), n1.dot(&n2));
+        let det = &n11 * &n22 - &n12 * &n12;
+        let a = ((&d1 * &n22 - &d2 * &n12) / &det).map_err(GeometryError::Numeric)?;
+        let b = ((&d2 * &n11 - &d1 * &n12) / &det).map_err(GeometryError::Numeric)?;
+        (
+            Point3::origin() + n1.clone() * a + n2.clone() * b,
+            direction,
+        )
+    };
+    // |origin + τ along - c1|^2 = r1^2.
+    let relative = &origin - &first.center;
+    let roots = match quadratic_roots(
+        along.norm_squared(),
+        Real::from(2) * relative.dot(&along),
+        relative.norm_squared() - r1 * r1,
+    )? {
+        QuadraticRoots::None => Vec::new(),
+        QuadraticRoots::Isolated(roots) => roots,
+        QuadraticRoots::All => return Err(GeometryError::UnsupportedIntersection),
+    };
+    let mut points = Vec::new();
+    for (tau, _) in roots {
+        let point = origin.clone() + along.clone() * &tau;
+        if order(&(&point - &second.center).norm_squared(), &(r2 * r2))? != Ordering::Equal {
+            continue;
+        }
+        let visits = |curve: &Curve3| -> GeometryResult<Vec<Parameter>> {
+            Ok(match curve.parameters_of(&point)? {
+                CurveParameterLocation::None => Vec::new(),
+                CurveParameterLocation::Parameters(parameters) => parameters,
+                CurveParameterLocation::EntireDomain => {
+                    return Err(GeometryError::UnsupportedIntersection);
+                }
+            })
+        };
+        let second_visits = visits(second_curve)?;
+        for t in visits(first_curve)? {
+            for s in &second_visits {
+                points.push(CurveCurvePoint {
+                    first: t.clone(),
+                    second: s.clone(),
+                    point: point.clone().into(),
+                });
+            }
         }
     }
     sort_by_first(&mut points);

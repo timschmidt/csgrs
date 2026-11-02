@@ -529,3 +529,67 @@ fn line_meets_an_elliptic_arc_exactly() {
             .unwrap()
     );
 }
+
+fn full_circle(center: Point3, x: Vector3, y: Vector3, radius: i64) -> Curve3 {
+    Curve3::circle_arc(
+        center,
+        x,
+        y,
+        radius.into(),
+        Real::zero(),
+        Real::from(2) * Real::pi(),
+    )
+    .unwrap()
+}
+
+/// Coplanar circles |p| = 5 and |p - (8, 0, 0)| = 5 meet at (4, ±3, 0); the
+/// circle |p - (0, 0, 12)| = 13 in the xz plane meets |p| = 5 in the xy plane
+/// only on the x axis, where x^2 = 25 = 169 - 144, at (±5, 0, 0); concentric
+/// distinct radii and distant
+/// circles miss; a circle against itself is a typed coincidence.
+#[test]
+fn circles_meet_exactly_in_and_across_planes() {
+    let base = full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 5);
+    let shifted = full_circle(pi(8, 0, 0), Vector3::x(), Vector3::y(), 5);
+    let found = points(&base, &shifted);
+    assert_eq!(found.len(), 2);
+    for (point, y) in found.iter().zip([3, -3]) {
+        assert!(point.point.coincides_with(&pi(4, y, 0).into()).unwrap());
+    }
+    let upright = full_circle(pi(0, 0, 12), Vector3::x(), Vector3::z(), 13);
+    let found = points(&base, &upright);
+    // (5, 0, 0) is the full base circle's seam, visited at θ = 0 and θ = 2π.
+    assert_eq!(found.len(), 3);
+    assert!(equal(&found[0].first, Real::zero()));
+    assert!(equal(&found[1].first, Real::pi()));
+    assert!(equal(&found[2].first, Real::from(2) * Real::pi()));
+    let xs = found
+        .iter()
+        .map(|point| {
+            point
+                .point
+                .compare_linear_form(&Vector3::x(), &Real::zero())
+                .unwrap()
+        })
+        .collect::<Vec<_>>();
+    assert!(xs.contains(&Ordering::Less) && xs.contains(&Ordering::Greater));
+    for point in &found {
+        assert!(
+            point.point.coincides_with(&pi(5, 0, 0).into()).unwrap()
+                || point.point.coincides_with(&pi(-5, 0, 0).into()).unwrap()
+        );
+    }
+    for other in [
+        full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 3),
+        full_circle(pi(20, 0, 0), Vector3::x(), Vector3::y(), 5),
+    ] {
+        assert!(matches!(
+            base.intersect_curve(&other).unwrap(),
+            CurveCurveIntersection::None
+        ));
+    }
+    assert!(matches!(
+        base.intersect_curve(&base),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
+}

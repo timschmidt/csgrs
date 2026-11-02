@@ -3651,6 +3651,32 @@
       "validation": "Two new witnesses: on the upper unit semicircle the line y = 1/2 meets it at t = 1/2 -/+ sqrt(3)/8 with arc angles exactly 5 pi/6 and pi/6, y = 1 is tangent at (0, 1, 0), y = -1/2 misses, and a vertical line pierces it at t = 1/2 in both orders; the vertical segment x = 1 meets the upper half of x^2/4 + y^2 = 1 at (1, sqrt(3)/2, 0), t = 1/2 + sqrt(3)/8. Every reported point is checked against both curves. Swapping the radii in the quadratic fails the ellipse witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 763 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
       "limits": "Conic arcs against rational, planar-image, tensor-image or other conic curves, and lines lying along degenerate conics, remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "circle-circle-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to pairs of circular arcs. Common points lie on one line: the radical line 2(c2 - c1).(p - c1) = |c2 - c1|^2 + r1^2 - r2^2 for coplanar circles, or the intersection line of their planes otherwise (parallel distinct planes and concentric distinct coplanar circles miss). The line meets the first circle in an exact quadratic, candidates are kept only when exactly on the second circle, and both arc parameters come from exact point location, so every seam visit is reported. Coincident circles stay typed.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: coplanar circles |p| = 5 and |p - (8, 0, 0)| = 5 meet at (4, +/-3, 0); the circle |p - (0, 0, 12)| = 13 in the xz plane meets |p| = 5 at (+/-5, 0, 0), with the base circle's seam point visited at theta = 0 and 2 pi and the other point at theta = pi; concentric distinct radii and distant circles miss; a circle against itself is a typed coincidence. Perturbing the radical-line formula fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 764 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in under 0.01 s in release.",
+      "limits": "Coincident circles (angular overlap mapping), ellipse pairs, conics against rational or planar-image curves remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
