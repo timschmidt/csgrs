@@ -11,14 +11,8 @@
 use super::curve_implicit::ImplicitCarrier;
 use super::curve_plane::{assemble, classify_derivative};
 use super::*;
-use hypercurve::{
-    CurveIntersectionPairBlockerKind2, CurveParameterSet2, CurvePointLocations2,
-    PolynomialCurveSet2,
-};
-use hypersolve::bivariate_topology::{
-    BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
-};
-use hypersolve::{AlgebraicFiberRootIsolationConfig, BivariatePolynomial};
+use hypercurve::{CurveIntersectionPairBlockerKind2, CurveParameterSet2, CurvePointLocations2};
+use hypersolve::BivariatePolynomial;
 
 /// Complete exact contacts of a tensor-image curve with a plane, sphere,
 /// cylinder, cone or ring torus. Returns `None` for other surface families.
@@ -93,14 +87,7 @@ fn intersect(
         }
         return Ok(CurveSurfaceIntersection::Contained);
     }
-    let unit = BivariateCurveDomain {
-        first: [Real::zero(), Real::one()],
-        second: [Real::zero(), Real::one()],
-    };
-    let topology = decompose_bivariate_curve(equation, &unit, BivariateTopologyConfig::default())
-        .map_err(GeometryError::PolynomialTopology)?;
-    let set =
-        PolynomialCurveSet2::from_topology(topology, AlgebraicFiberRootIsolationConfig::default())?;
+    let set = implicit_tensor::unit_square_zeros(equation)?;
     let inverse = (Real::one() / &image.source_scale).map_err(GeometryError::Numeric)?;
     let offset = -&image.source_offset * &inverse;
     let spatial = |source: &hypercurve::CurveParameter2| -> GeometryResult<Parameter> {
@@ -133,7 +120,7 @@ fn intersect(
         });
         Ok(())
     };
-    for branch in set.curves() {
+    for branch in &set.curves {
         let intersection = source.intersect_curve(branch)?;
         if let Some(blocker) = intersection.blockers().first() {
             return Err(match blocker.kind() {
@@ -190,7 +177,7 @@ fn intersect(
             }
         }
     }
-    for isolated in set.isolated_points() {
+    for isolated in &set.points {
         // G keeps one sign around an isolated real zero, so its derivative
         // along any curve through that point vanishes.
         match source.point_locations(isolated)? {

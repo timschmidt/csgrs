@@ -238,10 +238,14 @@ fn coplanar_tensors_and_budgets_remain_typed() {
     )
     .unwrap();
     // A line in the tensor's own plane meets it in a range; the shared UV
-    // component is a typed limitation rather than isolated contacts.
+    // component is a typed limitation (an unsupported relation, a topology
+    // blocker, or Hypercurve's coincident-branch blocker), never isolated
+    // contacts.
     assert!(matches!(
         flat.intersect_curve(&line(pi(-2, 0, 0), pi(2, 0, 0))),
-        Err(GeometryError::UnsupportedIntersection | GeometryError::PolynomialTopology(_))
+        Err(GeometryError::UnsupportedIntersection
+            | GeometryError::PolynomialTopology(_)
+            | GeometryError::PlanarCurve(_))
     ));
     let curve = line(
         p(q(1, 2), 0.into(), (-1).into()),

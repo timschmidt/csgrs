@@ -286,14 +286,16 @@ fn selected_third_surface_contact_splits_and_replays() {
     assert_eq!(contacts(&cut, &replayed).len(), 1);
 }
 
-/// A plane of constant x pulls back to a v-constant line, which the current
-/// polynomial topology reports as an unsupported vertical component.
+/// A plane of constant x pulls back to a line of constant u. The topology's
+/// projection reports it as a vertical component, so it is decomposed in the
+/// exchanged chart and reflected back; Hypercurve's curve/curve intersection
+/// does not yet accept such mapped branches, so the cut stays typed.
 #[test]
-fn vertical_pullback_components_remain_typed_blockers() {
+fn axis_aligned_plane_cut_remains_a_typed_blocker() {
     let [lower, _] = cylinder_branches();
     let cut = plane(Point3::origin(), Vector3::y(), Vector3::z());
     assert!(matches!(
         cut.intersect_curve(lower.curve()),
-        Err(GeometryError::PolynomialTopology(_))
+        Err(GeometryError::PlanarCurve(_) | GeometryError::PolynomialTopology(_))
     ));
 }

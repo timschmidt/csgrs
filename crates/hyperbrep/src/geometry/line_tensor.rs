@@ -11,15 +11,12 @@
 
 use super::curve_plane::assemble;
 use super::*;
-use hypercurve::{CurveIntersectionPairBlockerKind2, CurvePointLocations2, PolynomialCurveSet2};
+use hypercurve::{CurveIntersectionPairBlockerKind2, CurvePointLocations2};
 use hypersolve::bivariate_arithmetic::{
     bivariate_add, bivariate_multiply, bivariate_parameter_derivative, bivariate_scale,
     bivariate_subtract,
 };
-use hypersolve::bivariate_topology::{
-    BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
-};
-use hypersolve::{AlgebraicFiberRootIsolationConfig, BivariatePolynomial, CurveResultantParameter};
+use hypersolve::{BivariatePolynomial, CurveResultantParameter};
 
 /// Complete exact contacts of a finite line with a rational Bézier tensor.
 pub(super) fn intersect_line_tensor(
@@ -83,7 +80,9 @@ pub(super) fn intersect_line_tensor(
     };
     let along = linear(&direction);
     let denominator = bivariate_scale(weight, &direction.norm_squared());
-    if first_set.is_empty() || second_set.is_empty() {
+    if first_set.curves.is_empty() && first_set.points.is_empty()
+        || second_set.curves.is_empty() && second_set.points.is_empty()
+    {
         return Ok(CurveSurfaceIntersection::None);
     }
     // At a contact X = W P with P on the line, so n·(X_u - A W_u) = W n·S_u
@@ -124,8 +123,8 @@ pub(super) fn intersect_line_tensor(
         }
         Ok(())
     };
-    for branch in first_set.curves() {
-        for other in second_set.curves() {
+    for branch in &first_set.curves {
+        for other in &second_set.curves {
             let intersection = branch.intersect_curve(other)?;
             if let Some(blocker) = intersection.blockers().first() {
                 return Err(match blocker.kind() {
@@ -148,7 +147,7 @@ pub(super) fn intersect_line_tensor(
                 push(contact.point())?;
             }
         }
-        for isolated in second_set.isolated_points() {
+        for isolated in &second_set.points {
             if let CurvePointLocations2::Locations(locations) = branch.point_locations(isolated)?
                 && !locations.is_empty()
             {
@@ -156,7 +155,7 @@ pub(super) fn intersect_line_tensor(
             }
         }
     }
-    for isolated in first_set.isolated_points() {
+    for isolated in &first_set.points {
         if isolated
             .rational_form(g2.clone(), one.clone())?
             .compare_to_real(&Real::zero())?
@@ -168,17 +167,8 @@ pub(super) fn intersect_line_tensor(
     assemble(curve, points, Vec::new())
 }
 
-fn decompose(equation: &BivariatePolynomial) -> GeometryResult<PolynomialCurveSet2> {
-    let unit = BivariateCurveDomain {
-        first: [Real::zero(), Real::one()],
-        second: [Real::zero(), Real::one()],
-    };
-    let topology = decompose_bivariate_curve(equation, &unit, BivariateTopologyConfig::default())
-        .map_err(GeometryError::PolynomialTopology)?;
-    Ok(PolynomialCurveSet2::from_topology(
-        topology,
-        AlgebraicFiberRootIsolationConfig::default(),
-    )?)
+fn decompose(equation: &BivariatePolynomial) -> GeometryResult<implicit_tensor::UnitSquareZeros> {
+    implicit_tensor::unit_square_zeros(equation)
 }
 
 fn is_zero(value: &Real) -> GeometryResult<bool> {

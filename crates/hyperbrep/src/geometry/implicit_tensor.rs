@@ -96,16 +96,8 @@ pub(super) fn intersect_with(
     if zero {
         return Ok(SurfaceSurfaceIntersection::ContainedSurface(tensor_operand));
     }
-    let domain = BivariateCurveDomain {
-        first: [Real::zero(), Real::one()],
-        second: [Real::zero(), Real::one()],
-    };
-    let topology =
-        decompose_bivariate_curve(&equation, &domain, BivariateTopologyConfig::default())
-            .map_err(GeometryError::PolynomialTopology)?;
-    let set =
-        PolynomialCurveSet2::from_topology(topology, AlgebraicFiberRootIsolationConfig::default())?;
-    if set.is_empty() {
+    let set = unit_square_zeros(&equation)?;
+    if set.curves.is_empty() && set.points.is_empty() {
         return Ok(SurfaceSurfaceIntersection::None);
     }
     // Distinct UV components are distinct spatial components only when the
@@ -115,8 +107,8 @@ pub(super) fn intersect_with(
     if matches!(injectivity, Injectivity::Certify) {
         certify_injective_tensor([&x, &y, &z], &weight)?;
     }
-    let mut curves = Vec::with_capacity(set.curves().len());
-    for uv in set.curves() {
+    let mut curves = Vec::with_capacity(set.curves.len());
+    for uv in &set.curves {
         // The spatial chart equals the source chart, matching the retained
         // pcurve's identity correspondence.
         let curve = Curve3::from_tensor_image(TensorCurve3 {
@@ -139,15 +131,14 @@ pub(super) fn intersect_with(
             SurfaceIntersectionOperand::First => [true, false],
             SurfaceIntersectionOperand::Second => [false, true],
         };
-        section.polynomial_contact_exponent = Some(
-            uv.polynomial_branch()
-                .expect("topology supplies a selected graph")
-                .defining_exponent(),
-        );
+        // A reflected branch keeps its original selected graph and exponent.
+        section.polynomial_contact_exponent = uv
+            .polynomial_branch()
+            .map(|branch| branch.defining_exponent());
         curves.push(section);
     }
     let mut points = set
-        .isolated_points()
+        .points
         .iter()
         .map(|uv| tensor.point_at(uv))
         .collect::<GeometryResult<Vec<_>>>()?;
@@ -243,4 +234,64 @@ fn certify_injective_tensor(
         }
     }
     Err(GeometryError::UnsupportedIntersection)
+}
+
+/// The complete real zero set of a bivariate polynomial on the unit square:
+/// selected branches and isolated points in the original UV chart.
+pub(super) struct UnitSquareZeros {
+    pub(super) curves: Vec<Curve2>,
+    pub(super) points: Vec<hypercurve::CurvePoint2>,
+}
+
+/// Decomposes `equation` on the unit square. The topology projects over one
+/// coordinate and reports lines on which it is constant as vertical
+/// components; such a set is decomposed again with exchanged coordinates and
+/// mapped back through the exact reflection `(u, v) -> (v, u)`, which retains
+/// every selected branch, fiber and source authority. Other blockers, and a
+/// set with vertical components in both directions, remain typed.
+pub(super) fn unit_square_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquareZeros> {
+    use hypersolve::bivariate_arithmetic::bivariate_swap_parameters;
+    use hypersolve::bivariate_topology::BivariateTopologyError;
+    let domain = BivariateCurveDomain {
+        first: [Real::zero(), Real::one()],
+        second: [Real::zero(), Real::one()],
+    };
+    let decompose = |equation: &BivariatePolynomial| -> GeometryResult<PolynomialCurveSet2> {
+        let topology =
+            decompose_bivariate_curve(equation, &domain, BivariateTopologyConfig::default())
+                .map_err(GeometryError::PolynomialTopology)?;
+        Ok(PolynomialCurveSet2::from_topology(
+            topology,
+            AlgebraicFiberRootIsolationConfig::default(),
+        )?)
+    };
+    match decompose(equation) {
+        Ok(set) => Ok(UnitSquareZeros {
+            curves: set.curves().to_vec(),
+            points: set.isolated_points().to_vec(),
+        }),
+        Err(GeometryError::PolynomialTopology(BivariateTopologyError::VerticalComponent)) => {
+            let set = decompose(&bivariate_swap_parameters(equation))?;
+            let swap = RationalMap2::new(
+                [
+                    BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+                    BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+                ],
+                BivariatePolynomial::new(vec![vec![Real::one()]]),
+            );
+            Ok(UnitSquareZeros {
+                curves: set
+                    .curves()
+                    .iter()
+                    .map(|curve| curve.rational_image(&swap))
+                    .collect::<Result<_, _>>()?,
+                points: set
+                    .isolated_points()
+                    .iter()
+                    .map(|point| point.rational_image(&swap))
+                    .collect::<Result<_, _>>()?,
+            })
+        }
+        Err(error) => Err(error),
+    }
 }

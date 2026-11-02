@@ -533,3 +533,48 @@ fn zero_budget_exhausts_and_a_later_retry_succeeds() {
     assert_eq!(denied.result.unwrap_err().limit, 0);
     assert_eq!(cylinder_branches().len(), 2);
 }
+
+/// |p| = 17/10 on the patch of y^2 + z^2 = 2 gives x^2 = 89/100: two arcs of
+/// constant u, which the topology's projection reports as vertical
+/// components. The exchanged-chart decomposition admits them; each arc runs
+/// between (x, 7/5, 1/5) and (x, 1/5, 7/5) with x = ±sqrt(89)/10.
+#[test]
+fn vertical_pullback_sections_use_the_exchanged_chart() {
+    let sphere = Surface::sphere(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        q(17, 10),
+    )
+    .unwrap();
+    let pieces = sections(sphere.intersect_surface(&cylinder_patch()).unwrap());
+    assert_eq!(pieces.len(), 2);
+    let x = (root(89) / Real::from(10)).unwrap();
+    for sign in [1, -1] {
+        let x = x.clone() * Real::from(sign);
+        for (y, z) in [(q(7, 5), q(1, 5)), (q(1, 5), q(7, 5))] {
+            let expected = GeometricPoint3::from(p(x.clone(), y, z));
+            assert!(pieces.iter().any(|piece| {
+                let curve = piece.curve();
+                [curve.domain().start(), curve.domain().end()]
+                    .into_iter()
+                    .any(|t| {
+                        curve
+                            .point_at(t)
+                            .unwrap()
+                            .coincides_with(&expected)
+                            .unwrap()
+                    })
+            }));
+        }
+    }
+    for piece in &pieces {
+        assert_eq!(piece.curve().kind(), Curve3Kind::TensorImage);
+        let cold = reload(&edge_model(piece.curve()));
+        assert_eq!(
+            cold.curves().next().unwrap().geometry().kind(),
+            Curve3Kind::TensorImage
+        );
+    }
+}
