@@ -4156,6 +4156,40 @@
       "validation": "The off-axis equal torus witness (crossings (3, 0, 1), (4, 0, 0), (-2, 0, 0), (-3, 0, 1)) now runs in the default suite; all six torus atlas witnesses pass in 4.8 s. A structural unit test checks the contact table against the actual atlas controls: shared v edges share a boundary control row, shared u edges a boundary column, corner contacts a corner control point and no edge, disjoint pairs no corner. Swapping the edge axes or treating corners as disjoint fails that test; making the generic-direction test declare every pair distinct fails the torus witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 791 hyperbrep passes (no ignored tests) and 127 hyperbrep-io passes, 0 failures; the hyperbrep suite took 299.5 s wall time.",
       "cost_evidence": "Release, this host, off-axis equal (3, 1) torus pair: 148.8 s before; 115 s with the generic-direction test only; 42 s adding atlas adjacency; 21 s adding corner contacts; 1.7 s adding edge-axis contacts. A bounding-box separation in coincides_with was tried and rejected (324 s: enclosures of these selected points are themselves expensive).",
       "limits": "Exact comparisons of distinct high-degree selected points that do share a seam remain costly in Hypercurve (owner refinement cost); the cylinder and cone atlases use only the generic boundary filter. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-graph-solids-2026-11-02",
+      "work_packages": [
+        "WP05",
+        "WP07",
+        "WP09",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Closed shells with a rational B\u00e9zier face are now admitted as solids in one certified class: exactly one positive-weight tensor top, one planar base without holes, and planar walls parallel to the base's inward normal d, where the top is certified a graph strictly above the base. The geometry layer certifies the graph: the height pullback C(u, v) (c = C / (det W) in the frame p - o = a u + b v + c d) is positive on the unit square, by Bernstein coefficients or exactly by an empty complete zero set and a positive corner (the paraboloid's middle control point lies below its base, so the control hull alone fails), and the projection (a, b) is certified injective. Point classification is exact: the base profile location of (a, b), then c against 0 and against the graph height at the complete common zero of the two projection pullbacks. The certificate carries its frame, base profile and top surface through affine transforms and transfers, and cold replay re-admits it.",
+      "source": [
+        "../src/geometry/tensor_graph.rs",
+        "../src/topology/validation/tensor_graph.rs",
+        "../src/topology/builder.rs",
+        "../src/topology/query.rs",
+        "../src/topology/transform.rs",
+        "../src/topology/transfer.rs",
+        "../src/topology/mod.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#standard-builders-and-solid-queries",
+      "validation": "New witnesses on the solid under z = x^2 + y^2 over [-1, 1]^2 above z = -1 (previously UnsupportedSolidShell): eleven points classify exactly as derived (top, interior, above, outside the base, on the base, below, on a wall below and above the top, and (9/10, -9/10, 161/100) just under the top height 81/50); the same classifications hold after cold replay (byte-identical re-serialization) and after a scaled rotation/translation mapping each probe point; a Boolean with a cuboid remains a typed refusal. Unit witness: the graph certificate holds above z = -1 and fails for the crossing base z = 1/2. Flipping the height order, skipping the positivity test, or removing the class from admission fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 795 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in about 0.01 s in release.",
+      "limits": "Face area, volume and Booleans for tensor-graph solids are not claimed (a Boolean fails in the face-pair graph with UnsupportedPcurveContour). Shells with several tensor faces, holes in the base, or non-parallel walls are not admitted. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

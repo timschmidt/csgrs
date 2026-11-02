@@ -39,6 +39,7 @@ mod rotation;
 mod selected_pcurves;
 mod spline;
 mod surface_point;
+mod tensor_graph;
 mod tensor_image;
 mod torus_atlas;
 mod transform;

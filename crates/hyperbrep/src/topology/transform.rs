@@ -461,6 +461,28 @@ impl ArenaModel {
                         .transpose()
                 })
                 .collect::<Result<Vec<_>, GeometryError>>()?;
+            let certified_tensor_graphs = self
+                .data
+                .certified_tensor_graphs
+                .iter()
+                .map(|certificate| {
+                    certificate
+                        .as_ref()
+                        .map(|certificate| {
+                            Ok(CertifiedTensorGraphShell {
+                                origin: transform
+                                    .transform_point3(&certificate.origin)
+                                    .map_err(GeometryError::Numeric)?,
+                                u: transform.transform_direction3(&certificate.u),
+                                v: transform.transform_direction3(&certificate.v),
+                                direction: transform.transform_direction3(&certificate.direction),
+                                profile: certificate.profile.clone(),
+                                top: certificate.top.transformed(&metric, reverses_orientation)?,
+                            })
+                        })
+                        .transpose()
+                })
+                .collect::<Result<Vec<_>, GeometryError>>()?;
             let certified_lofts = self
                 .data
                 .certified_lofts
@@ -636,6 +658,7 @@ impl ArenaModel {
                     certified_curve_sweeps,
                     certified_prisms,
                     certified_axial_shells,
+                    certified_tensor_graphs,
                     bounds: OnceLock::new(),
                     face_contours: (0..self.data.faces.len())
                         .map(|_| OnceLock::new())

@@ -137,6 +137,7 @@ impl ArenaModel {
                             curve_sweep: self.data.certified_curve_sweeps[index].clone(),
                             prism: self.data.certified_prisms[index].clone(),
                             axial: self.data.certified_axial_shells[index].clone(),
+                            tensor_graph: self.data.certified_tensor_graphs[index].clone(),
                         },
                     )
                 } else {

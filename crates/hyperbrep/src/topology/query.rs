@@ -72,6 +72,9 @@ impl ArenaModel {
             if let Some(axial) = &self.data.certified_axial_shells[solid_id.index()] {
                 return Self::classify_point_against_axial(axial, point);
             }
+            if let Some(graph) = &self.data.certified_tensor_graphs[solid_id.index()] {
+                return Self::classify_point_against_tensor_graph(graph, point);
+            }
             for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
                 for face in &self.shell(*shell).expect("validated shell ID").faces {
                     let signed = self.face_plane_value(*face, point)?;
@@ -216,6 +219,54 @@ impl ArenaModel {
             }
         }
         Ok(SolidPointLocation::Inside)
+    }
+
+    /// Classifies against a certified tensor graph solid: the base location
+    /// of `(a, b)`, then `c` against `0` and the exact graph height.
+    pub(in crate::topology) fn classify_point_against_tensor_graph(
+        graph: &CertifiedTensorGraphShell,
+        point: &Point3,
+    ) -> Result<SolidPointLocation, QueryError> {
+        let displacement = point - &graph.origin;
+        let determinant = graph.u.dot(&graph.v.cross(&graph.direction));
+        let coordinate = |form: Vector3| {
+            (displacement.dot(&form) / &determinant).map_err(GeometryError::Numeric)
+        };
+        let a = coordinate(graph.v.cross(&graph.direction))?;
+        let b = coordinate(graph.direction.cross(&graph.u))?;
+        let c = coordinate(graph.u.cross(&graph.v))?;
+        let base = match crate::error::classified(
+            graph
+                .profile
+                .classify_point(&CurvePoint2::new(a.clone(), b.clone()).into()),
+        )
+        .map_err(GeometryError::from)?
+        {
+            Classification::Decided(location) => location,
+            Classification::Uncertain(reason) => {
+                return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+            }
+        };
+        if base == ContourPointLocation::Outside {
+            return Ok(SolidPointLocation::Outside);
+        }
+        match decided_model_order(compare_reals(&c, &Real::zero(), crate::STRICT_PREDICATES))? {
+            std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
+            std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
+            std::cmp::Ordering::Greater => {}
+        }
+        let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
+        let Some(height) = graph.top.tensor_graph_height_order(frame, &a, &b, &c)? else {
+            // The certified graph projects onto the whole base region.
+            return Err(GeometryError::UnsupportedIntersection.into());
+        };
+        Ok(match (height, base) {
+            (std::cmp::Ordering::Greater, _) => SolidPointLocation::Outside,
+            (std::cmp::Ordering::Equal, _) | (_, ContourPointLocation::Boundary) => {
+                SolidPointLocation::Boundary
+            }
+            _ => SolidPointLocation::Inside,
+        })
     }
 
     pub(in crate::topology) fn classify_point_against_loft(

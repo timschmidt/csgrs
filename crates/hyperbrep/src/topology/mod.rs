@@ -122,6 +122,7 @@ struct ModelData {
     certified_curve_sweeps: Vec<Option<CertifiedCurveSweepShell>>,
     certified_prisms: Vec<Option<CertifiedPrismShell>>,
     certified_axial_shells: Vec<Option<CertifiedAxialShell>>,
+    certified_tensor_graphs: Vec<Option<CertifiedTensorGraphShell>>,
     bounds: OnceLock<Option<Aabb>>,
     face_contours: Vec<OnceLock<Vec<Contour2>>>,
 }
@@ -138,6 +139,7 @@ struct CertifiedSolid {
     curve_sweep: Option<CertifiedCurveSweepShell>,
     prism: Option<CertifiedPrismShell>,
     axial: Option<CertifiedAxialShell>,
+    tensor_graph: Option<CertifiedTensorGraphShell>,
 }
 
 /// A complete oriented boundary proof, reconstructed from native faces. Each
@@ -492,6 +494,20 @@ impl CertifiedRevolutionBoundary {
     }
 }
 
+/// A solid between a planar base region and a rational Bézier tensor graph
+/// above it, with planar walls parallel to `direction`. Points decompose as
+/// `p - origin = a u + b v + c direction`; the solid is `(a, b)` in `profile`
+/// and `0 <= c <= f(a, b)`, where `f` is the graph height of `top`.
+#[derive(Clone, Debug)]
+struct CertifiedTensorGraphShell {
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    direction: Vector3,
+    profile: CurvePath2,
+    top: Surface,
+}
+
 #[derive(Clone, Debug)]
 struct CertifiedLoftShell {
     origin: Point3,
@@ -748,6 +764,7 @@ fn invalidate_model_certificates(data: &mut ModelData) {
     data.certified_curve_sweeps.fill(None);
     data.certified_prisms.fill(None);
     data.certified_axial_shells.fill(None);
+    data.certified_tensor_graphs.fill(None);
 }
 
 fn compact_wire_arena(
