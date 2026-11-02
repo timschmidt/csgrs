@@ -17,6 +17,7 @@ mod affine_image;
 mod analytic;
 mod axial_lines;
 mod conical_revolution;
+mod curve_extrusion;
 mod curve_implicit;
 mod curve_plane;
 mod location;
@@ -4318,6 +4319,9 @@ impl Surface {
     /// of the exact homogenized carrier equation; roots without a scalar view
     /// remain selected parameters. Cone roots on the opposite nappe are
     /// rejected, and a coincident span crossing the cone apex fails typed.
+    /// The same curve families against an extrusion of a line, rational
+    /// Bézier or NURBS profile return complete contacts and coincident ranges
+    /// from the exact projection along the extrusion direction.
     /// Unsupported curve/surface pairs fail with
     /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
@@ -4370,6 +4374,12 @@ impl Surface {
                     curve_implicit::ImplicitCarrier::from_surface(&self.data.geometry)
                 && let Some(result) =
                     curve_implicit::intersect_rational_curve_implicit(curve, carrier)
+            {
+                return result;
+            }
+            if let SurfaceGeometry::Extrusion(surface) = &self.data.geometry
+                && let Some(result) =
+                    curve_extrusion::intersect_rational_curve_extrusion(curve, surface)
             {
                 return result;
             }

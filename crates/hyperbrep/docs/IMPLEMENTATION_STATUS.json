@@ -3211,6 +3211,35 @@
       "validation": "Twelve new witnesses in tests/implicit_contacts.rs use independently derived equations: four rational diametral line/torus contacts and their reversal; repeated tangent contacts on the tube top; three complete empty line/torus results; chord contacts at x = \u00b1sqrt(15), \u00b1sqrt(3) compared exactly with radical points; exact similarity transport with cold replay; a rational-weight circle arc contained in a sphere, cylinder, torus and downward cone and excluded at a different height; nappe rejection for isolated and coincident roots; apex Boundary contacts and a typed apex-crossing refusal; cubic/cylinder roots equal to 1/2 \u2213 sqrt((8 sqrt(229) - 119)/36) that split an edge twice through cold replay; two-span NURBS contacts in authored knot parameters; a contained single-span NURBS arc; zero-budget exhaustion followed by successful retry. Mutating the torus equation (4R^2 -> 3R^2) and disabling the nappe filter fail eight witnesses. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 698 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
       "cost_evidence": "No performance claim. The new route replaces typed UnsupportedIntersection results; existing line fast paths are untouched.",
       "limits": "Circle/ellipse arcs keep their existing transverse analytic routes; ellipse arcs, planar/affine/rotation/translation images and procedural/tensor surfaces against these carriers remain unsupported. Cone spans crossing the apex need a sign decision between selected roots. Hypercurve root-isolation resources are charged where instrumented; total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
+    },
+    {
+      "id": "extrusion-curve-contacts-2026-11-01",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Add complete curve/surface contacts between lines, positive-weight rational Bezier curves and NURBS and linear extrusions of line, rational Bezier and NURBS profiles. A point lies on the unbounded extrusion exactly when its image under a linear map with kernel span(d) lies on the projected profile; the exact map (p.(d x a), p.(d x (d x a))) preserves family, weights, knots and parameters. Hypercurve's complete planar curve/curve incidence supplies contacts, coincident ranges and parameter components in the spatial curve's chart. Curves parallel to the direction are contained or disjoint. Contact kinds use Hypercurve's tangent cross sign or transversality certificate for single spans and inspect both sides of authored spline joints otherwise; undecidable cross signs of two selected tangents and profiles parallel to the direction fail typed. These pairs previously returned UnsupportedIntersection.",
+      "source": [
+        "../src/geometry/curve_extrusion.rs",
+        "../src/geometry.rs",
+        "../tests/extrusion_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Eight new witnesses in tests/extrusion_contacts.rs use independent geometry: a line meeting a swept rational-weight radius-5 arc at (3,4,0), with reversal and an axially translated copy; a crossing outside the profile's angular range; a repeated tangent contact; contained and disjoint lines parallel to the direction and a contained lifted profile; a coplanar segment overlap at t in [1/3, 2/3]; a cubic contact equal to 1/2 + sqrt((8 sqrt(229) - 119)/36) that splits an edge and replays cold; two-span NURBS curve and profile contacts and overlaps in authored knot parameters, including a contact at a profile knot; typed unsupported circle arcs and zero-budget exhaustion with retry. Mutations replacing the curve contact parameter or disabling one-sided tangency detection fail four witnesses. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 706 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
+      "cost_evidence": "No performance claim. The new route replaces typed UnsupportedIntersection results.",
+      "limits": "Circle/ellipse arcs, planar/affine/rotation/translation images and procedural profiles remain unsupported against extrusions. Jointly selected tangent pairs without a Hypercurve sign or transversality certificate fail typed rather than being classified. Hypercurve resource accounting applies where instrumented; total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
