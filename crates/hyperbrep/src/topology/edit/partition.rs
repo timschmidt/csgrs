@@ -786,15 +786,7 @@ impl ArenaModel {
             let reverse_pcurve = PcurveId::from_index(data.pcurves.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
             data.pcurves.push(reverse_pcurve_geometry.clone());
-            let (scale, offset) = bridge
-                .correspondence
-                .affine_coefficients()
-                .expect("boundary bridge requires affine correspondence");
-            let reverse_correspondence = ParameterCorrespondence::affine(
-                -scale.clone(),
-                scale * (bridge.pcurve.represented_start()? + bridge.pcurve.represented_end()?)
-                    + offset,
-            )?;
+            let reverse_correspondence = bridge.correspondence.reversed_pcurve(&bridge.pcurve)?;
             let forward_use = EdgeUseId::from_index(data.edge_uses.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
             data.edge_uses.push(EdgeUse {

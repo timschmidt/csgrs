@@ -94,7 +94,25 @@ pub(super) fn intersect(
     // UV topology alone does not rule out distinct parameter points with the
     // same spatial image. This whole-rectangle certificate also excludes rank
     // loss. Unproved image topology cannot publish a partial section as complete.
-    map.certify_injective_on(&rectangle)?;
+    if map.certify_injective_on(&rectangle).is_err() {
+        // The plane's own projection folds the tensor. An injective
+        // coordinate-plane projection still certifies the tensor itself, and
+        // the sections are then published as tensor images whose plane-side
+        // pcurves are unavailable rather than fitted.
+        let [x, y, z, weight] = surface_point::tensor_coefficients(surface);
+        super::implicit_tensor::certify_injective_tensor([&x, &y, &z], &weight)?;
+        let tensor =
+            Surface::rational_bezier(surface.control_points.clone(), surface.weights.clone())?;
+        let zeros = super::implicit_tensor::UnitSquareZeros {
+            curves: set.curves().to_vec(),
+            points: set.isolated_points().to_vec(),
+        };
+        return super::implicit_tensor::tensor_image_sections(
+            &tensor,
+            &zeros,
+            SurfaceIntersectionOperand::Second,
+        );
+    }
     let mut curves = Vec::with_capacity(set.curves().len());
     for uv in set.curves() {
         let projected = uv.rational_image(&map)?;

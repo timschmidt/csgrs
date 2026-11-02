@@ -619,3 +619,63 @@ fn nested_radical_section_endpoints_split_tensor_faces() {
         3
     );
 }
+
+/// The plane x = 0 folds under its own projection of the paraboloid patch,
+/// so its section is published as a tensor image (the tensor is certified
+/// injective through its xy projection). On the ring left by the loop split
+/// it runs from (0, -1, 1) through the hole's events (0, ±1/2, 1/4) to
+/// (0, 1, 1); its two pieces from the outer boundary to the hole form a
+/// bridge cycle that cuts the ring into two halves.
+#[test]
+fn bridge_sections_cut_a_ring_with_a_generated_hole() {
+    let (model, patch) = paraboloid_face();
+    let ring = model
+        .faces()
+        .next()
+        .unwrap()
+        .split_by_surface_curve_loop(&loop_sections(&patch), SurfaceIntersectionOperand::First)
+        .unwrap();
+    let ring = reload(ring.model());
+    let plane = Surface::plane(Point3::origin(), Vector3::y(), Vector3::z()).unwrap();
+    let section = match patch.intersect_surface(&plane).unwrap() {
+        SurfaceSurfaceIntersection::Curve(curve) => *curve,
+        other => panic!("one plane section required, found {other:?}"),
+    };
+    assert_eq!(section.curve().kind(), Curve3Kind::TensorImage);
+    let mut cuts = Vec::new();
+    for y in [q(-1, 2), q(1, 2)] {
+        let CurveParameterLocation::Parameters(found) = section
+            .curve()
+            .parameters_of(&Point3::new(0.into(), y, q(1, 4)))
+            .unwrap()
+        else {
+            panic!("the section crosses each hole event");
+        };
+        assert_eq!(found.len(), 1);
+        cuts.push(found[0].clone());
+    }
+    cuts.sort_by(|a, b| a.compare(b).unwrap());
+    let domain = section.curve().domain();
+    let pieces = [
+        section
+            .restrict_source(ParameterRange::new(domain.start().clone(), cuts[0].clone()).unwrap())
+            .unwrap(),
+        section
+            .restrict_source(ParameterRange::new(cuts[1].clone(), domain.end().clone()).unwrap())
+            .unwrap(),
+    ];
+    let mut partitioned = None;
+    for face in ring.faces() {
+        match face.split_by_surface_curves(&pieces, SurfaceIntersectionOperand::First) {
+            Ok(partition) => {
+                partitioned = Some(partition.model().clone());
+                break;
+            }
+            // The disk does not contain the bridges.
+            Err(TopologyEditError::FaceSplitTraceNotInSingleRegion { .. }) => {}
+            Err(error) => panic!("unexpected bridge refusal: {error:?}"),
+        }
+    }
+    let partitioned = reload(&partitioned.expect("the ring takes the bridge cycle"));
+    assert_eq!(partitioned.faces().count(), 3);
+}

@@ -4020,6 +4020,37 @@
       "validation": "New witness: the circle x^2 + y^2 = 4 and the ellipse x^2/9 + y^2 = 1 meet exactly at (+/-sqrt(27/8), +/-sqrt(5/8), 0) in both orders, with both parameters evaluating to each point; on a circle quarter span the contacts solve -5t^4 + 118t^2 - 5 = 0. The selected cubic crossing at s = cbrt(1/2) stays typed. Disabling the certification or the alternating signs of the Bernstein-to-power conversion fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 783 hyperbrep and 127 hyperbrep-io passes, 0 failures (before a type-alias-only Clippy fix, after which Clippy and the affected suite were rerun).",
       "cost_evidence": "No performance claim; the witness completes in about 0.02 s in release.",
       "limits": "Contacts whose parameters have no radical form available (irreducible cubics, quartics without a rational resolvent root, higher degrees), non-coplanar selected crossings and coincident conics remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-bridge-cycles-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Sections running between a tensor face's outer boundary and a generated hole now cut the face through the existing bridge-cycle partition. Two defects blocked this. (1) Plane/tensor intersection required the plane's own projection to be injective on the unit square; when it folds the tensor but a coordinate-plane projection certifies the tensor injective, sections are now published as tensor images through the implicit-carrier section builder (tensor pcurve retained, plane pcurve unavailable, never fitted). (2) The bridge-cycle split built each reverse use's correspondence with its own formula from the pcurve's represented endpoints, which disagrees with the pcurve domain for restricted generated sections and failed validation; it now uses the shared exact ParameterCorrespondence::reversed_pcurve like every other split.",
+      "source": [
+        "../src/geometry/plane_tensor.rs",
+        "../src/geometry/implicit_tensor.rs",
+        "../src/topology/edit/partition.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: the plane x = 0 against the paraboloid patch (previously a typed construction blocker) yields one tensor-image section; restricted exactly at the hole events (0, +/-1/2, 1/4) located on it, its two outer-to-hole pieces partition the ring left by the loop split into two halves (three faces with the disk), replaying cold; the disk refuses the bridges with FaceSplitTraceNotInSingleRegion. Restoring the old bridge correspondence formula or removing the plane fallback fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 784 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.15 s in release.",
+      "limits": "Tensors with no injective coordinate-plane projection, plane-side faces of such sections (no plane pcurve), analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

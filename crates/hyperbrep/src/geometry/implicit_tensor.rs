@@ -107,6 +107,17 @@ pub(super) fn intersect_with(
     if matches!(injectivity, Injectivity::Certify) {
         certify_injective_tensor([&x, &y, &z], &weight)?;
     }
+    tensor_image_sections(tensor, &set, tensor_operand)
+}
+
+/// Publishes a complete unit-square zero set of an injective tensor as
+/// tensor-image sections. The tensor's pcurves are the retained UV branches;
+/// the other operand's pcurves are published as unavailable, not fitted.
+pub(super) fn tensor_image_sections(
+    tensor: &Surface,
+    set: &UnitSquareZeros,
+    tensor_operand: SurfaceIntersectionOperand,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
     let mut curves = Vec::with_capacity(set.curves.len());
     for uv in &set.curves {
         // The spatial chart equals the source chart, matching the retained
@@ -213,7 +224,7 @@ pub(super) fn pullback(
     }
 }
 
-fn certify_injective_tensor(
+pub(super) fn certify_injective_tensor(
     coordinates: [&BivariatePolynomial; 3],
     weight: &BivariatePolynomial,
 ) -> GeometryResult<()> {
