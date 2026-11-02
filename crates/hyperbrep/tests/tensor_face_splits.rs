@@ -202,13 +202,13 @@ fn both_sections_split_the_face_into_three_and_replay_transformed() {
 }
 
 /// On the rational patch of y^2 + z^2 = 2, the section by x^2 + y^2 = 1 runs
-/// from x = -√24/5 to √24/5 and is split into two branches at the topology
-/// event x = 0, (0, 1, 1). There the UV coordinate v solves a quartic with no
-/// rational root and no remaining factor of degree at most two, so no scalar
-/// endpoint is certified and the face split is a typed refusal rather than a
-/// rounded vertex.
+/// from x = -√24/5 to √24/5 (y = 1/5, z = 7/5) and is split into two branches
+/// at the projection event x = 0, (0, 1, 1). Every end is certified exactly:
+/// the boundary ends through their radical coordinate, the junction through
+/// the event resultant. A single branch ends inside the face, so it is not an
+/// open split and is refused with that reason.
 #[test]
-fn irrational_section_endpoints_remain_typed() {
+fn junction_ended_branches_are_refused_as_open_splits() {
     let arc = [
         (q(7, 5), q(1, 5), Real::one()),
         (q(5, 4), q(5, 4), q(4, 5)),
@@ -240,18 +240,40 @@ fn irrational_section_endpoints_remain_typed() {
         SurfaceSurfaceIntersection::Curves(curves) => curves,
         other => panic!("two branches required, found {other:?}"),
     };
-    let branch = pieces
-        .iter()
-        .find(|piece| piece.curve().start().is_err() || piece.curve().end().is_err())
-        .expect("a branch with an irrational boundary endpoint");
-    assert!(
-        model
-            .faces()
-            .next()
-            .unwrap()
-            .split_by_surface_curve(branch, SurfaceIntersectionOperand::First)
-            .is_err()
-    );
+    assert_eq!(pieces.len(), 2);
+    let x = (Real::from(24).sqrt().unwrap() / Real::from(5)).unwrap();
+    let expected = [
+        Point3::new(x.clone(), q(1, 5), q(7, 5)),
+        Point3::new(-x, q(1, 5), q(7, 5)),
+        pi(0, 1, 1),
+    ];
+    for piece in &pieces {
+        let ends = [piece.curve().start().unwrap(), piece.curve().end().unwrap()];
+        let at_junction = ends
+            .iter()
+            .filter(|end| {
+                GeometricPoint3::from((*end).clone())
+                    .coincides_with(&expected[2].clone().into())
+                    .unwrap()
+            })
+            .count();
+        assert_eq!(at_junction, 1);
+        for end in &ends {
+            assert!(expected.iter().any(|point| {
+                GeometricPoint3::from(end.clone())
+                    .coincides_with(&point.clone().into())
+                    .unwrap()
+            }));
+        }
+        assert!(matches!(
+            model
+                .faces()
+                .next()
+                .unwrap()
+                .split_by_surface_curve(piece, SurfaceIntersectionOperand::First),
+            Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. })
+        ));
+    }
 }
 
 /// Exact point location on a generated section: its rational boundary points
@@ -384,4 +406,108 @@ fn radical_section_endpoints_split_tensor_faces() {
         current = reload(&next.expect("one face contains each corner section"));
     }
     assert_eq!(current.faces().count(), 5);
+}
+
+/// x^2 + y^2 = 1/4 about the z axis meets the paraboloid face in a closed
+/// loop at height 1/4 that the topology returns as two branches joined at
+/// the projection events (0, ±1/2, 1/4), where u = 1/4 and u = 3/4.
+fn loop_sections(patch: &Surface) -> Vec<SurfaceIntersectionCurve> {
+    let cylinder = Surface::cylinder(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        q(1, 2),
+    )
+    .unwrap();
+    match patch.intersect_surface(&cylinder).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("two loop branches required, found {other:?}"),
+    }
+}
+
+#[test]
+fn closed_section_chain_splits_a_tensor_face_into_a_ring_and_a_disk() {
+    let (model, patch) = paraboloid_face();
+    let pieces = loop_sections(&patch);
+    assert_eq!(pieces.len(), 2);
+    // Both branches end exactly at the two projection events.
+    for piece in &pieces {
+        for end in [piece.curve().start().unwrap(), piece.curve().end().unwrap()] {
+            assert!(
+                [
+                    Point3::new(0.into(), q(1, 2), q(1, 4)),
+                    Point3::new(0.into(), q(-1, 2), q(1, 4)),
+                ]
+                .iter()
+                .any(|point| GeometricPoint3::from(end.clone())
+                    .coincides_with(&point.clone().into())
+                    .unwrap())
+            );
+        }
+    }
+    let face = model.faces().next().unwrap();
+    // A single open piece, or a chain that does not close, is not a loop.
+    assert!(matches!(
+        face.split_by_surface_curve_loop(&pieces[..1], SurfaceIntersectionOperand::First),
+        Err(TopologyEditError::DegenerateFaceSplit)
+    ));
+    let corners = corner_sections(&patch);
+    assert!(matches!(
+        face.split_by_surface_curve_loop(&corners[..2], SurfaceIntersectionOperand::First),
+        Err(TopologyEditError::DegenerateFaceSplit)
+    ));
+    let split = face
+        .split_by_surface_curve_loop(&pieces, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(split.model().faces().count(), 2);
+    assert_eq!(split.edges().len(), 2);
+    let cold = reload(split.model());
+    assert_eq!(cold.faces().count(), 2);
+    // The chain is accepted in either order and orientation.
+    let reordered = [pieces[1].reversed().unwrap(), pieces[0].clone()];
+    let again = face
+        .split_by_surface_curve_loop(&reordered, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(reload(again.model()).faces().count(), 2);
+    // The ring keeps splitting: a corner section cuts it further.
+    let mut cut = None;
+    for face in cold.faces() {
+        if let Ok(split) =
+            face.split_by_surface_curve(&corners[0], SurfaceIntersectionOperand::First)
+        {
+            cut = Some(split.model().clone());
+            break;
+        }
+    }
+    assert_eq!(
+        reload(&cut.expect("the ring contains a corner"))
+            .faces()
+            .count(),
+        3
+    );
+    let transform = Matrix4::from_row_major([
+        q(6, 5),
+        q(-8, 5),
+        0.into(),
+        1.into(),
+        q(8, 5),
+        q(6, 5),
+        0.into(),
+        2.into(),
+        0.into(),
+        0.into(),
+        2.into(),
+        3.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    assert_eq!(
+        reload(&cold.transformed(&transform).unwrap())
+            .faces()
+            .count(),
+        2
+    );
 }

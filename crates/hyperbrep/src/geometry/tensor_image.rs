@@ -150,7 +150,8 @@ impl TensorCurve3 {
 
     /// An exact scalar UV point for a selected source point, when one
     /// coordinate has a scalar view (or is proved equal to a patch-boundary
-    /// value 0 or 1) and the other is a root of the source's
+    /// value 0 or 1, or to an exact root candidate of the projection-event
+    /// resultant) and the other is a root of the source's
     /// defining polynomial at that value that is rational, or a root of the
     /// remaining linear or quadratic factor after exact rational deflation.
     /// Rational candidates come from a bounded exact rational-root search;
@@ -184,8 +185,6 @@ impl TensorCurve3 {
         use hypersolve::bivariate_arithmetic::{
             bivariate_specialize_first, bivariate_specialize_second,
         };
-        use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
-        use hypersolve::exact_factor::exact_rational_polynomial_root;
         let source = self
             .source
             .source_restriction()
@@ -205,64 +204,50 @@ impl TensorCurve3 {
             };
             selected.affine_form(a, b, Real::zero())
         };
+        // Proves a selected coordinate equal to one exact candidate.
+        let certify = |selected: &hypercurve::CurvePointAffineForm2,
+                       candidates: Vec<Real>|
+         -> GeometryResult<Option<Real>> {
+            for candidate in candidates {
+                if selected.compare_to_real(&candidate)? == Ordering::Equal {
+                    return Ok(Some(candidate));
+                }
+            }
+            Ok(None)
+        };
         for known in [0, 1] {
-            // A scalar view, or a patch-boundary value proved equal.
-            let value = match coordinate(known).parameter()?.scalar().cloned() {
+            // A scalar view, a patch-boundary value, or an event abscissa:
+            // branch ends lie on the patch boundary or where the defining
+            // polynomial and its derivative across `known` vanish together,
+            // so the exact resultant eliminating the other coordinate
+            // proposes event candidates.
+            let selected_known = coordinate(known);
+            let value = match selected_known.parameter()?.scalar().cloned() {
                 Some(value) => value,
                 None => {
-                    let mut boundary = None;
-                    for candidate in [Real::zero(), Real::one()] {
-                        if coordinate(known).compare_to_real(&candidate)? == Ordering::Equal {
-                            boundary = Some(candidate);
-                            break;
-                        }
+                    let mut candidates = vec![Real::zero(), Real::one()];
+                    if let Some(events) = event_polynomial(defining, known) {
+                        candidates.extend(exact_root_candidates(events)?);
                     }
-                    let Some(value) = boundary else {
+                    let Some(value) = certify(&selected_known, candidates)? else {
                         continue;
                     };
                     value
                 }
             };
-            let other = coordinate(1 - known);
-            // Section ends usually lie on the patch boundary.
-            for boundary in [Real::zero(), Real::one()] {
-                if other.compare_to_real(&boundary)? == Ordering::Equal {
-                    return Ok(Some(if known == 0 {
-                        CurvePoint2::new(value, boundary)
-                    } else {
-                        CurvePoint2::new(boundary, value)
-                    }));
-                }
-            }
-            let mut polynomial = if known == 0 {
+            let polynomial = if known == 0 {
                 bivariate_specialize_first(defining, &value)
             } else {
                 bivariate_specialize_second(defining, &value)
             };
-            while let Some(root) = exact_rational_polynomial_root(&polynomial) {
-                if other.compare_to_real(&root)? == Ordering::Equal {
-                    return Ok(Some(if known == 0 {
-                        CurvePoint2::new(value, root)
-                    } else {
-                        CurvePoint2::new(root, value)
-                    }));
-                }
-                let Some(quotient) =
-                    divide_univariate_polynomial_exact(&polynomial, &[-root, Real::one()])
-                else {
-                    break;
-                };
-                polynomial = quotient;
-            }
-            // A remaining factor of degree at most two has radical roots.
-            for root in low_degree_roots(polynomial)? {
-                if other.compare_to_real(&root)? == Ordering::Equal {
-                    return Ok(Some(if known == 0 {
-                        CurvePoint2::new(value, root)
-                    } else {
-                        CurvePoint2::new(root, value)
-                    }));
-                }
+            let mut candidates = vec![Real::zero(), Real::one()];
+            candidates.extend(exact_root_candidates(polynomial)?);
+            if let Some(other) = certify(&coordinate(1 - known), candidates)? {
+                return Ok(Some(if known == 0 {
+                    CurvePoint2::new(value, other)
+                } else {
+                    CurvePoint2::new(other, value)
+                }));
             }
         }
         Ok(None)
@@ -511,6 +496,58 @@ impl TensorCurve3 {
     pub(crate) fn translated(&self, offset: &Vector3) -> GeometryResult<Curve3> {
         self.transformed(&Matrix4::affine_translation(offset.0.clone()))
     }
+}
+
+/// Exact candidate roots of a univariate polynomial (ascending powers): its
+/// rational roots from Hypersolve's bounded exact search with exact
+/// deflation, then the radical roots of a remaining factor of degree at most
+/// two. Candidates are proposals only; callers prove each by exact comparison.
+fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
+    use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
+    use hypersolve::exact_factor::exact_rational_polynomial_root;
+    let mut candidates = Vec::new();
+    while let Some(root) = exact_rational_polynomial_root(&polynomial) {
+        candidates.push(root.clone());
+        let Some(quotient) = divide_univariate_polynomial_exact(&polynomial, &[-root, Real::one()])
+        else {
+            return Ok(candidates);
+        };
+        polynomial = quotient;
+    }
+    candidates.extend(low_degree_roots(polynomial)?);
+    Ok(candidates)
+}
+
+/// The exact resultant of `F` and `dF/d(other)` eliminating the other
+/// coordinate: a polynomial in coordinate `known` vanishing at every
+/// projection event of `F`. `None` when it is not constructed.
+fn event_polynomial(defining: &hypersolve::BivariatePolynomial, known: usize) -> Option<Vec<Real>> {
+    use hypersolve::bivariate_arithmetic::bivariate_parameter_derivative;
+    use hypersolve::curve_resultant::resultant_bivariate_polynomial_system_complete;
+    use hypersolve::{
+        CurveIntersectionResultantConfig, CurveIntersectionResultantStatus, CurveResultantParameter,
+    };
+    let (retained, eliminated) = if known == 0 {
+        (
+            CurveResultantParameter::First,
+            CurveResultantParameter::Second,
+        )
+    } else {
+        (
+            CurveResultantParameter::Second,
+            CurveResultantParameter::First,
+        )
+    };
+    let derivative = bivariate_parameter_derivative(defining, eliminated);
+    let report = resultant_bivariate_polynomial_system_complete(
+        defining,
+        &derivative,
+        retained,
+        CurveIntersectionResultantConfig::default(),
+    );
+    (report.status == CurveIntersectionResultantStatus::Constructed
+        && report.resultant_coefficients.len() > 1)
+        .then_some(report.resultant_coefficients)
 }
 
 /// The real roots of a polynomial (ascending powers) of degree one or two

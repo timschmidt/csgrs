@@ -548,13 +548,12 @@ impl ArenaModel {
             let first_path = staged.build_model_wire_curve_path(outer)?;
             let second_path = staged.build_model_wire_curve_path(second_wire)?;
             for wire in inner {
-                let contour = staged.build_model_wire_contour(wire)?;
-                let representative = contour.segments()[0].start();
+                // The hole's exact curve path, which also admits generated
+                // pcurves that have no line/arc contour.
+                let representative = staged.build_model_wire_curve_path(wire)?.start();
                 let classify = |path: &CurvePath2| -> Result<bool, TopologyEditError> {
-                    match crate::error::classified(
-                        path.classify_point(&representative.clone().into()),
-                    )
-                    .map_err(GeometryError::from)?
+                    match crate::error::classified(path.classify_point(&representative))
+                        .map_err(GeometryError::from)?
                     {
                         Classification::Decided(ContourPointLocation::Inside) => Ok(true),
                         Classification::Decided(ContourPointLocation::Outside) => Ok(false),

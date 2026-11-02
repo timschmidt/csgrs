@@ -3900,6 +3900,40 @@
       "validation": "New witness: on the paraboloid face, x^2 + y^2 = 3/2 cuts the four corners along sections whose ends are exactly (+/-sqrt(2)/2, +/-1, 3/2) and (+/-1, +/-sqrt(2)/2, 3/2); one cut leaves two faces and all four leave five, each replaying cold. The plane x = 0 now meets each generated branch of the perpendicular-cylinder loop exactly once at s = 1/2, (0, 1, 1), the independently derived branch junction. The cylinder-patch section whose junction coordinate solves a quartic without rational or low-degree factors stays a typed split refusal (its doc now states that reason). Disabling boundary candidates for the known coordinate, the radical roots, or the pullback fallback fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 777 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the four-corner witness completes in about 1.2 s in release.",
       "limits": "Endpoint coordinates of degree above two after rational deflation (Hypersolve has no rational factorization), endpoints with neither coordinate scalar nor on the patch boundary, closed-loop tensor splits, Booleans and analytic-side faces remain open; Hypercurve still cannot intersect native and swapped-chart branches. No work package or pre-push gate closes."
+    },
+    {
+      "id": "closed-tensor-section-loops-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Closed chains of generated sections now split tensor faces. New public FaceRef::split_by_surface_curve_loop orients the given pieces into one exactly closed chain (each piece forward or reversed by exact endpoint equality), materializes every operand pcurve without fitting, and publishes the loop as a new inner wire of the source face plus the outer wire of a new enclosed face, assigning holes by exact classification and revalidating the whole model. Loop orientation uses the exact signed area when available; for implicit branches, where Hypercurve has no area integral, a dyadic grid point proposed from the UV bounds and classified inside casts a horizontal ray whose exact signed crossings give its winding. Branch ends at interior projection events are certified through exact root candidates of the resultant Res(F, dF/d(other)), always by exact comparison. Open splits of faces with holes now classify holes through their exact curve path rather than a line/arc contour, so faces bounded by generated loops keep splitting.",
+      "source": [
+        "../src/topology/edit/surface_loop.rs",
+        "../src/topology/edit/face.rs",
+        "../src/topology/edit/results.rs",
+        "../src/ownership/changes.rs",
+        "../src/geometry/tensor_image.rs",
+        "../src/lib.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "validation": "New witness: x^2 + y^2 = 1/4 meets the paraboloid face in a loop returned as two branches whose ends are exactly the projection events (0, +/-1/2, 1/4); the loop split gives a ring and a disk that replay cold, also after a scaled rotation/translation; the chain is accepted reordered with a reversed piece; a single piece and two non-closing corner sections are DegenerateFaceSplit; the ring then takes an open corner split into three faces. The former typed cylinder-patch witness now certifies all branch ends exactly ((+/-sqrt(24)/5, 1/5, 7/5) and the junction (0, 1, 1)) and is refused with the correct reason, FaceSplitEndpointNotOnOuterBoundary. Flipping the winding sign, swapping interior and exterior wires, or disabling event candidates fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 778 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the loop witness completes in about 0.5 s in release.",
+      "limits": "Open chains (several pieces from boundary to boundary), loops whose interior is missed by the bounded grid search, loops crossing existing holes, analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

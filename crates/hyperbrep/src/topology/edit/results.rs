@@ -162,6 +162,23 @@ pub struct ArenaClosedSurfaceCurveFaceSplit {
     pub second_face: FaceId,
 }
 
+/// Stable identifiers produced by one closed chain of surface curves.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaSurfaceCurveLoopFaceSplit {
+    /// New vertices at the chain's junctions, starting at the first piece.
+    pub vertices: Vec<VertexId>,
+    /// One canonical edge per piece, shared by both descendants.
+    pub edges: Vec<EdgeId>,
+    /// New inner wire of the retained first descendant.
+    pub first_wire: WireId,
+    /// Outer wire of the appended enclosed descendant.
+    pub second_wire: WireId,
+    /// First descendant retaining the source face ID.
+    pub first_face: FaceId,
+    /// Newly appended enclosed descendant.
+    pub second_face: FaceId,
+}
+
 /// Stable result of deterministic exact multi-trace face partitioning.
 #[derive(Clone, Debug)]
 pub struct ArenaFacePartition {
