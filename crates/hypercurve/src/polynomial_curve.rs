@@ -468,6 +468,26 @@ impl PolynomialCurveBranch2 {
         self.endpoints[usize::from(start == self.reversed)].clone()
     }
 
+    /// The proved affine view of this branch's image: `Some(None)` for the
+    /// source plane, `Some(Some(S))` when every retained rational map is
+    /// certified as an exact similarity (composed with the final transform),
+    /// and `None` when some map is not. The original maps and denominators
+    /// remain authoritative; the view only answers queries.
+    pub(crate) fn similarity_view(&self) -> Option<Option<Similarity2>> {
+        if self.maps.is_empty() {
+            return Some(self.transform.clone());
+        }
+        let mut maps = self.maps.iter();
+        let mut image = maps.next()?.rational_similarity()?;
+        for map in maps {
+            image = image.then(&map.rational_similarity()?);
+        }
+        if let Some(next) = &self.transform {
+            image = image.then(next);
+        }
+        Some(Some(image))
+    }
+
     /// Whether this branch lies in its polynomial's own plane.
     pub(crate) fn is_source_image(&self) -> bool {
         self.transform.is_none() && self.maps.is_empty()
@@ -486,26 +506,8 @@ impl PolynomialCurveBranch2 {
         // A retained rational definition may encode a similarity, including
         // a guarded identity. Use its proved affine view only for the query;
         // returned points still replay every original map and denominator.
-        let transform = if self.maps.is_empty() {
-            self.transform.clone()
-        } else {
-            let mut maps = self.maps.iter();
-            let Some(mut image) = maps
-                .next()
-                .and_then(crate::RationalMap2::rational_similarity)
-            else {
-                return Ok(None);
-            };
-            for map in maps {
-                let Some(next) = map.rational_similarity() else {
-                    return Ok(None);
-                };
-                image = image.then(&next);
-            }
-            if let Some(next) = &self.transform {
-                image = image.then(next);
-            }
-            Some(image)
+        let Some(transform) = self.similarity_view() else {
+            return Ok(None);
         };
         let Some(transform) = transform else {
             return self.source_line_sections(line, policy).map(Some);

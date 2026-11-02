@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Trim polynomial branches whose retained rational maps are all certified
+  exact similarities inside regions. Such images are decidedly not points and
+  their line-chord forms use the maps' composed affine view; the original maps
+  and denominators remain authoritative.
+
 - Preserve typed exact failures from SVG region arrangement and region union
   through the public importer and its adapters.
 

@@ -59,7 +59,12 @@ impl CurveSourceSpan2 {
         let family = support.family();
         let result = match &support {
             CurveSupport2::Polynomial(branch) => {
-                if branch.rational_maps().is_empty() {
+                // A branch is a graph over a positive-length abscissa interval,
+                // so it is never one point; an injective image keeps that. Every
+                // map certified as an exact similarity (its original quotient
+                // still authoritative) is injective. Other rational maps may
+                // collapse the branch.
+                if branch.similarity_view().is_some() {
                     Classification::Decided(None)
                 } else {
                     Classification::Uncertain(UncertaintyReason::Unsupported)

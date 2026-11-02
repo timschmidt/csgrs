@@ -4304,6 +4304,33 @@
       "validation": "New witness: the x <= 1/2 intersection of the paraboloid-capped solid, replayed cold, intersected with y <= 1/2 gives a six-face corner solid with exact volume 27/8 (independently 9/8 + 9/4) before and after cold replay, and exact classifications ((-1/2, -1/2, 0) inside, (1/2, 1/2, 1/4) on both walls below the top, (1/2, 1/2, 3/4) above it, and points beyond either cut outside). Disabling the certified contacts, the witness-vertex skip, straight-branch volume, or the iso validation arm each fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 797 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the chained witness completes in well under 0.1 s in release.",
       "limits": "Cuts through the top by non-vertical planes (plane-face trimming of mapped-branch pcurves), unions and coincident-face cases remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "hypercurve-similarity-mapped-trims-2026-11-02",
+      "work_packages": [
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P19",
+        "P20"
+      ],
+      "change": "Supporting Hypercurve change for the mapped-branch gap: polynomial branches whose retained rational maps are all certified exact similarities (RationalMap2::rational_similarity, including guarded identities with removable factors) now trim inside regions. A new PolynomialCurveBranch2::similarity_view composes such maps with the final transform (shared with the existing line_sections path); subdivision decides that such an image is not a point (a graph over a positive interval stays non-constant under an injective map), and line-chord source forms use the composed affine view. The maps and denominators stay authoritative: an attempt to replace similarity-shaped maps by native similarity images was rejected because Hypercurve's contract tests require the original quotient to remain recorded.",
+      "source": [
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/curve_subdivision.rs",
+        "../../hypercurve/src/polynomial_curve_chord.rs",
+        "../../hypercurve/tests/polynomial_closure_composition.rs",
+        "../../hypercurve/CHANGELOG.md"
+      ],
+      "evidence": "../../hypercurve/CHANGELOG.md",
+      "validation": "New Hypercurve witness: the branch y = x^2 mapped by the rational map (x, y) -> (2y, 2x) keeps that map as its definition and trims inside [-1, 1]^2 to exactly the source parameters [-1/2, 1/2], the same as the similarity applied directly (previously a Subdivision blocker). Reverting the subdivision decision or the chord source forms fails the witness; a self-intersection relaxation that no witness required was removed. On Rust stable: cargo fmt --check passes; strict Clippy for hypercurve (all targets, all features) and for hyperbrep and hyperbrep-io passes; hypercurve release all-feature tests report 3052 passes, 34 ignored, 0 failures; hyperbrep 797 and hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "General (non-similarity) rational images, point location and selected chord sections on mapped branches remain blocked; BRep plane-section pcurves still need further Boolean support for cuts through tensor tops. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

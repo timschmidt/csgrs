@@ -93,10 +93,11 @@ fn invalid(cause: CurveError) -> ExactCurveError {
 fn source_forms(
     branch: &crate::PolynomialCurveBranch2,
 ) -> ExactCurveResult<Option<[[Real; 3]; 2]>> {
-    if !branch.rational_maps().is_empty() {
+    // Similarity-certified maps contribute their proved affine view.
+    let Some(view) = branch.similarity_view() else {
         return Ok(None);
-    }
-    let Some(image) = branch.image_transform() else {
+    };
+    let Some(image) = view.as_ref() else {
         return Ok(Some([
             [Real::one(), Real::zero(), Real::zero()],
             [Real::zero(), Real::one(), Real::zero()],

@@ -425,3 +425,73 @@ fn closed_domain_components_remain_filled_boundaries_after_boolean_reconstructio
         }
     }
 }
+
+/// A branch mapped by a rational map that is an exact similarity, here the
+/// scaled reflection (x, y) -> (2y, 2x), keeps that map as its authoritative
+/// definition and trims inside the square [-1, 1]^2 through the map's proved
+/// affine view, exactly like the same similarity applied directly: the image
+/// of y = x^2 is X = Y^2 / 2 with Y = 2x, so the retained source parameters
+/// are x in [-1/2, 1/2].
+#[test]
+fn similarity_certified_rational_images_trim_inside_regions() {
+    let polynomial = |rows: &[&[i32]]| {
+        BivariatePolynomial::new(
+            rows.iter()
+                .map(|r| r.iter().copied().map(Real::from).collect())
+                .collect(),
+        )
+    };
+    let topology = decompose_bivariate_curve(
+        &polynomial(&[&[0, 1], &[0], &[-1]]),
+        &BivariateCurveDomain {
+            first: [(-1).into(), 1.into()],
+            second: [(-1).into(), 2.into()],
+        },
+        Default::default(),
+    )
+    .unwrap();
+    let set = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+    let branch = &set.curves()[0];
+    let map = hypercurve::RationalMap2::new(
+        [polynomial(&[&[0, 2]]), polynomial(&[&[0], &[2]])],
+        polynomial(&[&[1]]),
+    );
+    let mapped = branch.rational_image(&map).unwrap();
+    assert_eq!(
+        mapped.polynomial_branch().unwrap().rational_maps(),
+        std::slice::from_ref(&map)
+    );
+    let similarity = Similarity2::try_from_real_affine(
+        0.into(),
+        2.into(),
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+    )
+    .unwrap();
+    let direct = branch.transform_similarity(&similarity).unwrap();
+    let square = CurvePath2::try_new(vec![
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(-1, -1), Point2::from_values(1, -1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(1, -1), Point2::from_values(1, 1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-1, 1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(-1, 1), Point2::from_values(-1, -1)).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[square], FillRule::NonZero).unwrap();
+    for curve in [&mapped, &direct] {
+        let fragments = curve.trim_inside_region_with_parameters(&region).unwrap();
+        assert_eq!(fragments.len(), 1);
+        let (start, end) = fragments[0].represented_parameter_range().unwrap();
+        assert_eq!(start.partial_cmp(&q(-1, 2)), Some(Ordering::Equal));
+        assert_eq!(end.partial_cmp(&q(1, 2)), Some(Ordering::Equal));
+    }
+}
