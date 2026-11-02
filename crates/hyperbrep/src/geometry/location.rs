@@ -250,6 +250,43 @@ pub(super) fn locate_ellipse_arc_parameters(
             return Err(GeometryError::PredicateUnresolved { needed, stage });
         }
     }
+    ellipse_arc_parameters_at_point(curve, arc, normalized_x, normalized_y)
+}
+
+/// Arc parameters of a point the caller has already proved to lie on the
+/// arc's whole conic (in its plane and on its equation), such as an exact
+/// root of the conic's pulled-back equation. Endpoint identity is still
+/// preferred when decided, and the arc's own angular domain is applied
+/// exactly; only the redundant membership predicates are skipped.
+pub(super) fn locate_ellipse_arc_parameters_on_conic(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    point: &Point3,
+) -> GeometryResult<CurveParameterLocation> {
+    let mut endpoints = Vec::new();
+    if point3_equal(&curve.start()?, point, crate::STRICT_PREDICATES).value() == Some(true) {
+        endpoints.push(curve.domain().start().clone());
+    }
+    if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
+        && (endpoints.is_empty() || endpoints[0].compare(curve.domain().end())? != Ordering::Equal)
+    {
+        endpoints.push(curve.domain().end().clone());
+    }
+    if !endpoints.is_empty() {
+        return Ok(CurveParameterLocation::Parameters(endpoints));
+    }
+    let relative = point - &arc.center;
+    let normalized_x = (arc.x.dot(&relative) / &arc.x_radius).map_err(GeometryError::Numeric)?;
+    let normalized_y = (arc.y.dot(&relative) / &arc.y_radius).map_err(GeometryError::Numeric)?;
+    ellipse_arc_parameters_at_point(curve, arc, normalized_x, normalized_y)
+}
+
+fn ellipse_arc_parameters_at_point(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    normalized_x: Real,
+    normalized_y: Real,
+) -> GeometryResult<CurveParameterLocation> {
     let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
         Ok(angle) => angle,
         Err(GeometryError::PredicateUnresolved { .. }) => {

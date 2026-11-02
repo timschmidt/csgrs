@@ -1307,14 +1307,16 @@ fn intersect_conic_rational(
             let Some((numerator, start, length)) = &source else {
                 return Err(GeometryError::UnsupportedIntersection);
             };
-            let mut certified = None;
-            for local in tensor_image::exact_root_candidates(bernstein_to_power(numerator))? {
-                let candidate = Parameter::from_real(local).affine_image(length, start)?;
-                if candidate.compare(&parameter)? == Ordering::Equal {
-                    certified = Some(candidate);
-                    break;
-                }
-            }
+            let certified = tensor_image::first_proved_equal(
+                tensor_image::exact_root_candidates(bernstein_to_power(numerator))?,
+                |local| {
+                    Parameter::from_real(local.clone())
+                        .affine_image(length, start)?
+                        .compare(&parameter)
+                },
+            )
+            .map(|local| Parameter::from_real(local).affine_image(length, start))
+            .transpose()?;
             let Some(certified) = certified else {
                 return Err(GeometryError::UnsupportedIntersection);
             };
@@ -1324,7 +1326,14 @@ fn intersect_conic_rational(
         let Some(coordinates) = point.try_coordinates() else {
             return Err(GeometryError::UnsupportedIntersection);
         };
-        let visits = match arc_curve.parameters_of(coordinates)? {
+        // A coplanar contact is an exact root of the conic's own equation, so
+        // only its angle and the arc's domain remain to be decided.
+        let location = if source.is_some() {
+            location::locate_ellipse_arc_parameters_on_conic(arc_curve, arc, coordinates)?
+        } else {
+            arc_curve.parameters_of(coordinates)?
+        };
+        let visits = match location {
             CurveParameterLocation::None => continue,
             CurveParameterLocation::Parameters(visits) => visits,
             CurveParameterLocation::EntireDomain => {

@@ -908,3 +908,68 @@ fn conic_pairs_meet_at_quartic_root_contacts() {
         }
     }
 }
+
+/// The quadratic with controls (1, 0), (1/2, 1), (-5/2, 3/4) is
+/// a(s) = 1 - s - 5s^2/2, b(s) = 2s - 5s^2/4, so a^2 + b^2 - 1 =
+/// s((125/16)s^3 - 2): it meets the unit circle at its start (1, 0), the
+/// circle's seam, and at the pure cube root s = cbrt(32/125), which is
+/// certified exactly. The circle and
+/// y = x^2 + x meet at x^3 + x^2 + x = 1, whose root has only an undecided
+/// Cardano form, so that incidence stays typed rather than failing otherwise.
+#[test]
+fn circles_meet_rational_curves_at_cube_root_contacts() {
+    let circle = full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 1);
+    let quadratic = Curve3::rational_bezier(
+        vec![
+            pi(1, 0, 0),
+            Point3::new(q(1, 2), 1.into(), 0.into()),
+            Point3::new(q(-5, 2), q(3, 4), 0.into()),
+        ],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    // The circle's evaluation at an atan2 of cube-root coordinates is exact
+    // but its comparison with the point is undecided, so the contact is
+    // checked through its defining relation instead.
+    let CurveCurveIntersection::Points(found) = circle.intersect_curve(&quadratic).unwrap() else {
+        panic!("isolated contacts required");
+    };
+    // The start (1, 0, 0) is the full circle's seam, visited at 0 and 2π.
+    assert_eq!(found.len(), 3);
+    assert_eq!(
+        found
+            .iter()
+            .filter(|contact| equal(&contact.second, Real::zero()))
+            .count(),
+        2
+    );
+    let interior = found
+        .iter()
+        .find(|contact| !equal(&contact.second, Real::zero()))
+        .unwrap();
+    let s = interior
+        .second
+        .try_real()
+        .expect("certified scalar parameter")
+        .clone();
+    assert!(equal(
+        &Parameter::from_real(&s * &s * &s),
+        (Real::from(32) / Real::from(125)).unwrap()
+    ));
+    assert!(
+        quadratic
+            .point_at(&interior.second)
+            .unwrap()
+            .coincides_with(&interior.point)
+            .unwrap()
+    );
+    let parabola = Curve3::rational_bezier(
+        vec![pi(-1, 0, 0), pi(0, -1, 0), pi(1, 2, 0)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    assert!(matches!(
+        circle.intersect_curve(&parabola),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
+}

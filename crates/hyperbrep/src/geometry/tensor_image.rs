@@ -208,12 +208,9 @@ impl TensorCurve3 {
         let certify = |selected: &hypercurve::CurvePointAffineForm2,
                        candidates: Vec<Real>|
          -> GeometryResult<Option<Real>> {
-            for candidate in candidates {
-                if selected.compare_to_real(&candidate)? == Ordering::Equal {
-                    return Ok(Some(candidate));
-                }
-            }
-            Ok(None)
+            Ok(first_proved_equal(candidates, |candidate| {
+                Ok(selected.compare_to_real(candidate)?)
+            }))
         };
         for known in [0, 1] {
             // A scalar view, a patch-boundary value, or an event abscissa:
@@ -506,6 +503,20 @@ pub(super) fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult
     use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
     use hypersolve::exact_factor::exact_rational_polynomial_root;
     let mut candidates = Vec::new();
+    // The bounded rational search skips zero roots: deflate factors of x.
+    while polynomial.len() > 1
+        && decided_order(compare_reals(
+            &polynomial[0],
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))
+        .is_ok_and(|order| order == Ordering::Equal)
+    {
+        if candidates.is_empty() {
+            candidates.push(Real::zero());
+        }
+        polynomial.remove(0);
+    }
     while let Some(root) = exact_rational_polynomial_root(&polynomial) {
         candidates.push(root.clone());
         let Some(quotient) = divide_univariate_polynomial_exact(&polynomial, &[-root, Real::one()])
@@ -514,9 +525,106 @@ pub(super) fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult
         };
         polynomial = quotient;
     }
-    candidates.extend(low_degree_roots(polynomial.clone())?);
-    candidates.extend(quartic_roots(polynomial)?);
+    // A family whose exact sign decisions are undecided proposes nothing.
+    candidates.extend(low_degree_roots(polynomial.clone()).unwrap_or_default());
+    candidates.extend(cubic_roots(polynomial.clone()).unwrap_or_default());
+    candidates.extend(quartic_roots(polynomial).unwrap_or_default());
     Ok(candidates)
+}
+
+/// The first candidate proved exactly equal by `compare`. Candidates are
+/// proposals: an undecided or failed comparison certifies nothing and the
+/// next candidate is tried, so no unprovable form hides a provable one.
+pub(super) fn first_proved_equal(
+    candidates: Vec<Real>,
+    compare: impl Fn(&Real) -> GeometryResult<Ordering>,
+) -> Option<Real> {
+    candidates
+        .into_iter()
+        .find(|candidate| matches!(compare(candidate), Ok(Ordering::Equal)))
+}
+
+/// Exact real cube root, with `cbrt(-x) = -cbrt(x)`.
+fn real_cube_root(value: &Real) -> GeometryResult<Real> {
+    match decided_order(compare_reals(
+        value,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
+        Ordering::Equal => Ok(Real::zero()),
+        Ordering::Greater => value.clone().root_n(3).map_err(GeometryError::Numeric),
+        Ordering::Less => Ok(-(-value.clone()).root_n(3).map_err(GeometryError::Numeric)?),
+    }
+}
+
+/// Exact radical real roots of a cubic (ascending powers, after dropping
+/// exactly zero leading coefficients). The shift `x = t - c2/3` gives the
+/// monic depressed cubic `t^3 + p t + q` with `D = (q/2)^2 + (p/3)^3`. With
+/// `p = 0` the real root is the pure cube root `cbrt(-q)`; otherwise for
+/// `D > 0` it is Cardano's `cbrt(-q/2 + sqrt(D)) + cbrt(-q/2 - sqrt(D))`, and
+/// for `D = 0` the roots are `3q/p` and `-3q/(2p)`. Three distinct real roots
+/// (`D < 0`) have only trigonometric forms and give no candidates. Exact
+/// comparisons decide some Cardano forms and not others; callers prove every
+/// candidate by exact comparison and skip undecided ones.
+fn cubic_roots(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
+    let sign = |value: &Real| {
+        decided_order(compare_reals(
+            value,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))
+    };
+    let divide = |a: Real, b: &Real| (a / b).map_err(GeometryError::Numeric);
+    while let Some(leading) = polynomial.last() {
+        if sign(leading)? != Ordering::Equal {
+            break;
+        }
+        polynomial.pop();
+    }
+    if polynomial.len() != 4 {
+        return Ok(Vec::new());
+    }
+    let leading = polynomial[3].clone();
+    let c = polynomial
+        .iter()
+        .map(|value| divide(value.clone(), &leading))
+        .collect::<GeometryResult<Vec<_>>>()?;
+    let h = divide(-c[2].clone(), &Real::from(3))?;
+    // Taylor shift by h: b_k = sum_{i >= k} C(i, k) c_i h^(i - k).
+    let binomial = [[1, 0, 0, 0], [1, 1, 0, 0], [1, 2, 1, 0], [1, 3, 3, 1]];
+    let powers = [Real::one(), h.clone(), &h * &h, &h * &h * &h];
+    let shifted = (0..4)
+        .map(|k| {
+            (k..4).fold(Real::zero(), |total, i| {
+                total + Real::from(binomial[i][k]) * &c[i] * &powers[i - k]
+            })
+        })
+        .collect::<Vec<_>>();
+    let (p, q) = (&shifted[1], &shifted[0]);
+    let half_q = divide(q.clone(), &Real::from(2))?;
+    let third_p = divide(p.clone(), &Real::from(3))?;
+    let discriminant = &half_q * &half_q + &third_p * &third_p * &third_p;
+    let depressed = match sign(&discriminant)? {
+        Ordering::Less => Vec::new(),
+        Ordering::Equal => {
+            if sign(p)? == Ordering::Equal {
+                vec![Real::zero()]
+            } else {
+                vec![
+                    divide(Real::from(3) * q, p)?,
+                    divide(-(Real::from(3) * q), &(Real::from(2) * p))?,
+                ]
+            }
+        }
+        Ordering::Greater if sign(p)? == Ordering::Equal => vec![real_cube_root(&(-q.clone()))?],
+        // Cardano's sum: exact comparisons decide some of these forms and not
+        // others; undecided ones certify nothing.
+        Ordering::Greater => {
+            let root = discriminant.sqrt().map_err(GeometryError::Numeric)?;
+            vec![real_cube_root(&(-&half_q + &root))? + real_cube_root(&(-&half_q - &root))?]
+        }
+    };
+    Ok(depressed.into_iter().map(|t| t + &h).collect())
 }
 
 /// Exact radical roots of a quartic (ascending powers, after dropping exactly
@@ -864,5 +972,77 @@ mod quartic_tests {
                     == Ordering::Equal
             }));
         }
+    }
+
+    fn q(n: i64, d: i64) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    /// Hypercurve's complete selected roots on [0, 1] are the independent
+    /// authority; each must equal one exact candidate.
+    fn assert_candidates_cover(power: Vec<Real>, bernstein: Vec<Real>, expected: usize) {
+        let candidates = exact_root_candidates(power).unwrap();
+        let roots = super::super::curve_implicit::roots(bernstein).unwrap();
+        assert_eq!(roots.len(), expected);
+        for (root, _) in roots {
+            assert!(candidates.iter().any(|candidate| {
+                root.compare(&Parameter::from_real(candidate.clone()))
+                    .unwrap()
+                    == Ordering::Equal
+            }));
+        }
+    }
+
+    /// x^3 - 1/2 and (x - 1/4)^3 - 1/16: pure cube roots cbrt(1/2) and
+    /// 1/4 + cbrt(1/16) equal Hypercurve's selected roots exactly.
+    #[test]
+    fn pure_cube_roots_are_exact() {
+        assert_candidates_cover(
+            vec![q(-1, 2), 0.into(), 0.into(), 1.into()],
+            vec![q(-1, 2), q(-1, 2), q(-1, 2), q(1, 2)],
+            1,
+        );
+        // (x - 1/4)^3 - 1/16 = x^3 - 3x^2/4 + 3x/16 - 5/64.
+        let power = vec![q(-5, 64), q(3, 16), q(-3, 4), 1.into()];
+        let bernstein = vec![
+            q(-5, 64),
+            q(-5, 64) + q(1, 16),
+            q(-5, 64) + q(2, 16) + q(-1, 4),
+            q(-5, 64) + q(3, 16) + q(-3, 4) + Real::one(),
+        ];
+        assert_candidates_cover(power, bernstein, 1);
+    }
+
+    /// x^3 + x - 1 proposes its Cardano root, whose comparison with
+    /// Hypercurve's selected root is undecided: certification finds nothing
+    /// and reports no error, leaving the caller's typed outcome.
+    #[test]
+    fn undecided_cardano_roots_certify_nothing() {
+        let candidates =
+            exact_root_candidates(vec![(-1).into(), 1.into(), 0.into(), 1.into()]).unwrap();
+        assert_eq!(candidates.len(), 1);
+        let roots =
+            super::super::curve_implicit::roots(vec![(-1).into(), q(-2, 3), q(-1, 3), 1.into()])
+                .unwrap();
+        let selected = roots[0].0.clone();
+        assert!(
+            first_proved_equal(candidates, |candidate| {
+                selected.compare(&Parameter::from_real(candidate.clone()))
+            })
+            .is_none()
+        );
+    }
+
+    /// The helper skips a failed comparison and proves the next candidate.
+    #[test]
+    fn failed_comparisons_do_not_hide_provable_candidates() {
+        let proved = first_proved_equal(vec![Real::zero(), Real::one()], |candidate| {
+            if *candidate == Real::zero() {
+                Err(GeometryError::UnsupportedIntersection)
+            } else {
+                Ok(Ordering::Equal)
+            }
+        });
+        assert!(proved.is_some_and(|value| value == Real::one()));
     }
 }

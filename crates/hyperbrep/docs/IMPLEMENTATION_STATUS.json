@@ -4051,6 +4051,35 @@
       "validation": "New witness: the plane x = 0 against the paraboloid patch (previously a typed construction blocker) yields one tensor-image section; restricted exactly at the hole events (0, +/-1/2, 1/4) located on it, its two outer-to-hole pieces partition the ring left by the loop split into two halves (three faces with the disk), replaying cold; the disk refuses the bridges with FaceSplitTraceNotInSingleRegion. Restoring the old bridge correspondence formula or removing the plane fallback fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 784 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.15 s in release.",
       "limits": "Tensors with no injective coordinate-plane projection, plane-side faces of such sections (no plane pcurve), analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "cubic-candidates-and-proof-robustness-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Exact root candidates extend to cubics and become robust to undecided comparisons. (1) Zero roots are deflated first: Hypersolve's bounded rational search skips them, which previously left polynomials with a factor of x without candidates. (2) A remaining cubic proposes its pure cube root (p = 0), its repeated-root forms (D = 0) and, for D > 0, Cardano's sum; trigonometric three-root forms are not proposed. (3) Every certification goes through first_proved_equal: an undecided or failed exact comparison certifies nothing and the next candidate is tried, and a root family with undecided sign decisions proposes nothing, so an unprovable form never hides a provable one or turns a typed outcome into a predicate error. (4) Coplanar conic contacts, being exact roots of the conic's own pulled-back equation, are located on the arc by angle and domain only, without re-deciding membership predicates that cube-root coordinates leave undecided.",
+      "source": [
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry/curve_curve.rs",
+        "../src/geometry/location.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Unit witnesses against Hypercurve's independently isolated roots: cbrt(1/2) and 1/4 + cbrt(1/16) are certified; x^3 + x - 1 proposes a Cardano root whose comparison is undecided and certifies nothing without error; the proof helper skips a failed comparison and proves the next candidate. Geometric witness: the quadratic with controls (1, 0), (1/2, 1), (-5/2, 3/4) satisfies a^2 + b^2 - 1 = s((125/16)s^3 - 2), so it meets the unit circle at its seam start (two visits) and at s = cbrt(32/125), checked through s^3 = 32/125 and the quadratic's own evaluation (the circle's evaluation at an atan2 of cube-root coordinates is exact but its comparison with the point is undecided); the circle against y = x^2 + x, whose contact solves x^3 + x^2 + x = 1 with only an undecided Cardano form, stays UnsupportedIntersection. Removing the zero-root deflation or the on-conic location fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 788 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in about 0.02 s in release.",
+      "limits": "Undecided Cardano forms, three-real-root cubics (casus irreducibilis), quartics without a rational resolvent root and higher degrees remain typed; downstream consumers that must compare a circle's evaluation at such a contact with its cube-root point face the same undecided predicate. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
