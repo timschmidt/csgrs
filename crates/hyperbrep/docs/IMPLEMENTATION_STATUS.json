@@ -4247,6 +4247,30 @@
       "validation": "Former typed witness: the solid under z = x^2 + y^2 over [-1, 1]^2 above z = -1, intersected with the cuboid x <= 1/2, is a six-face tensor-graph solid whose points classify exactly as derived ((1/4, 0, 0) inside, (3/4, 0, 0) outside, (1/2, 0, 0) on the new wall, (1/2, 0, 1/2) above the top at 1/4, and others), also after cold replay; the difference is the complementary six-face solid ((3/4, 0, 1/2) under the top at 9/16 inside, (3/4, 0, 3/4) outside). The union's result shell is outside every admitted class and remains a typed UnsupportedSolidShell. Disabling either planar fallback fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the Boolean witness completes in about 0.05 s in release.",
       "limits": "Results outside the tensor-graph class (for example unions, or cuts through the top by non-vertical planes) remain typed; volume and area of tensor-graph solids are not claimed; tensor faces against analytic curved faces still lack analytic-side pcurves. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-graph-volume-2026-11-02",
+      "work_packages": [
+        "WP09",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P13",
+        "P17",
+        "P18",
+        "P20"
+      ],
+      "change": "Tensor-graph solids gain exact volume when the top is a polynomial tensor (equal weights) whose face is trimmed by UV segments. With frame coordinates a = A/(det w0), b = B/(det w0), c = C/(det w0), the volume is |det(u, v, d)| times the integral over the trimmed UV region of c |d(a, b)/d(u, v)| = C J / (det w0)^3 with J = A_u B_v - A_v B_u; Green's theorem turns it into -sum of integral H du over the face's oriented boundary segments (H the v-antiderivative of C J), each integrated exactly as a polynomial in the segment parameter. The integrand has one sign (positive heights, injective projection), so the absolute value is the volume. Rational tops or curved trims report UnsupportedMeasurement.",
+      "source": [
+        "../src/geometry/tensor_graph.rs",
+        "../src/topology/measure.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#standard-builders-and-solid-queries",
+      "validation": "Independent expectations from integrating z + 1 = x^2 + y^2 + 1: the full solid has volume 20/3 (also after cold replay); after the scaled rotation with linear determinant (36/25 + 64/25) * 2 = 8 it is 160/3; the Boolean intersection with x <= 1/2 has 19/4 and the difference 23/12 (= 20/3 - 19/4), certifying the Boolean results by an independent exact quantity. A wrong antiderivative factor or a missing frame determinant fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures (before an assign-operator-only Clippy fix, after which Clippy and the affected suite were rerun).",
+      "cost_evidence": "No performance claim.",
+      "limits": "Volume for rational tensor tops and for top faces trimmed by curved pcurves, and face area of tensor-graph solids, remain unsupported. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

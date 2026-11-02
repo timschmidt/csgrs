@@ -197,6 +197,8 @@ fn tensor_graph_solids_are_admitted_and_classified_exactly() {
     for (point, expected) in expected_locations() {
         assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
     }
+    // Volume: integral over [-1, 1]^2 of (x^2 + y^2 + 1) = 4/3 + 4/3 + 4.
+    assert_eq!(solid.volume().unwrap(), q(20, 3));
 }
 
 #[test]
@@ -241,6 +243,9 @@ fn tensor_graph_solids_replay_cold_and_transform() {
         );
         assert_eq!(solid.classify_point(&image).unwrap(), expected);
     }
+    // The linear part has determinant (36/25 + 64/25) * 2 = 8.
+    assert_eq!(solid.volume().unwrap(), q(160, 3));
+    assert_eq!(cold.solids().next().unwrap().volume().unwrap(), q(20, 3));
 }
 
 /// The cuboid x <= 1/2 cuts the tensor top along the iso section x = 1/2
@@ -290,7 +295,14 @@ fn booleans_split_tensor_graph_solids_exactly() {
             assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
         }
     }
+    // Volume of x <= 1/2: integral_{-1}^{1/2} (2x^2 + 8/3) dx = 3/4 + 4.
+    assert_eq!(common.bodies().next().unwrap().volume().unwrap(), q(19, 4));
     let remainder = boolean::difference(&body, &cut).unwrap();
+    // The complement: 20/3 - 19/4.
+    assert_eq!(
+        remainder.bodies().next().unwrap().volume().unwrap(),
+        q(23, 12)
+    );
     assert_eq!(remainder.model().faces().count(), 6);
     let solid = remainder.bodies().next().unwrap();
     for (point, expected) in [

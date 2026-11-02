@@ -669,6 +669,47 @@ impl ArenaModel {
                 }
                 return Ok(Real::from(2) * Real::pi() * first_moment);
             }
+            if let Some(graph) = &self.data.certified_tensor_graphs[id.index()] {
+                // The top face's oriented UV boundary segments.
+                let solid = self.solid(id).expect("validated solid ID");
+                let mut loops = Vec::new();
+                for face_id in &self.shell(solid.outer).expect("validated shell ID").faces {
+                    let face = self.face(*face_id).expect("validated face ID");
+                    if self
+                        .surface(face.surface)
+                        .expect("validated surface")
+                        .kind()
+                        != SurfaceKind::RationalBezier
+                    {
+                        continue;
+                    }
+                    for wire in face.boundary_wires() {
+                        let mut segments = Vec::new();
+                        for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
+                            let edge_use = self.edge_use(*use_id).expect("validated edge use");
+                            let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
+                            let Some(hypercurve::CurveGeometry2::Line(line)) =
+                                pcurve.curve().geometry()
+                            else {
+                                return Err(GeometryError::UnsupportedMeasurement.into());
+                            };
+                            segments.push((
+                                CurvePoint2::new(
+                                    line.start().x().clone(),
+                                    line.start().y().clone(),
+                                ),
+                                CurvePoint2::new(line.end().x().clone(), line.end().y().clone()),
+                            ));
+                        }
+                        loops.push(segments);
+                    }
+                }
+                let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
+                return graph
+                    .top
+                    .tensor_graph_volume(frame, &loops)?
+                    .ok_or(GeometryError::UnsupportedMeasurement.into());
+            }
             if let Some(loft) = &self.data.certified_lofts[id.index()] {
                 let jacobian = loft.u.dot(&loft.v.cross(&loft.height_axis)).abs();
                 return Ok(jacobian * &loft.parameter_volume);

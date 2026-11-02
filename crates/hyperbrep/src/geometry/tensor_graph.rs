@@ -197,6 +197,135 @@ impl Surface {
     }
 }
 
+/// Univariate polynomial product (ascending powers).
+fn univariate_product(a: &[Real], b: &[Real]) -> Vec<Real> {
+    if a.is_empty() || b.is_empty() {
+        return Vec::new();
+    }
+    let mut product = vec![Real::zero(); a.len() + b.len() - 1];
+    for (i, x) in a.iter().enumerate() {
+        for (j, y) in b.iter().enumerate() {
+            product[i + j] = &product[i + j] + x * y;
+        }
+    }
+    product
+}
+
+/// `integral_0^1 H(u0 + s du, v0 + s dv) ds` for a bivariate polynomial `H`.
+fn line_integral(
+    h: &BivariatePolynomial,
+    start: &CurvePoint2,
+    end: &CurvePoint2,
+) -> GeometryResult<Real> {
+    let du = end.x() - start.x();
+    let dv = end.y() - start.y();
+    let u_line = vec![start.x().clone(), du];
+    let v_line = vec![start.y().clone(), dv];
+    let powers = |line: &Vec<Real>, count: usize| {
+        let mut powers = vec![vec![Real::one()]];
+        for _ in 1..count {
+            let next = univariate_product(powers.last().expect("nonempty"), line);
+            powers.push(next);
+        }
+        powers
+    };
+    let rows = h.coefficients.len();
+    let columns = h.coefficients.iter().map(Vec::len).max().unwrap_or(0);
+    let u_powers = powers(&u_line, rows.max(1));
+    let v_powers = powers(&v_line, columns.max(1));
+    let mut total = Real::zero();
+    for (i, row) in h.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            let term = univariate_product(&u_powers[i], &v_powers[j]);
+            for (k, value) in term.iter().enumerate() {
+                total += (coefficient * value / Real::from((k + 1) as i64))
+                    .map_err(GeometryError::Numeric)?;
+            }
+        }
+    }
+    Ok(total)
+}
+
+impl Surface {
+    /// Exact volume of a certified tensor-graph solid whose top face is this
+    /// polynomial tensor (all weights equal) trimmed by closed UV boundary
+    /// loops of oriented segments. The volume is `|det(u, v, d)|` times the
+    /// integral over the trimmed UV region of `c |d(a, b)/d(u, v)|`; with
+    /// constant weight `w0`, `c = C / (det w0)` and the Jacobian is `J / (det w0)^2`, where
+    /// `J = A_u B_v - A_v B_u`. Green's theorem gives
+    /// `integral C J = -sum integral H du` with `H` the v-antiderivative of
+    /// `C J`; the integrand has one sign (positive heights, injective
+    /// projection), so the volume is the absolute value. `None` for rational
+    /// tensors.
+    pub(crate) fn tensor_graph_volume(
+        &self,
+        frame: (&Point3, &Vector3, &Vector3, &Vector3),
+        loops: &[Vec<(CurvePoint2, CurvePoint2)>],
+    ) -> GeometryResult<Option<Real>> {
+        use hypersolve::CurveResultantParameter;
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_multiply, bivariate_parameter_derivative,
+        };
+        let SurfaceGeometry::RationalBezier(patch) = &self.data.geometry else {
+            return Ok(None);
+        };
+        let first_weight = patch.weights[0][0].clone();
+        for row in &patch.weights {
+            for weight in row {
+                if decided_order(compare_reals(
+                    weight,
+                    &first_weight,
+                    crate::STRICT_PREDICATES,
+                ))? != Ordering::Equal
+                {
+                    return Ok(None);
+                }
+            }
+        }
+        let (origin, u, v, d) = frame;
+        let pullbacks = frame_pullbacks(patch, origin, u, v, d)?;
+        let [a, b, c] = &pullbacks.coordinates;
+        let jacobian = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_parameter_derivative(a, CurveResultantParameter::First),
+                &bivariate_parameter_derivative(b, CurveResultantParameter::Second),
+            ),
+            &bivariate_multiply(
+                &bivariate_parameter_derivative(a, CurveResultantParameter::Second),
+                &bivariate_parameter_derivative(b, CurveResultantParameter::First),
+            ),
+        );
+        let integrand = bivariate_multiply(c, &jacobian);
+        // H(u, v) = integral_0^v integrand(u, t) dt.
+        let antiderivative = BivariatePolynomial::new(
+            integrand
+                .coefficients
+                .iter()
+                .map(|row| {
+                    std::iter::once(Ok(Real::zero()))
+                        .chain(row.iter().enumerate().map(|(j, value)| {
+                            (value / Real::from((j + 1) as i64)).map_err(GeometryError::Numeric)
+                        }))
+                        .collect::<GeometryResult<Vec<_>>>()
+                })
+                .collect::<GeometryResult<Vec<_>>>()?,
+        );
+        let mut signed = Real::zero();
+        for boundary in loops {
+            for (start, end) in boundary {
+                let du = end.x() - start.x();
+                signed -= du * line_integral(&antiderivative, start, end)?;
+            }
+        }
+        // The integral is over frame coordinates (a, b, c); physical volume
+        // carries the frame's |det(u, v, d)|.
+        let scale = &pullbacks.determinant * &first_weight;
+        let cube = (&scale * &scale * &scale).abs();
+        let parameter_volume = (signed.abs() / cube).map_err(GeometryError::Numeric)?;
+        Ok(Some(pullbacks.determinant.clone().abs() * parameter_volume))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
