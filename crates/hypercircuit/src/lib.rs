@@ -9,6 +9,8 @@
 //! through exact residual definitions or return explicit uncertainty. See the
 //! crate README for the MNA, circuit-simulation, and exact-computation sources.
 
+#![recursion_limit = "256"]
+
 /// Hypercircuit accepts only strictly certified scalar, route, and topology decisions.
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;
