@@ -299,3 +299,70 @@ fn axis_aligned_plane_cut_remains_a_typed_blocker() {
         Err(GeometryError::PlanarCurve(_) | GeometryError::PolynomialTopology(_))
     ));
 }
+
+/// Branches of the patch's sections by x^2 + y^2 = 1 and by x^2 + z^2 = 9/4
+/// meet exactly where all three cylinders meet: x^2 = 5/8, y^2 = 3/8,
+/// z^2 = 13/8, i.e. (±√10/4, √6/4, √26/4). Generated curves on different
+/// tensors have no admitted shared chart.
+#[test]
+fn generated_curves_on_one_tensor_meet_exactly() {
+    let first = cylinder_branches();
+    let third = Surface::cylinder(
+        Point3::origin(),
+        Vector3::z(),
+        Vector3::x(),
+        Vector3::y(),
+        q(3, 2),
+    )
+    .unwrap();
+    let second = match third.intersect_surface(&cylinder_patch()).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        SurfaceSurfaceIntersection::Curve(curve) => vec![*curve],
+        other => panic!("curve components required, found {other:?}"),
+    };
+    let x = (root(10) / Real::from(4)).unwrap();
+    let y = (root(6) / Real::from(4)).unwrap();
+    let z = (root(26) / Real::from(4)).unwrap();
+    let mut found = Vec::new();
+    for a in &first {
+        for b in &second {
+            match a.curve().intersect_curve(b.curve()).unwrap() {
+                CurveCurveIntersection::None => {}
+                CurveCurveIntersection::Points(points) => {
+                    for point in points {
+                        assert!(
+                            point
+                                .point
+                                .coincides_with(&b.curve().point_at(&point.second).unwrap())
+                                .unwrap()
+                        );
+                        found.push(point.point);
+                    }
+                }
+                other => panic!("isolated incidences required, found {other:?}"),
+            }
+        }
+    }
+    assert_eq!(found.len(), 2);
+    for sign in [-1, 1] {
+        let expected = GeometricPoint3::from(p(x.clone() * Real::from(sign), y.clone(), z.clone()));
+        assert!(
+            found
+                .iter()
+                .any(|point| point.coincides_with(&expected).unwrap())
+        );
+    }
+    // A translated copy lies on a different exact tensor.
+    let moved = edge_model(first[0].curve())
+        .transformed(&Matrix4::affine_translation([
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+        ]))
+        .unwrap();
+    let moved = moved.curves().next().unwrap().geometry().clone();
+    assert!(matches!(
+        first[0].curve().intersect_curve(&moved),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
+}

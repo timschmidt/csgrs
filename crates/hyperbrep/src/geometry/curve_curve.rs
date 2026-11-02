@@ -60,7 +60,8 @@ impl Curve3 {
     /// the arc's exact point location. Circular arcs meet on their radical line
     /// (coplanar) or on the line of their planes (otherwise), with both arc
     /// parameters exact; arcs of one circle return their exact coincident
-    /// ranges and touching points in both charts. Noncoplanar rational
+    /// ranges and touching points in both charts. Tensor-image curves on one
+    /// exact tensor meet where their UV sources meet. Noncoplanar rational
     /// Bézier/NURBS pairs
     /// are intersected through an
     /// exact planar projection whose candidates are confirmed by exact spatial
@@ -97,6 +98,11 @@ impl Curve3 {
                 (&self.data.geometry, &other.data.geometry)
             {
                 return intersect_circles(self, first, other, second);
+            }
+            if let (CurveGeometry3::TensorImage(first), CurveGeometry3::TensorImage(second)) =
+                (&self.data.geometry, &other.data.geometry)
+            {
+                return intersect_tensor_images(self, first, other, second);
             }
             if let Some(result) = intersect_coplanar(self, other)? {
                 return Ok(result);
@@ -532,69 +538,7 @@ fn intersect_coplanar(
     let (Some(a), Some(b)) = (planar_view(first, &frame)?, planar_view(second, &frame)?) else {
         return Ok(None);
     };
-    let intersection = a.curve.intersect_curve(&b.curve)?;
-    if let Some(blocker) = intersection.blockers().first() {
-        return Err(match blocker.kind() {
-            hypercurve::CurveIntersectionPairBlockerKind2::Uncertain(reason) => {
-                GeometryError::PlanarClassificationUnresolved(*reason)
-            }
-            _ => GeometryError::UnsupportedIntersection,
-        });
-    }
-    let spatial = |view: &PlanarView, parameter: &hypercurve::CurveParameter2| {
-        Parameter::from_curve(parameter)?.affine_image(&view.scale, &view.offset)
-    };
-    let range = |view: &PlanarView, index, local: &hypercurve::CurveParameterRange2| {
-        let start = spatial(view, &view.curve.parameter_from_span(index, local.start())?)?;
-        let end = spatial(view, &view.curve.parameter_from_span(index, local.end())?)?;
-        if start.compare(&end)? == Ordering::Greater {
-            ParameterRange::new(end, start)
-        } else {
-            ParameterRange::new(start, end)
-        }
-    };
-    let mut overlaps = Vec::new();
-    for overlap in intersection.overlaps() {
-        if !overlap.includes_start() || !overlap.includes_end() {
-            return Err(GeometryError::UnsupportedIntersection);
-        }
-        overlaps.push((
-            range(&a, overlap.first_span_index(), overlap.first_range())?,
-            range(&b, overlap.second_span_index(), overlap.second_range())?,
-        ));
-    }
-    if !intersection.parameter_components().is_empty() {
-        // Collapsed-span components need a point/range pairing not yet exposed.
-        return Err(GeometryError::UnsupportedIntersection);
-    }
-    let mut points = Vec::new();
-    'contact: for contact in intersection.contacts() {
-        let t = spatial(&a, &contact.first().parameter()?)?;
-        let s = spatial(&b, &contact.second().parameter()?)?;
-        if !first.domain().contains(&t)? || !second.domain().contains(&s)? {
-            continue;
-        }
-        for (range, _) in &overlaps {
-            if range.contains(&t)? {
-                continue 'contact;
-            }
-        }
-        points.push(CurveCurvePoint {
-            point: first.point_at(&t)?,
-            first: t,
-            second: s,
-        });
-    }
-    sort_by_first(&mut points);
-    Ok(Some(match (points.is_empty(), overlaps.len()) {
-        (true, 0) => CurveCurveIntersection::None,
-        (false, 0) => CurveCurveIntersection::Points(points),
-        (true, 1) => {
-            let (first, second) = overlaps.pop().expect("one overlap");
-            CurveCurveIntersection::Overlap { first, second }
-        }
-        _ => CurveCurveIntersection::Components { points, overlaps },
-    }))
+    intersect_planar_views(first, &a, second, &b).map(Some)
 }
 
 /// A line not lying in a planar image's plane meets it at most at the line's
@@ -1091,5 +1035,102 @@ fn intersect_coincident_arcs(
             points,
             overlaps: merged,
         },
+    })
+}
+
+/// Two tensor-image curves on exactly the same tensor. The tensor is injective
+/// wherever these generated curves were admitted, so spatial incidence is UV
+/// incidence of the sources: Hypercurve's complete planar result maps through
+/// both source charts. Curves on different tensors stay typed.
+fn intersect_tensor_images(
+    first_curve: &Curve3,
+    first: &TensorCurve3,
+    second_curve: &Curve3,
+    second: &TensorCurve3,
+) -> GeometryResult<CurveCurveIntersection> {
+    if !first.surface.has_same_tensor_definition(&second.surface)? {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let view = |image: &TensorCurve3| -> GeometryResult<PlanarView> {
+        let scale = (Real::one() / &image.source_scale).map_err(GeometryError::Numeric)?;
+        Ok(PlanarView {
+            curve: image.source.clone(),
+            offset: -&image.source_offset * &scale,
+            scale,
+        })
+    };
+    intersect_planar_views(first_curve, &view(first)?, second_curve, &view(second)?)
+}
+
+/// Maps Hypercurve's complete planar intersection of two planar views back to
+/// both spatial charts.
+fn intersect_planar_views(
+    first: &Curve3,
+    a: &PlanarView,
+    second: &Curve3,
+    b: &PlanarView,
+) -> GeometryResult<CurveCurveIntersection> {
+    let intersection = a.curve.intersect_curve(&b.curve)?;
+    if let Some(blocker) = intersection.blockers().first() {
+        return Err(match blocker.kind() {
+            hypercurve::CurveIntersectionPairBlockerKind2::Uncertain(reason) => {
+                GeometryError::PlanarClassificationUnresolved(*reason)
+            }
+            _ => GeometryError::UnsupportedIntersection,
+        });
+    }
+    let spatial = |view: &PlanarView, parameter: &hypercurve::CurveParameter2| {
+        Parameter::from_curve(parameter)?.affine_image(&view.scale, &view.offset)
+    };
+    let range = |view: &PlanarView, index, local: &hypercurve::CurveParameterRange2| {
+        let start = spatial(view, &view.curve.parameter_from_span(index, local.start())?)?;
+        let end = spatial(view, &view.curve.parameter_from_span(index, local.end())?)?;
+        if start.compare(&end)? == Ordering::Greater {
+            ParameterRange::new(end, start)
+        } else {
+            ParameterRange::new(start, end)
+        }
+    };
+    let mut overlaps = Vec::new();
+    for overlap in intersection.overlaps() {
+        if !overlap.includes_start() || !overlap.includes_end() {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        overlaps.push((
+            range(a, overlap.first_span_index(), overlap.first_range())?,
+            range(b, overlap.second_span_index(), overlap.second_range())?,
+        ));
+    }
+    if !intersection.parameter_components().is_empty() {
+        // Collapsed-span components need a point/range pairing not yet exposed.
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let mut points = Vec::new();
+    'contact: for contact in intersection.contacts() {
+        let t = spatial(a, &contact.first().parameter()?)?;
+        let s = spatial(b, &contact.second().parameter()?)?;
+        if !first.domain().contains(&t)? || !second.domain().contains(&s)? {
+            continue;
+        }
+        for (range, _) in &overlaps {
+            if range.contains(&t)? {
+                continue 'contact;
+            }
+        }
+        points.push(CurveCurvePoint {
+            point: first.point_at(&t)?,
+            first: t,
+            second: s,
+        });
+    }
+    sort_by_first(&mut points);
+    Ok(match (points.is_empty(), overlaps.len()) {
+        (true, 0) => CurveCurveIntersection::None,
+        (false, 0) => CurveCurveIntersection::Points(points),
+        (true, 1) => {
+            let (first, second) = overlaps.pop().expect("one overlap");
+            CurveCurveIntersection::Overlap { first, second }
+        }
+        _ => CurveCurveIntersection::Components { points, overlaps },
     })
 }

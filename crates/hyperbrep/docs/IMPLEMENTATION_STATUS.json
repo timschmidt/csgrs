@@ -3704,6 +3704,33 @@
       "validation": "New witness on unit-circle arcs: [0, pi] and [pi/2, 3 pi/2] share [pi/2, pi] in both charts; [0, pi/2] and [pi/2, pi] touch at (0, 1, 0); [0, pi/3] and [pi/2, pi] miss; a quarter-turn rotated frame maps the shared [pi/2, pi] to its own [0, pi/2]; a y-flipped frame's [pi/2, pi] touches [0, pi] only at (-1, 0, 0) with parameters pi and pi; a full circle shares [pi/2, pi] with that arc. The former typed self-coincidence witness now asserts the whole range [0, 2 pi] in both charts. Treating every interval as overlap fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 765 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
       "limits": "Arc endpoints and boundary parameters must have scalar views (authored arcs do); ellipse pairs and conics against rational or planar-image curves remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-image-pair-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP05b",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to tensor-image curves on exactly the same tensor (equal controls and weights). Generated curves are admitted only where the tensor is injective, so spatial incidence is UV incidence of the sources; Hypercurve's complete planar result is mapped through both signed source charts. The planar result mapping is factored into one shared function used by coplanar curve pairs and tensor-image pairs. Curves on different tensors and reflected exchanged-chart sources against unmapped sources stay typed.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/tensor_image_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: branches of the rational cylinder patch's sections by x^2 + y^2 = 1 and by x^2 + z^2 = 9/4 meet exactly twice, at (+/-sqrt(10)/4, sqrt(6)/4, sqrt(26)/4), the independently summed solution of the three cylinder equations; each reported point is checked against the second curve; a translated copy on a different tensor is a typed refusal. The existing coplanar curve/curve witnesses pass unchanged through the shared mapping. Removing the same-tensor guard fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 766 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.2 s in release.",
+      "limits": "Tensor-image curves on different tensors, against native curves, atlas pieces across patches, and reflected sources remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
