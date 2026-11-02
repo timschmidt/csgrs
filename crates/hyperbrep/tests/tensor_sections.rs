@@ -28,7 +28,8 @@ fn pi(x: i64, y: i64, z: i64) -> Point3 {
 /// The arc of `y^2 + z^2 = 2` from (7/5, 1/5) to (1/5, 7/5): the endpoint
 /// directions have cosine 7/25, so the half-angle cosine and middle weight
 /// are 4/5, and the tangents meet at (5/4, 5/4). The arc is swept along
-/// x in [-2, 2]; u follows the arc and v follows x = 4v - 2.
+/// x in [-2, 2]. Control rows follow the arc (parameter v) and columns follow
+/// x = 4u - 2 (parameter u).
 fn cylinder_patch() -> Surface {
     let arc = [
         (q(7, 5), q(1, 5), Real::one()),
@@ -62,7 +63,7 @@ fn unit_cylinder() -> Surface {
     .unwrap()
 }
 
-/// The flat square [-5, 5]^2 in z = 0 with x = 10u - 5 and y = 10v - 5.
+/// The flat square [-5, 5]^2 in z = 0 with x = 10v - 5 and y = 10u - 5.
 fn flat() -> Surface {
     Surface::rational_bezier(
         vec![
@@ -74,8 +75,8 @@ fn flat() -> Surface {
     .unwrap()
 }
 
-/// z = x^2 + y^2 over [-1, 1]^2 with x = 2u - 1, y = 2v - 1. The Bernstein
-/// coefficients of (2u - 1)^2 are [1, -1, 1].
+/// z = x^2 + y^2 over [-1, 1]^2 with x = 2v - 1, y = 2u - 1. The Bernstein
+/// coefficients of (2v - 1)^2 are [1, -1, 1].
 fn paraboloid() -> Surface {
     let a = [1, -1, 1];
     let xs = [-1, 0, 1];
@@ -189,8 +190,8 @@ fn cylinder_branches() -> [SurfaceIntersectionCurve; 2] {
 }
 
 /// On the patch, x^2 = 1 - y^2 with y in [1/5, 1]. The branches are graphs over
-/// v = (x + 2)/4, joined at the event (0, 1, 1) where v = 1/2, and leave the
-/// patch at u = 1, (±sqrt(24)/5, 1/5, 7/5), where v = 1/2 ± sqrt(24)/20.
+/// u = (x + 2)/4, joined at the event (0, 1, 1) where u = 1/2, and leave the
+/// patch at v = 1, (±sqrt(24)/5, 1/5, 7/5), where u = 1/2 ± sqrt(24)/20.
 #[test]
 fn perpendicular_cylinder_branches_are_exact_nonrational_tensor_images() {
     let [lower, upper] = cylinder_branches();
@@ -414,7 +415,7 @@ fn sphere_paraboloid_section_has_isolated_point_and_circle() {
             );
         }
     }
-    // x = 2u - 1 and y = 2v - 1 vanish at the midlines.
+    // x = 2v - 1 and y = 2u - 1 vanish at the midlines.
     assert_midline(
         components.surface_curves(),
         [&[pi(0, -1, 1), pi(0, 1, 1)], &[pi(-1, 0, 1), pi(1, 0, 1)]],

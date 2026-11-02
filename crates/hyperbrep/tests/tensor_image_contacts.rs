@@ -22,7 +22,8 @@ fn pi(x: i64, y: i64, z: i64) -> Point3 {
 /// The arc of `y^2 + z^2 = 2` from (7/5, 1/5) to (1/5, 7/5): the endpoint
 /// directions have cosine 7/25, so the half-angle cosine and middle weight
 /// are 4/5, and the tangents meet at (5/4, 5/4). The arc is swept along
-/// x in [-2, 2]; u follows the arc and v follows x = 4v - 2.
+/// x in [-2, 2]. Control rows follow the arc (parameter v) and columns follow
+/// x = 4u - 2 (parameter u).
 fn cylinder_patch() -> Surface {
     let arc = [
         (q(7, 5), q(1, 5), Real::one()),

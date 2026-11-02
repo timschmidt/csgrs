@@ -25,7 +25,7 @@ fn line(start: Point3, end: Point3) -> Curve3 {
     Curve3::line(start, end).unwrap()
 }
 
-/// z = x^2 + y^2 over [-1, 1]^2 with x = 2u - 1, y = 2v - 1.
+/// z = x^2 + y^2 over [-1, 1]^2 with x = 2v - 1, y = 2u - 1.
 fn paraboloid() -> Surface {
     let a = [1, -1, 1];
     let xs = [-1, 0, 1];
