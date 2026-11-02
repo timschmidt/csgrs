@@ -3993,6 +3993,33 @@
       "validation": "Unit witnesses: the shifted biquadratic x^4 - 4x^3 + x^2 + 6x has exact roots -1, 0, 2, 3; y^4 - 5y^2 + 2y + 3 = (y^2 - y - 1)(y^2 + y - 3) uses the resolvent root m = -2 (s^2 = 1) and gives exactly (1 +/- sqrt(5))/2 and (-1 +/- sqrt(13))/2. Face witness: on the paraboloid face, the sections by x^2 + z^2 = 3/2 end at the nested radicals (+/-sqrt((sqrt(11) - 3)/2), +/-1, (sqrt(11) - 1)/2), and both split the face into three faces that replay cold. Removing the quartic candidates fails the face witness; swapping the Ferrari offset signs fails the unit witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 782 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the face witness completes in about 0.6 s in release.",
       "limits": "Irreducible cubics and quartics without a rational resolvent root (no real radical form in Real, or casus irreducibilis), and higher degrees, still leave endpoints uncertified and splits typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "quartic-conic-contacts-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Conic/rational and conic/conic incidences now complete at selected coplanar contacts that have radical forms. Each coplanar contact keeps its span's exact Bernstein numerator; when the selected contact point has no scalar coordinates, the numerator is converted exactly to power form, the shared exact root-candidate generator (rational roots, quadratic radicals, shifted biquadratics and rational Ferrari splits) proposes local parameters, and a candidate is accepted only when its mapped parameter compares exactly equal to the selected one. The contact is then evaluated at that scalar parameter, so the arc angle is located from scalar coordinates. Non-coplanar plane contacts and contacts without radical candidates remain typed.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../src/geometry/tensor_image.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: the circle x^2 + y^2 = 4 and the ellipse x^2/9 + y^2 = 1 meet exactly at (+/-sqrt(27/8), +/-sqrt(5/8), 0) in both orders, with both parameters evaluating to each point; on a circle quarter span the contacts solve -5t^4 + 118t^2 - 5 = 0. The selected cubic crossing at s = cbrt(1/2) stays typed. Disabling the certification or the alternating signs of the Bernstein-to-power conversion fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 783 hyperbrep and 127 hyperbrep-io passes, 0 failures (before a type-alias-only Clippy fix, after which Clippy and the affected suite were rerun).",
+      "cost_evidence": "No performance claim; the witness completes in about 0.02 s in release.",
+      "limits": "Contacts whose parameters have no radical form available (irreducible cubics, quartics without a rational resolvent root, higher degrees), non-coplanar selected crossings and coincident conics remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

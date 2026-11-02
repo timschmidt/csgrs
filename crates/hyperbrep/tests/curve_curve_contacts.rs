@@ -858,3 +858,53 @@ fn conic_pairs_meet_at_exact_points() {
     }
     assert_eq!(points(&circle, &upright).len(), 3);
 }
+
+/// The circle x^2 + y^2 = 4 and the ellipse x^2/9 + y^2 = 1 meet where
+/// 8x^2/9 = 3: at (±√(27/8), ±√(5/8)). On a quarter span of either conic
+/// the contact parameters solve a biquadratic (for the circle span,
+/// -5t^4 + 118t^2 - 5 = 0), so each selected contact is certified as an
+/// exact nested-radical parameter before the arc angle is located.
+#[test]
+fn conic_pairs_meet_at_quartic_root_contacts() {
+    let circle = full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 2);
+    let ellipse = whole_ellipse(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        3.into(),
+        1.into(),
+    );
+    let x = (Real::from(27) / Real::from(8)).unwrap().sqrt().unwrap();
+    let y = (Real::from(5) / Real::from(8)).unwrap().sqrt().unwrap();
+    let expected = [
+        Point3::new(x.clone(), y.clone(), 0.into()),
+        Point3::new(-x.clone(), y.clone(), 0.into()),
+        Point3::new(-x.clone(), -y.clone(), 0.into()),
+        Point3::new(x, -y, 0.into()),
+    ];
+    for (a, b) in [(&circle, &ellipse), (&ellipse, &circle)] {
+        let found = points(a, b);
+        assert_eq!(found.len(), 4);
+        for point in &expected {
+            assert!(
+                found
+                    .iter()
+                    .any(|contact| contact.point.coincides_with(&point.clone().into()).unwrap())
+            );
+        }
+        for contact in &found {
+            assert!(
+                a.point_at(&contact.first)
+                    .unwrap()
+                    .coincides_with(&contact.point)
+                    .unwrap()
+            );
+            assert!(
+                b.point_at(&contact.second)
+                    .unwrap()
+                    .coincides_with(&contact.point)
+                    .unwrap()
+            );
+        }
+    }
+}

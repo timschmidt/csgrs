@@ -1211,7 +1211,9 @@ fn intersect_conic_rational(
             break;
         }
     }
-    let mut contacts: Vec<Parameter> = Vec::new();
+    // Each contact keeps its span's Bernstein numerator, start and length so
+    // a selected contact can be certified as an exact radical parameter.
+    let mut contacts: Vec<(Parameter, Option<SpanNumerator>)> = Vec::new();
     if coplanar {
         let spans: Vec<(Vec<HomogeneousPoint3>, Real, Real)> = match &curve.data.geometry {
             CurveGeometry3::RationalBezier(bezier) => {
@@ -1268,8 +1270,11 @@ fn intersect_conic_rational(
                 // The curve lies along the conic: an overlap not yet mapped.
                 return Err(GeometryError::UnsupportedIntersection);
             }
-            for (local, _) in curve_implicit::roots(numerator)? {
-                contacts.push(local.affine_image(&length, &start)?);
+            for (local, _) in curve_implicit::roots(numerator.clone())? {
+                contacts.push((
+                    local.affine_image(&length, &start)?,
+                    Some((numerator.clone(), start.clone(), length.clone())),
+                ));
             }
         }
     } else {
@@ -1277,14 +1282,14 @@ fn intersect_conic_rational(
         match plane.intersect_curve(curve)? {
             CurveSurfaceIntersection::None => {}
             CurveSurfaceIntersection::Points(points) => {
-                contacts.extend(points.into_iter().map(|point| point.parameter));
+                contacts.extend(points.into_iter().map(|point| (point.parameter, None)));
             }
             _ => return Err(GeometryError::UnsupportedIntersection),
         }
     }
     let mut points = Vec::new();
     let mut seen: Vec<Parameter> = Vec::new();
-    'contact: for parameter in contacts {
+    'contact: for (parameter, source) in contacts {
         if !curve.domain().contains(&parameter)? {
             continue;
         }
@@ -1294,7 +1299,28 @@ fn intersect_conic_rational(
             }
         }
         seen.push(parameter.clone());
-        let point = curve.point_at(&parameter)?;
+        let mut parameter = parameter;
+        let mut point = curve.point_at(&parameter)?;
+        if point.try_coordinates().is_none() {
+            // A selected contact: certify an exact radical parameter among the
+            // numerator's exact root candidates, by exact comparison.
+            let Some((numerator, start, length)) = &source else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            let mut certified = None;
+            for local in tensor_image::exact_root_candidates(bernstein_to_power(numerator))? {
+                let candidate = Parameter::from_real(local).affine_image(length, start)?;
+                if candidate.compare(&parameter)? == Ordering::Equal {
+                    certified = Some(candidate);
+                    break;
+                }
+            }
+            let Some(certified) = certified else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            point = curve.point_at(&certified)?;
+            parameter = certified;
+        }
         let Some(coordinates) = point.try_coordinates() else {
             return Err(GeometryError::UnsupportedIntersection);
         };
@@ -1392,4 +1418,33 @@ fn intersect_conic_pair(
     } else {
         CurveCurveIntersection::Points(points)
     })
+}
+
+/// A span's Bernstein numerator with the span's start and length.
+type SpanNumerator = (Vec<Real>, Real, Real);
+
+/// Power-basis coefficients on `[0, 1]` of a Bernstein polynomial:
+/// `a_i = C(n, i) sum_{k <= i} (-1)^(i - k) C(i, k) b_k`.
+fn bernstein_to_power(bernstein: &[Real]) -> Vec<Real> {
+    let degree = bernstein.len() - 1;
+    let binomial = |n: usize, k: usize| -> Real {
+        let mut value = 1_i64;
+        for i in 0..k {
+            value = value * (n - i) as i64 / (i + 1) as i64;
+        }
+        Real::from(value)
+    };
+    (0..=degree)
+        .map(|i| {
+            let sum = (0..=i).fold(Real::zero(), |total, k| {
+                let term = binomial(i, k) * &bernstein[k];
+                if (i - k) % 2 == 0 {
+                    total + term
+                } else {
+                    total - term
+                }
+            });
+            binomial(degree, i) * sum
+        })
+        .collect()
 }

@@ -502,7 +502,7 @@ impl TensorCurve3 {
 /// rational roots from Hypersolve's bounded exact search with exact
 /// deflation, then the radical roots of a remaining factor of degree at most
 /// two. Candidates are proposals only; callers prove each by exact comparison.
-fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
+pub(super) fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
     use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
     use hypersolve::exact_factor::exact_rational_polynomial_root;
     let mut candidates = Vec::new();
