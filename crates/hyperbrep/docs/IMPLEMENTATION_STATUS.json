@@ -3814,6 +3814,32 @@
       "validation": "Four new witnesses on a face covering the paraboloid patch z = x^2 + y^2: the sections by x^2 + z^2 = 29/16 have exactly materialized boundary endpoints (+/-1/2, +/-1, 5/4) and one splits the face into two faces that replay cold; both sections split it into three faces that replay cold and again after a scaled rotation/translation; on the rational cylinder patch the section with irrational endpoints x = +/-sqrt(24)/5 is a typed split refusal; point location finds section endpoints at their domain ends and rejects (0, 0, 0) and (1/2, 0, 1). Disabling the certified rational endpoint or the two-pullback filter fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 771 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in about 0.03 s in release.",
       "limits": "Face splits still need scalar endpoints: sections whose boundary endpoints are irrational, faces on the analytic operand (no pcurve) and atlas pieces are not consumed. The rational-root search is bounded (integer factors up to 10^9). Closed-loop splits of tensor faces, Booleans with tensor faces and shell admission remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "conic-pair-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to circular/elliptic and elliptic/elliptic arc pairs (circle pairs keep their radical-line route). The first conic's whole ellipse is covered exactly by four rational quadratic quarter spans, (rx (1 - t^2) X + 2 ry t Y) / (1 + t^2) with controls rx X, rx X + ry Y, ry Y about the center and weights 1, 1, 2, rotated per quarter. Each span uses the exact conic/rational route against the second arc; contacts are located on the first arc from their scalar points, and duplicates at quarter joints are merged by exact parameter comparison. Closed arcs report both seam visits. The former typed ellipse-pair witness becomes an exact tangent contact; coincident ellipses keep a typed refusal.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witnesses: concentric aligned ellipses (39/5, 13/3) and (51/8, 68/15) and the radius-5 circle, whose pairwise equations are linear in (x^2, y^2) with unique solution (9, 16), meet at exactly the four points (+/-3, +/-4, 0) in all tested orders, with both parameters evaluating to each point; a quarter arc keeps only (3, 4, 0); an ellipse in the plane x = 3 crosses the circle at (3, +/-4, 0) with both seam visits of its start point. x^2/4 + y^2 = 1 and x^2/9 + y^2 = 1 on [0, pi] touch exactly once at (0, 1) with both angles pi/2. Using weights 1, 1, 1 for the quarter spans fails two witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 772 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in about 0.01 s in release.",
+      "limits": "Contacts that are general quartic roots have no scalar point for arc angles and fail typed; coincident or partially overlapping conics are not mapped as overlaps. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

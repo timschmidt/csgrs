@@ -62,7 +62,9 @@ impl Curve3 {
     /// parameters exact; arcs of one circle return their exact coincident
     /// ranges and touching points in both charts. Conic arcs against rational
     /// curves use an exact Bernstein numerator (coplanar) or plane contacts;
-    /// arc angles need scalar contact points. Tensor-image curves on one
+    /// arc angles need scalar contact points. Conic pairs other than two
+    /// circles cover the first conic by four exact rational quadratic quarter
+    /// spans and reuse that route. Tensor-image curves on one
     /// exact tensor meet where their UV sources meet. Noncoplanar rational
     /// Bézier/NURBS pairs
     /// are intersected through an
@@ -102,6 +104,10 @@ impl Curve3 {
                 return intersect_circles(self, first, other, second);
             }
             match (&self.data.geometry, &other.data.geometry) {
+                (
+                    CurveGeometry3::CircleArc(first) | CurveGeometry3::EllipseArc(first),
+                    CurveGeometry3::CircleArc(second) | CurveGeometry3::EllipseArc(second),
+                ) => return intersect_conic_pair(self, first, other, second),
                 (CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc), _)
                     if rational_net(other).is_some() =>
                 {
@@ -1305,6 +1311,79 @@ fn intersect_conic_rational(
                 second: parameter.clone(),
                 point: point.clone(),
             });
+        }
+    }
+    sort_by_first(&mut points);
+    Ok(if points.is_empty() {
+        CurveCurveIntersection::None
+    } else {
+        CurveCurveIntersection::Points(points)
+    })
+}
+
+/// Two conic arcs, at least one elliptic. The first conic's whole ellipse is
+/// covered exactly by four rational quadratic quarter spans: with unit axes
+/// `X, Y`, the quarter `(rx (1 - t^2) X + 2 ry t Y) / (1 + t^2)` has controls
+/// `rx X, rx X + ry Y, ry Y` (about the center) and weights `1, 1, 2`, and
+/// the other quarters rotate it. Each span is intersected with the second
+/// arc by the exact conic/rational route, and contacts are located on the
+/// first arc from their scalar points; quarter joints are merged exactly.
+fn intersect_conic_pair(
+    first_curve: &Curve3,
+    first: &EllipseArc3,
+    second_curve: &Curve3,
+    second: &EllipseArc3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let along_x = first.x.clone() * &first.x_radius;
+    let along_y = first.y.clone() * &first.y_radius;
+    let directions = [
+        along_x.clone(),
+        along_y.clone(),
+        -along_x.clone(),
+        -along_y.clone(),
+    ];
+    let mut points: Vec<CurveCurvePoint> = Vec::new();
+    for quarter in 0..4 {
+        let start = &directions[quarter];
+        let end = &directions[(quarter + 1) % 4];
+        let span = Curve3::rational_bezier(
+            vec![
+                first.center.clone() + start.clone(),
+                first.center.clone() + start.clone() + end.clone(),
+                first.center.clone() + end.clone(),
+            ],
+            vec![Real::one(), Real::one(), Real::from(2)],
+        )?;
+        let CurveCurveIntersection::Points(contacts) =
+            intersect_conic_rational(second_curve, second, &span)?
+        else {
+            continue;
+        };
+        for contact in contacts {
+            let Some(coordinates) = contact.point.try_coordinates() else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            let visits = match first_curve.parameters_of(coordinates)? {
+                CurveParameterLocation::None => continue,
+                CurveParameterLocation::Parameters(visits) => visits,
+                CurveParameterLocation::EntireDomain => {
+                    return Err(GeometryError::UnsupportedIntersection);
+                }
+            };
+            'visit: for visit in visits {
+                for existing in &points {
+                    if existing.first.compare(&visit)? == Ordering::Equal
+                        && existing.second.compare(&contact.first)? == Ordering::Equal
+                    {
+                        continue 'visit;
+                    }
+                }
+                points.push(CurveCurvePoint {
+                    first: visit,
+                    second: contact.first.clone(),
+                    point: contact.point.clone(),
+                });
+            }
         }
     }
     sort_by_first(&mut points);

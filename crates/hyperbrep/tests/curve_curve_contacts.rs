@@ -210,7 +210,8 @@ fn unsupported_pairs_remain_typed() {
         circle.intersect_curve(&bump()).unwrap(),
         CurveCurveIntersection::None
     ));
-    // Two elliptic arcs have no admitted route yet.
+    // x^2/4 + y^2 = 1 and x^2/9 + y^2 = 1 on θ in [0, π] touch only at
+    // (0, 1), where both angles are π/2.
     let ellipse = |rx: i64| {
         Curve3::ellipse_arc(
             Point3::origin(),
@@ -223,8 +224,20 @@ fn unsupported_pairs_remain_typed() {
         )
         .unwrap()
     };
+    let touching = points(&ellipse(2), &ellipse(3));
+    assert_eq!(touching.len(), 1);
+    let quarter = (Real::pi() / Real::from(2)).unwrap();
+    assert!(equal(&touching[0].first, quarter.clone()));
+    assert!(equal(&touching[0].second, quarter));
+    assert!(
+        touching[0]
+            .point
+            .coincides_with(&pi(0, 1, 0).into())
+            .unwrap()
+    );
+    // An ellipse along itself is an overlap not yet mapped: typed.
     assert!(matches!(
-        ellipse(2).intersect_curve(&ellipse(3)),
+        ellipse(2).intersect_curve(&ellipse(2)),
         Err(GeometryError::UnsupportedIntersection)
     ));
 }
@@ -743,4 +756,105 @@ fn circles_meet_rational_curves_in_and_across_their_plane() {
         circle.intersect_curve(&cubic),
         Err(GeometryError::UnsupportedIntersection)
     ));
+}
+
+fn whole_ellipse(center: Point3, x: Vector3, y: Vector3, rx: Real, ry: Real) -> Curve3 {
+    Curve3::ellipse_arc(
+        center,
+        x,
+        y,
+        rx,
+        ry,
+        Real::zero(),
+        Real::pi() * Real::from(2),
+    )
+    .unwrap()
+}
+
+/// Concentric aligned conics through (±3, ±4): x^2/(39/5)^2 + y^2/(13/3)^2
+/// = 1 (since 5/13 and 12/13 are a Pythagorean pair), x^2/(51/8)^2 +
+/// y^2/(68/15)^2 = 1 (8/17, 15/17), and the radius-5 circle. Each pair's
+/// equations are linear in (x^2, y^2) with the unique solution (9, 16), so
+/// every pair meets exactly at the four points (±3, ±4, 0).
+#[test]
+fn conic_pairs_meet_at_exact_points() {
+    let first = whole_ellipse(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        q(39, 5),
+        q(13, 3),
+    );
+    let second = whole_ellipse(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        q(51, 8),
+        q(68, 15),
+    );
+    let circle = full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 5);
+    let expected = [pi(3, 4, 0), pi(-3, 4, 0), pi(-3, -4, 0), pi(3, -4, 0)];
+    for (a, b) in [
+        (&first, &second),
+        (&second, &first),
+        (&circle, &first),
+        (&first, &circle),
+    ] {
+        let found = points(a, b);
+        assert_eq!(found.len(), 4);
+        for point in &expected {
+            assert!(
+                found
+                    .iter()
+                    .any(|contact| contact.point.coincides_with(&point.clone().into()).unwrap())
+            );
+        }
+        // Both parameters evaluate to the reported point.
+        for contact in &found {
+            assert!(
+                a.point_at(&contact.first)
+                    .unwrap()
+                    .coincides_with(&contact.point)
+                    .unwrap()
+            );
+            assert!(
+                b.point_at(&contact.second)
+                    .unwrap()
+                    .coincides_with(&contact.point)
+                    .unwrap()
+            );
+        }
+    }
+    // A quarter arc keeps only (3, 4, 0).
+    let quarter = Curve3::ellipse_arc(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        q(39, 5),
+        q(13, 3),
+        Real::zero(),
+        (Real::pi() / Real::from(2)).unwrap(),
+    )
+    .unwrap();
+    let found = points(&quarter, &second);
+    assert_eq!(found.len(), 1);
+    assert!(found[0].point.coincides_with(&pi(3, 4, 0).into()).unwrap());
+    // The ellipse in the plane x = 3 (radii 4 along y, 2 along z) crosses the
+    // circle's plane at (3, ±4, 0), both on the circle. It starts at
+    // (3, 4, 0), so that closed-arc seam is visited at θ = 0 and θ = 2π.
+    let upright = whole_ellipse(pi(3, 0, 0), Vector3::y(), Vector3::z(), 4.into(), 2.into());
+    let found = points(&upright, &circle);
+    assert_eq!(found.len(), 3);
+    assert!(equal(&found[0].first, Real::zero()));
+    assert!(equal(&found[2].first, Real::pi() * Real::from(2)));
+    assert!(found[0].point.coincides_with(&pi(3, 4, 0).into()).unwrap());
+    assert!(found[2].point.coincides_with(&pi(3, 4, 0).into()).unwrap());
+    for point in [pi(3, 4, 0), pi(3, -4, 0)] {
+        assert!(
+            found
+                .iter()
+                .any(|contact| contact.point.coincides_with(&point.clone().into()).unwrap())
+        );
+    }
+    assert_eq!(points(&circle, &upright).len(), 3);
 }
