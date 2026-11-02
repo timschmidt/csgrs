@@ -37,6 +37,14 @@ pub enum CurveCurveIntersection {
         /// Corresponding range on the second curve.
         second: ParameterRange,
     },
+    /// Several coincident ranges, or isolated points together with ranges.
+    /// Points inside a range are omitted from the point list.
+    Components {
+        /// Isolated incidences, ordered by first parameter.
+        points: Vec<CurveCurvePoint>,
+        /// Coincident ranges, each given in both charts.
+        overlaps: Vec<(ParameterRange, ParameterRange)>,
+    },
 }
 
 impl Curve3 {
@@ -44,15 +52,35 @@ impl Curve3 {
     ///
     /// Line pairs, and lines against positive-weight rational Bézier or NURBS
     /// curves (in either order), return complete exact results with selected
-    /// parameters on both curves. A rational curve lying along a line, and
-    /// other curve families, fail with
-    /// [`GeometryError::UnsupportedIntersection`].
+    /// parameters on both curves. Coplanar pairs of lines, rational Bézier or
+    /// NURBS curves and planar images are intersected completely in their
+    /// common plane, and a line crossing a planar image's plane is located on
+    /// it. A rational curve lying along a line, noncoplanar non-line pairs and
+    /// other curve families fail with [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, other: &Self) -> GeometryResult<CurveCurveIntersection> {
-        crate::context::strict(|| match (self.line_endpoints(), other.line_endpoints()) {
-            (Some(first), Some(second)) => intersect_lines(self, first, other, second),
-            (Some(line), None) => intersect_line_curve(self, line, other),
-            (None, Some(line)) => Ok(swap(intersect_line_curve(other, line, self)?)),
-            (None, None) => Err(GeometryError::UnsupportedIntersection),
+        crate::context::strict(|| {
+            match (self.line_endpoints(), other.line_endpoints()) {
+                (Some(first), Some(second)) => return intersect_lines(self, first, other, second),
+                (Some(line), None) if rational_net(other).is_some() => {
+                    return intersect_line_curve(self, line, other);
+                }
+                (None, Some(line)) if rational_net(self).is_some() => {
+                    return Ok(swap(intersect_line_curve(other, line, self)?));
+                }
+                _ => {}
+            }
+            if let Some(result) = intersect_coplanar(self, other)? {
+                return Ok(result);
+            }
+            match (&self.data.geometry, &other.data.geometry) {
+                (CurveGeometry3::Line(_), CurveGeometry3::PlanarImage(image)) => {
+                    intersect_line_planar_image(self, other, image)
+                }
+                (CurveGeometry3::PlanarImage(image), CurveGeometry3::Line(_)) => {
+                    Ok(swap(intersect_line_planar_image(other, self, image)?))
+                }
+                _ => Err(GeometryError::UnsupportedIntersection),
+            }
         })
     }
 }
@@ -76,6 +104,21 @@ fn swap(result: CurveCurveIntersection) -> CurveCurveIntersection {
             first: second,
             second: first,
         },
+        CurveCurveIntersection::Components { points, overlaps } => {
+            let mut points = points
+                .into_iter()
+                .map(|point| CurveCurvePoint {
+                    first: point.second,
+                    second: point.first,
+                    point: point.point,
+                })
+                .collect::<Vec<_>>();
+            sort_by_first(&mut points);
+            CurveCurveIntersection::Components {
+                points,
+                overlaps: overlaps.into_iter().map(|(a, b)| (b, a)).collect(),
+            }
+        }
     }
 }
 
@@ -321,4 +364,231 @@ fn intersect_line_curve(
     } else {
         CurveCurveIntersection::Points(points)
     })
+}
+
+/// A curve's exact image in a plane frame and its affine map back to the
+/// spatial chart: `spatial = scale * planar + offset`.
+struct PlanarView {
+    curve: Curve2,
+    scale: Real,
+    offset: Real,
+}
+
+/// The plane frame `(origin, u, v)` of a planar image, or of three
+/// noncollinear controls of a line or rational net.
+fn plane_frame(curve: &Curve3) -> GeometryResult<Option<(Point3, Vector3, Vector3)>> {
+    if let CurveGeometry3::PlanarImage(image) = &curve.data.geometry {
+        return Ok(Some((
+            image.origin.clone(),
+            image.u.clone(),
+            image.v.clone(),
+        )));
+    }
+    let controls = match (curve.line_endpoints(), rational_net(curve)) {
+        (Some((a, b)), _) => vec![a.clone(), b.clone()],
+        (None, Some(net)) => net.controls,
+        (None, None) => return Ok(None),
+    };
+    let origin = controls[0].clone();
+    for (i, a) in controls.iter().enumerate().skip(1) {
+        let u = a - &origin;
+        for b in &controls[i + 1..] {
+            let v = b - &origin;
+            if order(&u.cross(&v).norm_squared(), &Real::zero())? != Ordering::Equal {
+                return Ok(Some((origin, u, v)));
+            }
+        }
+    }
+    Ok(None)
+}
+
+/// The curve's exact image in the frame's plane, or `None` when it does not
+/// lie in that plane or has no admitted planar view.
+fn planar_view(
+    curve: &Curve3,
+    (origin, u, v): &(Point3, Vector3, Vector3),
+) -> GeometryResult<Option<PlanarView>> {
+    let normal = u.cross(v);
+    let on_plane = |p: &Point3| -> GeometryResult<bool> {
+        Ok(order(&normal.dot(&(p - origin)), &Real::zero())? == Ordering::Equal)
+    };
+    let project = |p: &Point3| -> GeometryResult<CurvePoint2> {
+        let projected = project_point_to_plane_frame(origin, u, v, p)?;
+        Ok(CurvePoint2::new(projected.x, projected.y))
+    };
+    if let Some((a, b)) = curve.line_endpoints() {
+        if !on_plane(a)? || !on_plane(b)? {
+            return Ok(None);
+        }
+        return Ok(Some(PlanarView {
+            curve: Curve2::from(LineSeg2::try_new(project(a)?, project(b)?)?),
+            scale: Real::one(),
+            offset: Real::zero(),
+        }));
+    }
+    if let Some(net) = rational_net(curve) {
+        let mut points = Vec::with_capacity(net.controls.len());
+        for control in &net.controls {
+            if !on_plane(control)? {
+                return Ok(None);
+            }
+            points.push(project(control)?);
+        }
+        return Ok(Some(PlanarView {
+            curve: net.image(points)?,
+            scale: Real::one(),
+            offset: Real::zero(),
+        }));
+    }
+    if let CurveGeometry3::PlanarImage(image) = &curve.data.geometry {
+        // The image's own plane must be the frame's plane.
+        if order(
+            &normal.cross(&image.u.cross(&image.v)).norm_squared(),
+            &Real::zero(),
+        )? != Ordering::Equal
+            || !on_plane(&image.origin)?
+        {
+            return Ok(None);
+        }
+        let materialized = match image.materialize_plane_projection(origin, u, v) {
+            Ok(materialized) => materialized,
+            // Frames related by a non-similarity have no exact source image.
+            Err(GeometryError::PlanarCurve(_) | GeometryError::UnsupportedIntersection) => {
+                return Ok(None);
+            }
+            Err(error) => return Err(error),
+        };
+        let Some((scale, offset)) = materialized
+            .correspondence
+            .affine_coefficients()
+            .map(|(scale, offset)| (scale.clone(), offset.clone()))
+        else {
+            return Ok(None);
+        };
+        return Ok(Some(PlanarView {
+            curve: materialized.curve,
+            scale,
+            offset,
+        }));
+    }
+    Ok(None)
+}
+
+fn intersect_coplanar(
+    first: &Curve3,
+    second: &Curve3,
+) -> GeometryResult<Option<CurveCurveIntersection>> {
+    // Prefer a planar image's frame so its source needs no change of frame.
+    let frame = match (&first.data.geometry, &second.data.geometry) {
+        (_, CurveGeometry3::PlanarImage(_)) => plane_frame(second)?,
+        _ => match plane_frame(first)? {
+            Some(frame) => Some(frame),
+            None => plane_frame(second)?,
+        },
+    };
+    let Some(frame) = frame else {
+        return Ok(None);
+    };
+    let (Some(a), Some(b)) = (planar_view(first, &frame)?, planar_view(second, &frame)?) else {
+        return Ok(None);
+    };
+    let intersection = a.curve.intersect_curve(&b.curve)?;
+    if let Some(blocker) = intersection.blockers().first() {
+        return Err(match blocker.kind() {
+            hypercurve::CurveIntersectionPairBlockerKind2::Uncertain(reason) => {
+                GeometryError::PlanarClassificationUnresolved(*reason)
+            }
+            _ => GeometryError::UnsupportedIntersection,
+        });
+    }
+    let spatial = |view: &PlanarView, parameter: &hypercurve::CurveParameter2| {
+        Parameter::from_curve(parameter)?.affine_image(&view.scale, &view.offset)
+    };
+    let range = |view: &PlanarView, index, local: &hypercurve::CurveParameterRange2| {
+        let start = spatial(view, &view.curve.parameter_from_span(index, local.start())?)?;
+        let end = spatial(view, &view.curve.parameter_from_span(index, local.end())?)?;
+        if start.compare(&end)? == Ordering::Greater {
+            ParameterRange::new(end, start)
+        } else {
+            ParameterRange::new(start, end)
+        }
+    };
+    let mut overlaps = Vec::new();
+    for overlap in intersection.overlaps() {
+        if !overlap.includes_start() || !overlap.includes_end() {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+        overlaps.push((
+            range(&a, overlap.first_span_index(), overlap.first_range())?,
+            range(&b, overlap.second_span_index(), overlap.second_range())?,
+        ));
+    }
+    if !intersection.parameter_components().is_empty() {
+        // Collapsed-span components need a point/range pairing not yet exposed.
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let mut points = Vec::new();
+    'contact: for contact in intersection.contacts() {
+        let t = spatial(&a, &contact.first().parameter()?)?;
+        let s = spatial(&b, &contact.second().parameter()?)?;
+        if !first.domain().contains(&t)? || !second.domain().contains(&s)? {
+            continue;
+        }
+        for (range, _) in &overlaps {
+            if range.contains(&t)? {
+                continue 'contact;
+            }
+        }
+        points.push(CurveCurvePoint {
+            point: first.point_at(&t)?,
+            first: t,
+            second: s,
+        });
+    }
+    sort_by_first(&mut points);
+    Ok(Some(match (points.is_empty(), overlaps.len()) {
+        (true, 0) => CurveCurveIntersection::None,
+        (false, 0) => CurveCurveIntersection::Points(points),
+        (true, 1) => {
+            let (first, second) = overlaps.pop().expect("one overlap");
+            CurveCurveIntersection::Overlap { first, second }
+        }
+        _ => CurveCurveIntersection::Components { points, overlaps },
+    }))
+}
+
+/// A line not lying in a planar image's plane meets it at most at the line's
+/// single plane crossing, which is located exactly on the planar source.
+fn intersect_line_planar_image(
+    line: &Curve3,
+    curve: &Curve3,
+    image: &PlanarCurve3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let plane = Surface::plane(image.origin.clone(), image.u.clone(), image.v.clone())?;
+    let crossing = match plane.intersect_curve(line)? {
+        CurveSurfaceIntersection::None => return Ok(CurveCurveIntersection::None),
+        CurveSurfaceIntersection::Points(mut points) if points.len() == 1 => points.remove(0),
+        // A coplanar line was handled by the planar route.
+        _ => return Err(GeometryError::UnsupportedIntersection),
+    };
+    let Some(point) = crossing.point.try_coordinates() else {
+        return Err(GeometryError::UnsupportedIntersection);
+    };
+    let parameters = match curve.parameters_of(point)? {
+        CurveParameterLocation::None => return Ok(CurveCurveIntersection::None),
+        CurveParameterLocation::Parameters(parameters) => parameters,
+        CurveParameterLocation::EntireDomain => {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
+    };
+    Ok(CurveCurveIntersection::Points(
+        parameters
+            .into_iter()
+            .map(|parameter| CurveCurvePoint {
+                first: crossing.parameter.clone(),
+                second: parameter,
+                point: crossing.point.clone(),
+            })
+            .collect(),
+    ))
 }

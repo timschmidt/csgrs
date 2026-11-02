@@ -201,3 +201,86 @@ fn unsupported_pairs_remain_typed() {
         Err(GeometryError::UnsupportedIntersection)
     ));
 }
+
+/// y = 1 - x^2 (controls (-1,0), (0,2), (1,0)) and y = x^2 (controls (-1,1),
+/// (0,-1), (1,1)) in z = 0 meet where x = ±√2/2, at t = s = 1/2 ± √2/4.
+#[test]
+fn coplanar_rational_curves_meet_at_selected_parameters() {
+    let cap = Curve3::rational_bezier(
+        vec![pi(-1, 0, 0), pi(0, 2, 0), pi(1, 0, 0)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let cup = Curve3::rational_bezier(
+        vec![pi(-1, 1, 0), pi(0, -1, 0), pi(1, 1, 0)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let found = points(&cap, &cup);
+    assert_eq!(found.len(), 2);
+    let root = Real::from(2).sqrt().unwrap();
+    for (point, sign) in found.iter().zip([-1, 1]) {
+        let offset = (Real::from(sign) * &root / Real::from(4)).unwrap();
+        assert!(equal(&point.first, q(1, 2) + &offset));
+        assert!(equal(&point.second, q(1, 2) + &offset));
+        assert!(
+            point
+                .point
+                .coincides_with(&p(Real::from(2) * &offset, q(1, 2), Real::zero()).into())
+                .unwrap()
+        );
+    }
+    // A sub-arc of the cap overlaps it on [0, 1/2] of the cap's chart.
+    let half = cap.subcurve(&Real::zero(), &q(1, 2)).unwrap();
+    let CurveCurveIntersection::Overlap { first, second } = cap.intersect_curve(&half).unwrap()
+    else {
+        panic!("one coincident range required");
+    };
+    assert!(equal(first.start(), Real::zero()) && equal(first.end(), q(1, 2)));
+    assert!(equal(second.start(), Real::zero()) && equal(second.end(), Real::one()));
+}
+
+/// The radius-5 quarter circle from (5, 0) to (0, 5) as a planar image in
+/// z = 0: the coplanar line x = y meets it at (5√2/2, 5√2/2, 0), and the
+/// vertical line through (3, 4) pierces it there at t = 1/2.
+#[test]
+fn lines_meet_planar_images_in_and_across_their_plane() {
+    let arc = hypercurve::CircularArc2::try_from_center(
+        hypercurve::Point2::from_values(5, 0),
+        hypercurve::Point2::from_values(0, 5),
+        hypercurve::Point2::from_values(0, 0),
+        false,
+    )
+    .unwrap();
+    let image = Curve3::planar_image(
+        hypercurve::Curve2::from(arc),
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let diagonal = line(pi(0, 0, 0), pi(6, 6, 0));
+    let found = points(&diagonal, &image);
+    assert_eq!(found.len(), 1);
+    let coordinate = (Real::from(5) * Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+    assert!(
+        found[0]
+            .point
+            .coincides_with(&p(coordinate.clone(), coordinate, Real::zero()).into())
+            .unwrap()
+    );
+    let vertical = line(pi(3, 4, -1), pi(3, 4, 1));
+    let found = points(&vertical, &image);
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].first, q(1, 2)));
+    assert!(found[0].point.coincides_with(&pi(3, 4, 0).into()).unwrap());
+    let swapped = points(&image, &vertical);
+    assert!(equal(&swapped[0].second, q(1, 2)));
+    // A vertical line off the arc misses it.
+    assert!(matches!(
+        line(pi(4, 4, -1), pi(4, 4, 1))
+            .intersect_curve(&image)
+            .unwrap(),
+        CurveCurveIntersection::None
+    ));
+}
