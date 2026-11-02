@@ -4413,6 +4413,41 @@
       "validation": "New witness horizontal_bump_sections_partition_unit_caps: the plane z = 5/4 meets the bump top z = x^2 + y^2 in four planar-image corner arcs whose eight ends are certified exactly at (+/-1, +/-1/2, 5/4) and (+/-1/2, +/-1, 5/4); the unit cap face splits into four three-edge corners and an eight-edge centre (ten faces) and replays cold with identical bytes. Reverting either change fails the witness; two exploratory changes (whole selected-end traces in partitions, certified fragment ranges in the Boolean kernel) were removed because the witness passes without them. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 799 passes and debug tests 791 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.02 s in release.",
       "limits": "The full intersection of the bump solid with the cuboid z <= 5/4 now reaches result construction and stops with UnsupportedSolidShell: tensor-graph admission accepts a single tensor top, not tops that mix trimmed tensor pieces with planar caps, and their volume would need curved-trim integrals. No work package or pre-push gate closes."
+    },
+    {
+      "id": "capped-tensor-graph-slab-cuts-2026-11-02",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P20"
+      ],
+      "change": "Booleans can cut tensor-graph tops by planes and keep a certified solid. Tensor-graph admission accepts several rational B\u00e9zier top faces on one exactly equal tensor and hole-free planar caps parallel to the base strictly above it; in those cases every top face must face along the inward base normal (caps by their constant normal, tensor faces by the sign of the certified graph's normal at the patch centre, constant because the projection is injective), so a vertical line over the profile leaves through exactly one top face and the tops' regions tile the base. Classification uses the cap height strictly inside a cap region and the graph height outside every cap, and on a cap boundary decides only a comparison that agrees with every adjacent top. Transforms carry cap frames; capped volume is a typed unsupported measurement. The Boolean kernel certifies a trimmed native-polynomial fragment's selected ends from the branch's defining polynomial and proves them equal to the selected parameters before using them as its range.",
+      "source": [
+        "../src/topology/validation/tensor_graph.rs",
+        "../src/topology/query.rs",
+        "../src/topology/mod.rs",
+        "../src/topology/transform.rs",
+        "../src/topology/measure.rs",
+        "../src/geometry/tensor_graph.rs",
+        "../src/boolean_kernel.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness slab_cuts_through_tensor_tops_leave_capped_graph_solids: intersecting the bump solid (top z = x^2 + y^2 over the unit square) with the slab z <= 5/4 gives one solid of ten faces (base, four walls, one central tensor face, four corner caps); fourteen exact probes classify under, on and over the tensor top and a corner cap, at the rational seam point (11/13, 19/26) where both tops have height 5/4, and on walls and base; cold replay is byte-identical and reclassifies identically; a translated copy classifies the mapped probes identically; volume returns UnsupportedMeasurement. Mutations: ignoring caps in classification, refusing capped shells, always consulting the tensor, and removing fragment certification each fail the witness; inverting the up-facing check also lets the previously typed union in booleans_split_tensor_graph_solids_exactly through, so that guard has a negative witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 800 passes and debug tests 792 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the six tensor-graph tests complete in about 0.7 s in release.",
+      "limits": "Capped volume needs curved-trim integrals (with transcendental terms for circular trims) and is typed. Caps must be parallel to the base and hole-free. Seam points with radical coordinates against polynomial-branch cap boundaries are typed by Hypercurve. Unions of tensor-graph solids remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

@@ -467,3 +467,122 @@ fn horizontal_bump_sections_partition_unit_caps() {
     assert_eq!(cold.to_json().unwrap(), json);
     assert_eq!(cold.faces().count(), 10);
 }
+
+/// Cutting the bump solid by the slab z <= 5/4 keeps the tensor top where
+/// x² + y² <= 5/4 and replaces the four corners by planar caps at 5/4. The
+/// result is a capped tensor-graph solid: points under, on and over both
+/// tops classify exactly, including on the curved seam where both tops
+/// meet; it replays cold and transforms, and its volume stays a typed
+/// unsupported measurement until curved-trim integrals exist.
+#[test]
+fn slab_cuts_through_tensor_tops_leave_capped_graph_solids() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let slab = builder::cuboid(pi(-2, -2, -2), Point3::new(2.into(), 2.into(), q(5, 4))).unwrap();
+    let result = boolean::intersection(&body, &slab).unwrap();
+    assert_eq!(result.len(), 1);
+    let model = result.model().clone();
+    // Base, four walls, the central tensor piece and four corner caps.
+    assert_eq!(model.faces().count(), 10);
+    assert_eq!(
+        model
+            .faces()
+            .filter(|face| face.surface().kind() == SurfaceKind::RationalBezier)
+            .count(),
+        1
+    );
+    // (11/13)² + (19/26)² = 845/676 = 5/4: a rational seam point.
+    let (sx, sy) = (q(11, 13), q(19, 26));
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    let cases = vec![
+        // Under, on and over the tensor top x² + y² at the centre.
+        (p(0.into(), 0.into(), n(-1, 2)), SolidPointLocation::Inside),
+        (
+            p(0.into(), 0.into(), 0.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (p(0.into(), 0.into(), n(1, 2)), SolidPointLocation::Outside),
+        (p(n(1, 2), n(1, 2), n(1, 4)), SolidPointLocation::Inside),
+        (p(n(1, 2), n(1, 2), n(1, 2)), SolidPointLocation::Boundary),
+        // Under, on and over a corner cap, still below the removed tensor.
+        (p(n(9, 10), n(9, 10), n(6, 5)), SolidPointLocation::Inside),
+        (p(n(9, 10), n(9, 10), n(5, 4)), SolidPointLocation::Boundary),
+        (
+            p(n(9, 10), n(9, 10), n(13, 10)),
+            SolidPointLocation::Outside,
+        ),
+        // On the curved seam where both tops have height 5/4.
+        (
+            p(sx.clone(), sy.clone(), 1.into()),
+            SolidPointLocation::Inside,
+        ),
+        (
+            p(sx.clone(), sy.clone(), n(5, 4)),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(sx.clone(), sy.clone(), n(3, 2)),
+            SolidPointLocation::Outside,
+        ),
+        // Walls and base.
+        (
+            p(1.into(), n(9, 10), 1.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(n(11, 10), 0.into(), 0.into()),
+            SolidPointLocation::Outside,
+        ),
+        (
+            p(0.into(), 0.into(), (-1).into()),
+            SolidPointLocation::Boundary,
+        ),
+    ];
+    let solid = model.solids().next().unwrap();
+    for (point, expected) in &cases {
+        assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
+    }
+    assert!(matches!(
+        solid.volume(),
+        Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+    ));
+    let json = model.to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+    let cold_solid = cold.solids().next().unwrap();
+    for (point, expected) in &cases {
+        assert_eq!(&cold_solid.classify_point(point).unwrap(), expected);
+    }
+    // A translation carries the caps and the tensor together.
+    let transform = Matrix4::from_row_major([
+        1.into(),
+        0.into(),
+        0.into(),
+        3.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        (-2).into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let mapped = model.transformed(&transform).unwrap();
+    let mapped_solid = mapped.solids().next().unwrap();
+    for (point, expected) in &cases {
+        let image = Point3::new(
+            &point.x + Real::from(3),
+            &point.y - Real::from(2),
+            &point.z + Real::one(),
+        );
+        assert_eq!(&mapped_solid.classify_point(&image).unwrap(), expected);
+    }
+}

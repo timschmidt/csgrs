@@ -123,6 +123,48 @@ impl Surface {
         Ok(map.certify_injective_on(&rectangle).is_ok())
     }
 
+    /// Whether two rational Bézier tensors have exactly equal controls and
+    /// weights; `false` also covers undecided comparisons and other families.
+    pub(crate) fn same_rational_tensor(&self, other: &Self) -> GeometryResult<bool> {
+        let (SurfaceGeometry::RationalBezier(a), SurfaceGeometry::RationalBezier(b)) =
+            (&self.data.geometry, &other.data.geometry)
+        else {
+            return Ok(false);
+        };
+        if a.control_points.len() != b.control_points.len()
+            || a.control_points
+                .iter()
+                .zip(&b.control_points)
+                .any(|(x, y)| x.len() != y.len())
+        {
+            return Ok(false);
+        }
+        let equal = |x: &Real, y: &Real| {
+            matches!(
+                compare_reals(x, y, crate::STRICT_PREDICATES),
+                PredicateOutcome::Decided {
+                    value: Ordering::Equal,
+                    ..
+                }
+            )
+        };
+        for (row_a, row_b) in a.control_points.iter().zip(&b.control_points) {
+            for (p, q) in row_a.iter().zip(row_b) {
+                if !(equal(&p.x, &q.x) && equal(&p.y, &q.y) && equal(&p.z, &q.z)) {
+                    return Ok(false);
+                }
+            }
+        }
+        for (row_a, row_b) in a.weights.iter().zip(&b.weights) {
+            for (x, y) in row_a.iter().zip(row_b) {
+                if !equal(x, y) {
+                    return Ok(false);
+                }
+            }
+        }
+        Ok(true)
+    }
+
     /// For a certified tensor graph, the exact order of `c` against the
     /// graph's height over the base point `(a, b)`, or `None` when `(a, b)` has
     /// no preimage on the unit square. The preimage is the complete common

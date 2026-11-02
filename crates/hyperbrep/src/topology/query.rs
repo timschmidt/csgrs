@@ -256,10 +256,59 @@ impl ArenaModel {
             std::cmp::Ordering::Greater => {}
         }
         let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
-        let Some(height) = graph.top.tensor_graph_height_order(frame, &a, &b, &c)? else {
-            // The certified graph projects onto the whole base region.
+        // Every top face faces along `direction` in a closed shell whose
+        // walls are parallel to it, so each vertical line over the profile
+        // leaves through exactly one top face: strictly inside a cap's
+        // region the cap is the top, outside every cap the tensor is. On a
+        // cap boundary every adjacent top is a candidate, and only a
+        // comparison that agrees with all of them is decided.
+        let mut orders = Vec::new();
+        let mut strictly_capped = false;
+        for cap in &graph.caps {
+            let projected = graph.origin.clone()
+                + graph.u.clone() * &a
+                + graph.v.clone() * &b
+                + graph.direction.clone() * &cap.height;
+            let offset = &projected - &cap.origin;
+            let (uu, uv, vv) = (cap.u.dot(&cap.u), cap.u.dot(&cap.v), cap.v.dot(&cap.v));
+            let (du, dv) = (offset.dot(&cap.u), offset.dot(&cap.v));
+            let gram = &uu * &vv - &uv * &uv;
+            let s = ((&vv * &du - &uv * &dv) / &gram).map_err(GeometryError::Numeric)?;
+            let t = ((&uu * &dv - &uv * &du) / &gram).map_err(GeometryError::Numeric)?;
+            let location = match crate::error::classified(
+                cap.boundary.classify_point(&CurvePoint2::new(s, t).into()),
+            )
+            .map_err(GeometryError::from)?
+            {
+                Classification::Decided(location) => location,
+                Classification::Uncertain(reason) => {
+                    return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+                }
+            };
+            if location == ContourPointLocation::Outside {
+                continue;
+            }
+            strictly_capped |= location == ContourPointLocation::Inside;
+            orders.push(decided_model_order(compare_reals(
+                &c,
+                &cap.height,
+                crate::STRICT_PREDICATES,
+            ))?);
+        }
+        if !strictly_capped {
+            match graph.top.tensor_graph_height_order(frame, &a, &b, &c)? {
+                Some(order) => orders.push(order),
+                // The certified graph projects onto the whole base region.
+                None if orders.is_empty() => {
+                    return Err(GeometryError::UnsupportedIntersection.into());
+                }
+                None => {}
+            }
+        }
+        let height = orders[0];
+        if orders.iter().any(|order| *order != height) {
             return Err(GeometryError::UnsupportedIntersection.into());
-        };
+        }
         Ok(match (height, base) {
             (std::cmp::Ordering::Greater, _) => SolidPointLocation::Outside,
             (std::cmp::Ordering::Equal, _) | (_, ContourPointLocation::Boundary) => {

@@ -4323,7 +4323,42 @@ fn retained_curve_face_intervals(
             Err(error) => return Err(GeometryError::from(error)),
         };
         for fragment in trimmed {
-            let Some((pcurve_start, pcurve_end)) = fragment.represented_parameter_range() else {
+            let Some((pcurve_start, pcurve_end)) = (match fragment.represented_parameter_range() {
+                Some(range) => Some(range),
+                // A native polynomial branch's parameter is its abscissa: a
+                // selected end is certified from the branch's defining
+                // polynomial and proved equal to the selected parameter.
+                None => match defining {
+                    Some(defining) => {
+                        let range = fragment.parameter_range().map_err(GeometryError::from)?;
+                        let mut ends = Vec::with_capacity(2);
+                        for parameter in [range.start(), range.end()] {
+                            let point = carrier
+                                .curve()
+                                .point_at(parameter)
+                                .map_err(GeometryError::from)?;
+                            let Some(certified) =
+                                crate::geometry::certified_scalar_point(&point, defining)?
+                            else {
+                                break;
+                            };
+                            let abscissa = certified.x().clone();
+                            if crate::Parameter::from_curve(parameter)?
+                                .compare(&crate::Parameter::from_real(abscissa.clone()))?
+                                != Ordering::Equal
+                            {
+                                break;
+                            }
+                            ends.push(abscissa);
+                        }
+                        match ends.as_slice() {
+                            [start, end] => Some((start.clone(), end.clone())),
+                            _ => None,
+                        }
+                    }
+                    None => None,
+                },
+            }) else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
             // Hypercurve's closed-set trim proves the complete retained

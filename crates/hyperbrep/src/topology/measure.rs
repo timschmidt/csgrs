@@ -670,6 +670,10 @@ impl ArenaModel {
                 return Ok(Real::from(2) * Real::pi() * first_moment);
             }
             if let Some(graph) = &self.data.certified_tensor_graphs[id.index()] {
+                // Capped graphs need curved-trim integrals over cap regions.
+                if !graph.caps.is_empty() {
+                    return Err(GeometryError::UnsupportedMeasurement.into());
+                }
                 // The top face's oriented UV boundary segments.
                 let solid = self.solid(id).expect("validated solid ID");
                 let mut loops = Vec::new();

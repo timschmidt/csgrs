@@ -497,7 +497,8 @@ impl CertifiedRevolutionBoundary {
 /// A solid between a planar base region and a rational Bézier tensor graph
 /// above it, with planar walls parallel to `direction`. Points decompose as
 /// `p - origin = a u + b v + c direction`; the solid is `(a, b)` in `profile`
-/// and `0 <= c <= f(a, b)`, where `f` is the graph height of `top`.
+/// and `0 <= c <= f(a, b)`, where `f` is the graph height of `top` or, over
+/// a cap's region, the cap's height.
 #[derive(Clone, Debug)]
 struct CertifiedTensorGraphShell {
     origin: Point3,
@@ -506,6 +507,19 @@ struct CertifiedTensorGraphShell {
     direction: Vector3,
     profile: CurvePath2,
     top: Surface,
+    /// Up-facing planar caps parallel to the base at one height `c`; each
+    /// keeps its plane frame and its exact outer boundary in that frame.
+    caps: Vec<CertifiedGraphCap>,
+}
+
+/// One planar cap of a tensor graph solid.
+#[derive(Clone, Debug)]
+struct CertifiedGraphCap {
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    height: Real,
+    boundary: CurvePath2,
 }
 
 #[derive(Clone, Debug)]

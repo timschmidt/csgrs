@@ -478,6 +478,23 @@ impl ArenaModel {
                                 direction: transform.transform_direction3(&certificate.direction),
                                 profile: certificate.profile.clone(),
                                 top: certificate.top.transformed(&metric, reverses_orientation)?,
+                                // Affine maps carry each cap frame; frame
+                                // coordinates, heights and boundaries are kept.
+                                caps: certificate
+                                    .caps
+                                    .iter()
+                                    .map(|cap| {
+                                        Ok(CertifiedGraphCap {
+                                            origin: transform
+                                                .transform_point3(&cap.origin)
+                                                .map_err(GeometryError::Numeric)?,
+                                            u: transform.transform_direction3(&cap.u),
+                                            v: transform.transform_direction3(&cap.v),
+                                            height: cap.height.clone(),
+                                            boundary: cap.boundary.clone(),
+                                        })
+                                    })
+                                    .collect::<Result<Vec<_>, GeometryError>>()?,
                             })
                         })
                         .transpose()
