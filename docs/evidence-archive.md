@@ -86,6 +86,17 @@ in this repository.
 ## Follow-on records
 
 The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` now ends at
+`a29b1f6cd2fdf5c198d9e6a53a24fcfc78dff012` with 406 records. Its new record
+`docs/evidence/2026-11-02-hypercurve-closure-arithmetic-scope-validation` contains 12,156 files and
+25,028,649 bytes, SHA-256 `78fd4105b130cca49c0f645fda961228164a77bb5a968e8bccf2890bf34cdae8`. It records
+fresh success for all 328 pre-push command groups on `1e7847896b21eabd61ee6e63a297d450fbca5897`.
+That revision covers the receipt-only push `61bb34b610`, which had gone out without its own campaign,
+plus the cross-source arithmetic sign scope and the off-diagonal reflection witness. All 13 ASan
+campaigns started from an empty fuzz state and include mutation evidence. One deliberately stopped
+campaign on `61bb34b610` is kept as superseded. Exact geometric operation closure and hosted
+publication or deployment are not established here.
+
+Before that record, the branch ended at
 `16cd8c94db9aeef4d68ccf7a0bc51fbf02925b32` with 405 records. Above `c0edcc75fd` it adds
 `docs/evidence/2026-10-31-hypercurve-closure-chamfer-closing-gap`,
 `docs/evidence/2026-10-31-hypercurve-closure-retained-bezier-replay` and

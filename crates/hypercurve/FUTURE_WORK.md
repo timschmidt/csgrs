@@ -3767,3 +3767,9 @@ Verification on this change, Rust 1.99.1, `--locked`:
 - release `--all-features` tests: Hypercurve 3086 passed (34 existing ignored),
   HyperBRep 687, Hypercircuit 354, HyperDRC 1670, with no failures;
 - formatting passes.
+
+The complete pre-push matrix then passed on `1e7847896b`: all 328 command
+groups, plus 13 ASan campaigns with mutation evidence that started from an empty
+fuzz state. That revision also covers the receipt-only push `61bb34b610`. Evidence:
+`docs/evidence/2026-11-02-hypercurve-closure-arithmetic-scope-validation`, SHA-256
+`78fd4105b130cca49c0f645fda961228164a77bb5a968e8bccf2890bf34cdae8`.
