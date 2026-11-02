@@ -23,6 +23,7 @@ mod curve_plane;
 mod curve_revolution;
 mod curve_tensor_image;
 mod implicit_tensor;
+mod line_tensor;
 mod location;
 mod pcurve;
 mod periodic_charts;
@@ -4364,6 +4365,8 @@ impl Surface {
     /// squared axis distance and height, again returning complete contacts.
     /// Tensor-image curves against planes and these implicit carriers use the
     /// complete UV decomposition of the pulled-back surface equation.
+    /// Finite lines against rational Bézier tensors intersect the pullbacks of
+    /// two planes through the line and keep selected rational-form parameters.
     /// Unsupported curve/surface pairs fail with
     /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
@@ -4496,9 +4499,11 @@ impl Surface {
                     curve_implicit::ImplicitCarrier::Torus(torus),
                 )
                 .expect("a line is a rational span"),
+                SurfaceGeometry::RationalBezier(patch) => {
+                    line_tensor::intersect_line_tensor(curve, start, end, patch)
+                }
                 SurfaceGeometry::Extrusion(_)
                 | SurfaceGeometry::Revolution(_)
-                | SurfaceGeometry::RationalBezier(_)
                 | SurfaceGeometry::Nurbs(_) => Err(GeometryError::UnsupportedIntersection),
             }
         })
