@@ -3840,6 +3840,33 @@
       "validation": "New witnesses: concentric aligned ellipses (39/5, 13/3) and (51/8, 68/15) and the radius-5 circle, whose pairwise equations are linear in (x^2, y^2) with unique solution (9, 16), meet at exactly the four points (+/-3, +/-4, 0) in all tested orders, with both parameters evaluating to each point; a quarter arc keeps only (3, 4, 0); an ellipse in the plane x = 3 crosses the circle at (3, +/-4, 0) with both seam visits of its start point. x^2/4 + y^2 = 1 and x^2/9 + y^2 = 1 on [0, pi] touch exactly once at (0, 1) with both angles pi/2. Using weights 1, 1, 1 for the quarter spans fails two witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 772 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in about 0.01 s in release.",
       "limits": "Contacts that are general quartic roots have no scalar point for arc angles and fail typed; coincident or partially overlapping conics are not mapped as overlaps. No work package or pre-push gate closes."
+    },
+    {
+      "id": "axis-factor-zero-sets-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Unit-square zero sets with line components in both UV directions, which the single swapped-chart retry cannot decompose, are now handled exactly. Hypersolve's exact axis-content extraction splits the pullback into a pure-u factor, a pure-v factor and a primitive remainder that share no curve component. The pure-u factor's components become exact vertical chords u = r over its complete roots in [0, 1] (Bernstein form, Hypercurve root authority), so Hypercurve's native line authority intersects them with branches in their own chart; the pure-v factor and remainder decompose natively. Branches of different parts are split at their exact Hypercurve crossings, and isolated points lying on another part are dropped. All consumers of unit_square_zeros benefit: tensor sections by analytic carriers, tensor-image/surface contacts, tensor-image point location and line/tensor contacts.",
+      "source": [
+        "../src/geometry/implicit_tensor.rs",
+        "../tests/tensor_image_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Unit witnesses: (2u - 1)(2v - 1) gives four branches, each ending at the crossing (1/2, 1/2); multiplying by the circle (u - 1/2)^2 + (v - 1/2)^2 = 1/16 gives twelve branches; (8u^3 - 2)(2v - 1) is a typed refusal because u = cbrt(1/4) has no scalar view. Public witness: on the bilinear saddle z = xy, the generated curve u = t, v = t/2 meets the plane z = 0 exactly at t = 1/2, (-1/2, 0, 0), and t = 1, (0, 1, 0). Skipping the crossing split or the new dispatch fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 776 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release. Crossing discovery is pairwise across parts.",
+      "limits": "Hypercurve still cannot intersect a native branch with a swapped-chart branch, so pure-u roots without a scalar view stay typed and the single-direction swap path keeps mapped branches. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

@@ -366,3 +366,47 @@ fn generated_curves_on_one_tensor_meet_exactly() {
         Err(GeometryError::UnsupportedIntersection)
     ));
 }
+
+/// The bilinear saddle patch z = xy over [-1, 1]^2 (x = 2v - 1, y = 2u - 1)
+/// meets z = 0 along (2u - 1)(2v - 1) = 0: lines in both UV directions. The
+/// generated curve u = t, v = t/2 is x = t - 1, y = 2t - 1, z = (t - 1)(2t - 1),
+/// so it crosses z = 0 at t = 1/2, (-1/2, 0, 0), and ends on it at (0, 1, 0).
+#[test]
+fn tensor_image_meets_a_plane_through_crossing_axis_components() {
+    let corners = [-1, 1];
+    let saddle = Surface::rational_bezier(
+        corners
+            .iter()
+            .map(|&x| corners.iter().map(|&y| pi(x, y, x * y)).collect())
+            .collect(),
+        vec![vec![Real::one(); 2]; 2],
+    )
+    .unwrap();
+    let source = hypercurve::Curve2::from(
+        hypercurve::LineSeg2::try_new(
+            hypercurve::Point2::from_values(0, 0),
+            hypercurve::Point2::new(Real::one(), q(1, 2)),
+        )
+        .unwrap(),
+    );
+    let curve = Curve3::tensor_image(saddle, source).unwrap();
+    let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+    let CurveSurfaceIntersection::Points(points) = plane.intersect_curve(&curve).unwrap() else {
+        panic!("isolated crossings required");
+    };
+    assert_eq!(points.len(), 2);
+    let expected = [
+        (q(1, 2), p(q(-1, 2), 0.into(), 0.into())),
+        (Real::one(), pi(0, 1, 0)),
+    ];
+    for (parameter, point) in expected {
+        assert!(points.iter().any(|contact| {
+            contact
+                .parameter
+                .compare(&Parameter::from_real(parameter.clone()))
+                .unwrap()
+                == Ordering::Equal
+                && contact.point.coincides_with(&point.clone().into()).unwrap()
+        }));
+    }
+}
