@@ -4190,6 +4190,34 @@
       "validation": "New witnesses on the solid under z = x^2 + y^2 over [-1, 1]^2 above z = -1 (previously UnsupportedSolidShell): eleven points classify exactly as derived (top, interior, above, outside the base, on the base, below, on a wall below and above the top, and (9/10, -9/10, 161/100) just under the top height 81/50); the same classifications hold after cold replay (byte-identical re-serialization) and after a scaled rotation/translation mapping each probe point; a Boolean with a cuboid remains a typed refusal. Unit witness: the graph certificate holds above z = -1 and fails for the crossing base z = 1/2. Flipping the height order, skipping the positivity test, or removing the class from admission fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 795 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in about 0.01 s in release.",
       "limits": "Face area, volume and Booleans for tensor-graph solids are not claimed (a Boolean fails in the face-pair graph with UnsupportedPcurveContour). Shells with several tensor faces, holes in the base, or non-parallel walls are not admitted. No work package or pre-push gate closes."
+    },
+    {
+      "id": "plane-tensor-iso-sections-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Plane/tensor intersection now decomposes through unit_square_zeros, so vertical components no longer refuse. Vertical chords u = r are published as the tensor's exact iso-curves (Surface::iso_curve) with native iso-segment tensor pcurves and plane pcurves obtained by projecting the iso-curve's weighted controls into the plane frame (an affine map, so the pcurve is exact with the same parameter). Branches of a polynomial in v alone, whose constant is certified among exact root candidates, are handled the same way when the plane projection folds, but keep the branch itself as the tensor pcurve and tensor-image spatial curve so repeated-factor multiplicity is retained. Other branches keep the planar-image route (injective plane projection) or the tensor-image fallback with unavailable plane pcurves.",
+      "source": [
+        "../src/geometry/plane_tensor.rs",
+        "../tests/tensor_face_splits.rs",
+        "../tests/support/plane_tensor_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Former typed witness (plane_tensor_sections): S(u, v) = (u, v, u - 1/2) against z = 0, previously VerticalComponent, is the exact segment (1/2, 0, 0)-(1/2, 1, 0) through (1/2, 1/2, 0). New witness: the plane x = 1/2 against the paraboloid patch yields a section with an exact plane pcurve, ends (1/2, +/-1, 5/4) and midpoint (1/2, 0, 1/4), splitting the face into two that replay cold. Existing repeated-section witnesses keep their contact exponents 2 and 3 and branch pcurves with repeated factorizations. Disabling iso-line detection fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "General branches of folding plane projections still lack plane pcurves; Booleans with tensor-graph solids still fail later (UnsupportedPcurveContour in planar face handling of walls with Bezier edges). No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

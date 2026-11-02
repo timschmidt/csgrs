@@ -1,12 +1,9 @@
 //! Complete polynomial pullbacks and checked spatial images of plane sections.
 
 use super::*;
-use hypercurve::{PolynomialCurveSet2, RationalMap2};
+use hypercurve::RationalMap2;
+use hypersolve::BivariatePolynomial;
 use hypersolve::bivariate_arithmetic::{bivariate_add, bivariate_scale, bivariate_subtract};
-use hypersolve::bivariate_topology::{
-    BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
-};
-use hypersolve::{AlgebraicFiberRootIsolationConfig, BivariatePolynomial};
 
 pub(super) fn intersect(
     plane: &PlaneSurface,
@@ -70,19 +67,12 @@ pub(super) fn intersect(
             SurfaceIntersectionOperand::Second,
         ));
     }
-    let domain = BivariateCurveDomain {
-        first: [Real::zero(), Real::one()],
-        second: [Real::zero(), Real::one()],
-    };
-    let topology =
-        decompose_bivariate_curve(&equation, &domain, BivariateTopologyConfig::default())
-            .map_err(GeometryError::PolynomialTopology)?;
-    let set =
-        PolynomialCurveSet2::from_topology(topology, AlgebraicFiberRootIsolationConfig::default())?;
-    if set.is_empty() {
+    // Complete zeros on the unit square, including vertical components as
+    // exact chords u = r (or swapped-chart branches).
+    let set = super::implicit_tensor::unit_square_zeros(&equation)?;
+    if set.curves.is_empty() && set.points.is_empty() {
         return Ok(SurfaceSurfaceIntersection::None);
     }
-
     let rectangle = hypercurve::Aabb2::from_points(&[
         CurvePoint2::new(Real::zero(), Real::zero()),
         CurvePoint2::new(Real::one(), Real::one()),
@@ -92,29 +82,82 @@ pub(super) fn intersect(
         Classification::Uncertain(_) => return Err(GeometryError::UnsupportedIntersection),
     };
     // UV topology alone does not rule out distinct parameter points with the
-    // same spatial image. This whole-rectangle certificate also excludes rank
-    // loss. Unproved image topology cannot publish a partial section as complete.
-    if map.certify_injective_on(&rectangle).is_err() {
-        // The plane's own projection folds the tensor. An injective
-        // coordinate-plane projection still certifies the tensor itself, and
-        // the sections are then published as tensor images whose plane-side
-        // pcurves are unavailable rather than fitted.
+    // same spatial image. An injective plane projection certifies the whole
+    // rectangle and gives planar images; otherwise an injective
+    // coordinate-plane projection still certifies the tensor itself.
+    let plane_injective = map.certify_injective_on(&rectangle).is_ok();
+    if !plane_injective {
         let [x, y, z, weight] = surface_point::tensor_coefficients(surface);
         super::implicit_tensor::certify_injective_tensor([&x, &y, &z], &weight)?;
-        let tensor =
-            Surface::rational_bezier(surface.control_points.clone(), surface.weights.clone())?;
-        let zeros = super::implicit_tensor::UnitSquareZeros {
-            curves: set.curves().to_vec(),
-            points: set.isolated_points().to_vec(),
-        };
-        return super::implicit_tensor::tensor_image_sections(
-            &tensor,
-            &zeros,
-            SurfaceIntersectionOperand::Second,
-        );
     }
-    let mut curves = Vec::with_capacity(set.curves().len());
-    for uv in set.curves() {
+    let tensor = Surface::rational_bezier(surface.control_points.clone(), surface.weights.clone())?;
+    let mut curves = Vec::with_capacity(set.curves.len());
+    let mut unmapped = Vec::new();
+    for uv in &set.curves {
+        let iso = iso_line(uv)?;
+        let chord = matches!(uv.geometry(), Some(hypercurve::CurveGeometry2::Line(_)));
+        if let Some((axis, constant)) = iso.clone()
+            && (chord || !plane_injective)
+        {
+            // An iso-line component whose plane image the projection map
+            // cannot give: the tensor's exact iso-curve projects to an exact
+            // plane pcurve with the iso-line's parameter.
+            let iso_curve = tensor.iso_curve(axis, &constant)?;
+            let CurveGeometry3::RationalBezier(bezier) = &iso_curve.data.geometry else {
+                return Err(GeometryError::UnsupportedIntersection);
+            };
+            let mut projected_points = Vec::new();
+            let mut weights = Vec::new();
+            for control in bezier.homogeneous_controls() {
+                let w = control.w.clone();
+                let point = Point3::new(
+                    (&control.x / &w).map_err(GeometryError::Numeric)?,
+                    (&control.y / &w).map_err(GeometryError::Numeric)?,
+                    (&control.z / &w).map_err(GeometryError::Numeric)?,
+                );
+                let flat = project_point_to_plane_frame(&plane.origin, &plane.u, &plane.v, &point)?;
+                projected_points.push(CurvePoint2::new(flat.x, flat.y));
+                weights.push(w);
+            }
+            let projected = Curve2::from(hypercurve::RationalBezier2::try_new(
+                projected_points,
+                weights,
+            )?);
+            let section = if chord {
+                // A chord has no polynomial branch: the native iso-curve and
+                // its iso segment replay as an iso image.
+                SurfaceIntersectionCurve::from_certified_exact_pcurves(
+                    iso_curve,
+                    projected,
+                    uv.clone(),
+                )?
+            } else {
+                // A branch keeps its selected graph and repeated-factor
+                // multiplicity as the tensor pcurve; the spatial curve is its
+                // tensor image, the same parameterization as the iso-curve.
+                let curve = Curve3::from_tensor_image(TensorCurve3 {
+                    surface: tensor.clone(),
+                    source: uv.clone(),
+                    source_scale: Real::one(),
+                    source_offset: Real::zero(),
+                })?;
+                let mut section = SurfaceIntersectionCurve::from_certified_exact_pcurves(
+                    curve,
+                    projected,
+                    uv.clone(),
+                )?;
+                section.polynomial_contact_exponent = uv
+                    .polynomial_branch()
+                    .map(|branch| branch.defining_exponent());
+                section
+            };
+            curves.push(section);
+            continue;
+        }
+        if !plane_injective {
+            unmapped.push(uv.clone());
+            continue;
+        }
         let projected = uv.rational_image(&map)?;
         let curve = Curve3::from_planar_image(PlanarCurve3 {
             source: projected.clone(),
@@ -126,16 +169,31 @@ pub(super) fn intersect(
         })?;
         let mut section =
             SurfaceIntersectionCurve::from_certified_exact_pcurves(curve, projected, uv.clone())?;
-        section.polynomial_contact_exponent = Some(
-            uv.polynomial_branch()
-                .expect("topology supplies a selected graph")
-                .defining_exponent(),
-        );
+        section.polynomial_contact_exponent = uv
+            .polynomial_branch()
+            .map(|branch| branch.defining_exponent());
         curves.push(section);
+    }
+    if !unmapped.is_empty() {
+        // Branches of a folding plane projection: tensor images whose plane
+        // pcurves are unavailable rather than fitted.
+        let zeros = super::implicit_tensor::UnitSquareZeros {
+            curves: unmapped,
+            points: Vec::new(),
+        };
+        match super::implicit_tensor::tensor_image_sections(
+            &tensor,
+            &zeros,
+            SurfaceIntersectionOperand::Second,
+        )? {
+            SurfaceSurfaceIntersection::Curve(curve) => curves.push(*curve),
+            SurfaceSurfaceIntersection::Curves(more) => curves.extend(more),
+            _ => return Err(GeometryError::UnsupportedIntersection),
+        }
     }
     let plane = Surface::plane(plane.origin.clone(), plane.u.clone(), plane.v.clone())?;
     let mut points = set
-        .isolated_points()
+        .points
         .iter()
         .map(|uv| plane.point_at(&uv.rational_image(&map)?))
         .collect::<GeometryResult<Vec<_>>>()?;
@@ -251,4 +309,63 @@ impl SurfaceIntersectionCurve {
     pub const fn polynomial_contact_exponent(&self) -> Option<usize> {
         self.polynomial_contact_exponent
     }
+}
+
+/// Whether a unit-square zero component is a whole iso-line with a scalar
+/// constant, traversed in increasing parameter over `[0, 1]`: a vertical
+/// chord `u = r` (varying `v`), or a polynomial branch whose defining
+/// equation depends on `v` alone (`v = c`, varying `u`). Other components
+/// return `None`.
+fn iso_line(uv: &Curve2) -> GeometryResult<Option<(SurfaceIsoAxis, Real)>> {
+    let unit = |value: &Real, expected: &Real| -> GeometryResult<bool> {
+        Ok(
+            decided_order(compare_reals(value, expected, crate::STRICT_PREDICATES))?
+                == Ordering::Equal,
+        )
+    };
+    if let Some(hypercurve::CurveGeometry2::Line(chord)) = uv.geometry() {
+        let (start, end) = (chord.start(), chord.end());
+        if unit(start.x(), end.x())?
+            && unit(start.y(), &Real::zero())?
+            && unit(end.y(), &Real::one())?
+        {
+            return Ok(Some((SurfaceIsoAxis::V, start.x().clone())));
+        }
+        return Ok(None);
+    }
+    let Some(branch) = uv.polynomial_branch() else {
+        return Ok(None);
+    };
+    if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
+        return Ok(None);
+    }
+    let equation = branch.topology().geometric_equation();
+    for row in equation.coefficients.iter().skip(1) {
+        for coefficient in row {
+            if !unit(coefficient, &Real::zero())? {
+                return Ok(None);
+            }
+        }
+    }
+    let (start, end) = uv.parameter_endpoints();
+    let (Some(start), Some(end)) = (start.scalar(), end.scalar()) else {
+        return Ok(None);
+    };
+    if !unit(start, &Real::zero())? || !unit(end, &Real::one())? {
+        return Ok(None);
+    }
+    // The constant is a root of the equation's v polynomial, certified equal
+    // to the branch's selected coordinate.
+    let selected = uv.point_at(uv.parameter_domain().start())?.affine_form(
+        Real::zero(),
+        Real::one(),
+        Real::zero(),
+    );
+    let Some(constant) = super::tensor_image::first_proved_equal(
+        super::tensor_image::exact_root_candidates(equation.coefficients[0].clone())?,
+        |candidate| Ok(selected.compare_to_real(candidate)?),
+    ) else {
+        return Ok(None);
+    };
+    Ok(Some((SurfaceIsoAxis::U, constant)))
 }

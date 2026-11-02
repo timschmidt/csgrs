@@ -679,3 +679,53 @@ fn bridge_sections_cut_a_ring_with_a_generated_hole() {
     let partitioned = reload(&partitioned.expect("the ring takes the bridge cycle"));
     assert_eq!(partitioned.faces().count(), 3);
 }
+
+/// The plane x = 1/2 pulls back to the iso-line v = 3/4 of the paraboloid
+/// patch (x = 2v - 1), whose plane projection folds. The section keeps the
+/// branch as its tensor pcurve and gains the exact plane pcurve projected
+/// from the iso-curve z = 1/4 + y^2, from (1/2, -1, 5/4) through
+/// (1/2, 0, 1/4) to (1/2, 1, 5/4); it splits the face into two that replay
+/// cold.
+#[test]
+fn axis_plane_sections_are_exact_iso_curves() {
+    let (model, patch) = paraboloid_face();
+    let plane = Surface::plane(
+        Point3::new(q(1, 2), 0.into(), 0.into()),
+        Vector3::y(),
+        Vector3::z(),
+    )
+    .unwrap();
+    let section = match patch.intersect_surface(&plane).unwrap() {
+        SurfaceSurfaceIntersection::Curve(curve) => *curve,
+        other => panic!("one iso section required, found {other:?}"),
+    };
+    // The plane is the second operand: its exact pcurve is available.
+    let plane_pcurve = section.second_pcurve().materialize().unwrap();
+    assert!(plane_pcurve.curve().polynomial_branch().is_none());
+    let curve = section.curve();
+    assert_eq!(curve.kind(), Curve3Kind::TensorImage);
+    let ends = [curve.start().unwrap(), curve.end().unwrap()];
+    for expected in [
+        Point3::new(q(1, 2), (-1).into(), q(5, 4)),
+        Point3::new(q(1, 2), 1.into(), q(5, 4)),
+    ] {
+        assert!(ends.iter().any(|end| {
+            GeometricPoint3::from(end.clone())
+                .coincides_with(&expected.clone().into())
+                .unwrap()
+        }));
+    }
+    let middle = curve.point_at(&Parameter::from_real(q(1, 2))).unwrap();
+    assert!(
+        middle
+            .coincides_with(&Point3::new(q(1, 2), 0.into(), q(1, 4)).into())
+            .unwrap()
+    );
+    let split = model
+        .faces()
+        .next()
+        .unwrap()
+        .split_by_surface_curve(&section, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(reload(split.model()).faces().count(), 2);
+}
