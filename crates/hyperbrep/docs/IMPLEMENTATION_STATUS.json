@@ -3758,6 +3758,32 @@
       "validation": "New witness: the radius-5 circle and the coplanar parabola y = x^2/3 + 1, for which u^2 + 15u - 216 = 0 with u = x^2 gives only the parabola's ends (+/-3, 4, 0), in both orders; a quadratic piercing z = 0 at (3, 4, 0) with s = 1/2; a cubic crossing at the selected s = cbrt(1/2) is a typed refusal. Dropping a radius from the numerator's constant term fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 767 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
       "limits": "Selected contacts without scalar views (arc angles of non-radical algebraic points), curves along a conic, ellipse pairs and conics against planar or tensor images remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "selected-planar-crossings-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Planar-image/rational incidence no longer needs Hypercurve to locate a point selected on another curve. The planar source is intersected once with the rational curve's exact plane-frame projection (an ordinary rational/rational planar intersection); at a plane contact s the projection equals the contact point, so the source parameters are those of the planar contacts whose curve parameter equals s exactly. When that planar intersection reports overlaps, parameter components or blockers, the previous point-location path is kept, and selected crossings there remain typed. The former typed witness for a selected crossing becomes a positive exact check.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "The cubic x = 1, y = 2s^3, z = 2s^3 - 1, previously a typed blocker, now meets the planar parabola y = x^2 once at (1, 1, 0) with parabola parameter exactly 1/4 and a selected cubic parameter in (79/100, 4/5) with no scalar view; all earlier curve/curve witnesses pass unchanged. Inverting the parameter match fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 767 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; one planar curve/curve intersection replaces one point location per crossing.",
+      "limits": "Projected overlaps fall back to point location; Hypercurve selected-point location on rational spans (algebraic-coefficient root isolation) remains an owner gap. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

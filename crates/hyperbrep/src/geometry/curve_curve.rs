@@ -719,18 +719,53 @@ fn intersect_planar_image_rational(
             })
             .collect::<GeometryResult<Vec<_>>>()?,
     )?;
+    // Locating a point selected on the other curve is not available, so the
+    // planar source is intersected with the whole projected curve once: at a
+    // plane contact s the projection is the contact point, and the source
+    // parameter is read from the planar contact whose curve parameter is s.
+    let planar = materialized.curve.intersect_curve(&projected)?;
+    let planar_contacts = if planar.blockers().is_empty()
+        && planar.overlaps().is_empty()
+        && planar.parameter_components().is_empty()
+    {
+        let mut pairs = Vec::new();
+        for contact in planar.contacts() {
+            pairs.push((
+                Parameter::from_curve(&contact.first().parameter()?)?,
+                Parameter::from_curve(&contact.second().parameter()?)?,
+            ));
+        }
+        Some(pairs)
+    } else {
+        None
+    };
     let mut points = Vec::new();
     for contact in contacts {
-        let uv = projected.point_at(&contact.parameter.curve_parameter())?;
-        let locations = match materialized.curve.point_locations(&uv)? {
-            CurvePointLocations2::EntireCurve => {
-                return Err(GeometryError::UnsupportedIntersection);
+        let sources: Vec<Parameter> = match &planar_contacts {
+            Some(pairs) => {
+                let mut sources = Vec::new();
+                for (source, along) in pairs {
+                    if along.compare(&contact.parameter)? == Ordering::Equal {
+                        sources.push(source.clone());
+                    }
+                }
+                sources
             }
-            CurvePointLocations2::Locations(locations) => locations,
+            None => {
+                let uv = projected.point_at(&contact.parameter.curve_parameter())?;
+                match materialized.curve.point_locations(&uv)? {
+                    CurvePointLocations2::EntireCurve => {
+                        return Err(GeometryError::UnsupportedIntersection);
+                    }
+                    CurvePointLocations2::Locations(locations) => locations
+                        .into_iter()
+                        .map(|location| Parameter::from_curve(&location.parameter()?))
+                        .collect::<GeometryResult<_>>()?,
+                }
+            }
         };
-        for location in locations {
-            let parameter =
-                Parameter::from_curve(&location.parameter()?)?.affine_image(&scale, &offset)?;
+        for source in sources {
+            let parameter = source.affine_image(&scale, &offset)?;
             if curve.domain().contains(&parameter)? {
                 points.push(CurveCurvePoint {
                     first: parameter,
