@@ -4103,6 +4103,31 @@
       "validation": "New witness: the (3, 1) torus at the origin against a tilted (1, 1/2) torus centred at (0, 6, 0) (only the ball certificate applies), (2, 0, 3) (only the slab certificate) and the origin (only the hole certificate) is the exact empty result in both orders; centred at (11/2, 0, 0), where the bounds touch, it remains UnsupportedIntersection, and the existing overlapping parallel-axis pair stays typed. Disabling any one certificate fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 789 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; certificates are a handful of exact comparisons.",
       "limits": "Overlapping non-coaxial torus pairs remain typed until the atlas route's measured cost (minutes for bidegree (8, 8) pullbacks per patch) is addressed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "non-coaxial-torus-pairs-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Non-coaxial ring torus pairs, including parallel off-axis ones, are no longer refused: after the exact disjointness certificates, only coaxial pairs keep the meridian-circle route and every other pair is sectioned through the coarse torus atlas against the other torus's exact equation. A remeasurement showed the formerly cited cost is pair-dependent rather than uniform: about 4.4 s for an overlapping parallel off-axis pair and about 150 s for an off-axis equal pair in release; this envelope is published.",
+      "source": [
+        "../src/geometry/torus_atlas.rs",
+        "../src/geometry.rs",
+        "../tests/torus_atlas_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Default-suite witness (former typed refusal): the (3, 1) torus at the origin and the (1, 1/2) torus at (3, 0, 1) cross the y = 0 atlas seam exactly at ((59 +/- sqrt(7))/16, 0, (11 -/+ sqrt(7))/16) and ((37 +/- sqrt(7))/16, 0, (11 +/- sqrt(7))/16), derived independently from the tube circles, each located on two adjacent pieces, while (4, 0, 0) is located on none. The tilted (1, 1/2) torus at (11/2, 0, 0), whose bounding balls touch, returns the exact empty result (its points have x >= 22/5 > 4). Ignored stress witness, executed for this entry in 148.8 s: the off-axis equal torus at (1, 0, 1) crosses (3, 0, 1), (4, 0, 0), (-2, 0, 0) and (-3, 0, 1), each located on a piece; it replaces the refusal assertion in the coaxial unit test, whose coaxial assertions are unchanged. Restoring the blanket torus refusal fails the default witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 789 hyperbrep passes (1 ignored stress test) and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "Measured in release on this host: 4.4 s (parallel off-axis overlapping pair), 4.5 s (tilted overlapping pair), 148.8 s (off-axis equal pair, stress witness). Point location of a piece takes about 10 ms.",
+      "limits": "The stress envelope (minutes for some pairs, bidegree (8, 8) pullbacks per patch) is unaddressed; no resource budget bounds it. Booleans and face splits on torus faces from these pieces lack analytic-side pcurves. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

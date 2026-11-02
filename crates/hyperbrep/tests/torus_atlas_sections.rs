@@ -104,10 +104,15 @@ fn ends_of_swapped(sphere: &Surface) -> Vec<GeometricPoint3> {
     ends(sphere.intersect_surface(&torus(Point3::origin())).unwrap())
 }
 
-/// Non-coaxial torus pairs remain a typed limitation: a measured overlapping
-/// pair took minutes through the atlas, so the route is not admitted.
+/// The (3, 1) torus at the origin and the parallel but off-axis (1, 1/2)
+/// torus at (3, 0, 1) are sectioned through the atlas. In the plane y = 0 the
+/// tube circle (x - 3)^2 + z^2 = 1 meets the small torus's circles about
+/// (4, 1) and (2, 1) (radius 1/2) along x + z = 35/8 and z = x - 13/8, at
+/// ((59 ± √7)/16, 0, (11 ∓ √7)/16) and ((37 ± √7)/16, 0, (11 ± √7)/16). Each
+/// lies on the y = 0 atlas seam, so two adjacent pieces locate it; a point of
+/// the large torus off the small one is located on no piece.
 #[test]
-fn non_coaxial_torus_pairs_remain_typed() {
+fn non_coaxial_torus_pairs_cross_known_seam_points() {
     let small = Surface::torus(
         pi(3, 0, 1),
         Vector3::x(),
@@ -117,10 +122,39 @@ fn non_coaxial_torus_pairs_remain_typed() {
         q(1, 2),
     )
     .unwrap();
-    assert!(matches!(
-        torus(Point3::origin()).intersect_surface(&small),
-        Err(GeometryError::UnsupportedIntersection)
-    ));
+    let curves = match torus(Point3::origin()).intersect_surface(&small).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("atlas pieces required, found {other:?}"),
+    };
+    let located = |point: &Point3| {
+        curves
+            .iter()
+            .map(|piece| match piece.curve().parameters_of(point).unwrap() {
+                CurveParameterLocation::Parameters(found) => found.len(),
+                _ => 0,
+            })
+            .sum::<usize>()
+    };
+    let r7 = root(7);
+    let sixteenth = |value: Real| (value / Real::from(16)).unwrap();
+    for sign in [Real::one(), -Real::one()] {
+        let offset = &sign * &r7;
+        for point in [
+            Point3::new(
+                sixteenth(Real::from(59) + &offset),
+                0.into(),
+                sixteenth(Real::from(11) - &offset),
+            ),
+            Point3::new(
+                sixteenth(Real::from(37) + &offset),
+                0.into(),
+                sixteenth(Real::from(11) + &offset),
+            ),
+        ] {
+            assert_eq!(located(&point), 2);
+        }
+    }
+    assert_eq!(located(&pi(4, 0, 0)), 0);
 }
 
 /// The 45-degree cone (x - 1)^2 + y^2 = (4 - z)^2 opening down from
@@ -192,14 +226,45 @@ fn certifiably_disjoint_non_coaxial_tori_do_not_meet() {
             SurfaceSurfaceIntersection::None
         ));
     }
-    // Touching bounds are not a certificate: |c| = 11/2 = 4 + 3/2 stays
-    // with the existing typed route.
+    // Touching balls are not a certificate (|c| = 11/2 = 4 + 3/2), so this
+    // pair is sectioned through the atlas. The tilted torus reaches toward -x
+    // by at most R |(-x)_perp| + r = 3/5 + 1/2, so its points have x >= 22/5
+    // > 4 >= every x of the large torus: the atlas returns the empty set.
     assert!(matches!(
-        torus(Point3::origin()).intersect_surface(&tilted(Point3::new(
-            q(11, 2),
-            0.into(),
-            0.into()
-        ))),
-        Err(GeometryError::UnsupportedIntersection)
+        torus(Point3::origin())
+            .intersect_surface(&tilted(Point3::new(q(11, 2), 0.into(), 0.into())))
+            .unwrap(),
+        SurfaceSurfaceIntersection::None
     ));
+}
+
+/// Stress envelope: the (3, 1) torus at the origin and the equal torus at
+/// (1, 0, 1), formerly a typed refusal, take about 150 s through the atlas in
+/// release. In y = 0 the tube circles about (3, 0) and (4, 1) meet on
+/// x + z = 4 at (3, 0, 1) and (4, 0, 0); those about (-3, 0) and (-2, 1) meet
+/// on x + z = -2 at (-2, 0, 0) and (-3, 0, 1). Each lies on some piece.
+#[test]
+#[ignore = "stress envelope: about 150 s in release"]
+fn non_coaxial_equal_tori_cross_known_points() {
+    let off_axis = Surface::torus(
+        pi(1, 0, 1),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        3.into(),
+        1.into(),
+    )
+    .unwrap();
+    let SurfaceSurfaceIntersection::Curves(pieces) = torus(Point3::origin())
+        .intersect_surface(&off_axis)
+        .unwrap()
+    else {
+        panic!("atlas pieces required");
+    };
+    for point in [pi(3, 0, 1), pi(4, 0, 0), pi(-2, 0, 0), pi(-3, 0, 1)] {
+        assert!(pieces.iter().any(|piece| matches!(
+            piece.curve().parameters_of(&point).unwrap(),
+            CurveParameterLocation::Parameters(_)
+        )));
+    }
 }

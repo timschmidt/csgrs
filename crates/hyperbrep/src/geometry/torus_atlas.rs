@@ -79,10 +79,10 @@ pub(super) fn special_route_applies(
     let parallel = |direction: &Vector3| zero(&axis.cross(direction).norm_squared());
     Ok(match other {
         ImplicitCarrier::Sphere(sphere) => on_axis(&sphere.center)?,
-        // Non-coaxial torus pairs pull back to bidegree (8, 8) per patch; a
-        // measured overlapping pair took minutes, so they keep the existing
-        // route and its typed refusal until that cost is addressed.
-        ImplicitCarrier::Torus(_) => true,
+        // Coaxial pairs keep the meridian-circle route; every other pair is
+        // sectioned through the atlas (measured 4.4 s to 150 s in release for
+        // overlapping pairs; see the torus atlas witnesses).
+        ImplicitCarrier::Torus(other) => parallel(&other.frame.z)? && on_axis(&other.center)?,
         ImplicitCarrier::Cone(cone) => parallel(&cone.frame.z)? && on_axis(&cone.apex)?,
         // Cylinders are charted by the cylinder atlas.
         ImplicitCarrier::Cylinder(_) => true,

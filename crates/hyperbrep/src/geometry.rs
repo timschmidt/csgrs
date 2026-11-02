@@ -17889,19 +17889,9 @@ mod tests {
             first.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circles(_)
         ));
-        let off_axis = Surface::torus(
-            p(1, 0, 1),
-            Vector3::x(),
-            Vector3::y(),
-            Vector3::z(),
-            r(3),
-            r(1),
-        )
-        .unwrap();
-        assert_eq!(
-            first.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // The off-axis equal torus is non-coaxial: it is covered by the
+        // stress witness `non_coaxial_equal_tori_cross_known_points` in
+        // tests/torus_atlas_sections.rs.
     }
 
     #[test]
