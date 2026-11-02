@@ -271,7 +271,7 @@ domain. General nonuniform analytic promotion remains open. See the
 | `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Certified similarity / exact |
 | `cone_frustum` | Circular caps and one cone carrier | Yes | Truncated-cone formula | Analytic | Certified similarity / exact |
 | `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Certified similarity / exact |
-| Authored tensor-graph solids (`ModelBuilder`) | One positive-weight rational Bézier top, one planar base without holes, planar walls parallel to the base's inward normal; admitted when the top is certified a graph strictly above the base (exact positivity of its height polynomial on the unit square, by Bernstein coefficients or an empty complete zero set, and a certified injective base projection) | Not claimed | Not claimed | Exact: base-profile location, then the height against 0 and against the graph at the selected preimage of the base point | Affine (certificate frame and top transformed) / exact cold replay; Booleans remain typed |
+| Authored tensor-graph solids (`ModelBuilder`) | One positive-weight rational Bézier top, one planar base without holes, planar walls parallel to the base's inward normal; admitted when the top is certified a graph strictly above the base (exact positivity of its height polynomial on the unit square, by Bernstein coefficients or an empty complete zero set, and a certified injective base projection) | Not claimed | Not claimed | Exact: base-profile location, then the height against 0 and against the graph at the selected preimage of the base point | Affine (certificate frame and top transformed) / exact cold replay; Booleans whose results stay tensor-graph solids (for example intersection and difference with a cuboid cutting the top along an iso section and the walls along lines that end on their Bézier edges) are exact; other result shells remain typed |
 | `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Certified similarity / exact |
 | `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Certified similarity / exact |
 | `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS and supported procedural meridians with selected latitudes, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
@@ -585,6 +585,12 @@ stitching on partially clipped tensor operands, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans
+
+Planar faces whose boundaries contain generated or spline edges (no line/arc
+contour) take part in Boolean face-pair graphs: their regions are the exact
+non-zero fill of their boundary curve paths, and line traces are cut at their
+exact contacts with each boundary curve (scalar line parameters only; overlaps
+with curved edges and selected contacts without scalar views remain typed).
 
 The [axial-shell evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md) completes the three original
 partial-depth cylinder cuts and covering reversed difference. Eight rationally

@@ -4218,6 +4218,35 @@
       "validation": "Former typed witness (plane_tensor_sections): S(u, v) = (u, v, u - 1/2) against z = 0, previously VerticalComponent, is the exact segment (1/2, 0, 0)-(1/2, 1, 0) through (1/2, 1/2, 0). New witness: the plane x = 1/2 against the paraboloid patch yields a section with an exact plane pcurve, ends (1/2, +/-1, 5/4) and midpoint (1/2, 0, 1/4), splitting the face into two that replay cold. Existing repeated-section witnesses keep their contact exponents 2 and 3 and branch pcurves with repeated factorizations. Disabling iso-line detection fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim.",
       "limits": "General branches of folding plane projections still lack plane pcurves; Booleans with tensor-graph solids still fail later (UnsupportedPcurveContour in planar face handling of walls with Bezier edges). No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-graph-booleans-2026-11-02",
+      "work_packages": [
+        "WP08",
+        "WP09",
+        "WP10",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Booleans now consume tensor-graph solids when the result stays in that class. The Boolean kernel's planar face handling required line/arc contours, which walls with Bezier edges lack: planar face regions now fall back to the exact non-zero fill of the face's boundary curve paths (CurveRegion2::try_from_boundary_paths), and line traces are cut at their exact Hypercurve contacts with each boundary curve, accepting only scalar line parameters (overlaps with curved edges and selected contacts stay typed). With the iso plane sections of the previous entry and the tensor-graph class, intersection and difference with a cuboid that cuts the tensor top complete exactly.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../src/topology/query.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "validation": "Former typed witness: the solid under z = x^2 + y^2 over [-1, 1]^2 above z = -1, intersected with the cuboid x <= 1/2, is a six-face tensor-graph solid whose points classify exactly as derived ((1/4, 0, 0) inside, (3/4, 0, 0) outside, (1/2, 0, 0) on the new wall, (1/2, 0, 1/2) above the top at 1/4, and others), also after cold replay; the difference is the complementary six-face solid ((3/4, 0, 1/2) under the top at 9/16 inside, (3/4, 0, 3/4) outside). The union's result shell is outside every admitted class and remains a typed UnsupportedSolidShell. Disabling either planar fallback fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the Boolean witness completes in about 0.05 s in release.",
+      "limits": "Results outside the tensor-graph class (for example unions, or cuts through the top by non-vertical planes) remain typed; volume and area of tensor-graph solids are not claimed; tensor faces against analytic curved faces still lack analytic-side pcurves. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

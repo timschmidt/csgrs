@@ -243,10 +243,79 @@ fn tensor_graph_solids_replay_cold_and_transform() {
     }
 }
 
-/// Booleans with tensor graph solids are not consumed yet: a typed refusal.
+/// The cuboid x <= 1/2 cuts the tensor top along the iso section x = 1/2
+/// (z = 1/4 + y^2) and the walls y = +/-1 along lines ending on their Bézier
+/// edges at (1/2, +/-1, 5/4). The intersection keeps x <= 1/2 and the
+/// difference keeps x >= 1/2; each is again a tensor-graph solid (six faces)
+/// that classifies exactly and replays cold. The union's shell is outside
+/// every admitted class, a typed refusal.
 #[test]
-fn booleans_with_tensor_graph_solids_remain_typed() {
+fn booleans_split_tensor_graph_solids_exactly() {
     let body = BodySet::from_solid(bump().solids().next().unwrap());
-    let cut = builder::cuboid(pi(-2, -2, -2), Point3::new(2.into(), 2.into(), q(3, 2))).unwrap();
-    assert!(boolean::intersection(&body, &cut).is_err());
+    let cut = builder::cuboid(pi(-2, -2, -2), Point3::new(q(1, 2), 2.into(), 3.into())).unwrap();
+    let common = boolean::intersection(&body, &cut).unwrap();
+    assert_eq!(common.model().faces().count(), 6);
+    let reloaded = RawModel::from_json(
+        &common.model().to_json().unwrap(),
+        &ArchiveLimits::default(),
+    )
+    .unwrap()
+    .validate()
+    .unwrap();
+    for model in [common.model(), &reloaded] {
+        let solid = model.solids().next().unwrap();
+        for (point, expected) in [
+            (pi(0, 0, 0), SolidPointLocation::Boundary),
+            (
+                Point3::new(q(1, 4), 0.into(), 0.into()),
+                SolidPointLocation::Inside,
+            ),
+            (
+                Point3::new(q(3, 4), 0.into(), 0.into()),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new(q(1, 2), 0.into(), 0.into()),
+                SolidPointLocation::Boundary,
+            ),
+            (
+                Point3::new(q(1, 2), 0.into(), q(1, 2)),
+                SolidPointLocation::Outside,
+            ),
+            (
+                Point3::new(q(-1, 2), 0.into(), q(-1, 2)),
+                SolidPointLocation::Inside,
+            ),
+        ] {
+            assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+        }
+    }
+    let remainder = boolean::difference(&body, &cut).unwrap();
+    assert_eq!(remainder.model().faces().count(), 6);
+    let solid = remainder.bodies().next().unwrap();
+    for (point, expected) in [
+        (
+            Point3::new(q(3, 4), 0.into(), 0.into()),
+            SolidPointLocation::Inside,
+        ),
+        (
+            Point3::new(q(1, 4), 0.into(), 0.into()),
+            SolidPointLocation::Outside,
+        ),
+        (
+            Point3::new(q(1, 2), 0.into(), 0.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            Point3::new(q(3, 4), 0.into(), q(1, 2)),
+            SolidPointLocation::Inside,
+        ),
+        (
+            Point3::new(q(3, 4), 0.into(), q(3, 4)),
+            SolidPointLocation::Outside,
+        ),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    assert!(boolean::union(&body, &cut).is_err());
 }

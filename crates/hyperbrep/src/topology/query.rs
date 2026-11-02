@@ -1175,6 +1175,15 @@ impl ArenaModel {
         self.classify_surface_parameter_on_face(face, &point.into())
     }
 
+    /// Exact boundary paths of a face's wires in its surface chart, for faces
+    /// whose boundaries have no line/arc contour.
+    pub(crate) fn face_curve_paths(&self, face: FaceId) -> Result<Vec<CurvePath2>, GeometryError> {
+        let face = self.face(face).expect("validated face ID");
+        face.boundary_wires()
+            .map(|wire| self.build_model_wire_curve_path(*wire))
+            .collect()
+    }
+
     pub(crate) fn face_contours(&self, face: FaceId) -> Result<&[Contour2], GeometryError> {
         crate::cache::get_or_try_init(&self.data.face_contours[face.index()], || {
             self.build_face_contours(face)

@@ -5695,11 +5695,37 @@ fn trim_segment_to_planar_face(
     let end = project_to_plane(surface, end)?;
     let source = LineSeg2::try_new(start, end)?;
     let mut cuts = vec![Real::zero(), Real::one()];
-    for segment in model
-        .face_contours(face)?
-        .iter()
-        .flat_map(|contour| contour.segments())
-    {
+    let contours = match model.face_contours(face) {
+        Ok(contours) => contours,
+        Err(GeometryError::UnsupportedPcurveContour) => {
+            // Generated or spline boundary edges: cut the line at its exact
+            // contacts with each boundary curve. Cuts must be scalar line
+            // parameters, since the trimmed pieces are native lines.
+            let line = Curve2::from(source.clone());
+            for path in model.face_curve_paths(face)? {
+                for curve in path.curves() {
+                    let crossing = line.intersect_curve(curve)?;
+                    // An overlap with a curved boundary edge is not mapped.
+                    if !crossing.blockers().is_empty()
+                        || !crossing.parameter_components().is_empty()
+                        || !crossing.overlaps().is_empty()
+                    {
+                        return Err(GeometryError::UnsupportedPcurveContour);
+                    }
+                    for contact in crossing.contacts() {
+                        let parameter = contact.first().parameter()?;
+                        let Some(value) = parameter.scalar().cloned() else {
+                            return Err(GeometryError::UnsupportedPcurveContour);
+                        };
+                        insert_sorted_parameter(&mut cuts, value)?;
+                    }
+                }
+            }
+            &[][..]
+        }
+        Err(error) => return Err(error),
+    };
+    for segment in contours.iter().flat_map(|contour| contour.segments()) {
         match segment {
             Segment2::Line(line) => match source.intersect_line(line)? {
                 LineLineIntersection::None => {}
@@ -5776,7 +5802,19 @@ fn insert_sorted_parameter(
 }
 
 fn planar_face_region(model: &ArenaModel, face: FaceId) -> Result<CurveRegion2, GeometryError> {
-    let contours = model.face_contours(face)?;
+    let contours = match model.face_contours(face) {
+        Ok(contours) => contours,
+        // Boundaries with generated or spline edges have no line/arc contour:
+        // their exact curve paths fill the same region (outer and holes have
+        // opposite windings, so the non-zero rule selects the material).
+        Err(GeometryError::UnsupportedPcurveContour) => {
+            return Ok(CurveRegion2::try_from_boundary_paths(
+                &model.face_curve_paths(face)?,
+                hypercurve::FillRule::NonZero,
+            )?);
+        }
+        Err(error) => return Err(error),
+    };
     Ok(CurveRegion2::try_from_native_contours(
         vec![contours[0].clone()],
         contours[1..].to_vec(),
