@@ -137,9 +137,76 @@ impl TensorCurve3 {
     }
 
     pub(super) fn point_at(&self, s: &Real) -> GeometryResult<Point3> {
-        let uv = represented_curve_point(&self.source, &self.parameter(s))?;
+        let uv = match represented_curve_point(&self.source, &self.parameter(s)) {
+            Ok(uv) => uv,
+            Err(GeometryError::UnsupportedPcurveContour) => self
+                .certified_rational_uv(&self.parameter(s))?
+                .ok_or(GeometryError::UnsupportedPcurveContour)?,
+            Err(error) => return Err(error),
+        };
         self.surface
             .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
+    }
+
+    /// An exact rational UV point for a selected source point, when one
+    /// coordinate has a scalar view and the other is a rational root of the
+    /// source's defining polynomial at that value. Each rational candidate is
+    /// found by a bounded exact rational-root search with exact deflation and
+    /// accepted only after an exact comparison with the selected coordinate;
+    /// irrational coordinates return `None` and stay unmaterialized.
+    fn certified_rational_uv(&self, t: &Real) -> GeometryResult<Option<CurvePoint2>> {
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_specialize_first, bivariate_specialize_second,
+        };
+        use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
+        use hypersolve::exact_factor::exact_rational_polynomial_root;
+        let source = self
+            .source
+            .source_restriction()
+            .map_or(&self.source, |(original, _, _)| original);
+        let Some(branch) = source.polynomial_branch() else {
+            return Ok(None);
+        };
+        if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
+            return Ok(None);
+        }
+        let defining = branch.topology().geometric_equation();
+        let selected = self.source.point_at(&t.clone().into())?;
+        let coordinate = |axis: usize| {
+            let (a, b) = if axis == 0 {
+                (Real::one(), Real::zero())
+            } else {
+                (Real::zero(), Real::one())
+            };
+            selected.affine_form(a, b, Real::zero())
+        };
+        for known in [0, 1] {
+            let Some(value) = coordinate(known).parameter()?.scalar().cloned() else {
+                continue;
+            };
+            let other = coordinate(1 - known);
+            let mut polynomial = if known == 0 {
+                bivariate_specialize_first(defining, &value)
+            } else {
+                bivariate_specialize_second(defining, &value)
+            };
+            while let Some(root) = exact_rational_polynomial_root(&polynomial) {
+                if other.compare_to_real(&root)? == Ordering::Equal {
+                    return Ok(Some(if known == 0 {
+                        CurvePoint2::new(value, root)
+                    } else {
+                        CurvePoint2::new(root, value)
+                    }));
+                }
+                let Some(quotient) =
+                    divide_univariate_polynomial_exact(&polynomial, &[-root, Real::one()])
+                else {
+                    break;
+                };
+                polynomial = quotient;
+            }
+        }
+        Ok(None)
     }
 
     /// Joint evaluation at a possibly selected spatial parameter. The UV point
@@ -384,5 +451,123 @@ impl TensorCurve3 {
     /// Translates the tensor's control points; the UV chart is unchanged.
     pub(crate) fn translated(&self, offset: &Vector3) -> GeometryResult<Curve3> {
         self.transformed(&Matrix4::affine_translation(offset.0.clone()))
+    }
+}
+
+impl TensorCurve3 {
+    /// Exact parameter location of a represented point on the tensor image.
+    ///
+    /// The coordinate pullbacks `g_k = X_k - p_k W` vanish together exactly at
+    /// the point's UV preimages. The source is intersected with the complete
+    /// zero set of one pullback (Hypercurve native branch intersection), and
+    /// a contact is kept only where the other two pullbacks vanish too, by
+    /// exact rational forms at its selected UV point. A pullback containing
+    /// the source is replaced by another coordinate.
+    pub(super) fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
+        use hypersolve::BivariatePolynomial;
+        use hypersolve::bivariate_arithmetic::{bivariate_scale, bivariate_subtract};
+        let SurfaceGeometry::RationalBezier(patch) = &self.surface.data.geometry else {
+            unreachable!("tensor images retain rational Bézier tensors");
+        };
+        let [x, y, z, weight] = surface_point::tensor_coefficients(patch);
+        let pullbacks =
+            [(&x, &point.x), (&y, &point.y), (&z, &point.z)].map(|(coordinate, value)| {
+                bivariate_subtract(coordinate, &bivariate_scale(weight.clone(), value))
+            });
+        let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let vanishes = |uv: &hypercurve::CurvePoint2, polynomial: &BivariatePolynomial| {
+            Ok::<bool, GeometryError>(
+                uv.rational_form(polynomial.clone(), one.clone())?
+                    .compare_to_real(&Real::zero())?
+                    == Ordering::Equal,
+            )
+        };
+        let inverse = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+        let offset = -&self.source_offset * &inverse;
+        let spatial_domain = self.spatial_domain()?;
+        'primary: for primary in 0..3 {
+            let zeros = super::implicit_tensor::unit_square_zeros(&pullbacks[primary])?;
+            let others = (0..3).filter(|k| *k != primary).collect::<Vec<_>>();
+            let mut found: Vec<Parameter> = Vec::new();
+            let mut push = |parameter: Parameter| -> GeometryResult<()> {
+                if !spatial_domain.contains(&parameter)? {
+                    return Ok(());
+                }
+                for existing in &found {
+                    if existing.compare(&parameter)? == Ordering::Equal {
+                        return Ok(());
+                    }
+                }
+                found.push(parameter);
+                Ok(())
+            };
+            for branch in &zeros.curves {
+                let intersection = self.source.intersect_curve(branch)?;
+                if !intersection.overlaps().is_empty()
+                    || !intersection.parameter_components().is_empty()
+                {
+                    // The source lies along this pullback; use another one.
+                    continue 'primary;
+                }
+                if let Some(blocker) = intersection.blockers().first() {
+                    return Err(match blocker.kind() {
+                        hypercurve::CurveIntersectionPairBlockerKind2::SharedComponent => {
+                            continue 'primary;
+                        }
+                        hypercurve::CurveIntersectionPairBlockerKind2::Uncertain(reason) => {
+                            GeometryError::PlanarClassificationUnresolved(*reason)
+                        }
+                        hypercurve::CurveIntersectionPairBlockerKind2::IncompleteReplay => {
+                            GeometryError::UnsupportedParameterLocation
+                        }
+                    });
+                }
+                for contact in intersection.contacts() {
+                    let uv = contact.point();
+                    if vanishes(uv, &pullbacks[others[0]])? && vanishes(uv, &pullbacks[others[1]])?
+                    {
+                        push(
+                            Parameter::from_curve(&contact.first().parameter()?)?
+                                .affine_image(&inverse, &offset)?,
+                        )?;
+                    }
+                }
+            }
+            for isolated in &zeros.points {
+                if vanishes(isolated, &pullbacks[others[0]])?
+                    && vanishes(isolated, &pullbacks[others[1]])?
+                {
+                    match self.source.point_locations(isolated)? {
+                        hypercurve::CurvePointLocations2::EntireCurve => {
+                            return Ok(CurveParameterLocation::EntireDomain);
+                        }
+                        hypercurve::CurvePointLocations2::Locations(locations) => {
+                            for location in locations {
+                                push(
+                                    Parameter::from_curve(&location.parameter()?)?
+                                        .affine_image(&inverse, &offset)?,
+                                )?;
+                            }
+                        }
+                    }
+                }
+            }
+            // Order by spatial parameter.
+            for index in 1..found.len() {
+                let mut position = index;
+                while position > 0
+                    && found[position - 1].compare(&found[position])? == Ordering::Greater
+                {
+                    found.swap(position - 1, position);
+                    position -= 1;
+                }
+            }
+            return Ok(if found.is_empty() {
+                CurveParameterLocation::None
+            } else {
+                CurveParameterLocation::Parameters(found)
+            });
+        }
+        Err(GeometryError::UnsupportedParameterLocation)
     }
 }

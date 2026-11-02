@@ -1692,8 +1692,7 @@ impl Curve3 {
                 Err(GeometryError::UnsupportedParameterLocation)
             }
             CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
-            // No complete exact tensor inverse is admitted yet.
-            CurveGeometry3::TensorImage(_) => Err(GeometryError::UnsupportedParameterLocation),
+            CurveGeometry3::TensorImage(image) => image.parameters_of(point),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
                 locate_rational_bezier_parameters(self, curve, point)

@@ -3784,6 +3784,36 @@
       "validation": "The cubic x = 1, y = 2s^3, z = 2s^3 - 1, previously a typed blocker, now meets the planar parabola y = x^2 once at (1, 1, 0) with parabola parameter exactly 1/4 and a selected cubic parameter in (79/100, 4/5) with no scalar view; all earlier curve/curve witnesses pass unchanged. Inverting the parameter match fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 767 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; one planar curve/curve intersection replaces one point location per crossing.",
       "limits": "Projected overlaps fall back to point location; Hypercurve selected-point location on rational spans (algebraic-coefficient root isolation) remains an owner gap. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-face-splits-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Generated tensor-image sections can now split faces on their tensor. Two prerequisites are added. First, tensor-image scalar evaluation materializes a selected source point exactly when one UV coordinate has a scalar view and the other is a rational root of the source's defining polynomial at that value: Hypersolve's bounded exact rational-root search with exact deflation proposes candidates and only a candidate exactly equal to the selected coordinate is accepted; irrational coordinates stay unmaterialized. Second, tensor-image point location is exact for represented points: the source is intersected with the complete zero set of one coordinate pullback X_k - p_k W and contacts are kept only where the other two pullbacks vanish by exact rational forms; a pullback containing the source is replaced by another coordinate. With these, the existing open face split consumes generated sections and the tensor-image edge proof validates the result.",
+      "source": [
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "validation": "Four new witnesses on a face covering the paraboloid patch z = x^2 + y^2: the sections by x^2 + z^2 = 29/16 have exactly materialized boundary endpoints (+/-1/2, +/-1, 5/4) and one splits the face into two faces that replay cold; both sections split it into three faces that replay cold and again after a scaled rotation/translation; on the rational cylinder patch the section with irrational endpoints x = +/-sqrt(24)/5 is a typed split refusal; point location finds section endpoints at their domain ends and rejects (0, 0, 0) and (1/2, 0, 1). Disabling the certified rational endpoint or the two-pullback filter fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 771 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in about 0.03 s in release.",
+      "limits": "Face splits still need scalar endpoints: sections whose boundary endpoints are irrational, faces on the analytic operand (no pcurve) and atlas pieces are not consumed. The rational-root search is bounded (integer factors up to 10^9). Closed-loop splits of tensor faces, Booleans with tensor faces and shell admission remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
@@ -3958,7 +3988,7 @@
     }
   ],
   "next_actions": [
-    "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof now exists; face splits still require scalar Point3 endpoints, and a measured section endpoint provably equal to 1/4 exposes no scalar view, so splits need GeometricPoint3 stitching or certified rational-root recovery), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
+    "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof, certified rational endpoint recovery and tensor-image point location now let open splits consume sections with rational boundary endpoints; irrational endpoints still need GeometricPoint3 stitching), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
     "Continue WP02/WP03/WP05a/WP05b/WP06 from evidence/2026-10-19-surface-differentials/next-domains.md. Preserve the full old corpus and all eight new differential workflows while extending singular branch germs/event limits, complete dual-chart differential proofs, retained-profile selected positions and trim arrangements. Selected partials/unit normals and common-source vector products are now admitted on the recorded domains; independent-field/radical joins remain typed. All modeling, resource and delivery work packages and prior adverse cost observations remain active.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-section-differentials/next-domains.md. Regular implicit section jets and smooth-event directions now remain exact through selected spatial queries and replay. Preserve the full prior section corpus and seven new differential workflows while extending singular branch germs, same-source vector products, selected surface partials/normals, dual-chart differential proofs and trim arrangements. All modeling, resource and delivery work packages remain active.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-plane-tensor-sections/next-domains.md. The original full interior-loop plane/tensor target now succeeds with both pcurves and whole-image validation through affine replay. Preserve that success corpus while extending implicit differential/event queries, complete dual-chart trim arrangements and spatial image certificates. General curved solid Booleans and total-resource/release gates remain open.",
