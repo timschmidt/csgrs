@@ -16,6 +16,7 @@ use crate::{Parameter, ParameterRange};
 mod affine_image;
 mod analytic;
 mod axial_lines;
+mod cone_atlas;
 mod conical_revolution;
 mod curve_extrusion;
 mod curve_implicit;
@@ -4542,7 +4543,8 @@ impl Surface {
     /// projection certifies the tensor. Cylinders against nonparallel
     /// cylinders and off-axis spheres or tori are sectioned through an exact
     /// rational atlas of the cylinder's bounded relevant height range; ring tori
-    /// against off-axis spheres and cones use an exact rational torus atlas.
+    /// against off-axis spheres and cones use an exact rational torus atlas,
+    /// and cones against off-axis spheres an exact atlas of the cone.
     /// The configured
     /// solver work context participates where instrumented, but these limits
     /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
@@ -4695,10 +4697,18 @@ impl Surface {
                 }
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cone(cone)) => {
-                intersect_coaxial_sphere_cone(sphere, cone)
+                if cone_atlas::special_route_applies(cone, sphere)? {
+                    intersect_coaxial_sphere_cone(sphere, cone)
+                } else {
+                    cone_atlas::intersect(cone, sphere, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_cone(sphere, cone).map(swapped_curve_intersection)
+                if cone_atlas::special_route_applies(cone, sphere)? {
+                    intersect_coaxial_sphere_cone(sphere, cone).map(swapped_curve_intersection)
+                } else {
+                    cone_atlas::intersect(cone, sphere, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(first), SurfaceGeometry::Sphere(second)) => {
                 intersect_spheres(first, second)
@@ -17133,10 +17143,15 @@ mod tests {
         );
         let off_axis =
             Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
-        assert_eq!(
-            off_axis.intersect_surface(&cone).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on the cone seams (±3h/4, 0, h) the
+        // sphere gives 25h^2 ∓ 24h - 48 = 0, so h = (8√21 ± 12)/25.
+        let ends = atlas_piece_ends(off_axis.intersect_surface(&cone).unwrap());
+        let root = Real::from(21).sqrt().unwrap();
+        for sign in [1, -1] {
+            let h = ((Real::from(8) * &root + Real::from(12 * sign)) / Real::from(25)).unwrap();
+            let x = (Real::from(3 * sign) * &h / Real::from(4)).unwrap();
+            assert!(atlas_has_end(&ends, &x, &r(0), &h));
+        }
 
         let rotated_parameters =
             Surface::sphere(p(0, 0, 5), Vector3::y(), -Vector3::x(), Vector3::z(), r(5)).unwrap();

@@ -3431,6 +3431,34 @@
       "validation": "Four new witnesses in tests/torus_atlas_sections.rs on the R = 3, r = 1 torus, with every expected point derived from both equations on an atlas seam: the unit sphere about (4, 0, 0) gives two-piece junctions at (7/2, 0, +/-sqrt(3)/2) and (31/8, +/-sqrt(63)/8, 0), in both operand orders; the off-axis downward 45-degree cone from (1, 0, 4) gives junctions at (-3 -/+ sqrt(2)/2, 0, -/+ sqrt(2)/2); a distant sphere gives a complete empty result; a non-coaxial torus pair stays a typed refusal. Migrated unit witnesses: the radius-3 sphere against the torus about (1, 0, 0) ends at (3/17, 48/17, +/-12 sqrt(2)/17); the upward cone against the torus about (1, 0, 3) ends at (4, 0, 4) and (3, 0, 3). Breaking the weight product, swapping meridian coordinates, or inverting box pruning fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 745 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim. Release probe timings: the fine 100-patch torus atlas took 49 s for the migrated cone/torus witness, and the coarse 16-patch atlas took about 8 s in a probe and 4.1 s for the three migrated unit witnesses; a coarse cylinder atlas slowed the cylinder witnesses from 0.48 s to 40 s, so the cylinder keeps the fine atlas. An overlapping non-coaxial torus pair (R = 3, r = 1, offset (1, 0, 1)) took 253 s with the coarse atlas; that pair is therefore not admitted.",
       "limits": "Non-coaxial torus pairs, cone patches crossing the apex plane and sphere/cone pairs remain typed. Pieces carry no operand pcurves, depend on the charted operand and meet at seams; Boolean consumers keep their unsupported-carrier handling. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "cone-atlas-sections-2026-11-02",
+      "work_packages": [
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Native cones against spheres centred off the cone axis now return complete exact results instead of UnsupportedIntersection. Every common point has axial distance h <= axis.(c - apex) + r; an exact rational H above that bound is found by doubling, and a sphere with no reach above the apex plane is a complete empty result. Ten rational patches, quadratic along the fine exact unit-circle arcs and linear in h, apex + h (axis + tan(alpha)(a.x X + a.y Y)) for 0 <= h <= H, cover the cone portion and are sectioned completely after exact box pruning. The apex row collapses to one point, so a sphere through the apex is refused typed; otherwise the pulled-back equation is nonzero on that row and every section lies in the injective part of the atlas. The coaxial special route is dispatched exactly as before. The unit witness that pinned UnsupportedIntersection for the off-axis sphere/cone pair now asserts exact seam points.",
+      "source": [
+        "../src/geometry/cone_atlas.rs",
+        "../src/geometry.rs",
+        "../tests/cone_atlas_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Two new witnesses in tests/cone_atlas_sections.rs on the 45-degree cone x^2 + y^2 = z^2: the unit sphere about (1, 0, 2) crosses the seam (h, 0, h) where (h - 1)^2 + (h - 2)^2 = 1, giving two-piece junctions at (1, 0, 1) and (2, 0, 2) in both operand orders; a sphere through the apex is refused typed and a sphere below the apex plane is empty. The migrated unit witness (tan alpha = 3/4, radius-2 sphere about (1, 0, 0)) ends at (+/-3h/4, 0, h) with h = (8 sqrt(21) +/- 12)/25. Replacing tan(alpha) fails a witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 747 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the new witnesses complete in 0.03 s in release.",
+      "limits": "Spheres through the cone apex, cone/cylinder and cone/cone pairs (which need not be bounded) remain typed. Pieces carry no operand pcurves, depend on the charted operand and meet at seams; Boolean consumers keep their unsupported-carrier handling. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
