@@ -3966,6 +3966,33 @@
       "validation": "New witness: the two cylinder-patch branches chain through the junction (0, 1, 1) between the arc-boundary points (+/-sqrt(24)/5, 1/5, 7/5); the chain split gives two faces that replay cold, also with the pieces reordered and one reversed; a single piece and the closed paraboloid loop are DegenerateFaceSplit. Dropping the reversal of the first wire's chain uses or linking an edge to the wrong junction fails the witness. All earlier face-split witnesses pass through the refactored path. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 779 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the chain witness completes in well under 1 s in release.",
       "limits": "Chains touching existing holes or crossing each other, analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "quartic-section-endpoints-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP06",
+        "WP07",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Certified section endpoints extend to coordinates that solve quartics. After rational deflation, a remaining quartic is shifted exactly to the monic depressed form y^4 + p y^2 + q y + r. With q = 0 its roots are +/-sqrt(z) for the nonnegative roots z of z^2 + p z + r (nested radicals); otherwise each rational root m of Ferrari's resolvent 8m^3 - 4p m^2 - 8r m + 4pr - q^2 (found by exact rational search with deflation) with s^2 = 2m - p > 0 splits it into y^2 -+ s y + m +- q/(2s). These are candidates only; each is accepted by exact comparison with the selected coordinate.",
+      "source": [
+        "../src/geometry/tensor_image.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "validation": "Unit witnesses: the shifted biquadratic x^4 - 4x^3 + x^2 + 6x has exact roots -1, 0, 2, 3; y^4 - 5y^2 + 2y + 3 = (y^2 - y - 1)(y^2 + y - 3) uses the resolvent root m = -2 (s^2 = 1) and gives exactly (1 +/- sqrt(5))/2 and (-1 +/- sqrt(13))/2. Face witness: on the paraboloid face, the sections by x^2 + z^2 = 3/2 end at the nested radicals (+/-sqrt((sqrt(11) - 3)/2), +/-1, (sqrt(11) - 1)/2), and both split the face into three faces that replay cold. Removing the quartic candidates fails the face witness; swapping the Ferrari offset signs fails the unit witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 782 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the face witness completes in about 0.6 s in release.",
+      "limits": "Irreducible cubics and quartics without a rational resolvent root (no real radical form in Real, or casus irreducibilis), and higher degrees, still leave endpoints uncertified and splits typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

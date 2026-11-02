@@ -552,3 +552,70 @@ fn open_section_chain_splits_a_tensor_face() {
         Err(TopologyEditError::DegenerateFaceSplit)
     ));
 }
+
+/// x^2 + z^2 = 3/2 about the y axis on the paraboloid face: at y = ±1,
+/// x^2 + (x^2 + 1)^2 = 3/2 gives w^2 + 3w - 1/2 = 0 for w = x^2, so the
+/// sections end at the nested radicals x = ±sqrt((√11 - 3)/2) with
+/// z = (√11 - 1)/2. At y = 0, x^2 = (√7 - 1)/2 < 1, so each section stays
+/// inside the face. The UV coordinate there solves a quartic with no rational
+/// root, recovered as an exact shifted biquadratic.
+#[test]
+fn nested_radical_section_endpoints_split_tensor_faces() {
+    let (model, patch) = paraboloid_face();
+    let cylinder = Surface::cylinder(
+        Point3::origin(),
+        Vector3::z(),
+        Vector3::x(),
+        Vector3::y(),
+        (Real::from(6).sqrt().unwrap() / Real::from(2)).unwrap(),
+    )
+    .unwrap();
+    let pieces = match patch.intersect_surface(&cylinder).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("two sections required, found {other:?}"),
+    };
+    assert_eq!(pieces.len(), 2);
+    let root_eleven = Real::from(11).sqrt().unwrap();
+    let x = ((&root_eleven - Real::from(3)) / Real::from(2))
+        .unwrap()
+        .sqrt()
+        .unwrap();
+    let z = ((&root_eleven - Real::one()) / Real::from(2)).unwrap();
+    let expected = [
+        Point3::new(x.clone(), 1.into(), z.clone()),
+        Point3::new(x.clone(), (-1).into(), z.clone()),
+        Point3::new(-x.clone(), 1.into(), z.clone()),
+        Point3::new(-x, (-1).into(), z),
+    ];
+    for piece in &pieces {
+        for end in [piece.curve().start().unwrap(), piece.curve().end().unwrap()] {
+            assert!(expected.iter().any(|point| {
+                GeometricPoint3::from(end.clone())
+                    .coincides_with(&point.clone().into())
+                    .unwrap()
+            }));
+        }
+    }
+    let once = model
+        .faces()
+        .next()
+        .unwrap()
+        .split_by_surface_curve(&pieces[0], SurfaceIntersectionOperand::First)
+        .unwrap();
+    let once = reload(once.model());
+    let mut twice = None;
+    for face in once.faces() {
+        if let Ok(split) =
+            face.split_by_surface_curve(&pieces[1], SurfaceIntersectionOperand::First)
+        {
+            twice = Some(split.model().clone());
+            break;
+        }
+    }
+    assert_eq!(
+        reload(&twice.expect("one face contains the second section"))
+            .faces()
+            .count(),
+        3
+    );
+}

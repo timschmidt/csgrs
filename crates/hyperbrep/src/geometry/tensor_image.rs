@@ -514,8 +514,108 @@ fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>>
         };
         polynomial = quotient;
     }
-    candidates.extend(low_degree_roots(polynomial)?);
+    candidates.extend(low_degree_roots(polynomial.clone())?);
+    candidates.extend(quartic_roots(polynomial)?);
     Ok(candidates)
+}
+
+/// Exact radical roots of a quartic (ascending powers, after dropping exactly
+/// zero leading coefficients), when they exist in a form `Real` represents.
+/// The rational shift `x = y - c3/4` gives the monic depressed quartic
+/// `y^4 + p y^2 + q y + r`. With `q = 0` its roots are `±sqrt(z)` for the
+/// nonnegative roots `z` of `z^2 + p z + r`. Otherwise a rational root `m` of
+/// Ferrari's resolvent `8m^3 - 4p m^2 - 8r m + 4pr - q^2` with
+/// `s^2 = 2m - p > 0` splits it into `y^2 -+ s y + m +- q/(2s)`. Other quartics
+/// give no candidates; candidates are proved by exact comparison by callers.
+fn quartic_roots(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
+    use hypersolve::exact_factor::exact_rational_polynomial_root;
+    let sign = |value: &Real| {
+        decided_order(compare_reals(
+            value,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))
+    };
+    let divide = |a: Real, b: &Real| (a / b).map_err(GeometryError::Numeric);
+    while let Some(leading) = polynomial.last() {
+        if sign(leading)? != Ordering::Equal {
+            break;
+        }
+        polynomial.pop();
+    }
+    if polynomial.len() != 5 {
+        return Ok(Vec::new());
+    }
+    let leading = polynomial[4].clone();
+    let c = polynomial
+        .iter()
+        .map(|value| divide(value.clone(), &leading))
+        .collect::<GeometryResult<Vec<_>>>()?;
+    // Taylor shift by h = -c3/4: b_k = sum_{i >= k} C(i, k) c_i h^(i - k).
+    let h = divide(-c[3].clone(), &Real::from(4))?;
+    let binomial = [
+        [1, 0, 0, 0, 0],
+        [1, 1, 0, 0, 0],
+        [1, 2, 1, 0, 0],
+        [1, 3, 3, 1, 0],
+        [1, 4, 6, 4, 1],
+    ];
+    let mut powers = vec![Real::one()];
+    for _ in 0..4 {
+        let next = powers.last().expect("nonempty powers") * &h;
+        powers.push(next);
+    }
+    let shifted = (0..5)
+        .map(|k| {
+            (k..5).fold(Real::zero(), |total, i| {
+                total + Real::from(binomial[i][k]) * &c[i] * &powers[i - k]
+            })
+        })
+        .collect::<Vec<_>>();
+    let (p, q, r) = (&shifted[2], &shifted[1], &shifted[0]);
+    let mut depressed = Vec::new();
+    if sign(q)? == Ordering::Equal {
+        for z in low_degree_roots(vec![r.clone(), p.clone(), Real::one()])? {
+            match sign(&z)? {
+                Ordering::Less => {}
+                Ordering::Equal => depressed.push(Real::zero()),
+                Ordering::Greater => {
+                    let root = z.sqrt().map_err(GeometryError::Numeric)?;
+                    depressed.push(-root.clone());
+                    depressed.push(root);
+                }
+            }
+        }
+    } else {
+        // (y^2 + m)^2 - [(2m - p) y^2 - q y + (m^2 - r)]: the bracket is the
+        // square (s y - q/(2s))^2 exactly when q^2 = 4(2m - p)(m^2 - r).
+        let resolvent = vec![
+            Real::from(4) * p * r - q * q,
+            -(Real::from(8) * r),
+            -(Real::from(4) * p),
+            Real::from(8),
+        ];
+        let mut resolvent = resolvent;
+        while let Some(m) = exact_rational_polynomial_root(&resolvent) {
+            let square = Real::from(2) * &m - p;
+            if sign(&square)? == Ordering::Greater {
+                let s = square.sqrt().map_err(GeometryError::Numeric)?;
+                let offset = divide(q.clone(), &(Real::from(2) * &s))?;
+                for (linear, constant) in [(-s.clone(), &m + &offset), (s.clone(), &m - &offset)] {
+                    depressed.extend(low_degree_roots(vec![constant, linear, Real::one()])?);
+                }
+                break;
+            }
+            let Some(quotient) = hypersolve::curve_resultant::divide_univariate_polynomial_exact(
+                &resolvent,
+                &[-m, Real::one()],
+            ) else {
+                break;
+            };
+            resolvent = quotient;
+        }
+    }
+    Ok(depressed.into_iter().map(|y| y + &h).collect())
 }
 
 /// The exact resultant of `F` and `dF/d(other)` eliminating the other
@@ -712,5 +812,57 @@ impl TensorCurve3 {
             });
         }
         Err(GeometryError::UnsupportedParameterLocation)
+    }
+}
+
+#[cfg(test)]
+mod quartic_tests {
+    use super::*;
+
+    /// (x - 1)^4 - 5(x - 1)^2 + 4 = ((x-1)^2 - 1)((x-1)^2 - 4): a shifted
+    /// biquadratic with roots -1, 0, 2, 3, each verified exactly.
+    #[test]
+    fn shifted_biquadratic_roots_are_exact() {
+        // Expanded: x^4 - 4x^3 + x^2 + 6x.
+        let polynomial = vec![0.into(), 6.into(), 1.into(), (-4).into(), 1.into()];
+        let roots = quartic_roots(polynomial).unwrap();
+        assert_eq!(roots.len(), 4);
+        for expected in [-1, 0, 2, 3] {
+            assert!(roots.iter().any(|root| {
+                decided_order(compare_reals(
+                    root,
+                    &Real::from(expected),
+                    crate::STRICT_PREDICATES,
+                ))
+                .unwrap()
+                    == Ordering::Equal
+            }));
+        }
+    }
+
+    /// (y^2 - y - 1)(y^2 + y - 3) = y^4 - 5y^2 + 2y + 3 has q = 2 != 0. With
+    /// p = -5, r = 3 the resolvent 8m^3 + 20m^2 - 24m - 64 = 4(m + 2)(2m^2 +
+    /// m - 8) has the rational root m = -2 with s^2 = 2m - p = 1, so the split
+    /// recovers both factors; the roots are checked exactly as (1 ± √5)/2 and
+    /// (-1 ± √13)/2.
+    #[test]
+    fn ferrari_split_roots_are_exact() {
+        let polynomial = vec![3.into(), 2.into(), (-5).into(), 0.into(), 1.into()];
+        let roots = quartic_roots(polynomial).unwrap();
+        assert_eq!(roots.len(), 4);
+        let five = Real::from(5).sqrt().unwrap();
+        let thirteen = Real::from(13).sqrt().unwrap();
+        let half = |value: Real| (value / Real::from(2)).unwrap();
+        for expected in [
+            half(Real::one() + &five),
+            half(Real::one() - &five),
+            half(-Real::one() + &thirteen),
+            half(-Real::one() - &thirteen),
+        ] {
+            assert!(roots.iter().any(|root| {
+                decided_order(compare_reals(root, &expected, crate::STRICT_PREDICATES)).unwrap()
+                    == Ordering::Equal
+            }));
+        }
     }
 }
