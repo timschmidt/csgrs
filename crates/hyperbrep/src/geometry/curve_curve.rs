@@ -59,7 +59,8 @@ impl Curve3 {
     /// (coplanar) or locate the single plane crossing, with arc parameters from
     /// the arc's exact point location. Circular arcs meet on their radical line
     /// (coplanar) or on the line of their planes (otherwise), with both arc
-    /// parameters exact; coincident circles stay typed. Noncoplanar rational
+    /// parameters exact; arcs of one circle return their exact coincident
+    /// ranges and touching points in both charts. Noncoplanar rational
     /// Bézier/NURBS pairs
     /// are intersected through an
     /// exact planar projection whose candidates are confirmed by exact spatial
@@ -883,7 +884,7 @@ fn intersect_circles(
         let distance = between.norm_squared();
         if zero(&distance)? {
             return if order(r1, r2)? == Ordering::Equal {
-                Err(GeometryError::UnsupportedIntersection)
+                intersect_coincident_arcs(first_curve, second_curve)
             } else {
                 Ok(CurveCurveIntersection::None)
             };
@@ -949,5 +950,146 @@ fn intersect_circles(
         CurveCurveIntersection::None
     } else {
         CurveCurveIntersection::Points(points)
+    })
+}
+
+/// Two arcs of one circle. On the first arc, the overlap can only change at
+/// its own endpoints or at the second arc's endpoints; each interval between
+/// consecutive boundary parameters is tested at its exact midpoint. Ranges
+/// map to the second chart by endpoint visits whose angular lengths agree
+/// (equal radii preserve arc length); uncovered boundary parameters lying on
+/// both arcs are isolated touching points.
+fn intersect_coincident_arcs(
+    first: &Curve3,
+    second: &Curve3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let visits = |curve: &Curve3, point: &Point3| -> GeometryResult<Vec<Parameter>> {
+        Ok(match curve.parameters_of(point)? {
+            CurveParameterLocation::None => Vec::new(),
+            CurveParameterLocation::Parameters(parameters) => parameters,
+            CurveParameterLocation::EntireDomain => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+        })
+    };
+    let real = |parameter: &Parameter| {
+        parameter
+            .try_real()
+            .cloned()
+            .ok_or(GeometryError::UnsupportedIntersection)
+    };
+    let (start, end) = (real(first.domain().start())?, real(first.domain().end())?);
+    let mut boundaries = vec![start.clone(), end.clone()];
+    for endpoint in [second.start()?, second.end()?] {
+        for visit in visits(first, &endpoint)? {
+            boundaries.push(real(&visit)?);
+        }
+    }
+    // Sort and deduplicate exactly.
+    let mut sorted: Vec<Real> = Vec::new();
+    for value in boundaries {
+        let mut index = sorted.len();
+        let mut duplicate = false;
+        while index > 0 {
+            match order(&value, &sorted[index - 1])? {
+                Ordering::Less => index -= 1,
+                Ordering::Equal => {
+                    duplicate = true;
+                    break;
+                }
+                Ordering::Greater => break,
+            }
+        }
+        if !duplicate {
+            sorted.insert(index, value);
+        }
+    }
+    let mut overlaps = Vec::new();
+    let mut covered = vec![false; sorted.len()];
+    for index in 0..sorted.len() - 1 {
+        let (a0, a1) = (&sorted[index], &sorted[index + 1]);
+        let middle = ((a0 + a1) / Real::from(2)).map_err(GeometryError::Numeric)?;
+        if visits(second, &first.evaluate_real(&middle)?)?.is_empty() {
+            continue;
+        }
+        let length = a1 - a0;
+        let starts = visits(second, &first.evaluate_real(a0)?)?;
+        let ends = visits(second, &first.evaluate_real(a1)?)?;
+        let mut mapped = None;
+        'pair: for b0 in &starts {
+            for b1 in &ends {
+                let (b0r, b1r) = (real(b0)?, real(b1)?);
+                let span = &b1r - &b0r;
+                if order(&span, &length)? == Ordering::Equal
+                    || order(&-span, &length)? == Ordering::Equal
+                {
+                    mapped = Some(if order(&b0r, &b1r)? == Ordering::Less {
+                        (b0r, b1r)
+                    } else {
+                        (b1r, b0r)
+                    });
+                    break 'pair;
+                }
+            }
+        }
+        let Some((b_low, b_high)) = mapped else {
+            return Err(GeometryError::UnsupportedIntersection);
+        };
+        covered[index] = true;
+        covered[index + 1] = true;
+        overlaps.push((
+            ParameterRange::new(a0.clone().into(), a1.clone().into())?,
+            ParameterRange::new(b_low.into(), b_high.into())?,
+        ));
+    }
+    // Merge ranges that meet at a shared boundary on the first arc.
+    let mut merged: Vec<(ParameterRange, ParameterRange)> = Vec::new();
+    for (a, b) in overlaps {
+        if let Some((last_a, last_b)) = merged.last_mut()
+            && last_a.end().compare(a.start())? == Ordering::Equal
+            && (last_b.end().compare(b.start())? == Ordering::Equal
+                || last_b.start().compare(b.end())? == Ordering::Equal)
+        {
+            let low = if last_b.start().compare(b.start())? == Ordering::Less {
+                last_b.start().clone()
+            } else {
+                b.start().clone()
+            };
+            let high = if last_b.end().compare(b.end())? == Ordering::Greater {
+                last_b.end().clone()
+            } else {
+                b.end().clone()
+            };
+            *last_a = ParameterRange::new(last_a.start().clone(), a.end().clone())?;
+            *last_b = ParameterRange::new(low, high)?;
+            continue;
+        }
+        merged.push((a, b));
+    }
+    let mut points = Vec::new();
+    for (index, value) in sorted.iter().enumerate() {
+        if covered[index] {
+            continue;
+        }
+        let point = first.evaluate_real(value)?;
+        for visit in visits(second, &point)? {
+            points.push(CurveCurvePoint {
+                first: value.clone().into(),
+                second: visit,
+                point: point.clone().into(),
+            });
+        }
+    }
+    Ok(match (points.is_empty(), merged.len()) {
+        (true, 0) => CurveCurveIntersection::None,
+        (false, 0) => CurveCurveIntersection::Points(points),
+        (true, 1) => {
+            let (first, second) = merged.pop().expect("one overlap");
+            CurveCurveIntersection::Overlap { first, second }
+        }
+        _ => CurveCurveIntersection::Components {
+            points,
+            overlaps: merged,
+        },
     })
 }

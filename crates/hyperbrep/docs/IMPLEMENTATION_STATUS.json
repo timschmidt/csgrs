@@ -3677,6 +3677,33 @@
       "validation": "New witness: coplanar circles |p| = 5 and |p - (8, 0, 0)| = 5 meet at (4, +/-3, 0); the circle |p - (0, 0, 12)| = 13 in the xz plane meets |p| = 5 at (+/-5, 0, 0), with the base circle's seam point visited at theta = 0 and 2 pi and the other point at theta = pi; concentric distinct radii and distant circles miss; a circle against itself is a typed coincidence. Perturbing the radical-line formula fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 764 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in under 0.01 s in release.",
       "limits": "Coincident circles (angular overlap mapping), ellipse pairs, conics against rational or planar-image curves remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "coincident-arc-overlaps-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Arcs of one circle (same plane, center and radius) no longer fail typed in Curve3::intersect_curve. On the first arc the overlap can only change at its own endpoints or the second arc's located endpoints; each interval between exactly sorted boundary parameters is tested at its exact midpoint. Overlap ranges map to the second chart by choosing endpoint visits whose angular lengths agree exactly (equal radii preserve arc length), adjacent ranges are merged, and uncovered boundary parameters on both arcs are reported as touching points. Arbitrary frame rotations and reflections of the second arc are handled without angle algebra.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness on unit-circle arcs: [0, pi] and [pi/2, 3 pi/2] share [pi/2, pi] in both charts; [0, pi/2] and [pi/2, pi] touch at (0, 1, 0); [0, pi/3] and [pi/2, pi] miss; a quarter-turn rotated frame maps the shared [pi/2, pi] to its own [0, pi/2]; a y-flipped frame's [pi/2, pi] touches [0, pi] only at (-1, 0, 0) with parameters pi and pi; a full circle shares [pi/2, pi] with that arc. The former typed self-coincidence witness now asserts the whole range [0, 2 pi] in both charts. Treating every interval as overlap fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 765 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
+      "limits": "Arc endpoints and boundary parameters must have scalar views (authored arcs do); ellipse pairs and conics against rational or planar-image curves remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

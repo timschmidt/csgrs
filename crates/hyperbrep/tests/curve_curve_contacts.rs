@@ -588,8 +588,86 @@ fn circles_meet_exactly_in_and_across_planes() {
             CurveCurveIntersection::None
         ));
     }
+    // A circle against itself is its whole coincident range.
+    let CurveCurveIntersection::Overlap { first, second } = base.intersect_curve(&base).unwrap()
+    else {
+        panic!("one coincident range required");
+    };
+    let turn = Real::from(2) * Real::pi();
+    assert!(equal(first.start(), Real::zero()) && equal(first.end(), turn.clone()));
+    assert!(equal(second.start(), Real::zero()) && equal(second.end(), turn));
+}
+
+fn unit_arc(x: Vector3, y: Vector3, start: Real, end: Real) -> Curve3 {
+    Curve3::circle_arc(Point3::origin(), x, y, Real::one(), start, end).unwrap()
+}
+
+fn assert_overlap(result: CurveCurveIntersection, first: [Real; 2], second: [Real; 2]) {
+    let CurveCurveIntersection::Overlap {
+        first: a,
+        second: b,
+    } = result
+    else {
+        panic!("one coincident range required, found {result:?}");
+    };
+    let [a0, a1] = first;
+    let [b0, b1] = second;
+    assert!(equal(a.start(), a0) && equal(a.end(), a1));
+    assert!(equal(b.start(), b0) && equal(b.end(), b1));
+}
+
+/// Arcs of the unit circle in z = 0, in the global frame unless stated:
+/// [0, π] and [π/2, 3π/2] share [π/2, π]; [0, π/2] and [π/2, π] touch at
+/// (0, 1, 0); [0, π/3] and [π/2, π] miss; with the frame rotated by a quarter
+/// turn, its [0, π/2] is the global [π/2, π]; with the y axis flipped, its
+/// [π/2, π] is the global lower quarter [π, 3π/2], touching [0, π] at (-1, 0, 0).
+#[test]
+fn arcs_of_one_circle_return_exact_coincident_ranges() {
+    let x = Vector3::x;
+    let y = Vector3::y;
+    let pi = Real::pi;
+    let half = |r: Real| (r / Real::from(2)).unwrap();
+    let upper = unit_arc(x(), y(), Real::zero(), pi());
+    assert_overlap(
+        upper
+            .intersect_curve(&unit_arc(x(), y(), half(pi()), Real::from(3) * half(pi())))
+            .unwrap(),
+        [half(pi()), pi()],
+        [half(pi()), pi()],
+    );
+    let touching = points(
+        &unit_arc(x(), y(), Real::zero(), half(pi())),
+        &unit_arc(x(), y(), half(pi()), pi()),
+    );
+    assert_eq!(touching.len(), 1);
+    assert!(touching[0].point.coincides_with(&pi_point(0, 1)).unwrap());
     assert!(matches!(
-        base.intersect_curve(&base),
-        Err(GeometryError::UnsupportedIntersection)
+        unit_arc(x(), y(), Real::zero(), (pi() / Real::from(3)).unwrap())
+            .intersect_curve(&unit_arc(x(), y(), half(pi()), pi()))
+            .unwrap(),
+        CurveCurveIntersection::None
     ));
+    let rotated = unit_arc(y(), -x(), Real::zero(), half(pi()));
+    assert_overlap(
+        upper.intersect_curve(&rotated).unwrap(),
+        [half(pi()), pi()],
+        [Real::zero(), half(pi())],
+    );
+    let flipped = unit_arc(x(), -y(), half(pi()), pi());
+    let found = points(&upper, &flipped);
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].first, pi()));
+    assert!(equal(&found[0].second, pi()));
+    assert!(found[0].point.coincides_with(&pi_point(-1, 0)).unwrap());
+    let full = unit_arc(x(), y(), Real::zero(), Real::from(2) * pi());
+    assert_overlap(
+        full.intersect_curve(&unit_arc(x(), y(), half(pi()), pi()))
+            .unwrap(),
+        [half(pi()), pi()],
+        [half(pi()), pi()],
+    );
+}
+
+fn pi_point(x: i64, y: i64) -> GeometricPoint3 {
+    pi(x, y, 0).into()
 }
