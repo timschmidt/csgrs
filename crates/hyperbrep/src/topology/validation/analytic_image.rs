@@ -242,6 +242,38 @@ impl ArenaModelBuilder {
         }
     }
 
+    /// Whole-image identity of a tensor-image edge on a rational tensor face:
+    /// the same exact tensor and the same UV source definition under the
+    /// edge use's affine chart. Endpoints and their chart were checked by
+    /// validate_edge_use_image; no sample or archived flag is accepted.
+    pub(in crate::topology) fn validate_tensor_curve_image(
+        &self,
+        curve: &Curve3,
+        edge_use: &EdgeUse,
+        pcurve: &Pcurve,
+        surface: &Surface,
+    ) -> Result<(), BuildError> {
+        let Curve3ExactData::TensorImage(actual) = curve.exact_data() else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let ParameterCorrespondence::Affine { scale, offset, .. } =
+            &edge_use.parameter_correspondence
+        else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let expected = crate::geometry::TensorCurve3 {
+            surface: surface.clone(),
+            source: pcurve.curve().clone(),
+            source_scale: (Real::one() / scale).map_err(GeometryError::Numeric)?,
+            source_offset: (-offset / scale).map_err(GeometryError::Numeric)?,
+        };
+        if actual.parameterization_equals(&expected)? {
+            Ok(())
+        } else {
+            Err(BuildError::EdgeUseSupportMismatch)
+        }
+    }
+
     pub(in crate::topology) fn validate_planar_circle_image(
         &self,
         curve: &Curve3,
