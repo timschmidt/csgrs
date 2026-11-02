@@ -119,6 +119,52 @@ impl Curve3 {
     }
 }
 
+impl Curve3 {
+    /// For a tensor image whose (unrestricted) source is a whole iso-line of
+    /// its tensor, the tensor's exact iso-curve over the corresponding source
+    /// interval: the image at `s` is the iso-curve at `offset + scale s`, so
+    /// the restriction (reversed for a negative scale) matches this curve's
+    /// rebased chart. `None` for other curves.
+    pub(crate) fn tensor_image_as_iso_curve(&self) -> GeometryResult<Option<Curve3>> {
+        let CurveGeometry3::TensorImage(image) = &self.data.geometry else {
+            return Ok(None);
+        };
+        let order =
+            |a: &Real, b: &Real| decided_order(compare_reals(a, b, crate::STRICT_PREDICATES));
+        let original = image
+            .source
+            .source_restriction()
+            .map_or(&image.source, |(original, _, _)| original);
+        // A pure-v branch on any sub-range keeps the abscissa u as parameter.
+        let Some((axis, constant)) = super::plane_tensor::iso_line_with_range(
+            original,
+            original.polynomial_branch().is_none(),
+        )?
+        else {
+            return Ok(None);
+        };
+        let iso = image.surface.iso_curve(axis, &constant)?;
+        // The image at s is the iso-curve at offset + scale s.
+        let Some((start, end)) = self.domain().try_real_endpoints() else {
+            return Ok(None);
+        };
+        let first = image.parameter(start);
+        let last = image.parameter(end);
+        if order(start, &Real::zero())? == Ordering::Equal
+            && order(end, &Real::one())? == Ordering::Equal
+            && order(&first, &Real::zero())? == Ordering::Equal
+            && order(&last, &Real::one())? == Ordering::Equal
+        {
+            return Ok(Some(iso));
+        }
+        Ok(match order(&first, &last)? {
+            Ordering::Less => Some(iso.subcurve(&first, &last)?),
+            Ordering::Greater => Some(iso.subcurve(&last, &first)?.reversed()?),
+            Ordering::Equal => None,
+        })
+    }
+}
+
 impl TensorCurve3 {
     pub(super) fn parameter(&self, s: &Real) -> Real {
         &self.source_offset + &self.source_scale * s
@@ -182,9 +228,6 @@ impl TensorCurve3 {
         &self,
         selected: &hypercurve::CurvePoint2,
     ) -> GeometryResult<Option<CurvePoint2>> {
-        use hypersolve::bivariate_arithmetic::{
-            bivariate_specialize_first, bivariate_specialize_second,
-        };
         let source = self
             .source
             .source_restriction()
@@ -195,7 +238,23 @@ impl TensorCurve3 {
         if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
             return Ok(None);
         }
-        let defining = branch.topology().geometric_equation();
+        certified_scalar_point(selected, branch.topology().geometric_equation())
+    }
+}
+
+/// An exact scalar point for a selected planar point lying on the zero set of
+/// `defining`: one coordinate is a scalar view, a boundary value 0 or 1, or a
+/// projection-event root, and the other a root of the specialized defining
+/// polynomial, each proposed by exact candidates and proved by exact
+/// comparison. `None` when no candidate is proved.
+pub(crate) fn certified_scalar_point(
+    selected: &hypercurve::CurvePoint2,
+    defining: &hypersolve::BivariatePolynomial,
+) -> GeometryResult<Option<CurvePoint2>> {
+    use hypersolve::bivariate_arithmetic::{
+        bivariate_specialize_first, bivariate_specialize_second,
+    };
+    {
         let coordinate = |axis: usize| {
             let (a, b) = if axis == 0 {
                 (Real::one(), Real::zero())
@@ -247,9 +306,11 @@ impl TensorCurve3 {
                 }));
             }
         }
-        Ok(None)
     }
+    Ok(None)
+}
 
+impl TensorCurve3 {
     /// Joint evaluation at a possibly selected spatial parameter. The UV point
     /// keeps its selected source; the tensor retains its joint rational image.
     pub(super) fn geometric_point_at(&self, s: &Parameter) -> GeometryResult<GeometricPoint3> {

@@ -316,7 +316,16 @@ impl SurfaceIntersectionCurve {
 /// chord `u = r` (varying `v`), or a polynomial branch whose defining
 /// equation depends on `v` alone (`v = c`, varying `u`). Other components
 /// return `None`.
-fn iso_line(uv: &Curve2) -> GeometryResult<Option<(SurfaceIsoAxis, Real)>> {
+pub(super) fn iso_line(uv: &Curve2) -> GeometryResult<Option<(SurfaceIsoAxis, Real)>> {
+    iso_line_with_range(uv, true)
+}
+
+/// [`iso_line`], optionally accepting a polynomial branch on any sub-range
+/// of `u` (its parameter is still the abscissa `u`).
+pub(super) fn iso_line_with_range(
+    uv: &Curve2,
+    whole: bool,
+) -> GeometryResult<Option<(SurfaceIsoAxis, Real)>> {
     let unit = |value: &Real, expected: &Real| -> GeometryResult<bool> {
         Ok(
             decided_order(compare_reals(value, expected, crate::STRICT_PREDICATES))?
@@ -347,12 +356,14 @@ fn iso_line(uv: &Curve2) -> GeometryResult<Option<(SurfaceIsoAxis, Real)>> {
             }
         }
     }
-    let (start, end) = uv.parameter_endpoints();
-    let (Some(start), Some(end)) = (start.scalar(), end.scalar()) else {
-        return Ok(None);
-    };
-    if !unit(start, &Real::zero())? || !unit(end, &Real::one())? {
-        return Ok(None);
+    if whole {
+        let (start, end) = uv.parameter_endpoints();
+        let (Some(start), Some(end)) = (start.scalar(), end.scalar()) else {
+            return Ok(None);
+        };
+        if !unit(start, &Real::zero())? || !unit(end, &Real::one())? {
+            return Ok(None);
+        }
     }
     // The constant is a root of the equation's v polynomial, certified equal
     // to the branch's selected coordinate.

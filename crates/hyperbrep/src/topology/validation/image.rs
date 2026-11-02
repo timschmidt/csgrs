@@ -246,6 +246,19 @@ impl ArenaModelBuilder {
                 self.validate_tensor_curve_image(curve, edge_use, pcurve, surface)?;
             }
             (
+                Curve3Kind::TensorImage,
+                CurveFamily2::RationalQuadraticBezier | CurveFamily2::RationalBezier,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { .. },
+            ) => {
+                // A tensor image of a whole iso-line is exactly the tensor's
+                // iso-curve, whose planar spline image proof applies.
+                let iso = curve
+                    .tensor_image_as_iso_curve()?
+                    .ok_or(BuildError::EdgeUseSupportMismatch)?;
+                self.validate_planar_spline_image(&iso, edge, edge_use, pcurve, surface)?;
+            }
+            (
                 Curve3Kind::Line,
                 CurveFamily2::Line,
                 SurfaceKind::Plane,

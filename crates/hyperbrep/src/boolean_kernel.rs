@@ -1767,17 +1767,14 @@ fn face_interior_parameter_witnesses(
         })
         .collect::<Vec<_>>();
     let outer = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
+    // Vertices only propose candidates (each is proved inside below, and a
+    // grid follows), so selected vertices without scalar coordinates are
+    // skipped rather than failing the face.
     let vertices = outer
         .curves()
         .iter()
-        .map(|curve| {
-            curve
-                .start()
-                .coordinates()
-                .cloned()
-                .ok_or(GeometryError::UnsupportedPcurveContour)
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+        .filter_map(|curve| curve.start().coordinates().cloned())
+        .collect::<Vec<_>>();
     let mut candidates = Vec::with_capacity(vertices.len() + 60);
     let vertex_average = average_planar_points(&vertices)?;
     if let Some(average) = &vertex_average {
@@ -4311,6 +4308,13 @@ fn retained_curve_face_intervals(
     let region = planar_face_region(model, face)?;
     let mut intervals = Vec::new();
     for carrier in carriers {
+        let defining = carrier
+            .curve()
+            .polynomial_branch()
+            .filter(|branch| {
+                branch.image_transform().is_none() && branch.rational_maps().is_empty()
+            })
+            .map(|branch| branch.topology().geometric_equation());
         let trimmed = match carrier.curve().trim_inside_region_with_parameters(&region) {
             Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
@@ -4331,6 +4335,7 @@ fn retained_curve_face_intervals(
                 face,
                 fragment.start_boundary_contacts(),
                 canonical_surface,
+                defining,
             )?
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4340,6 +4345,7 @@ fn retained_curve_face_intervals(
                 face,
                 fragment.end_boundary_contacts(),
                 canonical_surface,
+                defining,
             )?
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4423,12 +4429,27 @@ fn model_boundary_contacts(
     face_id: FaceId,
     contacts: &[CurveRegionBoundaryContact2],
     canonical_surface: Option<&Surface>,
+    defining: Option<&hypersolve::BivariatePolynomial>,
 ) -> Result<Option<Vec<SurfaceIntersectionBoundaryContact>>, GeometryError> {
     let face = model.face(face_id).expect("validated trim face");
     let mut translated = Vec::with_capacity(contacts.len());
     for contact in contacts {
-        let Some(pcurve_point) = contact.point().and_then(|point| point.coordinates()) else {
-            return Ok(None);
+        // A selected contact on a polynomial carrier is certified as an exact
+        // scalar point from the carrier's defining polynomial.
+        let certified;
+        let pcurve_point = match contact.point().and_then(|point| point.coordinates()) {
+            Some(point) => point,
+            None => {
+                let (Some(selected), Some(defining)) = (contact.point(), defining) else {
+                    return Ok(None);
+                };
+                let Some(point) = crate::geometry::certified_scalar_point(selected, defining)?
+                else {
+                    return Ok(None);
+                };
+                certified = point;
+                &certified
+            }
         };
         let canonical_coordinate = |coordinate: &Real| {
             coordinate
@@ -7287,6 +7308,7 @@ fn trim_conic_to_planar_face(
                 face,
                 fragment.start_boundary_contacts(),
                 Some(opposite_surface),
+                None,
             )?
             else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
@@ -7296,6 +7318,7 @@ fn trim_conic_to_planar_face(
                 face,
                 fragment.end_boundary_contacts(),
                 Some(opposite_surface),
+                None,
             )?
             else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
@@ -7687,9 +7710,10 @@ mod tests {
                         fragment.start_boundary_contacts(),
                         fragment.end_boundary_contacts(),
                     ] {
-                        let retained = model_boundary_contacts(&model, face_id, contacts, None)
-                            .unwrap()
-                            .unwrap();
+                        let retained =
+                            model_boundary_contacts(&model, face_id, contacts, None, None)
+                                .unwrap()
+                                .unwrap();
                         assert!(!retained.is_empty());
                         for contact in retained {
                             let replay =

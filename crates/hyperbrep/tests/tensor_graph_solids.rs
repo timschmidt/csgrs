@@ -331,3 +331,60 @@ fn booleans_split_tensor_graph_solids_exactly() {
     }
     assert!(boolean::union(&body, &cut).is_err());
 }
+
+/// Boolean output as input: the x <= 1/2 intersection, replayed cold, is
+/// intersected with y <= 1/2. The second cut crosses the first cut's wall and
+/// iso section, and the corner solid has volume
+/// integral_{-1}^{1/2} integral_{-1}^{1/2} (x^2 + y^2 + 1) = 9/8 + 9/4.
+#[test]
+fn chained_booleans_on_tensor_graph_solids_stay_exact() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let cut_x = builder::cuboid(pi(-2, -2, -2), Point3::new(q(1, 2), 2.into(), 3.into())).unwrap();
+    let first = boolean::intersection(&body, &cut_x).unwrap();
+    let cold = RawModel::from_json(&first.model().to_json().unwrap(), &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    let first = BodySet::from_solid(cold.solids().next().unwrap());
+    let cut_y = builder::cuboid(pi(-2, -2, -2), Point3::new(2.into(), q(1, 2), 3.into())).unwrap();
+    let corner = boolean::intersection(&first, &cut_y).unwrap();
+    assert_eq!(corner.len(), 1);
+    assert_eq!(corner.model().faces().count(), 6);
+    let solid = corner.bodies().next().unwrap();
+    assert_eq!(solid.volume().unwrap(), q(27, 8));
+    for (point, expected) in [
+        (
+            Point3::new(q(-1, 2), q(-1, 2), 0.into()),
+            SolidPointLocation::Inside,
+        ),
+        (
+            Point3::new(q(3, 4), 0.into(), 0.into()),
+            SolidPointLocation::Outside,
+        ),
+        (
+            Point3::new(0.into(), q(3, 4), 0.into()),
+            SolidPointLocation::Outside,
+        ),
+        (
+            Point3::new(q(1, 2), q(1, 2), q(1, 4)),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            Point3::new(q(1, 2), q(1, 2), q(3, 4)),
+            SolidPointLocation::Outside,
+        ),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    let replayed = RawModel::from_json(
+        &corner.model().to_json().unwrap(),
+        &ArchiveLimits::default(),
+    )
+    .unwrap()
+    .validate()
+    .unwrap();
+    assert_eq!(
+        replayed.solids().next().unwrap().volume().unwrap(),
+        q(27, 8)
+    );
+}

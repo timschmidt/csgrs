@@ -4271,6 +4271,39 @@
       "validation": "Independent expectations from integrating z + 1 = x^2 + y^2 + 1: the full solid has volume 20/3 (also after cold replay); after the scaled rotation with linear determinant (36/25 + 64/25) * 2 = 8 it is 160/3; the Boolean intersection with x <= 1/2 has 19/4 and the difference 23/12 (= 20/3 - 19/4), certifying the Boolean results by an independent exact quantity. A wrong antiderivative factor or a missing frame determinant fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 796 hyperbrep and 127 hyperbrep-io passes, 0 failures (before an assign-operator-only Clippy fix, after which Clippy and the affected suite were rerun).",
       "cost_evidence": "No performance claim.",
       "limits": "Volume for rational tensor tops and for top faces trimmed by curved pcurves, and face area of tensor-graph solids, remain unsupported. No work package or pre-push gate closes."
+    },
+    {
+      "id": "chained-tensor-graph-booleans-2026-11-02",
+      "work_packages": [
+        "WP08",
+        "WP09",
+        "WP10",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P13",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Boolean results on tensor-graph solids now serve as operands again, including after cold replay. Four owner fixes, each required by the chain: (1) selected boundary contacts of a polynomial trimming carrier are certified as exact scalar points from the carrier's defining polynomial (certified_scalar_point, factored from the tensor-image endpoint certification) instead of being refused; (2) face interior witnesses skip boundary vertices without scalar views, since every candidate (vertex-derived or grid) is proved inside exactly; (3) a tensor image whose source is an iso-line of its tensor validates on a plane by reconstructing the exact iso-curve over the corresponding source interval and applying the planar spline image proof; (4) tensor-graph volume accepts straight polynomial-branch trims (total degree one) with scalar or certified endpoints. An exploratory overlap-cut change was removed because no witness required it.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/geometry.rs",
+        "../src/topology/measure.rs",
+        "../src/topology/validation/image.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "validation": "New witness: the x <= 1/2 intersection of the paraboloid-capped solid, replayed cold, intersected with y <= 1/2 gives a six-face corner solid with exact volume 27/8 (independently 9/8 + 9/4) before and after cold replay, and exact classifications ((-1/2, -1/2, 0) inside, (1/2, 1/2, 1/4) on both walls below the top, (1/2, 1/2, 3/4) above it, and points beyond either cut outside). Disabling the certified contacts, the witness-vertex skip, straight-branch volume, or the iso validation arm each fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 797 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the chained witness completes in well under 0.1 s in release.",
+      "limits": "Cuts through the top by non-vertical planes (plane-face trimming of mapped-branch pcurves), unions and coincident-face cases remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

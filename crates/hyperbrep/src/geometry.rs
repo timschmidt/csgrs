@@ -41,6 +41,7 @@ mod spline;
 mod surface_point;
 mod tensor_graph;
 mod tensor_image;
+pub(crate) use tensor_image::certified_scalar_point;
 mod torus_atlas;
 mod transform;
 mod translation;

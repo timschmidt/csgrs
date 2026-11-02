@@ -688,18 +688,10 @@ impl ArenaModel {
                         for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
                             let edge_use = self.edge_use(*use_id).expect("validated edge use");
                             let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
-                            let Some(hypercurve::CurveGeometry2::Line(line)) =
-                                pcurve.curve().geometry()
-                            else {
-                                return Err(GeometryError::UnsupportedMeasurement.into());
-                            };
-                            segments.push((
-                                CurvePoint2::new(
-                                    line.start().x().clone(),
-                                    line.start().y().clone(),
-                                ),
-                                CurvePoint2::new(line.end().x().clone(), line.end().y().clone()),
-                            ));
+                            segments.push(
+                                straight_pcurve_segment(pcurve.curve())?
+                                    .ok_or(GeometryError::UnsupportedMeasurement)?,
+                            );
                         }
                         loops.push(segments);
                     }
@@ -923,4 +915,52 @@ fn area_magnitude(signed: Real) -> Real {
         } => signed,
         PredicateOutcome::Unknown { .. } => signed.abs(),
     }
+}
+
+/// The exact endpoints of a straight pcurve: a native line segment, or a
+/// polynomial branch whose defining equation has total degree one (an exact
+/// line), with endpoints from their scalar views or certified from that
+/// equation. `None` for other curves.
+fn straight_pcurve_segment(
+    curve: &Curve2,
+) -> Result<Option<(CurvePoint2, CurvePoint2)>, GeometryError> {
+    if let Some(hypercurve::CurveGeometry2::Line(line)) = curve.geometry() {
+        return Ok(Some((
+            CurvePoint2::new(line.start().x().clone(), line.start().y().clone()),
+            CurvePoint2::new(line.end().x().clone(), line.end().y().clone()),
+        )));
+    }
+    let Some(branch) = curve.polynomial_branch() else {
+        return Ok(None);
+    };
+    if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
+        return Ok(None);
+    }
+    let equation = branch.topology().geometric_equation();
+    for (i, row) in equation.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            if i + j > 1
+                && decided_model_order(compare_reals(
+                    coefficient,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Equal
+            {
+                return Ok(None);
+            }
+        }
+    }
+    let scalar = |point: hypercurve::CurvePoint2| -> Result<Option<CurvePoint2>, GeometryError> {
+        if let Some(coordinates) = point.coordinates() {
+            return Ok(Some(CurvePoint2::new(
+                coordinates.x().clone(),
+                coordinates.y().clone(),
+            )));
+        }
+        crate::geometry::certified_scalar_point(&point, equation)
+    };
+    let (Some(start), Some(end)) = (scalar(curve.start())?, scalar(curve.end())?) else {
+        return Ok(None);
+    };
+    Ok(Some((start, end)))
 }
