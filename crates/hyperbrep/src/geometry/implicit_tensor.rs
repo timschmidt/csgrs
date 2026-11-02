@@ -245,69 +245,78 @@ pub(super) struct UnitSquareZeros {
 
 /// Decomposes `equation` on the unit square. The topology projects over one
 /// coordinate and reports lines on which it is constant as vertical
-/// components; such a set is decomposed again with exchanged coordinates and
-/// mapped back through the exact reflection `(u, v) -> (v, u)`, which retains
-/// every selected branch, fiber and source authority. A set with line
-/// components in both directions is split exactly into its pure-`u` factor,
-/// pure-`v` factor and primitive remainder; each part is decomposed in a
-/// chart without vertical components, branches of different parts are split
-/// at their exact crossings, and isolated points lying on another part are
-/// dropped. Other blockers remain typed.
+/// components. Such a set is first split exactly into its pure-`u` factor,
+/// pure-`v` factor and primitive remainder: pure-`u` components become exact
+/// chords `u = r`, the other parts decompose natively, branches of different
+/// parts are split at their exact crossings, and isolated points lying on
+/// another part are dropped. When that fails (for example a pure-`u` root
+/// without a scalar view), the set is decomposed with exchanged coordinates
+/// and mapped back through the exact reflection `(u, v) -> (v, u)`, which
+/// retains every selected branch, fiber and source authority. Other
+/// blockers remain typed.
 pub(super) fn unit_square_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquareZeros> {
     use hypersolve::bivariate_topology::BivariateTopologyError;
-    match single_chart_zeros(equation) {
-        Err(GeometryError::PolynomialTopology(BivariateTopologyError::VerticalComponent)) => {
-            axis_factor_zeros(equation)
-        }
+    let vertical = |error: &GeometryError| {
+        matches!(
+            error,
+            GeometryError::PolynomialTopology(BivariateTopologyError::VerticalComponent)
+        )
+    };
+    match native_zeros(equation) {
+        Err(error) if vertical(&error) => match axis_factor_zeros(equation) {
+            Ok(zeros) => Ok(zeros),
+            Err(axis_error) => match swapped_zeros(equation) {
+                Err(error) if vertical(&error) => Err(axis_error),
+                other => other,
+            },
+        },
         other => other,
     }
 }
 
-fn single_chart_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquareZeros> {
-    use hypersolve::bivariate_arithmetic::bivariate_swap_parameters;
-    use hypersolve::bivariate_topology::BivariateTopologyError;
+fn decompose_unit_square(equation: &BivariatePolynomial) -> GeometryResult<PolynomialCurveSet2> {
     let domain = BivariateCurveDomain {
         first: [Real::zero(), Real::one()],
         second: [Real::zero(), Real::one()],
     };
-    let decompose = |equation: &BivariatePolynomial| -> GeometryResult<PolynomialCurveSet2> {
-        let topology =
-            decompose_bivariate_curve(equation, &domain, BivariateTopologyConfig::default())
-                .map_err(GeometryError::PolynomialTopology)?;
-        Ok(PolynomialCurveSet2::from_topology(
-            topology,
-            AlgebraicFiberRootIsolationConfig::default(),
-        )?)
-    };
-    match decompose(equation) {
-        Ok(set) => Ok(UnitSquareZeros {
-            curves: set.curves().to_vec(),
-            points: set.isolated_points().to_vec(),
-        }),
-        Err(GeometryError::PolynomialTopology(BivariateTopologyError::VerticalComponent)) => {
-            let set = decompose(&bivariate_swap_parameters(equation))?;
-            let swap = RationalMap2::new(
-                [
-                    BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
-                    BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
-                ],
-                BivariatePolynomial::new(vec![vec![Real::one()]]),
-            );
-            Ok(UnitSquareZeros {
-                curves: set
-                    .curves()
-                    .iter()
-                    .map(|curve| curve.rational_image(&swap))
-                    .collect::<Result<_, _>>()?,
-                points: set
-                    .isolated_points()
-                    .iter()
-                    .map(|point| point.rational_image(&swap))
-                    .collect::<Result<_, _>>()?,
-            })
-        }
-        Err(error) => Err(error),
-    }
+    let topology = decompose_bivariate_curve(equation, &domain, BivariateTopologyConfig::default())
+        .map_err(GeometryError::PolynomialTopology)?;
+    Ok(PolynomialCurveSet2::from_topology(
+        topology,
+        AlgebraicFiberRootIsolationConfig::default(),
+    )?)
+}
+
+fn native_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquareZeros> {
+    let set = decompose_unit_square(equation)?;
+    Ok(UnitSquareZeros {
+        curves: set.curves().to_vec(),
+        points: set.isolated_points().to_vec(),
+    })
+}
+
+fn swapped_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquareZeros> {
+    use hypersolve::bivariate_arithmetic::bivariate_swap_parameters;
+    let set = decompose_unit_square(&bivariate_swap_parameters(equation))?;
+    let swap = RationalMap2::new(
+        [
+            BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]),
+            BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]),
+        ],
+        BivariatePolynomial::new(vec![vec![Real::one()]]),
+    );
+    Ok(UnitSquareZeros {
+        curves: set
+            .curves()
+            .iter()
+            .map(|curve| curve.rational_image(&swap))
+            .collect::<Result<_, _>>()?,
+        points: set
+            .isolated_points()
+            .iter()
+            .map(|point| point.rational_image(&swap))
+            .collect::<Result<_, _>>()?,
+    })
 }
 
 /// The zero set of `f(u) g(v) R(u, v)` as the union of the three parts' zero
@@ -375,7 +384,7 @@ fn axis_factor_zeros(equation: &BivariatePolynomial) -> GeometryResult<UnitSquar
                 points: Vec::new(),
             }
         } else {
-            single_chart_zeros(part)?
+            native_zeros(part)?
         });
     }
     // Exact crossing parameters of each branch with every other part.

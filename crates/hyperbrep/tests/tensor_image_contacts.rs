@@ -286,18 +286,27 @@ fn selected_third_surface_contact_splits_and_replays() {
     assert_eq!(contacts(&cut, &replayed).len(), 1);
 }
 
-/// A plane of constant x pulls back to a line of constant u. The topology's
-/// projection reports it as a vertical component, so it is decomposed in the
-/// exchanged chart and reflected back; Hypercurve's curve/curve intersection
-/// does not yet accept such mapped branches, so the cut stays typed.
+/// A plane of constant x pulls back to a line of constant u, which the
+/// topology's projection reports as a vertical component; it is now an exact
+/// chord u = 1/2. The plane x = 0 meets the loop only at (0, 1, 1), where
+/// x^2 + y^2 = 1 and y^2 + z^2 = 2 give y = z = 1, at s = (x + 2)/4 = 1/2:
+/// the shared end of the two branches.
 #[test]
-fn axis_aligned_plane_cut_remains_a_typed_blocker() {
-    let [lower, _] = cylinder_branches();
+fn axis_aligned_plane_cut_meets_the_branch_end_exactly() {
+    let [lower, upper] = cylinder_branches();
     let cut = plane(Point3::origin(), Vector3::y(), Vector3::z());
-    assert!(matches!(
-        cut.intersect_curve(lower.curve()),
-        Err(GeometryError::PlanarCurve(_) | GeometryError::PolynomialTopology(_))
-    ));
+    for branch in [&lower, &upper] {
+        let found = contacts(&cut, branch.curve());
+        assert_eq!(found.len(), 1);
+        assert_eq!(
+            found[0]
+                .parameter
+                .compare(&Parameter::from_real(q(1, 2)))
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert!(found[0].point.coincides_with(&pi(0, 1, 1).into()).unwrap());
+    }
 }
 
 /// Branches of the patch's sections by x^2 + y^2 = 1 and by x^2 + z^2 = 9/4

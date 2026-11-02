@@ -1207,12 +1207,23 @@ impl Curve3 {
 
     /// Evaluates the curve at its exact domain start.
     pub fn start(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().represented_start()?))
+        crate::context::strict(|| {
+            if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                // A selected end whose UV preimage is certified scalar.
+                return image.certified_point(self.domain().start());
+            }
+            self.evaluate_real(self.domain().represented_start()?)
+        })
     }
 
     /// Evaluates the curve at its exact domain end.
     pub fn end(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().represented_end()?))
+        crate::context::strict(|| {
+            if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().end());
+            }
+            self.evaluate_real(self.domain().represented_end()?)
+        })
     }
 
     pub(crate) fn line_endpoints(&self) -> Option<(&Point3, &Point3)> {

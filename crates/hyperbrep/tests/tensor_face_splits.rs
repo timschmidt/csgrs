@@ -201,9 +201,12 @@ fn both_sections_split_the_face_into_three_and_replay_transformed() {
     assert_eq!(mapped.faces().count(), 3);
 }
 
-/// On the rational patch of y^2 + z^2 = 2, the section by x^2 + y^2 = 1 ends
-/// at x = ±√24/5: no certified rational endpoint exists, so the face split
-/// is a typed refusal rather than a rounded vertex.
+/// On the rational patch of y^2 + z^2 = 2, the section by x^2 + y^2 = 1 runs
+/// from x = -√24/5 to √24/5 and is split into two branches at the topology
+/// event x = 0, (0, 1, 1). There the UV coordinate v solves a quartic with no
+/// rational root and no remaining factor of degree at most two, so no scalar
+/// endpoint is certified and the face split is a typed refusal rather than a
+/// rounded vertex.
 #[test]
 fn irrational_section_endpoints_remain_typed() {
     let arc = [
@@ -304,4 +307,81 @@ impl EvaluatePoint for Curve3 {
                 }
             })
     }
+}
+
+/// x^2 + y^2 = 3/2 about the z axis cuts the paraboloid face's four corners
+/// along arcs from (±√2/2, ±1, 3/2) to (±1, ±√2/2, 3/2). The selected UV
+/// ends expose no scalar coordinates; one coordinate is proved equal to a
+/// patch-boundary value and the other to a root of the remaining quadratic,
+/// so both ends are certified radical points.
+fn corner_sections(patch: &Surface) -> Vec<SurfaceIntersectionCurve> {
+    let cylinder = Surface::cylinder(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::z(),
+        (Real::from(6).sqrt().unwrap() / Real::from(2)).unwrap(),
+    )
+    .unwrap();
+    match patch.intersect_surface(&cylinder).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("curve components required, found {other:?}"),
+    }
+}
+
+#[test]
+fn radical_section_endpoints_split_tensor_faces() {
+    let (model, patch) = paraboloid_face();
+    let pieces = corner_sections(&patch);
+    assert_eq!(pieces.len(), 4);
+    let half_root_two = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+    let expected = |point: &Point3| {
+        let unit = |value: &Real| {
+            GeometricPoint3::from(Point3::new(value.clone(), 0.into(), 0.into()))
+                .coincides_with(&Point3::new(1.into(), 0.into(), 0.into()).into())
+                .unwrap()
+                || GeometricPoint3::from(Point3::new(value.clone(), 0.into(), 0.into()))
+                    .coincides_with(&Point3::new((-1).into(), 0.into(), 0.into()).into())
+                    .unwrap()
+        };
+        let surd = |value: &Real| {
+            [half_root_two.clone(), -half_root_two.clone()]
+                .iter()
+                .any(|candidate| {
+                    GeometricPoint3::from(Point3::new(value.clone(), 0.into(), 0.into()))
+                        .coincides_with(&Point3::new(candidate.clone(), 0.into(), 0.into()).into())
+                        .unwrap()
+                })
+        };
+        GeometricPoint3::from(Point3::new(0.into(), 0.into(), point.z.clone()))
+            .coincides_with(&Point3::new(0.into(), 0.into(), q(3, 2)).into())
+            .unwrap()
+            && (unit(&point.x) && surd(&point.y) || surd(&point.x) && unit(&point.y))
+    };
+    for piece in &pieces {
+        let curve = piece.curve();
+        assert!(expected(&curve.start().unwrap()));
+        assert!(expected(&curve.end().unwrap()));
+    }
+    // One cut leaves two faces; all four leave five, replaying cold.
+    let split = model
+        .faces()
+        .next()
+        .unwrap()
+        .split_by_surface_curve(&pieces[0], SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(reload(split.model()).faces().count(), 2);
+    let mut current = split.model().clone();
+    for piece in &pieces[1..] {
+        let mut next = None;
+        for face in current.faces() {
+            if let Ok(split) = face.split_by_surface_curve(piece, SurfaceIntersectionOperand::First)
+            {
+                next = Some(split.model().clone());
+                break;
+            }
+        }
+        current = reload(&next.expect("one face contains each corner section"));
+    }
+    assert_eq!(current.faces().count(), 5);
 }

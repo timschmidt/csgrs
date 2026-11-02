@@ -148,13 +148,39 @@ impl TensorCurve3 {
             .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
     }
 
-    /// An exact rational UV point for a selected source point, when one
-    /// coordinate has a scalar view and the other is a rational root of the
-    /// source's defining polynomial at that value. Each rational candidate is
-    /// found by a bounded exact rational-root search with exact deflation and
+    /// An exact scalar UV point for a selected source point, when one
+    /// coordinate has a scalar view (or is proved equal to a patch-boundary
+    /// value 0 or 1) and the other is a root of the source's
+    /// defining polynomial at that value that is rational, or a root of the
+    /// remaining linear or quadratic factor after exact rational deflation.
+    /// Rational candidates come from a bounded exact rational-root search;
+    /// radical candidates from the exact quadratic formula. Each candidate is
     /// accepted only after an exact comparison with the selected coordinate;
-    /// irrational coordinates return `None` and stay unmaterialized.
+    /// other coordinates return `None` and stay unmaterialized.
     fn certified_rational_uv(&self, t: &Real) -> GeometryResult<Option<CurvePoint2>> {
+        self.certified_scalar_uv(&self.source.point_at(&t.clone().into())?)
+    }
+
+    /// Scalar evaluation at a possibly selected spatial parameter: the joint
+    /// point when its UV preimage is certified scalar, as for
+    /// [`Self::certified_rational_uv`].
+    pub(super) fn certified_point(&self, s: &Parameter) -> GeometryResult<Point3> {
+        if let Some(value) = s.try_real() {
+            return self.point_at(value);
+        }
+        let mapped = s.affine_image(&self.source_scale, &self.source_offset)?;
+        let selected = self.source.point_at(&mapped.curve_parameter())?;
+        let uv = self
+            .certified_scalar_uv(&selected)?
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        self.surface
+            .evaluate_real(&Point2::new(uv.x().clone(), uv.y().clone()))
+    }
+
+    fn certified_scalar_uv(
+        &self,
+        selected: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<Option<CurvePoint2>> {
         use hypersolve::bivariate_arithmetic::{
             bivariate_specialize_first, bivariate_specialize_second,
         };
@@ -171,7 +197,6 @@ impl TensorCurve3 {
             return Ok(None);
         }
         let defining = branch.topology().geometric_equation();
-        let selected = self.source.point_at(&t.clone().into())?;
         let coordinate = |axis: usize| {
             let (a, b) = if axis == 0 {
                 (Real::one(), Real::zero())
@@ -181,10 +206,34 @@ impl TensorCurve3 {
             selected.affine_form(a, b, Real::zero())
         };
         for known in [0, 1] {
-            let Some(value) = coordinate(known).parameter()?.scalar().cloned() else {
-                continue;
+            // A scalar view, or a patch-boundary value proved equal.
+            let value = match coordinate(known).parameter()?.scalar().cloned() {
+                Some(value) => value,
+                None => {
+                    let mut boundary = None;
+                    for candidate in [Real::zero(), Real::one()] {
+                        if coordinate(known).compare_to_real(&candidate)? == Ordering::Equal {
+                            boundary = Some(candidate);
+                            break;
+                        }
+                    }
+                    let Some(value) = boundary else {
+                        continue;
+                    };
+                    value
+                }
             };
             let other = coordinate(1 - known);
+            // Section ends usually lie on the patch boundary.
+            for boundary in [Real::zero(), Real::one()] {
+                if other.compare_to_real(&boundary)? == Ordering::Equal {
+                    return Ok(Some(if known == 0 {
+                        CurvePoint2::new(value, boundary)
+                    } else {
+                        CurvePoint2::new(boundary, value)
+                    }));
+                }
+            }
             let mut polynomial = if known == 0 {
                 bivariate_specialize_first(defining, &value)
             } else {
@@ -204,6 +253,16 @@ impl TensorCurve3 {
                     break;
                 };
                 polynomial = quotient;
+            }
+            // A remaining factor of degree at most two has radical roots.
+            for root in low_degree_roots(polynomial)? {
+                if other.compare_to_real(&root)? == Ordering::Equal {
+                    return Ok(Some(if known == 0 {
+                        CurvePoint2::new(value, root)
+                    } else {
+                        CurvePoint2::new(root, value)
+                    }));
+                }
             }
         }
         Ok(None)
@@ -454,6 +513,44 @@ impl TensorCurve3 {
     }
 }
 
+/// The real roots of a polynomial (ascending powers) of degree one or two
+/// after dropping exactly zero leading coefficients, as exact radicals. Other
+/// degrees, and a zero polynomial, give no candidates.
+fn low_degree_roots(mut polynomial: Vec<Real>) -> GeometryResult<Vec<Real>> {
+    let sign = |value: &Real| {
+        decided_order(compare_reals(
+            value,
+            &Real::zero(),
+            crate::STRICT_PREDICATES,
+        ))
+    };
+    while let Some(leading) = polynomial.last() {
+        if sign(leading)? != Ordering::Equal {
+            break;
+        }
+        polynomial.pop();
+    }
+    match polynomial.as_slice() {
+        [c, b] => Ok(vec![(-c / b).map_err(GeometryError::Numeric)?]),
+        [c, b, a] => {
+            let discriminant = b * b - Real::from(4) * a * c;
+            let twice = Real::from(2) * a;
+            match sign(&discriminant)? {
+                Ordering::Less => Ok(Vec::new()),
+                Ordering::Equal => Ok(vec![(-b / &twice).map_err(GeometryError::Numeric)?]),
+                Ordering::Greater => {
+                    let root = discriminant.sqrt().map_err(GeometryError::Numeric)?;
+                    Ok(vec![
+                        ((-b - &root) / &twice).map_err(GeometryError::Numeric)?,
+                        ((-b + &root) / &twice).map_err(GeometryError::Numeric)?,
+                    ])
+                }
+            }
+        }
+        _ => Ok(Vec::new()),
+    }
+}
+
 impl TensorCurve3 {
     /// Exact parameter location of a represented point on the tensor image.
     ///
@@ -462,7 +559,8 @@ impl TensorCurve3 {
     /// zero set of one pullback (Hypercurve native branch intersection), and
     /// a contact is kept only where the other two pullbacks vanish too, by
     /// exact rational forms at its selected UV point. A pullback containing
-    /// the source is replaced by another coordinate.
+    /// the source, or with coefficients the topology cannot decompose (a
+    /// radical coordinate value), is replaced by another coordinate.
     pub(super) fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
         use hypersolve::BivariatePolynomial;
         use hypersolve::bivariate_arithmetic::{bivariate_scale, bivariate_subtract};
@@ -486,7 +584,15 @@ impl TensorCurve3 {
         let offset = -&self.source_offset * &inverse;
         let spatial_domain = self.spatial_domain()?;
         'primary: for primary in 0..3 {
-            let zeros = super::implicit_tensor::unit_square_zeros(&pullbacks[primary])?;
+            let zeros = match super::implicit_tensor::unit_square_zeros(&pullbacks[primary]) {
+                Ok(zeros) => zeros,
+                // A radical coordinate value gives coefficients the topology
+                // does not decompose; another coordinate may be rational.
+                Err(GeometryError::PolynomialTopology(
+                    hypersolve::bivariate_topology::BivariateTopologyError::UnsupportedCoefficient,
+                )) => continue 'primary,
+                Err(error) => return Err(error),
+            };
             let others = (0..3).filter(|k| *k != primary).collect::<Vec<_>>();
             let mut found: Vec<Parameter> = Vec::new();
             let mut push = |parameter: Parameter| -> GeometryResult<()> {
