@@ -3129,7 +3129,16 @@ fn intersect_face_carriers(
 ) -> Result<Option<ArenaFacePairIntersection>, BooleanError> {
     let first_surface = face_surface(first_model, first_face);
     let second_surface = face_surface(second_model, second_face);
-    match first_surface.intersect_surface(second_surface) {
+    let carrier_intersection = match first_surface.intersect_surface(second_surface) {
+        // Pieces sectioned through an internal atlas carry no face pcurves,
+        // so face trimming cannot consume them; such pairs keep the existing
+        // unsupported-carrier handling below.
+        Ok(intersection) if intersection.has_curve_without_operand_pcurves() => {
+            Err(GeometryError::UnsupportedIntersection)
+        }
+        result => result,
+    };
+    match carrier_intersection {
         Ok(SurfaceSurfaceIntersection::None) => Ok(None),
         Ok(intersection) => {
             let trim = trim_face_pair_intersection(
@@ -10671,6 +10680,9 @@ mod tests {
                 -Real::one(),
             ]))
             .unwrap();
+        // The carrier pair is now sectioned exactly through the cylinder
+        // atlas, but its pieces carry no face pcurves, so face trimming still
+        // treats the pair as unsupported and exercises the containment bypass.
         assert!(
             intersection_graph(&sphere, sphere_solid, &inner_cylinder, inner_cylinder_solid)
                 .unwrap()
@@ -10833,7 +10845,10 @@ mod tests {
                 Real::zero(),
             ]))
             .unwrap();
-        assert!(
+        // Formerly an unsupported carrier pair: the cylinder atlas now proves
+        // the off-axis sphere carrier disjoint from the cylinder carrier, so
+        // no unsupported pair remains and the void result below is unchanged.
+        assert_eq!(
             intersection_graph(
                 &outer_cylinder,
                 outer_cylinder_solid,
@@ -10841,8 +10856,8 @@ mod tests {
                 inner_sphere_solid
             )
             .unwrap()
-            .unsupported_pairs()
-                > 0
+            .unsupported_pairs(),
+            0
         );
         let ArenaBooleanResult::Solid {
             model: hollow_cylinder,

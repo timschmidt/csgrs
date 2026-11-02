@@ -22,6 +22,7 @@ mod curve_implicit;
 mod curve_plane;
 mod curve_revolution;
 mod curve_tensor_image;
+mod cylinder_atlas;
 mod implicit_tensor;
 mod line_tensor;
 mod location;
@@ -2084,6 +2085,22 @@ pub struct SurfaceIntersectionComponents {
     points: Vec<GeometricPoint3>,
     curves: Vec<Curve3>,
     surface_curves: Vec<SurfaceIntersectionCurve>,
+}
+
+impl SurfaceSurfaceIntersection {
+    /// Whether some curve component carries no exact pcurve on either
+    /// operand, such as a piece sectioned through an internal exact atlas.
+    /// Face-trimming consumers need operand pcurves and cannot use it.
+    pub(crate) fn has_curve_without_operand_pcurves(&self) -> bool {
+        let unavailable =
+            |curve: &SurfaceIntersectionCurve| curve.image_certificates == [false, false];
+        match self {
+            Self::Curve(curve) => unavailable(curve),
+            Self::Curves(curves) => curves.iter().any(unavailable),
+            Self::Components(components) => components.surface_curves.iter().any(unavailable),
+            _ => false,
+        }
+    }
 }
 
 impl SurfaceIntersectionComponents {
@@ -4521,7 +4538,9 @@ impl Surface {
     /// cylinders, cones and ring tori against such a tensor use the same
     /// complete decomposition of the pulled-back carrier equation; branches
     /// become retained tensor-image curves when an injective coordinate-plane
-    /// projection certifies the tensor. The configured
+    /// projection certifies the tensor. Cylinders against nonparallel
+    /// cylinders and off-axis spheres or tori are sectioned through an exact
+    /// rational atlas of the cylinder's bounded relevant height range. The configured
     /// solver work context participates where instrumented, but these limits
     /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
@@ -4582,7 +4601,12 @@ impl Surface {
                 intersect_plane_nurbs_surface(plane, surface).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => {
-                intersect_parallel_cylinders(first, second)
+                let other = curve_implicit::ImplicitCarrier::Cylinder(second);
+                if cylinder_atlas::special_route_applies(first, other)? {
+                    intersect_parallel_cylinders(first, second)
+                } else {
+                    cylinder_atlas::intersect(first, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cone(first), SurfaceGeometry::Cone(second)) => {
                 intersect_coaxial_cones(first, second)
@@ -4597,10 +4621,21 @@ impl Surface {
                 intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_cylinder_torus(cylinder, torus)
+                let other = curve_implicit::ImplicitCarrier::Torus(torus);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_cylinder_torus(cylinder, torus)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cylinder(cylinder)) => {
-                intersect_coaxial_cylinder_torus(cylinder, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Torus(torus);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_cylinder_torus(cylinder, torus)
+                        .map(swapped_curve_intersection)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Torus(torus)) => {
                 intersect_coaxial_cone_torus(cone, torus)
@@ -4615,10 +4650,21 @@ impl Surface {
                 intersect_coaxial_cylinder_cone(cylinder, cone).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cylinder(cylinder)) => {
-                intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_cylinder(sphere, cylinder).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                        .map(swapped_curve_intersection)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cone(cone)) => {
                 intersect_coaxial_sphere_cone(sphere, cone)
@@ -16543,6 +16589,40 @@ mod tests {
         );
     }
 
+    /// Exact piece end points of an atlas section result.
+    fn atlas_piece_ends(result: SurfaceSurfaceIntersection) -> Vec<GeometricPoint3> {
+        let pieces = match result {
+            SurfaceSurfaceIntersection::Curves(curves) => curves,
+            SurfaceSurfaceIntersection::Curve(curve) => vec![*curve],
+            SurfaceSurfaceIntersection::Components(components) => {
+                components.surface_curves().to_vec()
+            }
+            other => panic!("atlas pieces required, found {other:?}"),
+        };
+        assert!(!pieces.is_empty());
+        pieces
+            .iter()
+            .flat_map(|piece| {
+                let curve = piece.curve();
+                [
+                    curve.point_at(curve.domain().start()).unwrap(),
+                    curve.point_at(curve.domain().end()).unwrap(),
+                ]
+            })
+            .collect()
+    }
+
+    /// Whether some end has the represented x and y and the given exact z.
+    fn atlas_has_end(ends: &[GeometricPoint3], x: &Real, y: &Real, z: &Real) -> bool {
+        ends.iter().any(|point| {
+            [(Vector3::x(), x), (Vector3::y(), y), (Vector3::z(), z)]
+                .into_iter()
+                .all(|(axis, value)| {
+                    point.compare_linear_form(&axis, value).unwrap() == Ordering::Equal
+                })
+        })
+    }
+
     #[test]
     fn parallel_cylinder_intersections_retain_exact_axial_lines() {
         let cylinder = Surface::cylinder(
@@ -16613,10 +16693,17 @@ mod tests {
             r(2),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&skew).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: equal radii and perpendicular axes
+        // give z^2 = x^2, so every atlas piece end lies in z = x or z = -x.
+        for point in atlas_piece_ends(cylinder.intersect_surface(&skew).unwrap()) {
+            let plus = point
+                .compare_linear_form(&Vector3::new([r(1), r(0), r(-1)]), &Real::zero())
+                .unwrap();
+            let minus = point
+                .compare_linear_form(&Vector3::new([r(1), r(0), r(1)]), &Real::zero())
+                .unwrap();
+            assert!(plus == Ordering::Equal || minus == Ordering::Equal);
+        }
     }
 
     #[test]
@@ -16802,10 +16889,12 @@ mod tests {
         ));
         let off_axis =
             Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on x^2 + y^2 = 4 the sphere gives
+        // z^2 = 4 + 2x, so the atlas seam over (2, 0) is crossed at z = ±2√2.
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(2) * Real::from(2).sqrt().unwrap()).clone();
+        assert!(atlas_has_end(&ends, &r(2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &r(2), &r(0), &-z));
     }
 
     #[test]
@@ -18127,10 +18216,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on x^2 + y^2 = 49/4 the distance
+        // from the torus axis satisfies rho^2 = 53/4 - 2x; at the seam over
+        // (7/2, 0) rho = 5/2, so (rho - 3)^2 + z^2 = 1 gives z = ±√3/2.
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &-z));
         let transverse = Surface::torus(
             Point3::origin(),
             Vector3::x(),
@@ -18140,10 +18232,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&transverse).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: with w = |p|^2 the torus about -y is
+        // (w + 8)^2 = 36(x^2 + z^2). At the seam over (7/2, 0), x^2 + z^2 = w,
+        // so w = 16 and z = ±√15/2 (the root w = 4 has no real z).
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&transverse).unwrap());
+        let z = (Real::from(15).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &-z));
     }
 
     #[test]

@@ -154,7 +154,7 @@ fn intersect(
             let kind = match contact.tangent_cross_sign() {
                 Some(sign) => classify_derivative(sign),
                 None if contact.is_certified_transverse() => CurveSurfaceContactKind::Simple,
-                None => return Err(GeometryError::UnsupportedIntersection),
+                None => classify_by_gradients(source, equation, contact.point())?,
             };
             push(parameter, kind, &mut points)?;
         }
@@ -206,4 +206,50 @@ fn intersect(
         }
     }
     assemble(curve, points, overlaps)
+}
+
+/// Exact contact kind at a point `P` where Hypercurve supplies no crossing
+/// certificate, such as a topology event at a branch endpoint.
+///
+/// Near a regular point of the source's defining equation `f = 0`, the source
+/// is a smooth arc with tangent `(-f_v, f_u)`, so `dG/dt` vanishes exactly when
+/// `f_u G_v - f_v G_u = 0`. At a singular point of `f` the arc's tangent is not
+/// determined by `f`, and no classification is claimed.
+fn classify_by_gradients(
+    source: &Curve2,
+    equation: &BivariatePolynomial,
+    point: &hypercurve::CurvePoint2,
+) -> GeometryResult<CurveSurfaceContactKind> {
+    use hypersolve::CurveResultantParameter::{First, Second};
+    use hypersolve::bivariate_arithmetic::{
+        bivariate_multiply, bivariate_parameter_derivative, bivariate_subtract,
+    };
+    let source = source
+        .source_restriction()
+        .map_or(source, |(original, _, _)| original);
+    let Some(branch) = source.polynomial_branch() else {
+        return Err(GeometryError::UnsupportedIntersection);
+    };
+    let defining = branch.topology().geometric_equation();
+    let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let vanishes = |polynomial: &BivariatePolynomial| -> GeometryResult<bool> {
+        Ok(point
+            .rational_form(polynomial.clone(), one.clone())?
+            .compare_to_real(&Real::zero())?
+            == Ordering::Equal)
+    };
+    let fu = bivariate_parameter_derivative(defining, First);
+    let fv = bivariate_parameter_derivative(defining, Second);
+    if vanishes(&fu)? && vanishes(&fv)? {
+        return Err(GeometryError::UnsupportedIntersection);
+    }
+    let jacobian = bivariate_subtract(
+        &bivariate_multiply(&fu, &bivariate_parameter_derivative(equation, Second)),
+        &bivariate_multiply(&fv, &bivariate_parameter_derivative(equation, First)),
+    );
+    Ok(if vanishes(&jacobian)? {
+        CurveSurfaceContactKind::Repeated
+    } else {
+        CurveSurfaceContactKind::Simple
+    })
 }

@@ -3371,6 +3371,36 @@
       "validation": "Five new witnesses in tests/line_tensor_contacts.rs on z = x^2 + y^2 and the rational cylinder patch: a vertical line piercing at (1/2, 0, 1/4), t = 5/12 (an axis-aligned case that needs the plane-pair retry); secant contacts at x = +/-1/2, a repeated tangent contact at the vertex and contacts at t = 1/2 -/+ sqrt(2)/8 compared exactly; an oblique line with selected parameters 1/2 -/+ sqrt(2)/4 that also reverses, splits an edge and replays cold; the line x = 0, z = 1 meeting the cylinder patch at (0, 1, 1); a coplanar line refused typed and zero-budget exhaustion with retry. Inverting the tangency classification or scaling the parameter form fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 735 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim. A topology blocker can cost up to five plane-pair decompositions before failing.",
       "limits": "Only finite lines are admitted; rational Bezier and NURBS curves against tensors, NURBS tensors, coincident ranges and remaining vertical/repeated components stay unsupported or typed. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "cylinder-atlas-sections-2026-11-01",
+      "work_packages": [
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Native cylinders against cylinders with nonparallel axes, spheres centred off the cylinder axis, and ring tori that are off-axis or tilted now return complete exact results instead of UnsupportedIntersection. An exact rational height H bounds every common point (|h| s <= R1 + R2 + |o1 - o2|_1 for cylinder pairs with s = |a1 x a2|; |a.(c - o)| + radius for spheres and tori), found by exact doubling. The cylinder portion |h| <= H is covered by ten rational quadratic tensor patches whose seam points have half-angle tangents 0, +/-5/12, +/-3/4, +/-4/3, +/-12/5 and infinity, so every seam point, middle control and weight is rational in the cylinder frame; each patch is sectioned by the complete implicit/tensor route. The result publishes the exact tensor-image pieces and deduplicated isolated points, with both operand pcurves typed unavailable because the atlas is an internal chart. Pieces meet at atlas seams that are not physical vertices and depend on which cylinder is charted. The existing parallel and coaxial special routes are dispatched exactly as before. The tensor-image contact route also gains an exact gradient fallback for contacts at topology events: at a regular point of the source's defining equation f, the contact is tangent exactly when f_u G_v - f_v G_u vanishes, evaluated as rational forms at the selected UV point; singular points stay typed. Migration: four unit witnesses that pinned UnsupportedIntersection for exactly these pairs now assert exact atlas seam points derived from the equations (equal-radius skew cylinders on z = +/-x; an off-axis sphere at (2, 0, +/-2 sqrt 2); off-axis and transverse tori at (7/2, 0, +/-sqrt(3)/2) and (7/2, 0, +/-sqrt(15)/2)). Boolean face-pair trimming cannot consume pieces without operand pcurves, so the Boolean kernel maps such sections to its existing unsupported-carrier handling; the original off-axis containment Boolean workflow and its bypass remain unchanged, and its contained off-axis sphere pair is now proved carrier-disjoint (no unsupported pair).",
+      "source": [
+        "../src/geometry/cylinder_atlas.rs",
+        "../src/geometry/curve_tensor_image.rs",
+        "../src/geometry.rs",
+        "../tests/cylinder_atlas_sections.rs",
+        "../src/boolean_kernel.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Six new witnesses in tests/cylinder_atlas_sections.rs. The plan's decisive native pair x^2 + y^2 = 1, y^2 + z^2 = 2 returns pieces that chain into exactly two closed loops, separated by the sign of z, crossing every atlas seam (c, s) at z = +/-sqrt(2 - s^2); the reversed operand order charts the other cylinder and also forms two loops. Cutting the native loops with x = 0 returns exactly the four simple contacts (0, +/-1, +/-1) required by the plan. The equal-radius control places every piece end on z = x or z = -x. The off-axis sphere |p - (1,0,0)| = 1 gives one loop through (1, 0, +/-1) and (119/169, +/-120/169, +/-sqrt(69)/13). A thin cylinder through the R = 3, r = 1 torus tube gives two loops. Far spheres and skew cylinders give complete empty results. Loop checks bucket piece ends by exact linear forms against rational seam values and use each fixture's independent seam-uniqueness argument; exact equality proofs between independently selected seam points of adjacent patches cost about 7.5 s each in a measured probe and are avoided. Shrinking H, dropping a patch, or inverting the gradient classification fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 741 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim. In release, the decisive native section takes about 0.36 s in a probe; exact equality between seam points from different patches was measured at about 7.5 s per proof.",
+      "limits": "Native operand pcurves, maximal (seam-free) components, Boolean/face consumption and STEP export of these pieces are not provided. Cones are excluded because cylinder/cone intersections need not be bounded. Atlas patches whose sections hit vertical/repeated/boundary components or fail the injectivity certificate return typed errors. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
