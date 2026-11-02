@@ -3310,6 +3310,37 @@
       "validation": "Ten new witnesses in tests/tensor_sections.rs. The decisive fixture is the plan's unequal perpendicular pair x^2 + y^2 = 1 and y^2 + z^2 = 2, with the second cylinder an exact rational quadratic patch (half-angle weight 4/5). Two branches have exact domains [1/2 - sqrt(24)/20, 1/2] and [1/2, 1/2 + sqrt(24)/20], meet at the event (0, 1, 1), end at selected points (+/-sqrt(24)/5, 1/5, 7/5), and pass through independently derived radical points such as (-4/5, 3/5, sqrt(41)/5) and (-2/5, sqrt(21)/5, sqrt(29)/5). Further witnesses: retained tensor pcurves and typed unavailable angular pcurves in both operand orders; edge split at s = 3/10, reversal, a scaled rotation/translation and two cold replays; containment of the patch by its own cylinder; a sphere/paraboloid section with its isolated tangent point and circle; both torus circles on a flat patch; cone nappe selection, a complete miss and a typed apex-plane refusal; a complete empty sphere section; a forged negative tensor weight rejected on replay; zero-budget exhaustion and retry. Mutating the torus constant, dropping the cylinder axial term, removing the cone hull refusal or ignoring transforms each fails a witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 724 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim. The decisive section completes in the release test harness; matched costs were not measured.",
       "limits": "This does not complete native cylinder/cylinder or other analytic-pair intersections: one operand must be a rational Bezier tensor. Vertical, repeated and boundary components remain Hypersolve topology blockers. Tensors without an injective coordinate-plane projection certificate are refused. TensorImage parameter location, selected derivatives, higher derivatives, STEP export and face-image proofs are typed unsupported; faces bounded by TensorImage edges, Booleans and solids are not yet admitted. Injectivity certificate errors are reported as the unsupported relation rather than distinguished. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-image-contacts-2026-11-01",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Make generated tensor-image curves intersectable with a third surface. A plane, sphere, cylinder, cone or ring torus meets S(c(t)) exactly where the UV source c meets the zero set of the surface equation pulled back through the curve's tensor. Hypersolve decomposes that zero set on the unit square; Hypercurve intersects c with every branch and locates isolated points on c; contacts map back through the curve's signed source chart. Contact kinds use Hypercurve's tangent sign or transversality certificate (the pullback gradient is normal to its regular branches); isolated zeros are repeated contacts; an uncertified tangency fails typed. Cone roots on the opposite nappe are rejected and a contained tensor needs a nonnegative axial hull. These pairs previously returned UnsupportedIntersection.",
+      "source": [
+        "../src/geometry/curve_tensor_image.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/geometry/implicit_tensor.rs",
+        "../src/geometry.rs",
+        "../tests/tensor_image_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Six new witnesses in tests/tensor_image_contacts.rs on the branches of the perpendicular cylinder pair x^2 + y^2 = 1, y^2 + z^2 = 2: the plane y = 3/5 meets them at s = 3/10 and 7/10 at (+/-4/5, 3/5, sqrt(41)/5), also through a reversed curve with a selected endpoint (negated chart, s = -3/10), and y = 1/10 misses; the plane z = 1 touches both branches at the event (0, 1, 1) with repeated contacts, since z^2 = 1 + x^2 on the loop; the third quadric x^2 + z^2 = 9/4 meets each branch once at selected parameters equal to (2 +/- sqrt(10)/4)/4, at (+/-sqrt(10)/4, sqrt(6)/4, sqrt(26)/4) from the summed equations; the patch's own cylinder contains each branch; a selected third-quadric contact splits the generated edge, replays cold and is intersected again together with the plane; a constant-x plane, whose pullback is a v-constant line, remains a typed polynomial-topology blocker. Disabling classification or the source chart map fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 730 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; each contact query decomposes one pulled-back equation and intersects branch pairs. Matched costs were not measured.",
+      "limits": "Planes whose pullback has vertical, repeated or boundary components remain Hypersolve blockers, so some axis-aligned cuts of generated curves are typed failures. Extrusions, revolutions, tensors and other curve families against tensor-image curves remain unsupported, as do tensor-image curve/curve incidences and face/solid consumers. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

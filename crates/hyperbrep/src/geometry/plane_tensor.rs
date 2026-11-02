@@ -135,7 +135,7 @@ pub(super) fn intersect(
     })
 }
 
-fn pullback(
+pub(super) fn pullback(
     plane: &PlaneSurface,
     surface: &RationalBezierSurface,
 ) -> GeometryResult<(BivariatePolynomial, RationalMap2)> {

@@ -21,6 +21,7 @@ mod curve_extrusion;
 mod curve_implicit;
 mod curve_plane;
 mod curve_revolution;
+mod curve_tensor_image;
 mod implicit_tensor;
 mod location;
 mod pcurve;
@@ -4361,6 +4362,8 @@ impl Surface {
     /// from the exact projection along the extrusion direction.
     /// Full revolutions of such profiles use the exact quotient map to
     /// squared axis distance and height, again returning complete contacts.
+    /// Tensor-image curves against planes and these implicit carriers use the
+    /// complete UV decomposition of the pulled-back surface equation.
     /// Unsupported curve/surface pairs fail with
     /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
@@ -4406,6 +4409,11 @@ impl Surface {
                 (&self.data.geometry, &curve.data.geometry)
             {
                 return intersect_transverse_circle_arc_torus(curve, arc, torus);
+            }
+            if let CurveGeometry3::TensorImage(image) = &curve.data.geometry
+                && let Some(result) = curve_tensor_image::intersect_tensor_image(curve, image, self)
+            {
+                return result;
             }
             // Lines keep their quadratic sphere/cylinder/cone fast paths below.
             if !matches!(&curve.data.geometry, CurveGeometry3::Line(_))

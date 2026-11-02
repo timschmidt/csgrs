@@ -145,7 +145,7 @@ pub(super) fn intersect(
 }
 
 /// `W^k F(X/W)` for the homogeneous tensor coordinates.
-fn pullback(
+pub(super) fn pullback(
     carrier: ImplicitCarrier<'_>,
     coordinates: [&BivariatePolynomial; 3],
     weight: &BivariatePolynomial,
