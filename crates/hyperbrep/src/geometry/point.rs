@@ -188,6 +188,27 @@ impl GeometricPoint3 {
             {
                 return Ok(true);
             }
+            // Distinct points almost always differ along a generic direction,
+            // which refinement separates cheaply; proving a shared coordinate
+            // exactly equal first can cost far more. A decided difference
+            // proves distinctness; equality or no decision falls through.
+            if let (Some((first, first_uv)), Some((second, second_uv))) = (
+                self.rational_surface_source(),
+                other.rational_surface_source(),
+            ) {
+                let direction = Vector3::new([
+                    Real::one(),
+                    (Real::one() / Real::from(3)).map_err(GeometryError::Numeric)?,
+                    (Real::one() / Real::from(7)).map_err(GeometryError::Numeric)?,
+                ]);
+                if let (Ok(a), Ok(b)) = (
+                    first.linear_form(first_uv, &direction),
+                    second.linear_form(second_uv, &direction),
+                ) && matches!(a.compare(&b), Ok(Ordering::Less | Ordering::Greater))
+                {
+                    return Ok(false);
+                }
+            }
             let mut unresolved = None;
             for axis in [Axis::X, Axis::Y, Axis::Z] {
                 match self.compare_coordinate(other, axis) {

@@ -44,10 +44,76 @@ pub(super) fn section_patches(
     other: ImplicitCarrier<'_>,
     atlas_operand: SurfaceIntersectionOperand,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
-    let mut points = Vec::<GeometricPoint3>::new();
+    section_patches_with_adjacency(patches, other, atlas_operand, None)
+}
+
+/// How the closed images of two distinct atlas patches meet.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(super) enum PatchContact {
+    /// Disjoint closed images.
+    Disjoint,
+    /// A shared boundary curve (or unknown): boundary points may coincide.
+    Edge,
+    /// A shared boundary curve on which UV coordinate `0` (u) or `1` (v) is
+    /// a boundary value in both patches.
+    EdgeAlong(usize),
+    /// Only a shared corner: just UV corner points may coincide.
+    Corner,
+}
+
+/// [`section_patches`] with an optional exact contact relation on distinct
+/// patch indices, used to skip spatial comparisons of results that cannot
+/// coincide.
+pub(super) fn section_patches_with_adjacency(
+    patches: Vec<Surface>,
+    other: ImplicitCarrier<'_>,
+    atlas_operand: SurfaceIntersectionOperand,
+    adjacent: Option<&dyn Fn(usize, usize) -> PatchContact>,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
+    // Atlas patches are injective charts whose images meet only along shared
+    // patch boundaries. Results of one patch are already distinct (an
+    // isolated zero lies on no branch), and results of different patches can
+    // coincide only when both lie on their patches' UV boundaries, so exact
+    // spatial comparisons are spent only on such pairs.
+    // Per UV coordinate, whether it may equal a boundary value 0 or 1 (an
+    // undecided comparison counts as possibly equal).
+    let boundary_coordinates = |point: &GeometricPoint3| -> [bool; 2] {
+        let Some((_, uv)) = point.surface_source() else {
+            return [true, true];
+        };
+        [(Real::one(), Real::zero()), (Real::zero(), Real::one())].map(|(a, b)| {
+            let coordinate = uv.affine_form(a, b, Real::zero());
+            [Real::zero(), Real::one()].iter().any(|value| {
+                !matches!(
+                    coordinate.compare_to_real(value),
+                    Ok(Ordering::Less | Ordering::Greater)
+                )
+            })
+        })
+    };
+    let may_coincide = |first: (&GeometricPoint3, usize),
+                        second: (&GeometricPoint3, usize)|
+     -> GeometryResult<bool> {
+        if first.1 == second.1 {
+            return Ok(false);
+        }
+        let contact = adjacent.map_or(PatchContact::Edge, |adjacent| adjacent(first.1, second.1));
+        let (a, b) = (
+            boundary_coordinates(first.0),
+            boundary_coordinates(second.0),
+        );
+        Ok(match contact {
+            PatchContact::Disjoint => false,
+            PatchContact::Edge => (a[0] || a[1]) && (b[0] || b[1]),
+            PatchContact::EdgeAlong(index) => a[index] && b[index],
+            PatchContact::Corner => a[0] && a[1] && b[0] && b[1],
+        })
+    };
+    let mut points = Vec::<(GeometricPoint3, usize)>::new();
     let mut curves = Vec::new();
+    let mut curve_patches = Vec::<usize>::new();
     let other_bounds = carrier_bounds(other);
-    for patch in patches {
+    for (patch_index, patch) in patches.into_iter().enumerate() {
         // A positive-weight patch lies in its control hull; an exactly
         // disjoint box cannot meet a bounded carrier.
         if let (Some(other_bounds), SurfaceBounds::Bounded(patch_bounds)) =
@@ -79,12 +145,14 @@ pub(super) fn section_patches(
         };
         'point: for point in patch_points {
             // A point on an atlas seam is reported by both adjacent patches.
-            for existing in &points {
-                if existing.coincides_with(&point)? {
+            for (existing, existing_patch) in &points {
+                if may_coincide((existing, *existing_patch), (&point, patch_index))?
+                    && existing.coincides_with(&point)?
+                {
                     continue 'point;
                 }
             }
-            points.push(point);
+            points.push((point, patch_index));
         }
         for section in patch_curves {
             let curve = section.curve().clone();
@@ -97,15 +165,19 @@ pub(super) fn section_patches(
             piece.image_certificates = [false, false];
             piece.polynomial_contact_exponent = section.polynomial_contact_exponent;
             curves.push(piece);
+            curve_patches.push(patch_index);
         }
     }
     // Isolated contacts lying on a published piece are part of that piece.
     let mut isolated = Vec::with_capacity(points.len());
-    'isolated: for point in points {
-        for piece in &curves {
+    'isolated: for (point, point_patch) in points {
+        for (piece, piece_patch) in curves.iter().zip(&curve_patches) {
             let curve = piece.curve();
             for parameter in [curve.domain().start(), curve.domain().end()] {
-                if curve.point_at(parameter)?.coincides_with(&point)? {
+                let end = curve.point_at(parameter)?;
+                if may_coincide((&end, *piece_patch), (&point, point_patch))?
+                    && end.coincides_with(&point)?
+                {
                     continue 'isolated;
                 }
             }

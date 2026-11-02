@@ -4128,6 +4128,34 @@
       "validation": "Default-suite witness (former typed refusal): the (3, 1) torus at the origin and the (1, 1/2) torus at (3, 0, 1) cross the y = 0 atlas seam exactly at ((59 +/- sqrt(7))/16, 0, (11 -/+ sqrt(7))/16) and ((37 +/- sqrt(7))/16, 0, (11 +/- sqrt(7))/16), derived independently from the tube circles, each located on two adjacent pieces, while (4, 0, 0) is located on none. The tilted (1, 1/2) torus at (11/2, 0, 0), whose bounding balls touch, returns the exact empty result (its points have x >= 22/5 > 4). Ignored stress witness, executed for this entry in 148.8 s: the off-axis equal torus at (1, 0, 1) crosses (3, 0, 1), (4, 0, 0), (-2, 0, 0) and (-3, 0, 1), each located on a piece; it replaces the refusal assertion in the coaxial unit test, whose coaxial assertions are unchanged. Restoring the blanket torus refusal fails the default witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 789 hyperbrep passes (1 ignored stress test) and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "Measured in release on this host: 4.4 s (parallel off-axis overlapping pair), 4.5 s (tilted overlapping pair), 148.8 s (off-axis equal pair, stress witness). Point location of a piece takes about 10 ms.",
       "limits": "The stress envelope (minutes for some pairs, bidegree (8, 8) pullbacks per patch) is unaddressed; no resource budget bounds it. Booleans and face splits on torus faces from these pieces lack analytic-side pcurves. No work package or pre-push gate closes."
+    },
+    {
+      "id": "atlas-seam-merge-cost-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP21",
+        "WP22"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "The torus atlas route's stress cost came from merging seam points, not from sectioning (each patch takes about 0.1 s): exact comparisons of distinct high-degree selected points took 12-49 s each. Three sound reductions remove almost all of them. (1) Atlas patches are injective charts whose images meet only along shared boundaries: results of one patch are already distinct, and results of different patches are compared only when both lie on their patch's UV boundary. (2) The torus atlas supplies its exact arc adjacency (patch_contact): patches in non-consecutive arcs have disjoint closed images, consecutive major arcs share a v boundary, consecutive minor arcs a u boundary, and doubly consecutive patches only a corner, so comparisons require the matching boundary coordinates. (3) GeometricPoint3::coincides_with first compares two rational-surface points along the generic direction (1, 1/3, 1/7); a decided difference proves distinctness before any shared coordinate is proved equal. The off-axis equal torus pair drops from about 149 s to 1.7 s and its witness returns to the default suite.",
+      "source": [
+        "../src/geometry/cylinder_atlas.rs",
+        "../src/geometry/torus_atlas.rs",
+        "../src/geometry/point.rs",
+        "../src/geometry.rs",
+        "../tests/torus_atlas_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "The off-axis equal torus witness (crossings (3, 0, 1), (4, 0, 0), (-2, 0, 0), (-3, 0, 1)) now runs in the default suite; all six torus atlas witnesses pass in 4.8 s. A structural unit test checks the contact table against the actual atlas controls: shared v edges share a boundary control row, shared u edges a boundary column, corner contacts a corner control point and no edge, disjoint pairs no corner. Swapping the edge axes or treating corners as disjoint fails that test; making the generic-direction test declare every pair distinct fails the torus witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 791 hyperbrep passes (no ignored tests) and 127 hyperbrep-io passes, 0 failures; the hyperbrep suite took 299.5 s wall time.",
+      "cost_evidence": "Release, this host, off-axis equal (3, 1) torus pair: 148.8 s before; 115 s with the generic-direction test only; 42 s adding atlas adjacency; 21 s adding corner contacts; 1.7 s adding edge-axis contacts. A bounding-box separation in coincides_with was tried and rejected (324 s: enclosures of these selected points are themselves expensive).",
+      "limits": "Exact comparisons of distinct high-degree selected points that do share a seam remain costly in Hypercurve (owner refinement cost); the cylinder and cone atlases use only the generic boundary filter. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

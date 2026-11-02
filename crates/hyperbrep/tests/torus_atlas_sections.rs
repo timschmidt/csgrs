@@ -238,13 +238,12 @@ fn certifiably_disjoint_non_coaxial_tori_do_not_meet() {
     ));
 }
 
-/// Stress envelope: the (3, 1) torus at the origin and the equal torus at
-/// (1, 0, 1), formerly a typed refusal, take about 150 s through the atlas in
-/// release. In y = 0 the tube circles about (3, 0) and (4, 1) meet on
+/// The (3, 1) torus at the origin and the equal torus at (1, 0, 1), formerly
+/// a typed refusal (and about 150 s before seam merging used the atlas's
+/// patch contacts). In y = 0 the tube circles about (3, 0) and (4, 1) meet on
 /// x + z = 4 at (3, 0, 1) and (4, 0, 0); those about (-3, 0) and (-2, 1) meet
 /// on x + z = -2 at (-2, 0, 0) and (-3, 0, 1). Each lies on some piece.
 #[test]
-#[ignore = "stress envelope: about 150 s in release"]
 fn non_coaxial_equal_tori_cross_known_points() {
     let off_axis = Surface::torus(
         pi(1, 0, 1),

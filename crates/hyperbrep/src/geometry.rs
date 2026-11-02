@@ -17889,8 +17889,8 @@ mod tests {
             first.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circles(_)
         ));
-        // The off-axis equal torus is non-coaxial: it is covered by the
-        // stress witness `non_coaxial_equal_tori_cross_known_points` in
+        // The off-axis equal torus is non-coaxial: it is covered by
+        // `non_coaxial_equal_tori_cross_known_points` in
         // tests/torus_atlas_sections.rs.
     }
 
