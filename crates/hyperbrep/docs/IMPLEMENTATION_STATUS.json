@@ -3240,6 +3240,36 @@
       "validation": "Eight new witnesses in tests/extrusion_contacts.rs use independent geometry: a line meeting a swept rational-weight radius-5 arc at (3,4,0), with reversal and an axially translated copy; a crossing outside the profile's angular range; a repeated tangent contact; contained and disjoint lines parallel to the direction and a contained lifted profile; a coplanar segment overlap at t in [1/3, 2/3]; a cubic contact equal to 1/2 + sqrt((8 sqrt(229) - 119)/36) that splits an edge and replays cold; two-span NURBS curve and profile contacts and overlaps in authored knot parameters, including a contact at a profile knot; typed unsupported circle arcs and zero-budget exhaustion with retry. Mutations replacing the curve contact parameter or disabling one-sided tangency detection fail four witnesses. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 706 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
       "cost_evidence": "No performance claim. The new route replaces typed UnsupportedIntersection results.",
       "limits": "Circle/ellipse arcs, planar/affine/rotation/translation images and procedural profiles remain unsupported against extrusions. Jointly selected tangent pairs without a Hypercurve sign or transversality certificate fail typed rather than being classified. Hypercurve resource accounting applies where instrumented; total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
+    },
+    {
+      "id": "revolution-curve-contacts-2026-11-01",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Add complete curve/surface contacts between lines, positive-weight rational Bezier curves and NURBS and full revolutions of line, rational Bezier and NURBS profiles. A point lies on the revolution exactly when its squared axis distance and height equal those of a profile point; the quotient map p -> (|D|^2 - (a.D)^2, (a.D) W, W^2) sends each positive-weight span of degree n to a positive-weight planar span of degree 2n in the same parameter. Hypercurve's complete planar incidence between the curve image and each profile-span image supplies contacts and coincident ranges; NURBS curves and profiles are decomposed into authored spans and mapped back to knot parameters. Profiles may lie on either side of or cross the axis. Latitude-circle curve spans are contained or disjoint; latitude-circle profile spans and undecidable tangent cross signs fail typed. These pairs previously returned UnsupportedIntersection.",
+      "source": [
+        "../src/geometry/curve_revolution.rs",
+        "../src/geometry/curve_extrusion.rs",
+        "../src/geometry.rs",
+        "../tests/revolution_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Eight new witnesses in tests/revolution_contacts.rs use independent geometry: a revolved unit wall crossed at x = +/-1 and missed above its height; an axial line coincident for t in [1/4, 3/4]; a rational-weight sphere zone with secant contacts at x = +/-4, a repeated tangent contact and contacts at x = +/-sqrt(15) compared exactly with radical points; contained latitude and rotated meridian arcs; two-span NURBS curve and profile contacts in authored knot parameters; a selected contact that splits an edge and replays cold; an off-origin x-directed axis; typed unsupported circle arcs and zero-budget exhaustion with retry. Disabling contact classification, or the y origin of the quotient map, fails witnesses; dropping the axial correction or the x origin for an x axis are equivalent mutants (sheared or translated injective quotient maps) and are not detectable. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 714 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
+      "cost_evidence": "No performance claim. The quotient image doubles span degree; matched costs were not measured.",
+      "limits": "Circle/ellipse arcs and planar/affine/rotation/translation images remain unsupported against revolutions, as do procedural profiles. Jointly selected tangent pairs without a Hypercurve sign or transversality certificate fail typed. Total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

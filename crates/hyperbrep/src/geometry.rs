@@ -20,6 +20,7 @@ mod conical_revolution;
 mod curve_extrusion;
 mod curve_implicit;
 mod curve_plane;
+mod curve_revolution;
 mod location;
 mod pcurve;
 mod periodic_charts;
@@ -4322,6 +4323,8 @@ impl Surface {
     /// The same curve families against an extrusion of a line, rational
     /// Bézier or NURBS profile return complete contacts and coincident ranges
     /// from the exact projection along the extrusion direction.
+    /// Full revolutions of such profiles use the exact quotient map to
+    /// squared axis distance and height, again returning complete contacts.
     /// Unsupported curve/surface pairs fail with
     /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
@@ -4380,6 +4383,12 @@ impl Surface {
             if let SurfaceGeometry::Extrusion(surface) = &self.data.geometry
                 && let Some(result) =
                     curve_extrusion::intersect_rational_curve_extrusion(curve, surface)
+            {
+                return result;
+            }
+            if let SurfaceGeometry::Revolution(surface) = &self.data.geometry
+                && let Some(result) =
+                    curve_revolution::intersect_rational_curve_revolution(curve, surface)
             {
                 return result;
             }

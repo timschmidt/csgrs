@@ -263,7 +263,7 @@ fn is_spline(curve: &Curve2) -> bool {
 /// tangents are parallel (including a zero projected curve tangent, where the
 /// spatial tangent is the extrusion direction). Both sides of authored spline
 /// joints are inspected; an undecidable cross sign is not a tangency proof.
-fn classify_one_sided(
+pub(super) fn classify_one_sided(
     projected: &Curve2,
     curve_parameter: &hypercurve::CurveParameter2,
     profile: &Curve2,
