@@ -3518,6 +3518,34 @@
       "validation": "New witness: |p| = 17/10 against the rational patch of y^2 + z^2 = 2, previously a VerticalComponent blocker, returns two tensor-image arcs ending at (+/-sqrt(89)/10, 7/5, 1/5) and (+/-sqrt(89)/10, 1/5, 7/5) that replay cold. Disabling the exchanged-chart retry fails it. The axis-aligned plane cut of a generated branch and the coplanar line/tensor case remain typed refusals, now possibly reported as Hypercurve's coincident or mapped-branch blocker; their witnesses accept those typed variants and still exclude any successful result. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 751 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; a vertical component costs one extra decomposition.",
       "limits": "Hypercurve curve/curve intersection with mapped polynomial branches, sets with vertical components in both coordinates, repeated and boundary components remain blockers. The plane/tensor route keeps its existing behavior. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "line-curve-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Add the public spatial curve/curve incidence query Curve3::intersect_curve with CurveCurveIntersection (None, Points with parameters on both curves and an exact point, or one coincident range in both charts) and CurveCurvePoint. Line pairs are decided by exact linear algebra: crossing, skew, parallel offset, collinear overlap or touching. A line against a positive-weight rational Bezier or NURBS curve (either order) is complete: the affine image p -> (n1.(p - A), n2.(p - A)) in the line's normal plane keeps the curve's family, weights, knots and parameter, Hypercurve locates the origin on it, and the line parameter d.(C(s) - A)/|d|^2 is read as an exact affine form of a second image evaluated at the same selected s. Rational curves lying along the line and other family pairs fail typed.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../src/geometry.rs",
+        "../src/lib.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Five new witnesses in tests/curve_curve_contacts.rs: crossing, skew, parallel offset, collinear overlap ([1/2, 1] and [0, 1/2]) and touching line pairs; a line meeting the cubic x = 4t - 2, y = 3t(1 - t)/2, z = 3t at t = 1/4, 3/4 with line parameters 1/3, 2/3 in both operand orders; selected incidences at t = 1/2 -/+ sqrt(3)/6 with line parameters 1/2 -/+ sqrt(3)/12 compared exactly with radical points; a two-span NURBS met at its interior knot u = 3; typed refusals for a curve along the line and for two non-line families. Every reported point is checked against both curves. Scaling the line coordinate or dropping the second plane condition fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 756 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
+      "limits": "General rational/rational, conic, planar-image, tensor-image and atlas-piece curve pairs, rational curves coincident with a line, and contact multiplicity classification are not provided. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

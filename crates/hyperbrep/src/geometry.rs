@@ -18,6 +18,7 @@ mod analytic;
 mod axial_lines;
 mod cone_atlas;
 mod conical_revolution;
+mod curve_curve;
 mod curve_extrusion;
 mod curve_implicit;
 mod curve_plane;
@@ -47,6 +48,7 @@ pub(crate) use affine_image::AffineCurve3;
 pub use affine_image::AffineCurveGeometry;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
+pub use curve_curve::{CurveCurveIntersection, CurveCurvePoint};
 use curve_plane::{
     intersect_nurbs_plane, intersect_planar_image_plane, intersect_rational_bezier_plane,
 };

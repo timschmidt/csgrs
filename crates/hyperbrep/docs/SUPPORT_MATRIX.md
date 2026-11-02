@@ -360,6 +360,8 @@ strict-convexity certificate.
 | Pair | Exact outcomes |
 | --- | --- |
 | Finite line / plane | None, point, contained |
+| Finite line / finite line (curve/curve) | `Curve3::intersect_curve`: crossing point, none for skew or parallel offset lines, collinear coincident range in both charts, or a single touching point |
+| Finite line / positive-weight rational Bézier or NURBS (curve/curve, either order) | Complete isolated incidences: the curve's affine image in the line's normal plane is located at the origin by Hypercurve, and the line parameter is read from a second affine image at the same selected curve parameter. Curves lying along the line and other family pairs fail typed |
 | Positive-weight rational Bézier / plane | Complete finite isolated contacts with retained selected parameters and original-source point images; none or contained |
 | Finite positive-weight NURBS / plane | Authored-knot contacts, maximal coincident ranges, mixed components, none or contained; shared joints deduplicated without merging distinct visits |
 | Planar image / plane | Owner-supported complete finite point/range contacts after bounds prove the consumed source interval; selected points retain the original planar authority and spatial frame |
