@@ -3598,6 +3598,9 @@ span tangent. Even then, single pairs over these fields take 5-50 s, which is M2
 cost work. Evidence: `docs/evidence/2026-10-31-hypercurve-closure-chamfer-closing-gap`,
 SHA-256 `ba2d77dd9550c6ba3d0ba11e69c5770dfd0010fdfebb8758122849f3dbf8cd27`.
 
+Resolved by "Closing a chamfered ellipse dilation: connector identity
+(2026-11-02)" below.
+
 ## Parabola offsets and their rational reparameterization (2026-10-30)
 
 Closure-plan corpus item "parabola offset: known rational reparameterization
@@ -3773,3 +3776,63 @@ groups, plus 13 ASan campaigns with mutation evidence that started from an empty
 fuzz state. That revision also covers the receipt-only push `61bb34b610`. Evidence:
 `docs/evidence/2026-11-02-hypercurve-closure-arithmetic-scope-validation`, SHA-256
 `78fd4105b130cca49c0f645fda961228164a77bb5a968e8bccf2890bf34cdae8`.
+
+## Closing a chamfered ellipse dilation: connector identity (2026-11-02)
+
+This resolves the stall recorded in "Closing a chamfered ellipse dilation
+(2026-10-31)". On `d92fc4be9b` the chamfer variant still did not finish in an
+hour. Stack samples and gdb counts showed a single tangent-cross sign in the
+erosion's band arrangement, running through the recursive norm.
+
+The erosion builds the same normal connector twice at the chamfer's junction
+with the ellipse offset:
+- from the round join's cusp-semicircle band;
+- from the chamfer edge's band, whose composed displacement is exactly zero.
+
+The two copies have unrelated endpoint representations, so the arrangement had
+to prove their zero tangent cross and zero endpoint sides by refinement. Two
+changes, both required, remove that:
+- **Zero-displacement identity.** A chord-parallel point with structurally
+  zero composed distance and translation is its displacement origin
+  (`CurvePoint2::zero_displacement_origin`). The pair-side kernel's endpoint
+  equality and `same_point` use this identity. The procedural representation
+  is kept, so the round-trip fillet tests that rejected returning the source
+  chord still pass.
+- **Tangent-junction sharing.** `share_exact_offset_band_endpoints` now also
+  shares the certified offset endpoint of cusp-semicircle join fragments, and
+  of algebraic points. The tangent-junction proof makes the ends exactly equal,
+  so representation is not a precondition.
+
+Either change alone still reaches the recursive norm, about 230 s per pair.
+
+Release timings, with each closing exactly equal to its input:
+
+| Variant | Before | After |
+| --- | --- | --- |
+| chamfer | did not finish in 60 min | 274 s |
+| chamfer and fillet | did not finish in 300 s | 279 s |
+| cut only | 21.7 s | 14.9 s |
+| fillet only | 30.3 s | 13.1 s |
+| plain-ellipse chamfer | 61 s | 23.1 s |
+| circle analogue | 0.6 s | 0.6 s |
+
+The remaining time is spread over cusp-fragment regularization probes,
+cusp-semicircle chord intersections, retained parallel contacts and pair sides.
+That is M2 cost work, not a stall, and the ordinary completion envelope for
+this chain stays open at about four and a half minutes.
+
+Coverage:
+- `cancelled_chord_displacements_are_their_source_endpoints` (unit test with
+  a dispatch-trace path check);
+- the ignored slow regression `chamfered_ellipse_offset_closing_returns_the_input`,
+  which passed in 243-248 s.
+
+Validation:
+- release `--all-features` suites: Hypercurve 3,087 passed (35 ignored),
+  HyperBRep 687, Hypercircuit 354, HyperDRC 1,670;
+- strict Clippy on the four Hypercurve feature sets;
+- formatting.
+
+Evidence:
+`docs/evidence/2026-11-02-hypercurve-closure-chamfer-closing-identity`, SHA-256
+`4bd819c29e47a46cad0362357108154f14066561f2fadffbebc899247a412d95`.

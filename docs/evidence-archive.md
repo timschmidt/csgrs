@@ -86,7 +86,16 @@ in this repository.
 ## Follow-on records
 
 The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` now ends at
-`a29b1f6cd2fdf5c198d9e6a53a24fcfc78dff012` with 406 records. Its new record
+`6185a3ec65aecdb239548915263a28b30f30357a` with 407 records. Its new record
+`docs/evidence/2026-11-02-hypercurve-closure-chamfer-closing-identity` contains 75 files and
+537,409 bytes, SHA-256 `4bd819c29e47a46cad0362357108154f14066561f2fadffbebc899247a412d95`. It
+reproduces the chamfered ellipse closing stall on `d92fc4be9b`, identifies the coincident band
+connectors, and records the zero-displacement identity and tangent-junction endpoint sharing that
+let the closing finish exactly in 274 s. The probes, diagnostic logs, stack samples, change patch
+and release test logs are included.
+
+Before that record, the branch ended at
+`a29b1f6cd2fdf5c198d9e6a53a24fcfc78dff012` with 406 records. Its record
 `docs/evidence/2026-11-02-hypercurve-closure-arithmetic-scope-validation` contains 12,156 files and
 25,028,649 bytes, SHA-256 `78fd4105b130cca49c0f645fda961228164a77bb5a968e8bccf2890bf34cdae8`. It records
 fresh success for all 328 pre-push command groups on `1e7847896b21eabd61ee6e63a297d450fbca5897`.
