@@ -99,97 +99,50 @@ impl GraphEncoder {
         {
             return Ok(RawPlanarPoint::Reference(*index));
         }
-        let raw = match point.definition().map_err(GeometryError::from)? {
-            CurvePointDefinition2::RationalImage { source, map } => RawPlanarPoint::RationalImage {
-                source: Box::new(self.planar_point(&source)?),
-                map: RawRationalMap::from_map(&map),
-            },
+        // Each recursive definition is encoded in its own non-inlined frame:
+        // unoptimized builds otherwise reserve every arm's temporaries in one
+        // frame per dependency level, exhausting small stacks well inside the
+        // archive's logical depth limit.
+        let definition = point.definition().map_err(GeometryError::from)?;
+        let index = match &definition {
+            CurvePointDefinition2::RationalImage { source, map } => {
+                self.encode_rational_image(source, map)?
+            }
             CurvePointDefinition2::RationalQueryPair {
                 sources,
                 numerators,
                 denominators,
-            } => RawPlanarPoint::RationalQueryPair {
-                sources: Box::new([
-                    self.planar_point(&sources[0])?,
-                    self.planar_point(&sources[1])?,
-                ]),
-                numerators: numerators.map(|p| p.coefficients),
-                denominators: denominators.map(|p| p.coefficients),
-            },
+            } => self.encode_rational_query_pair(sources, numerators, denominators)?,
             CurvePointDefinition2::SelectedPolynomialRoot { coefficients, root } => {
-                let coefficients = coefficients
-                    .iter()
-                    .map(|coefficient| {
-                        // Reuse the selected-parameter graph instead of expanding
-                        // repeated coefficient dependencies into an archive tree.
-                        self.curve_parameter(&coefficient.parameter().map_err(GeometryError::from)?)
-                    })
-                    .collect::<Result<_, PersistenceError>>()?;
-                RawPlanarPoint::SelectedPolynomialRoot {
-                    coefficients,
-                    interval: [root.lower, root.upper],
-                    exact_root: root.exact_root,
-                }
+                self.encode_selected_polynomial_root(coefficients, root)?
             }
             CurvePointDefinition2::PolynomialFiber {
                 equation,
                 parameter,
                 root,
-            } => RawPlanarPoint::PolynomialFiber {
-                equation: equation.coefficients,
-                parameter: self.curve_parameter(&parameter)?,
-                interval: [root.lower, root.upper],
-                exact_root: root.exact_root,
-            },
+            } => self.encode_polynomial_fiber(equation, parameter, root)?,
             CurvePointDefinition2::Coordinates(point) => {
-                RawPlanarPoint::Coordinates(curve_point_array(&point))
+                self.planar_selection(RawPlanarPoint::Coordinates(curve_point_array(point)))?
             }
-            CurvePointDefinition2::Rational { source, parameter } => RawPlanarPoint::Rational {
-                homogeneous_controls: source
-                    .homogeneous_controls()
-                    .iter()
-                    .map(|c| [c.x().clone(), c.y().clone(), c.weight().clone()])
-                    .collect(),
-                parameter: self.curve_parameter(&parameter)?,
-            },
+            CurvePointDefinition2::Rational { source, parameter } => {
+                self.encode_rational(source, parameter)?
+            }
             CurvePointDefinition2::RationalExpression {
                 parameter,
                 x_numerator,
                 y_numerator,
                 denominator,
-            } => RawPlanarPoint::RationalExpression {
-                parameter: self.curve_parameter(&parameter.into())?,
-                x_numerator,
-                y_numerator,
-                denominator,
-            },
-            CurvePointDefinition2::Parallel { source, parameter } => RawPlanarPoint::Parallel {
-                source: raw_parallel_source(source.source()),
-                distance: source.distance().clone(),
-                parameter: self.curve_parameter(&parameter)?,
-            },
+            } => {
+                self.encode_rational_expression(parameter, x_numerator, y_numerator, denominator)?
+            }
+            CurvePointDefinition2::Parallel { source, parameter } => {
+                self.encode_parallel(source, parameter)?
+            }
             CurvePointDefinition2::Similarity { source, transform } => {
-                let (a, b, c, d, x, y) = transform.affine_components();
-                RawPlanarPoint::Similarity {
-                    source: Box::new(self.planar_point(&source)?),
-                    coefficients: [
-                        a.clone(),
-                        b.clone(),
-                        c.clone(),
-                        d.clone(),
-                        x.clone(),
-                        y.clone(),
-                    ],
-                }
+                self.encode_similarity(source, transform)?
             }
             CurvePointDefinition2::SupportingLineIntersection { first, second } => {
-                RawPlanarPoint::SupportingLineIntersection {
-                    first: Box::new([self.planar_point(&first[0])?, self.planar_point(&first[1])?]),
-                    second: Box::new([
-                        self.planar_point(&second[0])?,
-                        self.planar_point(&second[1])?,
-                    ]),
-                }
+                self.encode_supporting_line_intersection(first, second)?
             }
             CurvePointDefinition2::ChordDisplacement {
                 source,
@@ -198,21 +151,199 @@ impl GraphEncoder {
                 distance,
                 translation,
                 left_normal,
-            } => RawPlanarPoint::ChordDisplacement {
-                source: Box::new(self.pcurve(&source)?),
-                origin: origin
-                    .as_ref()
-                    .map(|point| self.planar_point(point).map(Box::new))
-                    .transpose()?,
-                at_end,
+            } => self.encode_chord_displacement(
+                source,
+                origin.as_ref(),
+                *at_end,
                 distance,
                 translation,
-                left_normal,
-            },
+                *left_normal,
+            )?,
         };
-        let index = self.selection(RawSelection::PlanarPoint(Box::new(raw)))?;
         self.planar_points.push((point.clone(), index));
         Ok(RawPlanarPoint::Reference(index))
+    }
+
+    /// Registers one encoded planar definition in the shared selection graph.
+    fn planar_selection(&mut self, raw: RawPlanarPoint) -> Result<usize, PersistenceError> {
+        self.selection(RawSelection::PlanarPoint(Box::new(raw)))
+    }
+
+    #[inline(never)]
+    fn encode_rational_image(
+        &mut self,
+        source: &hypercurve::CurvePoint2,
+        map: &hypercurve::RationalMap2,
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::RationalImage {
+            source: Box::new(self.planar_point(source)?),
+            map: RawRationalMap::from_map(map),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_rational_query_pair(
+        &mut self,
+        sources: &[hypercurve::CurvePoint2; 2],
+        numerators: &[hypersolve::BivariatePolynomial; 2],
+        denominators: &[hypersolve::BivariatePolynomial; 2],
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::RationalQueryPair {
+            sources: Box::new([
+                self.planar_point(&sources[0])?,
+                self.planar_point(&sources[1])?,
+            ]),
+            numerators: numerators.clone().map(|p| p.coefficients),
+            denominators: denominators.clone().map(|p| p.coefficients),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_selected_polynomial_root(
+        &mut self,
+        coefficients: &[hypercurve::CurvePointRationalForm2],
+        root: &hypersolve::IsolatedRootInterval,
+    ) -> Result<usize, PersistenceError> {
+        let coefficients = coefficients
+            .iter()
+            .map(|coefficient| {
+                // Reuse the selected-parameter graph instead of expanding
+                // repeated coefficient dependencies into an archive tree.
+                self.curve_parameter(&coefficient.parameter().map_err(GeometryError::from)?)
+            })
+            .collect::<Result<_, PersistenceError>>()?;
+        let raw = RawPlanarPoint::SelectedPolynomialRoot {
+            coefficients,
+            interval: [root.lower.clone(), root.upper.clone()],
+            exact_root: root.exact_root.clone(),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_polynomial_fiber(
+        &mut self,
+        equation: &hypersolve::BivariatePolynomial,
+        parameter: &hypercurve::CurveParameter2,
+        root: &hypersolve::IsolatedRootInterval,
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::PolynomialFiber {
+            equation: equation.coefficients.clone(),
+            parameter: self.curve_parameter(parameter)?,
+            interval: [root.lower.clone(), root.upper.clone()],
+            exact_root: root.exact_root.clone(),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_rational(
+        &mut self,
+        source: &hypercurve::RationalBezier2,
+        parameter: &hypercurve::CurveParameter2,
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::Rational {
+            homogeneous_controls: source
+                .homogeneous_controls()
+                .iter()
+                .map(|c| [c.x().clone(), c.y().clone(), c.weight().clone()])
+                .collect(),
+            parameter: self.curve_parameter(parameter)?,
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_rational_expression(
+        &mut self,
+        parameter: &hypercurve::BezierParameter2,
+        x_numerator: &[Real],
+        y_numerator: &[Real],
+        denominator: &[Real],
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::RationalExpression {
+            parameter: self.curve_parameter(&parameter.clone().into())?,
+            x_numerator: x_numerator.to_vec(),
+            y_numerator: y_numerator.to_vec(),
+            denominator: denominator.to_vec(),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_parallel(
+        &mut self,
+        source: &hypercurve::BezierParallel2,
+        parameter: &hypercurve::CurveParameter2,
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::Parallel {
+            source: raw_parallel_source(source.source()),
+            distance: source.distance().clone(),
+            parameter: self.curve_parameter(parameter)?,
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_similarity(
+        &mut self,
+        source: &hypercurve::CurvePoint2,
+        transform: &Similarity2,
+    ) -> Result<usize, PersistenceError> {
+        let (a, b, c, d, x, y) = transform.affine_components();
+        let raw = RawPlanarPoint::Similarity {
+            source: Box::new(self.planar_point(source)?),
+            coefficients: [
+                a.clone(),
+                b.clone(),
+                c.clone(),
+                d.clone(),
+                x.clone(),
+                y.clone(),
+            ],
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_supporting_line_intersection(
+        &mut self,
+        first: &[hypercurve::CurvePoint2; 2],
+        second: &[hypercurve::CurvePoint2; 2],
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::SupportingLineIntersection {
+            first: Box::new([self.planar_point(&first[0])?, self.planar_point(&first[1])?]),
+            second: Box::new([
+                self.planar_point(&second[0])?,
+                self.planar_point(&second[1])?,
+            ]),
+        };
+        self.planar_selection(raw)
+    }
+
+    #[inline(never)]
+    fn encode_chord_displacement(
+        &mut self,
+        source: &Curve2,
+        origin: Option<&hypercurve::CurvePoint2>,
+        at_end: bool,
+        distance: &Real,
+        translation: &[Real; 2],
+        left_normal: bool,
+    ) -> Result<usize, PersistenceError> {
+        let raw = RawPlanarPoint::ChordDisplacement {
+            source: Box::new(self.pcurve(source)?),
+            origin: origin
+                .map(|point| self.planar_point(point).map(Box::new))
+                .transpose()?,
+            at_end,
+            distance: distance.clone(),
+            translation: translation.clone(),
+            left_normal,
+        };
+        self.planar_selection(raw)
     }
 }
 
