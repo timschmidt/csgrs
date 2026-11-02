@@ -586,6 +586,13 @@ analytic/spline pair matrix.
 
 ## Booleans
 
+Several plane-section traces over one plane frame with structurally distinct
+mapped sources keep caller order in face partitions (overlaps still fail
+explicitly), and selected planar-image ends are certified in the branch's own
+chart and carried through the exact similarity view; the four corner arcs of
+the bump top cut by z = 5/4 partition the unit cap into four corners and a
+centre that replay cold.
+
 Plane sections of tensors whose plane projection is an exact similarity keep
 mapped-branch plane pcurves that Hypercurve now intersects, locates and
 classifies through their similarity view; planar-image curve ends with selected

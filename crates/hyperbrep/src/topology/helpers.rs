@@ -2644,9 +2644,28 @@ pub(super) fn compare_ordered_surface_curve_traces(
     left: &OrderedSurfaceCurveTrace,
     right: &OrderedSurfaceCurveTrace,
 ) -> Result<std::cmp::Ordering, GeometryError> {
-    match compare_curve3_exact_data(&left.exact_key.exact_data(), &right.exact_key.exact_data()) {
+    let (left_data, right_data) = (left.exact_key.exact_data(), right.exact_key.exact_data());
+    match compare_curve3_exact_data(&left_data, &right_data) {
         Ok(order) => Ok(order),
         Err(GeometryError::PredicateUnresolved { .. }) => {
+            Ok(left.source_index.cmp(&right.source_index))
+        }
+        // Images over equal carriers with structurally distinct sources have
+        // no canonical order, but they are not duplicates: insertion keeps
+        // the caller order and the pairwise trace intersection still rejects
+        // any overlap explicitly.
+        Err(GeometryError::UnsupportedIntersection)
+            if matches!(
+                (&left_data, &right_data),
+                (
+                    Curve3ExactData::PlanarImage(_),
+                    Curve3ExactData::PlanarImage(_)
+                ) | (
+                    Curve3ExactData::TensorImage(_),
+                    Curve3ExactData::TensorImage(_)
+                )
+            ) =>
+        {
             Ok(left.source_index.cmp(&right.source_index))
         }
         Err(error) => Err(error),

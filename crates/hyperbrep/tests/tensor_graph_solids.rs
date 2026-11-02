@@ -388,3 +388,82 @@ fn chained_booleans_on_tensor_graph_solids_stay_exact() {
         q(27, 8)
     );
 }
+
+/// The plane z = 5/4 meets the bump top z = x² + y² in the circle of radius
+/// √5/2, which leaves the unit square: four corner arcs end on the square's
+/// sides at (±1, ±1/2) and (±1/2, ±1). Each arc is a similarity-mapped
+/// polynomial branch whose ends are selected points; the unit cap face
+/// splits along all four into four corners and a centre, and replays cold.
+#[test]
+fn horizontal_bump_sections_partition_unit_caps() {
+    let top = bump()
+        .faces()
+        .find(|face| face.surface().kind() == SurfaceKind::RationalBezier)
+        .unwrap()
+        .surface()
+        .geometry()
+        .clone();
+    let model = builder::cuboid(pi(-1, -1, -2), Point3::new(1.into(), 1.into(), q(5, 4)))
+        .unwrap()
+        .model()
+        .clone();
+    let face = model
+        .faces()
+        .find(|face| matches!(face.surface().geometry().plane_origin(), Some(o) if o.z == q(5, 4)))
+        .unwrap();
+    let pieces = match face.surface().geometry().intersect_surface(&top).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("four corner arcs required, found {other:?}"),
+    };
+    assert_eq!(pieces.len(), 4);
+    let half = q(1, 2);
+    let expected = [
+        (Real::one(), half.clone()),
+        (Real::one(), -half.clone()),
+        (-Real::one(), half.clone()),
+        (-Real::one(), -half.clone()),
+        (half.clone(), Real::one()),
+        (half.clone(), -Real::one()),
+        (-half.clone(), Real::one()),
+        (-half.clone(), -Real::one()),
+    ];
+    let mut seen = [0usize; 8];
+    for piece in &pieces {
+        assert_eq!(piece.curve().kind(), Curve3Kind::PlanarImage);
+        for end in [piece.curve().start().unwrap(), piece.curve().end().unwrap()] {
+            let index = expected
+                .iter()
+                .position(|(x, y)| end == Point3::new(x.clone(), y.clone(), q(5, 4)))
+                .expect("arc ends on the unit square's sides");
+            seen[index] += 1;
+        }
+    }
+    assert_eq!(seen, [1; 8]);
+    let split = face
+        .split_by_surface_curves(&pieces, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(split.model().faces().count(), 10);
+    let caps = split
+        .model()
+        .faces()
+        .filter(
+            |face| matches!(face.surface().geometry().plane_origin(), Some(o) if o.z == q(5, 4)),
+        )
+        .collect::<Vec<_>>();
+    assert_eq!(caps.len(), 5);
+    let mut edge_counts = caps
+        .iter()
+        .map(|face| face.outer().unwrap().edge_uses().count())
+        .collect::<Vec<_>>();
+    edge_counts.sort_unstable();
+    // Each corner: one arc and two side pieces; the centre: four arcs and
+    // four side pieces.
+    assert_eq!(edge_counts, vec![3, 3, 3, 3, 8]);
+    let json = split.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+    assert_eq!(cold.faces().count(), 10);
+}

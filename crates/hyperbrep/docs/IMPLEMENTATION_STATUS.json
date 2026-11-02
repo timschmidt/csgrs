@@ -4386,6 +4386,33 @@
       "validation": "Existing witness selected_coefficient_dependency_replay_export_and_drop_on_small_stack (a 12-level shared selected-coefficient chain replayed, re-exported and dropped on a 256 KiB thread) failed in debug builds since it was introduced at c08ddcc9bf: cold export overflowed (measured about 31 KiB of stack per dependency level, mostly a 21.6 KiB planar_point frame). After the change the debug test passes with a measured peak of about 197 KiB; reverting the change restores the overflow. Archive bytes are unchanged (the witness and the archive round-trip tests assert byte equality). On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep debug tests (the workspace CI form) report 790 passes and release all-feature tests 798 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; encoding now clones the borrowed definition fields it stores.",
       "limits": "The release check's hypercircuit documentation step still fails with a RefUnwindSafe trait-resolution overflow on hypersolve::selected_polynomial_field::FieldData, reproduced identically on main; it is not addressed here. No work package or pre-push gate closes."
+    },
+    {
+      "id": "horizontal-bump-cap-partition-2026-11-02",
+      "work_packages": [
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP12"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P20"
+      ],
+      "change": "Multi-trace face partitions accept several planar-image (or tensor-image) traces over one carrier frame whose sources are structurally distinct: such traces have no canonical order but are not duplicates, so insertion keeps caller order while the pairwise trace intersection still rejects overlaps. PlanarImage::certified_point first certifies the unmapped source point in the polynomial branch's own chart (where its selection was made) and carries it through the exact similarity view, accepting it only when both coordinates are proved equal to the selected image.",
+      "source": [
+        "../src/topology/helpers.rs",
+        "../src/geometry/planar_image.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "validation": "New witness horizontal_bump_sections_partition_unit_caps: the plane z = 5/4 meets the bump top z = x^2 + y^2 in four planar-image corner arcs whose eight ends are certified exactly at (+/-1, +/-1/2, 5/4) and (+/-1/2, +/-1, 5/4); the unit cap face splits into four three-edge corners and an eight-edge centre (ten faces) and replays cold with identical bytes. Reverting either change fails the witness; two exploratory changes (whole selected-end traces in partitions, certified fragment ranges in the Boolean kernel) were removed because the witness passes without them. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 799 passes and debug tests 791 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.02 s in release.",
+      "limits": "The full intersection of the bump solid with the cuboid z <= 5/4 now reaches result construction and stops with UnsupportedSolidShell: tensor-graph admission accepts a single tensor top, not tops that mix trimmed tensor pieces with planar caps, and their volume would need curved-trim integrals. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
