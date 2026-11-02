@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Intersect, locate points on and certify injectivity of polynomial branches
+  whose retained rational maps are all certified exact similarities, through
+  the public `PolynomialCurveBranch2::similarity_view`. Chord sections and
+  shared-chart pair intersections use the composed affine view; returned
+  points still evaluate the authoritative maps.
+
 - Trim polynomial branches whose retained rational maps are all certified
   exact similarities inside regions. Such images are decidedly not points and
   their line-chord forms use the maps' composed affine view; the original maps

@@ -586,6 +586,13 @@ analytic/spline pair matrix.
 
 ## Booleans
 
+Plane sections of tensors whose plane projection is an exact similarity keep
+mapped-branch plane pcurves that Hypercurve now intersects, locates and
+classifies through their similarity view; planar-image curve ends with selected
+coordinates are certified exactly from the branch's defining polynomial
+carried into the plane chart, so closed section loops split planar faces into
+a ring and a disk that replay cold.
+
 Planar faces whose boundaries contain generated or spline edges (no line/arc
 contour) take part in Boolean face-pair graphs: their regions are the exact
 non-zero fill of their boundary curve paths, and line traces are cut at their

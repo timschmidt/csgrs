@@ -473,7 +473,7 @@ impl PolynomialCurveBranch2 {
     /// certified as an exact similarity (composed with the final transform),
     /// and `None` when some map is not. The original maps and denominators
     /// remain authoritative; the view only answers queries.
-    pub(crate) fn similarity_view(&self) -> Option<Option<Similarity2>> {
+    pub fn similarity_view(&self) -> Option<Option<Similarity2>> {
         if self.maps.is_empty() {
             return Some(self.transform.clone());
         }
@@ -929,11 +929,14 @@ impl PolynomialCurveBranch2 {
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<CurveParameter2>> {
-        if !self.maps.is_empty() {
-            // A rational image may have multiple or continuous preimages.
+        // A general rational image may have multiple or continuous
+        // preimages; maps certified as exact similarities give their composed
+        // affine view, while the final incidence check below still replays the
+        // authoritative maps through `map_point`.
+        let Some(view) = self.similarity_view() else {
             return Err(blocked(UncertaintyReason::Unsupported));
-        }
-        let (form, ordinate_form) = match &self.transform {
+        };
+        let (form, ordinate_form) = match &view {
             Some(image) => {
                 let inverse = image.inverse().map_err(invalid)?;
                 let (a, b, c, d, x, y) = inverse.affine_components();

@@ -729,3 +729,51 @@ fn axis_plane_sections_are_exact_iso_curves() {
         .unwrap();
     assert_eq!(reload(split.model()).faces().count(), 2);
 }
+
+/// The plane z = 1/2 cuts the paraboloid patch in the circle x^2 + y^2 = 1/2,
+/// returned as two planar-image branches whose plane pcurves are mapped
+/// polynomial branches (the projection is an exact similarity). Their ends,
+/// the projection events (0, ±√2/2, 1/2), are certified exactly; the loop
+/// splits the cuboid's z = 1/2 face into a ring (keeping a new hole) and a
+/// disk, and the model replays cold.
+#[test]
+fn plane_side_section_loops_split_planar_faces() {
+    let (_, patch) = paraboloid_face();
+    let model = builder::cuboid(
+        Point3::new((-2).into(), (-2).into(), (-1).into()),
+        Point3::new(2.into(), 2.into(), q(1, 2)),
+    )
+    .unwrap()
+    .model()
+    .clone();
+    let face = model
+        .faces()
+        .find(|face| matches!(face.surface().geometry().plane_origin(), Some(o) if o.z == q(1, 2)))
+        .unwrap();
+    let plane = face.surface().geometry().clone();
+    let pieces = match plane.intersect_surface(&patch).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("two loop branches required, found {other:?}"),
+    };
+    assert_eq!(pieces.len(), 2);
+    let half_root_two = (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap();
+    for piece in &pieces {
+        assert_eq!(piece.curve().kind(), Curve3Kind::PlanarImage);
+        for end in [piece.curve().start().unwrap(), piece.curve().end().unwrap()] {
+            assert!(
+                [half_root_two.clone(), -half_root_two.clone()]
+                    .iter()
+                    .any(|y| GeometricPoint3::from(end.clone())
+                        .coincides_with(&Point3::new(0.into(), y.clone(), q(1, 2)).into())
+                        .unwrap())
+            );
+        }
+    }
+    let split = face
+        .split_by_surface_curve_loop(&pieces, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(split.model().faces().count(), 7);
+    assert_eq!(split.first_face().inner().len(), 1);
+    assert_eq!(split.second_face().inner().len(), 0);
+    assert_eq!(reload(split.model()).faces().count(), 7);
+}

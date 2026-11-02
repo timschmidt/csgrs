@@ -530,9 +530,10 @@ impl CurveSupport2 {
     ) -> bool {
         if let Self::Polynomial(branch) = self {
             // A selected graph is injective in its source abscissa. Its
-            // admitted similarities are invertible; a general image map
-            // needs its own injectivity proof before suppressing self events.
-            return branch.rational_maps().is_empty()
+            // admitted similarities, including retained rational maps certified
+            // as exact similarities, are invertible; a general image map needs
+            // its own injectivity proof before suppressing self events.
+            return branch.similarity_view().is_some()
                 && matches!(
                     CurveParameterDomain2::new(branch.parameter_range(), None)
                         .contains_finite_range(range, &policy.strict_counterpart()),

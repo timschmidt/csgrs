@@ -1214,6 +1214,9 @@ impl Curve3 {
                 // A selected end whose UV preimage is certified scalar.
                 return image.certified_point(self.domain().start());
             }
+            if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().start());
+            }
             self.evaluate_real(self.domain().represented_start()?)
         })
     }
@@ -1222,6 +1225,9 @@ impl Curve3 {
     pub fn end(&self) -> GeometryResult<Point3> {
         crate::context::strict(|| {
             if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().end());
+            }
+            if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
                 return image.certified_point(self.domain().end());
             }
             self.evaluate_real(self.domain().represented_end()?)

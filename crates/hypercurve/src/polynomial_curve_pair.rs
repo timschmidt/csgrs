@@ -184,18 +184,23 @@ fn negate(sign: RealSign) -> RealSign {
 
 /// A common invertible image preserves source incidence and parameter order.
 /// Compare affine coefficients by certified value, including an explicit
-/// identity versus an unmapped source. This is a sufficient chart certificate;
-/// other images retain their existing dispatch and capability blockers.
+/// identity versus an unmapped source and retained rational maps certified as
+/// exact similarities. This is a sufficient chart certificate; other images
+/// retain their existing dispatch and capability blockers.
 fn shared_similarity(
     first: &PolynomialCurveBranch2,
     second: &PolynomialCurveBranch2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Option<Option<Similarity2>>> {
-    if !first.rational_maps().is_empty() || !second.rational_maps().is_empty() {
+    // Retained rational maps certified as exact similarities contribute their
+    // composed affine view; returned points still evaluate each branch's
+    // authoritative definition.
+    let (Some(first_view), Some(second_view)) = (first.similarity_view(), second.similarity_view())
+    else {
         return Ok(None);
-    }
-    let coefficients = |branch: &PolynomialCurveBranch2| {
-        branch.image_transform().map_or_else(
+    };
+    let coefficients = |view: &Option<Similarity2>| {
+        view.as_ref().map_or_else(
             || {
                 [
                     Real::one(),
@@ -219,8 +224,8 @@ fn shared_similarity(
             },
         )
     };
-    let a = coefficients(first);
-    let b = coefficients(second);
+    let a = coefficients(&first_view);
+    let b = coefficients(&second_view);
     let same = policy.strict_predicate_pass(|| -> ExactCurveResult<bool> {
         for (a, b) in a.into_iter().zip(b) {
             if order(&a.into(), &b.into(), policy)? != Ordering::Equal {
@@ -232,12 +237,7 @@ fn shared_similarity(
     if !same {
         return Ok(None);
     }
-    Ok(Some(
-        first
-            .image_transform()
-            .or_else(|| second.image_transform())
-            .cloned(),
-    ))
+    Ok(Some(first_view.or(second_view)))
 }
 
 pub(super) fn intersect(

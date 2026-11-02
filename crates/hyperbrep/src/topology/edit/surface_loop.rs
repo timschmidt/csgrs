@@ -82,8 +82,23 @@ impl ArenaModel {
                     &Real::zero(),
                     crate::STRICT_PREDICATES,
                 ))?,
-                // Implicit branches have no exact area integral: a point with
-                // nonzero winding certifies the simple loop's orientation.
+                // Implicit branches have no exact area integral: Hypercurve's
+                // simple-loop orientation proof, or else a point with nonzero
+                // winding, certifies the simple loop's orientation.
+                _ if matches!(
+                    loop_path.simple_loop_orientation(),
+                    Ok(hypercurve::CurveLoopOrientation2::Counterclockwise)
+                ) =>
+                {
+                    std::cmp::Ordering::Greater
+                }
+                _ if matches!(
+                    loop_path.simple_loop_orientation(),
+                    Ok(hypercurve::CurveLoopOrientation2::Clockwise)
+                ) =>
+                {
+                    std::cmp::Ordering::Less
+                }
                 _ => winding_orientation(
                     &loop_path,
                     &pieces

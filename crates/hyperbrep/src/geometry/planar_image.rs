@@ -272,6 +272,93 @@ impl PlanarCurve3 {
         Ok(self.lift(&represented_curve_point(&self.source, &self.parameter(s))?))
     }
 
+    /// Scalar evaluation at a possibly selected spatial parameter. A selected
+    /// point of a polynomial-branch source whose image is a certified
+    /// similarity view is certified exactly against the branch's defining
+    /// polynomial carried into the image chart, then lifted. Other selected
+    /// points have no scalar view.
+    pub(super) fn certified_point(&self, s: &Parameter) -> GeometryResult<Point3> {
+        use hypersolve::BivariatePolynomial;
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_add, bivariate_multiply, bivariate_scale,
+        };
+        if let Some(value) = s.try_real() {
+            match self.point_at(value) {
+                // A scalar parameter can still select a point without a
+                // scalar view; certify it below.
+                Err(GeometryError::UnsupportedPcurveContour) => {}
+                other => return other,
+            }
+        }
+        let mapped = s.affine_image(&self.source_scale, &self.source_offset)?;
+        let selected = self.source.point_at(&mapped.curve_parameter())?;
+        if let Some(coordinates) = selected.coordinates() {
+            return Ok(self.lift(coordinates));
+        }
+        let original = self
+            .source
+            .source_restriction()
+            .map_or(&self.source, |(original, _, _)| original);
+        let Some(branch) = original.polynomial_branch() else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        let Some(view) = branch.similarity_view() else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        let defining = branch.topology().geometric_equation();
+        let equation = match view {
+            None => defining.clone(),
+            Some(transform) => {
+                // F(T^-1(X, Y)) with T(p) = M p + t, so T^-1(q) = M^-1 (q - t).
+                let (a, b, d, e, x, y) = transform.affine_components();
+                let determinant = a * e - b * d;
+                let inverse = |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
+                let p1 = inverse(e.clone())?;
+                let q1 = inverse(-b.clone())?;
+                let p2 = inverse(-d.clone())?;
+                let q2 = inverse(a.clone())?;
+                let r1 = -(&p1 * x + &q1 * y);
+                let r2 = -(&p2 * x + &q2 * y);
+                let first = BivariatePolynomial::new(vec![vec![r1, q1], vec![p1]]);
+                let second = BivariatePolynomial::new(vec![vec![r2, q2], vec![p2]]);
+                let powers = |base: &BivariatePolynomial, count: usize| {
+                    let mut powers = vec![BivariatePolynomial::new(vec![vec![Real::one()]])];
+                    for _ in 1..count {
+                        let next = bivariate_multiply(powers.last().expect("nonempty"), base);
+                        powers.push(next);
+                    }
+                    powers
+                };
+                let rows = defining.coefficients.len().max(1);
+                let columns = defining
+                    .coefficients
+                    .iter()
+                    .map(Vec::len)
+                    .max()
+                    .unwrap_or(1)
+                    .max(1);
+                let first_powers = powers(&first, rows);
+                let second_powers = powers(&second, columns);
+                let mut composed = BivariatePolynomial::new(Vec::new());
+                for (i, row) in defining.coefficients.iter().enumerate() {
+                    for (j, coefficient) in row.iter().enumerate() {
+                        composed = bivariate_add(
+                            &composed,
+                            &bivariate_scale(
+                                bivariate_multiply(&first_powers[i], &second_powers[j]),
+                                coefficient,
+                            ),
+                        );
+                    }
+                }
+                composed
+            }
+        };
+        let point = super::certified_scalar_point(&selected, &equation)?
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        Ok(self.lift(&point))
+    }
+
     pub(super) fn derivative_at(
         &self,
         s: &Parameter,
