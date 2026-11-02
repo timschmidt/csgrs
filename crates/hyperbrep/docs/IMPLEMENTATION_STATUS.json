@@ -3731,6 +3731,33 @@
       "validation": "New witness: branches of the rational cylinder patch's sections by x^2 + y^2 = 1 and by x^2 + z^2 = 9/4 meet exactly twice, at (+/-sqrt(10)/4, sqrt(6)/4, sqrt(26)/4), the independently summed solution of the three cylinder equations; each reported point is checked against the second curve; a translated copy on a different tensor is a typed refusal. The existing coplanar curve/curve witnesses pass unchanged through the shared mapping. Removing the same-tensor guard fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 766 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.2 s in release.",
       "limits": "Tensor-image curves on different tensors, against native curves, atlas pieces across patches, and reflected sources remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "conic-rational-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to circular or elliptic arcs against positive-weight rational Bezier or NURBS curves, in either order. When the curve's control net lies in the arc's plane, its contacts are the complete roots (per NURBS span, through Hypercurve's root authority) of the exact Bernstein numerator ry^2 a^2 + rx^2 b^2 - rx^2 ry^2 W^2, where a and b are the weighted in-plane coordinates; otherwise its complete plane contacts are used. Duplicate span-joint roots are merged. Arc angles come from exact point location, which needs scalar contact coordinates; selected contacts without a scalar view and curves lying along the conic remain typed. A former typed witness (unit arc against the noncoplanar cubic) is now the exact empty result, and an ellipse pair keeps the typed refusal.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../src/geometry/curve_implicit.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: the radius-5 circle and the coplanar parabola y = x^2/3 + 1, for which u^2 + 15u - 216 = 0 with u = x^2 gives only the parabola's ends (+/-3, 4, 0), in both orders; a quadratic piercing z = 0 at (3, 4, 0) with s = 1/2; a cubic crossing at the selected s = cbrt(1/2) is a typed refusal. Dropping a radius from the numerator's constant term fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 767 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
+      "limits": "Selected contacts without scalar views (arc angles of non-radical algebraic points), curves along a conic, ellipse pairs and conics against planar or tensor images remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

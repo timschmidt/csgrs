@@ -60,7 +60,9 @@ impl Curve3 {
     /// the arc's exact point location. Circular arcs meet on their radical line
     /// (coplanar) or on the line of their planes (otherwise), with both arc
     /// parameters exact; arcs of one circle return their exact coincident
-    /// ranges and touching points in both charts. Tensor-image curves on one
+    /// ranges and touching points in both charts. Conic arcs against rational
+    /// curves use an exact Bernstein numerator (coplanar) or plane contacts;
+    /// arc angles need scalar contact points. Tensor-image curves on one
     /// exact tensor meet where their UV sources meet. Noncoplanar rational
     /// Bézier/NURBS pairs
     /// are intersected through an
@@ -98,6 +100,19 @@ impl Curve3 {
                 (&self.data.geometry, &other.data.geometry)
             {
                 return intersect_circles(self, first, other, second);
+            }
+            match (&self.data.geometry, &other.data.geometry) {
+                (CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc), _)
+                    if rational_net(other).is_some() =>
+                {
+                    return intersect_conic_rational(self, arc, other);
+                }
+                (_, CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc))
+                    if rational_net(self).is_some() =>
+                {
+                    return Ok(swap(intersect_conic_rational(other, arc, self)?));
+                }
+                _ => {}
             }
             if let (CurveGeometry3::TensorImage(first), CurveGeometry3::TensorImage(second)) =
                 (&self.data.geometry, &other.data.geometry)
@@ -1132,5 +1147,135 @@ fn intersect_planar_views(
             CurveCurveIntersection::Overlap { first, second }
         }
         _ => CurveCurveIntersection::Components { points, overlaps },
+    })
+}
+
+/// A circular or elliptic arc against a rational Bézier or NURBS curve. A
+/// coplanar curve's contacts are the complete roots of the exact Bernstein
+/// numerator `ry^2 a^2 + rx^2 b^2 - rx^2 ry^2 W^2`, with `a, b` its weighted
+/// in-plane coordinates; otherwise the curve's complete plane contacts are
+/// checked on the arc. Arc angles come from exact point location, which needs
+/// scalar contact coordinates; selected contacts without them stay typed.
+fn intersect_conic_rational(
+    arc_curve: &Curve3,
+    arc: &EllipseArc3,
+    curve: &Curve3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let net = rational_net(curve).expect("caller checked a rational net");
+    let normal = arc.x.cross(&arc.y);
+    let mut coplanar = true;
+    for control in &net.controls {
+        if order(&normal.dot(&(control - &arc.center)), &Real::zero())? != Ordering::Equal {
+            coplanar = false;
+            break;
+        }
+    }
+    let mut contacts: Vec<Parameter> = Vec::new();
+    if coplanar {
+        let spans: Vec<(Vec<HomogeneousPoint3>, Real, Real)> = match &curve.data.geometry {
+            CurveGeometry3::RationalBezier(bezier) => {
+                vec![(
+                    bezier.homogeneous_controls().to_vec(),
+                    Real::zero(),
+                    Real::one(),
+                )]
+            }
+            CurveGeometry3::Nurbs(nurbs) => decompose_nurbs_into_bezier_segments(nurbs)?
+                .into_iter()
+                .map(|(segment, domain)| {
+                    let CurveGeometry3::RationalBezier(bezier) = &segment.data.geometry else {
+                        unreachable!("NURBS decomposition produces rational Bézier segments");
+                    };
+                    (
+                        bezier.homogeneous_controls().to_vec(),
+                        domain.start().clone(),
+                        domain.end() - domain.start(),
+                    )
+                })
+                .collect(),
+            _ => unreachable!("rational nets are Bézier or NURBS"),
+        };
+        let rx2 = &arc.x_radius * &arc.x_radius;
+        let ry2 = &arc.y_radius * &arc.y_radius;
+        for (controls, start, length) in spans {
+            let coordinate = |axis: &Vector3| -> Vec<Real> {
+                controls
+                    .iter()
+                    .map(|p| {
+                        &axis[0] * (&p.x - &arc.center.x * &p.w)
+                            + &axis[1] * (&p.y - &arc.center.y * &p.w)
+                            + &axis[2] * (&p.z - &arc.center.z * &p.w)
+                    })
+                    .collect()
+            };
+            let (a, b) = (coordinate(&arc.x), coordinate(&arc.y));
+            let w = controls.iter().map(|p| p.w.clone()).collect::<Vec<_>>();
+            let aa = bernstein_product(&a, &a)?;
+            let bb = bernstein_product(&b, &b)?;
+            let ww = bernstein_product(&w, &w)?;
+            let numerator = (0..aa.len())
+                .map(|i| &ry2 * &aa[i] + &rx2 * &bb[i] - &rx2 * &ry2 * &ww[i])
+                .collect::<Vec<_>>();
+            let mut zero = true;
+            for coefficient in &numerator {
+                if order(coefficient, &Real::zero())? != Ordering::Equal {
+                    zero = false;
+                    break;
+                }
+            }
+            if zero {
+                // The curve lies along the conic: an overlap not yet mapped.
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+            for (local, _) in curve_implicit::roots(numerator)? {
+                contacts.push(local.affine_image(&length, &start)?);
+            }
+        }
+    } else {
+        let plane = Surface::plane(arc.center.clone(), arc.x.clone(), arc.y.clone())?;
+        match plane.intersect_curve(curve)? {
+            CurveSurfaceIntersection::None => {}
+            CurveSurfaceIntersection::Points(points) => {
+                contacts.extend(points.into_iter().map(|point| point.parameter));
+            }
+            _ => return Err(GeometryError::UnsupportedIntersection),
+        }
+    }
+    let mut points = Vec::new();
+    let mut seen: Vec<Parameter> = Vec::new();
+    'contact: for parameter in contacts {
+        if !curve.domain().contains(&parameter)? {
+            continue;
+        }
+        for previous in &seen {
+            if previous.compare(&parameter)? == Ordering::Equal {
+                continue 'contact;
+            }
+        }
+        seen.push(parameter.clone());
+        let point = curve.point_at(&parameter)?;
+        let Some(coordinates) = point.try_coordinates() else {
+            return Err(GeometryError::UnsupportedIntersection);
+        };
+        let visits = match arc_curve.parameters_of(coordinates)? {
+            CurveParameterLocation::None => continue,
+            CurveParameterLocation::Parameters(visits) => visits,
+            CurveParameterLocation::EntireDomain => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+        };
+        for visit in visits {
+            points.push(CurveCurvePoint {
+                first: visit,
+                second: parameter.clone(),
+                point: point.clone(),
+            });
+        }
+    }
+    sort_by_first(&mut points);
+    Ok(if points.is_empty() {
+        CurveCurveIntersection::None
+    } else {
+        CurveCurveIntersection::Points(points)
     })
 }

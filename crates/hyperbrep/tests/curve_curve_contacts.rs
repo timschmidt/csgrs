@@ -195,7 +195,8 @@ fn unsupported_pairs_remain_typed() {
         line(pi(0, 0, 0), pi(2, 0, 0)).intersect_curve(&along),
         Err(GeometryError::UnsupportedIntersection)
     ));
-    // A conic arc against a rational curve has no admitted route yet.
+    // The unit arc θ in [0, 1] in z = 0 meets the cubic's plane crossing
+    // (-2, 0, 0) nowhere: an exact empty result.
     let circle = Curve3::circle_arc(
         Point3::origin(),
         Vector3::x(),
@@ -206,7 +207,24 @@ fn unsupported_pairs_remain_typed() {
     )
     .unwrap();
     assert!(matches!(
-        circle.intersect_curve(&bump()),
+        circle.intersect_curve(&bump()).unwrap(),
+        CurveCurveIntersection::None
+    ));
+    // Two elliptic arcs have no admitted route yet.
+    let ellipse = |rx: i64| {
+        Curve3::ellipse_arc(
+            Point3::origin(),
+            Vector3::x(),
+            Vector3::y(),
+            rx.into(),
+            1.into(),
+            Real::zero(),
+            Real::pi(),
+        )
+        .unwrap()
+    };
+    assert!(matches!(
+        ellipse(2).intersect_curve(&ellipse(3)),
         Err(GeometryError::UnsupportedIntersection)
     ));
 }
@@ -670,4 +688,45 @@ fn arcs_of_one_circle_return_exact_coincident_ranges() {
 
 fn pi_point(x: i64, y: i64) -> GeometricPoint3 {
     pi(x, y, 0).into()
+}
+
+/// The radius-5 circle in z = 0 and the parabola y = x^2/3 + 1 (controls
+/// (-3,4,0), (0,-2,0), (3,4,0)): substituting gives u^2 + 15u - 216 = 0 for
+/// u = x^2, so they meet only at (±3, 4, 0), the parabola's ends. The
+/// quadratic (2,4,-1), (4,4,0), (2,4,1) pierces z = 0 at (3, 4, 0).
+#[test]
+fn circles_meet_rational_curves_in_and_across_their_plane() {
+    let circle = full_circle(Point3::origin(), Vector3::x(), Vector3::y(), 5);
+    let parabola = Curve3::rational_bezier(
+        vec![pi(-3, 4, 0), pi(0, -2, 0), pi(3, 4, 0)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let found = points(&circle, &parabola);
+    assert_eq!(found.len(), 2);
+    let ends = found.iter().map(|p| p.second.clone()).collect::<Vec<_>>();
+    assert!(ends.iter().any(|s| equal(s, Real::zero())));
+    assert!(ends.iter().any(|s| equal(s, Real::one())));
+    let swapped = points(&parabola, &circle);
+    assert_eq!(swapped.len(), 2);
+    let piercing = Curve3::rational_bezier(
+        vec![pi(2, 4, -1), pi(4, 4, 0), pi(2, 4, 1)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let found = points(&circle, &piercing);
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].second, q(1, 2)));
+    assert!(found[0].point.coincides_with(&pi(3, 4, 0).into()).unwrap());
+    // A cubic crossing z = 0 at the selected s = cbrt(1/2) has no scalar
+    // contact point for the arc's angle: a typed refusal, not a guess.
+    let cubic = Curve3::rational_bezier(
+        vec![pi(3, 4, -1), pi(3, 4, -1), pi(3, 4, -1), pi(3, 4, 1)],
+        vec![Real::one(); 4],
+    )
+    .unwrap();
+    assert!(matches!(
+        circle.intersect_curve(&cubic),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
 }

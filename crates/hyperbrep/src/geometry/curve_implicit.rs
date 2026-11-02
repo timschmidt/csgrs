@@ -239,7 +239,9 @@ fn contained_span(
 
 /// Complete roots on `[0, 1]` of a nonzero Bernstein polynomial and the sign
 /// of its first derivative at each root.
-fn roots(coefficients: Vec<Real>) -> GeometryResult<Vec<(Parameter, hyperreal::RealSign)>> {
+pub(super) fn roots(
+    coefficients: Vec<Real>,
+) -> GeometryResult<Vec<(Parameter, hyperreal::RealSign)>> {
     let count = coefficients.len();
     // Hypercurve owns complete root isolation for arbitrary-degree Bézier
     // coordinates. The second coordinate is identically zero, so locating the
