@@ -82,6 +82,12 @@ impl Curve3 {
                 (CurveGeometry3::PlanarImage(image), CurveGeometry3::Line(_)) => {
                     Ok(swap(intersect_line_planar_image(other, self, image)?))
                 }
+                (CurveGeometry3::PlanarImage(image), _) if rational_net(other).is_some() => {
+                    intersect_planar_image_rational(self, image, other)
+                }
+                (_, CurveGeometry3::PlanarImage(image)) if rational_net(self).is_some() => {
+                    Ok(swap(intersect_planar_image_rational(other, image, self)?))
+                }
                 _ => match (rational_net(self), rational_net(other)) {
                     (Some(first), Some(second)) => {
                         intersect_rational_pair(self, &first, other, &second)
@@ -693,4 +699,66 @@ fn intersect_rational_pair(
         });
     }
     Err(GeometryError::UnsupportedIntersection)
+}
+
+/// A rational curve not lying in a planar image's plane meets the image only
+/// at its complete plane contacts. Each contact's plane-frame coordinates are
+/// the rational curve's exact projection evaluated at the same selected
+/// parameter, which is located on the planar source without forming
+/// independent coordinates.
+fn intersect_planar_image_rational(
+    curve: &Curve3,
+    image: &PlanarCurve3,
+    other: &Curve3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let net = rational_net(other).expect("caller checked a rational net");
+    let plane = Surface::plane(image.origin.clone(), image.u.clone(), image.v.clone())?;
+    let contacts = match plane.intersect_curve(other)? {
+        CurveSurfaceIntersection::None => return Ok(CurveCurveIntersection::None),
+        CurveSurfaceIntersection::Points(points) => points,
+        // A coplanar curve was handled by the planar route.
+        _ => return Err(GeometryError::UnsupportedIntersection),
+    };
+    let materialized = image.materialize_plane_projection(&image.origin, &image.u, &image.v)?;
+    let (scale, offset) = materialized
+        .correspondence
+        .affine_coefficients()
+        .map(|(scale, offset)| (scale.clone(), offset.clone()))
+        .ok_or(GeometryError::UnsupportedIntersection)?;
+    let projected = net.image(
+        net.controls
+            .iter()
+            .map(|p| {
+                let point = project_point_to_plane_frame(&image.origin, &image.u, &image.v, p)?;
+                Ok(CurvePoint2::new(point.x, point.y))
+            })
+            .collect::<GeometryResult<Vec<_>>>()?,
+    )?;
+    let mut points = Vec::new();
+    for contact in contacts {
+        let uv = projected.point_at(&contact.parameter.curve_parameter())?;
+        let locations = match materialized.curve.point_locations(&uv)? {
+            CurvePointLocations2::EntireCurve => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+            CurvePointLocations2::Locations(locations) => locations,
+        };
+        for location in locations {
+            let parameter =
+                Parameter::from_curve(&location.parameter()?)?.affine_image(&scale, &offset)?;
+            if curve.domain().contains(&parameter)? {
+                points.push(CurveCurvePoint {
+                    first: parameter,
+                    second: contact.parameter.clone(),
+                    point: contact.point.clone(),
+                });
+            }
+        }
+    }
+    sort_by_first(&mut points);
+    Ok(if points.is_empty() {
+        CurveCurveIntersection::None
+    } else {
+        CurveCurveIntersection::Points(points)
+    })
 }

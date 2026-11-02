@@ -380,3 +380,67 @@ fn nurbs_meets_a_transverse_quadratic_at_its_knot() {
             .unwrap()
     );
 }
+
+/// The planar image y = x^2 (source controls (0,0), (2,0), (4,16), x = 4σ) in
+/// z = 0, and the quadratic (1,0,-1), (1,0,-1), (1,3,2) with x = 1, y = 3s^2,
+/// z = 3s^2 - 1 in the plane y - z = 1. It crosses z = 0 only at the exact
+/// radical s = √3/3, at (1, 1, 0) = image(σ = 1/4).
+#[test]
+fn rational_curve_pierces_a_planar_image_at_a_selected_parameter() {
+    let parabola = Curve3::planar_image(
+        hypercurve::Curve2::from(
+            hypercurve::RationalBezier2::try_new(
+                vec![
+                    hypercurve::Point2::from_values(0, 0),
+                    hypercurve::Point2::from_values(2, 0),
+                    hypercurve::Point2::from_values(4, 16),
+                ],
+                vec![Real::one(); 3],
+            )
+            .unwrap(),
+        ),
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+    )
+    .unwrap();
+    let piercing = |height: i64| {
+        Curve3::rational_bezier(
+            vec![
+                pi(1, 0, -1 + height),
+                pi(1, 0, -1 + height),
+                pi(1, 3, 2 + height),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap()
+    };
+    let found = points(&parabola, &piercing(0));
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].first, q(1, 4)));
+    assert!(equal(
+        &found[0].second,
+        (Real::from(3).sqrt().unwrap() / Real::from(3)).unwrap()
+    ));
+    assert!(found[0].point.coincides_with(&pi(1, 1, 0).into()).unwrap());
+    let swapped = points(&piercing(0), &parabola);
+    assert!(equal(&swapped[0].second, q(1, 4)));
+    // The cubic x = 1, y = 2s^3, z = 2s^3 - 1 crosses z = 0 at the selected
+    // s = cbrt(1/2). Locating that selected plane point on the planar source
+    // needs selected-point location in Hypercurve, which is not yet
+    // available; the incidence stays a typed blocker rather than a guess.
+    let cubic = Curve3::rational_bezier(
+        vec![pi(1, 0, -1), pi(1, 0, -1), pi(1, 0, -1), pi(1, 2, 1)],
+        vec![Real::one(); 4],
+    )
+    .unwrap();
+    assert!(matches!(
+        parabola.intersect_curve(&cubic),
+        Err(GeometryError::PlanarCurve(_))
+    ));
+    // Lowered by one, the crossing (1, 2, 0) is off the parabola.
+    assert!(matches!(
+        parabola.intersect_curve(&piercing(-1)).unwrap(),
+        CurveCurveIntersection::None
+    ));
+}
