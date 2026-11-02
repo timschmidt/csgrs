@@ -3836,3 +3836,15 @@ Validation:
 Evidence:
 `docs/evidence/2026-11-02-hypercurve-closure-chamfer-closing-identity`, SHA-256
 `4bd819c29e47a46cad0362357108154f14066561f2fadffbebc899247a412d95`.
+
+Pre-push campaign on `57515fe506`, recorded in
+`docs/evidence/2026-11-02-hypercurve-closure-chamfer-identity-validation` (SHA-256
+`e63f643847b8d6294bbf1b47ecaa821a6e126cf296f800f7113156c8bb7bee45`):
+- all four normal phases passed: 16 quick, 196 lint, 101 workflow and 2 release steps;
+- the directed ASan fuzz-smoke step failed. `jacobi_epsilon` seeds `[21, 2, 173, 155, 1, 1]`
+  and `[8, 127, 94, 2, 1, 3]` exceeded or approached the 10 s per-input limit under unrelated
+  host load. That target's code is unchanged from `1e7847896b`, where both seeds passed.
+
+`main` was fast-forwarded to `57515fe506` with the owner's authorization despite that failure.
+Open: `jacobi_epsilon` has little headroom. Even under the same load, the timeout seed alone took
+10.4 s with ASan. It needs a quiet-host rerun, or a cost reduction in the epsilon evaluation path.

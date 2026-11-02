@@ -86,7 +86,19 @@ in this repository.
 ## Follow-on records
 
 The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` now ends at
-`6185a3ec65aecdb239548915263a28b30f30357a` with 407 records. Its new record
+`221d99c40675a7503185f8717d53278feddc2da8` with 408 records. Its new record
+`docs/evidence/2026-11-02-hypercurve-closure-chamfer-identity-validation` contains 9,074 files and
+23,985,190 bytes, SHA-256 `e63f643847b8d6294bbf1b47ecaa821a6e126cf296f800f7113156c8bb7bee45`. It
+records a partial pre-push campaign on `57515fe50632ead0c662eca058bfee7775b5f9d5`. All 315 normal
+command groups and the 12 directed corpus generation steps passed. The directed ASan fuzz-smoke step
+failed: two `jacobi_epsilon` seed inputs timed out at the 10 s per-input limit while an unrelated
+kernel build loaded the host. The fuzz target's dependency closure is unchanged from `1e7847896b`,
+where the same seeds passed. The repository owner authorized pushing `57515fe506` to `main` without
+that step passing. Exact geometric operation closure and hosted publication or deployment are not
+established here.
+
+Before that record, the branch ended at
+`6185a3ec65aecdb239548915263a28b30f30357a` with 407 records. Its record
 `docs/evidence/2026-11-02-hypercurve-closure-chamfer-closing-identity` contains 75 files and
 537,409 bytes, SHA-256 `4bd819c29e47a46cad0362357108154f14066561f2fadffbebc899247a412d95`. It
 reproduces the chamfered ellipse closing stall on `d92fc4be9b`, identifies the coincident band
