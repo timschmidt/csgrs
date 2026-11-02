@@ -1,4 +1,15 @@
-# Selected geometry in archive version 15
+# Selected geometry in archive version 16
+
+Version 16 adds the `TensorImage` spatial curve record: an admitted pcurve source
+in the unit chart of an inline positive-weight rational Bézier tensor, with its
+signed source chart. Curves decode before surfaces, so the tensor controls and
+weights are embedded and revalidated on replay, together with the complete
+source bounds; nothing in the record is a trusted proof. Admission charges one
+record, both tensor degrees, every control and weight entry, and the source.
+Version-15 archives are rejected without an adapter; the three retained cone
+fixtures change only their version field. All version-15 records below remain
+valid version-16 records.
+
 
 Version 15 interns planar point and generated chord definitions in the existing
 selection graph. Typed backward references preserve repeated dependencies without

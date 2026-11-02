@@ -61,6 +61,10 @@ impl Curve3 {
                     Self::from_planar_image(image.restricted_to(&range)?)
                         .map(|curve| curve.retaining_parameterization_of(self))
                 }
+                CurveGeometry3::TensorImage(image) => {
+                    Self::from_tensor_image(image.restricted_to(&range)?)
+                        .map(|curve| curve.retaining_parameterization_of(self))
+                }
                 CurveGeometry3::AffineImage(image) => Self::affine_image(
                     image.source.restrict_source(range)?,
                     image.transform.clone(),

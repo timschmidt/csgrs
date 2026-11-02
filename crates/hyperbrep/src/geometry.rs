@@ -21,6 +21,7 @@ mod curve_extrusion;
 mod curve_implicit;
 mod curve_plane;
 mod curve_revolution;
+mod implicit_tensor;
 mod location;
 mod pcurve;
 mod periodic_charts;
@@ -33,6 +34,7 @@ mod rotation;
 mod selected_pcurves;
 mod spline;
 mod surface_point;
+mod tensor_image;
 mod transform;
 mod translation;
 mod vector;
@@ -55,6 +57,8 @@ pub(crate) use rotation::RotationCurve3;
 pub use rotation::RotationCurveGeometry;
 use rotation::rotation_transform;
 pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
+pub(crate) use tensor_image::TensorCurve3;
+pub use tensor_image::TensorCurveGeometry;
 pub(crate) use transform::TransformMetric;
 pub(crate) use translation::TranslationCurve3;
 pub use translation::TranslationCurveGeometry;
@@ -146,6 +150,8 @@ pub enum Curve3Kind {
     Translation,
     /// Exact affine lift of a retained planar curve.
     PlanarImage,
+    /// Exact image of a retained UV curve on a rational Bézier tensor.
+    TensorImage,
     /// Finite line segment.
     Line,
     /// Arbitrary-degree rational Bézier curve.
@@ -386,6 +392,7 @@ enum CurveGeometry3 {
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
+    TensorImage(Box<TensorCurve3>),
     Line(Line3),
     RationalBezier(RationalBezier3),
     Nurbs(NurbsCurve3),
@@ -399,6 +406,7 @@ pub(crate) enum Curve3ExactData {
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
+    TensorImage(Box<TensorCurve3>),
     Line(Box<Line3ExactData>),
     RationalBezier {
         control_points: Vec<Point3>,
@@ -722,6 +730,7 @@ impl Curve3 {
             CurveGeometry3::Rotation(_) => Curve3Kind::Rotation,
             CurveGeometry3::Translation(_) => Curve3Kind::Translation,
             CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
+            CurveGeometry3::TensorImage(_) => Curve3Kind::TensorImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
             CurveGeometry3::RationalBezier(_) => Curve3Kind::RationalBezier,
             CurveGeometry3::Nurbs(_) => Curve3Kind::Nurbs,
@@ -812,6 +821,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
@@ -840,6 +850,7 @@ impl Curve3 {
                 CurveGeometry3::Rotation(rotation) => rotation.bounds(),
                 CurveGeometry3::Translation(line) => line.bounds(),
                 CurveGeometry3::PlanarImage(image) => image.bounds(),
+                CurveGeometry3::TensorImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
                     exact_point_bounds(&[line.start.clone(), line.end.clone()])
                 }
@@ -914,6 +925,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => None,
         };
         if let Some(controls) = controls {
@@ -1007,6 +1019,7 @@ impl Curve3 {
                     .cloned()
                     .ok_or(GeometryError::UnrepresentablePoint),
                 CurveGeometry3::PlanarImage(image) => image.point_at(parameter),
+                CurveGeometry3::TensorImage(image) => image.point_at(parameter),
                 CurveGeometry3::Line(line) => {
                     if parameter == self.domain().represented_start()? {
                         return Ok(line.start.clone());
@@ -1084,6 +1097,7 @@ impl Curve3 {
                         .affine_image(&image.transform);
                 }
                 CurveGeometry3::PlanarImage(image) => return image.derivative_at(parameter, order),
+                CurveGeometry3::TensorImage(image) => return image.derivative_at(parameter, order),
                 CurveGeometry3::Translation(line) => {
                     return Ok(GeometricVector3::from_coordinates(if order == 1 {
                         line.displacement.clone()
@@ -1204,6 +1218,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => None,
         }
     }
@@ -1247,6 +1262,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
@@ -1257,6 +1273,7 @@ impl Curve3 {
             CurveGeometry3::Rotation(rotation) => Curve3ExactData::Rotation(rotation.clone()),
             CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
             CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
+            CurveGeometry3::TensorImage(image) => Curve3ExactData::TensorImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
                 start: line.start.clone(),
                 end: line.end.clone(),
@@ -1306,6 +1323,7 @@ impl Curve3 {
             Curve3ExactData::Rotation(rotation) => Self::from_rotation(*rotation),
             Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
             Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
+            Curve3ExactData::TensorImage(image) => Self::from_tensor_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
             Curve3ExactData::RationalBezier {
                 control_points,
@@ -1378,6 +1396,11 @@ impl Curve3 {
                 Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
             }
             CurveGeometry3::PlanarImage(image) => Self::from_planar_image(PlanarCurve3 {
+                source_scale: -&image.source_scale,
+                source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
+                ..(**image).clone()
+            }),
+            CurveGeometry3::TensorImage(image) => Self::from_tensor_image(TensorCurve3 {
                 source_scale: -&image.source_scale,
                 source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
                 ..(**image).clone()
@@ -1481,6 +1504,10 @@ impl Curve3 {
                     image.restricted(self.domain().represented_start()?, parameter)?,
                     image.restricted(parameter, self.domain().represented_end()?)?,
                 )),
+                CurveGeometry3::TensorImage(image) => Ok((
+                    image.restricted(self.domain().represented_start()?, parameter)?,
+                    image.restricted(parameter, self.domain().represented_end()?)?,
+                )),
                 CurveGeometry3::Line(line) => {
                     let split = line.start.lerp(&line.end, parameter);
                     Ok((
@@ -1580,6 +1607,7 @@ impl Curve3 {
                 CurveGeometry3::Rotation(rotation) => rotation.restricted(start, end),
                 CurveGeometry3::Translation(line) => line.restricted(start, end),
                 CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
+                CurveGeometry3::TensorImage(image) => image.restricted(start, end),
                 CurveGeometry3::Line(_) => {
                     Self::line(self.evaluate_real(start)?, self.evaluate_real(end)?)
                 }
@@ -1657,6 +1685,8 @@ impl Curve3 {
                 Err(GeometryError::UnsupportedParameterLocation)
             }
             CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
+            // No complete exact tensor inverse is admitted yet.
+            CurveGeometry3::TensorImage(_) => Err(GeometryError::UnsupportedParameterLocation),
             CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
             CurveGeometry3::RationalBezier(curve) => {
                 locate_rational_bezier_parameters(self, curve, point)
@@ -1690,6 +1720,7 @@ impl Curve3 {
                 transform.transform_direction3(&line.displacement),
             ),
             CurveGeometry3::PlanarImage(image) => image.transformed(transform),
+            CurveGeometry3::TensorImage(image) => image.transformed(transform),
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
                 transform_point(transform, &line.end)?,
@@ -4147,6 +4178,11 @@ impl Surface {
                 image.v = rotate_vector(&image.v);
                 Curve3::from_planar_image(*image)
             }
+            Curve3ExactData::TensorImage(image) => image.transformed(&rotation_transform(
+                &surface.axis_origin,
+                &surface.axis,
+                angle,
+            )),
             Curve3ExactData::Line(line) => {
                 Curve3::line(rotate_point(&line.start), rotate_point(&line.end))
             }
@@ -4468,7 +4504,11 @@ impl Surface {
     /// whole-rectangle injectivity proof certifies its planar spatial image.
     /// Both pcurves keep the original source parameters. Folded images and
     /// unsupported vertical, repeated or boundary components fail typed;
-    /// no incomplete trace is returned as a complete section. The configured
+    /// no incomplete trace is returned as a complete section. Spheres,
+    /// cylinders, cones and ring tori against such a tensor use the same
+    /// complete decomposition of the pulled-back carrier equation; branches
+    /// become retained tensor-image curves when an injective coordinate-plane
+    /// projection certifies the tensor. The configured
     /// solver work context participates where instrumented, but these limits
     /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
@@ -4576,6 +4616,30 @@ impl Surface {
             (SurfaceGeometry::Sphere(first), SurfaceGeometry::Sphere(second)) => {
                 intersect_spheres(first, second)
             }
+            (
+                SurfaceGeometry::RationalBezier(_),
+                SurfaceGeometry::Sphere(_)
+                | SurfaceGeometry::Cylinder(_)
+                | SurfaceGeometry::Cone(_)
+                | SurfaceGeometry::Torus(_),
+            ) => implicit_tensor::intersect(
+                curve_implicit::ImplicitCarrier::from_surface(&other.data.geometry)
+                    .expect("implicit analytic carrier"),
+                self,
+                SurfaceIntersectionOperand::First,
+            ),
+            (
+                SurfaceGeometry::Sphere(_)
+                | SurfaceGeometry::Cylinder(_)
+                | SurfaceGeometry::Cone(_)
+                | SurfaceGeometry::Torus(_),
+                SurfaceGeometry::RationalBezier(_),
+            ) => implicit_tensor::intersect(
+                curve_implicit::ImplicitCarrier::from_surface(&self.data.geometry)
+                    .expect("implicit analytic carrier"),
+                other,
+                SurfaceIntersectionOperand::Second,
+            ),
             _ => Err(GeometryError::UnsupportedIntersection),
         })
     }
@@ -5497,6 +5561,7 @@ pub(crate) fn project_curve_to_plane_frame(
         | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::TensorImage(_)
         | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
 }
@@ -5687,6 +5752,7 @@ fn linear_section_pcurve_carriers(
         | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
 }
@@ -6848,6 +6914,7 @@ fn project_revolution_meridian(
         | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::TensorImage(_)
         | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -7478,6 +7545,7 @@ fn curve_is_strictly_on_one_plane_side(
         | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
 }
@@ -9953,6 +10021,7 @@ fn split_ellipse_arc(
         | Curve3Kind::AffineImage
         | Curve3Kind::Rotation
         | Curve3Kind::Translation
+        | Curve3Kind::TensorImage
         | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
         }

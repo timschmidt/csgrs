@@ -129,6 +129,11 @@ pub(super) enum Curve {
     PlanarImage {
         source: Box<Pcurve>,
     },
+    TensorImage {
+        source: Box<Pcurve>,
+        control_points: Rows,
+        weights: Rows,
+    },
     Line(IgnoredAny),
     EllipseArc(IgnoredAny),
     RationalBezier {
@@ -155,6 +160,17 @@ impl Record for Curve {
             }
             Self::PlanarImage { source } => {
                 budget.record()?;
+                source.admit(budget)
+            }
+            Self::TensorImage {
+                source,
+                control_points,
+                weights,
+            } => {
+                budget.record()?;
+                budget.degree(control_points.rows.saturating_sub(1))?;
+                budget.degree(control_points.columns.saturating_sub(1))?;
+                budget.geometry(control_points.entries() + weights.entries())?;
                 source.admit(budget)
             }
             Self::Line(_) | Self::EllipseArc(_) => Ok(()),

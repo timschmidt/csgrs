@@ -30,7 +30,7 @@ use planar_points::RawPlanarPoint;
 use selection::{GraphEncoder, RawParameter, RawSelectionGraph, RawVertex, SelectionGraph};
 use spatial_points::{RawSpatialPoint, RawSurfacePoint};
 
-const FORMAT_VERSION: u32 = 15;
+const FORMAT_VERSION: u32 = 16;
 
 /// Failure while encoding, decoding, or validating an exact model.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -579,6 +579,7 @@ enum RawCurve3 {
     Rotation(Box<RawRotationCurve3>),
     Translation(Box<RawTranslationCurve3>),
     PlanarImage(Box<RawPlanarCurve3>),
+    TensorImage(Box<RawTensorCurve3>),
     Line(Box<RawLine3>),
     RationalBezier {
         control_points: Vec<[Real; 3]>,
@@ -621,6 +622,17 @@ struct RawPlanarCurve3 {
     origin: [Real; 3],
     u: [Real; 3],
     v: [Real; 3],
+    source_chart: [Real; 2],
+}
+
+/// A UV source on an inline positive-weight rational Bézier tensor. Curves
+/// decode before surfaces, so the tensor definition is embedded rather than
+/// referenced; replay revalidates the tensor and the complete source bounds.
+#[derive(Clone, Debug, Deserialize, Serialize)]
+struct RawTensorCurve3 {
+    source: Box<RawPcurve>,
+    control_points: Vec<Vec<[Real; 3]>>,
+    weights: Vec<Vec<Real>>,
     source_chart: [Real; 2],
 }
 
@@ -946,6 +958,24 @@ fn raw_curve3(
             v: vector_array(&image.v),
             source_chart: [image.source_scale, image.source_offset],
         })),
+        Curve3ExactData::TensorImage(image) => {
+            let SurfaceExactData::RationalBezier {
+                control_points,
+                weights,
+            } = image.surface.exact_data()
+            else {
+                unreachable!("tensor images retain rational Bézier tensors");
+            };
+            RawCurve3::TensorImage(Box::new(RawTensorCurve3 {
+                source: Box::new(graph.pcurve(&image.source)?),
+                control_points: control_points
+                    .iter()
+                    .map(|row| row.iter().map(point_array).collect())
+                    .collect(),
+                weights,
+                source_chart: [image.source_scale, image.source_offset],
+            }))
+        }
         Curve3ExactData::Line(data) => RawCurve3::Line(Box::new(RawLine3 {
             start: point_array(&data.start),
             end: point_array(&data.end),
@@ -1040,6 +1070,26 @@ fn curve3(curve: RawCurve3, graph: &SelectionGraph) -> Result<Curve3, Persistenc
                 origin: point3(origin),
                 u: vector3(u),
                 v: vector3(v),
+                source_scale,
+                source_offset,
+            }))
+        }
+        RawCurve3::TensorImage(image) => {
+            let RawTensorCurve3 {
+                source,
+                control_points,
+                weights,
+                source_chart: [source_scale, source_offset],
+            } = *image;
+            Curve3ExactData::TensorImage(Box::new(crate::geometry::TensorCurve3 {
+                surface: Surface::rational_bezier(
+                    control_points
+                        .into_iter()
+                        .map(|row| row.into_iter().map(point3).collect())
+                        .collect(),
+                    weights,
+                )?,
+                source: pcurve(*source, graph)?,
                 source_scale,
                 source_offset,
             }))

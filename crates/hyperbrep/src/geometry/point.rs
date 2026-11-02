@@ -507,6 +507,14 @@ impl Curve3 {
                 )
             });
         }
+        if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+            return crate::context::strict(|| {
+                if !self.domain().contains(parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                image.geometric_point_at(parameter)
+            });
+        }
         if let Some(value) = parameter.try_real()
             && !matches!(self.data.geometry, CurveGeometry3::PlanarImage(_))
         {
@@ -597,7 +605,8 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
-            | CurveGeometry3::PlanarImage(_) => {
+            | CurveGeometry3::PlanarImage(_)
+            | CurveGeometry3::TensorImage(_) => {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
         })

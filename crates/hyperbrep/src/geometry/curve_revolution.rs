@@ -63,6 +63,7 @@ fn spans(curve: &Curve3) -> GeometryResult<Option<Vec<Span>>> {
         CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_)
         | CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_) => return Ok(None),

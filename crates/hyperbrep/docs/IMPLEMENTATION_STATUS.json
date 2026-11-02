@@ -3270,6 +3270,46 @@
       "validation": "Eight new witnesses in tests/revolution_contacts.rs use independent geometry: a revolved unit wall crossed at x = +/-1 and missed above its height; an axial line coincident for t in [1/4, 3/4]; a rational-weight sphere zone with secant contacts at x = +/-4, a repeated tangent contact and contacts at x = +/-sqrt(15) compared exactly with radical points; contained latitude and rotated meridian arcs; two-span NURBS curve and profile contacts in authored knot parameters; a selected contact that splits an edge and replays cold; an off-origin x-directed axis; typed unsupported circle arcs and zero-budget exhaustion with retry. Disabling contact classification, or the y origin of the quotient map, fails witnesses; dropping the axial correction or the x origin for an x axis are equivalent mutants (sheared or translated injective quotient maps) and are not detectable. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 714 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
       "cost_evidence": "No performance claim. The quotient image doubles span degree; matched costs were not measured.",
       "limits": "Circle/ellipse arcs and planar/affine/rotation/translation images remain unsupported against revolutions, as do procedural profiles. Jointly selected tangent pairs without a Hypercurve sign or transversality certificate fail typed. Total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
+    },
+    {
+      "id": "tensor-image-sections-2026-11-01",
+      "work_packages": [
+        "WP02",
+        "WP05a",
+        "WP05b",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P16",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Add the TensorImage spatial curve carrier: an admitted UV source on a positive-weight rational Bezier tensor, retained without fitting or coordinate materialization, with represented and selected point evaluation through the joint rational surface image, represented first derivatives, control-hull bounds, source restriction and reversal, edge splits, affine transforms through tensor controls, canonical ordering, parameterization equality and archive replay. Add complete sections of rational Bezier tensors by spheres, cylinders, cones and ring tori: the homogenized carrier equation is pulled back through the tensor and its zero set on the unit square is decomposed by Hypersolve; branches become TensorImage curves with retained UV pcurves and defining exponents, isolated points and tensor containment are reported, and an injective coordinate-plane projection certificate is required before publication. Angular pcurves on the analytic carrier are published as typed unavailable. Cone hulls strictly below the apex miss; hulls crossing the apex plane fail typed. Archive version 16 adds the TensorImage record with inline tensor controls and weights; version-15 archives are rejected without an adapter and the three retained cone fixtures change only their version field. GeometryError gains UnsupportedImageSurface and the public Curve3Kind gains TensorImage, as direct API migrations.",
+      "source": [
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry/implicit_tensor.rs",
+        "../src/geometry.rs",
+        "../src/geometry/point.rs",
+        "../src/geometry/planar_image.rs",
+        "../src/topology/helpers.rs",
+        "../src/persistence.rs",
+        "../src/persistence/admission/shapes.rs",
+        "../src/error.rs",
+        "../tests/tensor_sections.rs",
+        "SELECTED_ARCHIVE.md"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Ten new witnesses in tests/tensor_sections.rs. The decisive fixture is the plan's unequal perpendicular pair x^2 + y^2 = 1 and y^2 + z^2 = 2, with the second cylinder an exact rational quadratic patch (half-angle weight 4/5). Two branches have exact domains [1/2 - sqrt(24)/20, 1/2] and [1/2, 1/2 + sqrt(24)/20], meet at the event (0, 1, 1), end at selected points (+/-sqrt(24)/5, 1/5, 7/5), and pass through independently derived radical points such as (-4/5, 3/5, sqrt(41)/5) and (-2/5, sqrt(21)/5, sqrt(29)/5). Further witnesses: retained tensor pcurves and typed unavailable angular pcurves in both operand orders; edge split at s = 3/10, reversal, a scaled rotation/translation and two cold replays; containment of the patch by its own cylinder; a sphere/paraboloid section with its isolated tangent point and circle; both torus circles on a flat patch; cone nappe selection, a complete miss and a typed apex-plane refusal; a complete empty sphere section; a forged negative tensor weight rejected on replay; zero-budget exhaustion and retry. Mutating the torus constant, dropping the cylinder axial term, removing the cone hull refusal or ignoring transforms each fails a witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 724 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim. The decisive section completes in the release test harness; matched costs were not measured.",
+      "limits": "This does not complete native cylinder/cylinder or other analytic-pair intersections: one operand must be a rational Bezier tensor. Vertical, repeated and boundary components remain Hypersolve topology blockers. Tensors without an injective coordinate-plane projection certificate are refused. TensorImage parameter location, selected derivatives, higher derivatives, STEP export and face-image proofs are typed unsupported; faces bounded by TensorImage edges, Booleans and solids are not yet admitted. Injectivity certificate errors are reported as the unsupported relation rather than distinguished. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

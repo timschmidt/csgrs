@@ -422,6 +422,7 @@ pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve
             image.origin = image.origin + offset;
             Ok(Curve3::from_planar_image(*image)?)
         }
+        Curve3ExactData::TensorImage(image) => Ok(image.translated(offset)?),
         Curve3ExactData::Line(data) => Ok(Curve3::line(data.start + offset, data.end + offset)?),
         Curve3ExactData::RationalBezier {
             control_points,
@@ -1659,6 +1660,9 @@ pub(super) fn curve_parameterizations_equal(
         (Curve3ExactData::PlanarImage(actual), Curve3ExactData::PlanarImage(expected)) => actual
             .parameterization_equals(&expected)
             .map_err(Into::into),
+        (Curve3ExactData::TensorImage(actual), Curve3ExactData::TensorImage(expected)) => actual
+            .parameterization_equals(&expected)
+            .map_err(Into::into),
         (Curve3ExactData::Line(actual), Curve3ExactData::Line(expected)) => {
             Ok(points_equal(&actual.start, &expected.start)?
                 && points_equal(&actual.end, &expected.end)?)
@@ -2389,6 +2393,7 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::EllipseArc(data) if data.circle => 3,
         Curve3ExactData::EllipseArc(_) => 4,
         Curve3ExactData::PlanarImage(_) => 5,
+        Curve3ExactData::TensorImage(_) => 9,
         Curve3ExactData::Translation(_) => 6,
         Curve3ExactData::Rotation(_) => 7,
         Curve3ExactData::AffineImage(_) => 8,
@@ -2452,6 +2457,9 @@ pub(crate) fn compare_curve3_exact_data(
                 }
             }
             compare_vector3(&left.displacement, &right.displacement)
+        }
+        (Curve3ExactData::TensorImage(left), Curve3ExactData::TensorImage(right)) => {
+            left.canonical_order(right)
         }
         (Curve3ExactData::PlanarImage(left), Curve3ExactData::PlanarImage(right)) => {
             let order = exact_point_order(&left.origin, &right.origin)?;

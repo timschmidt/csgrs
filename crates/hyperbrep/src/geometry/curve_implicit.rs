@@ -37,7 +37,7 @@ impl<'a> ImplicitCarrier<'a> {
         }
     }
 
-    fn origin(self) -> &'a Point3 {
+    pub(super) fn origin(self) -> &'a Point3 {
         match self {
             Self::Sphere(surface) => &surface.center,
             Self::Cylinder(surface) => &surface.origin,
@@ -46,7 +46,7 @@ impl<'a> ImplicitCarrier<'a> {
         }
     }
 
-    fn axis(self) -> &'a Vector3 {
+    pub(super) fn axis(self) -> &'a Vector3 {
         match self {
             Self::Sphere(surface) => &surface.frame.z,
             Self::Cylinder(surface) => &surface.frame.z,
@@ -323,6 +323,7 @@ pub(super) fn intersect_rational_curve_implicit(
         CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_)
         | CurveGeometry3::CircleArc(_)
         | CurveGeometry3::EllipseArc(_) => None,
