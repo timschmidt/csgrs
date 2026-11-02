@@ -55,7 +55,10 @@ impl Curve3 {
     /// parameters on both curves. Coplanar pairs of lines, rational Bézier or
     /// NURBS curves and planar images are intersected completely in their
     /// common plane, and a line crossing a planar image's plane is located on
-    /// it. Noncoplanar rational Bézier/NURBS pairs are intersected through an
+    /// it. Lines against circular or elliptic arcs solve one exact quadratic
+    /// (coplanar) or locate the single plane crossing, with arc parameters from
+    /// the arc's exact point location. Noncoplanar rational Bézier/NURBS pairs
+    /// are intersected through an
     /// exact planar projection whose candidates are confirmed by exact spatial
     /// coincidence. A rational curve lying along a line, spatial overlaps of
     /// noncoplanar curves and other curve families fail with
@@ -69,6 +72,20 @@ impl Curve3 {
                 }
                 (None, Some(line)) if rational_net(self).is_some() => {
                     return Ok(swap(intersect_line_curve(other, line, self)?));
+                }
+                (Some(line), None) => {
+                    if let CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) =
+                        &other.data.geometry
+                    {
+                        return intersect_line_conic(self, line, other, arc);
+                    }
+                }
+                (None, Some(line)) => {
+                    if let CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) =
+                        &self.data.geometry
+                    {
+                        return Ok(swap(intersect_line_conic(other, line, self, arc)?));
+                    }
                 }
                 _ => {}
             }
@@ -753,6 +770,74 @@ fn intersect_planar_image_rational(
                     point: contact.point.clone(),
                 });
             }
+        }
+    }
+    sort_by_first(&mut points);
+    Ok(if points.is_empty() {
+        CurveCurveIntersection::None
+    } else {
+        CurveCurveIntersection::Points(points)
+    })
+}
+
+/// A line against a circular or elliptic arc `C + rx cos(θ) X + ry sin(θ) Y`
+/// with orthonormal `X, Y`. A coplanar line satisfies the exact quadratic
+/// `ry^2 (α + t a)^2 + rx^2 (β + t b)^2 = rx^2 ry^2`; a line crossing the plane
+/// meets it at most at its single crossing. Arc parameters, including seam
+/// visits, come from the arc's exact point location.
+fn intersect_line_conic(
+    line: &Curve3,
+    (start, end): (&Point3, &Point3),
+    curve: &Curve3,
+    arc: &EllipseArc3,
+) -> GeometryResult<CurveCurveIntersection> {
+    let direction = end - start;
+    let normal = arc.x.cross(&arc.y);
+    let relative = start - &arc.center;
+    let zero = |value: &Real| -> GeometryResult<bool> {
+        Ok(order(value, &Real::zero())? == Ordering::Equal)
+    };
+    let along_normal = normal.dot(&direction);
+    let offset = normal.dot(&relative);
+    let parameters: Vec<Real> = if zero(&along_normal)? {
+        if !zero(&offset)? {
+            return Ok(CurveCurveIntersection::None);
+        }
+        let (alpha, beta) = (relative.dot(&arc.x), relative.dot(&arc.y));
+        let (da, db) = (direction.dot(&arc.x), direction.dot(&arc.y));
+        let rx2 = &arc.x_radius * &arc.x_radius;
+        let ry2 = &arc.y_radius * &arc.y_radius;
+        let a = &ry2 * &da * &da + &rx2 * &db * &db;
+        let b = Real::from(2) * (&ry2 * &alpha * &da + &rx2 * &beta * &db);
+        let c = &ry2 * &alpha * &alpha + &rx2 * &beta * &beta - &rx2 * &ry2;
+        match quadratic_roots(a, b, c)? {
+            QuadraticRoots::None => Vec::new(),
+            QuadraticRoots::Isolated(roots) => roots.into_iter().map(|(t, _)| t).collect(),
+            // A nonzero in-plane direction keeps the leading coefficient positive.
+            QuadraticRoots::All => return Err(GeometryError::UnsupportedIntersection),
+        }
+    } else {
+        vec![((-offset) / along_normal).map_err(GeometryError::Numeric)?]
+    };
+    let mut points = Vec::new();
+    for t in parameters {
+        if !in_unit(&t)? {
+            continue;
+        }
+        let point = line.evaluate_real(&t)?;
+        let visits = match curve.parameters_of(&point)? {
+            CurveParameterLocation::None => continue,
+            CurveParameterLocation::Parameters(parameters) => parameters,
+            CurveParameterLocation::EntireDomain => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+        };
+        for visit in visits {
+            points.push(CurveCurvePoint {
+                first: t.clone().into(),
+                second: visit,
+                point: point.clone().into(),
+            });
         }
     }
     sort_by_first(&mut points);

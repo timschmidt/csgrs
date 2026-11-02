@@ -3625,6 +3625,32 @@
       "validation": "New witness: the planar parabola y = x^2 in z = 0 and the quadratic x = 1, y = 3s^2, z = 3s^2 - 1 meet once at (1, 1, 0) with image parameter 1/4 and curve parameter sqrt(3)/3, in both orders; lowered by one the crossing misses; a cubic crossing at the selected s = cbrt(1/2) is reported as a typed Hypercurve blocker. Scaling the image chart map fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 761 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
       "limits": "Selected plane crossings need Hypercurve selected-point location; planar images against other planar images in different planes, conics, tensor-image and atlas pieces remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "line-conic-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to finite lines against circular and elliptic arcs, in either order. With the arc's validated orthonormal axes, a coplanar line satisfies the exact quadratic ry^2 (alpha + t a)^2 + rx^2 (beta + t b)^2 = rx^2 ry^2 in its parameter; a line crossing the arc's plane meets it at most at its single crossing; parallel offset lines miss. Arc parameters, including both visits of a seam point, come from the arc's existing exact point location, so angular parameters stay exact.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Two new witnesses: on the upper unit semicircle the line y = 1/2 meets it at t = 1/2 -/+ sqrt(3)/8 with arc angles exactly 5 pi/6 and pi/6, y = 1 is tangent at (0, 1, 0), y = -1/2 misses, and a vertical line pierces it at t = 1/2 in both orders; the vertical segment x = 1 meets the upper half of x^2/4 + y^2 = 1 at (1, sqrt(3)/2, 0), t = 1/2 + sqrt(3)/8. Every reported point is checked against both curves. Swapping the radii in the quadratic fails the ellipse witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 763 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
+      "limits": "Conic arcs against rational, planar-image, tensor-image or other conic curves, and lines lying along degenerate conics, remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

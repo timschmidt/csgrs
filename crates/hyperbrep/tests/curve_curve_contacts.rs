@@ -444,3 +444,88 @@ fn rational_curve_pierces_a_planar_image_at_a_selected_parameter() {
         CurveCurveIntersection::None
     ));
 }
+
+/// The upper unit semicircle θ in [0, π] in z = 0. The line y = 1/2,
+/// x = -2 + 4t meets it at x = ±√3/2 (t = 1/2 ∓ √3/8, θ = 5π/6 and π/6);
+/// y = 1 is tangent at (0, 1, 0); y = -1/2 misses the upper half; the vertical
+/// line through (0, 1) pierces it at t = 1/2.
+#[test]
+fn lines_meet_circular_arcs_exactly() {
+    let semicircle = Curve3::circle_arc(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Real::one(),
+        Real::zero(),
+        Real::pi(),
+    )
+    .unwrap();
+    let secant = line(
+        p((-2).into(), q(1, 2), 0.into()),
+        p(2.into(), q(1, 2), 0.into()),
+    );
+    let found = points(&secant, &semicircle);
+    assert_eq!(found.len(), 2);
+    let offset = (Real::from(3).sqrt().unwrap() / Real::from(8)).unwrap();
+    assert!(equal(&found[0].first, q(1, 2) - &offset));
+    assert!(equal(&found[1].first, q(1, 2) + &offset));
+    let sixth = (Real::pi() / Real::from(6)).unwrap();
+    assert!(equal(&found[0].second, Real::from(5) * &sixth));
+    assert!(equal(&found[1].second, sixth));
+    let tangent = points(&line(pi(-2, 1, 0), pi(2, 1, 0)), &semicircle);
+    assert_eq!(tangent.len(), 1);
+    assert!(equal(&tangent[0].first, q(1, 2)));
+    assert!(
+        tangent[0]
+            .point
+            .coincides_with(&pi(0, 1, 0).into())
+            .unwrap()
+    );
+    assert!(matches!(
+        line(
+            p((-2).into(), q(-1, 2), 0.into()),
+            p(2.into(), q(-1, 2), 0.into())
+        )
+        .intersect_curve(&semicircle)
+        .unwrap(),
+        CurveCurveIntersection::None
+    ));
+    let vertical = points(&line(pi(0, 1, -1), pi(0, 1, 1)), &semicircle);
+    assert_eq!(vertical.len(), 1);
+    assert!(equal(&vertical[0].first, q(1, 2)));
+    let swapped = points(&semicircle, &line(pi(0, 1, -1), pi(0, 1, 1)));
+    assert!(equal(&swapped[0].second, q(1, 2)));
+}
+
+/// The upper half of x^2/4 + y^2 = 1 meets the vertical segment x = 1,
+/// y = -2 + 4t at y = √3/2, t = 1/2 + √3/8.
+#[test]
+fn line_meets_an_elliptic_arc_exactly() {
+    let ellipse = Curve3::ellipse_arc(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        2.into(),
+        1.into(),
+        Real::zero(),
+        Real::pi(),
+    )
+    .unwrap();
+    let found = points(&line(pi(1, -2, 0), pi(1, 2, 0)), &ellipse);
+    assert_eq!(found.len(), 1);
+    let offset = (Real::from(3).sqrt().unwrap() / Real::from(8)).unwrap();
+    assert!(equal(&found[0].first, q(1, 2) + offset));
+    assert!(
+        found[0]
+            .point
+            .coincides_with(
+                &p(
+                    1.into(),
+                    (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap(),
+                    0.into()
+                )
+                .into()
+            )
+            .unwrap()
+    );
+}
