@@ -17,6 +17,7 @@ mod affine_image;
 mod analytic;
 mod axial_lines;
 mod conical_revolution;
+mod curve_implicit;
 mod curve_plane;
 mod location;
 mod pcurve;
@@ -4311,6 +4312,14 @@ impl Surface {
     }
 
     /// Intersects this surface with a finite spatial curve.
+    ///
+    /// Lines, positive-weight rational Bézier curves and NURBS against
+    /// spheres, cylinders, cones and ring tori return the complete contact set
+    /// of the exact homogenized carrier equation; roots without a scalar view
+    /// remain selected parameters. Cone roots on the opposite nappe are
+    /// rejected, and a coincident span crossing the cone apex fails typed.
+    /// Unsupported curve/surface pairs fail with
+    /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
         crate::context::strict(|| {
             if let (
@@ -4354,6 +4363,15 @@ impl Surface {
                 (&self.data.geometry, &curve.data.geometry)
             {
                 return intersect_transverse_circle_arc_torus(curve, arc, torus);
+            }
+            // Lines keep their quadratic sphere/cylinder/cone fast paths below.
+            if !matches!(&curve.data.geometry, CurveGeometry3::Line(_))
+                && let Some(carrier) =
+                    curve_implicit::ImplicitCarrier::from_surface(&self.data.geometry)
+                && let Some(result) =
+                    curve_implicit::intersect_rational_curve_implicit(curve, carrier)
+            {
+                return result;
             }
             let Some((start, end)) = curve.line_endpoints() else {
                 return Err(GeometryError::UnsupportedIntersection);
@@ -4410,8 +4428,12 @@ impl Surface {
                     )
                 }
                 SurfaceGeometry::Cone(surface) => intersect_line_cone(curve, start, end, surface),
-                SurfaceGeometry::Torus(_)
-                | SurfaceGeometry::Extrusion(_)
+                SurfaceGeometry::Torus(torus) => curve_implicit::intersect_rational_curve_implicit(
+                    curve,
+                    curve_implicit::ImplicitCarrier::Torus(torus),
+                )
+                .expect("a line is a rational span"),
+                SurfaceGeometry::Extrusion(_)
                 | SurfaceGeometry::Revolution(_)
                 | SurfaceGeometry::RationalBezier(_)
                 | SurfaceGeometry::Nurbs(_) => Err(GeometryError::UnsupportedIntersection),

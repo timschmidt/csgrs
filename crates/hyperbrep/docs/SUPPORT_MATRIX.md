@@ -371,6 +371,9 @@ strict-convexity certificate.
 | Finite line / sphere | None, tangent/simple points |
 | Finite line / cylinder | None, tangent/simple points |
 | Finite line / cone | None, tangent/simple points, generator overlap; lower nappe rejected |
+| Finite line / ring torus | Complete simple/repeated isolated contacts from the homogeneous quartic; irrational roots stay selected parameters with original-line point images; never contained |
+| Positive-weight rational Bézier or NURBS / sphere, cylinder or ring torus | Complete isolated contacts from the exact Bernstein numerator of the homogenized carrier equation, with selected parameters, original-source point images and first-derivative classification; authored NURBS knot parameters; none, contained, or contained spans as maximal ranges |
+| Positive-weight rational Bézier or NURBS / cone | The same double-cone numerator with roots on the opposite nappe rejected; contained spans with nonnegative axial Bernstein coefficients are contained, nonpositive spans keep only apex `Boundary` contacts, and spans crossing the apex fail with a typed unsupported relation |
 | Plane / sphere | None, tangent point, full circle; authored-axis transverse circles retain exact pcurves on both carriers |
 | Sphere / sphere | None, coincident, tangent point, full circle |
 | Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines, with exact native affine axial correspondence and authored-periodic trim transfer |

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-30",
+  "updated_on": "2026-11-01",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -3181,6 +3181,36 @@
       "validation": "Eight focused groups and 24 affected groups pass, including the eight plane/tensor section groups, fresh-process native replay, original even and added odd repeated contacts, both pcurve images, restriction/reversal/affine replay and subsequent intersection. Full BRep reports 680 passed; BRep IO reports 127 passed. The linked ledger records commands, source attribution, all downstream checks and the evidence digest.",
       "cost_evidence": "No speedup claim. Command timing and maximum process RSS include compilation; existing allocation lifetime tests do not measure a matched repeated-factor workload.",
       "limits": "Rational finite-fiber repeated-factor admission does not complete vertical components, arbitrary algebraic coefficients, general surface intersections, trimmed solids or total resource bounds. Native pcurves reconstruct source-factor evidence; no new trusted archive flag or format is added. All work-package statuses and the general closure target remain open/in-progress. Full pre-push qualification is separate."
+    },
+    {
+      "id": "implicit-carrier-curve-contacts-2026-11-01",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Add complete curve/surface contacts between lines, positive-weight rational B\u00e9zier curves and NURBS and the native sphere, cylinder, cone and ring-torus carriers. The homogenized carrier equation is composed with each homogeneous Bernstein span; Hypercurve's existing arbitrary-degree root authority locates every root of the exact numerator. Roots remain selected parameters with original-source point images; first-derivative classification follows from W^k F' at roots with W > 0. Cone roots on the opposite nappe are rejected; coincident spans with nonnegative axial coefficients are contained, nonpositive spans keep only apex Boundary contacts, and spans crossing the apex fail as a typed unsupported relation. Existing line/sphere, line/cylinder and line/cone quadratic fast paths are unchanged; line/torus and the rational-curve pairs previously returned UnsupportedIntersection.",
+      "source": [
+        "../src/geometry/curve_implicit.rs",
+        "../src/geometry/curve_plane.rs",
+        "../src/geometry.rs",
+        "../tests/implicit_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Twelve new witnesses in tests/implicit_contacts.rs use independently derived equations: four rational diametral line/torus contacts and their reversal; repeated tangent contacts on the tube top; three complete empty line/torus results; chord contacts at x = \u00b1sqrt(15), \u00b1sqrt(3) compared exactly with radical points; exact similarity transport with cold replay; a rational-weight circle arc contained in a sphere, cylinder, torus and downward cone and excluded at a different height; nappe rejection for isolated and coincident roots; apex Boundary contacts and a typed apex-crossing refusal; cubic/cylinder roots equal to 1/2 \u2213 sqrt((8 sqrt(229) - 119)/36) that split an edge twice through cold replay; two-span NURBS contacts in authored knot parameters; a contained single-span NURBS arc; zero-budget exhaustion followed by successful retry. Mutating the torus equation (4R^2 -> 3R^2) and disabling the nappe filter fail eight witnesses. On Rust stable: strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 698 hyperbrep and 127 hyperbrep-io passes, 0 failures; cargo fmt --check passes.",
+      "cost_evidence": "No performance claim. The new route replaces typed UnsupportedIntersection results; existing line fast paths are untouched.",
+      "limits": "Circle/ellipse arcs keep their existing transverse analytic routes; ellipse arcs, planar/affine/rotation/translation images and procedural/tensor surfaces against these carriers remain unsupported. Cone spans crossing the apex need a sign decision between selected roots. Hypercurve root-isolation resources are charged where instrumented; total arithmetic, memory and cancellation are not bounded by this route. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
