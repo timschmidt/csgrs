@@ -129,10 +129,16 @@ fn offset_ends_meet_at_tangent_junction(
 }
 
 /// Carries a proved smooth junction into the connectors of adjacent bands.
-/// The original fragments keep their source charts; only an endpoint's equal
-/// represented image is shared. Circular endpoints are retained because their
-/// incidence on the supporting circle is already certified by construction.
-/// Callers supply consecutive spans of one certified connected source loop.
+/// The original fragments keep their source charts; only the connectors'
+/// shared endpoint changes. Circular endpoints, including selected-circle
+/// (cusp-semicircle) join fragments, are retained because their incidence on
+/// the supporting circle is already certified by construction. The junction
+/// proof makes the two offset ends equal exactly, so the shared point need not
+/// be represented: an algebraic point is shared as well. Without it, the two
+/// adjacent bands build one normal connector from two unrelated endpoint
+/// representations, and the arrangement must prove their coincidence by
+/// refinement. Callers supply consecutive spans of one certified connected
+/// source loop.
 pub(super) fn share_exact_offset_band_endpoints(
     spans: &mut [ExactOffsetSpan2],
     distance: &Real,
@@ -149,6 +155,7 @@ pub(super) fn share_exact_offset_band_endpoints(
                 span.fragments.last()
             };
             let curve = match fragment {
+                Some(BezierSplitFragment2::AlgebraicCuspSemicircle(_)) => return true,
                 Some(BezierSplitFragment2::Materialized { curve, .. }) => Some(curve),
                 Some(BezierSplitFragment2::RetainedBezier { source_curve, .. }) => {
                     Some(source_curve)
@@ -170,9 +177,7 @@ pub(super) fn share_exact_offset_band_endpoints(
         } else {
             continue;
         };
-        if point.coordinates().is_none()
-            || !offset_ends_meet_at_tangent_junction(&spans[index], &spans[next], distance, policy)
-        {
+        if !offset_ends_meet_at_tangent_junction(&spans[index], &spans[next], distance, policy) {
             continue;
         }
         let point = point.clone();

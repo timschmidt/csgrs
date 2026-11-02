@@ -2768,6 +2768,18 @@ impl BezierAlgebraicChordParallelPoint2 {
         }
     }
 
+    /// Returns the displacement origin when the retained displacement is
+    /// structurally zero. `P + 0*u + (0, 0)` is `P` for every unit direction
+    /// `u`, so this identity needs neither the direction's normalization nor
+    /// a coordinate comparison. Composed displacements cancel exactly when
+    /// an erosion band offsets a dilated chord back to its source.
+    pub(crate) fn zero_displacement_origin(&self) -> Option<&CurvePoint2> {
+        (self.data.distance.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_x.zero_status() == ZeroKnowledge::Zero
+            && self.data.translation_y.zero_status() == ZeroKnowledge::Zero)
+            .then(|| self.source_endpoint())
+    }
+
     pub(in crate::bezier_offset) fn source_endpoint(&self) -> &CurvePoint2 {
         if let Some(point) = self.data.source_point.as_deref() {
             return point;

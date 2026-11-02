@@ -2331,7 +2331,19 @@ impl BezierAlgebraicChord2 {
         let mut equal = [[false; 2]; 2];
         for (first_index, first) in first_points.iter().enumerate() {
             for (second_index, second) in second_points.iter().enumerate() {
-                equal[first_index][second_index] = first.shares_storage(second);
+                // A band offset of a dilated chord composes back to distance
+                // zero; its endpoints are then exactly the source endpoints
+                // that the adjacent connectors already reference.
+                equal[first_index][second_index] = first.shares_storage(second)
+                    || (first.shares_storage_through_zero_displacement(second) && {
+                        #[cfg(feature = "dispatch-trace")]
+                        hyperreal::dispatch_trace::record(
+                            "hypercurve",
+                            "algebraic-chord-pair-side-kernel",
+                            "zero-displacement-endpoint-identity",
+                        );
+                        true
+                    });
             }
         }
 

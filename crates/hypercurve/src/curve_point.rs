@@ -247,6 +247,28 @@ pub(crate) enum CurvePointData2 {
 }
 
 impl CurvePoint2 {
+    /// Returns the retained point after removing structurally zero chord
+    /// displacements, each of which is exactly its origin.
+    pub(crate) fn zero_displacement_origin(&self) -> &Self {
+        let mut point = self;
+        while let Self(CurvePointData2::AlgebraicChordParallel(parallel)) = point
+            && let Some(origin) = parallel.zero_displacement_origin()
+        {
+            point = origin;
+        }
+        point
+    }
+
+    /// [`Self::shares_storage`] after [`Self::zero_displacement_origin`]: a
+    /// proof of exact equality from retained construction, never a
+    /// coordinate comparison.
+    pub(crate) fn shares_storage_through_zero_displacement(&self, other: &Self) -> bool {
+        self.shares_storage(other)
+            || self
+                .zero_displacement_origin()
+                .shares_storage(other.zero_displacement_origin())
+    }
+
     /// Returns a constant-time positive identity certificate for retained
     /// point evidence. Distinct storage may still describe the same point and
     /// must continue through the exact geometric predicates.
@@ -366,7 +388,7 @@ impl CurvePoint2 {
         // Separate projections of one retained contact can allocate distinct
         // point handles while sharing the same source and exact transform.
         // Consume that positive identity before reconstructing either field.
-        if self.shares_storage(other) || self == other {
+        if self.shares_storage_through_zero_displacement(other) || self == other {
             return Classification::Decided(true);
         }
         match (&self.0, &other.0) {

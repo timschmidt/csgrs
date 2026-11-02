@@ -2499,3 +2499,88 @@ fn collinear_chords_on_distinct_parameter_axes_compare_traversal_exactly() {
     assert!(!reversed(&along, &owner));
     assert!(reversed(&opposite, &along));
 }
+
+mod cancelled_chord_displacement_tests {
+    use super::*;
+    use crate::classify::LineSide;
+
+    fn q(n: i32, d: i32) -> Real {
+        (Real::from(n) / Real::from(d)).unwrap()
+    }
+
+    fn chord(start: CurvePoint2, end: CurvePoint2, policy: &CurveContext) -> BezierAlgebraicChord2 {
+        match BezierAlgebraicChord2::try_new(start, end, policy).unwrap() {
+            Classification::Decided(chord) => chord,
+            Classification::Uncertain(reason) => panic!("{reason:?}"),
+        }
+    }
+
+    /// An erosion band offsets a dilated chord back by the same distance. The
+    /// composed displacement is exactly zero, so each endpoint is its source
+    /// endpoint while keeping its procedural representation, and the normal
+    /// connectors that adjacent bands build from either representation are
+    /// one segment. The pair kernel must use that identity rather than refine
+    /// a zero side or tangent cross over the unit normal's radical.
+    #[test]
+    fn cancelled_chord_displacements_are_their_source_endpoints() {
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            // The unit normal of (1, 2) needs sqrt(5).
+            let base = chord(
+                Point2::from_values(0, 0).into(),
+                Point2::from_values(1, 2).into(),
+                &policy,
+            );
+            let dilated = base.parallel_left_retained(q(1, 16), &policy).unwrap();
+            let closed = dilated.parallel_left_retained(q(-1, 16), &policy).unwrap();
+            let shifted = dilated.parallel_left_retained(q(-1, 32), &policy).unwrap();
+            for (closed_point, shifted_point, origin) in [
+                (closed.start(), shifted.start(), base.start()),
+                (closed.end(), shifted.end(), base.end()),
+            ] {
+                assert!(matches!(
+                    closed_point,
+                    CurvePoint2(CurvePointData2::AlgebraicChordParallel(_))
+                ));
+                assert!(!closed_point.shares_storage(origin));
+                assert!(closed_point.shares_storage_through_zero_displacement(origin));
+                assert!(origin.shares_storage_through_zero_displacement(closed_point));
+                assert_eq!(
+                    closed_point.same_point(origin, &policy),
+                    Classification::Decided(true)
+                );
+                assert!(!shifted_point.shares_storage_through_zero_displacement(origin));
+                assert_eq!(
+                    shifted_point.same_point(origin, &policy),
+                    Classification::Decided(false)
+                );
+            }
+            let far = base
+                .parallel_left_retained(q(-1, 8), &policy)
+                .unwrap()
+                .start()
+                .clone();
+            let from_source = chord(base.start().clone(), far.clone(), &policy);
+            let from_band = chord(far, closed.start().clone(), &policy);
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let work = || from_source.pair_sides_by_refinement(&from_band, false, &policy);
+            #[cfg(feature = "dispatch-trace")]
+            let sides = hyperreal::dispatch_trace::with_recording(work).unwrap();
+            #[cfg(not(feature = "dispatch-trace"))]
+            let sides = work().unwrap();
+            assert!(matches!(
+                sides,
+                Classification::Decided(BezierAlgebraicChordPairSides2::Complete(first, second))
+                    if first == [LineSide::On; 2] && second == [LineSide::On; 2]
+            ));
+            #[cfg(feature = "dispatch-trace")]
+            assert!(
+                hyperreal::dispatch_trace::take_trace().path_count(
+                    "hypercurve",
+                    "algebraic-chord-pair-side-kernel",
+                    "zero-displacement-endpoint-identity",
+                ) >= 1
+            );
+        }
+    }
+}

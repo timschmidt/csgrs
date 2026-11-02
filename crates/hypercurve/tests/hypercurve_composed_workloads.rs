@@ -1693,3 +1693,108 @@ fn bevel_then_round_erosion_of_a_weight_six_conic_completes() {
     )
     .unwrap();
 }
+
+/// The unit disk scaled by 2 along x is dilated by 1/2, a nonrational
+/// ellipse offset; it is cut by `x <= 1`, the corner where the cut starts is
+/// chamfered with setbacks 1/8, and the result is closed by a round dilation
+/// and erosion of 1/16. Every stage is convex, so the closing returns the
+/// chamfered region exactly.
+///
+/// The erosion's bands meet at the chamfer's junctions with the ellipse
+/// offset. There the cancelled displacement of the dilated chamfer edge and
+/// the circular join produce one normal connector from different endpoint
+/// representations. Until they shared that identity, one tangent-cross sign
+/// ran for more than an hour. The closing now takes about four minutes in
+/// release mode.
+#[test]
+#[ignore = "slow: closing the chamfered ellipse offset takes about four minutes in release mode"]
+fn chamfered_ellipse_offset_closing_returns_the_input() {
+    use hypercurve::{Axis2, CurveCornerSolutions2, CurveFamily2};
+
+    let under = |operation: &dyn Fn() -> hypercurve::ExactCurveResult<CurveRegion2>| {
+        support::under(&STRICT, operation).unwrap().into_value()
+    };
+    let circle = CurvePath2::try_new(vec![
+        Curve2::from(
+            CircularArc2::try_from_center(point(1, 0), point(-1, 0), point(0, 0), false).unwrap(),
+        ),
+        Curve2::from(
+            CircularArc2::try_from_center(point(-1, 0), point(1, 0), point(0, 0), false).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let disk = under(&|| {
+        CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&circle), FillRule::NonZero)
+    });
+    let ellipse = under(&|| {
+        disk.transform_affine(
+            &integer(2),
+            &Real::zero(),
+            &Real::zero(),
+            &Real::one(),
+            &Real::zero(),
+            &Real::zero(),
+        )
+    });
+    let round = OffsetCornerStyle2::Round;
+    let dilated = under(&|| ellipse.offset(fraction(1, 2), &round));
+    let half_plane = CurvePath2::try_new(
+        [(-10, -10), (1, -10), (1, 10), (-10, 10)]
+            .iter()
+            .zip([(1, -10), (1, 10), (-10, 10), (-10, -10)])
+            .map(|(&(x0, y0), (x1, y1))| {
+                Curve2::from(LineSeg2::try_new(point(x0, y0), point(x1, y1)).unwrap())
+            })
+            .collect(),
+    )
+    .unwrap();
+    let half_plane = under(&|| {
+        CurveRegion2::try_from_boundary_paths(std::slice::from_ref(&half_plane), FillRule::NonZero)
+    });
+    let cut = under(&|| dilated.boolean_region(&half_plane, BooleanOp::Intersection));
+
+    // The cut is the only line whose endpoints both lie on x = 1.
+    let on_cut = |q: &CurvePoint2| {
+        support::under(&STRICT, || {
+            q.compare_coordinate(&CurvePoint2::from(point(1, 0)), Axis2::X)
+        })
+        .unwrap()
+        .into_value()
+            == std::cmp::Ordering::Equal
+    };
+    let curves = cut.boundary_loops()[0].curves();
+    let cut_lines: Vec<usize> = curves
+        .iter()
+        .enumerate()
+        .filter(|(_, curve)| {
+            curve.family() == CurveFamily2::Line && on_cut(&curve.start()) && on_cut(&curve.end())
+        })
+        .map(|(index, _)| index)
+        .collect();
+    assert_eq!(cut_lines.len(), 1, "one cut line");
+    let chamfered = match support::under(&STRICT, || {
+        cut.chamfer_loop_vertex_by_setbacks(
+            0,
+            cut_lines[0],
+            fraction(1, 8),
+            fraction(1, 8),
+            CurveCornerMode2::TrimOnly,
+        )
+    })
+    .unwrap()
+    .into_value()
+    {
+        CurveCornerSolutions2::Unique(region) => region,
+        other => panic!("chamfer: {} solutions", other.solutions().len()),
+    };
+
+    let closed = under(&|| {
+        chamfered
+            .offset(fraction(1, 16), &round)?
+            .offset(fraction(-1, 16), &round)
+    });
+    assert!(
+        under(&|| closed.boolean_region(&chamfered, BooleanOp::Xor)).is_empty(),
+        "the closing of a convex region is the region"
+    );
+}
