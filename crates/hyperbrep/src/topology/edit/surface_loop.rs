@@ -2,6 +2,9 @@
 
 use crate::topology::*;
 
+/// Oriented chain pieces and their oriented end points.
+type OrientedSurfaceCurveChain = (Vec<SurfaceIntersectionCurve>, Vec<(Point3, Point3)>);
+
 impl ArenaModel {
     /// Splits a trimmed face along a closed chain of retained surface curves.
     ///
@@ -36,55 +39,8 @@ impl ArenaModel {
             let equal = |a: &Point3, b: &Point3| -> Result<bool, TopologyEditError> {
                 Ok(exact_point_order(a, b)? == std::cmp::Ordering::Equal)
             };
-            // Orient the pieces into one chain.
-            let mut oriented: Vec<SurfaceIntersectionCurve> =
-                Vec::with_capacity(intersections.len());
-            let mut ends: Vec<(Point3, Point3)> = Vec::with_capacity(intersections.len());
-            for (index, intersection) in intersections.iter().enumerate() {
-                if self
-                    .retained_surface_trace_on_boundary(face_id, intersection, operand)?
-                    .is_some()
-                {
-                    return Err(TopologyEditError::DegenerateFaceSplit);
-                }
-                let start = intersection.curve().start()?;
-                let end = intersection.curve().end()?;
-                if equal(&start, &end)? {
-                    return Err(TopologyEditError::DegenerateFaceSplit);
-                }
-                let forward = match ends.last() {
-                    None => true,
-                    Some((_, previous)) => {
-                        if equal(previous, &start)? {
-                            true
-                        } else if equal(previous, &end)? {
-                            false
-                        } else {
-                            return Err(TopologyEditError::DegenerateFaceSplit);
-                        }
-                    }
-                };
-                if index == 0 && intersections.len() > 1 {
-                    // The first piece may need reversal to meet the second.
-                    let next = &intersections[1];
-                    let (next_start, next_end) = (next.curve().start()?, next.curve().end()?);
-                    if !equal(&end, &next_start)? && !equal(&end, &next_end)? {
-                        if equal(&start, &next_start)? || equal(&start, &next_end)? {
-                            oriented.push(intersection.reversed()?);
-                            ends.push((end, start));
-                            continue;
-                        }
-                        return Err(TopologyEditError::DegenerateFaceSplit);
-                    }
-                }
-                if forward {
-                    oriented.push(intersection.clone());
-                    ends.push((start, end));
-                } else {
-                    oriented.push(intersection.reversed()?);
-                    ends.push((end, start));
-                }
-            }
+            let (oriented, ends) =
+                self.orient_surface_curve_chain(face_id, intersections, operand)?;
             if !equal(&ends[ends.len() - 1].1, &ends[0].0)? {
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
@@ -300,6 +256,160 @@ impl ArenaModel {
                     second_wire,
                     first_face: face_id,
                     second_face,
+                },
+            ))
+        })
+    }
+
+    /// Orients retained surface curves into one chain: each piece is used
+    /// forward or reversed so that consecutive pieces share exactly equal
+    /// endpoints. Pieces on the face boundary or with equal ends, and pieces
+    /// that do not chain, are degenerate. Returns the oriented pieces and
+    /// their oriented end points.
+    pub(in crate::topology) fn orient_surface_curve_chain(
+        &self,
+        face_id: FaceId,
+        intersections: &[SurfaceIntersectionCurve],
+        operand: SurfaceIntersectionOperand,
+    ) -> Result<OrientedSurfaceCurveChain, TopologyEditError> {
+        let equal = |a: &Point3, b: &Point3| -> Result<bool, TopologyEditError> {
+            Ok(exact_point_order(a, b)? == std::cmp::Ordering::Equal)
+        };
+        let mut oriented: Vec<SurfaceIntersectionCurve> = Vec::with_capacity(intersections.len());
+        let mut ends: Vec<(Point3, Point3)> = Vec::with_capacity(intersections.len());
+        for intersection in intersections {
+            if self
+                .retained_surface_trace_on_boundary(face_id, intersection, operand)?
+                .is_some()
+            {
+                return Err(TopologyEditError::DegenerateFaceSplit);
+            }
+            let start = intersection.curve().start()?;
+            let end = intersection.curve().end()?;
+            if equal(&start, &end)? {
+                return Err(TopologyEditError::DegenerateFaceSplit);
+            }
+            let forward = match ends.last() {
+                None => {
+                    // The first piece may need reversal to meet the second.
+                    match intersections.get(1) {
+                        None => true,
+                        Some(next) => {
+                            let (next_start, next_end) =
+                                (next.curve().start()?, next.curve().end()?);
+                            if equal(&end, &next_start)? || equal(&end, &next_end)? {
+                                true
+                            } else if equal(&start, &next_start)? || equal(&start, &next_end)? {
+                                false
+                            } else {
+                                return Err(TopologyEditError::DegenerateFaceSplit);
+                            }
+                        }
+                    }
+                }
+                Some((_, previous)) => {
+                    if equal(previous, &start)? {
+                        true
+                    } else if equal(previous, &end)? {
+                        false
+                    } else {
+                        return Err(TopologyEditError::DegenerateFaceSplit);
+                    }
+                }
+            };
+            if forward {
+                oriented.push(intersection.clone());
+                ends.push((start, end));
+            } else {
+                oriented.push(intersection.reversed()?);
+                ends.push((end, start));
+            }
+        }
+        Ok((oriented, ends))
+    }
+
+    /// Splits a trimmed face along an open chain of retained surface curves
+    /// running from one outer-boundary point to another through new interior
+    /// junction vertices. The chain is oriented by exact endpoint equality;
+    /// its ends attach to existing boundary vertices or split the unique
+    /// containing boundary edges, every operand pcurve is materialized
+    /// without fitting, and the complete model is revalidated.
+    pub fn split_face_by_surface_curve_chain(
+        &self,
+        face_id: FaceId,
+        intersections: &[SurfaceIntersectionCurve],
+        operand: SurfaceIntersectionOperand,
+    ) -> Result<(Self, ArenaSurfaceCurveChainFaceSplit), TopologyEditError> {
+        crate::context::strict(|| {
+            let face = self
+                .face(face_id)
+                .ok_or(TopologyEditError::InvalidReference {
+                    kind: EntityKind::Face,
+                    index: face_id.index(),
+                })?;
+            if face.outer().is_none() {
+                return Err(TopologyEditError::WholeSurfaceFace(face_id));
+            }
+            if intersections.len() < 2 {
+                return Err(TopologyEditError::DegenerateFaceSplit);
+            }
+            let (oriented, ends) =
+                self.orient_surface_curve_chain(face_id, intersections, operand)?;
+            let (start, end) = (ends[0].0.clone(), ends[ends.len() - 1].1.clone());
+            if exact_point_order(&start, &end)? == std::cmp::Ordering::Equal {
+                // A closed chain is a loop split, not an open chain.
+                return Err(TopologyEditError::DegenerateFaceSplit);
+            }
+            let mut pieces = Vec::with_capacity(oriented.len());
+            for intersection in &oriented {
+                let materialized = intersection.pcurve(operand).materialize()?;
+                let correspondence = match materialized.correspondence() {
+                    SurfacePcurveCorrespondence::Affine { scale, offset } => {
+                        ParameterCorrespondence::affine(scale.clone(), offset.clone())?
+                    }
+                    SurfacePcurveCorrespondence::AngularSweep { .. } => {
+                        ParameterCorrespondence::angular_sweep()
+                    }
+                };
+                pieces.push((
+                    intersection.curve().clone(),
+                    Pcurve::new(materialized.curve().clone()),
+                    correspondence,
+                    intersection.has_image_certificate(operand),
+                ));
+            }
+            let first = &oriented[0];
+            let last = &oriented[oriented.len() - 1];
+            let (staged, start_vertex, start_edge) = self.attach_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::Start,
+                &start,
+                first.start_boundary_contacts(operand),
+            )?;
+            let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
+                face_id,
+                Endpoint::End,
+                &end,
+                last.end_boundary_contacts(operand),
+            )?;
+            let junctions = ends[..ends.len() - 1]
+                .iter()
+                .map(|(_, junction)| junction.clone())
+                .collect();
+            let (staged, face, edges) = staged.split_face_with_chain(
+                face_id,
+                start_vertex,
+                end_vertex,
+                Some(pieces),
+                junctions,
+            )?;
+            Ok((
+                staged,
+                ArenaSurfaceCurveChainFaceSplit {
+                    start_edge,
+                    end_edge,
+                    face,
+                    edges,
                 },
             ))
         })

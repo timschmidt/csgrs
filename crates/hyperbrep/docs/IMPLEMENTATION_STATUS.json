@@ -3934,6 +3934,38 @@
       "validation": "New witness: x^2 + y^2 = 1/4 meets the paraboloid face in a loop returned as two branches whose ends are exactly the projection events (0, +/-1/2, 1/4); the loop split gives a ring and a disk that replay cold, also after a scaled rotation/translation; the chain is accepted reordered with a reversed piece; a single piece and two non-closing corner sections are DegenerateFaceSplit; the ring then takes an open corner split into three faces. The former typed cylinder-patch witness now certifies all branch ends exactly ((+/-sqrt(24)/5, 1/5, 7/5) and the junction (0, 1, 1)) and is refused with the correct reason, FaceSplitEndpointNotOnOuterBoundary. Flipping the winding sign, swapping interior and exterior wires, or disabling event candidates fails the witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 778 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the loop witness completes in about 0.5 s in release.",
       "limits": "Open chains (several pieces from boundary to boundary), loops whose interior is missed by the bounded grid search, loops crossing existing holes, analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "open-tensor-section-chains-2026-11-02",
+      "work_packages": [
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Open chains of generated sections now split tensor faces. New public FaceRef::split_by_surface_curve_chain orients the pieces into one chain by exact endpoint equality (shared with the loop split), attaches the chain's ends to existing outer-boundary vertices or splits the unique containing boundary edges, and publishes one canonical edge per piece through new interior junction vertices. The single-edge open split is refactored into a general chain split (a single piece is a chain of one), so every existing face split runs through the same exact path; a closed chain is refused as degenerate because it is a loop split.",
+      "source": [
+        "../src/topology/edit/surface_loop.rs",
+        "../src/topology/edit/face.rs",
+        "../src/topology/edit/results.rs",
+        "../src/ownership/changes.rs",
+        "../src/lib.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "validation": "New witness: the two cylinder-patch branches chain through the junction (0, 1, 1) between the arc-boundary points (+/-sqrt(24)/5, 1/5, 7/5); the chain split gives two faces that replay cold, also with the pieces reordered and one reversed; a single piece and the closed paraboloid loop are DegenerateFaceSplit. Dropping the reversal of the first wire's chain uses or linking an edge to the wrong junction fails the witness. All earlier face-split witnesses pass through the refactored path. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 779 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; the chain witness completes in well under 1 s in release.",
+      "limits": "Chains touching existing holes or crossing each other, analytic-side faces and Booleans with tensor faces remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

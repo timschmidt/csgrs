@@ -201,14 +201,9 @@ fn both_sections_split_the_face_into_three_and_replay_transformed() {
     assert_eq!(mapped.faces().count(), 3);
 }
 
-/// On the rational patch of y^2 + z^2 = 2, the section by x^2 + y^2 = 1 runs
-/// from x = -√24/5 to √24/5 (y = 1/5, z = 7/5) and is split into two branches
-/// at the projection event x = 0, (0, 1, 1). Every end is certified exactly:
-/// the boundary ends through their radical coordinate, the junction through
-/// the event resultant. A single branch ends inside the face, so it is not an
-/// open split and is refused with that reason.
-#[test]
-fn junction_ended_branches_are_refused_as_open_splits() {
+/// A face on the rational patch of y^2 + z^2 = 2 swept along x in [-2, 2],
+/// and the two branches of its section by x^2 + y^2 = 1.
+fn cylinder_patch_section() -> (Model, Vec<SurfaceIntersectionCurve>) {
     let arc = [
         (q(7, 5), q(1, 5), Real::one()),
         (q(5, 4), q(5, 4), q(4, 5)),
@@ -240,6 +235,18 @@ fn junction_ended_branches_are_refused_as_open_splits() {
         SurfaceSurfaceIntersection::Curves(curves) => curves,
         other => panic!("two branches required, found {other:?}"),
     };
+    (model, pieces)
+}
+
+/// On the rational patch of y^2 + z^2 = 2, the section by x^2 + y^2 = 1 runs
+/// from x = -√24/5 to √24/5 (y = 1/5, z = 7/5) and is split into two branches
+/// at the projection event x = 0, (0, 1, 1). Every end is certified exactly:
+/// the boundary ends through their radical coordinate, the junction through
+/// the event resultant. A single branch ends inside the face, so it is not an
+/// open split and is refused with that reason.
+#[test]
+fn junction_ended_branches_are_refused_as_open_splits() {
+    let (model, pieces) = cylinder_patch_section();
     assert_eq!(pieces.len(), 2);
     let x = (Real::from(24).sqrt().unwrap() / Real::from(5)).unwrap();
     let expected = [
@@ -510,4 +517,38 @@ fn closed_section_chain_splits_a_tensor_face_into_a_ring_and_a_disk() {
             .count(),
         2
     );
+}
+
+/// The two cylinder-patch branches chain through the junction (0, 1, 1) from
+/// (-√24/5, 1/5, 7/5) to (√24/5, 1/5, 7/5), both on the arc boundary: an open
+/// chain split gives two faces that replay cold, in either piece order.
+#[test]
+fn open_section_chain_splits_a_tensor_face() {
+    let (model, pieces) = cylinder_patch_section();
+    let face = model.faces().next().unwrap();
+    let split = face
+        .split_by_surface_curve_chain(&pieces, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(split.edges().len(), 2);
+    assert_eq!(reload(split.model()).faces().count(), 2);
+    let reordered = [pieces[1].clone(), pieces[0].reversed().unwrap()];
+    let again = face
+        .split_by_surface_curve_chain(&reordered, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(reload(again.model()).faces().count(), 2);
+    // One piece is not a chain; a closed chain is a loop, not an open split.
+    assert!(matches!(
+        face.split_by_surface_curve_chain(&pieces[..1], SurfaceIntersectionOperand::First),
+        Err(TopologyEditError::DegenerateFaceSplit)
+    ));
+    let (paraboloid, patch) = paraboloid_face();
+    let ring = loop_sections(&patch);
+    assert!(matches!(
+        paraboloid
+            .faces()
+            .next()
+            .unwrap()
+            .split_by_surface_curve_chain(&ring, SurfaceIntersectionOperand::First),
+        Err(TopologyEditError::DegenerateFaceSplit)
+    ));
 }

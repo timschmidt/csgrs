@@ -179,6 +179,19 @@ pub struct ArenaSurfaceCurveLoopFaceSplit {
     pub second_face: FaceId,
 }
 
+/// Stable identifiers produced by one open chain of surface curves.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaSurfaceCurveChainFaceSplit {
+    /// Optional canonical edge split that attached the chain start.
+    pub start_edge: Option<ArenaEdgeSplit>,
+    /// Optional canonical edge split that attached the chain end.
+    pub end_edge: Option<ArenaEdgeSplit>,
+    /// The resulting face split; its edge fields describe the first piece.
+    pub face: ArenaFaceSplit,
+    /// One canonical edge per piece, in chain order.
+    pub edges: Vec<EdgeId>,
+}
+
 /// Stable result of deterministic exact multi-trace face partitioning.
 #[derive(Clone, Debug)]
 pub struct ArenaFacePartition {

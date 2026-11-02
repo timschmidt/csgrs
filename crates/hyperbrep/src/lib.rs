@@ -74,8 +74,8 @@ pub use topology::{
 pub(crate) use topology::{
     ArenaBoundaryBridgeCurveSplit, ArenaBoundaryBridgeFaceSplit, ArenaClosedSurfaceCurveFaceSplit,
     ArenaCurveFaceSplit, ArenaEdgeSplit, ArenaEdit, ArenaFacePartition, ArenaFaceSplit,
-    ArenaFaceTracePartition, ArenaModel, ArenaModelBuilder, ArenaSurfaceCurveFaceSplit,
-    ArenaSurfaceCurveLoopFaceSplit, Edge, EdgeUse, Face, Solid,
+    ArenaFaceTracePartition, ArenaModel, ArenaModelBuilder, ArenaSurfaceCurveChainFaceSplit,
+    ArenaSurfaceCurveFaceSplit, ArenaSurfaceCurveLoopFaceSplit, Edge, EdgeUse, Face, Solid,
 };
 pub use topology::{
     Curve3Id, EdgeId, EdgeUseId, FaceId, PcurveId, ShellId, SolidId, SurfaceId, VertexId, WireId,

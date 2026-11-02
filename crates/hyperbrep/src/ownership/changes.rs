@@ -456,6 +456,50 @@ impl SurfaceCurveFaceSplit {
     }
 }
 
+/// Result of splitting a face along an open chain of surface curves.
+#[derive(Clone, Debug)]
+pub struct SurfaceCurveChainFaceSplit {
+    model: Model,
+    source: Model,
+    data: ArenaSurfaceCurveChainFaceSplit,
+}
+
+impl SurfaceCurveChainFaceSplit {
+    /// Borrows the resulting immutable revision.
+    pub fn model(&self) -> &Model {
+        &self.model
+    }
+    /// Borrows the immutable input revision.
+    pub fn source_model(&self) -> &Model {
+        &self.source
+    }
+    /// The first descendant, retaining the source face ID.
+    pub fn first_face(&self) -> FaceRef<'_> {
+        FaceRef {
+            model: &self.model,
+            id: self.data.face.first_face,
+        }
+    }
+    /// The newly appended second descendant.
+    pub fn second_face(&self) -> FaceRef<'_> {
+        FaceRef {
+            model: &self.model,
+            id: self.data.face.second_face,
+        }
+    }
+    /// The new edges, one per piece in chain order.
+    pub fn edges(&self) -> impl ExactSizeIterator<Item = EdgeRef<'_>> {
+        self.data.edges.iter().map(|id| EdgeRef {
+            model: &self.model,
+            id: *id,
+        })
+    }
+    /// Consumes the operation result and returns the resulting model.
+    pub fn into_model(self) -> Model {
+        self.model
+    }
+}
+
 /// Result of splitting a face along a closed chain of surface curves.
 #[derive(Clone, Debug)]
 pub struct SurfaceCurveLoopFaceSplit {
@@ -959,6 +1003,23 @@ impl FaceRef<'_> {
             .inner
             .split_face_by_surface_curve_loop(self.id, curves, operand)?;
         Ok(SurfaceCurveLoopFaceSplit {
+            model: Model::from_arena(model),
+            source: self.model.clone(),
+            data,
+        })
+    }
+    /// Splits a trimmed face along an open chain of retained surface curves
+    /// that runs between two outer-boundary points.
+    pub fn split_by_surface_curve_chain(
+        self,
+        curves: &[SurfaceIntersectionCurve],
+        operand: SurfaceIntersectionOperand,
+    ) -> Result<SurfaceCurveChainFaceSplit, TopologyEditError> {
+        let (model, data) = self
+            .model
+            .inner
+            .split_face_by_surface_curve_chain(self.id, curves, operand)?;
+        Ok(SurfaceCurveChainFaceSplit {
             model: Model::from_arena(model),
             source: self.model.clone(),
             data,

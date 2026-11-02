@@ -337,6 +337,29 @@ impl ArenaModel {
         end: VertexId,
         authored: Option<(Curve3, Pcurve, ParameterCorrespondence, bool)>,
     ) -> Result<(Self, ArenaFaceSplit), TopologyEditError> {
+        let (model, split, _) =
+            self.split_face_with_chain(face_id, start, end, authored.map(|a| vec![a]), Vec::new())?;
+        Ok((model, split))
+    }
+
+    /// Splits a face between two outer-boundary vertices along a chain of
+    /// authored edges joined at new vertices `junctions` (one fewer than the
+    /// pieces), or along a planar chord when `authored` is `None`. Returns
+    /// the split, whose edge fields describe the first piece, and every new
+    /// chain edge in order.
+    pub(in crate::topology) fn split_face_with_chain(
+        &self,
+        face_id: FaceId,
+        start: VertexId,
+        end: VertexId,
+        authored: Option<Vec<(Curve3, Pcurve, ParameterCorrespondence, bool)>>,
+        junctions: Vec<Point3>,
+    ) -> Result<(Self, ArenaFaceSplit, Vec<EdgeId>), TopologyEditError> {
+        if authored.as_ref().map_or(!junctions.is_empty(), |pieces| {
+            pieces.is_empty() || pieces.len() != junctions.len() + 1
+        }) {
+            return Err(TopologyEditError::DegenerateFaceSplit);
+        }
         let face = self
             .face(face_id)
             .ok_or(TopologyEditError::InvalidReference {
@@ -423,96 +446,117 @@ impl ArenaModel {
         let mut first_path = cyclic_path(start_index, end_index);
         let mut second_path = cyclic_path(end_index, start_index);
 
-        let (curve_geometry, forward_pcurve, forward_correspondence, image_certificate) =
-            match authored {
-                Some(authored) => authored,
-                None => {
-                    let pcurve_start =
-                        |edge_use_id: EdgeUseId| -> Result<CurvePoint2, GeometryError> {
-                            let edge_use = self
-                                .edge_use(edge_use_id)
-                                .expect("validated wire edge-use ID");
-                            let pcurve = self
-                                .pcurve(edge_use.pcurve)
-                                .expect("validated edge-use pcurve ID");
-                            Ok((pcurve.curve().start().clone())
-                                .coordinates()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?
-                                .clone())
-                        };
-                    let start_uv = pcurve_start(outer_uses[start_index])?;
-                    let end_uv = pcurve_start(outer_uses[end_index])?;
-                    let start_point = self
-                        .vertex(start)
-                        .expect("outer-boundary vertex resolves")
-                        .represented_point()?
-                        .clone();
-                    let end_point = self
-                        .vertex(end)
-                        .expect("outer-boundary vertex resolves")
-                        .represented_point()?
-                        .clone();
-                    (
-                        Curve3::line(start_point, end_point)?,
-                        Pcurve::new(Curve2::from(
-                            LineSeg2::try_new(start_uv, end_uv).map_err(GeometryError::from)?,
-                        )),
-                        ParameterCorrespondence::identity(),
-                        // The source boundary edge uses already certify both
-                        // parameter-space endpoints against these shared
-                        // vertices. A planar surface and both authored lines
-                        // are affine, so those endpoint certificates prove
-                        // the complete chord image.
-                        true,
-                    )
-                }
-            };
-        let edge_domain = curve_geometry.domain().clone();
-        let reverse_pcurve = forward_pcurve.reversed()?;
-        let reverse_correspondence = forward_correspondence.reversed_pcurve(&forward_pcurve)?;
+        let pieces = match authored {
+            Some(pieces) => pieces,
+            None => vec![{
+                let pcurve_start = |edge_use_id: EdgeUseId| -> Result<CurvePoint2, GeometryError> {
+                    let edge_use = self
+                        .edge_use(edge_use_id)
+                        .expect("validated wire edge-use ID");
+                    let pcurve = self
+                        .pcurve(edge_use.pcurve)
+                        .expect("validated edge-use pcurve ID");
+                    Ok((pcurve.curve().start().clone())
+                        .coordinates()
+                        .ok_or(GeometryError::UnsupportedPcurveContour)?
+                        .clone())
+                };
+                let start_uv = pcurve_start(outer_uses[start_index])?;
+                let end_uv = pcurve_start(outer_uses[end_index])?;
+                let start_point = self
+                    .vertex(start)
+                    .expect("outer-boundary vertex resolves")
+                    .represented_point()?
+                    .clone();
+                let end_point = self
+                    .vertex(end)
+                    .expect("outer-boundary vertex resolves")
+                    .represented_point()?
+                    .clone();
+                (
+                    Curve3::line(start_point, end_point)?,
+                    Pcurve::new(Curve2::from(
+                        LineSeg2::try_new(start_uv, end_uv).map_err(GeometryError::from)?,
+                    )),
+                    ParameterCorrespondence::identity(),
+                    // The source boundary edge uses already certify both
+                    // parameter-space endpoints against these shared
+                    // vertices. A planar surface and both authored lines
+                    // are affine, so those endpoint certificates prove
+                    // the complete chord image.
+                    true,
+                )
+            }],
+        };
 
         let mut staged = self.clone();
         let data = Arc::make_mut(&mut staged.data);
-        let curve = Curve3Id::from_index(data.curves.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
-        data.curves.push(curve_geometry);
-        let edge = EdgeId::from_index(data.edges.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Edge))?;
-        data.edges.push(Edge {
-            start,
-            end,
-            curve,
-            domain: edge_domain,
-            endpoint_certificate: authored_curve,
-        });
+        let mut chain_vertices = vec![start];
+        for point in junctions {
+            let vertex = VertexId::from_index(data.vertices.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
+            data.vertices.push(Vertex {
+                point: point.into(),
+            });
+            chain_vertices.push(vertex);
+        }
+        chain_vertices.push(end);
+        let mut chain_edges = Vec::with_capacity(pieces.len());
+        let mut reverse_uses = Vec::with_capacity(pieces.len());
+        let mut forward_uses = Vec::with_capacity(pieces.len());
+        for (index, (curve_geometry, forward_pcurve, forward_correspondence, image_certificate)) in
+            pieces.into_iter().enumerate()
+        {
+            let edge_domain = curve_geometry.domain().clone();
+            let reverse_pcurve = forward_pcurve.reversed()?;
+            let reverse_correspondence = forward_correspondence.reversed_pcurve(&forward_pcurve)?;
+            let curve = Curve3Id::from_index(data.curves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Curve3))?;
+            data.curves.push(curve_geometry);
+            let edge = EdgeId::from_index(data.edges.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Edge))?;
+            data.edges.push(Edge {
+                start: chain_vertices[index],
+                end: chain_vertices[index + 1],
+                curve,
+                domain: edge_domain,
+                endpoint_certificate: authored_curve,
+            });
+            chain_edges.push(edge);
 
-        let first_pcurve = PcurveId::from_index(data.pcurves.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
-        data.pcurves.push(reverse_pcurve);
-        let second_pcurve = PcurveId::from_index(data.pcurves.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
-        data.pcurves.push(forward_pcurve);
+            let first_pcurve = PcurveId::from_index(data.pcurves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
+            data.pcurves.push(reverse_pcurve);
+            let second_pcurve = PcurveId::from_index(data.pcurves.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
+            data.pcurves.push(forward_pcurve);
 
-        let first_use = EdgeUseId::from_index(data.edge_uses.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
-        data.edge_uses.push(EdgeUse {
-            edge,
-            direction: Direction::Reversed,
-            pcurve: first_pcurve,
-            parameter_correspondence: reverse_correspondence,
-            image_certificate,
-        });
-        let second_use = EdgeUseId::from_index(data.edge_uses.len())
-            .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
-        data.edge_uses.push(EdgeUse {
-            edge,
-            direction: Direction::Forward,
-            pcurve: second_pcurve,
-            parameter_correspondence: forward_correspondence,
-            image_certificate,
-        });
-        first_path.push(first_use);
-        second_path.push(second_use);
+            let first_use = EdgeUseId::from_index(data.edge_uses.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
+            data.edge_uses.push(EdgeUse {
+                edge,
+                direction: Direction::Reversed,
+                pcurve: first_pcurve,
+                parameter_correspondence: reverse_correspondence,
+                image_certificate,
+            });
+            let second_use = EdgeUseId::from_index(data.edge_uses.len())
+                .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
+            data.edge_uses.push(EdgeUse {
+                edge,
+                direction: Direction::Forward,
+                pcurve: second_pcurve,
+                parameter_correspondence: forward_correspondence,
+                image_certificate,
+            });
+            reverse_uses.push(first_use);
+            forward_uses.push(second_use);
+        }
+        let (edge, first_use, second_use) = (chain_edges[0], reverse_uses[0], forward_uses[0]);
+        // The first path returns from `end` to `start` along the reversed
+        // chain; the second continues from `start` to `end` along it.
+        first_path.extend(reverse_uses.iter().rev().copied());
+        second_path.extend(forward_uses.iter().copied());
         data.wires[outer.index()].edge_uses = first_path;
         data.wires[outer.index()].simplicity_certificate = true;
         let second_wire = WireId::from_index(data.wires.len())
@@ -616,6 +660,7 @@ impl ArenaModel {
                 first_face: face_id,
                 second_face,
             },
+            chain_edges,
         ))
     }
 }
