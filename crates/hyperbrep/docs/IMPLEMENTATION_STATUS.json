@@ -3401,6 +3401,36 @@
       "validation": "Six new witnesses in tests/cylinder_atlas_sections.rs. The plan's decisive native pair x^2 + y^2 = 1, y^2 + z^2 = 2 returns pieces that chain into exactly two closed loops, separated by the sign of z, crossing every atlas seam (c, s) at z = +/-sqrt(2 - s^2); the reversed operand order charts the other cylinder and also forms two loops. Cutting the native loops with x = 0 returns exactly the four simple contacts (0, +/-1, +/-1) required by the plan. The equal-radius control places every piece end on z = x or z = -x. The off-axis sphere |p - (1,0,0)| = 1 gives one loop through (1, 0, +/-1) and (119/169, +/-120/169, +/-sqrt(69)/13). A thin cylinder through the R = 3, r = 1 torus tube gives two loops. Far spheres and skew cylinders give complete empty results. Loop checks bucket piece ends by exact linear forms against rational seam values and use each fixture's independent seam-uniqueness argument; exact equality proofs between independently selected seam points of adjacent patches cost about 7.5 s each in a measured probe and are avoided. Shrinking H, dropping a patch, or inverting the gradient classification fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 741 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim. In release, the decisive native section takes about 0.36 s in a probe; exact equality between seam points from different patches was measured at about 7.5 s per proof.",
       "limits": "Native operand pcurves, maximal (seam-free) components, Boolean/face consumption and STEP export of these pieces are not provided. Cones are excluded because cylinder/cone intersections need not be bounded. Atlas patches whose sections hit vertical/repeated/boundary components or fail the injectivity certificate return typed errors. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "torus-atlas-sections-2026-11-02",
+      "work_packages": [
+        "WP04",
+        "WP05b",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25"
+      ],
+      "change": "Ring tori against spheres centred off the torus axis and against non-coaxial cones now return complete exact results instead of UnsupportedIntersection. A ring torus is the revolution of its rational meridian circle by its rational major circle, so sixteen rational biquadratic patches (controls c + (R + r m.x)(a.x X + a.y Y) + r m.y Z, weights w_major w_minor) from a coarse exact atlas with half-angle tangents 0, +/-4/3 and infinity cover it with rational seams, controls and weights. Patches whose control-hull box is exactly disjoint from a bounded carrier's box are skipped; the rest are sectioned completely. Atlas patches use injectivity by construction (each arc is an injective chart of less than one turn and the ring-torus and cylinder charts are injective), so the coordinate-projection certificate, which Hypercurve blocks for these maps, is not required; user tensors keep the certificate. The cylinder atlas shares this sectioning and keeps its fine ten-arc atlas. Non-coaxial torus pairs deliberately keep their typed refusal. Unit witnesses that pinned UnsupportedIntersection for the off-axis sphere/torus and cone/torus pairs now assert exact seam points.",
+      "source": [
+        "../src/geometry/torus_atlas.rs",
+        "../src/geometry/cylinder_atlas.rs",
+        "../src/geometry/implicit_tensor.rs",
+        "../src/geometry.rs",
+        "../tests/torus_atlas_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Four new witnesses in tests/torus_atlas_sections.rs on the R = 3, r = 1 torus, with every expected point derived from both equations on an atlas seam: the unit sphere about (4, 0, 0) gives two-piece junctions at (7/2, 0, +/-sqrt(3)/2) and (31/8, +/-sqrt(63)/8, 0), in both operand orders; the off-axis downward 45-degree cone from (1, 0, 4) gives junctions at (-3 -/+ sqrt(2)/2, 0, -/+ sqrt(2)/2); a distant sphere gives a complete empty result; a non-coaxial torus pair stays a typed refusal. Migrated unit witnesses: the radius-3 sphere against the torus about (1, 0, 0) ends at (3/17, 48/17, +/-12 sqrt(2)/17); the upward cone against the torus about (1, 0, 3) ends at (4, 0, 4) and (3, 0, 3). Breaking the weight product, swapping meridian coordinates, or inverting box pruning fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 745 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim. Release probe timings: the fine 100-patch torus atlas took 49 s for the migrated cone/torus witness, and the coarse 16-patch atlas took about 8 s in a probe and 4.1 s for the three migrated unit witnesses; a coarse cylinder atlas slowed the cylinder witnesses from 0.48 s to 40 s, so the cylinder keeps the fine atlas. An overlapping non-coaxial torus pair (R = 3, r = 1, offset (1, 0, 1)) took 253 s with the coarse atlas; that pair is therefore not admitted.",
+      "limits": "Non-coaxial torus pairs, cone patches crossing the apex plane and sphere/cone pairs remain typed. Pieces carry no operand pcurves, depend on the charted operand and meet at seams; Boolean consumers keep their unsupported-carrier handling. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

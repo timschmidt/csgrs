@@ -38,6 +38,7 @@ mod selected_pcurves;
 mod spline;
 mod surface_point;
 mod tensor_image;
+mod torus_atlas;
 mod transform;
 mod translation;
 mod vector;
@@ -4540,7 +4541,9 @@ impl Surface {
     /// become retained tensor-image curves when an injective coordinate-plane
     /// projection certifies the tensor. Cylinders against nonparallel
     /// cylinders and off-axis spheres or tori are sectioned through an exact
-    /// rational atlas of the cylinder's bounded relevant height range. The configured
+    /// rational atlas of the cylinder's bounded relevant height range; ring tori
+    /// against off-axis spheres and cones use an exact rational torus atlas.
+    /// The configured
     /// solver work context participates where instrumented, but these limits
     /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
@@ -4612,13 +4615,28 @@ impl Surface {
                 intersect_coaxial_cones(first, second)
             }
             (SurfaceGeometry::Torus(first), SurfaceGeometry::Torus(second)) => {
-                intersect_coaxial_tori(first, second)
+                let other = curve_implicit::ImplicitCarrier::Torus(second);
+                if torus_atlas::special_route_applies(first, other)? {
+                    intersect_coaxial_tori(first, second)
+                } else {
+                    torus_atlas::intersect(first, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_sphere_torus(sphere, torus)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_sphere_torus(sphere, torus)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Torus(torus)) => {
                 let other = curve_implicit::ImplicitCarrier::Torus(torus);
@@ -4638,10 +4656,20 @@ impl Surface {
                 }
             }
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_cone_torus(cone, torus)
+                let other = curve_implicit::ImplicitCarrier::Cone(cone);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_cone_torus(cone, torus)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cone(cone)) => {
-                intersect_coaxial_cone_torus(cone, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Cone(cone);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_cone_torus(cone, torus).map(swapped_curve_intersection)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Cone(cone)) => {
                 intersect_coaxial_cylinder_cone(cylinder, cone)
@@ -18002,10 +18030,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            sphere.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: the torus atlas seam over
+        // (-7/25, 24/25) about (1, 0, 0) meets |p| = 3 where the tube cosine is
+        // -1/17, at (3/17, 48/17, ±12√2/17).
+        let ends = atlas_piece_ends(sphere.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(12) * Real::from(2).sqrt().unwrap() / Real::from(17)).unwrap();
+        assert!(atlas_has_end(&ends, &q(3, 17), &q(48, 17), &z));
+        assert!(atlas_has_end(&ends, &q(3, 17), &q(48, 17), &-z));
         let transverse = Surface::torus(
             Point3::origin(),
             Vector3::x(),
@@ -18440,10 +18471,11 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cone.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on the torus seam theta = 0 about
+        // (1, 0, 3), x^2 = z^2 gives 4 + c = 3 + s, so (4, 0, 4) and (3, 0, 3).
+        let ends = atlas_piece_ends(cone.intersect_surface(&off_axis).unwrap());
+        assert!(atlas_has_end(&ends, &r(4), &r(0), &r(4)));
+        assert!(atlas_has_end(&ends, &r(3), &r(0), &r(3)));
         let transverse = Surface::torus(
             p(0, 0, 3),
             Vector3::x(),

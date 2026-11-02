@@ -2,7 +2,7 @@
 //!
 //! A cylinder meets a sphere, a ring torus, or a cylinder with a nonparallel
 //! axis only inside an exactly bounded height range. That finite portion of
-//! the cylinder is covered by an exact atlas of rational quadratic tensor
+//! the cylinder is covered by an exact atlas of ten rational quadratic tensor
 //! patches whose arc endpoints have half-angle tangents `0, ±5/12, ±3/4,
 //! ±4/3, ±12/5, ∞`: every endpoint, middle control and weight is rational in
 //! the cylinder's own frame. Each patch is sectioned by the complete
@@ -16,7 +16,12 @@ use super::curve_implicit::ImplicitCarrier;
 use super::*;
 
 /// Half-angle tangents `n/d` of the upper atlas points; `1 + t^2` is a square.
-const UPPER_TANGENTS: [(i64, i64); 5] = [(0, 1), (5, 12), (3, 4), (4, 3), (12, 5)];
+/// Upper half-angle tangents of the fine cylinder atlas (ten arcs).
+pub(super) const FINE_TANGENTS: &[(i64, i64)] = &[(0, 1), (5, 12), (3, 4), (4, 3), (12, 5)];
+
+/// Upper half-angle tangents of the coarse atlas (four arcs of about 106 and
+/// 74 degrees), used where each patch section is costly.
+pub(super) const COARSE_TANGENTS: &[(i64, i64)] = &[(0, 1), (4, 3)];
 
 /// Intersects `cylinder` with `other`, whose intersection with the cylinder is
 /// bounded. `cylinder_operand` names the cylinder's position in the query.
@@ -26,10 +31,39 @@ pub(super) fn intersect(
     cylinder_operand: SurfaceIntersectionOperand,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
     let height = height_bound(cylinder, other)?;
+    section_patches(atlas(cylinder, &height)?, other, cylinder_operand)
+}
+
+/// Sections every exact atlas patch of one operand by `other` and publishes
+/// the complete set of exact pieces and deduplicated isolated points.
+///
+/// The atlas is an internal exact chart, so no operand pcurve is claimed and
+/// pieces may meet at seams that are not physical vertices.
+pub(super) fn section_patches(
+    patches: Vec<Surface>,
+    other: ImplicitCarrier<'_>,
+    atlas_operand: SurfaceIntersectionOperand,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
     let mut points = Vec::<GeometricPoint3>::new();
     let mut curves = Vec::new();
-    for patch in atlas(cylinder, &height)? {
-        let section = implicit_tensor::intersect(other, &patch, cylinder_operand)?;
+    let other_bounds = carrier_bounds(other);
+    for patch in patches {
+        // A positive-weight patch lies in its control hull; an exactly
+        // disjoint box cannot meet a bounded carrier.
+        if let (Some(other_bounds), SurfaceBounds::Bounded(patch_bounds)) =
+            (&other_bounds, patch.bounds()?)
+            && boxes_disjoint(&patch_bounds, other_bounds)?
+        {
+            continue;
+        }
+        // Each patch is an injective chart: an arc of less than one turn
+        // (injective in angle) times an injective height or meridian chart.
+        let section = implicit_tensor::intersect_with(
+            other,
+            &patch,
+            atlas_operand,
+            implicit_tensor::Injectivity::ByConstruction,
+        )?;
         let (patch_points, patch_curves) = match section {
             SurfaceSurfaceIntersection::None => (Vec::new(), Vec::new()),
             SurfaceSurfaceIntersection::Point(point) => (vec![*point], Vec::new()),
@@ -40,7 +74,7 @@ pub(super) fn intersect(
                 components.points().to_vec(),
                 components.surface_curves().to_vec(),
             ),
-            // A bounded or transverse carrier cannot contain a cylinder patch.
+            // The admitted carriers cannot contain an atlas patch of the operand.
             _ => return Err(GeometryError::UnsupportedIntersection),
         };
         'point: for point in patch_points {
@@ -158,10 +192,21 @@ fn height_bound(cylinder: &CylinderSurface, other: ImplicitCarrier<'_>) -> Geome
     Err(GeometryError::UnsupportedIntersection)
 }
 
-/// Exact rational quadratic patches covering the cylinder for |h| <= H.
-fn atlas(cylinder: &CylinderSurface, height: &Real) -> GeometryResult<Vec<Surface>> {
-    let mut circle = Vec::with_capacity(2 * UPPER_TANGENTS.len());
-    for (numerator, denominator) in UPPER_TANGENTS {
+/// One exact rational quadratic arc of the unit circle: end points, the
+/// tangent intersection and the middle weight cos(half angle), all rational.
+pub(super) struct UnitArc {
+    pub(super) start: (Real, Real),
+    pub(super) middle: (Real, Real),
+    pub(super) end: (Real, Real),
+    pub(super) weight: Real,
+}
+
+/// Atlas arcs of the unit circle, counterclockwise from (1, 0), whose seams
+/// have the given upper half-angle tangents (each with `1 + t^2` a square),
+/// their mirror images, and infinity.
+pub(super) fn unit_arcs(tangents: &[(i64, i64)]) -> GeometryResult<Vec<UnitArc>> {
+    let mut circle = Vec::with_capacity(2 * tangents.len());
+    for &(numerator, denominator) in tangents {
         let t =
             (Real::from(numerator) / Real::from(denominator)).map_err(GeometryError::Numeric)?;
         let scale = Real::one() + &t * &t;
@@ -177,6 +222,32 @@ fn atlas(cylinder: &CylinderSurface, height: &Real) -> GeometryResult<Vec<Surfac
         .map(|(x, y)| (x.clone(), -y.clone()))
         .collect::<Vec<_>>();
     circle.extend(lower);
+    let mut arcs = Vec::with_capacity(circle.len());
+    for index in 0..circle.len() {
+        let (px, py) = circle[index].clone();
+        let (qx, qy) = circle[(index + 1) % circle.len()].clone();
+        // The tangents at unit points p and q meet at (p + q)/(1 + p·q); the
+        // middle weight is cos(half angle) = sqrt((1 + p·q)/2), rational here.
+        let sum = Real::one() + &px * &qx + &py * &qy;
+        let middle = (
+            ((&px + &qx) / sum.clone()).map_err(GeometryError::Numeric)?,
+            ((&py + &qy) / sum.clone()).map_err(GeometryError::Numeric)?,
+        );
+        let weight = ((sum / Real::from(2)).map_err(GeometryError::Numeric)?)
+            .sqrt()
+            .map_err(GeometryError::Numeric)?;
+        arcs.push(UnitArc {
+            start: (px, py),
+            middle,
+            end: (qx, qy),
+            weight,
+        });
+    }
+    Ok(arcs)
+}
+
+/// Exact rational quadratic patches covering the cylinder for |h| <= H.
+fn atlas(cylinder: &CylinderSurface, height: &Real) -> GeometryResult<Vec<Surface>> {
     let frame = &cylinder.frame;
     let lift = |x: &Real, y: &Real, h: &Real| {
         cylinder.origin.clone()
@@ -184,25 +255,16 @@ fn atlas(cylinder: &CylinderSurface, height: &Real) -> GeometryResult<Vec<Surfac
             + frame.y.clone() * (&cylinder.radius * y)
             + frame.z.clone() * h
     };
-    let mut patches = Vec::with_capacity(circle.len());
-    for index in 0..circle.len() {
-        let (px, py) = &circle[index];
-        let (qx, qy) = &circle[(index + 1) % circle.len()];
-        // The tangents at unit points p and q meet at (p + q)/(1 + p·q); the
-        // middle weight is cos(half angle) = sqrt((1 + p·q)/2), rational here.
-        let sum = Real::one() + px * qx + py * qy;
-        let mx = ((px + qx) / sum.clone()).map_err(GeometryError::Numeric)?;
-        let my = ((py + qy) / sum.clone()).map_err(GeometryError::Numeric)?;
-        let weight = ((sum / Real::from(2)).map_err(GeometryError::Numeric)?)
-            .sqrt()
-            .map_err(GeometryError::Numeric)?;
+    let arcs = unit_arcs(FINE_TANGENTS)?;
+    let mut patches = Vec::with_capacity(arcs.len());
+    for arc in &arcs {
         let low = -height.clone();
-        let row = |x: &Real, y: &Real| vec![lift(x, y, &low), lift(x, y, height)];
+        let row = |(x, y): &(Real, Real)| vec![lift(x, y, &low), lift(x, y, height)];
         patches.push(Surface::rational_bezier(
-            vec![row(px, py), row(&mx, &my), row(qx, qy)],
+            vec![row(&arc.start), row(&arc.middle), row(&arc.end)],
             vec![
                 vec![Real::one(), Real::one()],
-                vec![weight.clone(), weight],
+                vec![arc.weight.clone(), arc.weight.clone()],
                 vec![Real::one(), Real::one()],
             ],
         )?);
@@ -237,4 +299,48 @@ pub(super) fn special_route_applies(
         }
         ImplicitCarrier::Cone(_) => true,
     })
+}
+
+/// An exact box containing a bounded carrier, or `None` when unbounded.
+fn carrier_bounds(carrier: ImplicitCarrier<'_>) -> Option<Aabb> {
+    let cube = |center: &Point3, half: Real| {
+        Aabb::new(
+            Point3::new(&center.x - &half, &center.y - &half, &center.z - &half),
+            Point3::new(&center.x + &half, &center.y + &half, &center.z + &half),
+        )
+    };
+    match carrier {
+        ImplicitCarrier::Sphere(sphere) => Some(cube(&sphere.center, sphere.radius.clone())),
+        ImplicitCarrier::Torus(torus) => Some(cube(
+            &torus.center,
+            &torus.major_radius + &torus.minor_radius,
+        )),
+        ImplicitCarrier::Cylinder(_) | ImplicitCarrier::Cone(_) => None,
+    }
+}
+
+/// Whether two exact boxes are strictly separated along some axis.
+fn boxes_disjoint(first: &Aabb, second: &Aabb) -> GeometryResult<bool> {
+    let less = |a: &Real, b: &Real| -> GeometryResult<bool> {
+        Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Less)
+    };
+    for (a, b) in [
+        (
+            (&first.mins.x, &first.maxs.x),
+            (&second.mins.x, &second.maxs.x),
+        ),
+        (
+            (&first.mins.y, &first.maxs.y),
+            (&second.mins.y, &second.maxs.y),
+        ),
+        (
+            (&first.mins.z, &first.maxs.z),
+            (&second.mins.z, &second.maxs.z),
+        ),
+    ] {
+        if less(a.1, b.0)? || less(b.1, a.0)? {
+            return Ok(true);
+        }
+    }
+    Ok(false)
 }

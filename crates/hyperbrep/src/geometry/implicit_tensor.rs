@@ -28,6 +28,25 @@ pub(super) fn intersect(
     tensor: &Surface,
     tensor_operand: SurfaceIntersectionOperand,
 ) -> GeometryResult<SurfaceSurfaceIntersection> {
+    intersect_with(carrier, tensor, tensor_operand, Injectivity::Certify)
+}
+
+/// How a tensor's injectivity on the unit square is established.
+#[derive(Clone, Copy)]
+pub(super) enum Injectivity {
+    /// Require an injective coordinate-plane projection certificate.
+    Certify,
+    /// The caller constructed the tensor as an injective exact chart, such as
+    /// an atlas patch of a cylinder or ring torus with arcs under one turn.
+    ByConstruction,
+}
+
+pub(super) fn intersect_with(
+    carrier: ImplicitCarrier<'_>,
+    tensor: &Surface,
+    tensor_operand: SurfaceIntersectionOperand,
+    injectivity: Injectivity,
+) -> GeometryResult<SurfaceSurfaceIntersection> {
     let SurfaceGeometry::RationalBezier(patch) = &tensor.data.geometry else {
         return Err(GeometryError::UnsupportedIntersection);
     };
@@ -93,7 +112,9 @@ pub(super) fn intersect(
     // tensor is injective on the square. An injective coordinate-plane
     // projection is a sufficient whole-rectangle certificate; without one,
     // no incomplete or overlapping trace is published as complete.
-    certify_injective_tensor([&x, &y, &z], &weight)?;
+    if matches!(injectivity, Injectivity::Certify) {
+        certify_injective_tensor([&x, &y, &z], &weight)?;
+    }
     let mut curves = Vec::with_capacity(set.curves().len());
     for uv in set.curves() {
         // The spatial chart equals the source chart, matching the retained
