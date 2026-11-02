@@ -55,8 +55,11 @@ impl Curve3 {
     /// parameters on both curves. Coplanar pairs of lines, rational Bézier or
     /// NURBS curves and planar images are intersected completely in their
     /// common plane, and a line crossing a planar image's plane is located on
-    /// it. A rational curve lying along a line, noncoplanar non-line pairs and
-    /// other curve families fail with [`GeometryError::UnsupportedIntersection`].
+    /// it. Noncoplanar rational Bézier/NURBS pairs are intersected through an
+    /// exact planar projection whose candidates are confirmed by exact spatial
+    /// coincidence. A rational curve lying along a line, spatial overlaps of
+    /// noncoplanar curves and other curve families fail with
+    /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, other: &Self) -> GeometryResult<CurveCurveIntersection> {
         crate::context::strict(|| {
             match (self.line_endpoints(), other.line_endpoints()) {
@@ -79,7 +82,12 @@ impl Curve3 {
                 (CurveGeometry3::PlanarImage(image), CurveGeometry3::Line(_)) => {
                     Ok(swap(intersect_line_planar_image(other, self, image)?))
                 }
-                _ => Err(GeometryError::UnsupportedIntersection),
+                _ => match (rational_net(self), rational_net(other)) {
+                    (Some(first), Some(second)) => {
+                        intersect_rational_pair(self, &first, other, &second)
+                    }
+                    _ => Err(GeometryError::UnsupportedIntersection),
+                },
             }
         })
     }
@@ -591,4 +599,98 @@ fn intersect_line_planar_image(
             })
             .collect(),
     ))
+}
+
+/// Every spatial incidence of two curves projects to an incidence of their
+/// images under a linear map with a one-dimensional kernel, which keeps each
+/// rational family, weight, knot and parameter. The complete planar result
+/// supplies candidate parameter pairs; exact spatial coincidence keeps only
+/// true incidences. A projection along which the images overlap or collapse
+/// is replaced by another direction; persistent overlaps stay typed.
+fn intersect_rational_pair(
+    first: &Curve3,
+    a: &RationalNet,
+    second: &Curve3,
+    b: &RationalNet,
+) -> GeometryResult<CurveCurveIntersection> {
+    let directions = [
+        Vector3::z(),
+        Vector3::x(),
+        Vector3::y(),
+        Vector3::new([1.into(), 2.into(), 3.into()]),
+    ];
+    'direction: for direction in &directions {
+        let mut e1 = direction.cross(&Vector3::x());
+        if order(&e1.norm_squared(), &Real::zero())? == Ordering::Equal {
+            e1 = direction.cross(&Vector3::y());
+        }
+        let e2 = direction.cross(&e1);
+        let project = |net: &RationalNet| -> GeometryResult<Option<Curve2>> {
+            let points = net
+                .controls
+                .iter()
+                .map(|p| {
+                    let p = Vector3::from(p.clone());
+                    CurvePoint2::new(e1.dot(&p), e2.dot(&p))
+                })
+                .collect::<Vec<_>>();
+            let mut collapsed = true;
+            for point in &points[1..] {
+                if order(point.x(), points[0].x())? != Ordering::Equal
+                    || order(point.y(), points[0].y())? != Ordering::Equal
+                {
+                    collapsed = false;
+                    break;
+                }
+            }
+            Ok(if collapsed {
+                None
+            } else {
+                Some(net.image(points)?)
+            })
+        };
+        let (Some(first_image), Some(second_image)) = (project(a)?, project(b)?) else {
+            continue;
+        };
+        let intersection = first_image.intersect_curve(&second_image)?;
+        if let Some(blocker) = intersection.blockers().first() {
+            match blocker.kind() {
+                hypercurve::CurveIntersectionPairBlockerKind2::SharedComponent => {
+                    continue 'direction;
+                }
+                hypercurve::CurveIntersectionPairBlockerKind2::Uncertain(reason) => {
+                    return Err(GeometryError::PlanarClassificationUnresolved(*reason));
+                }
+                hypercurve::CurveIntersectionPairBlockerKind2::IncompleteReplay => {
+                    return Err(GeometryError::UnsupportedIntersection);
+                }
+            }
+        }
+        if !intersection.overlaps().is_empty() || !intersection.parameter_components().is_empty() {
+            continue;
+        }
+        let mut points = Vec::new();
+        for contact in intersection.contacts() {
+            let t = Parameter::from_curve(&contact.first().parameter()?)?;
+            let s = Parameter::from_curve(&contact.second().parameter()?)?;
+            if !first.domain().contains(&t)? || !second.domain().contains(&s)? {
+                continue;
+            }
+            let point = first.point_at(&t)?;
+            if point.coincides_with(&second.point_at(&s)?)? {
+                points.push(CurveCurvePoint {
+                    point,
+                    first: t,
+                    second: s,
+                });
+            }
+        }
+        sort_by_first(&mut points);
+        return Ok(if points.is_empty() {
+            CurveCurveIntersection::None
+        } else {
+            CurveCurveIntersection::Points(points)
+        });
+    }
+    Err(GeometryError::UnsupportedIntersection)
 }

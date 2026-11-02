@@ -195,9 +195,18 @@ fn unsupported_pairs_remain_typed() {
         line(pi(0, 0, 0), pi(2, 0, 0)).intersect_curve(&along),
         Err(GeometryError::UnsupportedIntersection)
     ));
-    // Two non-line families.
+    // A conic arc against a rational curve has no admitted route yet.
+    let circle = Curve3::circle_arc(
+        Point3::origin(),
+        Vector3::x(),
+        Vector3::y(),
+        Real::one(),
+        Real::zero(),
+        Real::one(),
+    )
+    .unwrap();
     assert!(matches!(
-        bump().intersect_curve(&along),
+        circle.intersect_curve(&bump()),
         Err(GeometryError::UnsupportedIntersection)
     ));
 }
@@ -283,4 +292,91 @@ fn lines_meet_planar_images_in_and_across_their_plane() {
             .unwrap(),
         CurveCurveIntersection::None
     ));
+}
+
+/// The quadratic with controls (1, 1, 0), (0, 3/4, 3/2), (-1, -1, 3) has
+/// x = 1 - 2s, z = 3s and y = 1 - s/2 - 3s^2/2. The cubic lies in the plane
+/// 4z - 3x = 6, which the quadratic crosses only at s = 1/2, at (0, 3/8, 3/2)
+/// = cubic(1/2). The curves are not coplanar.
+#[test]
+fn noncoplanar_rational_curves_meet_at_their_single_common_point() {
+    let quadratic = |shift: i64| {
+        Curve3::rational_bezier(
+            vec![
+                p(1.into(), Real::from(1 + shift), 0.into()),
+                p(0.into(), q(3, 4) + Real::from(shift), q(3, 2)),
+                p((-1).into(), Real::from(shift - 1), 3.into()),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap()
+    };
+    let found = points(&bump(), &quadratic(0));
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].first, q(1, 2)));
+    assert!(equal(&found[0].second, q(1, 2)));
+    assert!(
+        found[0]
+            .point
+            .coincides_with(&p(0.into(), q(3, 8), q(3, 2)).into())
+            .unwrap()
+    );
+    let swapped = points(&quadratic(0), &bump());
+    assert_eq!(swapped.len(), 1);
+    // Shifted by (0, 1, 0), the plane crossing (0, 11/8, 3/2) is off the cubic.
+    assert!(matches!(
+        bump().intersect_curve(&quadratic(1)).unwrap(),
+        CurveCurveIntersection::None
+    ));
+    // Shifted by (0, 0, 1), the xy projections still cross at the old pair, but
+    // the heights differ there (3/2 versus 5/2); the only plane crossing,
+    // s = 5/18, is off the cubic. Exact verification rejects the candidate.
+    let lifted = Curve3::rational_bezier(
+        vec![pi(1, 1, 1), p(0.into(), q(3, 4), q(5, 2)), pi(-1, -1, 4)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    assert!(matches!(
+        bump().intersect_curve(&lifted).unwrap(),
+        CurveCurveIntersection::None
+    ));
+    // The collinear x-axis segment never meets the cubic, whose only points
+    // with y = 0 are (-2, 0, 0) and (2, 0, 3).
+    let along = Curve3::rational_bezier(
+        vec![pi(0, 0, 0), pi(1, 0, 0), pi(2, 0, 0)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    assert!(matches!(
+        bump().intersect_curve(&along).unwrap(),
+        CurveCurveIntersection::None
+    ));
+}
+
+/// The x-axis spline x = 2u - 6 and the quadratic in x = 0 with
+/// y = 2s(2s - 1), z = 2s - 1 meet only at the origin: u = 3, s = 1/2.
+#[test]
+fn nurbs_meets_a_transverse_quadratic_at_its_knot() {
+    let spline = Curve3::nurbs(
+        2,
+        vec![pi(-2, 0, 0), pi(-1, 0, 0), pi(1, 0, 0), pi(2, 0, 0)],
+        vec![Real::one(); 4],
+        [2, 2, 2, 3, 4, 4, 4].map(Real::from).to_vec(),
+    )
+    .unwrap();
+    let quadratic = Curve3::rational_bezier(
+        vec![pi(0, 0, -1), pi(0, -1, 0), pi(0, 2, 1)],
+        vec![Real::one(); 3],
+    )
+    .unwrap();
+    let found = points(&spline, &quadratic);
+    assert_eq!(found.len(), 1);
+    assert!(equal(&found[0].first, 3.into()));
+    assert!(equal(&found[0].second, q(1, 2)));
+    assert!(
+        found[0]
+            .point
+            .coincides_with(&Point3::origin().into())
+            .unwrap()
+    );
 }

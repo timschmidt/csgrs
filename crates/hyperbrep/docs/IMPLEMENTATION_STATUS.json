@@ -3573,6 +3573,32 @@
       "validation": "Two new witnesses: the coplanar parabolas y = 1 - x^2 and y = x^2 meet at t = s = 1/2 +/- sqrt(2)/4, (+/-sqrt(2)/2, 1/2, 0), and a sub-arc overlaps its parent on [0, 1/2] versus [0, 1]; the coplanar line x = y meets a radius-5 planar circle image at (5 sqrt(2)/2, 5 sqrt(2)/2, 0), a vertical line pierces it at (3, 4, 0) with t = 1/2 in both operand orders, and a vertical line off the arc misses. Every reported point is checked against both curves. Ignoring the planar-image chart map or skipping the coplanarity test fails witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 758 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release.",
       "limits": "Noncoplanar rational pairs, conics, tensor-image and atlas pieces, non-similar planar frames and collapsed components remain typed. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
+    },
+    {
+      "id": "rational-pair-incidence-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Extend Curve3::intersect_curve to noncoplanar pairs of positive-weight rational Bezier curves and NURBS. Every spatial incidence projects to an incidence of the curves' images under a linear map with a one-dimensional kernel, which keeps each family, weight, knot and parameter. Hypercurve's complete planar intersection of the images supplies every candidate parameter pair, and exact spatial coincidence of the two curve points keeps only true incidences. Directions z, x, y and (1, 2, 3) are tried in order; a direction is skipped when an image collapses, the images share a component or overlap, and spatial overlaps that persist in every direction fail typed. The previous typed witness for a noncoplanar rational pair is replaced by its exact empty result, and a conic arc against a rational curve keeps the typed refusal.",
+      "source": [
+        "../src/geometry/curve_curve.rs",
+        "../tests/curve_curve_contacts.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "Two new witnesses: the quadratic (1, 1, 0), (0, 3/4, 3/2), (-1, -1, 3), which crosses the cubic's plane 4z - 3x = 6 only at s = 1/2, meets the cubic exactly once at (0, 3/8, 3/2) with t = s = 1/2 in both orders; its copy shifted by (0, 1, 0) misses; its copy shifted by (0, 0, 1) keeps the same xy projection, so the projected crossing is a false candidate rejected by exact verification; a collinear x-axis segment misses the cubic; the two-span x-axis NURBS meets a quadratic in x = 0 only at the origin, u = 3, s = 1/2. Accepting every projected candidate fails two witnesses. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests report 760 hyperbrep and 127 hyperbrep-io passes, 0 failures. Strict Clippy then flagged a blocker loop that never iterates past its first blocker; it was rewritten as an equivalent first-blocker match, after which strict Clippy passes and the curve/curve suite (9 tests) passes again; the full suites were not rerun for that behavior-preserving edit.",
+      "cost_evidence": "No performance claim; the witnesses complete in under 0.01 s in release. Verification cost grows with the number of projected candidates and the algebraic degree of their selected points.",
+      "limits": "Spatial overlaps of noncoplanar curves, conic arcs, planar images against noncoplanar curves, tensor-image and atlas pieces remain typed. Total arithmetic, memory and cancellation are not bounded. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
