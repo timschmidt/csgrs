@@ -157,3 +157,49 @@ fn distant_sphere_gives_a_complete_empty_result() {
         SurfaceSurfaceIntersection::None
     ));
 }
+
+/// Non-coaxial torus pairs with exact disjointness certificates: the
+/// (R, r) = (3, 1) torus at the origin and a tilted (1, 1/2) torus whose
+/// bounding ball (radius 3/2) is separated from the first ball (radius 4),
+/// lies above the first torus's slab |z| <= 1, or lies inside its central
+/// hole of radius 2. Each is the exact empty result in both orders; the
+/// overlapping pair above stays typed.
+#[test]
+fn certifiably_disjoint_non_coaxial_tori_do_not_meet() {
+    let tilted = |center: Point3| {
+        Surface::torus(
+            center,
+            Vector3::new([q(3, 5), 0.into(), q(4, 5)]),
+            Vector3::y(),
+            Vector3::new([q(-4, 5), 0.into(), q(3, 5)]),
+            1.into(),
+            q(1, 2),
+        )
+        .unwrap()
+    };
+    // Separated balls: |c| = 6 > 4 + 3/2 (and no slab or hole certificate
+    // applies at (0, 6, 0)). Above the slab: at (2, 0, 3), |z| = 3 > 1 + 3/2
+    // while the centers are only √13 apart and 2 off the axis. In the hole:
+    // the center is on the axis and 0 + 3/2 < 3 - 1.
+    for center in [pi(0, 6, 0), pi(2, 0, 3), Point3::origin()] {
+        let other = tilted(center);
+        assert!(matches!(
+            torus(Point3::origin()).intersect_surface(&other).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+        assert!(matches!(
+            other.intersect_surface(&torus(Point3::origin())).unwrap(),
+            SurfaceSurfaceIntersection::None
+        ));
+    }
+    // Touching bounds are not a certificate: |c| = 11/2 = 4 + 3/2 stays
+    // with the existing typed route.
+    assert!(matches!(
+        torus(Point3::origin()).intersect_surface(&tilted(Point3::new(
+            q(11, 2),
+            0.into(),
+            0.into()
+        ))),
+        Err(GeometryError::UnsupportedIntersection)
+    ));
+}

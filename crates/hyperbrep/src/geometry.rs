@@ -4629,6 +4629,9 @@ impl Surface {
                 intersect_coaxial_cones(first, second)
             }
             (SurfaceGeometry::Torus(first), SurfaceGeometry::Torus(second)) => {
+                if tori_certifiably_disjoint(first, second)? {
+                    return Ok(SurfaceSurfaceIntersection::None);
+                }
                 let other = curve_implicit::ImplicitCarrier::Torus(second);
                 if torus_atlas::special_route_applies(first, other)? {
                     intersect_coaxial_tori(first, second)
@@ -9329,6 +9332,43 @@ fn intersect_coaxial_cone_torus(
             _ => SurfaceSurfaceIntersection::Circles(curves),
         })
     }
+}
+
+/// Exact disjointness certificates for two ring tori in any relative
+/// position. Torus `i` lies in the ball `|p - c_i| <= rho_i = R_i + r_i`, in
+/// the slab `|n_i . (p - c_i)| <= r_i`, and outside the open cylinder of
+/// radius `R_i - r_i` about its axis. The pair is disjoint when the balls are
+/// separated, when one ball lies outside the other's slab, or when one ball
+/// lies inside the other's central hole. Every comparison is exact on squares
+/// of nonnegative quantities; `false` proves nothing.
+fn tori_certifiably_disjoint(first: &TorusSurface, second: &TorusSurface) -> GeometryResult<bool> {
+    let greater = |a: &Real, b: &Real| -> GeometryResult<bool> {
+        Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Greater)
+    };
+    let offset = &second.center - &first.center;
+    let outer = |torus: &TorusSurface| &torus.major_radius + &torus.minor_radius;
+    let reach = outer(first) + outer(second);
+    if greater(&offset.norm_squared(), &(&reach * &reach))? {
+        return Ok(true);
+    }
+    for (this, other, displacement) in [
+        (first, second, offset.clone()),
+        (second, first, -offset.clone()),
+    ] {
+        let axial = this.frame.z.dot(&displacement);
+        let slab = &this.minor_radius + outer(other);
+        if greater(&(&axial * &axial), &(&slab * &slab))? {
+            return Ok(true);
+        }
+        let hole = &this.major_radius - &this.minor_radius - outer(other);
+        if greater(&hole, &Real::zero())? {
+            let radial_squared = displacement.norm_squared() - &axial * &axial;
+            if greater(&(&hole * &hole), &radial_squared)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
 }
 
 fn intersect_coaxial_tori(

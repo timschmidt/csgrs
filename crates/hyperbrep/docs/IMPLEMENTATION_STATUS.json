@@ -4080,6 +4080,29 @@
       "validation": "Unit witnesses against Hypercurve's independently isolated roots: cbrt(1/2) and 1/4 + cbrt(1/16) are certified; x^3 + x - 1 proposes a Cardano root whose comparison is undecided and certifies nothing without error; the proof helper skips a failed comparison and proves the next candidate. Geometric witness: the quadratic with controls (1, 0), (1/2, 1), (-5/2, 3/4) satisfies a^2 + b^2 - 1 = s((125/16)s^3 - 2), so it meets the unit circle at its seam start (two visits) and at s = cbrt(32/125), checked through s^3 = 32/125 and the quadratic's own evaluation (the circle's evaluation at an atan2 of cube-root coordinates is exact but its comparison with the point is undecided); the circle against y = x^2 + x, whose contact solves x^3 + x^2 + x = 1 with only an undecided Cardano form, stays UnsupportedIntersection. Removing the zero-root deflation or the on-conic location fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 788 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
       "cost_evidence": "No performance claim; the witnesses complete in about 0.02 s in release.",
       "limits": "Undecided Cardano forms, three-real-root cubics (casus irreducibilis), quartics without a rational resolvent root and higher degrees remain typed; downstream consumers that must compare a circle's evaluation at such a contact with its cube-root point face the same undecided predicate. No work package or pre-push gate closes."
+    },
+    {
+      "id": "torus-disjointness-certificates-2026-11-02",
+      "work_packages": [
+        "WP02",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P17",
+        "P18",
+        "P20"
+      ],
+      "change": "Ring torus pairs in any relative position now return the exact empty result when an exact disjointness certificate holds, before the coaxial route or its typed refusal. Torus i lies in the ball |p - c_i| <= R_i + r_i, in the slab |n_i . (p - c_i)| <= r_i and outside the open cylinder of radius R_i - r_i about its axis; the pair is disjoint when the balls are separated, when one ball lies outside the other's slab, or when one ball lies inside the other's central hole. All comparisons are exact on squares of nonnegative quantities, strict inequalities only; touching bounds certify nothing.",
+      "source": [
+        "../src/geometry.rs",
+        "../tests/torus_atlas_sections.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#intersections",
+      "validation": "New witness: the (3, 1) torus at the origin against a tilted (1, 1/2) torus centred at (0, 6, 0) (only the ball certificate applies), (2, 0, 3) (only the slab certificate) and the origin (only the hole certificate) is the exact empty result in both orders; centred at (11/2, 0, 0), where the bounds touch, it remains UnsupportedIntersection, and the existing overlapping parallel-axis pair stays typed. Disabling any one certificate fails the witness. On Rust stable: cargo fmt --check passes; strict Clippy for hyperbrep and hyperbrep-io (all targets, all features, -D warnings) passes; release all-feature tests (no-fail-fast) report 789 hyperbrep and 127 hyperbrep-io passes, 0 failures.",
+      "cost_evidence": "No performance claim; certificates are a handful of exact comparisons.",
+      "limits": "Overlapping non-coaxial torus pairs remain typed until the atlas route's measured cost (minutes for bidegree (8, 8) pullbacks per patch) is addressed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
