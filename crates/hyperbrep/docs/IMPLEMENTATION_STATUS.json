@@ -4670,6 +4670,40 @@
       "validation": "Volumes are checked within 10^-30 by exact comparison against independent closed forms: the slab cut and the shared-wall z <= 5/4 intersection equal 91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5) (derived with SymPy and confirmed by a 30-digit numerical integral), the z <= 5/4 intersection and union sum to 47/3, and the z <= 1/2 union and holed-cap intersection equal 20/3 + pi/8 and 6 - pi/8. Two witnesses that asserted these volumes as typed UnsupportedMeasurement now assert the exact values. Mutations removing the arc view, the arc Green integral, the arc direction, the hole subtraction or the sweep sign each fail witnesses. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 805 passes and debug tests 797 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the ten tensor-graph tests complete in about 1.1 s in release.",
       "limits": "Non-circular curved trims, unequal-weight tops and caps whose boundaries are not lines or circle branches remain typed. Curved-face (tensor) area is still unsupported. No work package or pre-push gate closes."
+    },
+    {
+      "id": "elliptical-trims-affine-section-charts-2026-11-03",
+      "work_packages": [
+        "WP06",
+        "WP12",
+        "WP14",
+        "WP17",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P20"
+      ],
+      "change": "Slab cuts of nonuniformly stretched tensor-graph solids resolve and measure. Hypercurve: PolynomialCurveBranch2::affine_view is public; pair intersection treats two branches with equal exact affine views as sharing a source chart (points pulled back through the inverse affine map, tangent signs flipped for reflecting views); point location inverts exact affine views; injective-image certification accepts injective affine views. hyperbrep: certified_branch_point carries certified source points through any exact nonsingular affine view (the planar-image composed-equation fallback stays similarity-only), and a cap boundary whose curved pieces are affine images of circle arcs under one shared view is measured in that source chart (lines pulled back) and scaled by |det|.",
+      "source": [
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_curve_pair.rs",
+        "../../hypercurve/src/curve_support.rs",
+        "../../hypercurve/CHANGELOG.md",
+        "../src/geometry/planar_image.rs",
+        "../src/geometry/tensor_graph.rs",
+        "../src/geometry.rs",
+        "../src/topology/measure.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness stretched_slab_cuts_measure_elliptical_caps_exactly: the bump stretched by 2 along x (top x^2/4 + y^2) cut by the slab z <= 5/4 gives one ten-face solid whose volume is within 10^-30 of exactly twice the unstretched closed form 91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5), stretched probes classify exactly, and it replays cold byte-identically. Mutations restricting point certification to similarities, removing the shared affine pair chart, affine point location, the source-chart elliptical cap measurement, or affine injectivity each fail the witness; a general-affine composed-equation fallback and an affine self-contact exemption were dropped because no witness needed them. On Rust stable: cargo fmt --check and strict Clippy for hypercurve, hyperbrep and hyperbrep-io pass; hypercurve 3053 passes (34 ignored), capability guards and matrix pass; hyperbrep release 806 and debug 798 passes, hyperbrep-io 127; downstream hypercircuit 105, hyperpack 154 and root csgrs all-feature 694 passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "Curved trims that are neither lines nor affine images of circle arcs, unequal-weight tops, and tensor face area remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

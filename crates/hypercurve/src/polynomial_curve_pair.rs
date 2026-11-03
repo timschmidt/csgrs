@@ -187,6 +187,45 @@ fn negate(sign: RealSign) -> RealSign {
 /// identity versus an unmapped source and retained rational maps certified as
 /// exact similarities. This is a sufficient chart certificate; other images
 /// retain their existing dispatch and capability blockers.
+enum SharedChart {
+    Similarity(Option<Similarity2>),
+    /// An exact nonsingular affine view that is not a similarity: its
+    /// inverse map and whether it reverses orientation.
+    Affine(crate::RationalMap2, bool),
+}
+
+fn shared_chart(
+    first: &PolynomialCurveBranch2,
+    second: &PolynomialCurveBranch2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<SharedChart>> {
+    if let Some(view) = shared_similarity(first, second, policy)? {
+        return Ok(Some(SharedChart::Similarity(view)));
+    }
+    // Equal exact nonsingular affine views also share one source chart.
+    let (Some(a), Some(b)) = (first.affine_view(), second.affine_view()) else {
+        return Ok(None);
+    };
+    let same = policy.strict_predicate_pass(|| -> ExactCurveResult<bool> {
+        for (a, b) in a.iter().zip(&b) {
+            if order(&a.clone().into(), &b.clone().into(), policy)? != Ordering::Equal {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    })?;
+    if !same {
+        return Ok(None);
+    }
+    let Some((inverse, reverses)) = first.inverse_affine_view() else {
+        return Ok(None);
+    };
+    Ok(Some(SharedChart::Affine(
+        crate::RationalMap2::from_affine(&inverse),
+        reverses,
+    )))
+}
+
 fn shared_similarity(
     first: &PolynomialCurveBranch2,
     second: &PolynomialCurveBranch2,
@@ -248,17 +287,23 @@ pub(super) fn intersect(
     let (Some(a), Some(b)) = (first.polynomial_branch(), second.polynomial_branch()) else {
         return Ok(None);
     };
-    let Some(image) = shared_similarity(a, b, policy)? else {
+    let Some(chart) = shared_chart(a, b, policy)? else {
         return Ok(None);
     };
-    let inverse = image
-        .as_ref()
-        .map(Similarity2::inverse)
-        .transpose()
-        .map_err(invalid)?;
-    let reflected = image
-        .as_ref()
-        .is_some_and(Similarity2::reverses_orientation);
+    let (inverse, affine_inverse, reflected) = match &chart {
+        SharedChart::Similarity(image) => (
+            image
+                .as_ref()
+                .map(Similarity2::inverse)
+                .transpose()
+                .map_err(invalid)?,
+            None,
+            image
+                .as_ref()
+                .is_some_and(Similarity2::reverses_orientation),
+        ),
+        SharedChart::Affine(map, reverses) => (None, Some(map), *reverses),
+    };
     let policy = &policy.strict_counterpart();
     let [a_low, a_high] = decided(
         first
@@ -423,16 +468,19 @@ pub(super) fn intersect(
                 shared_selected_support,
             )
         });
-        let source_point = inverse.as_ref().map_or_else(
-            || point.clone(),
-            |inverse| {
-                CurvePoint2::from(crate::bezier_offset::BezierSimilarityPoint2::new(
-                    point.clone(),
-                    inverse.clone(),
-                    policy,
-                ))
-            },
-        );
+        let source_point = match affine_inverse {
+            Some(map) => point.rational_image(map)?,
+            None => inverse.as_ref().map_or_else(
+                || point.clone(),
+                |inverse| {
+                    CurvePoint2::from(crate::bezier_offset::BezierSimilarityPoint2::new(
+                        point.clone(),
+                        inverse.clone(),
+                        policy,
+                    ))
+                },
+            ),
+        };
         let tangent_cross_sign = forms.cross(&source_point, policy)?.map(|sign| {
             if reflected
                 ^ first.source_traversal_is_reversed()

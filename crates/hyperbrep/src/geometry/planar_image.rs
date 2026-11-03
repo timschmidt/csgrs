@@ -302,60 +302,62 @@ impl PlanarCurve3 {
         let Some(branch) = original.polynomial_branch() else {
             return Err(GeometryError::UnrepresentableParameter);
         };
-        let Some(view) = branch.similarity_view() else {
-            return Err(GeometryError::UnrepresentableParameter);
-        };
-        let defining = branch.topology().geometric_equation();
         if let Some(image) = certified_branch_point(&selected, branch)? {
             return Ok(self.lift(&image));
         }
-        let equation = match view {
-            None => defining.clone(),
-            Some(transform) => {
-                // F(T^-1(X, Y)) with T(p) = M p + t, so T^-1(q) = M^-1 (q - t).
-                let (a, b, d, e, x, y) = transform.affine_components();
-                let determinant = a * e - b * d;
-                let inverse = |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
-                let p1 = inverse(e.clone())?;
-                let q1 = inverse(-b.clone())?;
-                let p2 = inverse(-d.clone())?;
-                let q2 = inverse(a.clone())?;
-                let r1 = -(&p1 * x + &q1 * y);
-                let r2 = -(&p2 * x + &q2 * y);
-                let first = BivariatePolynomial::new(vec![vec![r1, q1], vec![p1]]);
-                let second = BivariatePolynomial::new(vec![vec![r2, q2], vec![p2]]);
-                let powers = |base: &BivariatePolynomial, count: usize| {
-                    let mut powers = vec![BivariatePolynomial::new(vec![vec![Real::one()]])];
-                    for _ in 1..count {
-                        let next = bivariate_multiply(powers.last().expect("nonempty"), base);
-                        powers.push(next);
-                    }
-                    powers
-                };
-                let rows = defining.coefficients.len().max(1);
-                let columns = defining
-                    .coefficients
-                    .iter()
-                    .map(Vec::len)
-                    .max()
-                    .unwrap_or(1)
-                    .max(1);
-                let first_powers = powers(&first, rows);
-                let second_powers = powers(&second, columns);
-                let mut composed = BivariatePolynomial::new(Vec::new());
-                for (i, row) in defining.coefficients.iter().enumerate() {
-                    for (j, coefficient) in row.iter().enumerate() {
-                        composed = bivariate_add(
-                            &composed,
-                            &bivariate_scale(
-                                bivariate_multiply(&first_powers[i], &second_powers[j]),
-                                coefficient,
-                            ),
-                        );
-                    }
+        // The composed-equation fallback is used only for similarity views.
+        let Some([a, b, d, e, x, y]) = branch
+            .affine_view()
+            .filter(|_| branch.similarity_view().is_some())
+        else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        let defining = branch.topology().geometric_equation();
+        // F(T^-1(X, Y)) for the exact affine view T, composed exactly.
+        let equation = {
+            // F(T^-1(X, Y)) with T(p) = M p + t, so T^-1(q) = M^-1 (q - t).
+            let (a, b, d, e, x, y) = (&a, &b, &d, &e, &x, &y);
+            let determinant = a * e - b * d;
+            let inverse = |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
+            let p1 = inverse(e.clone())?;
+            let q1 = inverse(-b.clone())?;
+            let p2 = inverse(-d.clone())?;
+            let q2 = inverse(a.clone())?;
+            let r1 = -(&p1 * x + &q1 * y);
+            let r2 = -(&p2 * x + &q2 * y);
+            let first = BivariatePolynomial::new(vec![vec![r1, q1], vec![p1]]);
+            let second = BivariatePolynomial::new(vec![vec![r2, q2], vec![p2]]);
+            let powers = |base: &BivariatePolynomial, count: usize| {
+                let mut powers = vec![BivariatePolynomial::new(vec![vec![Real::one()]])];
+                for _ in 1..count {
+                    let next = bivariate_multiply(powers.last().expect("nonempty"), base);
+                    powers.push(next);
                 }
-                composed
+                powers
+            };
+            let rows = defining.coefficients.len().max(1);
+            let columns = defining
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(1)
+                .max(1);
+            let first_powers = powers(&first, rows);
+            let second_powers = powers(&second, columns);
+            let mut composed = BivariatePolynomial::new(Vec::new());
+            for (i, row) in defining.coefficients.iter().enumerate() {
+                for (j, coefficient) in row.iter().enumerate() {
+                    composed = bivariate_add(
+                        &composed,
+                        &bivariate_scale(
+                            bivariate_multiply(&first_powers[i], &second_powers[j]),
+                            coefficient,
+                        ),
+                    );
+                }
             }
+            composed
         };
         let point = super::certified_scalar_point(&selected, &equation)?
             .ok_or(GeometryError::UnrepresentableParameter)?;
@@ -539,14 +541,16 @@ impl PlanarCurve3 {
 }
 
 /// Certifies a selected point of a polynomial branch whose maps compose to
-/// an exact similarity view: the unmapped source point is certified in the
+/// an exact nonsingular affine view: the unmapped source point is certified in the
 /// branch's own chart, where its selection was made, carried through the
 /// view, and accepted only when proved equal to the selected image.
 pub(crate) fn certified_branch_point(
     selected: &hypercurve::CurvePoint2,
     branch: &hypercurve::PolynomialCurveBranch2,
 ) -> GeometryResult<Option<CurvePoint2>> {
-    let Some(view) = branch.similarity_view() else {
+    // Every exact nonsingular affine view (similarities included) carries
+    // the certified source point to the image.
+    let Some([a, b, d, e, x, y]) = branch.affine_view() else {
         return Ok(None);
     };
     let mut base = selected.clone();
@@ -562,14 +566,8 @@ pub(crate) fn certified_branch_point(
     else {
         return Ok(None);
     };
-    let image = match &view {
-        None => source_point,
-        Some(transform) => {
-            let (a, b, d, e, x, y) = transform.affine_components();
-            let (px, py) = (source_point.x(), source_point.y());
-            CurvePoint2::new(a * px + b * py + x, d * px + e * py + y)
-        }
-    };
+    let (px, py) = (source_point.x(), source_point.y());
+    let image = CurvePoint2::new(&a * px + &b * py + x, &d * px + &e * py + y);
     let candidate: hypercurve::CurvePoint2 = image.clone().into();
     let equal = [hypercurve::Axis2::X, hypercurve::Axis2::Y]
         .into_iter()

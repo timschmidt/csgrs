@@ -721,27 +721,93 @@ impl ArenaModel {
                     {
                         return Ok(area.abs());
                     }
+                    let contour_area = |segments: Vec<hypercurve::Segment2>| {
+                        hypercurve::Contour2::try_new(segments)
+                            .ok()
+                            .and_then(|contour| contour.signed_area().ok().flatten())
+                            .map(|area| area.abs())
+                    };
                     // Circle-branch boundaries measure through their exact
                     // native arc views; the boundary curves stay authoritative.
                     let mut segments = Vec::with_capacity(path.curves().len());
                     for curve in path.curves() {
-                        segments.push(match curve.geometry() {
+                        match curve.geometry() {
                             Some(hypercurve::CurveGeometry2::Line(line)) => {
-                                hypercurve::Segment2::Line(line.clone())
+                                segments.push(hypercurve::Segment2::Line(line.clone()));
                             }
-                            _ => hypercurve::Segment2::Arc(
-                                crate::geometry::circular_arc_of(curve)?
-                                    .ok_or(GeometryError::UnsupportedMeasurement)?,
-                            ),
+                            _ => match crate::geometry::circular_arc_of(curve)? {
+                                Some(arc) => segments.push(hypercurve::Segment2::Arc(arc)),
+                                None => break,
+                            },
+                        }
+                    }
+                    if segments.len() == path.curves().len()
+                        && let Some(area) = contour_area(segments)
+                    {
+                        return Ok(area);
+                    }
+                    // Otherwise every curved piece may be an affine image of a
+                    // circle arc in one shared source chart: measure there, with
+                    // lines pulled back, and scale by |det| of that view.
+                    let mut view: Option<[Real; 6]> = None;
+                    let mut arcs = Vec::with_capacity(path.curves().len());
+                    for curve in path.curves() {
+                        if matches!(curve.geometry(), Some(hypercurve::CurveGeometry2::Line(_))) {
+                            arcs.push(None);
+                            continue;
+                        }
+                        let (arc, piece_view) = crate::geometry::source_circular_arc(curve)?
+                            .ok_or(GeometryError::UnsupportedMeasurement)?;
+                        match &view {
+                            None => view = Some(piece_view),
+                            Some(view) => {
+                                for (a, b) in view.iter().zip(&piece_view) {
+                                    if decided_model_order(compare_reals(
+                                        a,
+                                        b,
+                                        crate::STRICT_PREDICATES,
+                                    ))? != std::cmp::Ordering::Equal
+                                    {
+                                        return Err(GeometryError::UnsupportedMeasurement.into());
+                                    }
+                                }
+                            }
+                        }
+                        arcs.push(Some(arc));
+                    }
+                    let [a, b, d, e, x, y] = view.ok_or(GeometryError::UnsupportedMeasurement)?;
+                    let determinant = &a * &e - &b * &d;
+                    let inverse =
+                        |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
+                    let (ia, ib, id, ie) = (
+                        inverse(e.clone())?,
+                        inverse(-b.clone())?,
+                        inverse(-d.clone())?,
+                        inverse(a.clone())?,
+                    );
+                    let pull = |point: &hypercurve::Point2| {
+                        let (px, py) = (point.x() - &x, point.y() - &y);
+                        hypercurve::Point2::new(&ia * &px + &ib * &py, &id * &px + &ie * &py)
+                    };
+                    let mut segments = Vec::with_capacity(arcs.len());
+                    for (curve, arc) in path.curves().iter().zip(arcs) {
+                        segments.push(match (arc, curve.geometry()) {
+                            (Some(arc), _) => hypercurve::Segment2::Arc(arc),
+                            (None, Some(hypercurve::CurveGeometry2::Line(line))) => {
+                                hypercurve::Segment2::Line(
+                                    hypercurve::LineSeg2::try_new(
+                                        pull(line.start()),
+                                        pull(line.end()),
+                                    )
+                                    .map_err(|_| GeometryError::UnsupportedMeasurement)?,
+                                )
+                            }
+                            _ => return Err(GeometryError::UnsupportedMeasurement.into()),
                         });
                     }
-                    let contour = hypercurve::Contour2::try_new(segments)
-                        .map_err(|_| GeometryError::UnsupportedMeasurement)?;
-                    Ok(contour
-                        .signed_area()
-                        .map_err(|_| GeometryError::UnsupportedMeasurement)?
-                        .ok_or(GeometryError::UnsupportedMeasurement)?
-                        .abs())
+                    let area =
+                        contour_area(segments).ok_or(GeometryError::UnsupportedMeasurement)?;
+                    Ok(area * determinant.abs())
                 };
                 for cap in &graph.caps {
                     // The cap region's area is its outer area minus its holes.

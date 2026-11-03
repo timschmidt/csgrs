@@ -445,6 +445,108 @@ pub(crate) fn circular_arc_of(curve: &Curve2) -> GeometryResult<Option<hypercurv
     Ok(hypercurve::CircularArc2::try_from_center(start, end, center, clockwise).ok())
 }
 
+/// The source-chart circular arc of a curve that is a polynomial branch of a
+/// circle with certified source endpoints, with the branch's exact affine
+/// view `[a, b, d, e, x, y]` carrying that chart to the curve's own; `None`
+/// otherwise. Used for measurement only.
+pub(crate) fn source_circular_arc(
+    curve: &Curve2,
+) -> GeometryResult<Option<(hypercurve::CircularArc2, [Real; 6])>> {
+    let original = curve
+        .source_restriction()
+        .map_or(curve, |(original, _, _)| original);
+    let Some(branch) = original.polynomial_branch() else {
+        return Ok(None);
+    };
+    let Some(view) = branch.affine_view() else {
+        return Ok(None);
+    };
+    let equation = branch.topology().geometric_equation();
+    let Some((center_x, center_y)) = circle_center(equation)? else {
+        return Ok(None);
+    };
+    let source = |point: hypercurve::CurvePoint2| -> GeometryResult<Option<CurvePoint2>> {
+        let mut base = point;
+        while let Ok(
+            hypercurve::CurvePointDefinition2::RationalImage { source, .. }
+            | hypercurve::CurvePointDefinition2::Similarity { source, .. },
+        ) = base.definition()
+        {
+            base = source;
+        }
+        if let Some(point) = base.coordinates() {
+            return Ok(Some(point.clone()));
+        }
+        super::certified_scalar_point(&base, equation)
+    };
+    let domain = curve.parameter_domain();
+    let (Some(lower), Some(upper)) = (domain.start().scalar(), domain.end().scalar()) else {
+        return Ok(None);
+    };
+    let middle = ((lower + upper) / Real::from(2)).map_err(GeometryError::Numeric)?;
+    let (Some(start), Some(mid), Some(end)) = (
+        source(curve.start())?,
+        source(
+            curve
+                .point_at(&middle.into())
+                .map_err(GeometryError::from)?,
+        )?,
+        source(curve.end())?,
+    ) else {
+        return Ok(None);
+    };
+    let turn =
+        (mid.x() - start.x()) * (end.y() - mid.y()) - (mid.y() - start.y()) * (end.x() - mid.x());
+    let clockwise = match decided_order(compare_reals(
+        &turn,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
+        Ordering::Greater => false,
+        Ordering::Less => true,
+        Ordering::Equal => return Ok(None),
+    };
+    Ok(hypercurve::CircularArc2::try_from_center(
+        start,
+        end,
+        CurvePoint2::new(center_x, center_y),
+        clockwise,
+    )
+    .ok()
+    .map(|arc| (arc, view)))
+}
+
+/// The center of `A(x² + y²) + Dx + Ey + F = 0`, or `None` for other curves.
+fn circle_center(equation: &BivariatePolynomial) -> GeometryResult<Option<(Real, Real)>> {
+    let coefficient = |i: usize, j: usize| {
+        equation
+            .coefficients
+            .get(i)
+            .and_then(|row| row.get(j))
+            .cloned()
+            .unwrap_or_else(Real::zero)
+    };
+    for (i, row) in equation.coefficients.iter().enumerate() {
+        for (j, value) in row.iter().enumerate() {
+            if i + j > 2 && !value.definitely_zero() {
+                return Ok(None);
+            }
+        }
+    }
+    let quadratic = coefficient(2, 0);
+    if quadratic.definitely_zero()
+        || !(&quadratic - &coefficient(0, 2)).definitely_zero()
+        || !coefficient(1, 1).definitely_zero()
+    {
+        return Ok(None);
+    }
+    let two_a = &quadratic * Real::from(2);
+    Ok(Some((
+        (-coefficient(1, 0) / &two_a).map_err(GeometryError::Numeric)?,
+        (-coefficient(0, 1) / &two_a).map_err(GeometryError::Numeric)?,
+    )))
+}
+
 fn line_integral(
     h: &BivariatePolynomial,
     start: &CurvePoint2,

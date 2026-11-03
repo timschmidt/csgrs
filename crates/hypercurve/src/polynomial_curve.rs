@@ -488,10 +488,12 @@ impl PolynomialCurveBranch2 {
         Some(Some(image))
     }
 
-    /// The composed exact affine view `[a, b, d, e, x, y]` of every retained
-    /// map and the final similarity, when each map is certified affine and
-    /// the composition is nonsingular. The maps remain authoritative.
-    pub(crate) fn affine_view(&self) -> Option<[Real; 6]> {
+    /// The composed exact affine view `[a, b, d, e, x, y]`, meaning
+    /// `(a x + b y + x0, d x + e y + y0)` with `x0 = x`, `y0 = y`, of every
+    /// retained map and the final similarity, when each map is certified
+    /// affine with rational coefficients and the composition is nonsingular.
+    /// The maps remain authoritative; this view only serves exact queries.
+    pub fn affine_view(&self) -> Option<[Real; 6]> {
         let then = |first: [Real; 6], [a2, b2, d2, e2, x2, y2]: [Real; 6]| {
             let [a1, b1, d1, e1, x1, y1] = first;
             [
@@ -1057,7 +1059,11 @@ impl PolynomialCurveBranch2 {
         // affine view, while the final incidence check below still replays the
         // authoritative maps through `map_point`.
         let Some(view) = self.similarity_view() else {
-            return Err(blocked(UncertaintyReason::Unsupported));
+            // Other exact nonsingular affine views invert the same way.
+            let Some(([a, b, d, e, x, y], _)) = self.inverse_affine_view() else {
+                return Err(blocked(UncertaintyReason::Unsupported));
+            };
+            return self.located_parameter(point, [a, b, x], [d, e, y], policy);
         };
         let (form, ordinate_form) = match &view {
             Some(image) => {
@@ -1073,6 +1079,18 @@ impl PolynomialCurveBranch2 {
                 [Real::zero(), Real::one(), Real::zero()],
             ),
         };
+        self.located_parameter(point, form, ordinate_form, policy)
+    }
+
+    /// The parameter of `point` through the source-chart inverse forms
+    /// `form` (abscissa) and `ordinate_form`, proved against the branch.
+    fn located_parameter(
+        &self,
+        point: &CurvePoint2,
+        form: [Real; 3],
+        ordinate_form: [Real; 3],
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveParameter2>> {
         let mut parameter = decided(
             crate::bezier_offset::point_affine_form_parameter(point, &form, policy)
                 .map_err(invalid)?,

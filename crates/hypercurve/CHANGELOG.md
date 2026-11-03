@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- `PolynomialCurveBranch2::affine_view` is public. Two polynomial branches
+  with equal exact affine views intersect in their shared source chart
+  (pulling points back through the inverse affine map and flipping tangent
+  signs for reflections), point location inverts exact affine views, and
+  injective-image certification accepts injective affine views.
+
 - Polynomial branches whose retained rational maps are all certified exact
   nonsingular affine maps (not only similarities) are no longer collapsed in
   subdivision, intersect native lines through the inverse affine view (with

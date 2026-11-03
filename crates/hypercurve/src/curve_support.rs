@@ -533,7 +533,7 @@ impl CurveSupport2 {
             // admitted similarities, including retained rational maps certified
             // as exact similarities, are invertible; a general image map needs
             // its own injectivity proof before suppressing self events.
-            return branch.similarity_view().is_some()
+            return (branch.similarity_view().is_some() || branch.has_injective_affine_view())
                 && matches!(
                     CurveParameterDomain2::new(branch.parameter_range(), None)
                         .contains_finite_range(range, &policy.strict_counterpart()),

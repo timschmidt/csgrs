@@ -1089,3 +1089,64 @@ fn shared_wall_blocks_cut_closed_sections_into_holed_caps() {
         }
     }
 }
+
+/// The bump stretched by 2 along x has top z = x²/4 + y²; the slab z <= 5/4
+/// cuts it in elliptical corner arcs whose plane pcurves carry exact
+/// non-similarity affine maps. Each elliptical cap is an affine image of a
+/// circular region in the section's source chart, so the volume is exactly
+/// twice the unstretched closed form, and stretched probes classify alike.
+#[test]
+fn stretched_slab_cuts_measure_elliptical_caps_exactly() {
+    let stretch = Matrix4::from_row_major([
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let wide = bump().transformed(&stretch).unwrap();
+    let body = BodySet::from_solid(wide.solids().next().unwrap());
+    let slab = builder::cuboid(pi(-3, -3, -2), Point3::new(3.into(), 3.into(), q(5, 4))).unwrap();
+    let result = boolean::intersection(&body, &slab).unwrap();
+    assert_eq!((result.len(), result.model().faces().count()), (1, 10));
+    let solid = result.bodies().next().unwrap();
+    assert_within(
+        &solid.volume().unwrap(),
+        &(Real::from(2) * slab_cut_volume()),
+    );
+    let p = |x: Real, y: Real, z: Real| Point3::new(x * Real::from(2), y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    for (point, expected) in [
+        (p(0.into(), 0.into(), n(-1, 2)), SolidPointLocation::Inside),
+        (
+            p(0.into(), 0.into(), 0.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (p(0.into(), 0.into(), n(1, 2)), SolidPointLocation::Outside),
+        (p(n(9, 10), n(9, 10), n(6, 5)), SolidPointLocation::Inside),
+        (p(n(9, 10), n(9, 10), n(5, 4)), SolidPointLocation::Boundary),
+        (
+            p(n(9, 10), n(9, 10), n(13, 10)),
+            SolidPointLocation::Outside,
+        ),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    let json = result.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+}
