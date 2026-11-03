@@ -197,6 +197,16 @@ This is an experiment, not a migration. Record the result either way in
 migration plan follows under P05's gates. If it does not, record it as rejected
 with its evidence.
 
+**Outcome (2026-11-03): rejected.** The two routes share only finite chords on
+rational lines (and circles with rational centers). Rational, parallel and
+selected-endpoint partners need implicitization or a field join. On 18
+line cases (three cusp fixtures, three lines, both policies) the contacts and
+certainty are identical. The general route costs 31–61× more time on
+rational-frame centers, and about 10⁴× on the ellipse-offset parallel-normal
+center (≈1 min against 5–11 ms). It must also borrow the kernel's half-circle
+selection. Evidence is in
+[`crates/hypercurve/PERFORMANCE.md`](../../crates/hypercurve/PERFORMANCE.md#k06-selected-polynomial-field-route-versus-cusp-semicircle-kernels-2026-11-03).
+
 ### K07 — Dependency and build-time trimming
 
 - **hyperdrc → csgrs.** hyperdrc uses csgrs for Gerber import and a thin wrapper
@@ -360,6 +370,7 @@ they consume the stack's contracts.
 | U01 (one name per operation) | accepted in part | The 11 duplicate `try_x`/`x` pairs, where `x` only called `try_x` (12 functions across `solid` and `curve`), are removed in favor of the plain names. The `try_` prefix is also dropped from their policy-taking variants: 192 references were rewritten, including Hypercircuit's. These names were never published (crates.io has 0.20.1), so they were removed instead of deprecated, and `docs/MIGRATIONS.md` lists the renames. The `_with_context` and `_with_diagnostics` variants remain. Replacing them changes return types, so it waits for a planned breaking release; `Csg` already covers the policy case. |
 | U05 (methods or free functions) | accepted | `SolidExt` gains `rotated`, `scaled`, `mirrored` and `centered`, so every transform is a method alongside `translated` and `transformed`. Each one is the corresponding free function, and a test compares them. Constructors stay functions. |
 | U06 (lazy CSG tree) | accepted | `SolidExpr` records unions, intersections, differences and symmetric differences (also as `|`, `&`, `-`, `^`) plus lazy transforms. It evaluates the whole model as one `hypermesh::boolean` truth program. Transforms are pushed to the leaves and applied with the eager functions, empty leaves are the constant false node, and shared subtrees are lowered once. Tests show equal sets to step-by-step evaluation (empty exact symmetric difference, equal exact volume, and the independent closed-form volume 1544), every operator matching its eager operation, pushed-down rotate/scale/translate, empty-leaf identities, and certainty recorded through `Csg::evaluate`. With `dispatch-trace`, a five-box union builds 1 arrangement instead of 4. Release timing for a 24-cube drilled by eight holes: 11.9 ms median for one expression against 14.6 ms step by step, with the same exact set (host load about 7). |
+| K06 (selected polynomial field route) | rejected | Head-to-head on the cusp fixtures (`crates/hypercurve/PERFORMANCE.md`, K06 section). The routes share only chords on rational lines and circles with rational centers. Rational, parallel and selected-endpoint partners would need implicitization or a field join. On the 18 shared cases (3 fixtures × 3 lines × both policies), contacts, counts and certainty are identical. The general route costs 31-61× more time on rational-frame centers and about 10⁴× on the ellipse-offset center (about 1 min against 5-11 ms; 2,268 retained sign queries against 1), and it must borrow the kernel's half-circle selection. The per-case kernels stay; K04's deferred items keep their shape. |
 | D03 (openscad-rs ratchet) | accepted (local commit `2b7700a` in openscad-rs) | The compat job never ran: `/vendor/` was gitignored, so the declared submodule had no gitlink, and the test skipped and passed. The OpenSCAD corpus is now pinned at `8e8df3dd`, and CI requires it. The >50% floor is replaced by an exact list of the 513 of 524 files that parse; the test fails on a regression or on an unrecorded new pass. All four failure modes were exercised. The 11 failures are classified: five deliberately invalid upstream, six real gaps. openscad-rs's own CI has been red since 2026-10-05 because its manifest requires an unresolvable `../hyperreal` 0.13.1. That is a maintainer decision, recorded in its AGENTS.md. |
 
 ## Suggested order

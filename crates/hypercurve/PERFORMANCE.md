@@ -10,6 +10,196 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## K06: selected polynomial field route versus cusp semicircle kernels (2026-11-03)
+
+**Verdict: rejected.** On the only partner family the two routes share,
+finite rational lines, both routes give identical certified contacts in all
+18 cases. The general route is 31–61 times slower on the two rational-frame
+fixtures, and 19–33 times slower without the half-selection filter. On the
+ellipse-offset fixture it is about 10,000 times slower: it
+takes about a minute where the kernel takes 5–11 ms, and it requests about
+300 GB of allocation traffic. It also covers far fewer partner kinds. Do not
+scope a K04/P05 consolidation that routes cusp-semicircle contacts through
+`selected_circle_sections`.
+
+### Coverage limit
+
+`PolynomialCurveBranch2::selected_circle_sections`
+(`src/polynomial_curve_selected_circle.rs:132-137`) intersects a circle with
+an exact center only against an implicit polynomial branch:
+- It substitutes the two rational circle charts (`:162`) into
+  `self.topology().geometric_equation()` (`:164`).
+- That equation's coefficients are scaled as `Real` constants (`:63-70`).
+  `BivariatePolynomial` holds `Vec<Vec<Real>>` (`hypersolve/src/curve_resultant.rs:66-69`).
+- Branches pulled back through rational maps are `Unsupported` (`:138-140`).
+
+The kernels cover four partner kinds:
+
+| Kernel partner | Entry | General route |
+| --- | --- | --- |
+| Finite chord | `cusp_semicircle/chord_kernel.rs:7454` | **Overlap only for chords on a rational line.** A chord whose endpoints are selected algebraic points has no `Real`-coefficient equation unless its endpoints are materialized. Importing its coefficients would join the center field with the endpoint fields in `selected_root_candidates` (`src/polynomial_point/selected_root.rs:22-28`). That join is the one this route is meant to avoid. |
+| Rational Bézier span | `cusp_semicircle/rational_kernel.rs:15` | Only through implicitization, which AGENTS.md rules out as a default. The only in-tree implicit form is the conic (`src/rational_bezier_general.rs:4863-4872`, degree 2 only). Even a conic would be re-decomposed as a polynomial branch, so contacts would carry branch parameters rather than the span's Bézier parameters. |
+| Parallel (offset) curve | `cusp_semicircle/parallel_kernel.rs:3144` | None. General offsets are nonrational, and no implicit equation is retained. |
+| Other selected circle | `cusp_semicircle/pair_kernel.rs:2846` | Only when the other center is rational. Two algebraic centers would require the field join this route is meant to avoid. |
+
+Even inside the overlap, the general route returns less. It intersects the
+whole circle and returns `(branch parameter, point)` pairs. The kernel
+returns `BezierAlgebraicCuspSemicircleRetainedChordContact2`
+(`src/bezier_offset.rs:3336-3341`), which also carries:
+- the half-circle selection;
+- the semicircle parameter;
+- the chord parameter;
+- the tangent-cross sign.
+
+For the benchmark, the general route's points are filtered with the kernel's
+own `BezierAlgebraicCuspSemicircleFragment2::contains_point`. That filter is
+timed separately as "half-selection". The general route has no
+half-selection predicate of its own.
+
+### Fixtures
+
+All fixtures are in `src/bezier_offset/k06_selected_field_bench.rs`.
+
+| Fixture | Construction | Frame | Center | Radius |
+| --- | --- | --- | --- | --- |
+| `sqrt-center` | Same as `algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly` | Rational frame, cardinal normal | (√½, 0) | 2 |
+| `cubic-cusp` | Same as `general_algebraic_cusp_semicircle` | Rational frame | Cusp of the distance-½ parallel of cubic (0,0),(0,4),(4,−4),(4,0), ≈ (3.54969, −0.65526) | ¼ |
+| `ellipse-cusp` | `from_selected_parallel_normal`, the production parallel-normal frame | Parallel-normal frame | Cusp of the inward distance-1 offset of the ellipse quarter x²/4+y²=1, where the curvature radius is 1, ≈ (1.08178, −0.25992) | ¼ |
+
+The ellipse quarter is a rational quadratic with weights 1, 1, 2.
+
+Each fixture is cut by three lines of slope ⅓:
+- one passing within 10⁻³ of the center;
+- two shifted vertically by about 0.6 r.
+
+Each line is both an exact `BezierAlgebraicChord2` and a one-branch
+`PolynomialCurveSet2` with identical endpoints. Both checks are asserted.
+
+### Agreement
+
+Agreement was checked for all 18 cases: 3 fixtures × 3 lines × `STRICT` and
+`APPROXIMATE_512`. Each case runs with a 120 s cooperative-cancellation
+deadline. In every case:
+- both routes are certified;
+- the counts are equal (0, 1 or 2 selected contacts out of 2 full-circle sections);
+- every contact matches exactly one contact of the other route under both
+  `coincides_with` and `same_point`.
+
+No disagreement was found.
+
+### Measurements
+
+**Measurement conditions.**
+- Release build on a host shared with a long validation campaign.
+- One fresh fixture per repetition; construction is outside the timer.
+- Median [min..max] in ms, n = 9. The ellipse general route has n = 3 and no
+  warm run.
+- Allocation calls/bytes are per-thread medians of requested sizes from the
+  counting allocator in the bench module. They count allocation traffic, not
+  peak memory.
+- The general times include `center_point_evidence` and half-selection.
+
+**Results.**
+
+| Case | Policy | Contacts | Kernel ms | Kernel allocs / MB | General ms (half-selection) | General allocs / MB | Ratio |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| sqrt/center | STRICT | 1 | 0.456 [0.387..0.719] | 10,389 / 0.49 | 18.0 [17.3..20.0] (5.0) | 311,656 / 16.3 | 39× |
+| sqrt/above | STRICT | 2 | 0.428 [0.413..0.489] | 10,704 / 0.51 | 14.3 [13.0..16.2] (4.1) | 269,034 / 13.7 | 33× |
+| sqrt/below | STRICT | 0 | 0.383 [0.370..0.650] | 9,941 / 0.46 | 13.4 [13.1..17.2] (3.8) | 270,390 / 13.8 | 35× |
+| cubic/center | STRICT | 1 | 3.00 [2.98..3.03] | 52,434 / 3.9 | 182 [175..191] (88) | 3.66 M / 170 | 61× |
+| cubic/above | STRICT | 1 | 3.03 [2.99..3.95] | 52,436 / 3.9 | 185 [179..264] (91) | 3.61 M / 170 | 61× |
+| cubic/below | STRICT | 1 | 4.82 [4.67..4.88] | 52,428 / 3.9 | 180 [176..288] (90) | 3.64 M / 172 | 37× |
+| ellipse/center | STRICT | 1 | 10.9 [9.6..11.9] | 92,930 / 8.6 | 64,861 [64,467..98,535] (51,274) | 584 M / 298,043 | 5,926× |
+| ellipse/above | STRICT | 0 | 5.36 [5.14..7.30] | 86,661 / 8.1 | 75,740 [61,061..91,154] (63,178) | 715 M / 309,941 | 14,123× |
+| ellipse/below | STRICT | 2 | 6.09 [5.49..7.32] | 91,441 / 8.3 | 62,103 [59,623..65,653] (47,080) | 736 M / 301,195 | 10,204× |
+| sqrt/center | APPROX_512 | 1 | 0.402 [0.385..0.439] | 10,392 / 0.49 | 18.2 [17.2..18.8] (4.9) | 311,662 / 16.3 | 45× |
+| sqrt/above | APPROX_512 | 2 | 0.412 [0.405..0.455] | 10,704 / 0.51 | 12.9 [12.7..13.6] (3.7) | 269,034 / 13.7 | 31× |
+| sqrt/below | APPROX_512 | 0 | 0.392 [0.364..0.531] | 9,941 / 0.46 | 13.6 [12.8..15.1] (3.8) | 270,390 / 13.8 | 35× |
+| cubic/center | APPROX_512 | 1 | 3.10 [3.01..3.25] | 52,434 / 3.9 | 174 [170..179] (84) | 3.66 M / 170 | 56× |
+| cubic/above | APPROX_512 | 1 | 2.92 [2.88..3.17] | 52,436 / 3.9 | 172 [167..184] (84) | 3.61 M / 170 | 59× |
+| cubic/below | APPROX_512 | 1 | 2.96 [2.91..3.02] | 52,428 / 3.9 | 174 [168..183] (87) | 3.64 M / 172 | 59× |
+| ellipse/center | APPROX_512 | 1 | 5.53 [5.45..5.67] | 92,930 / 8.6 | 56,806 [55,973..68,476] (45,248) | 584 M / 298,043 | 10,272× |
+| ellipse/above | APPROX_512 | 0 | 5.82 [5.29..7.59] | 86,661 / 8.1 | 62,915 [60,785..67,643] (49,459) | 715 M / 309,942 | 10,812× |
+| ellipse/below | APPROX_512 | 2 | 5.54 [5.37..7.84] | 91,441 / 8.3 | 57,540 [56,097..60,439] (45,067) | 736 M / 301,195 | 10,391× |
+
+**The cost gap does not come from the half-selection filter.** Leaving out
+the filter, the general solve alone is still:
+- 22–33× slower for `sqrt-center`;
+- 19–31× slower for `cubic-cusp`;
+- 1,241–2,468× slower for `ellipse-cusp` (11.6–15.0 s).
+
+**Warm repeats on the same objects do not close the gap.** They are within
+noise of the cold runs for both routes (for example, sqrt/center general
+17.6 ms warm). The general route retains no reusable proof between calls.
+
+### Field joins
+
+The general route never joins the center field with a foreign algebraic field
+for a rational line. Every substituted coefficient is a query on the one
+center. It does, however, import each coefficient separately and join each
+import with the first (`selected_root.rs:22-28`).
+
+`k06_center_field_imports` imports both coordinates of one retained center
+and joins them:
+
+| Fixture | Imports share authority | Join cost |
+| --- | --- | --- |
+| `ellipse-cusp` | Yes | Trivial: 0 allocations |
+| `cubic-cusp` | No | Native join into the first import: 1.27 ms, 17,871 allocations |
+| `sqrt-center` | No | New joined field: 54 µs, 773 allocations |
+
+For the same reason, the general contacts' fields are traced to the center
+field only for `ellipse-cusp`: exactly one adjoined generator (`Some(1)`).
+For the other two fixtures the trace reports `None`. That is a re-imported
+copy of the same field, not a different algebraic field.
+
+`selected_field` and `join.rs` have no `dispatch-trace` points. Joins were
+therefore counted structurally, not with trace counts. The trace paths
+recorded per route are listed below.
+
+`STRICT` traces, center line. The other two lines take the same paths, with
+equal general-route counts. All 36 `APPROXIMATE_512` traces (18 cases × 2
+routes) are identical to their `STRICT` counterparts. The trace build also
+reproduced agreement in all 18 cases.
+
+| Fixture | Kernel paths | General paths |
+| --- | --- | --- |
+| `sqrt-center` | `algebraic-circle-chord-kernel/recursive-projective-retained-chord`=1, `certified-unit-bounds`=1 | `point-polynomial-sign/dispatch`=33, `retained-interval-sign`=18, `recursive-quadratic-sign` compact witnesses=6, `cardinal-coordinate-precedence`=2 |
+| `cubic-cusp` | `recursive-projective-retained-chord`=1, `retained-interval-sign`=4, `represented-root-refinement/advance`=1 | `retained-interval-sign`=55, `point-polynomial-sign/dispatch`=37, `represented-root-refinement/advance`=76 |
+| `ellipse-cusp` | `recursive-projective-retained-chord`=1, `retained-singleton-query`=1, `dense-polynomial-tuple-sign/retained-univariate-parameter`=3, `analytic-parallel`=2 | `retained-singleton-query`=2,268, `dense-polynomial-tuple-sign/retained-univariate-parameter`=2,268, `point-polynomial-sign/dispatch`=37, `analytic-parallel`=7 |
+
+On all three fixtures the kernel takes the single
+`recursive-projective-retained-chord` path. On the ellipse center the general
+route repeats the selected-parameter sign query about 750 times as often as
+the kernel. A stack sample during the solve shows where:
+`PolynomialCurveBranch2::point_parameter` → `query_fiber_rank` →
+nested `SelectedPolynomialValue::sign_strict` →
+`dense_two_positive_square_root_sum_sign` → big-rational interval products.
+
+### Commands
+
+```text
+CARGO_TARGET_DIR=/home/tim/Documents/GitHub/workspace/csgrs/target/k06-bench \
+  cargo +1.99.1 test --locked --release -j 8 -p hypercurve --lib k06_ -- --ignored --nocapture
+CARGO_TARGET_DIR=/home/tim/Documents/GitHub/workspace/csgrs/target/k06-bench \
+  cargo +1.99.1 test --locked --release -j 8 -p hypercurve --features dispatch-trace \
+  --lib k06_selected -- --ignored --nocapture
+```
+
+The timing run took 3,420 s; the ellipse general route accounts for nearly
+all of it. Base revision `82d7466f13`, toolchain 1.99.1.
+
+### What would change the verdict
+
+The selection and solve costs on the parallel-normal center dominate. A
+general-route candidate would need all of the following:
+- its own half-circle selection;
+- semicircle and chord parameter publication;
+- a cheaper sign path for the ellipse center's field (the stack sample shows
+  `point_parameter` → `query_fiber_rank` → nested `RecursiveQuadraticValue::sign`).
+
+Even then, it would cover only rational-line chords and rational-center circles.
+
 ## Equivalent-field root comparisons (R15, 2026-10-25)
 
 The candidate extends exact completion: formula roots can sign a polynomial

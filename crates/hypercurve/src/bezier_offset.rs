@@ -15714,6 +15714,9 @@ mod conversion_tests;
 #[cfg(test)]
 mod regression_tests;
 
+#[cfg(test)]
+mod k06_selected_field_bench;
+
 /// Signs a two-term sum from the signs of its terms.
 ///
 /// The sum is decided directly when either sign is zero or both agree.
