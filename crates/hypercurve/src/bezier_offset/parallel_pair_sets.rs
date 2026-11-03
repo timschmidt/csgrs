@@ -178,10 +178,10 @@ pub(crate) fn rational_pair_intersections_on_ranges(
         };
         let other_axis = 1 - axis;
         let other = [first, second][other_axis];
-        let incidence = match other.point_incidence_on_range(&point, ranges[other_axis], &strict)? {
-            Classification::Decided(incidence) => incidence,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let incidence = decided!(
+            other.point_incidence_on_range(&point, ranges[other_axis], &strict)?,
+            Ok
+        );
         let point = CurvePoint2::from(point);
         let components = match incidence {
             crate::RationalBezierPointIncidence2::EntireCurve => {
@@ -995,10 +995,10 @@ pub(super) fn certified_parallel_source_overlap(
 ) -> CurveResult<Classification<CertifiedParallelSourceOverlap2>> {
     let first_source = first.source().to_rational_bezier()?;
     let second_source = second.source().to_rational_bezier()?;
-    let contacts = match first_source.intersection_contacts_classified(&second_source, policy)? {
-        Classification::Decided(contacts) => contacts,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let contacts = decided!(
+        first_source.intersection_contacts_classified(&second_source, policy)?,
+        Ok
+    );
     let isolated = contacts
         .isolated_contacts()
         .iter()

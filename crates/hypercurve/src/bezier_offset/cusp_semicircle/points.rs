@@ -28,13 +28,10 @@ impl BezierAlgebraicCuspChordPoint2 {
     ) -> CurveResult<Classification<bool>> {
         let (map, _) = self.map_contact();
         map.validate_policy(policy)?;
-        let support = match BezierAlgebraicChordSupportPredicate2::try_new(&map.data.chord, policy)?
-        {
-            Classification::Decided(support) => support,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let support = decided!(
+            BezierAlgebraicChordSupportPredicate2::try_new(&map.data.chord, policy)?,
+            Ok
+        );
         Ok(support
             .oriented_side(point, policy)?
             .map(|side| side != crate::classify::LineSide::On))

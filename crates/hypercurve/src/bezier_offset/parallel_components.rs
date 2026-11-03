@@ -26,15 +26,15 @@ pub(super) fn parallel_intersection_candidate_system(
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let candidates = match project_parallel_intersection_system(
-            &reduced[0],
-            &reduced[1],
-            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates = decided!(
+            project_parallel_intersection_system(
+                &reduced[0],
+                &reduced[1],
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+                policy,
+            )?,
+            Ok
+        );
         return Ok(Classification::Decided(parallel_candidate_system(
             candidates, reduced,
         )));
@@ -84,10 +84,10 @@ pub(super) fn project_parallel_intersection_system(
         CurveResultantParameter::First,
         config,
     );
-    let parallel = match resultant_parameter_projection(parallel_report, domains[0], policy)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let parallel = decided!(
+        resultant_parameter_projection(parallel_report, domains[0], policy)?,
+        Ok
+    );
     match parallel {
         ResultantParameterProjection::Empty => {
             // One empty projection proves the complete pair domain empty.
@@ -110,10 +110,10 @@ pub(super) fn project_parallel_intersection_system(
         CurveResultantParameter::Second,
         config,
     );
-    let other = match resultant_parameter_projection(other_report, domains[1], policy)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let other = decided!(
+        resultant_parameter_projection(other_report, domains[1], policy)?,
+        Ok
+    );
     Ok(Classification::Decided(match (parallel, other) {
         (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
             CurveIntersectionCandidates2::NoIntersection
@@ -548,10 +548,10 @@ impl BezierParameterComponentOverlap2 {
             }
         }
         let map = &charts.to_local[axis];
-        let parameter = match parameter.affine_image_unbounded(&map.scale, &map.offset, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let parameter = decided!(
+            parameter.affine_image_unbounded(&map.scale, &map.offset, policy)?,
+            Ok
+        );
         let parameter =
             match self.map_local_curve_parameter(retained_parameter, &parameter, policy)? {
                 Classification::Decided(Some(parameter)) => parameter,
@@ -682,12 +682,10 @@ impl BezierParameterComponentOverlap2 {
                 }
             }
         }
-        let rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
-            Classification::Decided(rank) => rank,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let rank = decided!(
+            self.resolved_fiber_root_rank(retained_parameter, policy)?,
+            Ok
+        );
         let Some(mapped) = support_roots.into_iter().nth(rank) else {
             return Ok(Classification::Decided(None));
         };
@@ -784,23 +782,19 @@ impl BezierParameterComponentOverlap2 {
         let Some(scalar) = parameter.projective_scalar() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates = match recursive_projective_polynomial_parameters(
-            &scalar.numerator.field(),
-            equation,
-            SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
-            Classification::Decided(rank) => rank,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            recursive_projective_polynomial_parameters(
+                &scalar.numerator.field(),
+                equation,
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
+                policy,
+            )?,
+            Ok
+        );
+        let rank = decided!(
+            self.resolved_fiber_root_rank(retained_parameter, policy)?,
+            Ok
+        );
         let Some(mapped) = candidates.into_iter().nth(rank) else {
             return Ok(Classification::Decided(None));
         };
@@ -936,12 +930,10 @@ impl BezierParameterComponentOverlap2 {
                     candidates.pop().map(|(_, root)| root),
                 ));
             }
-            let desired_rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
-                Classification::Decided(rank) => rank,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let desired_rank = decided!(
+                self.resolved_fiber_root_rank(retained_parameter, policy)?,
+                Ok
+            );
             return Ok(Classification::Decided(
                 candidates
                     .into_iter()
@@ -961,17 +953,15 @@ impl BezierParameterComponentOverlap2 {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         };
-        let pairs = match bivariate_system_unit_square_solution_pairs(
-            &self.support,
-            &axis_equation,
-            policy,
-            config,
-        )? {
-            Classification::Decided(pairs) => pairs,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let pairs = decided!(
+            bivariate_system_unit_square_solution_pairs(
+                &self.support,
+                &axis_equation,
+                policy,
+                config,
+            )?,
+            Ok
+        );
         let mut candidate_pairs = Vec::new();
         for pair in pairs {
             let (candidate_retained, candidate_lifted) = match retained_parameter {
@@ -1000,17 +990,15 @@ impl BezierParameterComponentOverlap2 {
                 }
             }
             if rank != UNKNOWN_PARAMETER_COMPONENT_FIBER_ROOT_RANK {
-                let candidate_rank = match parameter_component_fiber_root_rank(
-                    &self.support,
-                    &pair,
-                    retained_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(candidate_rank) => candidate_rank,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidate_rank = decided!(
+                    parameter_component_fiber_root_rank(
+                        &self.support,
+                        &pair,
+                        retained_parameter,
+                        policy,
+                    )?,
+                    Ok
+                );
                 if candidate_rank != rank {
                     continue;
                 }
@@ -1024,25 +1012,21 @@ impl BezierParameterComponentOverlap2 {
             ));
         }
         if rank == UNKNOWN_PARAMETER_COMPONENT_FIBER_ROOT_RANK {
-            let desired_rank = match self.resolved_fiber_root_rank(retained_parameter, policy)? {
-                Classification::Decided(rank) => rank,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let desired_rank = decided!(
+                self.resolved_fiber_root_rank(retained_parameter, policy)?,
+                Ok
+            );
             let mut mapped = None;
             for (pair, parameter) in candidate_pairs {
-                let candidate_rank = match parameter_component_fiber_root_rank(
-                    &self.support,
-                    &pair,
-                    retained_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(rank) => rank,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidate_rank = decided!(
+                    parameter_component_fiber_root_rank(
+                        &self.support,
+                        &pair,
+                        retained_parameter,
+                        policy,
+                    )?,
+                    Ok
+                );
                 if candidate_rank == desired_rank && mapped.replace(parameter).is_some() {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
@@ -1147,15 +1131,15 @@ pub(super) fn parallel_candidate_system_from_parameter_components(
             return Ok(Classification::Decided(candidate_system));
         }
     }
-    let candidates = match project_parallel_intersection_system(
-        &component.residual_equations[0],
-        &component.residual_equations[1],
-        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-        policy,
-    )? {
-        Classification::Decided(candidates) => candidates,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let candidates = decided!(
+        project_parallel_intersection_system(
+            &component.residual_equations[0],
+            &component.residual_equations[1],
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+            policy,
+        )?,
+        Ok
+    );
     match parallel_intersection_candidate_system(component.residual_equations, candidates, policy)?
     {
         Classification::Decided(mut candidate_system) => {
@@ -2064,14 +2048,10 @@ pub(super) fn certify_regular_implicit_parameter_component_fallback(
     }
     let mut fallback = initial;
     let mut multiplicity_reduced = None;
-    let reduced = match reduce_implicit_parameter_component_multiplicity(
-        component,
-        retained_parameter,
-        config,
-    ) {
-        Classification::Decided(reduced) => reduced,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let reduced = decided!(
+        reduce_implicit_parameter_component_multiplicity(component, retained_parameter, config,),
+        Ok
+    );
     if let Some(reduced) = reduced
         && reduced != *component
     {
@@ -2375,15 +2355,15 @@ pub(super) fn certify_regular_implicit_parameter_graph_with_selector(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    let turning_points = match bivariate_system_unit_square_solution_pairs(
-        component,
-        &retained_derivative,
-        policy,
-        config,
-    )? {
-        Classification::Decided(points) => points,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let turning_points = decided!(
+        bivariate_system_unit_square_solution_pairs(
+            component,
+            &retained_derivative,
+            policy,
+            config,
+        )?,
+        Ok
+    );
 
     for boundary_value in [Real::zero(), Real::one()] {
         let roots = match polynomial_unit_interval_roots(
@@ -2475,15 +2455,12 @@ pub(super) fn certify_regular_implicit_parameter_graph_with_selector(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let retained_sample = match start
-                .retained_parameter
-                .strict_scalar_between_ordered(&end.retained_parameter, policy)?
-            {
-                Classification::Decided(sample) => sample,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let retained_sample = decided!(
+                start
+                    .retained_parameter
+                    .strict_scalar_between_ordered(&end.retained_parameter, policy)?,
+                Ok
+            );
             let sample_roots = match polynomial_unit_interval_roots(
                 &bivariate_specialize_first(component, &retained_sample),
                 policy,
@@ -2495,17 +2472,15 @@ pub(super) fn certify_regular_implicit_parameter_graph_with_selector(
                 }
             };
             let lifted_sample = sample_roots[branch_rank].clone();
-            let selected_branch = match selector.selected_at(
-                retained_parameter,
-                &BezierParameter2::Exact(retained_sample.clone()),
-                &lifted_sample,
-                policy,
-            )? {
-                Classification::Decided(selected) => selected,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let selected_branch = decided!(
+                selector.selected_at(
+                    retained_parameter,
+                    &BezierParameter2::Exact(retained_sample.clone()),
+                    &lifted_sample,
+                    policy,
+                )?,
+                Ok
+            );
             if selected_branch {
                 overlap_drafts.push(ParameterComponentOverlapDraft2 {
                     overlap: parameter_component_overlap_from_domain(
@@ -2581,15 +2556,10 @@ pub(super) fn certify_regular_implicit_parameter_cells_with_selector(
         bivariate_parameter_derivative(component, CurveResultantParameter::First);
     let lifted_derivative =
         bivariate_parameter_derivative(component, CurveResultantParameter::Second);
-    let folds = match bivariate_system_unit_square_solution_pairs(
-        component,
-        &lifted_derivative,
-        policy,
-        config,
-    )? {
-        Classification::Decided(points) => points,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let folds = decided!(
+        bivariate_system_unit_square_solution_pairs(component, &lifted_derivative, policy, config,)?,
+        Ok
+    );
     let mut critical_points = Vec::with_capacity(folds.len());
     for point in folds {
         let singular = match signed_bivariate_at_parameter_pair(
@@ -2606,15 +2576,15 @@ pub(super) fn certify_regular_implicit_parameter_cells_with_selector(
         };
         critical_points.push((point, singular));
     }
-    let turns = match bivariate_system_unit_square_solution_pairs(
-        component,
-        &retained_derivative,
-        policy,
-        config,
-    )? {
-        Classification::Decided(points) => points,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let turns = decided!(
+        bivariate_system_unit_square_solution_pairs(
+            component,
+            &retained_derivative,
+            policy,
+            config,
+        )?,
+        Ok
+    );
     critical_points.reserve(turns.len());
     for point in turns {
         let singular = match signed_bivariate_at_parameter_pair(
@@ -2640,14 +2610,10 @@ pub(super) fn certify_regular_implicit_parameter_cells_with_selector(
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let points =
-            match bivariate_system_unit_square_solution_pairs(component, boundary, policy, config)?
-            {
-                Classification::Decided(points) => points,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let points = decided!(
+            bivariate_system_unit_square_solution_pairs(component, boundary, policy, config)?,
+            Ok
+        );
         for point in points {
             if !selection_events.contains(&point) {
                 selection_events.push(point);
@@ -2813,17 +2779,15 @@ pub(super) fn certify_regular_implicit_parameter_cells_with_selector(
         }
 
         for (event_index, event) in fibers[fiber_index].events.iter().enumerate() {
-            let event_selected = match selector.selected_at(
-                retained_parameter,
-                &event.point.retained_parameter,
-                &event.point.lifted_parameter,
-                policy,
-            )? {
-                Classification::Decided(selected) => selected,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let event_selected = decided!(
+                selector.selected_at(
+                    retained_parameter,
+                    &event.point.retained_parameter,
+                    &event.point.lifted_parameter,
+                    policy,
+                )?,
+                Ok
+            );
             if event.selection_boundary {
                 push_unique_parameter_component_pair(
                     if event_selected {
@@ -2990,14 +2954,14 @@ pub(super) fn insert_implicit_parameter_component_event(
     mut event: ImplicitParameterComponentEvent,
     policy: &CurveContext,
 ) -> CurveResult<Classification<()>> {
-    let fiber_index = match ensure_implicit_parameter_component_fiber(
-        fibers,
-        event.point.retained_parameter.clone(),
-        policy,
-    )? {
-        Classification::Decided(index) => index,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let fiber_index = decided!(
+        ensure_implicit_parameter_component_fiber(
+            fibers,
+            event.point.retained_parameter.clone(),
+            policy,
+        )?,
+        Ok
+    );
     event.point.retained_parameter = fibers[fiber_index].retained_parameter.clone();
     let events = &mut fibers[fiber_index].events;
     for index in 0..events.len() {
@@ -3181,18 +3145,8 @@ pub(super) fn implicit_parameter_fiber_root_count(
         let upper = BezierParameter2::Exact(lifted_upper.clone());
         let mut count = 0;
         for root in roots {
-            let lower_order = match root.cmp_by_refinement_with_policy(&lower, policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let upper_order = match root.cmp_by_refinement_with_policy(&upper, policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let lower_order = decided!(root.cmp_by_refinement_with_policy(&lower, policy)?, Ok);
+            let upper_order = decided!(root.cmp_by_refinement_with_policy(&upper, policy)?, Ok);
             if lower_order != std::cmp::Ordering::Less && upper_order != std::cmp::Ordering::Greater
             {
                 count += 1;
@@ -3528,15 +3482,15 @@ pub(super) fn implicit_parameter_track_from_side(
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<ImplicitParameterTrack>>> {
     let retained_sample = BezierParameter2::Exact(side.sample.clone());
-    let selected = match selector.selected_at(
-        retained_parameter,
-        &retained_sample,
-        &side.roots[rank],
-        policy,
-    )? {
-        Classification::Decided(selected) => selected,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let selected = decided!(
+        selector.selected_at(
+            retained_parameter,
+            &retained_sample,
+            &side.roots[rank],
+            policy,
+        )?,
+        Ok
+    );
     Ok(Classification::Decided(Some(ImplicitParameterTrack {
         start: start.clone(),
         witness: rational_parameter_component_pair(
@@ -3610,19 +3564,13 @@ pub(super) fn polynomial_is_rootless_on_open_parameter_range(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let roots = decided!(
+        polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+        Ok
+    );
     for root in roots {
-        let start_order = match root.cmp_by_refinement_with_policy(start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let end_order = match root.cmp_by_refinement_with_policy(end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let start_order = decided!(root.cmp_by_refinement_with_policy(start, policy)?, Ok);
+        let end_order = decided!(root.cmp_by_refinement_with_policy(end, policy)?, Ok);
         if start_order == std::cmp::Ordering::Greater && end_order == std::cmp::Ordering::Less {
             return Ok(Classification::Decided(Some(false)));
         }
@@ -3955,15 +3903,15 @@ pub(super) fn bivariate_system_has_unit_square_solution(
     {
         return Ok(Classification::Decided(false));
     }
-    let candidates = match project_parallel_intersection_system(
-        first,
-        second,
-        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-        policy,
-    )? {
-        Classification::Decided(candidates) => candidates,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let candidates = decided!(
+        project_parallel_intersection_system(
+            first,
+            second,
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+            policy,
+        )?,
+        Ok
+    );
     let (parallel_parameters, other_parameters) = match candidates {
         CurveIntersectionCandidates2::Candidates {
             first_parameters: parallel_parameters,
@@ -4041,15 +3989,15 @@ pub(super) fn bivariate_system_unit_square_solution_pairs(
     {
         return Ok(Classification::Decided(Vec::new()));
     }
-    let candidates = match project_parallel_intersection_system(
-        first,
-        second,
-        [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-        policy,
-    )? {
-        Classification::Decided(candidates) => candidates,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let candidates = decided!(
+        project_parallel_intersection_system(
+            first,
+            second,
+            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+            policy,
+        )?,
+        Ok
+    );
     let (parallel_parameters, other_parameters) = match candidates {
         CurveIntersectionCandidates2::Candidates {
             first_parameters: parallel_parameters,
@@ -4182,12 +4130,10 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let roots = decided!(
+            polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+            Ok
+        );
         for root in roots {
             match insert_ordered_parameter_component_boundary(&mut selection_events, root, policy)?
             {
@@ -4218,22 +4164,20 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
             match root.cmp_by_refinement_with_policy(&domain.retained_start, policy)? {
                 Classification::Decided(std::cmp::Ordering::Less) => continue,
                 Classification::Decided(std::cmp::Ordering::Equal) => {
-                    start_included = match partition_parameter_component_selector_point(
-                        selector,
-                        retained_parameter,
-                        &ParameterComponentPoint {
-                            retained_parameter: domain.retained_start.clone(),
-                            lifted_parameter: domain.lifted_start.clone(),
-                        },
-                        &mut selected_pairs,
-                        &mut excluded_pairs,
-                        policy,
-                    )? {
-                        Classification::Decided(selected) => selected,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    start_included = decided!(
+                        partition_parameter_component_selector_point(
+                            selector,
+                            retained_parameter,
+                            &ParameterComponentPoint {
+                                retained_parameter: domain.retained_start.clone(),
+                                lifted_parameter: domain.lifted_start.clone(),
+                            },
+                            &mut selected_pairs,
+                            &mut excluded_pairs,
+                            policy,
+                        )?,
+                        Ok
+                    );
                     continue;
                 }
                 Classification::Decided(std::cmp::Ordering::Greater) => {}
@@ -4244,22 +4188,20 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
             match root.cmp_by_refinement_with_policy(&domain.retained_end, policy)? {
                 Classification::Decided(std::cmp::Ordering::Greater) => break,
                 Classification::Decided(std::cmp::Ordering::Equal) => {
-                    end_included = match partition_parameter_component_selector_point(
-                        selector,
-                        retained_parameter,
-                        &ParameterComponentPoint {
-                            retained_parameter: domain.retained_end.clone(),
-                            lifted_parameter: domain.lifted_end.clone(),
-                        },
-                        &mut selected_pairs,
-                        &mut excluded_pairs,
-                        policy,
-                    )? {
-                        Classification::Decided(selected) => selected,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    end_included = decided!(
+                        partition_parameter_component_selector_point(
+                            selector,
+                            retained_parameter,
+                            &ParameterComponentPoint {
+                                retained_parameter: domain.retained_end.clone(),
+                                lifted_parameter: domain.lifted_end.clone(),
+                            },
+                            &mut selected_pairs,
+                            &mut excluded_pairs,
+                            policy,
+                        )?,
+                        Ok
+                    );
                     break;
                 }
                 Classification::Decided(std::cmp::Ordering::Less) => {}
@@ -4278,19 +4220,17 @@ pub(super) fn certify_rational_parameter_component_map_with_selector(
                 retained_parameter: root.clone(),
                 lifted_parameter,
             };
-            let event_included = match partition_parameter_component_selector_point(
-                selector,
-                retained_parameter,
-                &segment_end,
-                &mut selected_pairs,
-                &mut excluded_pairs,
-                policy,
-            )? {
-                Classification::Decided(selected) => selected,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let event_included = decided!(
+                partition_parameter_component_selector_point(
+                    selector,
+                    retained_parameter,
+                    &segment_end,
+                    &mut selected_pairs,
+                    &mut excluded_pairs,
+                    policy,
+                )?,
+                Ok
+            );
             match append_selected_rational_parameter_component_domain(
                 &mut overlap_drafts,
                 selector,
@@ -4372,24 +4312,22 @@ pub(super) fn append_selected_rational_parameter_component_domain(
     endpoint_inclusion: [bool; 2],
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<()>>> {
-    let retained_sample = match start
-        .retained_parameter
-        .strict_scalar_between_ordered(&end.retained_parameter, policy)?
-    {
-        Classification::Decided(sample) => sample,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let lifted_sample = match rational_parameter_map_at(map, &retained_sample, policy)? {
-        Classification::Decided(sample) => sample,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let retained_sample = decided!(
+        start
+            .retained_parameter
+            .strict_scalar_between_ordered(&end.retained_parameter, policy)?,
+        Ok
+    );
+    let lifted_sample = decided!(
+        rational_parameter_map_at(map, &retained_sample, policy)?,
+        Ok
+    );
     let retained_sample = BezierParameter2::Exact(retained_sample);
     let lifted_sample = BezierParameter2::Exact(lifted_sample);
-    let selected =
-        match selector.selected_at(retained_parameter, &retained_sample, &lifted_sample, policy)? {
-            Classification::Decided(selected) => selected,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let selected = decided!(
+        selector.selected_at(retained_parameter, &retained_sample, &lifted_sample, policy)?,
+        Ok
+    );
     if selected {
         let witness = rational_parameter_component_pair(
             retained_parameter,
@@ -4448,15 +4386,15 @@ pub(super) fn partition_parameter_component_selector_point(
     excluded_pairs: &mut Vec<BezierParallelIntersectionParameterPair2>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let selected = match selector.selected_at(
-        retained_parameter,
-        &point.retained_parameter,
-        &point.lifted_parameter,
-        policy,
-    )? {
-        Classification::Decided(selected) => selected,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let selected = decided!(
+        selector.selected_at(
+            retained_parameter,
+            &point.retained_parameter,
+            &point.lifted_parameter,
+            policy,
+        )?,
+        Ok
+    );
     push_unique_parameter_component_pair(
         if selected {
             selected_pairs
@@ -4774,27 +4712,19 @@ pub(super) fn rational_parameter_component_domains(
     let one = Real::one();
     let mut runs: Vec<(usize, usize, std::cmp::Ordering)> = Vec::new();
     for index in 0..boundaries.len().saturating_sub(1) {
-        let sample = match boundaries[index]
-            .parameter
-            .strict_scalar_between_ordered(&boundaries[index + 1].parameter, policy)?
-        {
-            Classification::Decided(sample) => sample,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sample = decided!(
+            boundaries[index]
+                .parameter
+                .strict_scalar_between_ordered(&boundaries[index + 1].parameter, policy)?,
+            Ok
+        );
         let direction = match real_sign(&Real::eval_poly(derivative_numerator, &sample), policy) {
             Some(RealSign::Positive) => std::cmp::Ordering::Less,
             Some(RealSign::Negative) => std::cmp::Ordering::Greater,
             Some(RealSign::Zero) => return Ok(Classification::Decided(None)),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let lifted = match rational_parameter_map_at(map, &sample, policy)? {
-            Classification::Decided(lifted) => lifted,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let lifted = decided!(rational_parameter_map_at(map, &sample, policy)?, Ok);
         let Some(zero_order) = compare_reals(&lifted, &zero, policy) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
         };
@@ -5045,10 +4975,10 @@ pub(super) fn polynomial_is_rootless_on_parameter_range(
         Classification::Decided(None) => return Ok(Classification::Decided(false)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let roots = decided!(
+        polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+        Ok
+    );
     parameter_roots_are_outside_range(&roots, start, end, policy)
 }
 
@@ -5060,18 +4990,8 @@ pub(super) fn parameter_roots_are_outside_range(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     for root in roots {
-        let start_order = match root.cmp_by_refinement_with_policy(start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end_order = match root.cmp_by_refinement_with_policy(end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start_order = decided!(root.cmp_by_refinement_with_policy(start, policy)?, Ok);
+        let end_order = decided!(root.cmp_by_refinement_with_policy(end, policy)?, Ok);
         if matches!(
             start_order,
             std::cmp::Ordering::Equal | std::cmp::Ordering::Greater
@@ -5213,10 +5133,7 @@ impl BezierParallelIncidentDomain2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let [lower, upper] = match range.ordered_endpoints(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let [lower, upper] = decided!(range.ordered_endpoints(policy)?, Ok);
         let anchor = CurveParameter2::from(self.anchor.clone());
         let lower = match anchor.cmp_by_refinement(lower, policy)? {
             Classification::Decided(std::cmp::Ordering::Less) => anchor.clone(),
@@ -5238,12 +5155,7 @@ impl BezierParallelIncidentDomain2 {
         parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let endpoint_order = match parameter.cmp_by_refinement(&self.endpoint, policy)? {
-            Classification::Decided(ordering) => ordering,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let endpoint_order = decided!(parameter.cmp_by_refinement(&self.endpoint, policy)?, Ok);
         let beyond_endpoint = match self.direction {
             BezierParameterRayDirection2::Decreasing => endpoint_order == std::cmp::Ordering::Less,
             BezierParameterRayDirection2::Increasing => {
@@ -5553,30 +5465,18 @@ pub(super) fn parameter_domain_constraint(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    let initial_candidates = match project(&residual_equations)? {
-        Classification::Decided(candidates) => candidates,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let initial_candidates = decided!(project(&residual_equations)?, Ok);
     let candidates = if matches!(
         initial_candidates,
         CurveIntersectionCandidates2::DegenerateResultant
     ) {
-        let extracted = match extract_bivariate_system_components(residual_equations, config) {
-            Classification::Decided(extracted) => extracted,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let extracted = decided!(
+            extract_bivariate_system_components(residual_equations, config),
+            Ok
+        );
         component_support = merge_parameter_component_support(component_support, extracted.support);
         residual_equations = extracted.residual_equations;
-        match project(&residual_equations)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(project(&residual_equations)?, Ok)
     } else {
         initial_candidates
     };
@@ -5752,10 +5652,7 @@ impl<'a> ParameterComponentChart2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
         if map.get().is_none() {
-            let (_, [lower, upper]) = match domain.finite_envelope(policy)? {
-                Classification::Decided(envelope) => envelope,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let (_, [lower, upper]) = decided!(domain.finite_envelope(policy)?, Ok);
             // The unit topology is authoritative only for a contained domain.
             // Exterior finite intervals use an invertible affine chart, while
             // the original selected boundaries remain the clipping authority.
@@ -5791,12 +5688,7 @@ impl<'a> ParameterComponentChart2<'a> {
         }
         let range = match self.mapping {
             ParameterComponentMap2::Identity | ParameterComponentMap2::Affine(_) => {
-                let [lower, upper] = match self.domain.finite.ordered_endpoints(policy)? {
-                    Classification::Decided(endpoints) => endpoints,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let [lower, upper] = decided!(self.domain.finite.ordered_endpoints(policy)?, Ok);
                 match self.mapping {
                     ParameterComponentMap2::Identity => {
                         CurveParameterRange2::new_validated(lower.clone(), upper.clone())
@@ -5804,18 +5696,10 @@ impl<'a> ParameterComponentChart2<'a> {
                     ParameterComponentMap2::Affine(mapping) => {
                         let scale = (Real::one() / &mapping.scale)?;
                         let offset = -(&mapping.offset * &scale);
-                        let lower = match lower.affine_image_unbounded(&scale, &offset, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
-                        let upper = match upper.affine_image_unbounded(&scale, &offset, policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let lower =
+                            decided!(lower.affine_image_unbounded(&scale, &offset, policy)?, Ok);
+                        let upper =
+                            decided!(upper.affine_image_unbounded(&scale, &offset, policy)?, Ok);
                         CurveParameterRange2::new_validated(lower, upper)
                     }
                     ParameterComponentMap2::Incident(_) => unreachable!(),
@@ -5824,27 +5708,23 @@ impl<'a> ParameterComponentChart2<'a> {
             ParameterComponentMap2::Incident(extension) => {
                 let end = match extension.barrier {
                     None => BezierParameter2::Exact(Real::one()),
-                    Some(barrier) => match barrier.incident_ray_compact_parameter(
-                        extension.anchor,
-                        extension.direction,
+                    Some(barrier) => decided!(
+                        barrier.incident_ray_compact_parameter(
+                            extension.anchor,
+                            extension.direction,
+                            policy,
+                        )?,
+                        Ok
+                    ),
+                };
+                let range = decided!(
+                    BezierParameterRange2::try_new_with_policy(
+                        BezierParameter2::Exact(Real::zero()),
+                        end,
                         policy,
-                    )? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    },
-                };
-                let range = match BezierParameterRange2::try_new_with_policy(
-                    BezierParameter2::Exact(Real::zero()),
-                    end,
-                    policy,
-                )? {
-                    Classification::Decided(range) => range,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                    )?,
+                    Ok
+                );
                 CurveParameterRange2::from_bezier_range(range)
             }
         };
@@ -5856,10 +5736,7 @@ impl<'a> ParameterComponentChart2<'a> {
         parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let range = match self.compact_range(policy)? {
-            Classification::Decided(range) => range,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let range = decided!(self.compact_range(policy)?, Ok);
         let inclusion = if matches!(self.mapping, ParameterComponentMap2::Incident(_)) {
             [false; 2]
         } else {
@@ -5902,16 +5779,14 @@ impl<'a> ParameterComponentChart2<'a> {
                     .map(Some));
             }
             ParameterComponentMap2::Incident(extension) => {
-                match parameter.incident_ray_parameter(
-                    extension.anchor,
-                    extension.direction,
-                    policy,
-                )? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    parameter.incident_ray_parameter(
+                        extension.anchor,
+                        extension.direction,
+                        policy,
+                    )?,
+                    Ok
+                )
             }
         };
         Ok(self
@@ -5949,16 +5824,14 @@ impl<'a> ParameterComponentChart2<'a> {
                     BezierParameterRayDirection2::Increasing => Real::one(),
                     BezierParameterRayDirection2::Decreasing => -Real::one(),
                 };
-                match parameter.projective_image_unbounded(
-                    &[extension.anchor.clone(), direction - extension.anchor],
-                    &[Real::one(), -Real::one()],
-                    policy,
-                )? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    parameter.projective_image_unbounded(
+                        &[extension.anchor.clone(), direction - extension.anchor],
+                        &[Real::one(), -Real::one()],
+                        policy,
+                    )?,
+                    Ok
+                )
             }
         };
         Ok(self
@@ -6171,10 +6044,7 @@ impl BezierParallelDerivativeConstraint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
         Ok(self
             .parallel
             .parallel_derivative_scale_sign(&interior.into(), &strict)?
@@ -6355,10 +6225,7 @@ pub(super) fn retained_component_domains<'a>(
     if let Some(retained) = slot.get() {
         return Ok(Classification::Decided(retained));
     }
-    let charts = match retain_component_charts(charts, policy)? {
-        Classification::Decided(charts) => charts,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let charts = decided!(retain_component_charts(charts, policy)?, Ok);
     let mut owned = [Vec::new(), Vec::new()];
     for (chart, owned) in charts.iter().zip(&mut owned) {
         match chart.owned_intervals(policy)? {
@@ -6394,10 +6261,10 @@ pub(super) fn select_axis_parameter_components_on_chart(
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let fixed_parameters = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let fixed_parameters = decided!(
+        polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+        Ok
+    );
     let fixed_chart = match fixed_axis {
         CurveResultantParameter::First => first_chart,
         CurveResultantParameter::Second => second_chart,
@@ -6423,19 +6290,17 @@ pub(super) fn select_axis_parameter_components_on_chart(
                 CurveResultantParameter::First => boundary,
                 CurveResultantParameter::Second => bivariate_swap_parameters(&boundary),
             };
-            let projection = match selected_parameter_fiber_parameters(
-                &boundary,
-                &fixed,
-                MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
-                MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
-                &CurveParameterRange2::unit(),
-                policy,
-            )? {
-                Classification::Decided(projection) => projection,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let projection = decided!(
+                selected_parameter_fiber_parameters(
+                    &boundary,
+                    &fixed,
+                    MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
+                    MAX_SELECTED_FIBER_QUOTIENT_DEGREE,
+                    &CurveParameterRange2::unit(),
+                    policy,
+                )?,
+                Ok
+            );
             let roots = match projection {
                 BezierAlgebraicFiberProjection2::Parameters(roots) => roots,
                 BezierAlgebraicFiberProjection2::IdenticallyZero => continue,
@@ -6466,17 +6331,15 @@ pub(super) fn select_axis_parameter_components_on_chart(
         let mut event_inclusion = Vec::with_capacity(events.len());
         for event in &events {
             let event_pair = pair(event.clone());
-            let selected = match selector.selected_at(
-                CurveResultantParameter::First,
-                &event_pair.parallel_parameter,
-                &event_pair.other_parameter,
-                policy,
-            )? {
-                Classification::Decided(selected) => selected,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let selected = decided!(
+                selector.selected_at(
+                    CurveResultantParameter::First,
+                    &event_pair.parallel_parameter,
+                    &event_pair.other_parameter,
+                    policy,
+                )?,
+                Ok
+            );
             event_inclusion.push(selected);
             if selected {
                 let mapped = match owned_parameter_component_pair_from_chart(
@@ -6509,13 +6372,10 @@ pub(super) fn select_axis_parameter_components_on_chart(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let sample =
-                match boundaries[0].strict_scalar_between_ordered(&boundaries[1], policy)? {
-                    Classification::Decided(sample) => sample,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let sample = decided!(
+                boundaries[0].strict_scalar_between_ordered(&boundaries[1], policy)?,
+                Ok
+            );
             let sample_pair = pair(BezierParameter2::Exact(sample));
             match selector.selected_at(
                 CurveResultantParameter::First,
@@ -6524,16 +6384,14 @@ pub(super) fn select_axis_parameter_components_on_chart(
                 policy,
             )? {
                 Classification::Decided(true) => {
-                    let (charts, owned) = match retained_component_domains(
-                        retained_charts,
-                        [first_chart, second_chart],
-                        policy,
-                    )? {
-                        Classification::Decided(retained) => retained,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let (charts, owned) = decided!(
+                        retained_component_domains(
+                            retained_charts,
+                            [first_chart, second_chart],
+                            policy,
+                        )?,
+                        Ok
+                    );
                     let fixed_axis_index = match fixed_axis {
                         CurveResultantParameter::First => 0,
                         CurveResultantParameter::Second => 1,
@@ -6843,32 +6701,20 @@ pub(super) fn select_parameter_component_in_domain(
             }) {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
-            let first_range = match first_chart.compact_range(policy)? {
-                Classification::Decided(range) => range,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second_range = match second_chart.compact_range(policy)? {
-                Classification::Decided(range) => range,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let first_range = decided!(first_chart.compact_range(policy)?, Ok);
+            let second_range = decided!(second_chart.compact_range(policy)?, Ok);
             for overlap in component.component_overlaps.iter() {
                 match overlap.has_positive_overlap(first_range, second_range, policy)? {
                     Classification::Decided(true) => {
                         if !matches!(query, ParameterComponentQuery2::RetainFinite) {
-                            let (charts, owned) = match retained_component_domains(
-                                &retained_charts,
-                                [first_chart, second_chart],
-                                policy,
-                            )? {
-                                Classification::Decided(retained) => retained,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
+                            let (charts, owned) = decided!(
+                                retained_component_domains(
+                                    &retained_charts,
+                                    [first_chart, second_chart],
+                                    policy,
+                                )?,
+                                Ok
+                            );
                             for first in &owned[0] {
                                 for second in &owned[1] {
                                     match overlap.has_positive_overlap(
@@ -6925,13 +6771,10 @@ pub(super) fn select_parameter_component_in_domain(
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                let contacts =
-                    match overlap.closed_boundary_contacts(first_range, second_range, policy)? {
-                        Classification::Decided(contacts) => contacts,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let contacts = decided!(
+                    overlap.closed_boundary_contacts(first_range, second_range, policy)?,
+                    Ok
+                );
                 for mut contact in contacts {
                     let mut owned = [None, None];
                     for ((chart, parameter), slot) in [
@@ -7198,15 +7041,15 @@ pub(super) fn project_unit_parallel_pair_intersection_system(
         return Ok(Classification::Decided(projection));
     }
 
-    let projected = match project_parallel_intersection_system(
-        &system.first_equation,
-        &system.second_equation,
-        domains,
-        policy,
-    )? {
-        Classification::Decided(projected) => projected,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let projected = decided!(
+        project_parallel_intersection_system(
+            &system.first_equation,
+            &system.second_equation,
+            domains,
+            policy,
+        )?,
+        Ok
+    );
     if !matches!(projected, CurveIntersectionCandidates2::DegenerateResultant) {
         return Ok(Classification::Decided(enumerated(
             BezierParallelPairProjection2 {
@@ -7228,15 +7071,15 @@ pub(super) fn project_unit_parallel_pair_intersection_system(
     if let Some(projection) = project_without_components(&source_overlap)? {
         return Ok(Classification::Decided(projection));
     }
-    let fallback = match project_parallel_intersection_system(
-        &system.first_equation,
-        &system.norm_equation,
-        domains,
-        policy,
-    )? {
-        Classification::Decided(projected) => projected,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let fallback = decided!(
+        project_parallel_intersection_system(
+            &system.first_equation,
+            &system.norm_equation,
+            domains,
+            policy,
+        )?,
+        Ok
+    );
     if matches!(fallback, CurveIntersectionCandidates2::DegenerateResultant)
         && let Classification::Uncertain(reason) = source_overlap
     {

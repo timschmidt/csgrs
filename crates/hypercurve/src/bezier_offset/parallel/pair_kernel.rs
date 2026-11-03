@@ -52,12 +52,10 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let Some(system) = (match parallel_pair_equation_system(self, other, true, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(
+            parallel_pair_equation_system(self, other, true, policy)?,
+            Ok
+        )) else {
             return Ok(Classification::Decided(
                 CurveIntersectionCandidates2::NoIntersection,
             ));
@@ -196,15 +194,13 @@ impl BezierParallel2 {
                         ),
                     )))
                 };
-                let result = match curve.self_intersection_contacts_with_point_evidence_classified(
-                    policy,
-                    &mut fallback_point_evidence,
-                )? {
-                    Classification::Decided(result) => result,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let result = decided!(
+                    curve.self_intersection_contacts_with_point_evidence_classified(
+                        policy,
+                        &mut fallback_point_evidence,
+                    )?,
+                    Ok
+                );
                 return Ok(Classification::Decided(
                     parallel_pair_set_from_rational_self_contacts(self, result, policy)?,
                 ));
@@ -228,12 +224,8 @@ impl BezierParallel2 {
                 ),
             ));
         }
-        let Some(system) = (match parallel_pair_equation_system(self, self, true, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(parallel_pair_equation_system(self, self, true, policy)?, Ok))
+        else {
             return Ok(Classification::Decided(
                 BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
             ));
@@ -309,23 +301,18 @@ impl BezierParallel2 {
         other: &Self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
-        let Some(system) = (match parallel_pair_equation_system(self, other, true, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(
+            parallel_pair_equation_system(self, other, true, policy)?,
+            Ok
+        )) else {
             return Ok(Classification::Decided(
                 BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
             ));
         };
-        let projection =
-            match project_unit_parallel_pair_intersection_system(&system, self, other, policy)? {
-                Classification::Decided(projection) => projection,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let projection = decided!(
+            project_unit_parallel_pair_intersection_system(&system, self, other, policy)?,
+            Ok
+        );
         let BezierParallelPairDomainProjection2::Enumerated {
             projection,
             retained_contacts,
@@ -400,13 +387,10 @@ impl BezierParallel2 {
         if domains.iter().any(|domain| domain.extension.is_some()) {
             let mut frames = [None, None];
             for (axis, parallel) in [self, other].into_iter().enumerate() {
-                frames[axis] =
-                    match parallel.source_tangent_field_in_regular_domain(domains[axis], policy)? {
-                        Classification::Decided(frame) => frame,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                frames[axis] = decided!(
+                    parallel.source_tangent_field_in_regular_domain(domains[axis], policy)?,
+                    Ok
+                );
             }
             extension_frames = Some(frames);
         }
@@ -445,22 +429,18 @@ impl BezierParallel2 {
         let first_frame = if let Some(frames) = &extension_frames {
             frames[0].clone()
         } else {
-            match self.source_oriented_regularized_tangent_field(first_range, policy)? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                self.source_oriented_regularized_tangent_field(first_range, policy)?,
+                Ok
+            )
         };
         let second_frame = if let Some(frames) = &extension_frames {
             frames[1].clone()
         } else {
-            match other.source_oriented_regularized_tangent_field(second_range, policy)? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                other.source_oriented_regularized_tangent_field(second_range, policy)?,
+                Ok
+            )
         };
         // Unit-span bounds and root enumeration are valid only for the
         // queried unit spans. Retained and extended ranges own their own
@@ -479,19 +459,17 @@ impl BezierParallel2 {
                 .parallel_intersections_without_regular_frame(other, policy)?
                 .map(BezierParallelPairDomainIntersectionSet2::enumerated));
         }
-        let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
-            self,
-            other,
-            first_frame.as_deref(),
-            second_frame.as_deref(),
-            unit_domain,
-            policy,
-        )? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(
+            parallel_pair_equation_system_with_tangent_fields(
+                self,
+                other,
+                first_frame.as_deref(),
+                second_frame.as_deref(),
+                unit_domain,
+                policy,
+            )?,
+            Ok
+        )) else {
             return Ok(Classification::Decided(
                 BezierParallelPairDomainIntersectionSet2::from_components(Vec::new()),
             ));
@@ -561,13 +539,10 @@ impl BezierParallel2 {
                 policy,
             );
         }
-        let projection =
-            match project_unit_parallel_pair_intersection_system(&system, self, other, policy)? {
-                Classification::Decided(projection) => projection,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let projection = decided!(
+            project_unit_parallel_pair_intersection_system(&system, self, other, policy)?,
+            Ok
+        );
         let BezierParallelPairDomainProjection2::Enumerated {
             projection,
             retained_contacts,
@@ -675,14 +650,8 @@ impl BezierParallel2 {
             }
             let [first, second] =
                 tangents.map(|tangent| tangent.expect("both original source frames were retained"));
-            let cross = match first.tangent_cross_sign(&second, &strict)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let dot = match first.tangent_dot_sign(&second, &strict)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let cross = decided!(first.tangent_cross_sign(&second, &strict)?, Ok);
+            let dot = decided!(first.tangent_dot_sign(&second, &strict)?, Ok);
             let contact = &mut Arc::make_mut(&mut intersections.contacts)[index];
             contact.tangent_cross_sign = Some(cross);
             contact.tangent_dot_sign = Some(dot);
@@ -734,18 +703,16 @@ impl BezierParallel2 {
                         BezierParallelPairDomainIntersectionSet2::enumerated(intersections),
                     ));
                 }
-                let components = match retain_finite_parallel_components(
-                    self,
-                    other,
-                    &intersections,
-                    domains,
-                    policy,
-                )? {
-                    Classification::Decided(components) => components,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let components = decided!(
+                    retain_finite_parallel_components(
+                        self,
+                        other,
+                        &intersections,
+                        domains,
+                        policy,
+                    )?,
+                    Ok
+                );
                 if matches!(query, ParameterComponentQuery2::FirstComponent(_))
                     && !components.is_empty()
                 {
@@ -911,12 +878,10 @@ impl BezierParallel2 {
                 );
             }
         }
-        let Some(system) = (match parallel_pair_equation_system(self, other, false, policy)? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(
+            parallel_pair_equation_system(self, other, false, policy)?,
+            Ok
+        )) else {
             return Ok(Classification::Decided(
                 BezierParallelPairDomainIntersectionSet2::enumerated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
@@ -941,17 +906,15 @@ impl BezierParallel2 {
         regular_ranges: Option<[&CurveParameterRange2; 2]>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairDomainIntersectionSet2>> {
-        let candidates = match project_parallel_intersection_system(
-            &system.first_equation,
-            &system.second_equation,
-            domains,
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            project_parallel_intersection_system(
+                &system.first_equation,
+                &system.second_equation,
+                domains,
+                policy,
+            )?,
+            Ok
+        );
         let mut projection = BezierParallelPairProjection2 {
             candidates,
             basis: BezierParallelPairProjectionBasis2::ProjectionEquations,
@@ -985,12 +948,10 @@ impl BezierParallel2 {
                 min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
                 max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
             };
-            let components = match parallel_source_parameter_components(self, other, config)? {
-                Classification::Decided(components) => components,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let components = decided!(
+                parallel_source_parameter_components(self, other, config)?,
+                Ok
+            );
             let source_constraint = match parameter_component_union_support(&components) {
                 Some(support) => match parameter_domain_constraint(
                     support,
@@ -1010,23 +971,21 @@ impl BezierParallel2 {
                 let mut selected_pairs = Vec::new();
                 let mut component_overlaps = Vec::new();
                 if let Some(support) = source_constraint.component_support {
-                    let selection = match select_parameter_component_in_domain(
-                        &support,
-                        &ParameterComponentSelector2::ParallelPair {
-                            normal_constraints: None,
-                            system: &system,
-                            parameter_filter: None,
-                        },
-                        domains,
-                        query,
-                        policy,
-                        config,
-                    )? {
-                        Classification::Decided(selection) => selection,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let selection = decided!(
+                        select_parameter_component_in_domain(
+                            &support,
+                            &ParameterComponentSelector2::ParallelPair {
+                                normal_constraints: None,
+                                system: &system,
+                                parameter_filter: None,
+                            },
+                            domains,
+                            query,
+                            policy,
+                            config,
+                        )?,
+                        Ok
+                    );
                     if selection.has_components()
                         && matches!(query, ParameterComponentQuery2::FirstComponent(_))
                     {
@@ -1142,10 +1101,10 @@ impl BezierParallel2 {
         let tangent_field = if distance_sign != RealSign::Zero
             && let Some(range) = regular_parallel_range
         {
-            match self.source_oriented_regularized_tangent_field(range, policy)? {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(
+                self.source_oriented_regularized_tangent_field(range, policy)?,
+                Ok
+            )
         } else {
             None
         };
@@ -1211,16 +1170,10 @@ impl BezierParallel2 {
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         };
         let [first_equation, second_equation] = equations;
-        let constraint = match parameter_domain_constraint(
-            first_equation,
-            &second_equation,
-            domains,
-            policy,
-            config,
-        )? {
-            Classification::Decided(constraint) => constraint,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let constraint = decided!(
+            parameter_domain_constraint(first_equation, &second_equation, domains, policy, config,)?,
+            Ok
+        );
         let mut selected_pairs = Vec::new();
         let mut retained_contacts = Vec::new();
         let mut domain_components = Vec::new();
@@ -1250,17 +1203,17 @@ impl BezierParallel2 {
                     }
                 }
             }
-            let selection = match select_parameter_component_in_domain(
-                &support,
-                &ParameterComponentSelector2::Positive(&branch, None),
-                domains,
-                query,
-                policy,
-                config,
-            )? {
-                Classification::Decided(selection) => selection,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let selection = decided!(
+                select_parameter_component_in_domain(
+                    &support,
+                    &ParameterComponentSelector2::Positive(&branch, None),
+                    domains,
+                    query,
+                    policy,
+                    config,
+                )?,
+                Ok
+            );
             if selection.has_components()
                 && matches!(query, ParameterComponentQuery2::FirstComponent(_))
             {
@@ -1298,22 +1251,22 @@ impl BezierParallel2 {
             .map(|overlap| overlap.overlap().clone())
             .collect();
         candidate_system.component_overlaps = component_overlaps.into();
-        let intersections = match self.replay_parallel_rational_candidate_system(
-            &other,
-            candidate_system,
-            off_diagonal,
-            tangent_field.as_deref(),
-            regular_parallel_range,
-            |parameter| {
-                Ok(Classification::Decided(CurvePoint2::from(
-                    BezierAnalyticParallelPoint2::new(zero.clone(), parameter.clone(), policy),
-                )))
-            },
-            policy,
-        )? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let intersections = decided!(
+            self.replay_parallel_rational_candidate_system(
+                &other,
+                candidate_system,
+                off_diagonal,
+                tangent_field.as_deref(),
+                regular_parallel_range,
+                |parameter| {
+                    Ok(Classification::Decided(CurvePoint2::from(
+                        BezierAnalyticParallelPoint2::new(zero.clone(), parameter.clone(), policy),
+                    )))
+                },
+                policy,
+            )?,
+            Ok
+        );
         let intersections = parallel_pair_set_from_parallel_rational(intersections, swapped);
         if swapped {
             domain_components = domain_components
@@ -1411,27 +1364,23 @@ impl BezierParallel2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                frames[axis] = match self.source_tangent_field_in_regular_domain(domain, policy)? {
-                    Classification::Decided(frame) => frame,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                frames[axis] = decided!(
+                    self.source_tangent_field_in_regular_domain(domain, policy)?,
+                    Ok
+                );
             }
         }
-        let Some(system) = (match parallel_pair_equation_system_with_tangent_fields(
-            self,
-            self,
-            frames[0].as_deref(),
-            frames[1].as_deref(),
-            false,
-            policy,
-        )? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }) else {
+        let Some(system) = (decided!(
+            parallel_pair_equation_system_with_tangent_fields(
+                self,
+                self,
+                frames[0].as_deref(),
+                frames[1].as_deref(),
+                false,
+                policy,
+            )?,
+            Ok
+        )) else {
             return Ok(Classification::Decided(
                 BezierParallelPairDomainIntersectionSet2::enumerated(
                     BezierParallelPairIntersectionSet2::complete(Arc::from([]), Arc::from([])),
@@ -1446,13 +1395,10 @@ impl BezierParallel2 {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
             max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
         };
-        let source_components =
-            match parallel_nonstructural_source_parameter_components(self, self, config)? {
-                Classification::Decided(components) => components,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let source_components = decided!(
+            parallel_nonstructural_source_parameter_components(self, self, config)?,
+            Ok
+        );
         let source_constraint = match parameter_component_union_support(&source_components) {
             Some(support) => match parameter_domain_constraint(
                 support,
@@ -1478,23 +1424,21 @@ impl BezierParallel2 {
             let mut selected_pairs = Vec::new();
             let mut component_overlaps = Vec::new();
             if let Some(support) = source_constraint.component_support {
-                let selection = match select_parameter_component_in_domain(
-                    &support,
-                    &ParameterComponentSelector2::ParallelPair {
-                        normal_constraints: None,
-                        system: &system,
-                        parameter_filter: Some(&off_diagonal),
-                    },
-                    domains,
-                    query,
-                    policy,
-                    config,
-                )? {
-                    Classification::Decided(selection) => selection,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let selection = decided!(
+                    select_parameter_component_in_domain(
+                        &support,
+                        &ParameterComponentSelector2::ParallelPair {
+                            normal_constraints: None,
+                            system: &system,
+                            parameter_filter: Some(&off_diagonal),
+                        },
+                        domains,
+                        query,
+                        policy,
+                        config,
+                    )?,
+                    Ok
+                );
                 if selection.has_components()
                     && matches!(query, ParameterComponentQuery2::FirstComponent(_))
                 {
@@ -1565,10 +1509,7 @@ impl BezierParallel2 {
             policy,
         )?;
         let result = extend_parallel_pair_contacts(result, retained_contacts, policy)?;
-        let mut result = match result {
-            Classification::Decided(result) => result,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let mut result = decided!(result, Ok);
         // Saturation removes the identity component, but residual branches
         // can still meet it. Those visits are not off-diagonal self contacts.
         let mut contacts = Vec::with_capacity(result.contacts.len());
@@ -1853,32 +1794,28 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelPairIntersectionSet2>> {
         if let Some(radical_component_projection) = projection.radical_component_projection.take() {
-            let radical_component = match self.replay_parallel_pair_projection_with_ranges(
-                other,
-                system,
-                *radical_component_projection,
-                selection,
-                regular_ranges,
-                policy,
-            )? {
-                Classification::Decided(intersections) => intersections,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let residual = match self.replay_parallel_pair_projection_with_ranges(
-                other,
-                system,
-                projection,
-                selection,
-                regular_ranges,
-                policy,
-            )? {
-                Classification::Decided(intersections) => intersections,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let radical_component = decided!(
+                self.replay_parallel_pair_projection_with_ranges(
+                    other,
+                    system,
+                    *radical_component_projection,
+                    selection,
+                    regular_ranges,
+                    policy,
+                )?,
+                Ok
+            );
+            let residual = decided!(
+                self.replay_parallel_pair_projection_with_ranges(
+                    other,
+                    system,
+                    projection,
+                    selection,
+                    regular_ranges,
+                    policy,
+                )?,
+                Ok
+            );
             return merge_parallel_pair_intersection_sets(radical_component, residual, policy);
         }
         let BezierParallelPairProjection2 {

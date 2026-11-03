@@ -929,29 +929,17 @@ pub(super) fn trivariate_bounded_factor_sign_with_budget(
         };
         for (factor, quotient) in factorizations {
             let next_budget = remaining_splits.saturating_sub(1);
-            let factor_sign = match trivariate_factored_component_sign(
-                &factor,
-                first,
-                second,
-                third,
-                next_budget,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let factor_sign = decided!(
+                trivariate_factored_component_sign(&factor, first, second, third, next_budget,)?,
+                Ok
+            );
             if factor_sign == Some(RealSign::Zero) {
                 return Ok(Classification::Decided(factor_sign));
             }
-            let quotient_sign = match trivariate_factored_component_sign(
-                &quotient,
-                first,
-                second,
-                third,
-                next_budget,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let quotient_sign = decided!(
+                trivariate_factored_component_sign(&quotient, first, second, third, next_budget,)?,
+                Ok
+            );
             if quotient_sign == Some(RealSign::Zero) {
                 return Ok(Classification::Decided(quotient_sign));
             }

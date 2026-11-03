@@ -1051,12 +1051,7 @@ impl BezierAlgebraicChord2 {
                 Ok(Classification::Uncertain(_)) | Err(_) => {}
             }
             let other_point = second_points[1 - second_index];
-            let side = match self.represented_oriented_side(other_point, policy)? {
-                Classification::Decided(side) => side,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let side = decided!(self.represented_oriented_side(other_point, policy)?, Ok);
             let mut sign = match side {
                 crate::classify::LineSide::Left => RealSign::Positive,
                 crate::classify::LineSide::On => RealSign::Zero,
@@ -1341,16 +1336,16 @@ impl BezierAlgebraicChord2 {
         dot_scale: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let source_sign = match self.tangent_cross_dot_parallel_source_linear_combination_sign(
-            parallel,
-            parameter,
-            cross_scale,
-            dot_scale,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let source_sign = decided!(
+            self.tangent_cross_dot_parallel_source_linear_combination_sign(
+                parallel,
+                parameter,
+                cross_scale,
+                dot_scale,
+                policy,
+            )?,
+            Ok
+        );
         let scale = match parallel.parallel_derivative_scale_sign(parameter, policy)? {
             Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Classification::Decided(RealSign::Zero) => {
@@ -1378,20 +1373,17 @@ impl BezierAlgebraicChord2 {
         // only algebraic axis instead of rebuilding two endpoint fields and a
         // trivariate support system merely to recover the same direction.
         if let Some((tangent_x, tangent_y)) = self.certified_unit_tangent() {
-            let source_sign = match parallel
-                .vector_source_tangent_cross_dot_linear_combination_sign(
+            let source_sign = decided!(
+                parallel.vector_source_tangent_cross_dot_linear_combination_sign(
                     parameter,
                     &tangent_x,
                     &tangent_y,
                     cross_scale,
                     dot_scale,
                     policy,
-                )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+                )?,
+                Ok
+            );
             return Ok(Classification::Decided(source_sign));
         }
         // Retained endpoint fields also support native and exact target
@@ -1438,16 +1430,11 @@ impl BezierAlgebraicChord2 {
         }
         // The independent trivariate fallback needs an ordinary root axis;
         // promotion is demand-driven and does not replace the retained root.
-        let parameter = match promote_curve_region_bezier_parameter(parameter, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let support = match self.independent_support_system(policy)? {
-            Classification::Decided(support) => support,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(
+            promote_curve_region_bezier_parameter(parameter, policy)?,
+            Ok
+        );
+        let support = decided!(self.independent_support_system(policy)?, Ok);
         let differential = parallel.differential()?;
         let Some(line_x) = trivariate_from_axis_bivariate_coefficients(
             std::slice::from_ref(&support.line_x),

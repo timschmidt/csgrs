@@ -209,14 +209,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 }
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
-            let center = match support.point_evidence_at(parameter, policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let support_center = match support.center_point_evidence(policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let center = decided!(support.point_evidence_at(parameter, policy)?, Ok);
+            let support_center = decided!(support.center_point_evidence(policy)?, Ok);
             // A represented angular value can have a represented radial
             // displacement while its center remains a jointly selected point.
             // Query that difference in the source field instead of separating
@@ -294,19 +288,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         let CurvePoint2(CurvePointData2::Algebraic(center)) = center else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let parameter = match algebraic_chord_image_parameter(center, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let [source_x_numerator, source_y_numerator, denominator] =
-            match algebraic_chord_owned_coordinate_polynomials(center, policy)? {
-                Classification::Decided(coordinates) => coordinates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let parameter = decided!(algebraic_chord_image_parameter(center, policy)?, Ok);
+        let [source_x_numerator, source_y_numerator, denominator] = decided!(
+            algebraic_chord_owned_coordinate_polynomials(center, policy)?,
+            Ok
+        );
         let normal_x_numerator = polynomial_scale(&denominator, &Real::from(cardinal_normal.0));
         let normal_y_numerator = polynomial_scale(&denominator, &Real::from(cardinal_normal.1));
         Ok(Classification::Decided(Some(Self {
@@ -433,16 +419,14 @@ impl BezierAlgebraicCuspSemicircle2 {
                 transform,
                 policy,
             ));
-            let anchor = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                Point2::from_values(0, 0).into(),
-                tangent,
-                policy,
-            )? {
-                Classification::Decided(anchor) => anchor,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let anchor = decided!(
+                BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                    Point2::from_values(0, 0).into(),
+                    tangent,
+                    policy,
+                )?,
+                Ok
+            );
             return Self::from_retained_center_and_chord_normal(
                 center.clone(),
                 anchor,
@@ -451,19 +435,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             );
         };
-        let parameter = match algebraic_chord_image_parameter(center, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let [center_x_numerator, center_y_numerator, center_denominator] =
-            match algebraic_chord_owned_coordinate_polynomials(center, policy)? {
-                Classification::Decided(coordinates) => coordinates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let parameter = decided!(algebraic_chord_image_parameter(center, policy)?, Ok);
+        let [center_x_numerator, center_y_numerator, center_denominator] = decided!(
+            algebraic_chord_owned_coordinate_polynomials(center, policy)?,
+            Ok
+        );
         let source_x_numerator = polynomial_scale(&center_x_numerator, &normal_denominator);
         let source_y_numerator = polynomial_scale(&center_y_numerator, &normal_denominator);
         let normal_x_numerator = polynomial_subtract(
@@ -518,10 +494,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 unit_normal.1,
                 -unit_normal.0,
             ));
-            let anchor = match BezierAlgebraicChord2::from_unit_direction(&direction, policy)? {
-                Classification::Decided(anchor) => anchor,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let anchor = decided!(
+                BezierAlgebraicChord2::from_unit_direction(&direction, policy)?,
+                Ok
+            );
             return Self::from_retained_center_and_chord_normal(
                 center.clone(),
                 anchor,
@@ -530,19 +506,11 @@ impl BezierAlgebraicCuspSemicircle2 {
                 policy,
             );
         };
-        let parameter = match algebraic_chord_image_parameter(center, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let [source_x_numerator, source_y_numerator, denominator] =
-            match algebraic_chord_owned_coordinate_polynomials(center, policy)? {
-                Classification::Decided(coordinates) => coordinates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let parameter = decided!(algebraic_chord_image_parameter(center, policy)?, Ok);
+        let [source_x_numerator, source_y_numerator, denominator] = decided!(
+            algebraic_chord_owned_coordinate_polynomials(center, policy)?,
+            Ok
+        );
         let normal_x_numerator = polynomial_scale(&denominator, &unit_normal.0);
         let normal_y_numerator = polynomial_scale(&denominator, &unit_normal.1);
         let represented_unit_normal = Arc::new(unit_normal);
@@ -804,12 +772,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
         let (denominator, normal_scale, tangent_scale) =
-            match self.represented_frame_scales(parameter, policy)? {
-                Classification::Decided(scales) => scales,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            decided!(self.represented_frame_scales(parameter, policy)?, Ok);
         let Some(frame) = self.data.frame.rational() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -831,12 +794,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurvePoint2>> {
         let (denominator, normal_scale, tangent_scale) =
-            match self.represented_frame_scales(parameter, policy)? {
-                Classification::Decided(scales) => scales,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            decided!(self.represented_frame_scales(parameter, policy)?, Ok);
         if let Some(frame) = self.data.frame.rational() {
             return Ok(Classification::Decided(CurvePoint2::from(
                 frame.point_image_from_frame_scales(
@@ -917,12 +875,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             if let Classification::Decided(point) =
                 parallel.point_at_with_policy(center_parameter, policy)?
             {
-                let tangent = match parallel.source_tangent_at(center_parameter, policy)? {
-                    Classification::Decided(tangent) => tangent,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let tangent = decided!(parallel.source_tangent_at(center_parameter, policy)?, Ok);
                 let speed = (&tangent.0 * &tangent.0 + &tangent.1 * &tangent.1).sqrt()?;
                 let tangent_x = (&tangent.0 * &tangent_distance / &speed)?;
                 let tangent_y = (tangent.1 * &tangent_distance / speed)?;
@@ -1503,12 +1456,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         "a selected chord-normal contact did not share its circle frame".into(),
                     ));
                 }
-                match self.center_point_evidence(policy)? {
-                    Classification::Decided(center) => center,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(self.center_point_evidence(policy)?, Ok)
             }
             BezierSelectedChordNormalAnchor2::RetainedChord(anchor) => {
                 anchor.validate_policy(policy)?;
@@ -1535,17 +1483,15 @@ impl BezierAlgebraicCuspSemicircle2 {
         let contact_radial_distance = if incidence_certified {
             contact_radial_distance
         } else {
-            match chord.certified_normal_displacement_distance(
-                &center,
-                &point,
-                &contact_radial_distance,
-                policy,
-            )? {
-                Classification::Decided(distance) => distance,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                chord.certified_normal_displacement_distance(
+                    &center,
+                    &point,
+                    &contact_radial_distance,
+                    policy,
+                )?,
+                Ok
+            )
         };
         let radius_residual = self.radial_distance() * self.radial_distance()
             - &contact_radial_distance * &contact_radial_distance;
@@ -1662,17 +1608,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             )
             .expect("a parallel-normal frame owns a scalar parameter"),
         );
-        let contact_radial_distance = match chord.certified_normal_displacement_distance(
-            &center,
-            &point,
-            &contact_radial_distance,
-            policy,
-        )? {
-            Classification::Decided(distance) => distance,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let contact_radial_distance = decided!(
+            chord.certified_normal_displacement_distance(
+                &center,
+                &point,
+                &contact_radial_distance,
+                policy,
+            )?,
+            Ok
+        );
         let radius_residual = self.radial_distance() * self.radial_distance()
             - &contact_radial_distance * &contact_radial_distance;
         match real_sign(&radius_residual, policy) {
@@ -1742,16 +1686,12 @@ impl BezierAlgebraicCuspSemicircle2 {
         ) = match frame.center_parameter.as_ref() {
             BezierAlgebraicCuspSemicircleMappedParameterData2::Chord { map, contact } => {
                 map.validate_policy(policy)?;
-                let target_tangent_reversed = match map
-                    .data
-                    .chord
-                    .certified_parallel_tangent_reversal_to(&chord, policy)?
-                {
-                    Classification::Decided(reversed) => reversed,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let target_tangent_reversed = decided!(
+                    map.data
+                        .chord
+                        .certified_parallel_tangent_reversal_to(&chord, policy)?,
+                    Ok
+                );
                 if map.retained_offset_system().is_none()
                     && map.represented_oblique_system().is_none()
                     && map.axis_system().is_none()
@@ -1793,13 +1733,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 else {
                     return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
                 };
-                let target_tangent_reversed =
-                    match mapped_chord.certified_parallel_tangent_reversal_to(&chord, policy)? {
-                        Classification::Decided(reversed) => reversed,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let target_tangent_reversed = decided!(
+                    mapped_chord.certified_parallel_tangent_reversal_to(&chord, policy)?,
+                    Ok
+                );
                 (
                     BezierSelectedChordNormalAnchor2::RetainedCircleRationalChord {
                         map: map.clone(),
@@ -1843,17 +1780,15 @@ impl BezierAlgebraicCuspSemicircle2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            match chord.certified_normal_displacement_distance(
-                &center,
-                &point,
-                &contact_radial_distance,
-                policy,
-            )? {
-                Classification::Decided(distance) => distance,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                chord.certified_normal_displacement_distance(
+                    &center,
+                    &point,
+                    &contact_radial_distance,
+                    policy,
+                )?,
+                Ok
+            )
         };
         let radius_residual = self.radial_distance() * self.radial_distance()
             - &contact_radial_distance * &contact_radial_distance;
@@ -2195,19 +2130,11 @@ impl BezierAlgebraicCuspSemicircle2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Aabb2>> {
-        let center = match self.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center =
-            match algebraic_chord_endpoint_bounds_refined(&center, refinement_steps, policy) {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let center = decided!(self.center_point_evidence(policy)?, Ok);
+        let center = decided!(
+            algebraic_chord_endpoint_bounds_refined(&center, refinement_steps, policy),
+            Ok
+        );
         let radius = self.data.radial_distance.abs();
         Ok(Classification::Decided(Aabb2::new_unchecked(
             Point2::new(center.min_x() - &radius, center.min_y() - &radius),
@@ -2418,10 +2345,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 )));
             }
         }
-        let center = match self.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let center = decided!(self.center_point_evidence(policy)?, Ok);
         let represented_normal = self.represented_frame_unit_normal()?;
         if let Some((normal_x, normal_y)) = represented_normal {
             match common_point_constant_displacement(point, &center, policy)? {
@@ -2463,21 +2387,19 @@ impl BezierAlgebraicCuspSemicircle2 {
                 Classification::Uncertain(_) => {}
             }
         }
-        let radial = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            center,
-            point.clone(),
-            policy,
-        )? {
-            Classification::Decided(radial) => radial,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let radial = decided!(
+            BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                center,
+                point.clone(),
+                policy,
+            )?,
+            Ok
+        );
         for (index, half) in halves.iter().enumerate() {
-            let contacts = match half
-                .chord_intersections_with_certified_endpoint_incidence(&radial, false, policy)?
-            {
-                Classification::Decided(contacts) => contacts,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let contacts = decided!(
+                half.chord_intersections_with_certified_endpoint_incidence(&radial, false, policy)?,
+                Ok
+            );
             if let Some(contact) = contacts
                 .into_iter()
                 .find(|contact| contact.chord_parameter.is_endpoint_of(&radial, false))
@@ -2519,34 +2441,22 @@ impl BezierAlgebraicCuspSemicircle2 {
                 "a displaced point entered circle incidence under a different policy".into(),
             ));
         }
-        let origin = match represented_point_evidence_coordinates(
-            parallel.source_endpoint(),
-            construction_policy,
-        )? {
-            Classification::Decided(origin) => origin,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let origin = decided!(
+            represented_point_evidence_coordinates(
+                parallel.source_endpoint(),
+                construction_policy,
+            )?,
+            Ok
+        );
         let source_support = parallel.data.source.retained_support();
-        let support_start = match represented_point_evidence_coordinates(
-            source_support.start(),
-            construction_policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let support_end = match represented_point_evidence_coordinates(
-            source_support.end(),
-            construction_policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let support_start = decided!(
+            represented_point_evidence_coordinates(source_support.start(), construction_policy,)?,
+            Ok
+        );
+        let support_end = decided!(
+            represented_point_evidence_coordinates(source_support.end(), construction_policy,)?,
+            Ok
+        );
         let center = match self.represented_circle_frame(construction_policy)? {
             Classification::Decided(frame) => frame.center,
             Classification::Uncertain(reason) => {
@@ -2670,12 +2580,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         maximum_refinement_steps: usize,
         permit_terminal_approximation: bool,
     ) -> CurveResult<Classification<RealSign>> {
-        let center = match self.center_point_evidence(construction_policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(self.center_point_evidence(construction_policy)?, Ok);
         let radius_squared = self.radial_distance() * self.radial_distance();
         let radius_squared = RealInterval {
             lower: radius_squared.clone(),
@@ -2887,12 +2792,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
-        let bounds = match self.conservative_circle_cover_bounds(policy)? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let bounds = decided!(self.conservative_circle_cover_bounds(policy)?, Ok);
         // `reach` dominates the absolute delta on either axis for every point
         // in the box. Hence
         //   |dot(Q-origin,d)| <= reach * (|dx|+|dy|).
@@ -2913,17 +2813,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             vec![origin.clone(), endpoint],
             vec![Real::one(), Real::one()],
         )?;
-        let (intersections, parameter_map) = match self.rational_intersections_internal(
-            &ray,
-            &crate::CurveParameterRange2::unit(),
-            retain_parameter_map,
-            policy,
-        )? {
-            Classification::Decided(result) => result,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (intersections, parameter_map) = decided!(
+            self.rational_intersections_internal(
+                &ray,
+                &crate::CurveParameterRange2::unit(),
+                retain_parameter_map,
+                policy,
+            )?,
+            Ok
+        );
         Ok(Classification::Decided((ray, intersections, parameter_map)))
     }
 
@@ -3030,12 +2928,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             pair_contact,
             support_first,
             similarity: combined_similarity,
-        } = match self.selected_radial_frame_source(policy)? {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        } = decided!(self.selected_radial_frame_source(policy)?, Ok);
         let (Some(first_source_frame), Some(second_source_frame)) = (
             pair_map.data.first_semicircle.data.frame.rational(),
             pair_map.data.second_semicircle.data.frame.rational(),
@@ -3046,26 +2939,20 @@ impl BezierAlgebraicCuspSemicircle2 {
             BezierParameter2::Algebraic(first_source_frame.data.parameter.clone());
         let second_cusp_parameter =
             BezierParameter2::Algebraic(second_source_frame.data.parameter.clone());
-        let mut first_frame = match pair_map
-            .data
-            .first_semicircle
-            .normalized_circle_frame(policy)?
-        {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let mut second_frame = match pair_map
-            .data
-            .second_semicircle
-            .normalized_circle_frame(policy)?
-        {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mut first_frame = decided!(
+            pair_map
+                .data
+                .first_semicircle
+                .normalized_circle_frame(policy)?,
+            Ok
+        );
+        let mut second_frame = decided!(
+            pair_map
+                .data
+                .second_semicircle
+                .normalized_circle_frame(policy)?,
+            Ok
+        );
         if first_frame.cusp_parameter != first_cusp_parameter
             || second_frame.cusp_parameter != second_cusp_parameter
         {
@@ -3488,14 +3375,12 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 })
             }
             BezierAlgebraicCuspSemicircleMappedOverlapMap2::Parallel(map) => {
-                let map_parameter = match policy.strict_predicate_pass(|| {
-                    map_parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let map_parameter = decided!(
+                    policy.strict_predicate_pass(|| {
+                        map_parameter.promoted_bezier_parameter_complete(policy)
+                    })?,
+                    Ok
+                );
                 let contact = BezierAlgebraicCuspSemicircleParallelContact2 {
                     parallel_parameter: map_parameter,
                     tangent_cross_sign: None,
@@ -3631,19 +3516,17 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 let target_reversed = source_reversed
                     ^ (self.orientation == CurveOverlapOrientation2::Reversed)
                     ^ self.map_reversed;
-                let candidates = match source.rational_parameters_for_contact(
-                    contact,
-                    first,
-                    &target.data.curve,
-                    &self.mapped_other_range()?,
-                    target_reversed,
-                    policy,
-                )? {
-                    Classification::Decided(candidates) => candidates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidates = decided!(
+                    source.rational_parameters_for_contact(
+                        contact,
+                        first,
+                        &target.data.curve,
+                        &self.mapped_other_range()?,
+                        target_reversed,
+                        policy,
+                    )?,
+                    Ok
+                );
                 return retain_unique_overlap_parameter(
                     candidates,
                     &self.other_range,
@@ -3662,19 +3545,17 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                 let target_reversed = source_reversed
                     ^ (self.orientation == CurveOverlapOrientation2::Reversed)
                     ^ self.map_reversed;
-                let candidates = match source.parallel_parameters_for_contact(
-                    contact,
-                    first,
-                    &target.data.parallel,
-                    &self.mapped_other_range()?,
-                    target_reversed,
-                    policy,
-                )? {
-                    Classification::Decided(candidates) => candidates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidates = decided!(
+                    source.parallel_parameters_for_contact(
+                        contact,
+                        first,
+                        &target.data.parallel,
+                        &self.mapped_other_range()?,
+                        target_reversed,
+                        policy,
+                    )?,
+                    Ok
+                );
                 return retain_unique_overlap_parameter(
                     curve_region_parameters_from_bezier(candidates),
                     &self.other_range,
@@ -3713,12 +3594,7 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         )?
                     }
                 };
-                let candidates = match candidates {
-                    Classification::Decided(candidates) => candidates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidates = decided!(candidates, Ok);
                 return retain_unique_overlap_parameter(
                     candidates,
                     &self.other_range,
@@ -3761,15 +3637,10 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         contact,
                     },
                 ) => {
-                    let source_parameter = match promote_curve_region_bezier_parameter(
-                        &contact.other_parameter,
-                        policy,
-                    )? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let source_parameter = decided!(
+                        promote_curve_region_bezier_parameter(&contact.other_parameter, policy,)?,
+                        Ok
+                    );
                     match rational_parallel_parameter_orientation_at_cut(
                         source,
                         target,
@@ -3937,18 +3808,16 @@ impl BezierAlgebraicCuspSemicircleMappedOverlap2 {
                         ]
                     }
                 };
-                let candidates = match mapped_circle_tangent_parameter_candidates(
-                    source_parameter.as_ref(),
-                    &source_tangent,
-                    &target_tangent,
-                    &self.mapped_other_range()?,
-                    policy,
-                )? {
-                    Classification::Decided(candidates) => candidates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let candidates = decided!(
+                    mapped_circle_tangent_parameter_candidates(
+                        source_parameter.as_ref(),
+                        &source_tangent,
+                        &target_tangent,
+                        &self.mapped_other_range()?,
+                        policy,
+                    )?,
+                    Ok
+                );
                 let retained = retain_unique_overlap_parameter(
                     candidates,
                     &self.other_range,
@@ -4352,10 +4221,10 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 policy,
             );
         }
-        let source_range = match mapped_point_regular_source_range(parallel, parameter, policy)? {
-            Classification::Decided(range) => range,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let source_range = decided!(
+            mapped_point_regular_source_range(parallel, parameter, policy)?,
+            Ok
+        );
         if let Classification::Decided(Some(component)) =
             parallel.exact_rational_parallel_component_on_regular_range(&source_range, policy)?
         {
@@ -4368,35 +4237,35 @@ impl BezierAlgebraicCuspSemicircleMappedPointSource2 {
                 policy,
             );
         }
-        let intersections = match parallel.parallel_intersections_in_domain(
-            target,
-            [
-                CurveParameterDomain2::new(&source_range, None),
-                CurveParameterDomain2::new(range, None),
-            ],
-            ParameterComponentQuery2::RetainFinite,
-            policy,
-        )? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let intersections = decided!(
+            parallel.parallel_intersections_in_domain(
+                target,
+                [
+                    CurveParameterDomain2::new(&source_range, None),
+                    CurveParameterDomain2::new(range, None),
+                ],
+                ParameterComponentQuery2::RetainFinite,
+                policy,
+            )?,
+            Ok
+        );
         let (intersections, positive_dimensional) = intersections.into_parts();
         debug_assert!(
             positive_dimensional.is_empty(),
             "finite inverse retains component correspondences"
         );
-        let candidates = match parameter.matching_target_parameters(
-            intersections.contacts().iter().map(|contact| {
-                (
-                    contact.first_parameter().clone(),
-                    contact.second_parameter().clone(),
-                )
-            }),
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates = decided!(
+            parameter.matching_target_parameters(
+                intersections.contacts().iter().map(|contact| {
+                    (
+                        contact.first_parameter().clone(),
+                        contact.second_parameter().clone(),
+                    )
+                }),
+                policy,
+            )?,
+            Ok
+        );
         let overlap_curves = if intersections.overlaps().is_empty() {
             None
         } else {
@@ -5012,12 +4881,7 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-        let source_bracket = match source.parameter_bracket(refinement_steps, policy)? {
-            Classification::Decided(bracket) => bracket,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source_bracket = decided!(source.parameter_bracket(refinement_steps, policy)?, Ok);
         if self.has_exact_endpoint_map() {
             return if self.data.orientation == CurveOverlapOrientation2::Same {
                 Ok(Classification::Decided(source_bracket))
@@ -5031,21 +4895,11 @@ impl BezierAlgebraicCuspSemicirclePairOverlap2 {
             })
         };
         let (source_start, source_end) = cusp_semicircle_parameter_bracket_bounds(&source_bracket);
-        let first = match mapped_bracket(source_start)? {
-            Classification::Decided(bracket) => bracket,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(mapped_bracket(source_start)?, Ok);
         if source_start == source_end {
             return Ok(Classification::Decided(first));
         }
-        let second = match mapped_bracket(source_end)? {
-            Classification::Decided(bracket) => bracket,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let second = decided!(mapped_bracket(source_end)?, Ok);
         let (first_start, first_end) = cusp_semicircle_parameter_bracket_bounds(&first);
         let (second_start, second_end) = cusp_semicircle_parameter_bracket_bounds(&second);
         let start = match compare_reals(first_start, second_start, policy) {
@@ -5800,18 +5654,8 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 policy,
             )
         };
-        let tangent_cross = match reduce(&system.tangent_cross)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let angular_tangent = match reduce(&system.angular_tangent)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let tangent_cross = decided!(reduce(&system.tangent_cross)?, Ok);
+        let angular_tangent = decided!(reduce(&system.angular_tangent)?, Ok);
         // The stored angular expression is the circle radius crossed with
         // the rational tangent. Convert it to the circle-tangent dot product
         // with the same convention as the selected-fiber map.
@@ -5914,13 +5758,10 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
                 policy,
             );
         }
-        let other_parameter =
-            match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let other_parameter = decided!(
+            promote_curve_region_bezier_parameter(&contact.other_parameter, policy)?,
+            Ok
+        );
         let BezierAlgebraicCuspSemicircleRationalParameterMapSystem2::SelectedRadial {
             pair_map,
             branch,
@@ -6161,12 +6002,10 @@ impl BezierAlgebraicCuspSemicircleRationalParameterMap2 {
         // promotion of the contact parameter.
         macro_rules! promoted_other {
             () => {
-                match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    promote_curve_region_bezier_parameter(&contact.other_parameter, policy)?,
+                    Ok
+                )
             };
         }
         let sign = match &self.data.system {
@@ -6867,10 +6706,10 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 .other_parameter_for_cusp(parameter, policy)?
                 .map(|parameter| Some(CurveParameter2::from_selected_fiber(parameter))));
         }
-        let parameter = match self.retain_unique_other_parameter(vec![parameter.clone()], policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let parameter = decided!(
+            self.retain_unique_other_parameter(vec![parameter.clone()], policy)?,
+            Ok
+        );
         Ok(self
             .cusp_parameter_for_other(&parameter, policy)?
             .map(|parameter| Some(CurveParameter2::from_algebraic_cusp(parameter))))
@@ -6982,18 +6821,8 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
         parameter: &BezierAlgebraicSelectedFiberParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let start = match parameter.cmp_by_refinement(&self.other_start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match parameter.cmp_by_refinement(&self.other_end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(parameter.cmp_by_refinement(&self.other_start, policy)?, Ok);
+        let end = decided!(parameter.cmp_by_refinement(&self.other_end, policy)?, Ok);
         Ok(Classification::Decided(
             start != std::cmp::Ordering::Less && end != std::cmp::Ordering::Greater,
         ))
@@ -7021,14 +6850,12 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
                 let candidate = if let Some(candidate) = candidate.as_bezier_parameter() {
                     candidate.clone()
                 } else {
-                    match policy.strict_predicate_pass(|| {
-                        candidate.promoted_bezier_parameter_complete(policy)
-                    })? {
-                        Classification::Decided(candidate) => candidate,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    decided!(
+                        policy.strict_predicate_pass(|| {
+                            candidate.promoted_bezier_parameter_complete(policy)
+                        })?,
+                        Ok
+                    )
                 };
                 BezierAlgebraicSelectedFiberAuthority2::from_bezier_parameter(
                     retained_parameter.clone(),
@@ -7182,18 +7009,16 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             let target_tangent = rational_parametric_tangent_numerator(
                 self.map.data.curve.homogeneous_power_basis()?,
             );
-            let candidates = match mapped_circle_tangent_parameter_candidates(
-                source_parameter.as_ref(),
-                &source_tangent,
-                &target_tangent,
-                &self.parameter_ranges().1,
-                policy,
-            )? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let candidates = decided!(
+                mapped_circle_tangent_parameter_candidates(
+                    source_parameter.as_ref(),
+                    &source_tangent,
+                    &target_tangent,
+                    &self.parameter_ranges().1,
+                    policy,
+                )?,
+                Ok
+            );
             return self.retain_unique_other_parameter(candidates, policy);
         }
         if let BezierAlgebraicCuspSemicircleParameter2::Mapped(data) = parameter {
@@ -7272,11 +7097,10 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalOverlap2 {
             .ok_or_else(|| {
                 CurveError::Topology("selected overlap inverse lost its center".into())
             })?;
-        let center_parameter =
-            match promote_curve_region_bezier_parameter(&center_parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let center_parameter = decided!(
+            promote_curve_region_bezier_parameter(&center_parameter, policy)?,
+            Ok
+        );
         let BezierParameter2::Algebraic(center_parameter) = center_parameter else {
             return Err(CurveError::Topology(
                 "selected overlap inverse lost its algebraic center".into(),
@@ -7464,12 +7288,7 @@ impl BezierAlgebraicCuspSemicircleSelectedFiberRationalParameterMap2 {
             &[Real::one()],
             &polynomial_subtract(numerator, &polynomial_scale(&source.weight, value)),
         );
-        let numerator_sign = match other_parameter.predicate_sign(&predicate, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let numerator_sign = decided!(other_parameter.predicate_sign(&predicate, policy)?, Ok);
         let weight_sign = match other_parameter.predicate_sign(
             &bivariate_outer_product(&[Real::one()], &source.weight),
             policy,
@@ -7533,12 +7352,10 @@ impl BezierAlgebraicCuspSemicircleSimilarityCache2 {
         {
             return Ok(Classification::Decided(transformed));
         }
-        let transformed = match source.transform_similarity_cached(transform, policy, self)? {
-            Classification::Decided(transformed) => transformed,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let transformed = decided!(
+            source.transform_similarity_cached(transform, policy, self)?,
+            Ok
+        );
         self.chords.push((source.clone(), transformed.clone()));
         Ok(Classification::Decided(transformed))
     }

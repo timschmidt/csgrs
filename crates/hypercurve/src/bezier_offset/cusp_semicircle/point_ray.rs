@@ -66,12 +66,10 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
     ) -> CurveResult<Classification<[RealSign; 2]>> {
         let mut signs = [RealSign::Zero; 2];
         for (index, endpoint) in [&self.start, &self.end].into_iter().enumerate() {
-            signs[index] = match point_linear_difference(endpoint, point, side_x, side_y, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            signs[index] = decided!(
+                point_linear_difference(endpoint, point, side_x, side_y, policy)?,
+                Ok
+            );
         }
         Ok(Classification::Decided(signs))
     }
@@ -159,24 +157,9 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
             |first: &CurvePoint2, second: &CurvePoint2, x_factor: &Real, y_factor: &Real| {
                 point_linear_order(first, second, x_factor, y_factor, policy)
             };
-        let start_y = match order(start, point, &side_x, &side_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end_y = match order(end, point, &side_x, &side_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let line_side = match point_oriented_side(start, end, point, policy)? {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start_y = decided!(order(start, point, &side_x, &side_y)?, Ok);
+        let end_y = decided!(order(end, point, &side_x, &side_y)?, Ok);
+        let line_side = decided!(point_oriented_side(start, end, point, policy)?, Ok);
         let inside_circle = if point_on_supporting_circle {
             false
         } else {
@@ -212,21 +195,11 @@ impl BezierAlgebraicCuspSemicircleAlgebraicRay2 {
                 (end, start, delta)
             }
         };
-        let lower_x = match order(lower, point, direction_x, direction_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let lower_x = decided!(order(lower, point, direction_x, direction_y)?, Ok);
         if lower_x != std::cmp::Ordering::Less {
             return Ok(Classification::Decided(0));
         }
-        let upper_x = match order(upper, point, direction_x, direction_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let upper_x = decided!(order(upper, point, direction_x, direction_y)?, Ok);
         Ok(Classification::Decided(
             if upper_x == std::cmp::Ordering::Greater {
                 delta
@@ -247,14 +220,8 @@ fn point_linear_order(
     if let (CurvePointData2::Algebraic(first), CurvePointData2::Algebraic(second)) =
         (&first.0, &second.0)
     {
-        let first = match first.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let second = match second.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let first = decided!(first.predicate_evaluator(policy)?, Ok);
+        let second = decided!(second.predicate_evaluator(policy)?, Ok);
         return algebraic_point_linear_order(&first, &second, a, b, policy);
     }
     match common_point_linear_order(first, second, a, b, policy)? {
@@ -294,18 +261,9 @@ fn point_oriented_side(
         CurvePointData2::Algebraic(point),
     ) = (&start.0, &end.0, &point.0)
     {
-        let start = match start.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let end = match end.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let start = decided!(start.predicate_evaluator(policy)?, Ok);
+        let end = decided!(end.predicate_evaluator(policy)?, Ok);
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         return algebraic_point_oriented_line_side(&start, &end, &point, policy);
     }
     common_point_oriented_side(start, end, point, policy)
@@ -319,14 +277,8 @@ fn point_circle_residual(
     if let (CurvePointData2::Algebraic(center), CurvePointData2::Algebraic(point)) =
         (&center.0, &point.0)
     {
-        let center = match center.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let center = decided!(center.predicate_evaluator(policy)?, Ok);
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         return algebraic_point_circle_residual_sign(&center, &point, radius_squared, policy);
     }
     common_point_circle_residual_sign(point, center, radius_squared, policy)
@@ -338,10 +290,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleAlgebraicRay2>> {
         self.validate_policy(policy)?;
-        let center = match self.semicircle().center_point_evidence(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let center = decided!(self.semicircle().center_point_evidence(policy)?, Ok);
         let mut endpoints = Vec::with_capacity(2);
         // The fragment owns concentric transport of mapped cuts as well as
         // traversal. A source-circle parameter alone does not describe the

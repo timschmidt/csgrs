@@ -1179,16 +1179,10 @@ impl BezierAlgebraicChord2 {
                         }
                     }
                 }
-                let point = match rational_point_evidence_at_parameter(
-                    source,
-                    &source_parameter,
-                    policy,
-                )? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(
+                    rational_point_evidence_at_parameter(source, &source_parameter, policy,)?,
+                    Ok
+                );
                 let chord_parameter =
                     match self.parameter_at_certified_point(point.clone(), policy)? {
                         Classification::Decided(Some(parameter)) => parameter,

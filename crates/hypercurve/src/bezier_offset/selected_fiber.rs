@@ -188,12 +188,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             };
             let mut steps = 0_usize;
             loop {
-                let source = match self.refined(steps, &strict)? {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let source = decided!(self.refined(steps, &strict)?, Ok);
                 let base = BezierParameter2::Algebraic(retained.clone())
                     .refined_isolating_interval(steps, &strict);
                 let base_bounds = real_interval_from_parameter(&base);
@@ -1034,12 +1029,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
 
             let mut refinement_steps = 0_usize;
             let (refined, first, second) = loop {
-                let refined = match self.refined(refinement_steps, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let refined = decided!(self.refined(refinement_steps, policy)?, Ok);
                 let map = |source: &Real| -> CurveResult<Option<(RealSign, Real)>> {
                     let mapped_denominator = &denominator[0] + &denominator[1] * source;
                     let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
@@ -1275,12 +1265,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(Real, Real, Real)>> {
-        let parameter = match self.refined(refinement_steps, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(self.refined(refinement_steps, policy)?, Ok);
         let lower = parameter.root().lower.clone();
         let upper = parameter.root().upper.clone();
         let representative = parameter
@@ -1318,18 +1303,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         };
         let mut refinement_steps = 0_usize;
         loop {
-            let first = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match other.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let first = decided!(self.refined(refinement_steps, policy)?, Ok);
+            let second = decided!(other.refined(refinement_steps, policy)?, Ok);
             // A shared polynomial root is not yet a shared selected root.
             // Prove containment in the other original singleton isolator;
             // mere overlap can cover two different roots. Keeping that
@@ -1569,12 +1544,7 @@ impl BezierAlgebraicSelectedFiberParameter2 {
         };
         let mut refinement_steps = 0_usize;
         loop {
-            let selected = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let selected = decided!(self.refined(refinement_steps, policy)?, Ok);
             let other = BezierParameter2::Algebraic(other_algebraic.clone())
                 .refined_isolating_interval(refinement_steps, &CurveContext::STRICT);
             let BezierParameter2::Algebraic(other) = other else {
@@ -1631,18 +1601,8 @@ impl BezierAlgebraicSelectedFiberParameter2 {
             == other.data.authority.data.retained_parameter;
         let mut refinement_steps = 0_usize;
         loop {
-            let first = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match other.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let first = decided!(self.refined(refinement_steps, policy)?, Ok);
+            let second = decided!(other.refined(refinement_steps, policy)?, Ok);
             if compare_reals(
                 &first.root().upper,
                 &second.root().lower,
@@ -1664,19 +1624,14 @@ impl BezierAlgebraicSelectedFiberParameter2 {
                 })?;
         }
 
-        let first = match policy.strict_predicate_pass(|| self.promoted_bezier_parameter(policy))? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second =
-            match policy.strict_predicate_pass(|| other.promoted_bezier_parameter(policy))? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let first = decided!(
+            policy.strict_predicate_pass(|| self.promoted_bezier_parameter(policy))?,
+            Ok
+        );
+        let second = decided!(
+            policy.strict_predicate_pass(|| other.promoted_bezier_parameter(policy))?,
+            Ok
+        );
         policy.strict_predicate_pass(|| first.strict_scalar_between_ordered(&second, policy))
     }
 }

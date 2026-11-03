@@ -79,10 +79,10 @@ impl BezierAlgebraicCuspSemicircle2 {
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let local = match self.parameter_at_certified_incident_point(&point, &policy)? {
-            Classification::Decided(local) => local,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let local = decided!(
+            self.parameter_at_certified_incident_point(&point, &policy)?,
+            Ok
+        );
         if local.is_algebraic_cusp_complement() {
             return Err(CurveError::InvalidBezierRange);
         }
@@ -190,12 +190,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                         return Ok(Classification::Uncertain(reason));
                     }
                 }
-                let parameter = match self.parameter_at_certified_incident_point(&point, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let parameter = decided!(
+                    self.parameter_at_certified_incident_point(&point, policy)?,
+                    Ok
+                );
                 if parameter.is_algebraic_cusp_complement() {
                     return Err(CurveError::InvalidBezierRange);
                 }

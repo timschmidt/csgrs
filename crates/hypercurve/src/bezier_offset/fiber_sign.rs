@@ -179,12 +179,7 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
          second: &BivariatePolynomial|
          -> CurveResult<Classification<BezierSelectedParallelNormalPositiveProjection2>> {
             for equation in [first, second] {
-                let projection = match project(equation)? {
-                    Classification::Decided(projection) => projection,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let projection = decided!(project(equation)?, Ok);
                 match projection {
                     SelectedParallelEquationProjection2::Candidates(parameters) => {
                         return Ok(Classification::Decided(
@@ -211,12 +206,10 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
             // sheet on the actual regular finite cell: an affine carrier edit
             // may move that cell across a speed zero lying outside its domain,
             // so the historical sign-at-zero convention is insufficient.
-            let sample = match policy
-                .strict_predicate_pass(|| finite_range.strict_interior_scalar(policy))?
-            {
-                Classification::Decided(sample) => sample,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let sample = decided!(
+                policy.strict_predicate_pass(|| finite_range.strict_interior_scalar(policy))?,
+                Ok
+            );
             match real_sign(&Real::eval_poly(&speed, &sample), &strict) {
                 Some(RealSign::Positive) => {}
                 Some(RealSign::Negative) => {
@@ -256,12 +249,7 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
                     center_speed_squared,
                 ),
             );
-            let projection = match project(&norm)? {
-                Classification::Decided(projection) => projection,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let projection = decided!(project(&norm)?, Ok);
             if let Some(result) = finish_projection(projection) {
                 return Ok(Classification::Decided(result));
             }
@@ -271,12 +259,7 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
             project_nonzero_branch(&collapsed.rational, &collapsed.radical)
         }
         Classification::Decided(None) => {
-            let selected_norm_is_zero = match selected_expression_is_zero(squared_branch)? {
-                Classification::Decided(is_zero) => is_zero,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let selected_norm_is_zero = decided!(selected_expression_is_zero(squared_branch)?, Ok);
             if !selected_norm_is_zero {
                 // The final norm vanished because the opposite center-speed
                 // conjugate owns the component. On the selected sheet roots
@@ -298,18 +281,8 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
                 rational: circle.candidate.clone(),
                 radical: circle.product.clone(),
             };
-            let center_term_is_zero = match selected_expression_is_zero(&center_term)? {
-                Classification::Decided(is_zero) => is_zero,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let target_term_is_zero = match selected_expression_is_zero(&target_term)? {
-                Classification::Decided(is_zero) => is_zero,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let center_term_is_zero = decided!(selected_expression_is_zero(&center_term)?, Ok);
+            let target_term_is_zero = decided!(selected_expression_is_zero(&target_term)?, Ok);
             if center_term_is_zero && target_term_is_zero {
                 return Ok(Classification::Decided(
                     BezierSelectedParallelNormalPositiveProjection2::CoincidentCircleComponent,
@@ -327,12 +300,7 @@ pub(super) fn parallel_normal_positive_dimensional_projection(
                     center_speed_squared,
                 ),
             );
-            let projection = match project(&norm)? {
-                Classification::Decided(projection) => projection,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let projection = decided!(project(&norm)?, Ok);
             if let Some(result) = finish_projection(projection) {
                 return Ok(Classification::Decided(result));
             }
@@ -499,13 +467,10 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
     let coefficients =
         hypersolve::square_free_part(coefficients.clone(), hypersolve::PredicatePolicy::STRICT)
             .unwrap_or(coefficients);
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let polynomial = decided!(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)?,
+        Ok
+    );
     let candidates = match selected_axis_parameters_in_domain(domain, policy, |axis| {
         Ok(axis
             .isolate(&polynomial, policy)?
@@ -520,17 +485,15 @@ pub(super) fn algebraic_selected_fiber_parameters_with_incident_ray(
     let cusp_parameter = BezierParameter2::Algebraic(cusp.clone());
     let mut retained = Vec::with_capacity(candidates.len());
     for candidate in candidates {
-        let belongs = match algebraic_selected_fiber_contains_parameter(
-            incidence,
-            &cusp_parameter,
-            &candidate,
-            policy,
-        )? {
-            Classification::Decided(belongs) => belongs,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let belongs = decided!(
+            algebraic_selected_fiber_contains_parameter(
+                incidence,
+                &cusp_parameter,
+                &candidate,
+                policy,
+            )?,
+            Ok
+        );
         if belongs {
             retained.push(candidate);
         }
@@ -654,10 +617,7 @@ pub(super) fn selected_fiber_parameters_in_range(
                 Classification::Decided(None) => return Ok(Classification::Decided(None)),
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             };
-            let roots = match domain.finite_roots(&polynomial, policy)? {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let roots = decided!(domain.finite_roots(&polynomial, policy)?, Ok);
             let authority = BezierAlgebraicSelectedFiberAuthority2::new(
                 incidence.clone(),
                 retained_parameter.clone(),
@@ -685,10 +645,7 @@ pub(super) fn selected_fiber_parameters_in_range(
                     .collect(),
             )));
         }
-        let (_, [lower, upper]) = match domain.finite_envelope(policy)? {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let (_, [lower, upper]) = decided!(domain.finite_envelope(policy)?, Ok);
         let candidates = match selected_fiber_parameters_in_interval(
             incidence,
             retained_parameter,
@@ -809,12 +766,7 @@ pub(super) fn selected_fiber_parameters_on_incident_ray(
         }
         let mut refinement_steps = 0_usize;
         let compact = loop {
-            let refined = match compact.refined(refinement_steps, policy)? {
-                Classification::Decided(refined) => refined,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let refined = decided!(compact.refined(refinement_steps, policy)?, Ok);
             if compare_reals(&refined.root().upper, &one, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Less)
             {
@@ -840,12 +792,7 @@ pub(super) fn selected_fiber_parameters_on_incident_ray(
             distinct_root_count: compact.root().distinct_root_count,
         });
         if let Some(barrier) = barrier {
-            let ordering = match mapped.cmp_bezier_parameter(barrier, policy)? {
-                Classification::Decided(ordering) => ordering,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let ordering = decided!(mapped.cmp_bezier_parameter(barrier, policy)?, Ok);
             let before = match direction {
                 BezierParameterRayDirection2::Decreasing => ordering == std::cmp::Ordering::Greater,
                 BezierParameterRayDirection2::Increasing => ordering == std::cmp::Ordering::Less,
@@ -867,11 +814,10 @@ pub(super) fn algebraic_selected_fiber_parameters_with_resultant_limit(
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let (_, [cell_lower, cell_upper]) =
-        match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let (_, [cell_lower, cell_upper]) = decided!(
+        CurveParameterDomain2::new(range, None).finite_envelope(policy)?,
+        Ok
+    );
     let cusp_root = parameter_representation(cusp, policy);
     let defining = BivariatePolynomial::new(
         cusp.polynomial()
@@ -890,18 +836,16 @@ pub(super) fn algebraic_selected_fiber_parameters_with_resultant_limit(
         },
     );
     let projection = if report.status == CurveIntersectionResultantStatus::DegreeBoundExceeded {
-        match algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
-            incidence,
-            &cusp_root,
-            max_quotient_degree,
-            range,
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(
+            algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
+                incidence,
+                &cusp_root,
+                max_quotient_degree,
+                range,
+                policy,
+            )?,
+            Ok
+        )
     } else {
         match resultant_parameter_polynomial(report, policy)? {
             Classification::Decided(Some(polynomial)) => {
@@ -1072,13 +1016,10 @@ pub(super) fn isolate_polynomial_roots_in_range_envelope(
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-    let (_, [lower, upper]) =
-        match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
-            Classification::Decided(range) => range,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let (_, [lower, upper]) = decided!(
+        CurveParameterDomain2::new(range, None).finite_envelope(policy)?,
+        Ok
+    );
     // Preserve the exact nonrational low-degree and Bernstein authorities
     // when the finite envelope is the unit interval. General Sturm replay
     // alone need not recognize the same correlated coefficient identities.
@@ -1145,13 +1086,10 @@ pub(super) fn algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
         hypersolve::PredicatePolicy::STRICT,
     )
     .unwrap_or(report.coefficients);
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let polynomial = decided!(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)?,
+        Ok
+    );
     if polynomial.degree() > MAX_DIRECT_SELECTED_NORM_ISOLATION_DEGREE {
         return algebraic_selected_parameters_from_norm(
             incidence, cusp_root, polynomial, range, policy,
@@ -1180,11 +1118,10 @@ pub(super) fn algebraic_selected_parameters_from_norm(
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
-    let (_, [lower, upper]) =
-        match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let (_, [lower, upper]) = decided!(
+        CurveParameterDomain2::new(range, None).finite_envelope(policy)?,
+        Ok
+    );
     let mut refinement_steps = 8_usize;
     loop {
         let report = isolate_bivariate_fiber_roots_at_algebraic_parameter_complete(
@@ -1269,29 +1206,25 @@ pub(super) fn algebraic_selected_parameters_from_norm(
                 }
                 None => None,
             };
-            let parameter_interval = match BezierParameterInterval::try_new_with_policy(
-                interval.lower,
-                interval.upper,
-                &CurveContext::STRICT,
-            )? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameter_interval = decided!(
+                BezierParameterInterval::try_new_with_policy(
+                    interval.lower,
+                    interval.upper,
+                    &CurveContext::STRICT,
+                )?,
+                Ok
+            );
             // The open-interval proof excludes both bounds, but the norm may
             // also vanish there on another sheet. Remove those factors before
             // the fallback count or publication of a native isolator: both
             // require non-root endpoints, including when refinement is needed.
-            let polynomial = match norm.clone().without_roots_at(
-                &[parameter_interval.start(), parameter_interval.end()],
-                policy,
-            )? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let polynomial = decided!(
+                norm.clone().without_roots_at(
+                    &[parameter_interval.start(), parameter_interval.end()],
+                    policy,
+                )?,
+                Ok
+            );
             if singleton != Some(true) {
                 match polynomial.root_count_in_interval_with_policy(&parameter_interval, policy)? {
                     Classification::Decided(0) => {
@@ -1671,16 +1604,14 @@ pub(super) fn selected_fiber_parameter_at_exact_retained(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let interval = match BezierParameterInterval::try_new_with_policy(
-        root.lower.clone(),
-        root.upper.clone(),
-        &CurveContext::STRICT,
-    )? {
-        Classification::Decided(interval) => interval,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let interval = decided!(
+        BezierParameterInterval::try_new_with_policy(
+            root.lower.clone(),
+            root.upper.clone(),
+            &CurveContext::STRICT,
+        )?,
+        Ok
+    );
     Ok(BezierAlgebraicParameter2::try_isolate_with_policy(
         polynomial,
         interval,
@@ -1823,13 +1754,10 @@ pub(super) fn algebraic_selected_fiber_root_predicate_sign(
         // univariate authority with the same selector instead of refining an
         // irrelevant base or constructing a degree-multiplied norm.
         let native = (|| {
-            let parameter =
-                match selected_fiber_parameter_at_exact_retained(incidence, &Real::zero(), root)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let parameter = decided!(
+                selected_fiber_parameter_at_exact_retained(incidence, &Real::zero(), root)?,
+                Ok
+            );
             signed_coefficients_at_parameter(
                 predicate.coefficients.first().map_or(&[], Vec::as_slice),
                 &parameter,
@@ -1873,16 +1801,10 @@ pub(super) fn algebraic_selected_fiber_root_predicate_sign(
                 Classification::Decided,
             ));
         }
-        let parameter = match selected_fiber_parameter_at_exact_retained(
-            incidence,
-            retained_value,
-            selected_root,
-        )? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(
+            selected_fiber_parameter_at_exact_retained(incidence, retained_value, selected_root,)?,
+            Ok
+        );
         signed_coefficients_at_parameter(
             &bivariate_specialize_first(predicate, retained_value),
             &parameter,
@@ -1961,17 +1883,15 @@ pub(super) fn algebraic_selected_fiber_root_predicate_sign(
     };
     loop {
         if refinement_steps != 0 {
-            latest = match algebraic_selected_fiber_root_interval_refined(
-                authority,
-                root,
-                refinement_steps,
-                policy,
-            )? {
-                Classification::Decided(interval) => interval,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            latest = decided!(
+                algebraic_selected_fiber_root_interval_refined(
+                    authority,
+                    root,
+                    refinement_steps,
+                    policy,
+                )?,
+                Ok
+            );
         }
         if let Some(exact_root) = &latest.exact_root {
             return signed_coefficients_at_parameter(
@@ -2172,18 +2092,8 @@ pub(super) fn algebraic_selected_fiber_pair_predicate_sign(
     let mut certified_nonzero = false;
     let mut steps = 0_usize;
     loop {
-        let refined_first = match first.refined(steps.saturating_add(64), strict)? {
-            Classification::Decided(first) => first,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let refined_second = match second.refined(steps, strict)? {
-            Classification::Decided(second) => second,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let refined_first = decided!(first.refined(steps.saturating_add(64), strict)?, Ok);
+        let refined_second = decided!(second.refined(steps, strict)?, Ok);
         let stalled = previous.as_ref().is_some_and(|(old_first, old_second)| {
             old_first == &refined_first && old_second == &refined_second
         });
@@ -2266,12 +2176,7 @@ pub(super) fn selected_fiber_rebind_incidence(
         ));
     }
     for steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-        let trusted = match parameter.refined(steps, strict)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let trusted = decided!(parameter.refined(steps, strict)?, Ok);
         if trusted.data.root.exact_root.is_some() {
             return Ok(Classification::Decided(
                 BezierAlgebraicSelectedFiberAuthority2::new(incidence, retained.clone(), strict)
@@ -2396,13 +2301,10 @@ pub(super) fn selected_fiber_simple_parameter(
                 return Ok(Classification::Decided(parameter));
             }
             Classification::Decided(RealSign::Zero) => {
-                parameter = match selected_fiber_rebind_incidence(&parameter, derivative, &strict)?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                parameter = decided!(
+                    selected_fiber_rebind_incidence(&parameter, derivative, &strict)?,
+                    Ok
+                );
             }
             Classification::Uncertain(reason) => {
                 return Ok(Classification::Uncertain(reason));
@@ -2428,15 +2330,13 @@ pub(super) fn algebraic_selected_fiber_pair_trivariate_root(
     let strict = *policy;
     let retained = &source.data.authority.data.retained_parameter;
     validate_selected_fiber_pair_base(source, image)?;
-    let base = match selected_parameter_simple_constraint(
-        &BezierParameter2::Algebraic(retained.clone()),
-        &strict,
-    )? {
-        Classification::Decided(base) => base,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let base = decided!(
+        selected_parameter_simple_constraint(
+            &BezierParameter2::Algebraic(retained.clone()),
+            &strict,
+        )?,
+        Ok
+    );
     let source_incidence = source.data.authority.data.incidence.clone();
     let mut previous = None;
     let mut steps = 0_usize;
@@ -2462,18 +2362,8 @@ pub(super) fn algebraic_selected_fiber_pair_trivariate_root(
         let BezierParameter2::Algebraic(alpha) = alpha else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let source = match source.refined(source_steps, &strict)? {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let image = match image.refined(steps, &strict)? {
-            Classification::Decided(image) => image,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(source.refined(source_steps, &strict)?, Ok);
+        let image = decided!(image.refined(steps, &strict)?, Ok);
         if previous
             .as_ref()
             .is_some_and(|(old_alpha, old_source, old_image)| {
@@ -2595,19 +2485,9 @@ pub(super) fn algebraic_selected_fiber_pair_projected_root_via_subresultants_str
     let strict = *policy;
     validate_selected_fiber_pair_base(source, image)?;
     let source_result = selected_fiber_simple_parameter(source, &strict)?;
-    let source = match source_result {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let source = decided!(source_result, Ok);
     let image_result = selected_fiber_simple_parameter(image, &strict)?;
-    let image = match image_result {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let image = decided!(image_result, Ok);
     let (image_incidence, axes) = match known_incidence {
         Some(incidence) => (incidence, [1, 2]),
         None => (&image.data.authority.data.incidence, [0, 2]),
@@ -2819,18 +2699,8 @@ pub(super) fn algebraic_selected_fiber_pair_projected_root(
             let BezierParameter2::Algebraic(alpha) = alpha else {
                 break;
             };
-            let source = match box_source.refined(source_steps, strict)? {
-                Classification::Decided(source) => source,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let image = match box_image.refined(steps, strict)? {
-                Classification::Decided(image) => image,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let source = decided!(box_source.refined(source_steps, strict)?, Ok);
+            let image = decided!(box_image.refined(steps, strict)?, Ok);
             if previous
                 .as_ref()
                 .is_some_and(|(old_alpha, old_source, old_image)| {
@@ -2940,18 +2810,8 @@ pub(super) fn algebraic_selected_fiber_pair_square_root_sum_sign(
     let sign = |polynomial: &BivariatePolynomial| {
         algebraic_selected_fiber_pair_predicate_sign(source, image, polynomial, policy)
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3086,18 +2946,8 @@ pub(super) fn algebraic_selected_fiber_pair_two_normal_sum_sign(
         rational: expression.candidate.clone(),
         radical: expression.product.clone(),
     };
-    let source_sign = match square_root_sign(&source_term, false)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let image_sign = match square_root_sign(&image_term, false)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let source_sign = decided!(square_root_sign(&source_term, false)?, Ok);
+    let image_sign = decided!(square_root_sign(&image_term, false)?, Ok);
     match (source_sign, image_sign) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3160,18 +3010,8 @@ pub(super) fn algebraic_selected_fiber_root_radical_sum_sign(
     let sign = |polynomial: &BivariatePolynomial| {
         algebraic_selected_fiber_root_predicate_sign(authority, polynomial, root, policy)
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3188,17 +3028,15 @@ pub(super) fn algebraic_selected_fiber_root_radical_sum_sign(
         ),
         &bivariate_multiply(&expression.radical, &expression.radical),
     );
-    let magnitude = match bivariate_reduce_axis(
-        &magnitude,
-        retained.polynomial(),
-        CurveResultantParameter::First,
-        policy,
-    )? {
-        Classification::Decided(magnitude) => magnitude,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let magnitude = decided!(
+        bivariate_reduce_axis(
+            &magnitude,
+            retained.polynomial(),
+            CurveResultantParameter::First,
+            policy,
+        )?,
+        Ok
+    );
     if magnitude == *incidence {
         return Ok(Classification::Decided(RealSign::Zero));
     }
@@ -3228,18 +3066,8 @@ pub(super) fn algebraic_selected_fiber_root_square_root_sum_sign(
     let sign = |polynomial: &BivariatePolynomial| {
         algebraic_selected_fiber_root_predicate_sign(authority, polynomial, root, policy)
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3256,17 +3084,15 @@ pub(super) fn algebraic_selected_fiber_root_square_root_sum_sign(
             radicand,
         ),
     );
-    let magnitude = match bivariate_reduce_axis(
-        &magnitude,
-        retained.polynomial(),
-        CurveResultantParameter::First,
-        policy,
-    )? {
-        Classification::Decided(magnitude) => magnitude,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let magnitude = decided!(
+        bivariate_reduce_axis(
+            &magnitude,
+            retained.polynomial(),
+            CurveResultantParameter::First,
+            policy,
+        )?,
+        Ok
+    );
     if magnitude == *incidence {
         return Ok(Classification::Decided(RealSign::Zero));
     }
@@ -3309,18 +3135,8 @@ pub(super) fn algebraic_selected_fiber_root_two_normal_sum_sign(
         rational: expression.candidate.clone(),
         radical: expression.product.clone(),
     };
-    let center_sign = match square_root_sign(&center_term)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidate_sign = match square_root_sign(&candidate_term)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let center_sign = decided!(square_root_sign(&center_term)?, Ok);
+    let candidate_sign = decided!(square_root_sign(&candidate_term)?, Ok);
     match (center_sign, candidate_sign) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3386,18 +3202,8 @@ pub(super) fn algebraic_cusp_correlated_radical_sum_sign(
             policy,
         )
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3416,17 +3222,15 @@ pub(super) fn algebraic_cusp_correlated_radical_sum_sign(
         &bivariate_multiply(&expression.radical, &expression.radical),
     );
     let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
-        match bivariate_reduce_axis(
-            &magnitude,
-            cusp.polynomial(),
-            CurveResultantParameter::First,
-            policy,
-        )? {
-            Classification::Decided(magnitude) => magnitude,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(
+            bivariate_reduce_axis(
+                &magnitude,
+                cusp.polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )?,
+            Ok
+        )
     } else {
         magnitude
     };
@@ -3454,18 +3258,8 @@ pub(super) fn algebraic_cusp_independent_radical_sum_sign(
     let sign = |polynomial: &BivariatePolynomial| {
         signed_bivariate_at_parameter_pair(polynomial, cusp_parameter, other_parameter, policy)
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -3484,17 +3278,15 @@ pub(super) fn algebraic_cusp_independent_radical_sum_sign(
         &bivariate_multiply(&expression.radical, &expression.radical),
     );
     let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
-        match bivariate_reduce_axis(
-            &magnitude,
-            cusp.polynomial(),
-            CurveResultantParameter::First,
-            policy,
-        )? {
-            Classification::Decided(magnitude) => magnitude,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(
+            bivariate_reduce_axis(
+                &magnitude,
+                cusp.polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )?,
+            Ok
+        )
     } else {
         magnitude
     };

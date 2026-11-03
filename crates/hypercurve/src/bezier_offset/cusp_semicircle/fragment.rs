@@ -20,13 +20,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             Classification::Decided(_) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let parameter = match self
-            .semicircle()
-            .parameter_at_certified_incident_point(point, policy)?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let parameter = decided!(
+            self.semicircle()
+                .parameter_at_certified_incident_point(point, policy)?,
+            Ok
+        );
         let Some(cusp) = parameter
             .as_algebraic_cusp()
             .filter(|_| !parameter.is_algebraic_cusp_complement())
@@ -108,12 +106,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             // terminal refinement bound.
             start_order.reverse()
         } else {
-            match end.order_to_real(&Real::one(), policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(end.order_to_real(&Real::one(), policy)?, Ok)
         };
         if end_order == std::cmp::Ordering::Greater {
             return Err(CurveError::InvalidBezierRange);
@@ -400,16 +393,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 ))))
             }
             BezierAlgebraicCuspSemicircleParameter2::Exact(parameter) => {
-                let (denominator, normal_scale, tangent_scale) = match self
-                    .data
-                    .semicircle
-                    .represented_frame_scales(parameter, policy)?
-                {
-                    Classification::Decided(scales) => scales,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let (denominator, normal_scale, tangent_scale) = decided!(
+                    self.data
+                        .semicircle
+                        .represented_frame_scales(parameter, policy)?,
+                    Ok
+                );
                 let radial_normal_scale =
                     &normal_scale - &denominator * self.data.semicircle.center_parallel_distance();
                 let support_normal_scale = &normal_scale - &perpendicular_scale * &tangent_scale;
@@ -492,18 +481,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 let tangent_distance = -(&support_tangent_scale / denominator)?;
                 if let Some(center_parameter) = frame.center_parameter.scalar() {
                     let parallel = frame.center_support.with_distance(normal_distance.clone());
-                    let point = match parallel.point_at_with_policy(center_parameter, policy)? {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let tangent = match parallel.source_tangent_at(center_parameter, policy)? {
-                        Classification::Decided(tangent) => tangent,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let point =
+                        decided!(parallel.point_at_with_policy(center_parameter, policy)?, Ok);
+                    let tangent =
+                        decided!(parallel.source_tangent_at(center_parameter, policy)?, Ok);
                     let speed = Real::dot2_refs([&tangent.0, &tangent.1], [&tangent.0, &tangent.1])
                         .sqrt()?;
                     return Ok(Classification::Decided(Some(CurvePoint2::from(
@@ -1196,12 +1177,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let dot = if first.first == second.first {
             RealSign::Positive
         } else {
-            match first.map.tangent_dot_sign(first.contact, policy)? {
-                Classification::Decided(dot) => dot,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(first.map.tangent_dot_sign(first.contact, policy)?, Ok)
         };
         Ok(Classification::Decided(Some((
             cross,
@@ -1404,14 +1380,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let circle_tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            point, support, policy,
-        )? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let circle_tangent = decided!(
+            BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                point, support, policy,
+            )?,
+            Ok
+        );
         if source_direction == RealSign::Zero {
             return Err(CurveError::Topology(
                 "retained parallel endpoint supplied a zero traversal direction".into(),
@@ -1430,27 +1404,23 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     Real::one(),
                     policy,
                 ));
-            match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-                anchor_point,
-                anchor_support,
-                policy,
-            )? {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                    anchor_point,
+                    anchor_support,
+                    policy,
+                )?,
+                Ok
+            )
         } else if parameter.is_retained_scalar() {
-            match BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
-                parallel.clone(),
-                parameter,
-                policy,
-            )? {
-                Classification::Decided(chord) => chord,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                BezierAlgebraicChord2::from_certified_retained_parallel_unit_tangent(
+                    parallel.clone(),
+                    parameter,
+                    policy,
+                )?,
+                Ok
+            )
         } else {
             return Ok(Classification::Decided(None));
         };
@@ -1890,12 +1860,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             _ => return fallback(),
         };
-        let sign = match sign {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sign = decided!(sign, Ok);
         Ok(Classification::Decided(Some(product_sign(
             sign,
             product_sign(circle_factor, source_direction),
@@ -1940,17 +1905,15 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 }
             };
         let source_parameter = source_fragment.endpoint_parameter(start_endpoint);
-        let intersections = match source_fragment.data.semicircle.parallel_intersections(
-            source_parallel,
-            source_range,
-            None,
-            policy,
-        )? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let intersections = decided!(
+            source_fragment.data.semicircle.parallel_intersections(
+                source_parallel,
+                source_range,
+                None,
+                policy,
+            )?,
+            Ok
+        );
         let mut retained_orientation = None;
         let mut retain_orientation = |orientation: CurveOverlapOrientation2| {
             let sign = match orientation {
@@ -1974,13 +1937,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 overlaps, ..
             } => {
                 for overlap in overlaps {
-                    let candidate =
-                        match overlap.other_parameter_for_cusp(source_parameter, policy)? {
-                            Classification::Decided(candidate) => candidate,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                    let candidate = decided!(
+                        overlap.other_parameter_for_cusp(source_parameter, policy)?,
+                        Ok
+                    );
                     let order = if let Some(selected_source_parameter) = selected_source_parameter {
                         candidate.cmp_by_refinement(selected_source_parameter, policy)?
                     } else {
@@ -2001,13 +1961,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             }
             BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped { overlaps, .. } => {
                 for overlap in overlaps {
-                    let candidate =
-                        match overlap.other_parameter_for_cusp(source_parameter, policy)? {
-                            Classification::Decided(candidate) => candidate,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                    let candidate = decided!(
+                        overlap.other_parameter_for_cusp(source_parameter, policy)?,
+                        Ok
+                    );
                     match candidate.same_value(&CurveParameter2::from(parameter.clone()), policy)? {
                         Classification::Decided(true) => {
                             retain_orientation(overlap.orientation())?;
@@ -2297,12 +2254,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center = match self.data.semicircle.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(self.data.semicircle.center_point_evidence(policy)?, Ok);
         let radial_projection = match algebraic_chord_points_linear_order(
             &point, &center, &vector.0, &vector.1, policy,
         )? {
@@ -2439,12 +2391,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center = match self.data.semicircle.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(self.data.semicircle.center_point_evidence(policy)?, Ok);
         let mut terminal_refined = false;
         for refinement_steps in [0, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
             let (
@@ -2779,17 +2726,15 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             1 => radial_delta.clone(),
             _ => unreachable!("cardinal radial component is closed"),
         };
-        let translated = match BezierAlgebraicChord2::translated_endpoint(
-            source_endpoint,
-            &scaled_component(radial_x),
-            &scaled_component(radial_y),
-            policy,
-        )? {
-            Classification::Decided(translated) => translated,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let translated = decided!(
+            BezierAlgebraicChord2::translated_endpoint(
+                source_endpoint,
+                &scaled_component(radial_x),
+                &scaled_component(radial_y),
+                policy,
+            )?,
+            Ok
+        );
         if let CurvePoint2(CurvePointData2::Algebraic(point)) = &translated {
             let source_start = start_endpoint != offset.data.reversed;
             let cache = if source_start {
@@ -2949,24 +2894,14 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         if self.data.semicircle.data.frame.rational().is_some() {
             return Ok(self.representative_point()?.map(CurvePoint2::from));
         }
-        let parameter = match self.representative_parameter()? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(self.representative_parameter()?, Ok);
         self.data.semicircle.point_evidence_at(&parameter, policy)
     }
 
     pub(crate) fn representative_point(
         &self,
     ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
-        let parameter = match self.representative_parameter()? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(self.representative_parameter()?, Ok);
         self.data.semicircle.point_at(&parameter, &self.data.policy)
     }
 
@@ -3330,12 +3265,10 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             );
             false
         } else {
-            match cusp_chamfer_parameter_uses_complement(source, &physical_half_angle, policy)? {
-                Classification::Decided(complementary) => complementary,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                cusp_chamfer_parameter_uses_complement(source, &physical_half_angle, policy)?,
+                Ok
+            )
         };
         let candidate = match self.endpoint_chord_setback_parameter(
             start_endpoint,
@@ -3365,18 +3298,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let compare = |boundary: &BezierAlgebraicCuspSemicircleParameter2| {
             parameter.cmp_by_refinement(boundary, policy)
         };
-        let start = match compare(&self.data.start)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match compare(&self.data.end)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(compare(&self.data.start)?, Ok);
+        let end = decided!(compare(&self.data.end)?, Ok);
         if start != std::cmp::Ordering::Greater || end != std::cmp::Ordering::Less {
             return Ok(Classification::Decided(None));
         }
@@ -3406,19 +3329,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         let represented = source.scalar_value(policy)?;
         let (parameter, point) = match represented {
             Classification::Decided(Some(source)) => {
-                let parameter =
-                    match cusp_chamfer_parameter_value(&source, &chart_half_angle, policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                let point = match target_semicircle.point_evidence_at(&parameter, policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let parameter = decided!(
+                    cusp_chamfer_parameter_value(&source, &chart_half_angle, policy)?,
+                    Ok
+                );
+                let point = decided!(target_semicircle.point_evidence_at(&parameter, policy)?, Ok);
                 (
                     BezierAlgebraicCuspSemicircleParameter2::Exact(parameter),
                     point,
@@ -4351,16 +4266,12 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<crate::classify::LineSide>>> {
         self.validate_policy(policy)?;
-        let residual = match self
-            .data
-            .semicircle
-            .retained_point_incidence_sign(point, policy)?
-        {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let residual = decided!(
+            self.data
+                .semicircle
+                .retained_point_incidence_sign(point, policy)?,
+            Ok
+        );
         if residual != RealSign::Zero {
             return Ok(Classification::Decided(None));
         }
@@ -4699,18 +4610,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleIncidentLocation2>> {
         self.validate_policy(policy)?;
-        let start = match parameter.cmp_by_refinement(&self.data.start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match parameter.cmp_by_refinement(&self.data.end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(parameter.cmp_by_refinement(&self.data.start, policy)?, Ok);
+        let end = decided!(parameter.cmp_by_refinement(&self.data.end, policy)?, Ok);
         Ok(Classification::Decided(
             self.incident_location_from_orders(start, end),
         ))
@@ -4783,18 +4684,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         self.validate_policy(policy)?;
-        let start = match parameter.cmp_by_refinement(&self.data.start, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match parameter.cmp_by_refinement(&self.data.end, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(parameter.cmp_by_refinement(&self.data.start, policy)?, Ok);
+        let end = decided!(parameter.cmp_by_refinement(&self.data.end, policy)?, Ok);
         Ok(Classification::Decided(match (start, end) {
             (std::cmp::Ordering::Equal, _) => tangent_cross_sign == RealSign::Negative,
             (_, std::cmp::Ordering::Equal) => tangent_cross_sign == RealSign::Positive,
@@ -4917,34 +4808,23 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center = match self.data.semicircle.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let residual = match self
-            .data
-            .semicircle
-            .retained_point_incidence_sign(&CurvePoint2::from(origin.clone()), policy)?
-        {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let line_side = match selected_circle_endpoint_chord_side(
-            &start,
-            &end,
-            &CurvePoint2::from(origin.clone()),
-            false,
-            policy,
-        )? {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(self.data.semicircle.center_point_evidence(policy)?, Ok);
+        let residual = decided!(
+            self.data
+                .semicircle
+                .retained_point_incidence_sign(&CurvePoint2::from(origin.clone()), policy)?,
+            Ok
+        );
+        let line_side = decided!(
+            selected_circle_endpoint_chord_side(
+                &start,
+                &end,
+                &CurvePoint2::from(origin.clone()),
+                false,
+                policy,
+            )?,
+            Ok
+        );
         let clockwise = self.data.semicircle.is_clockwise() ^ self.data.reversed;
         let point_on_fragment = residual == RealSign::Zero
             && if clockwise {
@@ -4990,18 +4870,16 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                     }
                 }
             }
-            let radial_order = match algebraic_chord_points_linear_order(
-                &CurvePoint2::from(origin.clone()),
-                &center,
-                direction_x,
-                direction_y,
-                policy,
-            )? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let radial_order = decided!(
+                algebraic_chord_points_linear_order(
+                    &CurvePoint2::from(origin.clone()),
+                    &center,
+                    direction_x,
+                    direction_y,
+                    policy,
+                )?,
+                Ok
+            );
             let mut traversal_cross_sign = match radial_order {
                 std::cmp::Ordering::Less => RealSign::Negative,
                 std::cmp::Ordering::Equal => RealSign::Zero,
@@ -5050,18 +4928,8 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             |first: &CurvePoint2, second: &CurvePoint2, x_factor: &Real, y_factor: &Real| {
                 algebraic_chord_points_linear_order(first, second, x_factor, y_factor, policy)
             };
-        let start_y = match order(&start, &exact_origin, &side_x, &side_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end_y = match order(&end, &exact_origin, &side_x, &side_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start_y = decided!(order(&start, &exact_origin, &side_x, &side_y)?, Ok);
+        let end_y = decided!(order(&end, &exact_origin, &side_x, &side_y)?, Ok);
         let inside_circle = residual == RealSign::Negative;
         let is_ccw = !clockwise;
         let point_is_left = if is_ccw {
@@ -5087,21 +4955,11 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                 (&end, &start, delta)
             }
         };
-        let lower_x = match order(lower, &exact_origin, direction_x, direction_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let lower_x = decided!(order(lower, &exact_origin, direction_x, direction_y)?, Ok);
         if lower_x != std::cmp::Ordering::Less {
             return Ok(Classification::Decided(-skipped_origin_delta));
         }
-        let upper_x = match order(upper, &exact_origin, direction_x, direction_y)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let upper_x = decided!(order(upper, &exact_origin, direction_x, direction_y)?, Ok);
         Ok(Classification::Decided(
             if upper_x == std::cmp::Ordering::Greater {
                 delta - skipped_origin_delta
@@ -5150,16 +5008,16 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
             "algebraic-circle-ray-winding",
             "rational-intersection-fallback",
         );
-        let (_, intersections, parameter_map) = match self
-            .data
-            .semicircle
-            .forward_ray_rational_contacts(origin, direction_x, direction_y, true, policy)?
-        {
-            Classification::Decided(result) => result,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (_, intersections, parameter_map) = decided!(
+            self.data.semicircle.forward_ray_rational_contacts(
+                origin,
+                direction_x,
+                direction_y,
+                true,
+                policy
+            )?,
+            Ok
+        );
         let contacts = match intersections {
             BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped { contacts, overlaps }
                 if overlaps.is_empty() =>
@@ -5191,12 +5049,7 @@ impl BezierAlgebraicCuspSemicircleFragment2 {
                         .expect("an interior ray contact retains its shared parameter map")
                         .contact_parameter(&contact)
                 });
-            let at_origin = match contact.other_parameter.same_value(&ray_start, policy)? {
-                Classification::Decided(at_origin) => at_origin,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let at_origin = decided!(contact.other_parameter.same_value(&ray_start, policy)?, Ok);
             if at_origin {
                 match self.contains_parameter(&parameter, true, true, policy)? {
                     Classification::Decided(true) => {

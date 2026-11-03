@@ -833,12 +833,7 @@ pub(super) fn embed_recursive_projective_point_sources<const N: usize>(
             represented.push(point);
             continue;
         }
-        let joined = match field.joined_with(&point_field, policy)? {
-            Classification::Decided(joined) => joined,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let joined = decided!(field.joined_with(&point_field, policy)?, Ok);
         if let Some((joined, embeddings)) = joined
             && let Some(lifted) = represented
                 .iter()
@@ -994,12 +989,7 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let point = match positive_recursive_projective_point(point)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(positive_recursive_projective_point(point)?, Ok);
 
     let cross = |first: &[Real; 3], second: &[Real; 3]| {
         [
@@ -1062,18 +1052,8 @@ pub(crate) fn quadratic_conic_parameter_at_incident_point(
         numerator,
         denominator,
     };
-    let zero_order = match parameter.order_to_real(&Real::zero(), &strict)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let one_order = match parameter.order_to_real(&Real::one(), &strict)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let zero_order = decided!(parameter.order_to_real(&Real::zero(), &strict)?, Ok);
+    let one_order = decided!(parameter.order_to_real(&Real::one(), &strict)?, Ok);
     if zero_order == std::cmp::Ordering::Less || one_order == std::cmp::Ordering::Greater {
         return Ok(Classification::Decided(None));
     }
@@ -1254,12 +1234,7 @@ pub(super) fn recursive_projective_evidence_points(
                 policy.permits_approximate_512(),
             );
         }
-        let joined = match field.joined_with(&point_field, policy)? {
-            Classification::Decided(joined) => joined,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let joined = decided!(field.joined_with(&point_field, policy)?, Ok);
         let Some((joined, embeddings)) = joined else {
             match recursive_merge_projective_point_fields(&field, &represented, &point, policy)? {
                 Classification::Decided(Some((joined, mut lifted, point))) => {
@@ -1307,10 +1282,10 @@ pub(super) fn positive_recursive_projective_evidence_points(
     };
     let mut positive = Vec::with_capacity(points.len());
     for (point, evidence) in points.into_iter().zip(evidence) {
-        let sign = match recursive_projective_evidence_denominator_sign(evidence, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let sign = decided!(
+            recursive_projective_evidence_denominator_sign(evidence, policy)?,
+            Ok
+        );
         positive.push(orient_recursive_projective_point_positive(point, sign)?);
     }
     Ok(Classification::Decided(Some(positive)))
@@ -2047,16 +2022,14 @@ pub(super) fn recursive_projective_polynomial_parameters_with_crossing(
         let mut retained = Vec::with_capacity(scalars.len());
         for (scalar, certified_bounds) in scalars {
             let has_certified_bounds = certified_bounds.is_some();
-            let parameter = match BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
-                scalar,
-                certified_bounds,
-                policy,
-            )? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameter = decided!(
+                BezierRecursiveProjectiveParameter2::new_with_certified_bounds(
+                    scalar,
+                    certified_bounds,
+                    policy,
+                )?,
+                Ok
+            );
             if !has_certified_bounds {
                 match domain.contains_parameter(
                     &CurveParameter2::from_recursive_projective(parameter.clone()),
@@ -2092,10 +2065,10 @@ pub(super) fn recursive_projective_polynomial_parameters_with_crossing(
     }
 
     if let SelectedThirdAxisDomain2::Finite(range) = domain {
-        let (_, bounds) = match CurveParameterDomain2::new(range, None).finite_envelope(policy)? {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let (_, bounds) = decided!(
+            CurveParameterDomain2::new(range, None).finite_envelope(policy)?,
+            Ok
+        );
         if let Some(candidates) =
             recursive_quadratic_polynomial_local_parameters(field, &coefficients, bounds, policy)?
         {
@@ -2224,12 +2197,7 @@ pub(crate) fn recursive_projective_point_rational_axis_parameters(
     let [point]: [BezierRecursiveQuadraticProjectivePoint2; 1] = points
         .try_into()
         .expect("a recursive endpoint projection retains one authored point");
-    let point = match positive_recursive_projective_point(point)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(positive_recursive_projective_point(point)?, Ok);
     let field = point.denominator.field();
     let source = source.homogeneous_power_basis()?;
     let source_axis = match axis {
@@ -2264,17 +2232,15 @@ pub(crate) fn recursive_projective_point_rational_axis_parameters(
     {
         weight.pop();
     }
-    let candidates = match recursive_projective_polynomial_parameters(
-        &field,
-        equation,
-        SelectedThirdAxisDomain2::Finite(range),
-        policy,
-    )? {
-        Classification::Decided(candidates) => candidates,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let candidates = decided!(
+        recursive_projective_polynomial_parameters(
+            &field,
+            equation,
+            SelectedThirdAxisDomain2::Finite(range),
+            policy,
+        )?,
+        Ok
+    );
     let mut retained = Vec::with_capacity(candidates.len());
     for candidate in candidates {
         let weight_sign = policy.strict_predicate_pass(|| {
@@ -2311,18 +2277,8 @@ pub(super) fn normalize_recursive_contact_frame(
             "a recursive contact frame crossed retained coefficient fields".into(),
         ));
     }
-    let point = match positive_recursive_projective_point(frame.point)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let center = match positive_recursive_projective_point(frame.center)? {
-        Classification::Decided(center) => center,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(positive_recursive_projective_point(frame.point)?, Ok);
+    let center = decided!(positive_recursive_projective_point(frame.center)?, Ok);
     Ok(Classification::Decided(
         BezierRecursiveQuadraticChordContactFrame2 {
             field: frame.field,
@@ -2540,16 +2496,14 @@ impl SelectedThirdAxisDomain2<'_> {
             }
             Self::AffineLine => {
                 let zero = Real::zero();
-                let mut decreasing = match polynomial.isolate_incident_ray_roots_with_policy(
-                    &zero,
-                    BezierParameterRayDirection2::Decreasing,
-                    policy,
-                )? {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let mut decreasing = decided!(
+                    polynomial.isolate_incident_ray_roots_with_policy(
+                        &zero,
+                        BezierParameterRayDirection2::Decreasing,
+                        policy,
+                    )?,
+                    Ok
+                );
                 decreasing.reverse();
                 match real_sign(&polynomial.evaluate(&zero), policy) {
                     Some(RealSign::Zero) => {
@@ -2560,16 +2514,14 @@ impl SelectedThirdAxisDomain2<'_> {
                         return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
                     }
                 }
-                let increasing = match polynomial.isolate_incident_ray_roots_with_policy(
-                    &zero,
-                    BezierParameterRayDirection2::Increasing,
-                    policy,
-                )? {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let increasing = decided!(
+                    polynomial.isolate_incident_ray_roots_with_policy(
+                        &zero,
+                        BezierParameterRayDirection2::Increasing,
+                        policy,
+                    )?,
+                    Ok
+                );
                 decreasing.extend(increasing);
                 Ok(Classification::Decided(decreasing))
             }
@@ -2578,14 +2530,10 @@ impl SelectedThirdAxisDomain2<'_> {
                 direction,
                 barrier,
             } => {
-                let parameters = match polynomial
-                    .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
-                {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let parameters = decided!(
+                    polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+                    Ok
+                );
                 retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)
             }
         }
@@ -2842,13 +2790,10 @@ pub(super) fn selected_trivariate_third_axis_parameters_bounded(
     } else {
         coefficients
     };
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let polynomial = decided!(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)?,
+        Ok
+    );
     if matches!(domain, SelectedThirdAxisDomain2::Finite(range) if range == &CurveParameterRange2::unit())
         && first_axis_is_independent
         && polynomial.degree() > MAX_DIRECT_SELECTED_PAIR_NORM_ISOLATION_DEGREE

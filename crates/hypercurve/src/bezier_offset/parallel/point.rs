@@ -1655,24 +1655,20 @@ impl BezierAnalyticParallelPoint2 {
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                match policy.strict_predicate_pass(|| {
-                    parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    policy.strict_predicate_pass(|| {
+                        parameter.promoted_bezier_parameter_complete(policy)
+                    })?,
+                    Ok
+                )
             }
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
-                match policy.strict_predicate_pass(|| {
-                    parameter.promoted_bezier_parameter_complete(policy)
-                })? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    policy.strict_predicate_pass(|| {
+                        parameter.promoted_bezier_parameter_complete(policy)
+                    })?,
+                    Ok
+                )
             }
         };
         match policy.strict_predicate_pass(|| {
@@ -1950,12 +1946,7 @@ impl BezierAnalyticParallelPoint2 {
                     "a recursive analytic point retained a zero source denominator".into(),
                 ));
             }
-            None => match positive_recursive_projective_point(point)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            None => decided!(positive_recursive_projective_point(point)?, Ok),
         };
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
@@ -2027,12 +2018,7 @@ impl BezierAnalyticParallelPoint2 {
                         // existing native or local-field proof above is not.
                         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                     }
-                    match parameter.promoted_bezier_parameter_complete(policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    decided!(parameter.promoted_bezier_parameter_complete(policy)?, Ok)
                 }
             }
             BezierAnalyticParallelPointParameter2::RecursiveProjective(parameter) => {
@@ -2047,12 +2033,7 @@ impl BezierAnalyticParallelPoint2 {
                     if policy.has_bounded_exact_predicate_budget() {
                         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                     }
-                    match parameter.promoted_bezier_parameter_complete(policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    decided!(parameter.promoted_bezier_parameter_complete(policy)?, Ok)
                 }
             }
         };
@@ -2163,12 +2144,7 @@ impl BezierAnalyticParallelPoint2 {
             };
             point
         };
-        let point = match positive_recursive_projective_point(point)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(positive_recursive_projective_point(point)?, Ok);
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -2536,23 +2512,17 @@ impl BezierAnalyticParallelPoint2 {
                             &frame_y,
                             &speed_squared,
                         );
-                        let x_image = match parameter
-                            .represented_polynomial_image_eliminant(&x_relation, policy)?
-                        {
-                            Classification::Decided(image) => image,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let x_image = decided!(
+                            parameter
+                                .represented_polynomial_image_eliminant(&x_relation, policy)?,
+                            Ok
+                        );
                         let y_image = if x_image.is_some() {
-                            match parameter
-                                .represented_polynomial_image_eliminant(&y_relation, policy)?
-                            {
-                                Classification::Decided(image) => image,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            }
+                            decided!(
+                                parameter
+                                    .represented_polynomial_image_eliminant(&y_relation, policy)?,
+                                Ok
+                            )
                         } else {
                             None
                         };
@@ -2610,12 +2580,7 @@ impl BezierAnalyticParallelPoint2 {
         let parameter = match &self.data.parameter {
             BezierAnalyticParallelPointParameter2::Bezier(parameter) => parameter.clone(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter) => {
-                match parameter.promoted_bezier_parameter_complete(policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(parameter.promoted_bezier_parameter_complete(policy)?, Ok)
             }
             BezierAnalyticParallelPointParameter2::RecursiveProjective(_) => {
                 unreachable!("recursive analytic points retain their projective field")
@@ -2770,12 +2735,7 @@ impl BezierAnalyticParallelPoint2 {
         else {
             return Ok(Classification::Decided(None));
         };
-        let source = match self.data.parallel.source_point_at(parameter, policy) {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(self.data.parallel.source_point_at(parameter, policy), Ok);
         if self.data.parallel.distance().zero_status() == ZeroKnowledge::Zero
             && self.data.tangent_distance.zero_status() == ZeroKnowledge::Zero
         {
@@ -3301,12 +3261,7 @@ impl BezierAnalyticParallelPoint2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
         let sign = |polynomial: &[Real]| self.parameter_polynomial_sign(polynomial, policy);
-        let speed_sign = match sign(speed_squared)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let speed_sign = decided!(sign(speed_squared)?, Ok);
         match speed_sign {
             RealSign::Positive => {}
             RealSign::Zero => {
@@ -3319,18 +3274,8 @@ impl BezierAnalyticParallelPoint2 {
             }
         }
 
-        let rational_sign = match sign(rational)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radical_sign = match sign(radical)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let rational_sign = decided!(sign(rational)?, Ok);
+        let radical_sign = decided!(sign(radical)?, Ok);
         match (rational_sign, radical_sign) {
             (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
                 return Ok(Classification::Decided(sign));

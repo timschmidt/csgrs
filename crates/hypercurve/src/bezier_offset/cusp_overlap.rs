@@ -67,12 +67,10 @@ pub(super) fn parallel_overlap_parameter_for_exact_cusp(
         ),
         &bivariate_multiply(&predicate.radical, &predicate.radical),
     );
-    let incidence = match reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)? {
-        Classification::Decided(incidence) => incidence,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let incidence = decided!(
+        reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)?,
+        Ok
+    );
     let cusp_root = parameter_representation(cusp_parameter, policy);
     let quotient = algebraic_selected_quotient_ring_fiber_projection_with_max_degree(
         &incidence,
@@ -164,10 +162,7 @@ pub(super) fn bivariate_sign_at_cusp_and_region_parameter(
     {
         return Ok(decided);
     }
-    let other = match promote_curve_region_bezier_parameter(other, policy)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let other = decided!(promote_curve_region_bezier_parameter(other, policy)?, Ok);
     match incidence {
         Some(incidence) => algebraic_selected_correlated_predicate_sign(
             incidence,
@@ -205,12 +200,10 @@ pub(super) fn rational_mapped_cusp_scalar_value(
         None => match contact.other_parameter.scalar() {
             Some(value) => BezierParameter2::Exact(value.clone()),
             None => {
-                match promote_curve_region_bezier_parameter(&contact.other_parameter, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(
+                    promote_curve_region_bezier_parameter(&contact.other_parameter, policy)?,
+                    Ok
+                )
             }
         },
     };
@@ -359,12 +352,10 @@ pub(super) fn mapped_cusp_scalar_value_from_incidence(
     let BezierParameter2::Algebraic(cusp_parameter) = cusp_parameter else {
         return Ok(Classification::Decided(None));
     };
-    let incidence = match reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)? {
-        Classification::Decided(incidence) => incidence,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let incidence = decided!(
+        reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)?,
+        Ok
+    );
     let candidates = match algebraic_selected_reduced_fiber_parameters(
         &incidence,
         cusp_parameter,
@@ -497,24 +488,9 @@ pub(super) fn algebraic_cusp_independent_two_radical_sum_is_zero(
     let sign = |polynomial: &BivariatePolynomial| {
         signed_bivariate_at_parameter_pair(polynomial, cusp_parameter, other_parameter, exact)
     };
-    let rational_sign = match sign(rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let first_sign = match sign(first_radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let second_sign = match sign(second_radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational_sign = decided!(sign(rational)?, Ok);
+    let first_sign = decided!(sign(first_radical)?, Ok);
+    let second_sign = decided!(sign(second_radical)?, Ok);
     for radicand in [first_radicand, second_radicand] {
         match sign(radicand)? {
             Classification::Decided(RealSign::Positive) => {}
@@ -1008,12 +984,7 @@ where
 {
     let mut retained = None;
     for map_parameter in candidates {
-        let sign = match predicate_sign(&map_parameter)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sign = decided!(predicate_sign(&map_parameter)?, Ok);
         if sign != RealSign::Zero {
             continue;
         }
@@ -1026,14 +997,11 @@ where
         } else {
             map_parameter
         };
-        let mut in_range = match CurveParameterDomain2::new(range, None)
-            .contains_finite_parameter(&candidate, policy)?
-        {
-            Classification::Decided(in_range) => in_range,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mut in_range = decided!(
+            CurveParameterDomain2::new(range, None)
+                .contains_finite_parameter(&candidate, policy)?,
+            Ok
+        );
         if in_range && !include_boundaries {
             for endpoint in [range.start(), range.end()] {
                 match candidate.same_value(endpoint, policy)? {
@@ -1095,14 +1063,8 @@ pub(crate) fn overlap_parameter_is_in_range(
         }
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let start = match parameter.cmp_by_refinement(&start_parameter, policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end = match parameter.cmp_by_refinement(&end_parameter, policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let start = decided!(parameter.cmp_by_refinement(&start_parameter, policy)?, Ok);
+    let end = decided!(parameter.cmp_by_refinement(&end_parameter, policy)?, Ok);
     Ok(Classification::Decided(match orientation {
         std::cmp::Ordering::Less => {
             (start.is_gt() || (include_boundaries && start.is_eq()))
@@ -1123,14 +1085,8 @@ pub(super) fn bezier_parameter_is_in_curve_region_range(
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
     let parameter = CurveParameter2::from(parameter.clone());
-    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end = match parameter.cmp_by_refinement(range.end(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let start = decided!(parameter.cmp_by_refinement(range.start(), policy)?, Ok);
+    let end = decided!(parameter.cmp_by_refinement(range.end(), policy)?, Ok);
     Ok(Classification::Decided(
         (start.is_gt() || (include_boundaries && start.is_eq()))
             && (end.is_lt() || (include_boundaries && end.is_eq())),
@@ -1179,12 +1135,7 @@ pub(super) fn mapped_parameters_for_cusp_endpoint(
         if !after_start || !before_end {
             continue;
         }
-        let candidate = match overlap.other_parameter_for_cusp(&parameter, policy)? {
-            Classification::Decided(candidate) => candidate,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidate = decided!(overlap.other_parameter_for_cusp(&parameter, policy)?, Ok);
         let mut duplicate = false;
         for existing in &candidates {
             match existing.same_value(&candidate, policy)? {

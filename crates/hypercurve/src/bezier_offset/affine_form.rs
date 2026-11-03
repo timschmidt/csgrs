@@ -159,12 +159,7 @@ pub(crate) fn point_affine_form_parameter(
         }
         CurvePointData2::Algebraic(point) => {
             if let Some((x, y, w)) = point.retained_coordinate_polynomials() {
-                let parameter = match point.source_parameter(policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let parameter = decided!(point.source_parameter(policy)?, Ok);
                 if let Some(result) = affine(x, y, w, &parameter.into())? {
                     return Ok(result);
                 }
@@ -402,10 +397,10 @@ pub(crate) fn point_affine_form_bounds(
     if a.zero_status() == ZeroKnowledge::Zero && b.zero_status() == ZeroKnowledge::Zero {
         return Ok(Classification::Decided((c.clone(), c.clone())));
     }
-    let bounds = match algebraic_chord_endpoint_bounds_refined(source, 0, policy) {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let bounds = decided!(
+        algebraic_chord_endpoint_bounds_refined(source, 0, policy),
+        Ok
+    );
     let exact =
         |value: &Real| RealInterval::from_values([value.clone()]).expect("one scalar interval");
     let interval = real_interval_from_axis(&bounds, Axis2::X)

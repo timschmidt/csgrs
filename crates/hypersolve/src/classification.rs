@@ -3,6 +3,52 @@
 //! Branching code consults a value only after its sign or order relation is
 //! decided; an undecided step keeps the reason it could not be decided.
 
+/// Unwraps a decided [`Classification`], or returns its uncertainty, unchanged,
+/// from the enclosing function.
+///
+/// - `decided!(value)` returns `Classification::Uncertain(reason)`;
+/// - `decided!(value, Ok)` returns `Ok(Classification::Uncertain(reason))`.
+///
+/// This is an exact pass-through and expands to the same `match` written by
+/// hand. The uncertainty reason is neither mapped nor inspected, and nothing
+/// runs between evaluating `value` and returning. An arm that does any of
+/// these, such as one that treats `BudgetExhausted` specially, stays a
+/// hand-written `match`.
+///
+/// ```
+/// use hypersolve::classification::{Classification, UncertaintyReason};
+///
+/// fn halved(value: Classification<i32>) -> Result<Classification<i32>, ()> {
+///     let value = hypersolve::decided!(value, Ok);
+///     Ok(Classification::Decided(value / 2))
+/// }
+///
+/// assert_eq!(halved(Classification::Decided(8)), Ok(Classification::Decided(4)));
+/// assert_eq!(
+///     halved(Classification::Uncertain(UncertaintyReason::RealSign)),
+///     Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
+/// );
+/// ```
+#[macro_export]
+macro_rules! decided {
+    ($classification:expr $(,)?) => {
+        match $classification {
+            $crate::classification::Classification::Decided(value) => value,
+            $crate::classification::Classification::Uncertain(reason) => {
+                return $crate::classification::Classification::Uncertain(reason);
+            }
+        }
+    };
+    ($classification:expr, $wrap:path $(,)?) => {
+        match $classification {
+            $crate::classification::Classification::Decided(value) => value,
+            $crate::classification::Classification::Uncertain(reason) => {
+                return $wrap($crate::classification::Classification::Uncertain(reason));
+            }
+        }
+    };
+}
+
 /// Result of a classification step.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Classification<T> {

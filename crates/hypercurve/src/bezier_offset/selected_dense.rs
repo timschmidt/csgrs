@@ -289,12 +289,10 @@ pub(super) fn selected_dense_last_axis_univariate(
     sources: &[AlgebraicRootRepresentation],
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierSelectedDenseLastAxisUnivariate2>> {
-    let projection = match selected_dense_last_axis_projection(polynomial, sources)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let projection = decided!(
+        selected_dense_last_axis_projection(polynomial, sources)?,
+        Ok
+    );
     let mut coefficients = projection
         .coefficients()
         .iter()
@@ -397,13 +395,10 @@ pub(super) fn selected_dense_last_axis_univariate(
         Some(coefficients) => (coefficients, true),
         None => (coefficients, false),
     };
-    let polynomial =
-        match BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let polynomial = decided!(
+        BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, policy)?,
+        Ok
+    );
     Ok(Classification::Decided(
         BezierSelectedDenseLastAxisUnivariate2::Polynomial {
             polynomial,
@@ -446,14 +441,10 @@ pub(super) fn isolate_selected_dense_last_axis_univariate(
                 barrier,
             },
         ) => {
-            let parameters = match polynomial
-                .isolate_square_free_incident_ray_roots(anchor, direction, policy)?
-            {
-                Classification::Decided(parameters) => parameters,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameters = decided!(
+                polynomial.isolate_square_free_incident_ray_roots(anchor, direction, policy)?,
+                Ok
+            );
             retain_parameters_before_incident_barrier(parameters, barrier, direction, policy)?
         }
         (true, SelectedThirdAxisDomain2::Finite(range)) => {
@@ -537,12 +528,10 @@ pub(super) fn selected_dense_last_axis_parameters(
     domain: SelectedThirdAxisDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let univariate = match selected_dense_last_axis_univariate(polynomial, sources, policy)? {
-        Classification::Decided(univariate) => univariate,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let univariate = decided!(
+        selected_dense_last_axis_univariate(polynomial, sources, policy)?,
+        Ok
+    );
     isolate_selected_dense_last_axis_univariate(&univariate, domain, policy)
 }
 
@@ -554,12 +543,10 @@ pub(super) fn selected_dense_last_axis_parameters_with_incident_domain(
     domain: CurveParameterDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-    let univariate = match selected_dense_last_axis_univariate(polynomial, sources, policy)? {
-        Classification::Decided(univariate) => univariate,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let univariate = decided!(
+        selected_dense_last_axis_univariate(polynomial, sources, policy)?,
+        Ok
+    );
     selected_dense_last_axis_univariate_parameters_with_incident_domain(&univariate, domain, policy)
 }
 
@@ -597,12 +584,7 @@ pub(super) fn selected_dense_last_axis_active_degree(
         let Some(coefficient) = dense_last_axis_coefficient(polynomial, target_power) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let value = match represented_dense_value_refined(&coefficient, sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let value = decided!(represented_dense_value_refined(&coefficient, sources), Ok);
         match represented_policy_sign(&value, &strict) {
             Classification::Decided(RealSign::Zero) => {}
             Classification::Decided(RealSign::Positive | RealSign::Negative) => {

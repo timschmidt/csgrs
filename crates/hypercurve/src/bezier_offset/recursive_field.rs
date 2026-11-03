@@ -22,18 +22,8 @@ impl BezierRecursiveCircleFrame2 {
         let [center, support_center]: [BezierRecursiveQuadraticProjectivePoint2; 2] = points
             .try_into()
             .expect("a circle frame retains its center and radial anchor");
-        let center = match positive_recursive_projective_point(center)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let support_center = match positive_recursive_projective_point(support_center)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(positive_recursive_projective_point(center)?, Ok);
+        let support_center = decided!(positive_recursive_projective_point(support_center)?, Ok);
         Ok(Classification::Decided(Some(Self {
             field: center.denominator.field(),
             center,
@@ -324,16 +314,14 @@ impl BezierRecursiveCircleTargetSystem2 {
         target_parameter: &CurveParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleContactLocation2>>> {
-        let selected = match self.expression_sign_at_region_parameter(
-            &self.selected_half_plane,
-            target_parameter,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let selected = decided!(
+            self.expression_sign_at_region_parameter(
+                &self.selected_half_plane,
+                target_parameter,
+                policy,
+            )?,
+            Ok
+        );
         Ok(match selected {
             RealSign::Negative => Classification::Decided(None),
             RealSign::Positive => Classification::Decided(Some(
@@ -439,16 +427,10 @@ impl BezierRecursiveCircleTargetSystem2 {
             let univariate = if let Some(univariate) = self.incidence_univariate.get() {
                 univariate
             } else {
-                let univariate = match selected_dense_last_axis_univariate(
-                    projection,
-                    &self.base.sources,
-                    policy,
-                )? {
-                    Classification::Decided(univariate) => univariate,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let univariate = decided!(
+                    selected_dense_last_axis_univariate(projection, &self.base.sources, policy,)?,
+                    Ok
+                );
                 let _ = self.incidence_univariate.set(univariate);
                 self.incidence_univariate
                     .get()
@@ -465,16 +447,10 @@ impl BezierRecursiveCircleTargetSystem2 {
         evaluation: &BezierRecursiveQuadraticParallelEvaluation2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleContactLocation2>>> {
-        let selected = match self.expression_sign_with_evaluation(
-            &self.selected_half_plane,
-            evaluation,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let selected = decided!(
+            self.expression_sign_with_evaluation(&self.selected_half_plane, evaluation, policy,)?,
+            Ok
+        );
         Ok(match selected {
             RealSign::Negative => Classification::Decided(None),
             RealSign::Positive => Classification::Decided(Some(
@@ -1057,14 +1033,10 @@ impl BezierRecursiveMonotoneParameter2 {
         {
             return Ok(Classification::Decided(std::cmp::Ordering::Greater));
         }
-        let sign = match policy
-            .strict_predicate_pass(|| self.system.incidence_sign_at_real(value, policy))?
-        {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sign = decided!(
+            policy.strict_predicate_pass(|| self.system.incidence_sign_at_real(value, policy))?,
+            Ok
+        );
         if sign == RealSign::Zero {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
@@ -1229,12 +1201,7 @@ impl BezierRecursiveMonotoneParameter2 {
             policy.observe_approximate_512();
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        let parameter = match self.promoted_source_parameter(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(self.promoted_source_parameter(policy)?, Ok);
         signed_coefficients_at_parameter(coefficients, &parameter, policy)
     }
 
@@ -1301,12 +1268,7 @@ impl BezierRecursiveMonotoneParameter2 {
             policy.observe_approximate_512();
             return Ok(Classification::Decided(RealSign::Zero));
         }
-        let parameter = match self.promoted_mapped_parameter(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(self.promoted_mapped_parameter(policy)?, Ok);
         signed_coefficients_at_parameter(coefficients, &parameter, policy)
     }
 
@@ -1330,12 +1292,7 @@ impl BezierRecursiveMonotoneParameter2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParameter2>> {
-        let source = match self.promoted_source_parameter(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(self.promoted_source_parameter(policy)?, Ok);
         match source {
             BezierParameter2::Exact(source) => Ok(Classification::Decided(
                 BezierParameter2::Exact(self.map_value(&source)?),
@@ -1496,18 +1453,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         let strict = policy.strict_counterpart();
         let mut lower = parameter.data.lower.clone();
         let mut upper = parameter.data.upper.clone();
-        let lower_sign = match parameter.polynomial_endpoint_sign(0, &strict)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let upper_sign = match parameter.polynomial_endpoint_sign(1, &strict)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let lower_sign = decided!(parameter.polynomial_endpoint_sign(0, &strict)?, Ok);
+        let upper_sign = decided!(parameter.polynomial_endpoint_sign(1, &strict)?, Ok);
         if lower_sign == RealSign::Zero {
             upper = lower.clone();
         } else if upper_sign == RealSign::Zero {
@@ -1531,12 +1478,8 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                     UncertaintyReason::BudgetExhausted,
                 ));
             }
-            let (midpoint, midpoint_sign) = match self.bracket_split(&lower, &upper, &strict)? {
-                Classification::Decided(split) => split,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let (midpoint, midpoint_sign) =
+                decided!(self.bracket_split(&lower, &upper, &strict)?, Ok);
             if midpoint_sign == RealSign::Zero {
                 lower = midpoint.clone();
                 upper = midpoint;
@@ -1736,16 +1679,10 @@ impl BezierRecursivePolynomialParameterAuthority2 {
             if policy.has_bounded_exact_predicate_budget() && refinement_steps > 8 {
                 break;
             }
-            refined = match self.refined_parameter(
-                &refined,
-                refinement_steps,
-                &policy.strict_counterpart(),
-            )? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            refined = decided!(
+                self.refined_parameter(&refined, refinement_steps, &policy.strict_counterpart(),)?,
+                Ok
+            );
             let target = RealInterval {
                 lower: refined.data.lower.clone(),
                 upper: refined.data.upper.clone(),
@@ -1844,12 +1781,7 @@ impl BezierRecursivePolynomialParameterAuthority2 {
         // The original isolator already selects this root. Query-driven
         // tighter bounds add close-order predicates to global replay without
         // strengthening that identity, so retain its original selection domain.
-        let promoted = match self.promoted_parameter(parameter, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let promoted = decided!(self.promoted_parameter(parameter, policy)?, Ok);
         let base = self.field.base_and_extension_path().0;
         recursive_quadratic_target_embedding(
             &self.field,
@@ -1890,16 +1822,14 @@ impl BezierRecursivePolynomialParameterAuthority2 {
                 "a recursive local promotion changed its retained base".into(),
             ));
         }
-        let univariate = match selected_dense_last_axis_univariate(
-            &projection,
-            &base.sources,
-            &policy.strict_counterpart(),
-        )? {
-            Classification::Decided(univariate) => univariate,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let univariate = decided!(
+            selected_dense_last_axis_univariate(
+                &projection,
+                &base.sources,
+                &policy.strict_counterpart(),
+            )?,
+            Ok
+        );
         // The eliminant contains every root of this local relation. When it
         // has exactly one root inside the selected bracket, that root is this
         // parameter. A local monotonicity or Bernstein certificate on the
@@ -3968,12 +3898,7 @@ impl BezierRecursiveProjectiveParameter2 {
         let refinement_steps = refinement_steps.max(self.data.refinement_steps);
         if let Some(authority) = self.monotone_authority() {
             let additional = refinement_steps.saturating_sub(self.data.refinement_steps);
-            let authority = match authority.refined_by(additional, policy)? {
-                Classification::Decided(authority) => authority,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let authority = decided!(authority.refined_by(additional, policy)?, Ok);
             let Some((lower, upper)) = authority.mapped_bounds()? else {
                 return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
             };
@@ -4070,12 +3995,7 @@ impl BezierRecursiveProjectiveParameter2 {
                 if sign == RealSign::Zero {
                     return Ok(Classification::Decided(std::cmp::Ordering::Equal));
                 }
-                let lower_sign = match self.polynomial_endpoint_sign(0, policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let lower_sign = decided!(self.polynomial_endpoint_sign(0, policy)?, Ok);
                 Ok(Classification::Decided(if sign == lower_sign {
                     std::cmp::Ordering::Greater
                 } else {
@@ -4125,18 +4045,8 @@ impl BezierRecursiveProjectiveParameter2 {
             return Ok(Classification::Decided(std::cmp::Ordering::Equal));
         }
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32] {
-            let first = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match other.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let first = decided!(self.refined(refinement_steps, policy)?, Ok);
+            let second = decided!(other.refined(refinement_steps, policy)?, Ok);
             if compare_reals(&first.data.upper, &second.data.lower, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Less)
             {
@@ -4449,18 +4359,8 @@ impl BezierRecursiveProjectiveParameter2 {
             }
         }
         for refinement_steps in [0_usize, 2, 4, 8, 16, 32, 64, 128, 256, 512] {
-            let first = match self.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let second = match other.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let first = decided!(self.refined(refinement_steps, policy)?, Ok);
+            let second = decided!(other.refined(refinement_steps, policy)?, Ok);
             if compare_reals(&first.data.upper, &second.data.lower, &CurveContext::STRICT)
                 == Some(std::cmp::Ordering::Less)
             {
@@ -4472,22 +4372,14 @@ impl BezierRecursiveProjectiveParameter2 {
                 return Ok(Classification::Decided(std::cmp::Ordering::Greater));
             }
         }
-        let first = match policy
-            .strict_predicate_pass(|| self.promoted_bezier_parameter_complete(policy))?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match policy
-            .strict_predicate_pass(|| other.promoted_bezier_parameter_complete(policy))?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(
+            policy.strict_predicate_pass(|| self.promoted_bezier_parameter_complete(policy))?,
+            Ok
+        );
+        let second = decided!(
+            policy.strict_predicate_pass(|| other.promoted_bezier_parameter_complete(policy))?,
+            Ok
+        );
         policy.strict_predicate_pass(|| first.cmp_by_refinement_with_policy(&second, policy))
     }
 
@@ -4741,12 +4633,7 @@ impl BezierRecursiveProjectiveParameter2 {
         let mut is_other_root = false;
         let mut refinement_steps = 0_usize;
         loop {
-            selected = match selected.refined(refinement_steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            selected = decided!(selected.refined(refinement_steps, policy)?, Ok);
             let refined_native = native_refinement.refine_to(refinement_steps);
             let BezierParameter2::Algebraic(other) = refined_native else {
                 return selected.order_to_real(
@@ -4946,16 +4833,14 @@ impl BezierRecursiveProjectiveParameter2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         if let Some(authority) = self.monotone_authority() {
-            let authority = match authority.composed_map(
-                &[offset.clone(), scale.clone()],
-                &[Real::one(), Real::zero()],
-                policy,
-            )? {
-                Classification::Decided(authority) => authority,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let authority = decided!(
+                authority.composed_map(
+                    &[offset.clone(), scale.clone()],
+                    &[Real::one(), Real::zero()],
+                    policy,
+                )?,
+                Ok
+            );
             return Self::from_mapped_monotone(authority, policy);
         }
         if self.polynomial_authority().is_some() {
@@ -5016,12 +4901,7 @@ impl BezierRecursiveProjectiveParameter2 {
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         }
         if let Some(authority) = self.monotone_authority() {
-            let authority = match authority.composed_map(numerator, denominator, policy)? {
-                Classification::Decided(authority) => authority,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let authority = decided!(authority.composed_map(numerator, denominator, policy)?, Ok);
             return Self::from_mapped_monotone(authority, policy);
         }
         if self.polynomial_authority().is_some() {
@@ -5038,14 +4918,10 @@ impl BezierRecursiveProjectiveParameter2 {
             }
             let mut refinement_steps = self.data.refinement_steps;
             let (refined, first, second) = loop {
-                let refined = match policy
-                    .strict_predicate_pass(|| self.refined(refinement_steps, policy))?
-                {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let refined = decided!(
+                    policy.strict_predicate_pass(|| self.refined(refinement_steps, policy))?,
+                    Ok
+                );
                 let map = |source: &Real| -> CurveResult<Option<(RealSign, Real)>> {
                     let mapped_denominator = &denominator[0] + &denominator[1] * source;
                     let Some(sign @ (RealSign::Positive | RealSign::Negative)) =
@@ -5226,12 +5102,7 @@ impl BezierRecursiveProjectiveParameter2 {
         refinement_steps: usize,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(Real, Real, Real)>> {
-        let refined = match self.refined(refinement_steps, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let refined = decided!(self.refined(refinement_steps, policy)?, Ok);
         let lower = refined.data.lower.clone();
         let upper = refined.data.upper.clone();
         let representative = ((&lower + &upper) / Real::from(2_u8))?;
@@ -5556,18 +5427,8 @@ impl BezierRecursiveQuadraticProjectivePoint2 {
             }
             .represented_value(policy)
         };
-        let x = match coordinate(&self.x)? {
-            Classification::Decided(x) => x,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let y = match coordinate(&self.y)? {
-            Classification::Decided(y) => y,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let x = decided!(coordinate(&self.x)?, Ok);
+        let y = decided!(coordinate(&self.y)?, Ok);
         Ok(Classification::Decided([x, y]))
     }
 

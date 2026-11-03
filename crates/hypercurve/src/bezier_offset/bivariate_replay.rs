@@ -356,10 +356,7 @@ pub(super) fn parallel_pair_selected_branch(
         Classification::Decided(sign) => sign,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let tangent_cross = match sign(&system.tangent_cross)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let tangent_cross = decided!(sign(&system.tangent_cross)?, Ok);
     // Both products vanish exactly when at least one source tangent is zero.
     // A nonzero displacement has no selected normal there. Read the dot sign
     // only on this branch, and retain it for the later norm decision.
@@ -372,14 +369,8 @@ pub(super) fn parallel_pair_selected_branch(
     } else {
         None
     };
-    let first_projection = match sign(&system.first_projection)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let second_projection = match sign(&system.second_projection)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let first_projection = decided!(sign(&system.first_projection)?, Ok);
+    let second_projection = decided!(sign(&system.second_projection)?, Ok);
     if tangent_cross == RealSign::Zero {
         if first_projection != RealSign::Zero || second_projection != RealSign::Zero {
             return Err(CurveError::Topology(
@@ -411,15 +402,9 @@ pub(super) fn parallel_pair_selected_branch(
 
     let tangent_dot = match parallel_tangent_dot {
         Some(sign) => sign,
-        None => match sign(&system.tangent_dot)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        },
+        None => decided!(sign(&system.tangent_dot)?, Ok),
     };
-    let norm_residual = match sign(&system.norm_residual)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let norm_residual = decided!(sign(&system.norm_residual)?, Ok);
     if tangent_dot == RealSign::Zero {
         if norm_residual != RealSign::Zero {
             return Ok(Classification::Decided(false));
@@ -452,10 +437,7 @@ pub(super) fn parallel_pair_selected_branch(
     if selected_normal_sign == RealSign::Zero {
         return Ok(Classification::Decided(true));
     }
-    let first_normal_projection = match sign(&system.first_normal_projection)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let first_normal_projection = decided!(sign(&system.first_normal_projection)?, Ok);
     if first_normal_projection == RealSign::Zero {
         return Err(CurveError::Topology(
             "nonzero tangent-parallel normal separation replayed as zero".to_owned(),
@@ -975,26 +957,21 @@ pub(super) fn signed_bivariate_on_parameter_lift(
 ) -> CurveResult<Classification<RealSign>> {
     let (cleared, lifted_degree) =
         bivariate_on_parameter_lift_cleared(polynomial, retained_axis, map);
-    let cleared_sign = match signed_coefficients_at_parameter(&cleared, retained_parameter, policy)?
-    {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let cleared_sign = decided!(
+        signed_coefficients_at_parameter(&cleared, retained_parameter, policy)?,
+        Ok
+    );
     if cleared_sign == RealSign::Zero || lifted_degree.is_multiple_of(2) {
         return Ok(Classification::Decided(cleared_sign));
     }
-    let denominator_sign = match signed_coefficients_at_parameter(
-        &map.denominator_coefficients,
-        retained_parameter,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let denominator_sign = decided!(
+        signed_coefficients_at_parameter(
+            &map.denominator_coefficients,
+            retained_parameter,
+            policy,
+        )?,
+        Ok
+    );
     if denominator_sign == RealSign::Zero {
         return Err(CurveError::Topology(
             "selected bivariate parameter lift denominator vanished".to_owned(),
@@ -1325,11 +1302,10 @@ pub(super) fn bivariate_reduce_parameter_polynomials(
     second: &BezierParameterPolynomial,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BivariatePolynomial>> {
-    let first_reduced =
-        match bivariate_reduce_axis(polynomial, first, CurveResultantParameter::First, policy)? {
-            Classification::Decided(reduced) => reduced,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let first_reduced = decided!(
+        bivariate_reduce_axis(polynomial, first, CurveResultantParameter::First, policy)?,
+        Ok
+    );
     bivariate_reduce_axis(
         &first_reduced,
         second,
@@ -1474,10 +1450,10 @@ pub(super) fn polynomial_roots_touch_only_range_endpoints(
         Classification::Decided(None) => return Ok(Classification::Decided(false)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let roots = match CurveParameterDomain2::new(range, None).finite_roots(&polynomial, policy)? {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let roots = decided!(
+        CurveParameterDomain2::new(range, None).finite_roots(&polynomial, policy)?,
+        Ok
+    );
     if roots.is_empty() {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }

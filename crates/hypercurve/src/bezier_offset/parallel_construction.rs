@@ -169,10 +169,7 @@ impl BezierParallelSingularityAnalysis2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveParameterRange2>>> {
-        let [lower, upper] = match self.range.ordered_endpoints(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let [lower, upper] = decided!(self.range.ordered_endpoints(policy)?, Ok);
         let mut sources = self.source_singularities.iter().peekable();
         let mut cusps = self.parallel_cusps.iter().peekable();
         let mut start = lower.clone();
@@ -522,13 +519,11 @@ impl QuadraticBezier2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
-        let analysis = match self
-            .parallel_left(distance.clone())?
-            .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?
-        {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let analysis = decided!(
+            self.parallel_left(distance.clone())?
+                .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+            Ok
+        );
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
@@ -634,13 +629,11 @@ impl CubicBezier2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelPath2>> {
-        let analysis = match self
-            .parallel_left(distance.clone())?
-            .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?
-        {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let analysis = decided!(
+            self.parallel_left(distance.clone())?
+                .singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+            Ok
+        );
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
@@ -758,15 +751,11 @@ impl CurvePath2 {
                     exact_source_curve_count += 1;
                 }
                 Some(CurveGeometry2::CircularArc(arc)) => {
-                    let offset = match arc
-                        .offset_left_with_policy(distance.clone(), policy)
-                        .map_err(|cause| parallel_path_error(source, cause))?
-                    {
-                        Classification::Decided(offset) => offset,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let offset = decided!(
+                        arc.offset_left_with_policy(distance.clone(), policy)
+                            .map_err(|cause| parallel_path_error(source, cause))?,
+                        Ok
+                    );
                     output.push(Curve2::from(offset));
                     exact_source_curve_count += 1;
                 }
@@ -897,11 +886,10 @@ pub(super) fn append_exact_rational_parallel(
     policy: &CurveContext,
     output: &mut Vec<Curve2>,
 ) -> CurveResult<Classification<()>> {
-    let singularities =
-        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
-            Classification::Decided(singularities) => singularities,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let singularities = decided!(
+        parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+        Ok
+    );
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
@@ -927,11 +915,10 @@ pub(super) fn append_polynomial_parallel<F>(
 where
     F: FnOnce() -> CurveResult<Classification<CertifiedBezierParallelPath2>>,
 {
-    let singularities =
-        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
-            Classification::Decided(singularities) => singularities,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let singularities = decided!(
+        parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+        Ok
+    );
     if !singularities.source_is_regular() || !singularities.parallel_is_cusp_free() {
         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
     }
@@ -943,10 +930,7 @@ where
         Classification::Decided(None) => {}
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
-    let fitted = match approximate()? {
-        Classification::Decided(fitted) => fitted,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let fitted = decided!(approximate()?, Ok);
     *verification_leaf_count += fitted.verification_leaf_count();
     output.extend(
         fitted
@@ -1422,11 +1406,10 @@ pub(super) fn certify_ph_speed_on_range(
         Classification::Decided(None) => return Ok(Classification::Decided(None)),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let speed_roots =
-        match CurveParameterDomain2::new(range, None).finite_roots(&speed_polynomial, policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let speed_roots = decided!(
+        CurveParameterDomain2::new(range, None).finite_roots(&speed_polynomial, policy)?,
+        Ok
+    );
     if !speed_roots.is_empty() {
         return Ok(Classification::Decided(None));
     }

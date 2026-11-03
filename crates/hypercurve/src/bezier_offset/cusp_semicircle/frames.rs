@@ -115,12 +115,10 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let mut center = match pair_map.represented_selected_radial_contact_point(pair_contact)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mut center = decided!(
+            pair_map.represented_selected_radial_contact_point(pair_contact)?,
+            Ok
+        );
         // Keep the unscaled retained radial through a similarity. Scaling its
         // coordinates first would form two scaled projective eliminants and
         // then a second tensor image, discarding the cheap shared-frame form.
@@ -130,18 +128,16 @@ impl BezierAlgebraicCuspSemicircle2 {
         } else {
             (Real::one() / &frame.normal_denominator)?
         };
-        let mut unit_radial = match pair_map.represented_selected_radial_vector(
-            pair_contact,
-            support_first,
-            &unit_radial_scale,
-            &Real::zero(),
-            policy,
-        )? {
-            Classification::Decided(radial) => radial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mut unit_radial = decided!(
+            pair_map.represented_selected_radial_vector(
+                pair_contact,
+                support_first,
+                &unit_radial_scale,
+                &Real::zero(),
+                policy,
+            )?,
+            Ok
+        );
         let signed_radius = self.radial_distance().clone();
         center = center.map(|coordinate| {
             hypersolve::compact_algebraic_root_low_degree_witness(&coordinate).unwrap_or(coordinate)
@@ -158,23 +154,12 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             ));
         };
-        let center = match represented_similarity_point(&center, &similarity) {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(represented_similarity_point(&center, &similarity), Ok);
         let inverse_normal_denominator = (Real::one() / &frame.normal_denominator)?;
-        let unit_radial = match represented_similarity_vector(
-            &unit_radial,
-            &similarity,
-            &inverse_normal_denominator,
-        ) {
-            Classification::Decided(unit_radial) => unit_radial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let unit_radial = decided!(
+            represented_similarity_vector(&unit_radial, &similarity, &inverse_normal_denominator,),
+            Ok
+        );
         Ok(Classification::Decided(
             BezierRepresentedSelectedRadialCircleFrame2 {
                 center,
@@ -219,12 +204,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let center = match represented_point_evidence_coordinates(&center, policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(represented_point_evidence_coordinates(&center, policy)?, Ok);
         let support_center = match support.represented_circle_frame(policy)? {
             Classification::Decided(frame) => frame.center,
             Classification::Uncertain(reason) => {
@@ -373,54 +353,30 @@ impl BezierAlgebraicCuspSemicircle2 {
                 ));
             }
         }
-        let center = match self.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let start = match self.point_evidence_at(&Real::zero(), policy)? {
-            Classification::Decided(start) => start,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center = match represented_point_evidence_coordinates(&center, policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let start = match represented_point_evidence_coordinates(&start, policy)? {
-            Classification::Decided(start) => start,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let center = decided!(self.center_point_evidence(policy)?, Ok);
+        let start = decided!(self.point_evidence_at(&Real::zero(), policy)?, Ok);
+        let center = decided!(represented_point_evidence_coordinates(&center, policy)?, Ok);
+        let start = decided!(represented_point_evidence_coordinates(&start, policy)?, Ok);
         let compact = |coordinate| {
             hypersolve::compact_algebraic_root_low_degree_witness(&coordinate).unwrap_or(coordinate)
         };
         let center = center.map(compact);
         let start = start.map(compact);
         let radial = [
-            match represented_affine_coordinate(
-                &[(&start[0], &Real::one()), (&center[0], &Real::from(-1_i8))],
-                &Real::zero(),
-            ) {
-                Classification::Decided(radial) => radial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
-            match represented_affine_coordinate(
-                &[(&start[1], &Real::one()), (&center[1], &Real::from(-1_i8))],
-                &Real::zero(),
-            ) {
-                Classification::Decided(radial) => radial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            decided!(
+                represented_affine_coordinate(
+                    &[(&start[0], &Real::one()), (&center[0], &Real::from(-1_i8))],
+                    &Real::zero(),
+                ),
+                Ok
+            ),
+            decided!(
+                represented_affine_coordinate(
+                    &[(&start[1], &Real::one()), (&center[1], &Real::from(-1_i8))],
+                    &Real::zero(),
+                ),
+                Ok
+            ),
         ];
         let inverse_radius = (Real::one() / self.radial_distance())?;
         let unit_radial = radial.map(|radial| {
@@ -576,11 +532,10 @@ impl BezierAlgebraicCuspSemicircle2 {
         {
             return Ok(Classification::Uncertain(reason));
         }
-        let center_parameter =
-            match promote_curve_region_bezier_parameter(&frame.center_parameter, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let center_parameter = decided!(
+            promote_curve_region_bezier_parameter(&frame.center_parameter, policy)?,
+            Ok
+        );
         let source = frame.center_support.source_power_basis()?;
         let differential = frame.center_support.differential()?;
         let dense =
@@ -628,14 +583,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         })() else {
             return Ok(Classification::Decided(None));
         };
-        let center = match positive_recursive_projective_point(center)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let support_center = match positive_recursive_projective_point(support_center)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let center = decided!(positive_recursive_projective_point(center)?, Ok);
+        let support_center = decided!(positive_recursive_projective_point(support_center)?, Ok);
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::record(
             "hypercurve",
@@ -713,12 +662,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let support_center = match support.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let support_center = decided!(support.center_point_evidence(policy)?, Ok);
         BezierRecursiveCircleFrame2::from_point_evidence(
             &center,
             &support_center,

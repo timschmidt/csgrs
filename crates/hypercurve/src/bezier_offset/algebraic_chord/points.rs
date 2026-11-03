@@ -257,16 +257,16 @@ impl BezierAlgebraicChordPairPoint2 {
         };
         let finite = expanded.as_ref().unwrap_or(range);
         let frame = if regular_domain {
-            match parallel.source_tangent_field_in_regular_domain(
-                CurveParameterDomain2::new(
-                    finite,
-                    incident.map(BezierParallelIncidentDomain2::parameter_ray),
-                ),
-                policy,
-            )? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(
+                parallel.source_tangent_field_in_regular_domain(
+                    CurveParameterDomain2::new(
+                        finite,
+                        incident.map(BezierParallelIncidentDomain2::parameter_ray),
+                    ),
+                    policy,
+                )?,
+                Ok
+            )
         } else {
             None
         };
@@ -405,18 +405,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 "correlated chord point was translated under a different predicate policy".into(),
             ));
         }
-        let first = match self.data.first.translated(delta_x, delta_y, policy)? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match self.data.second.translated(delta_x, delta_y, policy)? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(self.data.first.translated(delta_x, delta_y, policy)?, Ok);
+        let second = decided!(self.data.second.translated(delta_x, delta_y, policy)?, Ok);
         Ok(Classification::Decided(Self::new_with_location(
             first,
             second,
@@ -453,38 +443,34 @@ impl BezierAlgebraicChordPairPoint2 {
             Some(RealSign::Zero) => return Err(CurveError::InvalidAffineTransform),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let first = match self.data.first.transform_affine_with_similarity(
-            m00,
-            m01,
-            m10,
-            m11,
-            tx,
-            ty,
-            similarity,
-            similarity_cache.as_deref_mut(),
-            policy,
-        )? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match self.data.second.transform_affine_with_similarity(
-            m00,
-            m01,
-            m10,
-            m11,
-            tx,
-            ty,
-            similarity,
-            similarity_cache,
-            policy,
-        )? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(
+            self.data.first.transform_affine_with_similarity(
+                m00,
+                m01,
+                m10,
+                m11,
+                tx,
+                ty,
+                similarity,
+                similarity_cache.as_deref_mut(),
+                policy,
+            )?,
+            Ok
+        );
+        let second = decided!(
+            self.data.second.transform_affine_with_similarity(
+                m00,
+                m01,
+                m10,
+                m11,
+                tx,
+                ty,
+                similarity,
+                similarity_cache,
+                policy,
+            )?,
+            Ok
+        );
         let transform_location = |location| match location {
             BezierAlgebraicChordPairPointLocation2::EndpointSides {
                 first,
@@ -590,12 +576,7 @@ impl BezierAlgebraicChordPairPoint2 {
         axis: Axis2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Real>>> {
-        let support_point = match self.constant_axis_support_point(axis, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let support_point = decided!(self.constant_axis_support_point(axis, policy)?, Ok);
         let coordinate = match support_point {
             CurvePoint2(CurvePointData2::Exact(point)) => Some(match axis {
                 Axis2::X => point.x().clone(),
@@ -2257,12 +2238,7 @@ impl BezierAlgebraicChordPairPoint2 {
             && let Some(pair_to_other) =
                 Self::anchor_separation_order_on_owner(owner, at_end, order, other, policy)
         {
-            let reversed = match owner.collinear_traversal_reversed(chord, policy)? {
-                Classification::Decided(reversed) => reversed,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let reversed = decided!(owner.collinear_traversal_reversed(chord, policy)?, Ok);
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::record(
                 "hypercurve",
@@ -2461,12 +2437,7 @@ impl BezierAlgebraicChordPairPoint2 {
             // requested chord traversal, a positive chord/opposite cross
             // enters the right half-plane after the intersection, while a
             // negative cross enters the left half-plane.
-            let owner_reversed = match owner.collinear_traversal_reversed(chord, policy)? {
-                Classification::Decided(reversed) => reversed,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let owner_reversed = decided!(owner.collinear_traversal_reversed(chord, policy)?, Ok);
             let retained_cross = retained_pair_cross.map(|mut sign| {
                 if !shares_first_support {
                     sign = product_sign(sign, RealSign::Negative);
@@ -2617,14 +2588,14 @@ impl BezierAlgebraicChordParallelPoint2 {
         {
             source.clone()
         } else if let Some(crate::CurveGeometry2::Line(line)) = source.geometry() {
-            match BezierAlgebraicChord2::try_new(
-                line.start().clone().into(),
-                line.end().clone().into(),
-                policy,
-            )? {
-                Classification::Decided(source) => source,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(
+                BezierAlgebraicChord2::try_new(
+                    line.start().clone().into(),
+                    line.end().clone().into(),
+                    policy,
+                )?,
+                Ok
+            )
         } else {
             return Err(CurveError::InvalidCurveParameter);
         };
@@ -2851,24 +2822,9 @@ impl BezierAlgebraicChordParallelPoint2 {
         let [origin, start, end]: [BezierRecursiveQuadraticProjectivePoint2; 3] = points
             .try_into()
             .expect("a recursive chord displacement retains three source points");
-        let origin = match positive_recursive_projective_point(origin)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let start = match positive_recursive_projective_point(start)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match positive_recursive_projective_point(end)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let origin = decided!(positive_recursive_projective_point(origin)?, Ok);
+        let start = decided!(positive_recursive_projective_point(start)?, Ok);
+        let end = decided!(positive_recursive_projective_point(end)?, Ok);
         let Some((dx, dy, _)) = end.difference_numerators(&start) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
@@ -3418,12 +3374,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         })() else {
             return Ok(Classification::Decided(None));
         };
-        let sign = match value.sign(policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sign = decided!(value.sign(policy)?, Ok);
         let mut side = match sign {
             RealSign::Positive => crate::classify::LineSide::Left,
             RealSign::Negative => crate::classify::LineSide::Right,
@@ -4253,30 +4204,13 @@ impl BezierAlgebraicChordParallelPoint2 {
                 positive_recursive_projective_point(point)
             }
         };
-        let source_origin = match normalize(source_origin, physical_endpoints[anchor_index])? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let query_origin = match normalize(query_origin, self.source_endpoint())? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let direction_start = match normalize(direction_start, direction_start_evidence)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let direction_end = match normalize(direction_end, direction_end_evidence)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source_origin = decided!(
+            normalize(source_origin, physical_endpoints[anchor_index])?,
+            Ok
+        );
+        let query_origin = decided!(normalize(query_origin, self.source_endpoint())?, Ok);
+        let direction_start = decided!(normalize(direction_start, direction_start_evidence)?, Ok);
+        let direction_end = decided!(normalize(direction_end, direction_end_evidence)?, Ok);
         let field = query_origin.denominator.field();
         let (Some(tangent_x), Some(tangent_y), Some(tangent_speed_squared)) = (
             field.lift(&tangent_x),
@@ -4385,22 +4319,20 @@ impl BezierAlgebraicChordParallelPoint2 {
         } else {
             None
         };
-        let sign = match RecursiveQuadraticValue::nested_positive_root_affine_sign(
-            &retained,
-            &radical,
-            &tangent_speed_squared,
-            &constant,
-            &direction_speed_squared,
-            retained_sign,
-            radical_sign,
-            None,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sign = decided!(
+            RecursiveQuadraticValue::nested_positive_root_affine_sign(
+                &retained,
+                &radical,
+                &tangent_speed_squared,
+                &constant,
+                &direction_speed_squared,
+                retained_sign,
+                radical_sign,
+                None,
+                policy,
+            )?,
+            Ok
+        );
         let side = match (sign, reverse) {
             (RealSign::Positive, false) | (RealSign::Negative, true) => {
                 crate::classify::LineSide::Left
@@ -4461,12 +4393,7 @@ impl BezierAlgebraicChordParallelPoint2 {
                     .into(),
             ));
         }
-        let source = match cache.chord(&self.data.source, transform, policy)? {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(cache.chord(&self.data.source, transform, policy)?, Ok);
         let mut distance = &self.data.distance * transform.scale();
         if self.data.direction == BezierAlgebraicChordUnitDisplacement2::LeftNormal
             && transform.reverses_orientation()
@@ -4576,12 +4503,7 @@ impl BezierAlgebraicChordParallelPoint2 {
         if self.data.distance.definitely_zero() {
             // Zero displacement is the translated origin. A conservative box
             // must not require a unit direction (or its nonzero speed bound).
-            let origin = match endpoint_bounds(self.source_endpoint()) {
-                Classification::Decided(origin) => origin,
-                Classification::Uncertain(reason) => {
-                    return Classification::Uncertain(reason);
-                }
-            };
+            let origin = decided!(endpoint_bounds(self.source_endpoint()));
             return Classification::Decided(Aabb2::new_unchecked(
                 Point2::new(
                     origin.min_x() + &self.data.translation_x,
@@ -4666,32 +4588,17 @@ impl BezierAlgebraicChordParallelPoint2 {
             return Classification::Uncertain(UncertaintyReason::Ordering);
         };
         let origin = if let Some(point) = self.data.source_point.as_deref() {
-            match endpoint_bounds(point) {
-                Classification::Decided(bounds) => bounds,
-                Classification::Uncertain(reason) => {
-                    return Classification::Uncertain(reason);
-                }
-            }
+            decided!(endpoint_bounds(point))
         } else if self.at_end {
             if std::ptr::eq(source_end, self.data.source.end()) {
                 end
             } else {
-                match endpoint_bounds(self.data.source.end()) {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                }
+                decided!(endpoint_bounds(self.data.source.end()))
             }
         } else if std::ptr::eq(source_start, self.data.source.start()) {
             start
         } else {
-            match endpoint_bounds(self.data.source.start()) {
-                Classification::Decided(bounds) => bounds,
-                Classification::Uncertain(reason) => {
-                    return Classification::Uncertain(reason);
-                }
-            }
+            decided!(endpoint_bounds(self.data.source.start()))
         };
         let x = real_interval_from_axis(&origin, Axis2::X)
             .add(&offset_x)
@@ -5006,17 +4913,15 @@ impl BezierAlgebraicChordParallelPoint2 {
             Axis2::Y => (Real::zero(), delta),
         };
         Some((|| {
-            let translated = match BezierAlgebraicChord2::translated_endpoint(
-                other.source_endpoint(),
-                &delta_x,
-                &delta_y,
-                policy,
-            )? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let translated = decided!(
+                BezierAlgebraicChord2::translated_endpoint(
+                    other.source_endpoint(),
+                    &delta_x,
+                    &delta_y,
+                    policy,
+                )?,
+                Ok
+            );
             BezierAlgebraicChord2::point_axis_order(
                 self.source_endpoint(),
                 &translated,
@@ -5043,20 +4948,10 @@ impl BezierAlgebraicChordParallelPoint2 {
                 point.exact_coordinate(axis == Axis2::X, policy)
             }
             CurvePoint2(CurvePointData2::AlgebraicChordPair(point)) => {
-                match point.exact_axis_coordinate(axis, policy)? {
-                    Classification::Decided(coordinate) => coordinate,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(point.exact_axis_coordinate(axis, policy)?, Ok)
             }
             CurvePoint2(CurvePointData2::AlgebraicChordParallel(point)) => {
-                match point.exact_axis_coordinate(axis, policy)? {
-                    Classification::Decided(coordinate) => coordinate,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(point.exact_axis_coordinate(axis, policy)?, Ok)
             }
             CurvePoint2(CurvePointData2::AlgebraicCuspChord(_))
             | CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
@@ -5545,19 +5440,9 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
             };
             let mut points = points.into_iter();
             let source = points.next().expect("a derived point retains its source");
-            let source = match positive_recursive_projective_point(source)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let source = decided!(positive_recursive_projective_point(source)?, Ok);
             let transformed = if let Some(center) = points.next() {
-                let center = match positive_recursive_projective_point(center)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let center = decided!(positive_recursive_projective_point(center)?, Ok);
                 source.rotated_radial_image(
                     &center,
                     &self.data.radial_scale,
@@ -5921,29 +5806,15 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 return Ok(Classification::Decided(None));
             }
         };
-        let source = match source {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center = match self
-            .data
-            .source
-            .semicircle()
-            .center_point_evidence(policy)?
-        {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center = match represented_point_evidence_coordinates(&center, policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(source, Ok);
+        let center = decided!(
+            self.data
+                .source
+                .semicircle()
+                .center_point_evidence(policy)?,
+            Ok
+        );
+        let center = decided!(represented_point_evidence_coordinates(&center, policy)?, Ok);
         let radial = self.data.radial_scale.clone();
         let perpendicular = self.data.perpendicular_scale.clone();
         let negative_perpendicular = -perpendicular.clone();
@@ -5998,16 +5869,11 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
         if self.data.source.validate_policy(policy).is_err() {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
         }
-        let point = match self.data.source.conservative_bounds_refined_impl(
+        let point = decided!(self.data.source.conservative_bounds_refined_impl(
             refinement_steps,
             policy,
             local_only,
-        ) {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Classification::Uncertain(reason);
-            }
-        };
+        ));
         let center = match self.data.source.semicircle().center_point_evidence(policy) {
             Ok(Classification::Decided(center)) => {
                 let bounds = if local_only {
@@ -6015,12 +5881,7 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 } else {
                     algebraic_chord_endpoint_bounds_refined(&center, refinement_steps, policy)
                 };
-                match bounds {
-                    Classification::Decided(center) => center,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                }
+                decided!(bounds)
             }
             Ok(Classification::Uncertain(reason)) => {
                 return Classification::Uncertain(reason);
@@ -6192,20 +6053,18 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                     "a represented pair point crossed predicate policies".into(),
                 ));
             }
-            let coordinates = match map.represented_selected_radial_derived_point(
-                contact,
-                first,
-                &self.data.radial_scale,
-                &self.data.perpendicular_scale,
-                &self.data.translation_x,
-                &self.data.translation_y,
-                policy,
-            )? {
-                Classification::Decided(coordinates) => coordinates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let coordinates = decided!(
+                map.represented_selected_radial_derived_point(
+                    contact,
+                    first,
+                    &self.data.radial_scale,
+                    &self.data.perpendicular_scale,
+                    &self.data.translation_x,
+                    &self.data.translation_y,
+                    policy,
+                )?,
+                Ok
+            );
             let coordinate = match axis {
                 Axis2::X => &coordinates[0],
                 Axis2::Y => &coordinates[1],
@@ -6888,12 +6747,10 @@ impl BezierAlgebraicCuspChordDerivedPoint2 {
                 coordinate
             }
         };
-        let point_side = match map.radical_sign(&directed_axis, contact.branch, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point_side = decided!(
+            map.radical_sign(&directed_axis, contact.branch, policy)?,
+            Ok
+        );
         if branch == 0 {
             return Ok(Classification::Decided(Some(match point_side {
                 RealSign::Negative => RealSign::Positive,

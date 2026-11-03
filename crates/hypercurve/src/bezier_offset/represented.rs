@@ -148,13 +148,10 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
             )),
         };
     }
-    let radial_complement =
-        match represented_affine_coordinate(&[(&dot_value, &Real::one())], radius_squared) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let radial_complement = decided!(
+        represented_affine_coordinate(&[(&dot_value, &Real::one())], radius_squared),
+        Ok
+    );
     if represented_strict_sign(&radial_complement) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
@@ -169,26 +166,22 @@ pub(super) fn represented_tensor_circle_contact_location_parameter(
     })() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let parameter = match represented_tensor_nested_ratio(
-        &cross_retained,
-        &cross_candidate,
-        &parameter_denominator_retained,
-        &parameter_denominator_candidate,
-        discriminant,
-        sources,
-        signed_radical,
-    ) {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let parameter = match represented_strict_interior_bezier_parameter(&parameter)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameter = decided!(
+        represented_tensor_nested_ratio(
+            &cross_retained,
+            &cross_candidate,
+            &parameter_denominator_retained,
+            &parameter_denominator_candidate,
+            discriminant,
+            sources,
+            signed_radical,
+        ),
+        Ok
+    );
+    let parameter = decided!(
+        represented_strict_interior_bezier_parameter(&parameter)?,
+        Ok
+    );
     Ok(Classification::Decided(Some((
         BezierAlgebraicCuspSemicircleContactLocation2::Interior,
         parameter,
@@ -266,40 +259,28 @@ pub(super) fn represented_circle_contact_location_parameter_from_dot_cross(
             )),
         };
     }
-    let radial_complement =
-        match represented_affine_coordinate(&[(&dot, &Real::one())], radius_squared) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let radial_complement = decided!(
+        represented_affine_coordinate(&[(&dot, &Real::one())], radius_squared),
+        Ok
+    );
     if represented_strict_sign(&radial_complement) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-    let denominator = match represented_affine_coordinate(
-        &[(&dot, &Real::one()), (&oriented_cross, &Real::one())],
-        radius_squared,
-    ) {
-        Classification::Decided(denominator) => denominator,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let denominator = decided!(
+        represented_affine_coordinate(
+            &[(&dot, &Real::one()), (&oriented_cross, &Real::one())],
+            radius_squared,
+        ),
+        Ok
+    );
     if represented_strict_sign(&denominator) != Some(RealSign::Positive) {
         return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
     }
-    let parameter = match represented_ratio(&oriented_cross, &denominator) {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let parameter = match represented_strict_interior_bezier_parameter(&parameter)? {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameter = decided!(represented_ratio(&oriented_cross, &denominator), Ok);
+    let parameter = decided!(
+        represented_strict_interior_bezier_parameter(&parameter)?,
+        Ok
+    );
     Ok(Classification::Decided(Some((
         BezierAlgebraicCuspSemicircleContactLocation2::Interior,
         parameter,
@@ -320,18 +301,11 @@ pub(super) fn represented_circle_diameter_predicate_sign(
     {
         dot
     } else {
-        let point = match rational_point_evidence_at_parameter(curve, curve_parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match represented_point_evidence_coordinates(&point, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(
+            rational_point_evidence_at_parameter(curve, curve_parameter, policy)?,
+            Ok
+        );
+        let point = decided!(represented_point_evidence_coordinates(&point, policy)?, Ok);
         let difference = |point: &AlgebraicRootRepresentation,
                           center: &AlgebraicRootRepresentation| {
             represented_affine_coordinate(
@@ -356,15 +330,13 @@ pub(super) fn represented_circle_diameter_predicate_sign(
     };
     let diameter_scale = parameter_denominator * &frame.signed_radius;
     let radius_squared = &frame.signed_radius * &frame.signed_radius;
-    let predicate = match represented_affine_coordinate(
-        &[(&dot, &diameter_scale)],
-        &(-radial_coefficient * radius_squared),
-    ) {
-        Classification::Decided(predicate) => predicate,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let predicate = decided!(
+        represented_affine_coordinate(
+            &[(&dot, &diameter_scale)],
+            &(-radial_coefficient * radius_squared),
+        ),
+        Ok
+    );
     Ok(represented_policy_sign(&predicate, policy))
 }
 
@@ -457,10 +429,10 @@ pub(super) fn represented_circle_dot_cross_from_exact_radial(
     let (Classification::Decided(dot), Classification::Decided(cross)) = (dot, cross) else {
         return Classification::Uncertain(UncertaintyReason::Predicate);
     };
-    let oriented_cross = match represented_affine_coordinate(&[(&cross, turn)], &Real::zero()) {
-        Classification::Decided(cross) => cross,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let oriented_cross = decided!(represented_affine_coordinate(
+        &[(&cross, turn)],
+        &Real::zero()
+    ));
     Classification::Decided([dot, oriented_cross])
 }
 
@@ -525,11 +497,10 @@ pub(super) fn represented_circle_contact_location_from_exact_radial(
         Some(RealSign::Negative) => return Ok(Classification::Decided(None)),
         Some(RealSign::Zero) | None => {}
     }
-    let [dot, cross] =
-        match represented_circle_dot_cross_from_exact_radial(frame, contact_radial, turn) {
-            Classification::Decided(values) => values,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let [dot, cross] = decided!(
+        represented_circle_dot_cross_from_exact_radial(frame, contact_radial, turn),
+        Ok
+    );
     Ok(
         represented_circle_contact_location_parameter_from_dot_cross(dot, cross, radius_squared)?
             .map(|contact| contact.map(|(location, _)| location)),

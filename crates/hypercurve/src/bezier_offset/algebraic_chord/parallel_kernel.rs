@@ -202,30 +202,15 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 }
                 Ok(identity.or(tangent.then_some(RealSign::Zero)))
             };
-            let singularities = match parallel.singularity_analysis_with_policy(range, strict)? {
-                Classification::Decided(analysis) => analysis,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let singularities = decided!(parallel.singularity_analysis_with_policy(range, strict)?, Ok);
             for parameter in singularities
                 .source_singularities()
                 .iter()
                 .chain(singularities.parallel_cusps())
             {
                 let parameter = CurveParameter2::from(parameter.clone());
-                let start_order = match parameter.cmp_by_refinement(range.start(), strict)? {
-                    Classification::Decided(order) => order,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let end_order = match parameter.cmp_by_refinement(range.end(), strict)? {
-                    Classification::Decided(order) => order,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let start_order = decided!(parameter.cmp_by_refinement(range.start(), strict)?, Ok);
+                let end_order = decided!(parameter.cmp_by_refinement(range.end(), strict)?, Ok);
                 let lies_strictly_inside = match range_order {
                     std::cmp::Ordering::Less => {
                         start_order == std::cmp::Ordering::Greater
@@ -247,12 +232,7 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
             }
-            let interior = match range.strict_interior_scalar(strict)? {
-                Classification::Decided(interior) => interior,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let interior = decided!(range.strict_interior_scalar(strict)?, Ok);
             let derivative_scale = match parallel
                 .parallel_derivative_scale_sign_at_exact(&interior, strict)?
             {
@@ -264,14 +244,8 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let regularized = match parallel
-                .source_oriented_regularized_tangent_field_at_interior(&interior, strict)?
-            {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let regularized = decided!(parallel
+                .source_oriented_regularized_tangent_field_at_interior(&interior, strict)?, Ok);
             let authored_tangent_at_range_start = direction_authority
                 .is_authored_source_tangent_at_region_parameter(
                     parallel,
@@ -865,20 +839,12 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let interior = match range.strict_interior_scalar(strict)? {
-                Classification::Decided(interior) => interior,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let frame = match parallel
-                .source_oriented_regularized_tangent_field_at_interior(&interior, strict)?
-            {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let interior = decided!(range.strict_interior_scalar(strict)?, Ok);
+            let frame = decided!(
+                parallel
+                    .source_oriented_regularized_tangent_field_at_interior(&interior, strict)?,
+                Ok
+            );
             if let Classification::Uncertain(reason) = parallel.certify_source_frame_in_domain(
                 SelectedThirdAxisDomain2::Finite(range),
                 frame.as_deref(),
@@ -997,45 +963,37 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
             let mut scalar_bracket_steps = 0;
             let parameter = loop {
                 if let (Some(lower), Some(upper)) = (&lower_real, &upper_real) {
-                    let parameter = match BezierRecursiveProjectiveParameter2::new_monotone(
-                        Arc::clone(&system),
-                        self.clone(),
-                        parallel.clone(),
-                        lower.clone(),
-                        upper.clone(),
-                        lower_sign,
-                        upper_sign,
-                        policy,
-                    )? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let parameter = decided!(
+                        BezierRecursiveProjectiveParameter2::new_monotone(
+                            Arc::clone(&system),
+                            self.clone(),
+                            parallel.clone(),
+                            lower.clone(),
+                            upper.clone(),
+                            lower_sign,
+                            upper_sign,
+                            policy,
+                        )?,
+                        Ok
+                    );
                     break CurveParameter2::from_recursive_projective(parameter);
                 }
                 scalar_bracket_steps += 1;
                 if scalar_bracket_steps > MAX_SCALAR_BRACKET_STEPS {
                     return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
                 }
-                let midpoint = match CurveParameterRange2::new_validated(
-                    lower_parameter.clone(),
-                    upper_parameter.clone(),
-                )
-                .strict_interior_scalar(strict)?
-                {
-                    Classification::Decided(midpoint) => midpoint,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let midpoint_sign =
-                    match system.incidence_sign_at_real(&midpoint, midpoint_sign_policy)? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let midpoint = decided!(
+                    CurveParameterRange2::new_validated(
+                        lower_parameter.clone(),
+                        upper_parameter.clone(),
+                    )
+                    .strict_interior_scalar(strict)?,
+                    Ok
+                );
+                let midpoint_sign = decided!(
+                    system.incidence_sign_at_real(&midpoint, midpoint_sign_policy)?,
+                    Ok
+                );
                 let midpoint_parameter =
                     CurveParameter2::from(BezierParameter2::Exact(midpoint.clone()));
                 match midpoint_sign {
@@ -1058,12 +1016,7 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
             };
             Ok(Classification::Decided((frame, weight_sign, parameter)))
         })?;
-        let (frame, weight_sign, mut parameter) = match prepared {
-            Classification::Decided(prepared) => prepared,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (frame, weight_sign, mut parameter) = decided!(prepared, Ok);
         let point_at = |parameter: &CurveParameter2| {
             BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
                 parallel.clone(),
@@ -1637,12 +1590,7 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                     Some(sample) => sample,
                     None => domain.strict_sample(policy)?,
                 };
-                let sample = match sample {
-                    Classification::Decided(sample) => sample,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let sample = decided!(sample, Ok);
                 match system.norm_component_sheet_at_real(&sample, policy)? {
                     Classification::Decided(Some(true)) => {
                         #[cfg(feature = "dispatch-trace")]
@@ -1942,20 +1890,14 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
             } else {
                 self.parameter_at_certified_support_point(point.clone(), policy)?
             };
-            let source_cross =
-                match policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_cross))? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-            let source_dot =
-                match policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_dot))? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let source_cross = decided!(
+                policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_cross))?,
+                Ok
+            );
+            let source_dot = decided!(
+                policy.strict_predicate_pass(|| polynomial_sign(&system.tangent_dot))?,
+                Ok
+            );
             let derivative_scale = match if let Some(sign) = derivative_scale_sign {
                 Classification::Decided(sign)
             } else {
@@ -2314,22 +2256,19 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicChordParallelIntersections2>> {
         self.validate_policy(policy)?;
-        let component_sample =
-            match policy.strict_predicate_pass(|| range.strict_interior_scalar(policy))? {
-                Classification::Decided(sample) => sample,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let frame = match policy.strict_predicate_pass(|| {
-            parallel
-                .source_oriented_regularized_tangent_field_at_interior(&component_sample, policy)
-        })? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let component_sample = decided!(
+            policy.strict_predicate_pass(|| range.strict_interior_scalar(policy))?,
+            Ok
+        );
+        let frame = decided!(
+            policy.strict_predicate_pass(|| {
+                parallel.source_oriented_regularized_tangent_field_at_interior(
+                    &component_sample,
+                    policy,
+                )
+            })?,
+            Ok
+        );
         let derivative_scale_sign = if frame.is_some() {
             match parallel.parallel_derivative_scale_sign_at_exact(&component_sample, policy)? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
@@ -2392,40 +2331,36 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let finite = match self.recursive_projective_parallel_intersections_in_domain(
-            parallel,
-            &system,
-            None,
-            None,
-            SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
-            None,
-            false,
-            policy,
-        )? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let exterior = match self.recursive_projective_parallel_intersections_in_domain(
-            parallel,
-            &system,
-            None,
-            None,
-            SelectedThirdAxisDomain2::IncidentRay {
-                anchor: incident.anchor(),
-                direction: incident.direction(),
-                barrier: incident.barrier(),
-            },
-            None,
-            false,
-            policy,
-        )? {
-            Classification::Decided(intersections) => intersections,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let finite = decided!(
+            self.recursive_projective_parallel_intersections_in_domain(
+                parallel,
+                &system,
+                None,
+                None,
+                SelectedThirdAxisDomain2::Finite(&CurveParameterRange2::unit()),
+                None,
+                false,
+                policy,
+            )?,
+            Ok
+        );
+        let exterior = decided!(
+            self.recursive_projective_parallel_intersections_in_domain(
+                parallel,
+                &system,
+                None,
+                None,
+                SelectedThirdAxisDomain2::IncidentRay {
+                    anchor: incident.anchor(),
+                    direction: incident.direction(),
+                    barrier: incident.barrier(),
+                },
+                None,
+                false,
+                policy,
+            )?,
+            Ok
+        );
         Ok(Classification::Decided(match (finite, exterior) {
             (
                 BezierAlgebraicChordParallelIntersections2::Contacts(mut finite),

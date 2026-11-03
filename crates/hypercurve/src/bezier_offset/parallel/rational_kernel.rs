@@ -298,13 +298,13 @@ impl BezierParallel2 {
             }
         }
         if other.degree() >= 4 && bivariate_system_may_have_component(&equations) {
-            let reduced = match hypersolve::saturate_rootless_bivariate_axis_factors(
-                &equations,
-                [[&Real::zero(), &Real::one()]; 2],
-            ) {
-                Classification::Decided(reduced) => reduced,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let reduced = decided!(
+                hypersolve::saturate_rootless_bivariate_axis_factors(
+                    &equations,
+                    [[&Real::zero(), &Real::one()]; 2],
+                ),
+                Ok
+            );
             let component_equations = reduced.as_ref().unwrap_or(&equations);
             if bivariate_system_may_have_component(component_equations) {
                 if tangent_field.is_none()
@@ -344,15 +344,15 @@ impl BezierParallel2 {
                 }
             }
         }
-        let candidates = match project_parallel_intersection_system(
-            &equations[0],
-            &equations[1],
-            [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidates = decided!(
+            project_parallel_intersection_system(
+                &equations[0],
+                &equations[1],
+                [CurveParameterDomain2::new(&CurveParameterRange2::unit(), None); 2],
+                policy,
+            )?,
+            Ok
+        );
         if matches!(
             candidates,
             CurveIntersectionCandidates2::DegenerateResultant
@@ -387,13 +387,10 @@ impl BezierParallel2 {
                 }
             }
         }
-        let candidate_system =
-            match parallel_intersection_candidate_system(equations, candidates, policy)? {
-                Classification::Decided(candidate_system) => candidate_system,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let candidate_system = decided!(
+            parallel_intersection_candidate_system(equations, candidates, policy)?,
+            Ok
+        );
         if matches!(
             candidate_system.candidates,
             CurveIntersectionCandidates2::DegenerateResultant
@@ -802,17 +799,11 @@ impl BezierParallel2 {
             return self.intersections(other, policy);
         }
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let frame =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
+        let frame = decided!(
+            self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)?,
+            Ok
+        );
         let Some(frame) = frame else {
             return self.intersections(other, policy);
         };
@@ -875,16 +866,10 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         }
-        let candidate_system = match self.intersection_candidate_system_with_tangent_field(
-            other,
-            tangent_field,
-            policy,
-        )? {
-            Classification::Decided(candidate_system) => candidate_system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidate_system = decided!(
+            self.intersection_candidate_system_with_tangent_field(other, tangent_field, policy,)?,
+            Ok
+        );
         self.replay_parallel_rational_candidate_system(
             other,
             candidate_system,
@@ -1299,12 +1284,10 @@ impl BezierParallel2 {
                 ),
             ));
         };
-        let replay = match exact_parallel.intersection_contacts_classified(other, policy)? {
-            Classification::Decided(replay) => replay,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let replay = decided!(
+            exact_parallel.intersection_contacts_classified(other, policy)?,
+            Ok
+        );
         Ok(Classification::Decided(
             parallel_set_from_rational_contacts(replay),
         ))
@@ -1334,12 +1317,8 @@ impl BezierParallel2 {
         };
         match other.point_incidence_on_range(&other_point, ranges[1], policy)? {
             Classification::Decided(crate::RationalBezierPointIncidence2::EntireCurve) => {
-                let incidence = match self.point_incidence(&other_point, ranges[0], policy)? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let incidence =
+                    decided!(self.point_incidence(&other_point, ranges[0], policy)?, Ok);
                 let components = match incidence {
                     BezierParallelIncidence2::EntireCurve => Arc::from([
                         BezierParallelIntersectionParameterComponent2::entire_parameter_square(
@@ -1379,13 +1358,10 @@ impl BezierParallel2 {
                 Ok(Classification::Decided(None))
             }
             Classification::Decided(BezierParallelIncidence2::EntireCurve) => {
-                let incidence =
-                    match other.point_incidence_on_range(&parallel_point, ranges[1], policy)? {
-                        Classification::Decided(incidence) => incidence,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let incidence = decided!(
+                    other.point_incidence_on_range(&parallel_point, ranges[1], policy)?,
+                    Ok
+                );
                 let components = match incidence {
                     crate::RationalBezierPointIncidence2::EntireCurve => Arc::from([
                         BezierParallelIntersectionParameterComponent2::entire_parameter_square(
@@ -1543,12 +1519,7 @@ impl BezierParallel2 {
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
                 Classification::Decided(Some(_)) => unreachable!("the exact component returned"),
             };
-            let interior = match range.strict_interior_scalar(policy)? {
-                Classification::Decided(interior) => interior,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let interior = decided!(range.strict_interior_scalar(policy)?, Ok);
             let (tangent_x, tangent_y) = match self
                 .source_oriented_regularized_tangent_field_at_interior(&interior, policy)?
             {
@@ -1595,12 +1566,7 @@ impl BezierParallel2 {
             );
             let support_line = match (tangent_x.as_slice(), tangent_y.as_slice()) {
                 ([tangent_x], [tangent_y]) => {
-                    let anchor = match curve.point_at_affine_classified(&interior, policy) {
-                        Classification::Decided(anchor) => anchor,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let anchor = decided!(curve.point_at_affine_classified(&interior, policy), Ok);
                     Some(LineSeg2::try_new(
                         anchor.clone(),
                         anchor.translated(tangent_x.clone(), tangent_y.clone()),

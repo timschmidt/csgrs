@@ -220,12 +220,7 @@ impl BezierParallel2 {
         range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let parameter = match range.strict_interior_scalar(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(range.strict_interior_scalar(policy)?, Ok);
         self.parallel_derivative_scale_sign_at_exact(&parameter, policy)
     }
 
@@ -273,12 +268,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
         self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)
     }
 
@@ -289,10 +279,10 @@ impl BezierParallel2 {
         domain: CurveParameterDomain2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<Arc<BezierAnalyticParallelTangentField2>>>> {
-        let field = match self.source_oriented_regularized_tangent_field(domain.finite, policy)? {
-            Classification::Decided(field) => field,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let field = decided!(
+            self.source_oriented_regularized_tangent_field(domain.finite, policy)?,
+            Ok
+        );
         let (Some(frame), Some(ray)) = (field.as_deref(), domain.extension) else {
             return Ok(Classification::Decided(field));
         };
@@ -501,24 +491,20 @@ impl BezierParallel2 {
         second_range: &BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let first = match self.source_oriented_regularized_tangent_field(
-            &CurveParameterRange2::from_bezier_range(first_range.clone()),
-            policy,
-        )? {
-            Classification::Decided(field) => field,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match self.source_oriented_regularized_tangent_field(
-            &CurveParameterRange2::from_bezier_range(second_range.clone()),
-            policy,
-        )? {
-            Classification::Decided(field) => field,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(
+            self.source_oriented_regularized_tangent_field(
+                &CurveParameterRange2::from_bezier_range(first_range.clone()),
+                policy,
+            )?,
+            Ok
+        );
+        let second = decided!(
+            self.source_oriented_regularized_tangent_field(
+                &CurveParameterRange2::from_bezier_range(second_range.clone()),
+                policy,
+            )?,
+            Ok
+        );
         Ok(match (first, second) {
             (None, None) => Classification::Decided(true),
             (Some(first), Some(second)) => Classification::Decided(first == second),
@@ -563,10 +549,10 @@ impl BezierParallel2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        let frame = match self.source_oriented_regularized_tangent_field(range, &strict)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let frame = decided!(
+            self.source_oriented_regularized_tangent_field(range, &strict)?,
+            Ok
+        );
         let (x, y) = match &frame {
             Some(frame) => (&frame.x, &frame.y),
             None => {
@@ -607,17 +593,11 @@ impl BezierParallel2 {
                 Classification::Uncertain(reason) => Classification::Uncertain(reason),
             })
         };
-        let point = match retain(self, Real::zero())? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let point = decided!(retain(self, Real::zero())?, Ok);
         let anchor = if self.distance() == tangent_anchor.distance() {
             point.clone()
         } else {
-            match retain(tangent_anchor, Real::zero())? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(retain(tangent_anchor, Real::zero())?, Ok)
         };
         let support = match retain(
             tangent_anchor,
@@ -630,12 +610,12 @@ impl BezierParallel2 {
             Classification::Decided(point) => point,
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let tangent = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            anchor, support, policy,
-        )? {
-            Classification::Decided(tangent) => tangent,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let tangent = decided!(
+            BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                anchor, support, policy,
+            )?,
+            Ok
+        );
         Ok(Classification::Decided((point, tangent)))
     }
 
@@ -672,20 +652,11 @@ impl BezierParallel2 {
     ) -> CurveResult<Classification<CurvePoint2>> {
         policy.strict_predicate_pass(|| {
             let strict = policy;
-            let interior = match range.strict_interior_scalar(strict)? {
-                Classification::Decided(interior) => interior,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let frame = match self
-                .source_oriented_regularized_tangent_field_at_interior(&interior, strict)?
-            {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let interior = decided!(range.strict_interior_scalar(strict)?, Ok);
+            let frame = decided!(
+                self.source_oriented_regularized_tangent_field_at_interior(&interior, strict)?,
+                Ok
+            );
             let Some(point) =
                 BezierAnalyticParallelPoint2::new_with_region_parameter_and_frame_tangent(
                     self.clone(),
@@ -739,19 +710,11 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(RealSign, RealSign)>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let tangent_field =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
+        let tangent_field = decided!(
+            self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)?,
+            Ok
+        );
         let derivative_scale_sign = match self
             .parallel_derivative_scale_sign_on_regular_range(parameter, range, &strict)?
         {
@@ -794,18 +757,8 @@ impl BezierParallel2 {
             &polynomial_scale(tangent_x, vector_x),
             &polynomial_scale(tangent_y, vector_y),
         );
-        let source_cross = match parameter.polynomial_sign(&cross, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let source_dot = match parameter.polynomial_sign(&dot, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source_cross = decided!(parameter.polynomial_sign(&cross, policy)?, Ok);
+        let source_dot = decided!(parameter.polynomial_sign(&dot, policy)?, Ok);
         let scale = match derivative_scale_sign {
             Some(sign @ (RealSign::Positive | RealSign::Negative)) => sign,
             Some(RealSign::Zero) => {
@@ -931,20 +884,14 @@ impl BezierParallel2 {
             &bivariate_outer_product(&first.tangent_x, &second.tangent_x),
             &bivariate_outer_product(&first.tangent_y, &second.tangent_y),
         );
-        let cross =
-            match signed_bivariate_at_parameter_pair(&cross, parameter, other_parameter, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let dot =
-            match signed_bivariate_at_parameter_pair(&dot, parameter, other_parameter, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let cross = decided!(
+            signed_bivariate_at_parameter_pair(&cross, parameter, other_parameter, policy)?,
+            Ok
+        );
+        let dot = decided!(
+            signed_bivariate_at_parameter_pair(&dot, parameter, other_parameter, policy)?,
+            Ok
+        );
         Ok(Classification::Decided((cross, dot)))
     }
 
@@ -1127,12 +1074,7 @@ impl BezierParallel2 {
     /// so expanding a certified source box by that amount is exact broad-phase
     /// evidence without sampling the parallel or materializing a finite curve.
     pub fn conservative_bounds(&self) -> CurveResult<Classification<Aabb2>> {
-        let source = match self.source().certified_bounds() {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(self.source().certified_bounds(), Ok);
         let radius = self.distance().abs();
         Ok(Classification::Decided(Aabb2::new_unchecked(
             Point2::new(source.min_x() - &radius, source.min_y() - &radius),
@@ -1287,13 +1229,10 @@ impl BezierParallel2 {
             ),
             &polynomial_multiply(&weighted_distance, &weighted_distance),
         );
-        let incidence =
-            match common_polynomial_roots(orthogonality, distance_relation, domain, policy)? {
-                Classification::Decided(incidence) => incidence,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let incidence = decided!(
+            common_polynomial_roots(orthogonality, distance_relation, domain, policy)?,
+            Ok
+        );
 
         let orientation = polynomial_subtract(
             &polynomial_multiply(&delta_y, tangent_x),
@@ -1501,10 +1440,7 @@ impl BezierParallel2 {
             }
         };
         let retained = |point: &CurvePoint2, visitor: &mut _| {
-            let frame = match frame()? {
-                Classification::Decided(frame) => frame,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let frame = decided!(frame()?, Ok);
             BezierParallelPointQuery2 {
                 parallel: self,
                 range,
@@ -1535,12 +1471,7 @@ impl BezierParallel2 {
                     }
                 }
                 CurvePoint2(CurvePointData2::Exact(point)) => {
-                    let frame = match frame()? {
-                        Classification::Decided(frame) => frame,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let frame = decided!(frame()?, Ok);
                     self.point_incidence_with_tangent_field(point, domain, frame.as_deref(), policy)
                         .map(|result| {
                             result.map(|incidence| match incidence {
@@ -1613,12 +1544,7 @@ impl BezierParallel2 {
                 CurvePoint2(CurvePointData2::Algebraic(_)) => unreachable!(),
             };
         };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         retained(&CurvePoint2::from(point.point_image().clone()), visitor)
     }
 
@@ -1671,12 +1597,10 @@ impl BezierParallel2 {
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
         }
-        let incidence = match self.source_circle_polynomial(center, radius_squared, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let incidence = decided!(
+            self.source_circle_polynomial(center, radius_squared, policy)?,
+            Ok
+        );
         CurveParameterDomain2::new(range, None).finite_roots(&incidence, policy)
     }
 
@@ -1695,19 +1619,14 @@ impl BezierParallel2 {
         direction: BezierParameterRayDirection2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<BezierParameter2>>> {
-        let incidence = match self.source_circle_polynomial(center, radius_squared, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let candidates =
-            match incidence.isolate_incident_ray_roots_with_policy(anchor, direction, policy)? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let incidence = decided!(
+            self.source_circle_polynomial(center, radius_squared, policy)?,
+            Ok
+        );
+        let candidates = decided!(
+            incidence.isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+            Ok
+        );
 
         let source = self.source_power_basis()?;
         let weight = if let Some(weight) = source.weight {
@@ -1737,12 +1656,10 @@ impl BezierParallel2 {
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
             if let Some(barrier) = barrier.as_ref() {
-                let ordering = match candidate.cmp_by_refinement_with_policy(barrier, policy)? {
-                    Classification::Decided(ordering) => ordering,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let ordering = decided!(
+                    candidate.cmp_by_refinement_with_policy(barrier, policy)?,
+                    Ok
+                );
                 let before_barrier = match direction {
                     BezierParameterRayDirection2::Decreasing => {
                         ordering == std::cmp::Ordering::Greater
@@ -1832,19 +1749,12 @@ impl BezierParallel2 {
                     policy,
                 )
             };
-            match anchor? {
-                Classification::Decided(anchor) => anchor,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(anchor?, Ok)
         };
-        let barrier = match self.incident_ray_regular_barrier(
-            &anchor.represented_anchor,
-            direction,
-            policy,
-        )? {
-            Classification::Decided(barrier) => barrier,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let barrier = decided!(
+            self.incident_ray_regular_barrier(&anchor.represented_anchor, direction, policy,)?,
+            Ok
+        );
         Ok(Classification::Decided(BezierParallelIncidentDomain2 {
             endpoint: endpoint.clone(),
             bridge: anchor.adjacent_interval,
@@ -1967,26 +1877,19 @@ impl BezierParallel2 {
                     Some(square_free) => (square_free, true),
                     None => (coefficients, false),
                 };
-                let polynomial = match BezierParameterPolynomial::try_new_power_basis_with_policy(
-                    coefficients,
-                    policy,
-                )? {
-                    Classification::Decided(polynomial) => polynomial,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let polynomial = decided!(
+                    BezierParameterPolynomial::try_new_power_basis_with_policy(
+                        coefficients,
+                        policy,
+                    )?,
+                    Ok
+                );
                 let schedule = if square_free && range == &CurveParameterRange2::unit() {
                     polynomial.isolate_square_free_unit_interval_roots(policy)?
                 } else {
                     CurveParameterDomain2::new(range, None).finite_roots(&polynomial, policy)?
                 };
-                let schedule = match schedule {
-                    Classification::Decided(schedule) => schedule,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let schedule = decided!(schedule, Ok);
                 let exact_authority = BezierAlgebraicSelectedFiberAuthority2::new(
                     incidence.clone(),
                     retained.clone(),
@@ -2069,13 +1972,10 @@ impl BezierParallel2 {
             let mut candidates = finite;
             if let Some(direction) = direction {
                 let endpoint = CurveParameter2::from_selected_fiber(center.clone());
-                let incident =
-                    match self.incident_domain_from_parameter(&endpoint, direction, policy)? {
-                        Classification::Decided(incident) => incident,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let incident = decided!(
+                    self.incident_domain_from_parameter(&endpoint, direction, policy)?,
+                    Ok
+                );
                 if let Some(bridge) = incident.bridge() {
                     let adjacent = match selected_fiber_parameters_in_interval(
                         incidence,
@@ -2094,12 +1994,7 @@ impl BezierParallel2 {
                     };
                     let mut retained_adjacent = Vec::with_capacity(adjacent.len());
                     for parameter in adjacent {
-                        let ordering = match parameter.cmp_by_refinement(center, policy)? {
-                            Classification::Decided(ordering) => ordering,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let ordering = decided!(parameter.cmp_by_refinement(center, policy)?, Ok);
                         let beyond_endpoint = match direction {
                             BezierParameterRayDirection2::Decreasing => {
                                 ordering == std::cmp::Ordering::Less
@@ -2468,34 +2363,30 @@ impl BezierParallel2 {
                 && real_sign(center_parallel.distance(), &CurveContext::STRICT)
                     == Some(RealSign::Zero)
             {
-                let incidence = match parallel_source_fixed_distance_incidence(
-                    center_parallel,
-                    self,
-                    &radius_squared,
-                    &CurveParameter2::from_selected_fiber(center.clone()),
-                    isolation_range,
-                    policy,
-                )? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let incidence = decided!(
+                    parallel_source_fixed_distance_incidence(
+                        center_parallel,
+                        self,
+                        &radius_squared,
+                        &CurveParameter2::from_selected_fiber(center.clone()),
+                        isolation_range,
+                        policy,
+                    )?,
+                    Ok
+                );
                 (incidence, None)
             } else {
-                let system = match parallel_fixed_distance_system(
-                    center_parallel,
-                    self,
-                    &radius_squared,
-                    isolation_range,
-                    &CurveParameter2::from_selected_fiber(center.clone()),
-                    policy,
-                )? {
-                    Classification::Decided(system) => system,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let system = decided!(
+                    parallel_fixed_distance_system(
+                        center_parallel,
+                        self,
+                        &radius_squared,
+                        isolation_range,
+                        &CurveParameter2::from_selected_fiber(center.clone()),
+                        policy,
+                    )?,
+                    Ok
+                );
                 (system.incidence.clone(), Some(system))
             };
         let selected_image =
@@ -2637,30 +2528,26 @@ impl BezierParallel2 {
         let mut retained_candidates = Vec::with_capacity(candidates.len());
         for candidate in candidates {
             if projected_root_required {
-                let projected_root = match algebraic_selected_fiber_pair_projected_root(
-                    center,
-                    &candidate,
-                    &projected_incidence,
-                    policy,
-                )? {
-                    Classification::Decided(projected_root) => projected_root,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let projected_root = decided!(
+                    algebraic_selected_fiber_pair_projected_root(
+                        center,
+                        &candidate,
+                        &projected_incidence,
+                        policy,
+                    )?,
+                    Ok
+                );
                 if !projected_root {
                     continue;
                 }
             }
             if !authored_source_is_unique && let Some(incidence) = &authored_positive_incidence {
-                let authored_root = match algebraic_selected_fiber_pair_projected_root(
-                    center, &candidate, incidence, policy,
-                )? {
-                    Classification::Decided(root) => root,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let authored_root = decided!(
+                    algebraic_selected_fiber_pair_projected_root(
+                        center, &candidate, incidence, policy,
+                    )?,
+                    Ok
+                );
                 if !authored_root {
                     continue;
                 }
@@ -2722,19 +2609,17 @@ impl BezierParallel2 {
         if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
             && real_sign(center_parallel.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
         {
-            let incidence = match parallel_source_fixed_distance_incidence(
-                center_parallel,
-                self,
-                radius_squared,
-                &CurveParameter2::from_recursive_projective(center.clone()),
-                range,
-                policy,
-            )? {
-                Classification::Decided(incidence) => incidence,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let incidence = decided!(
+                parallel_source_fixed_distance_incidence(
+                    center_parallel,
+                    self,
+                    radius_squared,
+                    &CurveParameter2::from_recursive_projective(center.clone()),
+                    range,
+                    policy,
+                )?,
+                Ok
+            );
             let first_degree = bivariate_first_active_degree(&incidence);
             let Some(rational) = recursive_projective_bivariate_first_parameter_polynomial(
                 &incidence,
@@ -2785,20 +2670,17 @@ impl BezierParallel2 {
                 },
             ));
         }
-        let BezierParallelFixedDistanceSystem2 { circle, .. } =
-            match parallel_fixed_distance_system(
+        let BezierParallelFixedDistanceSystem2 { circle, .. } = decided!(
+            parallel_fixed_distance_system(
                 center_parallel,
                 self,
                 radius_squared,
                 range,
                 &CurveParameter2::from_recursive_projective(center.clone()),
                 policy,
-            )? {
-                Classification::Decided(system) => system,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            )?,
+            Ok
+        );
         let differential = center_parallel.differential()?;
         let tangent_degree = differential
             .tangent_x
@@ -2951,18 +2833,8 @@ impl BezierParallel2 {
             Classification::Decided(None)
         } {
             Classification::Decided(Some(delta)) => {
-                let first = match parameter.translated(&(-delta.clone()), policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let second = match parameter.translated(&delta, policy)? {
-                    Classification::Decided(parameter) => parameter,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let first = decided!(parameter.translated(&(-delta.clone()), policy)?, Ok);
+                let second = decided!(parameter.translated(&delta, policy)?, Ok);
                 let incident = if let Some(direction) = direction {
                     match self.incident_domain_from_parameter(center, direction, policy)? {
                         Classification::Decided(incident) => Some(incident),
@@ -2975,16 +2847,13 @@ impl BezierParallel2 {
                 };
                 let mut retained = Vec::with_capacity(2);
                 for candidate in [first, second] {
-                    let in_range = match CurveParameterDomain2::new(range, None)
-                        .contains_finite_parameter(
+                    let in_range = decided!(
+                        CurveParameterDomain2::new(range, None).contains_finite_parameter(
                             &CurveParameter2::from_recursive_projective(candidate.clone()),
                             policy,
-                        )? {
-                        Classification::Decided(inside) => inside,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                        )?,
+                        Ok
+                    );
                     if !in_range {
                         let Some(incident) = incident.as_ref() else {
                             continue;
@@ -3010,18 +2879,16 @@ impl BezierParallel2 {
             }
         }
         let radius_squared = setback * setback;
-        let system = match self.recursive_fixed_distance_system(
-            center_parallel,
-            parameter,
-            &radius_squared,
-            range,
-            policy,
-        )? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let system = decided!(
+            self.recursive_fixed_distance_system(
+                center_parallel,
+                parameter,
+                &radius_squared,
+                range,
+                policy,
+            )?,
+            Ok
+        );
         let incident = if let Some(direction) = direction {
             match self.incident_domain_from_parameter(center, direction, policy)? {
                 Classification::Decided(incident) => Some(incident),
@@ -3044,36 +2911,30 @@ impl BezierParallel2 {
                 .as_ref()
                 .map(BezierParallelIncidentDomain2::parameter_ray),
         );
-        let projected = match selected_axis_parameters_in_domain(domain, policy, |axis| {
-            system.parameters(&system.projection, axis, policy)
-        })? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let projected = decided!(
+            selected_axis_parameters_in_domain(domain, policy, |axis| {
+                system.parameters(&system.projection, axis, policy)
+            })?,
+            Ok
+        );
         let (candidates, transverse_certificate_applies) = match projected {
             BezierAlgebraicFiberProjection2::Parameters(candidates) => (candidates, true),
             BezierAlgebraicFiberProjection2::IdenticallyZero => {
                 let strict = policy.strict_counterpart();
-                let rational_zero = match recursive_quadratic_polynomial_is_identically_zero(
-                    &system.incidence.rational,
-                    &strict,
-                )? {
-                    Classification::Decided(zero) => zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let radical_zero = match recursive_quadratic_polynomial_is_identically_zero(
-                    &system.incidence.radical,
-                    &strict,
-                )? {
-                    Classification::Decided(zero) => zero,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let rational_zero = decided!(
+                    recursive_quadratic_polynomial_is_identically_zero(
+                        &system.incidence.rational,
+                        &strict,
+                    )?,
+                    Ok
+                );
+                let radical_zero = decided!(
+                    recursive_quadratic_polynomial_is_identically_zero(
+                        &system.incidence.radical,
+                        &strict,
+                    )?,
+                    Ok
+                );
                 if rational_zero && radical_zero {
                     return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                 }
@@ -3113,12 +2974,11 @@ impl BezierParallel2 {
         };
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let in_range = match CurveParameterDomain2::new(range, None)
-                .contains_finite_parameter(&candidate.clone().into(), policy)?
-            {
-                Classification::Decided(inside) => inside,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let in_range = decided!(
+                CurveParameterDomain2::new(range, None)
+                    .contains_finite_parameter(&candidate.clone().into(), policy)?,
+                Ok
+            );
             if !in_range {
                 let Some(incident) = incident.as_ref() else {
                     continue;
@@ -3228,39 +3088,30 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let candidates = match candidate_polynomial
-            .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
-        {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let candidates = match retain_parameters_before_incident_barrier(
-            candidates,
-            incident.barrier(),
-            direction,
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            candidate_polynomial
+                .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+            Ok
+        );
+        let candidates = decided!(
+            retain_parameters_before_incident_barrier(
+                candidates,
+                incident.barrier(),
+                direction,
+                policy,
+            )?,
+            Ok
+        );
         let mut retained = Vec::with_capacity(candidates.len());
         for candidate in candidates {
-            let radial_sign = match signed_coefficients_at_parameter(&radial, &candidate, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let normal_sign = match signed_coefficients_at_parameter(&normal, &candidate, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let radial_sign = decided!(
+                signed_coefficients_at_parameter(&radial, &candidate, policy)?,
+                Ok
+            );
+            let normal_sign = decided!(
+                signed_coefficients_at_parameter(&normal, &candidate, policy)?,
+                Ok
+            );
             match (radial_sign, normal_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
@@ -3476,28 +3327,19 @@ impl BezierParallel2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let candidates = match domain.finite_roots(&candidate_polynomial, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(domain.finite_roots(&candidate_polynomial, policy)?, Ok);
         let simple_roots = candidate_polynomial.simple_root_classifications(&candidates, policy)?;
         let candidate_derivative = polynomial_derivative(candidate_polynomial.coefficients());
         let mut retained = Vec::with_capacity(candidates.len() + certified_parameters.len());
         for (candidate, simple_root) in candidates.into_iter().zip(simple_roots) {
-            let radial_sign = match signed_coefficients_at_parameter(&radial, &candidate, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let normal_sign = match signed_coefficients_at_parameter(&normal, &candidate, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let radial_sign = decided!(
+                signed_coefficients_at_parameter(&radial, &candidate, policy)?,
+                Ok
+            );
+            let normal_sign = decided!(
+                signed_coefficients_at_parameter(&normal, &candidate, policy)?,
+                Ok
+            );
             match (radial_sign, normal_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
@@ -3649,12 +3491,10 @@ impl BezierParallel2 {
             let center_parameter = center_parameter
                 .scalar()
                 .expect("represented fixed-distance center has an exact parameter");
-            let center = match center_parallel.point_at_with_policy(center_parameter, policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let center = decided!(
+                center_parallel.point_at_with_policy(center_parameter, policy)?,
+                Ok
+            );
             let mut parameters = match if real_sign(self.distance(), &CurveContext::STRICT)
                 == Some(RealSign::Zero)
             {
@@ -3677,24 +3517,19 @@ impl BezierParallel2 {
             };
             if let Some(direction) = incident_direction {
                 let endpoint = CurveParameter2::from(center_parameter.clone());
-                let incident =
-                    match self.incident_domain_from_parameter(&endpoint, direction, policy)? {
-                        Classification::Decided(incident) => incident,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                let exterior = match self.circle_incidence_on_incident_ray(
-                    &center,
-                    radius_squared,
-                    &incident,
-                    policy,
-                )? {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let incident = decided!(
+                    self.incident_domain_from_parameter(&endpoint, direction, policy)?,
+                    Ok
+                );
+                let exterior = decided!(
+                    self.circle_incidence_on_incident_ray(
+                        &center,
+                        radius_squared,
+                        &incident,
+                        policy,
+                    )?,
+                    Ok
+                );
                 parameters.extend(exterior);
             }
             return Ok(Classification::Decided(
@@ -3708,26 +3543,21 @@ impl BezierParallel2 {
         if real_sign(self.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
             && real_sign(center_parallel.distance(), &CurveContext::STRICT) == Some(RealSign::Zero)
         {
-            let incidence = match parallel_source_fixed_distance_incidence(
-                center_parallel,
-                self,
-                radius_squared,
-                &CurveParameter2::from(BezierParameter2::Algebraic(center_parameter.clone())),
-                isolation_range,
-                policy,
-            )? {
-                Classification::Decided(incidence) => incidence,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let incidence =
-                match reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let incidence = decided!(
+                parallel_source_fixed_distance_incidence(
+                    center_parallel,
+                    self,
+                    radius_squared,
+                    &CurveParameter2::from(BezierParameter2::Algebraic(center_parameter.clone())),
+                    isolation_range,
+                    policy,
+                )?,
+                Ok
+            );
+            let incidence = decided!(
+                reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)?,
+                Ok
+            );
             return self.fixed_distance_candidate_parameters(
                 &incidence,
                 center_parameter,
@@ -3743,19 +3573,17 @@ impl BezierParallel2 {
             candidate_speed_squared,
             squared_branch,
             circle,
-        } = match parallel_fixed_distance_system(
-            center_parallel,
-            self,
-            radius_squared,
-            isolation_range,
-            &CurveParameter2::from(BezierParameter2::Algebraic(center_parameter.clone())),
-            policy,
-        )? {
-            Classification::Decided(system) => system,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        } = decided!(
+            parallel_fixed_distance_system(
+                center_parallel,
+                self,
+                radius_squared,
+                isolation_range,
+                &CurveParameter2::from(BezierParameter2::Algebraic(center_parameter.clone())),
+                policy,
+            )?,
+            Ok
+        );
         // Polynomial source speeds make the authored distance relation
         // polynomial on each regular cell. Project that relation directly;
         // replaying a twice-squared equation would introduce avoidable
@@ -3787,13 +3615,10 @@ impl BezierParallel2 {
         {
             let incidence =
                 collapse_two_normal_polynomial_speeds(&circle, &center_speed, &candidate_speed);
-            let incidence =
-                match reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)? {
-                    Classification::Decided(incidence) => incidence,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let incidence = decided!(
+                reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)?,
+                Ok
+            );
             return self.fixed_distance_candidate_parameters(
                 &incidence,
                 center_parameter,
@@ -3802,68 +3627,48 @@ impl BezierParallel2 {
                 policy,
             );
         }
-        let incidence = match reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)?
-        {
-            Classification::Decided(incidence) => incidence,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center_speed_squared = match reduce_algebraic_cusp_bivariate(
-            center_speed_squared,
-            center_parameter,
-            policy,
-        )? {
-            Classification::Decided(speed_squared) => speed_squared,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let incidence = decided!(
+            reduce_algebraic_cusp_bivariate(incidence, center_parameter, policy)?,
+            Ok
+        );
+        let center_speed_squared = decided!(
+            reduce_algebraic_cusp_bivariate(center_speed_squared, center_parameter, policy,)?,
+            Ok
+        );
         let reduce_expression = |expression| {
             reduce_algebraic_cusp_radical_expression(expression, center_parameter, policy)
         };
-        let squared_branch = match reduce_expression(squared_branch)? {
-            Classification::Decided(expression) => expression,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let center_term = match reduce_expression(BezierAlgebraicCuspTwoTermExpression2 {
-            rational: circle.rational,
-            radical: circle.center,
-        })? {
-            Classification::Decided(expression) => expression,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let candidate_term = match reduce_expression(BezierAlgebraicCuspTwoTermExpression2 {
-            rational: circle.candidate,
-            radical: circle.product,
-        })? {
-            Classification::Decided(expression) => expression,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let squared_branch = decided!(reduce_expression(squared_branch)?, Ok);
+        let center_term = decided!(
+            reduce_expression(BezierAlgebraicCuspTwoTermExpression2 {
+                rational: circle.rational,
+                radical: circle.center,
+            })?,
+            Ok
+        );
+        let candidate_term = decided!(
+            reduce_expression(BezierAlgebraicCuspTwoTermExpression2 {
+                rational: circle.candidate,
+                radical: circle.product,
+            })?,
+            Ok
+        );
         let circle = BezierParallelTwoNormalExpression2 {
             product: candidate_term.radical.clone(),
             center: center_term.radical.clone(),
             candidate: candidate_term.rational.clone(),
             rational: center_term.rational.clone(),
         };
-        let candidates = match self.fixed_distance_candidate_parameters(
-            &incidence,
-            center_parameter,
-            isolation_range,
-            incident_direction,
-            policy,
-        )? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            self.fixed_distance_candidate_parameters(
+                &incidence,
+                center_parameter,
+                isolation_range,
+                incident_direction,
+                policy,
+            )?,
+            Ok
+        );
 
         let center_parameter = BezierParameter2::Algebraic(center_parameter.clone());
         let radical_sign = |expression: &BezierAlgebraicCuspTwoTermExpression2,
@@ -3908,18 +3713,8 @@ impl BezierParallel2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let center_sign = match radical_sign(&center_term, &candidate)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let candidate_sign = match radical_sign(&candidate_term, &candidate)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let center_sign = decided!(radical_sign(&center_term, &candidate)?, Ok);
+            let candidate_sign = decided!(radical_sign(&candidate_term, &candidate)?, Ok);
             match (center_sign, candidate_sign) {
                 (RealSign::Zero, RealSign::Zero)
                 | (RealSign::Positive, RealSign::Negative)
@@ -3951,13 +3746,10 @@ impl BezierParallel2 {
                 // A global norm multiplies the candidate degree by the selected
                 // center field degree. Retain high-degree contacts directly in
                 // Q(alpha), sharing the reduced incidence across every root.
-                let (_, [isolation_lower, isolation_upper]) =
-                    match CurveParameterDomain2::new(finite_range, None).finite_envelope(policy)? {
-                        Classification::Decided(range) => range,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                let (_, [isolation_lower, isolation_upper]) = decided!(
+                    CurveParameterDomain2::new(finite_range, None).finite_envelope(policy)?,
+                    Ok
+                );
                 let roots = match selected_fiber_parameters_in_interval(
                     incidence,
                     center_parameter,
@@ -4015,13 +3807,10 @@ impl BezierParallel2 {
             return Ok(Classification::Decided(candidates));
         };
         let center = BezierParameter2::Algebraic(center_parameter.clone());
-        let incident =
-            match self.incident_domain_from_parameter(&center.clone().into(), direction, policy)? {
-                Classification::Decided(incident) => incident,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let incident = decided!(
+            self.incident_domain_from_parameter(&center.clone().into(), direction, policy)?,
+            Ok
+        );
         if let Some(interval) = incident.bridge() {
             let adjacent = match selected_fiber_parameters_in_interval(
                 incidence,
@@ -4040,12 +3829,7 @@ impl BezierParallel2 {
             };
             let mut retained_adjacent = Vec::with_capacity(adjacent.len());
             for parameter in adjacent {
-                let ordering = match parameter.cmp_bezier_parameter(&center, policy)? {
-                    Classification::Decided(ordering) => ordering,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let ordering = decided!(parameter.cmp_bezier_parameter(&center, policy)?, Ok);
                 let beyond_endpoint = match direction {
                     BezierParameterRayDirection2::Decreasing => {
                         ordering == std::cmp::Ordering::Less
@@ -4253,12 +4037,10 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierParallelIncidence2>> {
         let tangent_field = if regularize_source {
-            match self.source_oriented_regularized_tangent_field(range, policy)? {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                self.source_oriented_regularized_tangent_field(range, policy)?,
+                Ok
+            )
         } else {
             None
         };
@@ -4333,19 +4115,14 @@ impl BezierParallel2 {
             Some(weight) => polynomial_multiply(&signed_normal_term, weight),
             None => signed_normal_term,
         };
-        let line_polynomial = match polynomial_from_coefficients(line_numerator.clone(), policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let normal_polynomial =
-            match polynomial_from_coefficients(signed_normal_term.clone(), policy)? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let line_polynomial = decided!(
+            polynomial_from_coefficients(line_numerator.clone(), policy)?,
+            Ok
+        );
+        let normal_polynomial = decided!(
+            polynomial_from_coefficients(signed_normal_term.clone(), policy)?,
+            Ok
+        );
         let retain_before_barrier =
             |parameters: Vec<BezierParameter2>| -> CurveResult<Classification<Vec<_>>> {
                 retain_parameters_before_incident_barrier(
@@ -4362,14 +4139,10 @@ impl BezierParallel2 {
                 ));
             }
             (Some(polynomial), None) | (None, Some(polynomial)) => {
-                let parameters = match polynomial
-                    .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
-                {
-                    Classification::Decided(parameters) => parameters,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let parameters = decided!(
+                    polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+                    Ok
+                );
                 return Ok(
                     retain_before_barrier(parameters)?.map(BezierParallelIncidence2::Parameters)
                 );
@@ -4384,65 +4157,35 @@ impl BezierParallel2 {
             ),
             &polynomial_multiply(&signed_normal_term, &signed_normal_term),
         );
-        let squared_polynomial = match polynomial_from_coefficients(squared_relation, policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let squared_polynomial =
+            decided!(polynomial_from_coefficients(squared_relation, policy)?, Ok);
         let Some(squared_polynomial) = squared_polynomial else {
-            let line_sign = match polynomial_incident_anchor_sign(
-                &line_polynomial,
-                anchor,
-                direction,
-                policy,
-            ) {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let normal_sign = match polynomial_incident_anchor_sign(
-                &normal_polynomial,
-                anchor,
-                direction,
-                policy,
-            ) {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let line_sign = decided!(
+                polynomial_incident_anchor_sign(&line_polynomial, anchor, direction, policy,),
+                Ok
+            );
+            let normal_sign = decided!(
+                polynomial_incident_anchor_sign(&normal_polynomial, anchor, direction, policy,),
+                Ok
+            );
             if real_signs_are_opposite(line_sign, normal_sign) {
                 return Ok(Classification::Decided(
                     BezierParallelIncidence2::EntireCurve,
                 ));
             }
-            let parameters = match line_polynomial
-                .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
-            {
-                Classification::Decided(parameters) => parameters,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameters = decided!(
+                line_polynomial
+                    .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+                Ok
+            );
             return Ok(retain_before_barrier(parameters)?.map(BezierParallelIncidence2::Parameters));
         };
 
-        let parameters = match squared_polynomial
-            .isolate_incident_ray_roots_with_policy(anchor, direction, policy)?
-        {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let parameters = match retain_before_barrier(parameters)? {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameters = decided!(
+            squared_polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+            Ok
+        );
+        let parameters = decided!(retain_before_barrier(parameters)?, Ok);
         let branch_product = polynomial_multiply(&line_numerator, &signed_normal_term);
         let mut retained = Vec::with_capacity(parameters.len());
         for parameter in parameters {
@@ -4475,26 +4218,22 @@ impl BezierParallel2 {
                 RealSign::Negative => retained.push(parameter),
                 RealSign::Positive => {}
                 RealSign::Zero => {
-                    let line_sign = match signed_coefficients_at_parameter(
-                        line_polynomial.coefficients(),
-                        &parameter,
-                        policy,
-                    )? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let normal_sign = match signed_coefficients_at_parameter(
-                        normal_polynomial.coefficients(),
-                        &parameter,
-                        policy,
-                    )? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let line_sign = decided!(
+                        signed_coefficients_at_parameter(
+                            line_polynomial.coefficients(),
+                            &parameter,
+                            policy,
+                        )?,
+                        Ok
+                    );
+                    let normal_sign = decided!(
+                        signed_coefficients_at_parameter(
+                            normal_polynomial.coefficients(),
+                            &parameter,
+                            policy,
+                        )?,
+                        Ok
+                    );
                     match (line_sign, normal_sign) {
                         (RealSign::Zero, RealSign::Zero)
                         | (RealSign::Positive, RealSign::Negative)
@@ -4630,12 +4369,7 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(CurvePoint2, Option<BezierParameter2>)>> {
         if let Some(parameter) = parameter.scalar() {
-            let point = match self.point_at_with_policy(parameter, policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point = decided!(self.point_at_with_policy(parameter, policy)?, Ok);
             let (line_x, line_y) = line.delta();
             let (from_start_x, from_start_y) = point.delta_from(line.start());
             let denominator = &line_x * &line_x + &line_y * &line_y;
@@ -4685,13 +4419,10 @@ impl BezierParallel2 {
             &polynomial_scale(&differential.tangent_y, &line_y),
         );
         let strict = &CurveContext::STRICT;
-        let tangent_projection_sign =
-            match signed_coefficients_at_parameter(&tangent_projection, parameter, strict)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let tangent_projection_sign = decided!(
+            signed_coefficients_at_parameter(&tangent_projection, parameter, strict)?,
+            Ok
+        );
 
         let (x_numerator, y_numerator, denominator) = if tangent_projection_sign != RealSign::Zero {
             (
@@ -4872,10 +4603,10 @@ impl BezierParallel2 {
             &polynomial_scale(&source_from_start_y, &line_x),
             &polynomial_scale(&source_from_start_x, &line_y),
         );
-        let line_polynomial = match polynomial_from_coefficients(line_numerator.clone(), policy)? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let line_polynomial = decided!(
+            polynomial_from_coefficients(line_numerator.clone(), policy)?,
+            Ok
+        );
         if distance_sign == RealSign::Zero {
             return match line_polynomial {
                 Some(polynomial) => Ok(domain
@@ -4904,13 +4635,10 @@ impl BezierParallel2 {
             Some(weight) => polynomial_multiply(&signed_normal_term, weight),
             None => signed_normal_term,
         };
-        let normal_polynomial =
-            match polynomial_from_coefficients(signed_normal_term.clone(), policy)? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let normal_polynomial = decided!(
+            polynomial_from_coefficients(signed_normal_term.clone(), policy)?,
+            Ok
+        );
         let (line_polynomial, normal_polynomial) = match (line_polynomial, normal_polynomial) {
             (None, None) => {
                 return Ok(Classification::Decided(
@@ -5039,13 +4767,10 @@ impl BezierParallel2 {
                 squared_relation = divide_by_linear_root(&squared_relation, parameter);
             }
         }
-        let squared_polynomial =
-            match polynomial_from_coefficients(squared_relation.clone(), policy)? {
-                Classification::Decided(polynomial) => polynomial,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let squared_polynomial = decided!(
+            polynomial_from_coefficients(squared_relation.clone(), policy)?,
+            Ok
+        );
         let retained_range_is_strictly_disjoint = match retained_range {
             Some(range) => {
                 strict_polynomial_sign_on_curve_region_range(&squared_relation, range, policy)?
@@ -5071,30 +4796,16 @@ impl BezierParallel2 {
 
         match incidence {
             BezierParallelIncidence2::EntireCurve => {
-                let mut sample = match range.strict_interior_scalar(policy)? {
-                    Classification::Decided(sample) => sample,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let mut sample = decided!(range.strict_interior_scalar(policy)?, Ok);
                 let line_sign = loop {
                     match real_sign(&line_polynomial.evaluate(&sample), policy) {
                         Some(sign @ (RealSign::Positive | RealSign::Negative)) => break sign,
                         Some(RealSign::Zero) => {
-                            let [lower, _] = match range.ordered_endpoints(policy)? {
-                                Classification::Decided(endpoints) => endpoints,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
-                            sample = match lower
-                                .strict_scalar_between_ordered(&sample.into(), policy)?
-                            {
-                                Classification::Decided(sample) => sample,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
+                            let [lower, _] = decided!(range.ordered_endpoints(policy)?, Ok);
+                            sample = decided!(
+                                lower.strict_scalar_between_ordered(&sample.into(), policy)?,
+                                Ok
+                            );
                         }
                         None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
                     }
@@ -5197,38 +4908,34 @@ impl BezierParallel2 {
                                     None => false,
                                 };
                                 if odd_root {
-                                    let before = match parallel_line_neighbor_sign(
-                                        self,
-                                        line,
-                                        certified_direction,
-                                        &candidates,
-                                        candidate_index,
-                                        false,
-                                        tangent_field,
-                                        retained_range,
-                                        policy,
-                                    )? {
-                                        Classification::Decided(sign) => sign,
-                                        Classification::Uncertain(reason) => {
-                                            return Ok(Classification::Uncertain(reason));
-                                        }
-                                    };
-                                    let after = match parallel_line_neighbor_sign(
-                                        self,
-                                        line,
-                                        certified_direction,
-                                        &candidates,
-                                        candidate_index,
-                                        true,
-                                        tangent_field,
-                                        retained_range,
-                                        policy,
-                                    )? {
-                                        Classification::Decided(sign) => sign,
-                                        Classification::Uncertain(reason) => {
-                                            return Ok(Classification::Uncertain(reason));
-                                        }
-                                    };
+                                    let before = decided!(
+                                        parallel_line_neighbor_sign(
+                                            self,
+                                            line,
+                                            certified_direction,
+                                            &candidates,
+                                            candidate_index,
+                                            false,
+                                            tangent_field,
+                                            retained_range,
+                                            policy,
+                                        )?,
+                                        Ok
+                                    );
+                                    let after = decided!(
+                                        parallel_line_neighbor_sign(
+                                            self,
+                                            line,
+                                            certified_direction,
+                                            &candidates,
+                                            candidate_index,
+                                            true,
+                                            tangent_field,
+                                            retained_range,
+                                            policy,
+                                        )?,
+                                        Ok
+                                    );
                                     if before != after {
                                         RealSign::Negative
                                     } else {
@@ -5257,26 +4964,22 @@ impl BezierParallel2 {
                         RealSign::Positive => continue,
                         RealSign::Zero => {}
                     }
-                    let line_sign = match signed_coefficients_at_parameter(
-                        line_polynomial.coefficients(),
-                        &candidate,
-                        policy,
-                    )? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let normal_sign = match signed_coefficients_at_parameter(
-                        normal_polynomial.coefficients(),
-                        &candidate,
-                        policy,
-                    )? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let line_sign = decided!(
+                        signed_coefficients_at_parameter(
+                            line_polynomial.coefficients(),
+                            &candidate,
+                            policy,
+                        )?,
+                        Ok
+                    );
+                    let normal_sign = decided!(
+                        signed_coefficients_at_parameter(
+                            normal_polynomial.coefficients(),
+                            &candidate,
+                            policy,
+                        )?,
+                        Ok
+                    );
                     match (line_sign, normal_sign) {
                         (RealSign::Zero, RealSign::Zero) => {
                             retained_kinds.push(None);
@@ -5411,19 +5114,11 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierLineContactRelation>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let tangent_field =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
+        let tangent_field = decided!(
+            self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)?,
+            Ok
+        );
         let derivative_scale_sign = if tangent_field.is_some() {
             Some(
                 match self.parallel_derivative_scale_sign_at_exact(&interior, &strict)? {
@@ -5558,14 +5253,10 @@ impl BezierParallel2 {
                     let sign = match endpoint_scale_sign {
                         Some(sign) => sign,
                         None => {
-                            let sign = match self
-                                .derivative_scale_sign_without_interior_cusps(range, policy)?
-                            {
-                                Classification::Decided(sign) => sign,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
+                            let sign = decided!(
+                                self.derivative_scale_sign_without_interior_cusps(range, policy)?,
+                                Ok
+                            );
                             endpoint_scale_sign = Some(sign);
                             sign
                         }
@@ -5618,18 +5309,9 @@ impl BezierParallel2 {
                 && let Some((start, end)) =
                     retained_range.and_then(CurveParameterRange2::as_bezier_parameters)
             {
-                let at_start = match parameter.cmp_by_refinement_with_policy(start, policy)? {
-                    Classification::Decided(order) => order,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let at_end = match parameter.cmp_by_refinement_with_policy(end, policy)? {
-                    Classification::Decided(order) => order,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let at_start =
+                    decided!(parameter.cmp_by_refinement_with_policy(start, policy)?, Ok);
+                let at_end = decided!(parameter.cmp_by_refinement_with_policy(end, policy)?, Ok);
                 match (at_start, at_end) {
                     (std::cmp::Ordering::Equal, _) => Some(true),
                     (_, std::cmp::Ordering::Equal) => Some(false),
@@ -5665,38 +5347,34 @@ impl BezierParallel2 {
                 )?);
                 continue;
             }
-            let before = match parallel_line_neighbor_sign(
-                self,
-                line,
-                certified_direction,
-                &parameters,
-                index,
-                false,
-                tangent_field,
-                retained_range,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let after = match parallel_line_neighbor_sign(
-                self,
-                line,
-                certified_direction,
-                &parameters,
-                index,
-                true,
-                tangent_field,
-                retained_range,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let before = decided!(
+                parallel_line_neighbor_sign(
+                    self,
+                    line,
+                    certified_direction,
+                    &parameters,
+                    index,
+                    false,
+                    tangent_field,
+                    retained_range,
+                    policy,
+                )?,
+                Ok
+            );
+            let after = decided!(
+                parallel_line_neighbor_sign(
+                    self,
+                    line,
+                    certified_direction,
+                    &parameters,
+                    index,
+                    true,
+                    tangent_field,
+                    retained_range,
+                    policy,
+                )?,
+                Ok
+            );
             if before == after {
                 let side = match before {
                     RealSign::Positive => crate::classify::LineSide::Left,
@@ -5756,19 +5434,11 @@ impl BezierParallel2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<std::cmp::Ordering>> {
         let strict = policy.strict_counterpart();
-        let interior = match range.strict_interior_scalar(&strict)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let tangent_field =
-            match self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)? {
-                Classification::Decided(field) => field,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let interior = decided!(range.strict_interior_scalar(&strict)?, Ok);
+        let tangent_field = decided!(
+            self.source_oriented_regularized_tangent_field_at_interior(&interior, &strict)?,
+            Ok
+        );
         let Some(tangent_field) = tangent_field else {
             return self.supporting_line_parameter_order(parameter, line, policy);
         };
@@ -5864,10 +5534,7 @@ impl BezierParallel2 {
             return Ok(scale);
         }
         let strict = policy.strict_counterpart();
-        let [lower, upper] = match range.ordered_endpoints(&strict)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let [lower, upper] = decided!(range.ordered_endpoints(&strict)?, Ok);
         let increasing = match parameter.cmp_by_refinement(lower, &strict)? {
             Classification::Decided(std::cmp::Ordering::Equal) => true,
             Classification::Decided(_) => match parameter.cmp_by_refinement(upper, &strict)? {
@@ -7056,10 +6723,7 @@ impl BezierParallel2 {
         range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<RealSign>>> {
-        let analysis = match self.singularity_analysis_with_policy(range, policy)? {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let analysis = decided!(self.singularity_analysis_with_policy(range, policy)?, Ok);
         for event in analysis
             .parallel_cusps()
             .iter()
@@ -7079,10 +6743,7 @@ impl BezierParallel2 {
                 return Ok(Classification::Decided(None));
             }
         }
-        let interior = match range.strict_interior_scalar(policy)? {
-            Classification::Decided(interior) => interior,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let interior = decided!(range.strict_interior_scalar(policy)?, Ok);
         Ok(
             match self.parallel_derivative_scale_sign_at_exact(&interior, policy)? {
                 Classification::Decided(sign @ (RealSign::Positive | RealSign::Negative)) => {
@@ -7141,10 +6802,7 @@ impl BezierParallel2 {
             }
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let source_singularities = match domain.finite_roots(&speed_polynomial, policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let source_singularities = decided!(domain.finite_roots(&speed_polynomial, policy)?, Ok);
         if real_sign(self.distance(), policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(
                 BezierParallelSingularityAnalysis2 {
@@ -7193,12 +6851,7 @@ impl BezierParallel2 {
         // Cusps stay selected roots of the cusp polynomial. Closed-form
         // radicals would defeat later exact sign and equality decisions at
         // cusp-split domain boundaries.
-        let candidates = match domain.finite_roots(&cusp_polynomial, policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(domain.finite_roots(&cusp_polynomial, policy)?, Ok);
         let mut parallel_cusps = Vec::new();
         for candidate in candidates {
             // On the squared cusp equation, a negative curvature term proves
@@ -7206,14 +6859,10 @@ impl BezierParallel2 {
             // a source singularity the hodograph and curvature term vanish.
             // One sign certificate therefore excludes those roots too; no
             // comparison with a separately isolated source root is needed.
-            let sign =
-                match signed_coefficients_at_parameter(&signed_curvature_term, &candidate, policy)?
-                {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let sign = decided!(
+                signed_coefficients_at_parameter(&signed_curvature_term, &candidate, policy)?,
+                Ok
+            );
             if sign == RealSign::Negative {
                 parallel_cusps.push(candidate);
             }
@@ -7645,26 +7294,11 @@ impl BezierParallel2 {
         let zero = Real::zero();
         let one = Real::one();
         let half = (Real::one() / Real::from(2_i8))?;
-        let start = match self.point_at_with_policy(&zero, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let end = match self.point_at_with_policy(&one, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let midpoint = match self.point_at_with_policy(&half, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let start_derivative = match self.derivative_at_with_policy(&zero, policy)? {
-            Classification::Decided(derivative) => derivative,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let end_derivative = match self.derivative_at_with_policy(&one, policy)? {
-            Classification::Decided(derivative) => derivative,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let start = decided!(self.point_at_with_policy(&zero, policy)?, Ok);
+        let end = decided!(self.point_at_with_policy(&one, policy)?, Ok);
+        let midpoint = decided!(self.point_at_with_policy(&half, policy)?, Ok);
+        let start_derivative = decided!(self.derivative_at_with_policy(&zero, policy)?, Ok);
+        let end_derivative = decided!(self.derivative_at_with_policy(&one, policy)?, Ok);
         if start_derivative.zero_status() != ZeroKnowledge::NonZero
             || end_derivative.zero_status() != ZeroKnowledge::NonZero
         {
@@ -7766,11 +7400,10 @@ impl BezierParallel2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
-        let analysis =
-            match self.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
-                Classification::Decided(analysis) => analysis,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let analysis = decided!(
+            self.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+            Ok
+        );
         if !analysis.source_is_regular() {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }

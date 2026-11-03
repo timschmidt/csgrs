@@ -22,10 +22,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         let Some((normal_x, normal_y)) = self.represented_frame_unit_normal()? else {
             return Ok(Classification::Decided(None));
         };
-        let center = match self.center_point_evidence(policy)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let center = decided!(self.center_point_evidence(policy)?, Ok);
         if ![&center, chord.start(), chord.end()].iter().any(|point| {
             matches!(
                 point.0,
@@ -83,16 +80,16 @@ impl BezierAlgebraicCuspSemicircle2 {
             } else {
                 (chord.end(), chord.end_parameter())
             };
-            let (second, dot_sign) = match common_point_circle_second_line_contact(
-                incident,
-                &center,
-                chord.start(),
-                chord.end(),
-                policy,
-            )? {
-                Classification::Decided(contact) => contact,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let (second, dot_sign) = decided!(
+                common_point_circle_second_line_contact(
+                    incident,
+                    &center,
+                    chord.start(),
+                    chord.end(),
+                    policy,
+                )?,
+                Ok
+            );
             let first_cross = if self.is_clockwise() {
                 dot_sign
             } else {
@@ -117,15 +114,15 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
         let mut contacts = Vec::with_capacity(candidates.len());
         for (point, tangent_cross_sign, endpoint_parameter) in candidates {
-            let (cusp_parameter, complementary) = match self.selected_incident_point_parameter(
-                &point,
-                &center,
-                (&normal_x, &normal_y),
-                policy,
-            )? {
-                Classification::Decided(location) => location,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let (cusp_parameter, complementary) = decided!(
+                self.selected_incident_point_parameter(
+                    &point,
+                    &center,
+                    (&normal_x, &normal_y),
+                    policy,
+                )?,
+                Ok
+            );
             if complementary {
                 continue;
             }
@@ -183,10 +180,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         // Strictly replay point dependencies here; a qualified source cannot
         // become certified merely because one local sign happens to be exact.
         let strict = policy.strict_counterpart();
-        let radial = match common_point_displacement(point, center, &strict)? {
-            Classification::Decided(radial) => radial,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let radial = decided!(common_point_displacement(point, center, &strict)?, Ok);
         for form in &radial {
             if let Classification::Uncertain(reason) =
                 point_rational_denominator_sign(&form.source, &form.denominator, &strict)?
@@ -199,15 +193,15 @@ impl BezierAlgebraicCuspSemicircle2 {
             Some(RealSign::Negative) => Ordering::Less,
             _ => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let tangent = match radial_order(
-            &radial,
-            &(-self.turn_sign() * normal_y),
-            &(self.turn_sign() * normal_x),
-            policy,
-        )? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let tangent = decided!(
+            radial_order(
+                &radial,
+                &(-self.turn_sign() * normal_y),
+                &(self.turn_sign() * normal_x),
+                policy,
+            )?,
+            Ok
+        );
         if tangent == Ordering::Equal {
             let normal = match radial_order(&radial, normal_x, normal_y, policy)? {
                 Classification::Decided(Ordering::Equal) => {

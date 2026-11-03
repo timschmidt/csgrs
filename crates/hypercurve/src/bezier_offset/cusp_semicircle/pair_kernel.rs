@@ -1142,18 +1142,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             return Ok(result);
         }
         let common_source = self.represented_common_source_center_tensor(other, policy)?;
-        let first_frame = match self.represented_circle_frame(policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second_frame = match other.represented_circle_frame(policy)? {
-            Classification::Decided(frame) => frame,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first_frame = decided!(self.represented_circle_frame(policy)?, Ok);
+        let second_frame = decided!(other.represented_circle_frame(policy)?, Ok);
         let first_radius_squared = self.radial_distance() * self.radial_distance();
         let second_radius_squared = other.radial_distance() * other.radial_distance();
         let (sources, center_coordinates, unit_radial_coordinates) = if let Some(common_source) =
@@ -1307,12 +1297,7 @@ impl BezierAlgebraicCuspSemicircle2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let q_value = match represented_dense_value_refined(&q, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let q_value = decided!(represented_dense_value_refined(&q, &sources), Ok);
         let q_sign = represented_strict_sign(&q_value);
         match q_sign {
             Some(RealSign::Positive) => {}
@@ -1335,12 +1320,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         }
-        let discriminant_value = match represented_dense_value_refined(&discriminant, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let discriminant_value =
+            decided!(represented_dense_value_refined(&discriminant, &sources), Ok);
         let discriminant_sign = represented_strict_sign(&discriminant_value);
         let branches: &[i8] = match discriminant_sign {
             Some(RealSign::Negative) => {
@@ -1354,12 +1335,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Predicate));
             }
         };
-        let radial_dot_value = match represented_dense_value_refined(&radial_dot, &sources) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let radial_dot_value = decided!(represented_dense_value_refined(&radial_dot, &sources), Ok);
         let turn_product = self.turn_sign() * other.turn_sign();
         let zero = constant(&Real::zero())
             .expect("a represented circle-pair tensor has its zero polynomial");
@@ -1435,12 +1411,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             let point = if branch == 0
                 && let Some(point) = authored_tangent_point.as_ref()
             {
-                match represented_point_evidence_coordinates(point, policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(represented_point_evidence_coordinates(point, policy)?, Ok)
             } else {
                 let x = represented_tensor_nested_ratio(
                     &point_retained[0],
@@ -1571,24 +1542,20 @@ impl BezierAlgebraicCuspSemicircle2 {
                     ),
                 )
             } else {
-                let tangent_cross = match represented_affine_coordinate(
-                    &[(&signed_radical, &turn_product)],
-                    &Real::zero(),
-                ) {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let tangent_dot = match represented_affine_coordinate(
-                    &[(&radial_dot_value, &turn_product)],
-                    &Real::zero(),
-                ) {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let tangent_cross = decided!(
+                    represented_affine_coordinate(
+                        &[(&signed_radical, &turn_product)],
+                        &Real::zero(),
+                    ),
+                    Ok
+                );
+                let tangent_dot = decided!(
+                    represented_affine_coordinate(
+                        &[(&radial_dot_value, &turn_product)],
+                        &Real::zero(),
+                    ),
+                    Ok
+                );
                 (tangent_cross, tangent_dot)
             };
             let Some(tangent_cross_sign) = represented_strict_sign(&tangent_cross) else {
@@ -1695,12 +1662,7 @@ impl BezierAlgebraicCuspSemicircle2 {
             );
             return Ok(Classification::Decided(Some([first, second])));
         }
-        let joined = match first.field.joined_with(&second.field, policy)? {
-            Classification::Decided(joined) => joined,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let joined = decided!(first.field.joined_with(&second.field, policy)?, Ok);
         if let Some((field, embeddings)) = joined {
             let Some((first, second)) = (|| {
                 Some((
@@ -2102,18 +2064,8 @@ impl BezierAlgebraicCuspSemicircle2 {
             }
             Classification::Decided(None) | Classification::Uncertain(_) => {}
         }
-        let first_center = match first_center_evidence {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second_center = match second_center_evidence {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first_center = decided!(first_center_evidence, Ok);
+        let second_center = decided!(second_center_evidence, Ok);
         let centers =
             match recursive_projective_evidence_points(&[&first_center, &second_center], policy)? {
                 Classification::Decided(Some(centers)) => centers,
@@ -2125,18 +2077,8 @@ impl BezierAlgebraicCuspSemicircle2 {
         let [first, second]: [BezierRecursiveQuadraticProjectivePoint2; 2] = centers
             .try_into()
             .expect("a recursive circle-pair relation retains two centers");
-        let first = match positive_recursive_projective_point(first)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match positive_recursive_projective_point(second)? {
-            Classification::Decided(center) => center,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(positive_recursive_projective_point(first)?, Ok);
+        let second = decided!(positive_recursive_projective_point(second)?, Ok);
         let center_equality = match policy.strict_predicate_pass(|| {
             retained_point_evidence_equality_by_refinement(&first_center, &second_center, policy)
         }) {

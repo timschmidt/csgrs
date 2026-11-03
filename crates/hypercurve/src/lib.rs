@@ -12,6 +12,10 @@
 //! follows the robust-computation principle of deciding predicates before
 //! branching.
 
+// `decided!` is the shared exact pass-through for `Classification`.
+#[macro_use]
+extern crate hypersolve;
+
 #[cfg(test)]
 mod algebraic_image_tests;
 mod arc_bezier;

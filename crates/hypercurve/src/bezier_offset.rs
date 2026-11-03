@@ -1230,15 +1230,15 @@ fn rational_overlap_parameter_for_exact_cusp(
         } else {
             // Keep the angular inverse in the frame's selected coefficient
             // field. A represented frame need not have Cartesian Real witnesses.
-            let system = match data.semicircle.represented_rational_component_system(
-                &data.curve,
-                &map_range,
-                frame,
-                policy,
-            )? {
-                Classification::Decided(system) => system,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let system = decided!(
+                data.semicircle.represented_rational_component_system(
+                    &data.curve,
+                    &map_range,
+                    frame,
+                    policy,
+                )?,
+                Ok
+            );
             let Some(predicate) = system.diameter.scale(&denominator).and_then(|diameter| {
                 system
                     .radius_squared_denominator
@@ -1518,10 +1518,10 @@ fn rational_overlap_parameter_for_exact_cusp(
             )
         }
     };
-    let incidence = match reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)? {
-        Classification::Decided(incidence) => incidence,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let incidence = decided!(
+        reduce_algebraic_cusp_bivariate(incidence, cusp_parameter, policy)?,
+        Ok
+    );
     let candidates = match algebraic_selected_reduced_fiber_parameters(
         &incidence,
         cusp_parameter,
@@ -2192,17 +2192,15 @@ impl BezierRepresentedCircleRationalComponentSystem2 {
         range: &CurveParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<BezierAlgebraicFiberProjection2>> {
-        let projection = match selected_dense_last_axis_parameters(
-            polynomial,
-            &self.sources,
-            SelectedThirdAxisDomain2::Finite(range),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let projection = decided!(
+            selected_dense_last_axis_parameters(
+                polynomial,
+                &self.sources,
+                SelectedThirdAxisDomain2::Finite(range),
+                policy,
+            )?,
+            Ok
+        );
         let BezierAlgebraicFiberProjection2::Parameters(candidates) = projection else {
             return Ok(Classification::Decided(projection));
         };
@@ -2274,18 +2272,8 @@ impl BezierRepresentedCircleRationalComponentSystem2 {
             .ok_or(CurveError::InvalidCurveParameter)?;
         let zero = BezierParameter2::Exact(lower.clone());
         let one = BezierParameter2::Exact(upper.clone());
-        let lower_sign = match self.sign(&self.selected_half_plane, &zero, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let upper_sign = match self.sign(&self.selected_half_plane, &one, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let lower_sign = decided!(self.sign(&self.selected_half_plane, &zero, policy)?, Ok);
+        let upper_sign = decided!(self.sign(&self.selected_half_plane, &one, policy)?, Ok);
         if lower_sign == RealSign::Zero && upper_sign == RealSign::Zero {
             return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
         }
@@ -3778,10 +3766,7 @@ fn mapped_point_regular_source_range(
         let mut steps = 0_usize;
         let mut radius = Real::one();
         loop {
-            let refined = match parameter.refined_for_finite_envelope(steps, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let refined = decided!(parameter.refined_for_finite_envelope(steps, policy)?, Ok);
             let Some((lower, upper)) = refined.finite_envelope_bounds() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -3843,36 +3828,32 @@ fn finish_mapped_point_parameter_candidates(
     if !complete {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     }
-    let component_overlap_decided = match append_mapped_point_parameters(
-        &mut candidates,
-        mapped_point_parameters_through_component_overlaps(
-            component_overlaps,
-            CurveResultantParameter::First,
-            parameter,
-            policy,
-        )?,
-    ) {
-        Classification::Decided(decided) => decided,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let component_overlap_decided = decided!(
+        append_mapped_point_parameters(
+            &mut candidates,
+            mapped_point_parameters_through_component_overlaps(
+                component_overlaps,
+                CurveResultantParameter::First,
+                parameter,
+                policy,
+            )?,
+        ),
+        Ok
+    );
     let has_parameter_components = !parameter_components.is_empty();
-    let parameter_component_decided = match append_mapped_point_parameters(
-        &mut candidates,
-        mapped_point_parameters_through_parameter_components(
-            parameter_components
-                .iter()
-                .map(|component| (component.first_parameter(), component.second_parameter())),
-            parameter,
-            policy,
-        )?,
-    ) {
-        Classification::Decided(decided) => decided,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameter_component_decided = decided!(
+        append_mapped_point_parameters(
+            &mut candidates,
+            mapped_point_parameters_through_parameter_components(
+                parameter_components
+                    .iter()
+                    .map(|component| (component.first_parameter(), component.second_parameter())),
+                parameter,
+                policy,
+            )?,
+        ),
+        Ok
+    );
     if has_parameter_components && !parameter_component_decided {
         return Ok(Classification::Decided(None));
     }
@@ -3881,22 +3862,20 @@ fn finish_mapped_point_parameter_candidates(
         let Some((source_curve, target_curve)) = overlap_curves else {
             return Ok(Classification::Decided(None));
         };
-        match append_mapped_point_parameters(
-            &mut candidates,
-            mapped_point_parameters_through_rational_overlaps(
-                overlaps,
-                source_curve,
-                target_curve,
-                CurveResultantParameter::First,
-                parameter,
-                policy,
-            )?,
-        ) {
-            Classification::Decided(decided) => decided,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(
+            append_mapped_point_parameters(
+                &mut candidates,
+                mapped_point_parameters_through_rational_overlaps(
+                    overlaps,
+                    source_curve,
+                    target_curve,
+                    CurveResultantParameter::First,
+                    parameter,
+                    policy,
+                )?,
+            ),
+            Ok
+        )
     } else {
         false
     };
@@ -4398,10 +4377,7 @@ fn one_field_common_zero_parameter_candidates(
             // incidence equations identically zero and nonzero displacement,
             // the normal branch cannot vanish anywhere in this interval.
             // Its sign at one interior point therefore owns the whole fiber.
-            let sample = match range.strict_interior_scalar(policy)? {
-                Classification::Decided(sample) => sample,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let sample = decided!(range.strict_interior_scalar(policy)?, Ok);
             match parameter
                 .polynomial_sign(&bivariate_specialize_second(branch, &sample), policy)?
             {
@@ -4444,12 +4420,7 @@ fn one_field_point_parameter_candidates(
             },
         ));
     }
-    let point = match algebraic_axis_point_coordinates(point, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(algebraic_axis_point_coordinates(point, policy)?, Ok);
     parametric_point_parameter_candidates(
         BezierAlgebraicCuspSemicircleMappedPointParameterRef2::Ordinary(&point.parameter),
         [&point.x, &point.y, &point.denominator],
@@ -5824,28 +5795,24 @@ fn cusp_chamfer_parameter_uses_complement(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let numerator = match cusp_parameter_affine_expression_sign(
-        source,
-        &(Real::one() - physical_half_angle),
-        physical_half_angle,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let denominator_minus_numerator = match cusp_parameter_affine_expression_sign(
-        source,
-        &(-(Real::one() + physical_half_angle)),
-        &Real::one(),
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let numerator = decided!(
+        cusp_parameter_affine_expression_sign(
+            source,
+            &(Real::one() - physical_half_angle),
+            physical_half_angle,
+            policy,
+        )?,
+        Ok
+    );
+    let denominator_minus_numerator = decided!(
+        cusp_parameter_affine_expression_sign(
+            source,
+            &(-(Real::one() + physical_half_angle)),
+            &Real::one(),
+            policy,
+        )?,
+        Ok
+    );
     let agrees_with_denominator = |sign| sign == RealSign::Zero || sign == denominator;
     Ok(Classification::Decided(
         !agrees_with_denominator(numerator)
@@ -5859,12 +5826,7 @@ fn cusp_chamfer_parameter_bracket(
     refinement_steps: usize,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleParameterBracket2>> {
-    let source = match source.parameter_bracket(refinement_steps, policy)? {
-        Classification::Decided(source) => source,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let source = decided!(source.parameter_bracket(refinement_steps, policy)?, Ok);
     let (start, end) = cusp_semicircle_parameter_bracket_bounds(&source);
     let strict = &CurveContext::STRICT;
     let start_denominator = cusp_chamfer_parameter_denominator(start, half_angle);
@@ -5878,18 +5840,8 @@ fn cusp_chamfer_parameter_bracket(
     if start_sign == RealSign::Zero || start_sign != end_sign {
         return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
     }
-    let start = match cusp_chamfer_parameter_value(start, half_angle, strict)? {
-        Classification::Decided(start) => start,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end = match cusp_chamfer_parameter_value(end, half_angle, strict)? {
-        Classification::Decided(end) => end,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let start = decided!(cusp_chamfer_parameter_value(start, half_angle, strict)?, Ok);
+    let end = decided!(cusp_chamfer_parameter_value(end, half_angle, strict)?, Ok);
     // A coarse source bracket may extend past the subset on which this
     // authored angular transport remains in the half-circle chart.  The
     // retained target itself was certified strictly inside [0, 1] when the
@@ -5980,17 +5932,15 @@ fn cusp_chamfer_parameter_order_to_real(
     let numerator_constant = half_angle - target * (Real::one() + half_angle);
     let denominator_coefficient = Real::from(-2_i8) * half_angle;
     let denominator_constant = Real::one() + half_angle;
-    let numerator = match cusp_parameter_affine_expression_sign(
-        source,
-        &numerator_coefficient,
-        &numerator_constant,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let numerator = decided!(
+        cusp_parameter_affine_expression_sign(
+            source,
+            &numerator_coefficient,
+            &numerator_constant,
+            policy,
+        )?,
+        Ok
+    );
     let denominator = match cusp_parameter_affine_expression_sign(
         source,
         &denominator_coefficient,
@@ -6050,12 +6000,7 @@ fn positive_algebraic_point_field(
     point: &RationalBezierAlgebraicPointImage2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicCuspPositivePointField2>> {
-    let point = match point.predicate_evaluator(policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(point.predicate_evaluator(policy)?, Ok);
     let (x, y, denominator) = point.coordinate_polynomials();
     let scale = match point.denominator_sign() {
         RealSign::Positive => Real::one(),
@@ -6665,12 +6610,10 @@ fn projected_selected_trivariate_candidate_has_subresultant_root_with_resultant_
     else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let constraint = match selected_parameter_simple_constraint(third_parameter, &strict)? {
-        Classification::Decided(constraint) => constraint,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let constraint = decided!(
+        selected_parameter_simple_constraint(third_parameter, &strict)?,
+        Ok
+    );
     let mut config = CurveIntersectionResultantConfig {
         min_precision: hypersolve::PredicatePolicy::MAX_REFINEMENT_PRECISION,
         max_resultant_degree,
@@ -7028,13 +6971,10 @@ impl BezierDirectPairRadialParallelFastPath2 {
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleContactLocation2>>> {
-        let selected =
-            match self.expression_sign(&self.selected_half_plane, target_parameter, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let selected = decided!(
+            self.expression_sign(&self.selected_half_plane, target_parameter, policy)?,
+            Ok
+        );
         Ok(match selected {
             RealSign::Negative => Classification::Decided(None),
             RealSign::Positive => Classification::Decided(Some(
@@ -7188,13 +7128,10 @@ impl BezierRepresentedCircleParallelSystem2 {
         target_parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<BezierAlgebraicCuspSemicircleContactLocation2>>> {
-        let selected =
-            match self.expression_sign(&self.selected_half_plane, target_parameter, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let selected = decided!(
+            self.expression_sign(&self.selected_half_plane, target_parameter, policy)?,
+            Ok
+        );
         Ok(match selected {
             RealSign::Negative => Classification::Decided(None),
             RealSign::Positive => Classification::Decided(Some(
@@ -7675,16 +7612,10 @@ fn selected_radial_chord_pair_expression_sign(
         &owned_parameters[2],
         &owned_parameters[3],
     ];
-    let rational = match quadrivariate_parameter_tuple_sign_by_refinement(
-        &expression.rational,
-        parameters,
-        policy,
-    )? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(
+        quadrivariate_parameter_tuple_sign_by_refinement(&expression.rational, parameters, policy,)?,
+        Ok
+    );
     if system.pair_branch == 0 {
         return Ok(Classification::Decided(rational));
     }
@@ -7741,13 +7672,10 @@ fn selected_radial_chord_nested_expression_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     debug_assert!((-1..=1).contains(&branch));
-    let retained =
-        match selected_radial_chord_pair_expression_sign(system, &expression.retained, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let retained = decided!(
+        selected_radial_chord_pair_expression_sign(system, &expression.retained, policy)?,
+        Ok
+    );
     if branch == 0 {
         return Ok(Classification::Decided(retained));
     }
@@ -7822,13 +7750,10 @@ fn retained_offset_chord_nested_expression_sign(
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
     debug_assert!((-1..=1).contains(&branch));
-    let retained =
-        match retained_offset_chord_speed_expression_sign(system, &expression.retained, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let retained = decided!(
+        retained_offset_chord_speed_expression_sign(system, &expression.retained, policy)?,
+        Ok
+    );
     if branch == 0 {
         return Ok(Classification::Decided(retained));
     }
@@ -8596,10 +8521,7 @@ impl BezierAlgebraicChordRationalOverlap2 {
                 }
             }
         }
-        let [low, high] = match self.source_range.ordered_endpoints(policy)? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let [low, high] = decided!(self.source_range.ordered_endpoints(policy)?, Ok);
         let source_order = if self.chord.data.parameter_axis.coordinate_increases
             == (self.orientation == CurveOverlapOrientation2::Same)
         {
@@ -8655,13 +8577,10 @@ impl BezierAlgebraicChordRationalOverlap2 {
         if orders[0] == orders[1] {
             return Ok(Classification::Decided(None));
         }
-        let point =
-            match rational_point_evidence_at_region_parameter(&self.source, parameter, policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let point = decided!(
+            rational_point_evidence_at_region_parameter(&self.source, parameter, policy)?,
+            Ok
+        );
         // The retained monotone correspondence proves that every source
         // parameter strictly between these paired boundaries lies in the
         // finite chord's interior. Reuse that proof instead of reconstructing
@@ -9041,14 +8960,11 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 Axis2::X => (Real::one(), Real::zero()),
                 Axis2::Y => (Real::zero(), Real::one()),
             };
-            let other = match point_affine_form_parameter(other, &[a, b, Real::zero()], policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let coordinate = match point.coordinate_parameter(axis, policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let other = decided!(
+                point_affine_form_parameter(other, &[a, b, Real::zero()], policy)?,
+                Ok
+            );
+            let coordinate = decided!(point.coordinate_parameter(axis, policy)?, Ok);
             return coordinate
                 .cmp_by_refinement(&other, policy)
                 .map(|order| order.map(|order| if reverse { order.reverse() } else { order }));
@@ -9256,18 +9172,8 @@ pub(crate) fn algebraic_chord_point_coordinate_order(
                 return Ok(Classification::Decided(std::cmp::Ordering::Equal));
             }
             {
-                let first = match first.predicate_evaluator(policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let second = match second.predicate_evaluator(policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let first = decided!(first.predicate_evaluator(policy)?, Ok);
+                let second = decided!(second.predicate_evaluator(policy)?, Ok);
                 let one = Real::one();
                 let zero = Real::zero();
                 algebraic_point_linear_order(
@@ -9665,12 +9571,7 @@ fn algebraic_chord_owned_coordinate_polynomials(
             weight.to_vec(),
         ]));
     }
-    let point = match point.predicate_evaluator(policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let point = decided!(point.predicate_evaluator(policy)?, Ok);
     let (x, y, weight) = point.coordinate_polynomials();
     Ok(Classification::Decided([
         x.to_vec(),
@@ -9708,13 +9609,10 @@ fn algebraic_axis_point_coordinates(
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let [x, y, denominator] =
-                match algebraic_chord_owned_coordinate_polynomials(point, policy)? {
-                    Classification::Decided(coordinates) => coordinates,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let [x, y, denominator] = decided!(
+                algebraic_chord_owned_coordinate_polynomials(point, policy)?,
+                Ok
+            );
             (parameter, x, y, denominator)
         }
         CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
@@ -9731,13 +9629,10 @@ fn algebraic_axis_point_coordinates(
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         }
     };
-    let denominator_sign = match signed_coefficients_at_parameter(&denominator, &parameter, policy)?
-    {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let denominator_sign = decided!(
+        signed_coefficients_at_parameter(&denominator, &parameter, policy)?,
+        Ok
+    );
     match denominator_sign {
         RealSign::Positive => {}
         RealSign::Negative => {
@@ -9847,12 +9742,10 @@ fn represented_point_evidence_coordinates(
                 "similarity point entered a represented predicate under a different policy".into(),
             ));
         }
-        let source = match represented_point_evidence_coordinates(&point.data.source, policy)? {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source = decided!(
+            represented_point_evidence_coordinates(&point.data.source, policy)?,
+            Ok
+        );
         return Ok(represented_similarity_point(&source, &point.data.transform));
     }
     let Some(x) = algebraic_chord_point_coordinate_representation(point, Axis2::X, policy) else {
@@ -9887,18 +9780,14 @@ fn represented_chord_parameter_coordinates(
             return Ok(Classification::Uncertain(reason));
         }
     }
-    let start = match represented_point_evidence_coordinates(chord.start(), policy)? {
-        Classification::Decided(start) => start,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end = match represented_point_evidence_coordinates(chord.end(), policy)? {
-        Classification::Decided(end) => end,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let start = decided!(
+        represented_point_evidence_coordinates(chord.start(), policy)?,
+        Ok
+    );
+    let end = decided!(
+        represented_point_evidence_coordinates(chord.end(), policy)?,
+        Ok
+    );
     let parameter = bezier_parameter_root_representation(parameter);
     let represented = [
         start[0].clone(),
@@ -10162,29 +10051,15 @@ fn represented_chord_support_direction_speed(
 > {
     chord.validate_policy(policy)?;
     let support = chord.retained_support();
-    let ([mut dx, mut dy], speed) = match represented_chord_direction_speed(support, policy)? {
-        Classification::Decided(direction_speed) => direction_speed,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let ([mut dx, mut dy], speed) =
+        decided!(represented_chord_direction_speed(support, policy)?, Ok);
     if !Arc::ptr_eq(&support.data, &chord.data) && chord.retained_support_orientation_is_reversed()
     {
         let negate = |coordinate: &AlgebraicRootRepresentation| {
             represented_affine_coordinate(&[(coordinate, &Real::from(-1_i8))], &Real::zero())
         };
-        dx = match negate(&dx) {
-            Classification::Decided(dx) => dx,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        dy = match negate(&dy) {
-            Classification::Decided(dy) => dy,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        dx = decided!(negate(&dx), Ok);
+        dy = decided!(negate(&dy), Ok);
     }
     Ok(Classification::Decided(([dx, dy], speed)))
 }
@@ -10217,18 +10092,14 @@ fn represented_chord_direction_tensor(
         }
     };
     let support = chord.retained_support();
-    let start = match represented_point_evidence_coordinates(support.start(), policy)? {
-        Classification::Decided(start) => start,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end = match represented_point_evidence_coordinates(support.end(), policy)? {
-        Classification::Decided(end) => end,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let start = decided!(
+        represented_point_evidence_coordinates(support.start(), policy)?,
+        Ok
+    );
+    let end = decided!(
+        represented_point_evidence_coordinates(support.end(), policy)?,
+        Ok
+    );
     let represented = start
         .into_iter()
         .chain(end)
@@ -10566,12 +10437,10 @@ fn represented_chord_normal_line_angular_system(
         speed_squared,
         speed: _,
         trailing,
-    } = match represented_chord_direction_tensor(anchor, &trailing, None, policy)? {
-        Classification::Decided(tensor) => tensor,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    } = decided!(
+        represented_chord_direction_tensor(anchor, &trailing, None, policy)?,
+        Ok
+    );
     let [start_x, start_y, end_x, end_y, center_x, center_y]: [DenseTensorPolynomial; 6] = trailing
         .try_into()
         .expect("a chord-normal angular tensor retains its line and center coordinates");
@@ -10727,12 +10596,7 @@ impl BezierRepresentedChordNormalLineAngularSystem2 {
                 "a represented chord-normal contact retained an invalid radical branch".into(),
             ));
         }
-        let discriminant_sign = match self.discriminant.sign(&CurveContext::STRICT)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let discriminant_sign = decided!(self.discriminant.sign(&CurveContext::STRICT)?, Ok);
         if (branch == 0 && discriminant_sign != RealSign::Zero)
             || (branch != 0 && discriminant_sign != RealSign::Positive)
         {
@@ -10800,12 +10664,7 @@ impl BezierRepresentedChordNormalLineAngularSystem2 {
         })() else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let cross_sign = match oriented_cross.sign(&CurveContext::STRICT)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let cross_sign = decided!(oriented_cross.sign(&CurveContext::STRICT)?, Ok);
         if cross_sign == RealSign::Negative {
             return Ok(Classification::Decided(None));
         }
@@ -11028,19 +10887,14 @@ fn represented_parallel_chord_support(
     let Some(structural) = chord_parallel_support_source(chord, policy)? else {
         return Ok(Classification::Decided(None));
     };
-    let origin = match represented_point_evidence_coordinates(structural.source.start(), policy)? {
-        Classification::Decided(origin) => origin,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let ([dx, dy], speed) =
-        match represented_chord_support_direction_speed(&structural.source, policy)? {
-            Classification::Decided(direction_speed) => direction_speed,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let origin = decided!(
+        represented_point_evidence_coordinates(structural.source.start(), policy)?,
+        Ok
+    );
+    let ([dx, dy], speed) = decided!(
+        represented_chord_support_direction_speed(&structural.source, policy)?,
+        Ok
+    );
     Ok(Classification::Decided(Some(
         BezierRepresentedParallelChordSupport2 {
             coordinates: [origin[0].clone(), origin[1].clone(), dx, dy, speed],
@@ -11569,12 +11423,7 @@ pub(crate) fn retained_point_circle_incidence_sign(
             );
         }
         CurvePoint2(CurvePointData2::Algebraic(point)) => {
-            let point = match point.predicate_evaluator(policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point = decided!(point.predicate_evaluator(policy)?, Ok);
             let (x, y, denominator) = point.coordinate_polynomials();
             let dx = polynomial_subtract(x, &polynomial_scale(denominator, center.x()));
             let dy = polynomial_subtract(y, &polynomial_scale(denominator, center.y()));
@@ -11918,15 +11767,10 @@ impl BezierParallelPointQuery2<'_> {
             return Ok(Classification::Decided(visitor(None)));
         }
         for axis in std::iter::once(finite).chain(extension) {
-            let candidates = match recursive_projective_polynomial_parameters(
-                &field,
-                common.clone(),
-                axis,
-                &strict,
-            )? {
-                Classification::Decided(candidates) => candidates,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let candidates = decided!(
+                recursive_projective_polynomial_parameters(&field, common.clone(), axis, &strict,)?,
+                Ok
+            );
             for candidate in candidates {
                 match CurveParameterDomain2::new(self.range, None)
                     .contains_finite_parameter(&candidate, &strict)?
@@ -12125,19 +11969,17 @@ impl BezierParallelPointQuery2<'_> {
         parameter: &BezierParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let expression_sign = match algebraic_cusp_selected_square_root_sum_sign(
-            &authority.incidence,
-            &expression.expression,
-            &expression.speed_squared,
-            point.retained_parameter(),
-            parameter,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let expression_sign = decided!(
+            algebraic_cusp_selected_square_root_sum_sign(
+                &authority.incidence,
+                &expression.expression,
+                &expression.speed_squared,
+                point.retained_parameter(),
+                parameter,
+                policy,
+            )?,
+            Ok
+        );
         let source = self.parallel.source_power_basis()?;
         let weight = source
             .weight
@@ -12202,14 +12044,12 @@ impl BezierParallelAlgebraicRay2 {
     ) -> CurveResult<Classification<[RealSign; 2]>> {
         let mut signs = [RealSign::Zero; 2];
         for (index, endpoint) in self.endpoints.iter().enumerate() {
-            signs[index] = match retained_point_linear_difference_to_algebraic_sign(
-                endpoint, point, side_x, side_y, policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            signs[index] = decided!(
+                retained_point_linear_difference_to_algebraic_sign(
+                    endpoint, point, side_x, side_y, policy,
+                )?,
+                Ok
+            );
         }
         Ok(Classification::Decided(signs))
     }
@@ -12220,18 +12060,8 @@ impl BezierParallelAlgebraicRay2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<(std::cmp::Ordering, std::cmp::Ordering)>> {
         let parameter = CurveParameter2::from(parameter.clone());
-        let start = match parameter.cmp_by_refinement(self.range.start(), policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match parameter.cmp_by_refinement(self.range.end(), policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(parameter.cmp_by_refinement(self.range.start(), policy)?, Ok);
+        let end = decided!(parameter.cmp_by_refinement(self.range.end(), policy)?, Ok);
         Ok(Classification::Decided((start, end)))
     }
 
@@ -12314,12 +12144,7 @@ impl BezierParallelAlgebraicRay2 {
         };
         if let Some(neighbor) = neighbor {
             let neighbor = CurveParameter2::from(neighbor.clone());
-            let order = match neighbor.cmp_by_refinement(&boundary, policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let order = decided!(neighbor.cmp_by_refinement(&boundary, policy)?, Ok);
             if after && order.is_lt() || !after && order.is_gt() {
                 boundary = neighbor;
             }
@@ -12339,12 +12164,7 @@ impl BezierParallelAlgebraicRay2 {
         factor_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RealSign>> {
-        let sample = match self.parallel.point_at_with_policy(parameter, policy)? {
-            Classification::Decided(sample) => sample,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sample = decided!(self.parallel.point_at_with_policy(parameter, policy)?, Ok);
         point.homogeneous_linear_difference_sign(
             sample.x(),
             sample.y(),
@@ -12415,12 +12235,7 @@ impl BezierParallelAlgebraicRay2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let (start_order, end_order) = match self.parameter_orders(parameter, policy)? {
-                Classification::Decided(orders) => orders,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let (start_order, end_order) = decided!(self.parameter_orders(parameter, policy)?, Ok);
             if start_order.is_lt() || end_order.is_gt() {
                 continue;
             }
@@ -12444,12 +12259,10 @@ impl BezierParallelAlgebraicRay2 {
             };
             let before = match self.neighbor_sample(&parameters, index, false, policy)? {
                 Classification::Decided(sample) => {
-                    match self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    decided!(
+                        self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)?,
+                        Ok
+                    )
                 }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -12457,12 +12270,10 @@ impl BezierParallelAlgebraicRay2 {
             };
             let after = match self.neighbor_sample(&parameters, index, true, policy)? {
                 Classification::Decided(sample) => {
-                    match self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    decided!(
+                        self.exact_sample_sign(point, &sample, &side_x, &side_y, policy)?,
+                        Ok
+                    )
                 }
                 Classification::Uncertain(reason) => {
                     return Ok(Classification::Uncertain(reason));
@@ -12711,12 +12522,7 @@ pub(crate) fn algebraic_chord_point_linear_order_to_exact(
     if let CurvePoint2(CurvePointData2::Algebraic(point)) = point {
         let value = coefficient_x * origin.x() + coefficient_y * origin.y();
         let order = policy.strict_predicate_pass(|| -> CurveResult<_> {
-            let predicate = match point.predicate_evaluator(policy)? {
-                Classification::Decided(predicate) => predicate,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let predicate = decided!(point.predicate_evaluator(policy)?, Ok);
             predicate.linear_order_to_real(coefficient_x, coefficient_y, &value, policy)
         })?;
         if order.is_decided() {
@@ -12982,24 +12788,14 @@ fn algebraic_chord_endpoint_images(
     match (start_exact, start_algebraic, end_exact, end_algebraic) {
         (None, Some(start), None, Some(end)) => Ok(Classification::Decided([start, end])),
         (Some(start), None, None, Some(end)) => {
-            let parameter = match algebraic_chord_image_parameter(&end, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameter = decided!(algebraic_chord_image_parameter(&end, policy)?, Ok);
             Ok(Classification::Decided([
                 algebraic_constant_point_image(&start, &parameter, policy),
                 end,
             ]))
         }
         (None, Some(start), Some(end), None) => {
-            let parameter = match algebraic_chord_image_parameter(&start, policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameter = decided!(algebraic_chord_image_parameter(&start, policy)?, Ok);
             Ok(Classification::Decided([
                 start,
                 algebraic_constant_point_image(&end, &parameter, policy),
@@ -13020,12 +12816,7 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<RationalBezierAlgebraicPointImage2>> {
-        let parameter = match algebraic_chord_image_parameter(&self.start, policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(algebraic_chord_image_parameter(&self.start, policy)?, Ok);
         Ok(Classification::Decided(algebraic_constant_point_image(
             point, &parameter, policy,
         )))
@@ -13035,18 +12826,8 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         &'a self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[RationalBezierAlgebraicPointPredicate2<'a>; 2]>> {
-        let start = match self.start.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end = match self.end.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start = decided!(self.start.predicate_evaluator(policy)?, Ok);
+        let end = decided!(self.end.predicate_evaluator(policy)?, Ok);
         Ok(Classification::Decided([start, end]))
     }
 
@@ -13057,27 +12838,15 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         side_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<[RealSign; 2]>> {
-        let [start, end] = match self.endpoint_predicates(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let start = match signed_algebraic_point_linear_difference(
-            &start, point, side_x, side_y, policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end =
-            match signed_algebraic_point_linear_difference(&end, point, side_x, side_y, policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let [start, end] = decided!(self.endpoint_predicates(policy)?, Ok);
+        let start = decided!(
+            signed_algebraic_point_linear_difference(&start, point, side_x, side_y, policy,)?,
+            Ok
+        );
+        let end = decided!(
+            signed_algebraic_point_linear_difference(&end, point, side_x, side_y, policy)?,
+            Ok
+        );
         Ok(Classification::Decided([start, end]))
     }
 
@@ -13086,18 +12855,8 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let point = match self.exact_point_image(point, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(self.exact_point_image(point, policy)?, Ok);
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         self.contains_point(&point, policy)
     }
 
@@ -13106,12 +12865,7 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         point: &RationalBezierAlgebraicPointPredicate2<'_>,
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
-        let [start, end] = match self.endpoint_predicates(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let [start, end] = decided!(self.endpoint_predicates(policy)?, Ok);
         match algebraic_point_oriented_line_side(&start, &end, point, policy)? {
             Classification::Decided(crate::classify::LineSide::On) => {}
             Classification::Decided(
@@ -13132,19 +12886,14 @@ impl BezierAlgebraicChordAlgebraicRay2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let start_order = match algebraic_point_linear_order(&start, point, axis.0, axis.1, policy)?
-        {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end_order = match algebraic_point_linear_order(&end, point, axis.0, axis.1, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start_order = decided!(
+            algebraic_point_linear_order(&start, point, axis.0, axis.1, policy)?,
+            Ok
+        );
+        let end_order = decided!(
+            algebraic_point_linear_order(&end, point, axis.0, axis.1, policy)?,
+            Ok
+        );
         Ok(Classification::Decided(!matches!(
             (start_order, end_order),
             (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
@@ -13159,18 +12908,8 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        let point = match self.exact_point_image(point, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(self.exact_point_image(point, policy)?, Ok);
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         self.forward_ray_winding_delta(&point, direction_x, direction_y, policy)
     }
 
@@ -13181,27 +12920,17 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         direction_y: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<i32>> {
-        let [start, end] = match self.endpoint_predicates(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let [start, end] = decided!(self.endpoint_predicates(policy)?, Ok);
         let side_x = -direction_y.clone();
         let side_y = direction_x.clone();
-        let start_side =
-            match algebraic_point_linear_order(&start, point, &side_x, &side_y, policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let end_side = match algebraic_point_linear_order(&end, point, &side_x, &side_y, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let start_side = decided!(
+            algebraic_point_linear_order(&start, point, &side_x, &side_y, policy)?,
+            Ok
+        );
+        let end_side = decided!(
+            algebraic_point_linear_order(&end, point, &side_x, &side_y, policy)?,
+            Ok
+        );
         if matches!(
             (start_side, end_side),
             (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
@@ -13209,12 +12938,10 @@ impl BezierAlgebraicChordAlgebraicRay2 {
         ) {
             return Ok(Classification::Decided(0));
         }
-        let side = match algebraic_point_oriented_line_side(&start, &end, point, policy)? {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let side = decided!(
+            algebraic_point_oriented_line_side(&start, &end, point, policy)?,
+            Ok
+        );
         if side == crate::classify::LineSide::On {
             return match self.contains_point(point, policy)? {
                 Classification::Decided(true) => {
@@ -13381,12 +13108,7 @@ impl BezierAlgebraicChordSupportPredicate2 {
                     (chord, line.classify_point_with_policy(point, policy))
                 }
                 CurvePoint2(CurvePointData2::Algebraic(point)) => {
-                    let point = match point.predicate_evaluator(policy)? {
-                        Classification::Decided(point) => point,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let point = decided!(point.predicate_evaluator(policy)?, Ok);
                     (
                         chord,
                         point.oriented_line_side(line.start(), line.end(), policy)?,
@@ -13440,12 +13162,7 @@ impl BezierAlgebraicChordSupportPredicate2 {
                 }
                 let point = match point {
                     CurvePoint2(CurvePointData2::Exact(point)) => {
-                        match ray.exact_point_image(point, policy)? {
-                            Classification::Decided(point) => point,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
+                        decided!(ray.exact_point_image(point, policy)?, Ok)
                     }
                     CurvePoint2(CurvePointData2::Algebraic(point)) => point.clone(),
                     CurvePoint2(CurvePointData2::AlgebraicChordPair(_))
@@ -13462,18 +13179,8 @@ impl BezierAlgebraicChordSupportPredicate2 {
                         unreachable!("correlated chord points return before image normalization")
                     }
                 };
-                let point = match point.predicate_evaluator(policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let [start, end] = match ray.endpoint_predicates(policy)? {
-                    Classification::Decided(endpoints) => endpoints,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(point.predicate_evaluator(policy)?, Ok);
+                let [start, end] = decided!(ray.endpoint_predicates(policy)?, Ok);
                 (
                     chord,
                     algebraic_point_oriented_line_side(&start, &end, &point, policy)?,
@@ -14153,12 +13860,7 @@ fn represented_point_evidence_oriented_side(
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
     let cross = dense_reduce_selected_root_relations(cross.clone(), &sources).unwrap_or(cross);
-    let cross = match represented_dense_value_refined(&cross, &sources) {
-        Classification::Decided(cross) => cross,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let cross = decided!(represented_dense_value_refined(&cross, &sources), Ok);
     Ok(match represented_policy_sign(&cross, policy) {
         Classification::Decided(sign) => Classification::Decided(match sign {
             RealSign::Positive => crate::classify::LineSide::Left,
@@ -14212,22 +13914,18 @@ fn selected_circle_endpoint_chord_side(
     // injective half-circle chart certify that these points are distinct.
     // Re-running generic multi-field point equality here discards that proof
     // and can leave recursively derived pair endpoints unresolved.
-    let chord = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-        start.clone(),
-        end.clone(),
-        policy,
-    )? {
-        Classification::Decided(chord) => chord,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let support = match BezierAlgebraicChordSupportPredicate2::try_new(&chord, policy)? {
-        Classification::Decided(support) => support,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let chord = decided!(
+        BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+            start.clone(),
+            end.clone(),
+            policy,
+        )?,
+        Ok
+    );
+    let support = decided!(
+        BezierAlgebraicChordSupportPredicate2::try_new(&chord, policy)?,
+        Ok
+    );
     support.oriented_side(point, policy)
 }
 
@@ -14263,30 +13961,10 @@ fn reduce_two_normal_expression_in_selected_parameter(
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelTwoNormalExpression2>> {
     let reduce = |polynomial| reduce_bivariate_in_selected_parameter(polynomial, parameter, policy);
-    let product = match reduce(expression.product)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let center = match reduce(expression.center)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidate = match reduce(expression.candidate)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let rational = match reduce(expression.rational)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let product = decided!(reduce(expression.product)?, Ok);
+    let center = decided!(reduce(expression.center)?, Ok);
+    let candidate = decided!(reduce(expression.candidate)?, Ok);
+    let rational = decided!(reduce(expression.rational)?, Ok);
     Ok(Classification::Decided(
         BezierParallelTwoNormalExpression2 {
             product,
@@ -14339,18 +14017,14 @@ fn algebraic_selected_square_root_polynomial_is_identically_zero(
     for power in 0..coefficient_count {
         let rational = bivariate_second_parameter_coefficient(rational, power);
         let radical = bivariate_second_parameter_coefficient(radical, power);
-        let rational_sign = match signed_coefficients_at_parameter(&rational, &retained, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let radical_sign = match signed_coefficients_at_parameter(&radical, &retained, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let rational_sign = decided!(
+            signed_coefficients_at_parameter(&rational, &retained, policy)?,
+            Ok
+        );
+        let radical_sign = decided!(
+            signed_coefficients_at_parameter(&radical, &retained, policy)?,
+            Ok
+        );
         let coefficient_sign = match (rational_sign, radical_sign) {
             (RealSign::Zero, sign) | (sign, RealSign::Zero) => sign,
             (first, second) if first == second => first,
@@ -14455,18 +14129,8 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
             policy,
         )
     };
-    let rational = match sign(&expression.rational)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match sign(&expression.radical)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(&expression.rational)?, Ok);
+    let radical = decided!(sign(&expression.radical)?, Ok);
     match (rational, radical) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -14488,17 +14152,15 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
         if let (BezierParameter2::Algebraic(first), BezierParameter2::Algebraic(second)) =
             (first_parameter, second_parameter)
         {
-            match bivariate_reduce_parameter_polynomials(
-                &magnitude,
-                first.polynomial(),
-                second.polynomial(),
-                policy,
-            )? {
-                Classification::Decided(magnitude) => magnitude,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }
+            decided!(
+                bivariate_reduce_parameter_polynomials(
+                    &magnitude,
+                    first.polynomial(),
+                    second.polynomial(),
+                    policy,
+                )?,
+                Ok
+            )
         } else {
             magnitude
         };
@@ -14745,12 +14407,7 @@ fn algebraic_cusp_trivariate_square_root_components_sign_internal(
             policy,
         )
     };
-    let rational = match sign(rational_term)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(sign(rational_term)?, Ok);
     let radical = if branch == 0 {
         RealSign::Zero
     } else {
@@ -14996,18 +14653,8 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
                 return pair_sign(&expression.second, &expression.product);
             }
             Classification::Decided(RealSign::Zero) => {
-                let retained = match pair_sign(&expression.rational, &expression.first)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let candidate = match pair_sign(&expression.second, &expression.product)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let retained = decided!(pair_sign(&expression.rational, &expression.first)?, Ok);
+                let candidate = decided!(pair_sign(&expression.second, &expression.product)?, Ok);
                 return Ok(Classification::Decided(match (retained, candidate) {
                     (RealSign::Zero, sign) | (sign, RealSign::Zero) => sign,
                     (first, second) if first == second => first,
@@ -15019,18 +14666,8 @@ fn algebraic_cusp_trivariate_two_square_root_sum_sign_internal(
             }
         }
     }
-    let retained = match pair_sign(&expression.rational, &expression.first)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidate = match pair_sign(&expression.second, &expression.product)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let retained = decided!(pair_sign(&expression.rational, &expression.first)?, Ok);
+    let candidate = decided!(pair_sign(&expression.second, &expression.product)?, Ok);
     match (retained, candidate) {
         (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
             return Ok(Classification::Decided(sign));
@@ -15093,18 +14730,14 @@ fn reduce_algebraic_cusp_radical_expression(
     cusp: &BezierAlgebraicParameter2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierAlgebraicCuspTwoTermExpression2>> {
-    let rational = match reduce_algebraic_cusp_bivariate(expression.rational, cusp, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let radical = match reduce_algebraic_cusp_bivariate(expression.radical, cusp, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let rational = decided!(
+        reduce_algebraic_cusp_bivariate(expression.rational, cusp, policy)?,
+        Ok
+    );
+    let radical = decided!(
+        reduce_algebraic_cusp_bivariate(expression.radical, cusp, policy)?,
+        Ok
+    );
     Ok(Classification::Decided(
         BezierAlgebraicCuspTwoTermExpression2 { rational, radical },
     ))
@@ -15293,18 +14926,8 @@ fn common_polynomial_roots(
     domain: CurveParameterDomain2<'_>,
     policy: &CurveContext,
 ) -> CurveResult<Classification<BezierParallelIncidence2>> {
-    let first = match polynomial_from_coefficients(first, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let second = match polynomial_from_coefficients(second, policy)? {
-        Classification::Decided(polynomial) => polynomial,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let first = decided!(polynomial_from_coefficients(first, policy)?, Ok);
+    let second = decided!(polynomial_from_coefficients(second, policy)?, Ok);
     let polynomial = match (first, second) {
         (None, None) => {
             return Ok(Classification::Decided(
@@ -15344,13 +14967,10 @@ fn first_incident_ray_polynomial_root(
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
     let mut first: Option<BezierParameter2> = None;
     for polynomial in polynomials {
-        let roots =
-            match polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)? {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let roots = decided!(
+            polynomial.isolate_incident_ray_roots_with_policy(anchor, direction, policy)?,
+            Ok
+        );
         let Some(candidate) = roots.into_iter().next() else {
             continue;
         };
@@ -15358,12 +14978,10 @@ fn first_incident_ray_polynomial_root(
             first = Some(candidate);
             continue;
         };
-        let ordering = match candidate.cmp_by_refinement_with_policy(retained, policy)? {
-            Classification::Decided(ordering) => ordering,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let ordering = decided!(
+            candidate.cmp_by_refinement_with_policy(retained, policy)?,
+            Ok
+        );
         let candidate_is_nearer = match direction {
             BezierParameterRayDirection2::Decreasing => ordering == std::cmp::Ordering::Greater,
             BezierParameterRayDirection2::Increasing => ordering == std::cmp::Ordering::Less,
@@ -15546,13 +15164,10 @@ fn algebraic_incident_ray_regular_anchor_from_polynomials(
     direction: BezierParameterRayDirection2,
 ) -> CurveResult<Classification<BezierIncidentRayAnchor2>> {
     let strict = &CurveContext::STRICT;
-    let (weight, speed) =
-        match regular_barrier_polynomials(weight_coefficients, speed_squared, strict)? {
-            Classification::Decided(polynomials) => polynomials,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let (weight, speed) = decided!(
+        regular_barrier_polynomials(weight_coefficients, speed_squared, strict)?,
+        Ok
+    );
     let endpoint_parameter = BezierParameter2::Algebraic(endpoint.clone());
     if let Some(weight) = weight.as_ref() {
         match signed_coefficients_at_parameter(weight.coefficients(), &endpoint_parameter, strict)?
@@ -15627,13 +15242,10 @@ fn regular_incident_ray_barrier_from_polynomials(
     direction: BezierParameterRayDirection2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let (weight, speed) =
-        match regular_barrier_polynomials(weight_coefficients, speed_squared, policy)? {
-            Classification::Decided(polynomials) => polynomials,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let (weight, speed) = decided!(
+        regular_barrier_polynomials(weight_coefficients, speed_squared, policy)?,
+        Ok
+    );
     if let Some(weight) = weight.as_ref() {
         match real_sign(&weight.evaluate(anchor), policy) {
             Some(RealSign::Positive | RealSign::Negative) => {}
@@ -15678,12 +15290,10 @@ fn retain_parameters_before_incident_barrier(
     };
     let mut retained = Vec::with_capacity(parameters.len());
     for parameter in parameters {
-        let ordering = match parameter.cmp_by_refinement_with_policy(barrier, policy)? {
-            Classification::Decided(ordering) => ordering,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let ordering = decided!(
+            parameter.cmp_by_refinement_with_policy(barrier, policy)?,
+            Ok
+        );
         let before = match direction {
             BezierParameterRayDirection2::Decreasing => ordering == std::cmp::Ordering::Greater,
             BezierParameterRayDirection2::Increasing => ordering == std::cmp::Ordering::Less,
@@ -15769,12 +15379,10 @@ fn parallel_line_neighbor_sign(
             &default_boundary
         }
     };
-    let boundary_order = match root.cmp_by_refinement_with_policy(domain_boundary, policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let boundary_order = decided!(
+        root.cmp_by_refinement_with_policy(domain_boundary, policy)?,
+        Ok
+    );
     let has_interior_side = if after {
         boundary_order == std::cmp::Ordering::Less
     } else {
@@ -15793,12 +15401,7 @@ fn parallel_line_neighbor_sign(
         } else {
             neighbor.strict_scalar_between_ordered(root, policy)?
         };
-        match sample {
-            Classification::Decided(sample) => sample,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        }
+        decided!(sample, Ok)
     } else if boundary_order == std::cmp::Ordering::Equal && retained_range.is_none() {
         let mut step = (Real::one() / Real::from(2_u8))?;
         loop {
@@ -15889,13 +15492,10 @@ fn signed_parallel_linear_projection_at_parameter(
             return Ok(Classification::Uncertain(reason));
         }
     };
-    let source_sign = match signed_coefficients_at_parameter(&source_projection, parameter, policy)?
-    {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let source_sign = decided!(
+        signed_coefficients_at_parameter(&source_projection, parameter, policy)?,
+        Ok
+    );
     if real_sign(parallel.distance(), policy) == Some(RealSign::Zero) {
         return Ok(Classification::Decided(product_sign(
             source_sign,
@@ -15918,13 +15518,10 @@ fn signed_parallel_linear_projection_at_parameter(
         &polynomial_scale(&normal_projection, parallel.distance()),
         &weight,
     );
-    let normal_sign = match signed_coefficients_at_parameter(&normal_projection, parameter, policy)?
-    {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let normal_sign = decided!(
+        signed_coefficients_at_parameter(&normal_projection, parameter, policy)?,
+        Ok
+    );
     let speed_squared = polynomial_add(
         &polynomial_multiply(tangent_x, tangent_x),
         &polynomial_multiply(tangent_y, tangent_y),

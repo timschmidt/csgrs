@@ -417,10 +417,7 @@ pub(super) fn verify_parallel_node(
     trace: &mut ParallelVerificationTrace,
 ) -> CurveResult<Classification<()>> {
     trace.maximum_depth = trace.maximum_depth.max(depth);
-    let exact_midpoint = match source.exact_parallel_midpoint(distance, policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let exact_midpoint = decided!(source.exact_parallel_midpoint(distance, policy)?, Ok);
     let candidate_midpoint = candidate.point_at_half();
     let midpoint_error = exact_midpoint
         .distance_squared(&candidate_midpoint)
@@ -563,24 +560,22 @@ pub(super) fn derivative_hull_minimum_speed(
     if controls.is_empty() {
         return Ok(Classification::Decided(None));
     }
-    let (minimum_x, maximum_x) =
-        match coordinate_extrema(controls.iter().map(|control| &control.0), policy)? {
-            Classification::Decided(extrema) => extrema,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    let (minimum_y, maximum_y) =
-        match coordinate_extrema(controls.iter().map(|control| &control.1), policy)? {
-            Classification::Decided(extrema) => extrema,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-    let minimum_abs_x = match interval_minimum_absolute(&minimum_x, &maximum_x, policy) {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let minimum_abs_y = match interval_minimum_absolute(&minimum_y, &maximum_y, policy) {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let (minimum_x, maximum_x) = decided!(
+        coordinate_extrema(controls.iter().map(|control| &control.0), policy)?,
+        Ok
+    );
+    let (minimum_y, maximum_y) = decided!(
+        coordinate_extrema(controls.iter().map(|control| &control.1), policy)?,
+        Ok
+    );
+    let minimum_abs_x = decided!(
+        interval_minimum_absolute(&minimum_x, &maximum_x, policy),
+        Ok
+    );
+    let minimum_abs_y = decided!(
+        interval_minimum_absolute(&minimum_y, &maximum_y, policy),
+        Ok
+    );
     let lower_squared = &minimum_abs_x * &minimum_abs_x + &minimum_abs_y * &minimum_abs_y;
     match real_sign(&lower_squared, policy) {
         Some(RealSign::Positive) => Ok(Classification::Decided(Some(lower_squared.sqrt()?))),
