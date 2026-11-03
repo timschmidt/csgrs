@@ -8,6 +8,7 @@
 //! collision systems.
 
 use crate::predicate::PredicatePolicy;
+use crate::predicates::decision::max_stage;
 use core::cmp::Ordering;
 
 use hyperreal::Real;
@@ -1778,27 +1779,10 @@ fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
     }
 }
 
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::predicates::decision::stage_rank;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 

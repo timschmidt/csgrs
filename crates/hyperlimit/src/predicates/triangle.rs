@@ -1,6 +1,7 @@
 //! Triangle classification predicates.
 
 use crate::predicate::PredicatePolicy;
+use crate::predicates::decision::{certainty_rank, max_certainty, max_stage, stage_rank};
 use core::cmp::Ordering;
 
 use crate::classify::{
@@ -1650,45 +1651,11 @@ fn combine_certainties(values: [Certainty; 4]) -> Certainty {
         .unwrap_or(Certainty::Exact)
 }
 
-fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if certainty_rank(left) >= certainty_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn certainty_rank(certainty: Certainty) -> u8 {
-    match certainty {
-        Certainty::Exact => 0,
-        Certainty::Filtered => 1,
-        Certainty::Approximate => 2,
-    }
-}
-
 fn combine_stages(values: [Escalation; 4]) -> Escalation {
     values
         .into_iter()
         .max_by_key(|stage| stage_rank(*stage))
         .unwrap_or(Escalation::Undecided)
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
 }
 
 #[cfg(test)]

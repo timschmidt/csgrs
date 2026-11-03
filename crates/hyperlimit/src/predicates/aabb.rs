@@ -11,7 +11,8 @@ use crate::classify::{
 };
 use crate::geometry::{Aabb2Facts, Point2, Point3};
 use crate::predicate::PredicatePolicy;
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed};
+use crate::predicate::{Certainty, Escalation, PredicateOutcome};
+use crate::predicates::decision::{DecisionTrace, UnknownDecision, decided};
 use crate::predicates::interval::{
     classify_closed_interval_intersection_with_extent_policy,
     classify_closed_interval_intersection_with_policy, classify_real_closed_interval_with_policy,
@@ -903,88 +904,11 @@ fn min_max3<'a>(
     Ok((min, max))
 }
 
-#[derive(Clone, Copy)]
-struct DecisionTrace {
-    certainty: Certainty,
-    stage: Escalation,
-}
-
-impl Default for DecisionTrace {
-    fn default() -> Self {
-        Self {
-            certainty: Certainty::Exact,
-            stage: Escalation::Structural,
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct UnknownDecision {
-    needed: RefinementNeed,
-    stage: Escalation,
-}
-
-impl UnknownDecision {
-    fn into_outcome<T>(self) -> PredicateOutcome<T> {
-        PredicateOutcome::unknown(self.needed, self.stage)
-    }
-}
-
-fn decided<T>(
-    outcome: PredicateOutcome<T>,
-    trace: &mut DecisionTrace,
-) -> Result<T, UnknownDecision> {
-    match outcome {
-        PredicateOutcome::Decided {
-            value,
-            certainty,
-            stage,
-        } => {
-            trace.certainty = max_certainty(trace.certainty, certainty);
-            trace.stage = max_stage(trace.stage, stage);
-            Ok(value)
-        }
-        PredicateOutcome::Unknown { needed, stage } => Err(UnknownDecision { needed, stage }),
-    }
-}
-
-fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if certainty_rank(left) >= certainty_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn certainty_rank(certainty: Certainty) -> u8 {
-    match certainty {
-        Certainty::Exact => 0,
-        Certainty::Filtered => 1,
-        Certainty::Approximate => 2,
-    }
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::predicate::RefinementNeed;
+    use crate::predicates::decision::{certainty_rank, max_certainty, max_stage, stage_rank};
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 

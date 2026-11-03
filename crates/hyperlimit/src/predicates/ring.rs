@@ -1,6 +1,7 @@
 //! Polygon ring Real classifiers.
 
 use crate::predicate::PredicatePolicy;
+use crate::predicates::decision::{DecisionTrace, UnknownDecision, decided};
 use core::cmp::Ordering;
 
 use crate::classify::{PointSegmentLocation, RingConvexity, RingPointLocation};
@@ -683,88 +684,10 @@ fn compare_greater(
     Ok(decided(compare_reals_with_policy(left, right, policy), trace)? == Ordering::Greater)
 }
 
-#[derive(Clone, Copy)]
-struct DecisionTrace {
-    certainty: Certainty,
-    stage: Escalation,
-}
-
-impl Default for DecisionTrace {
-    fn default() -> Self {
-        Self {
-            certainty: Certainty::Exact,
-            stage: Escalation::Structural,
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct UnknownDecision {
-    needed: RefinementNeed,
-    stage: Escalation,
-}
-
-impl UnknownDecision {
-    fn into_outcome<T>(self) -> PredicateOutcome<T> {
-        PredicateOutcome::unknown(self.needed, self.stage)
-    }
-}
-
-fn decided<T>(
-    outcome: PredicateOutcome<T>,
-    trace: &mut DecisionTrace,
-) -> Result<T, UnknownDecision> {
-    match outcome {
-        PredicateOutcome::Decided {
-            value,
-            certainty,
-            stage,
-        } => {
-            trace.certainty = max_certainty(trace.certainty, certainty);
-            trace.stage = max_stage(trace.stage, stage);
-            Ok(value)
-        }
-        PredicateOutcome::Unknown { needed, stage } => Err(UnknownDecision { needed, stage }),
-    }
-}
-
-fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if certainty_rank(left) >= certainty_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn certainty_rank(certainty: Certainty) -> u8 {
-    match certainty {
-        Certainty::Exact => 0,
-        Certainty::Filtered => 1,
-        Certainty::Approximate => 2,
-    }
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::predicates::decision::{certainty_rank, stage_rank};
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;
 

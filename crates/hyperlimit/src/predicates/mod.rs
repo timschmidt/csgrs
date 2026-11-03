@@ -1,6 +1,7 @@
 pub mod aabb;
 pub mod convex;
 pub mod coplanar;
+pub(crate) mod decision;
 pub mod distance;
 pub mod dop;
 mod exact;

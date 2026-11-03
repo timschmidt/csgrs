@@ -8,7 +8,8 @@
 use crate::classify::{PointSegmentLocation, Segment3Intersection, SegmentIntersection};
 use crate::geometry::{Point2, Point3, Segment2Facts};
 use crate::predicate::PredicatePolicy;
-use crate::predicate::{Certainty, Escalation, PredicateOutcome, RefinementNeed, Sign};
+use crate::predicate::{PredicateOutcome, RefinementNeed, Sign};
+use crate::predicates::decision::{DecisionTrace, UnknownDecision, max_certainty, max_stage};
 use crate::predicates::order::compare_reals_with_policy;
 use crate::predicates::orient::{
     Line2Orientation, Line2OrientationQuery, orient2d_with_orientation_and_policy,
@@ -1193,33 +1194,6 @@ fn opposite_strict(left: Sign, right: Sign) -> bool {
     )
 }
 
-#[derive(Clone, Copy)]
-struct DecisionTrace {
-    certainty: Certainty,
-    stage: Escalation,
-}
-
-impl Default for DecisionTrace {
-    fn default() -> Self {
-        Self {
-            certainty: Certainty::Exact,
-            stage: Escalation::Structural,
-        }
-    }
-}
-
-#[derive(Clone, Copy)]
-struct UnknownDecision {
-    needed: RefinementNeed,
-    stage: Escalation,
-}
-
-impl UnknownDecision {
-    fn into_outcome<T>(self) -> PredicateOutcome<T> {
-        PredicateOutcome::unknown(self.needed, self.stage)
-    }
-}
-
 fn decided<T: Copy>(
     outcome: PredicateOutcome<T>,
     trace: &mut DecisionTrace,
@@ -1238,43 +1212,11 @@ fn decided<T: Copy>(
     }
 }
 
-fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if certainty_rank(left) >= certainty_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn certainty_rank(certainty: Certainty) -> u8 {
-    match certainty {
-        Certainty::Exact => 0,
-        Certainty::Filtered => 1,
-        Certainty::Approximate => 2,
-    }
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::predicate::{Certainty, Escalation};
+    use crate::predicates::decision::{certainty_rank, stage_rank};
     use crate::test_support::exact_normal_positive;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;

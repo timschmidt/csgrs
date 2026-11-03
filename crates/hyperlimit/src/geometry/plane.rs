@@ -1,6 +1,7 @@
 //! Plane classification helpers.
 
 use crate::predicate::PredicatePolicy;
+use crate::predicates::decision::{max_certainty, max_stage};
 use core::cmp::Ordering;
 
 use hyperreal::{
@@ -1057,40 +1058,6 @@ fn plane_coefficient_zero_masks(coordinates: [&Real; 4]) -> (u8, u8, u8) {
     (known_zero_mask, known_nonzero_mask, unknown_zero_mask)
 }
 
-fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
-    if certainty_rank(left) >= certainty_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn certainty_rank(certainty: Certainty) -> u8 {
-    match certainty {
-        Certainty::Exact => 0,
-        Certainty::Filtered => 1,
-        Certainty::Approximate => 2,
-    }
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
-    }
-}
-
 fn absorb_trace(
     certainty: &mut Certainty,
     stage: &mut Escalation,
@@ -1132,6 +1099,7 @@ fn sub(left: &Real, right: &Real) -> Real {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::predicates::decision::{certainty_rank, stage_rank};
     use hyperreal::Rational;
 
     const APPROX: PredicatePolicy = PredicatePolicy::APPROXIMATE_512;

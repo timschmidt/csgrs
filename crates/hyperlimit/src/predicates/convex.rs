@@ -9,6 +9,7 @@ use crate::geometry::{Plane3, Point2, Point3};
 use crate::plane::classify_point_plane_without_filter_with_policy;
 use crate::predicate::PredicatePolicy;
 use crate::predicate::{Certainty, Escalation, PredicateOutcome, Sign};
+use crate::predicates::decision::max_stage;
 use crate::predicates::orient::orient2d_with_policy;
 use crate::predicates::ring::ring_area_sign_with_policy;
 
@@ -152,24 +153,6 @@ fn max_certainty(left: Certainty, right: Certainty) -> Certainty {
         (Certainty::Approximate, _) | (_, Certainty::Approximate) => Certainty::Approximate,
         (Certainty::Filtered, _) | (_, Certainty::Filtered) => Certainty::Filtered,
         _ => Certainty::Exact,
-    }
-}
-
-fn max_stage(left: Escalation, right: Escalation) -> Escalation {
-    if stage_rank(left) >= stage_rank(right) {
-        left
-    } else {
-        right
-    }
-}
-
-fn stage_rank(stage: Escalation) -> u8 {
-    match stage {
-        Escalation::Structural => 0,
-        Escalation::Filter => 1,
-        Escalation::Exact => 2,
-        Escalation::Refined => 3,
-        Escalation::Undecided => 4,
     }
 }
 
