@@ -2963,10 +2963,27 @@ fn exact_edge_curve_equal(
         return Ok(points_certifiably_equal(&actual.start, &expected.start)
             && points_certifiably_equal(&actual.end, &expected.end));
     }
-    if crate::topology::compare_curve3_exact_data(&candidate.exact_data(), &existing.exact_data())?
-        == Ordering::Equal
-    {
-        return Ok(true);
+    match crate::topology::compare_curve3_exact_data(
+        &candidate.exact_data(),
+        &existing.exact_data(),
+    ) {
+        Ok(Ordering::Equal) => return Ok(true),
+        Ok(_) => {}
+        // Planar images over one frame with structurally distinct sources
+        // have no canonical order; they are not proved equal, so the edge is
+        // kept separate rather than merged or refused.
+        Err(GeometryError::UnsupportedIntersection)
+            if matches!(
+                (candidate.exact_data(), existing.exact_data()),
+                (
+                    Curve3ExactData::PlanarImage(_),
+                    Curve3ExactData::PlanarImage(_)
+                )
+            ) =>
+        {
+            return Ok(false);
+        }
+        Err(error) => return Err(error),
     }
     let (Curve3ExactData::EllipseArc(actual), Curve3ExactData::EllipseArc(mut expected)) =
         (candidate.exact_data(), existing.exact_data())

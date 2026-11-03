@@ -13,9 +13,9 @@ impl ArenaModelBuilder {
     /// the base region. Otherwise every top face must also face along `d`
     /// (caps by their constant normal, tensor faces by the sign of the
     /// certified graph's normal, constant because its projection is
-    /// injective), and each cap must lie strictly above the base and have no
-    /// holes: a vertical line over the profile then leaves the solid through
-    /// exactly one top face, so the tops' regions tile the profile.
+    /// injective), and each cap must lie strictly above the base: a vertical
+    /// line over the profile then leaves the solid through exactly one top
+    /// face, so the tops' regions (caps minus their holes) tile the profile.
     pub(in crate::topology) fn certified_tensor_graph_shell(
         &self,
         shell: ShellId,
@@ -102,7 +102,6 @@ impl ArenaModelBuilder {
                 if order(&parallel.dot(&parallel))? != std::cmp::Ordering::Equal
                     || order(&outward.dot(&direction))? != std::cmp::Ordering::Greater
                     || order(&height)? != std::cmp::Ordering::Greater
-                    || !other.inner().is_empty()
                 {
                     admissible = false;
                     break;
@@ -113,6 +112,11 @@ impl ArenaModelBuilder {
                     v: cap_v,
                     height,
                     boundary: self.build_wire_curve_path(cap_outer)?,
+                    holes: other
+                        .inner()
+                        .iter()
+                        .map(|wire| self.build_wire_curve_path(*wire))
+                        .collect::<Result<Vec<_>, _>>()?,
                 });
             }
             if !admissible || !top_surface.certify_tensor_graph(&origin, &u, &v, &direction)? {

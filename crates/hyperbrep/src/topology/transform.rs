@@ -492,6 +492,7 @@ impl ArenaModel {
                                             v: transform.transform_direction3(&cap.v),
                                             height: cap.height.clone(),
                                             boundary: cap.boundary.clone(),
+                                            holes: cap.holes.clone(),
                                         })
                                     })
                                     .collect::<Result<Vec<_>, GeometryError>>()?,

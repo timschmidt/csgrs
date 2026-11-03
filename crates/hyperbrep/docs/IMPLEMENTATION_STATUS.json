@@ -4616,6 +4616,35 @@
       "validation": "New witness shared_wall_blocks_cut_tensor_tops_into_capped_solids with the block [-1,1]^2 x [-1,5/4]: the intersection (ten faces: tensor centre and four corner caps, min(x^2 + y^2, 5/4)) and the union (central disk cap and tensor corners, max(x^2 + y^2, 5/4)) classify nine exact probes each, including the rational seam point (11/13, 19/26) and the union corner surface point (9/10, 9/10, 81/50), before and after byte-identical cold replay. Passing no mapped carrier to the contact certification fails the witness; the refactored planar-image certification keeps every existing witness passing. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 804 passes and debug tests 796 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.85 s in release.",
       "limits": "Both results have curved-boundary caps, so their volumes stay typed UnsupportedMeasurement. The difference (four disconnected corner pieces above z = 5/4) is not admitted by any certified solid class because the tensor dips below their base plane. Shared-wall blocks below the top (z <= 1/2) still stop at planar-image edge equality. No work package or pre-push gate closes."
+    },
+    {
+      "id": "holed-caps-closed-section-shared-blocks-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Capped tensor-graph admission accepts caps with holes: each cap keeps its inner boundaries in the cap frame, classification treats a point inside a hole as outside that cap (on a hole boundary as on the cap boundary), transforms carry them, and a holed cap's volume is a typed UnsupportedMeasurement. Boolean stitching treats two planar-image edges over one frame with structurally distinct sources (no canonical order) as not proved equal, keeping them separate instead of refusing. A block sharing the bump's base and walls whose top cuts a closed section inside the tensor top now intersects and unites exactly.",
+      "source": [
+        "../src/topology/validation/tensor_graph.rs",
+        "../src/topology/query.rs",
+        "../src/topology/mod.rs",
+        "../src/topology/transform.rs",
+        "../src/topology/measure.rs",
+        "../src/boolean_kernel.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness shared_wall_blocks_cut_closed_sections_into_holed_caps with the block [-1,1]^2 x [-1,1/2]: the intersection (seven faces: a tensor disk and a cap with a circular hole, min(x^2 + y^2, 1/2)) and the union (eleven faces: a disk cap inside a holed tensor face, max(x^2 + y^2, 1/2)) classify nine exact probes each, including the rational seam point (1/2, 1/2), before and after byte-identical cold replay; both volumes are typed. Mutations ignoring cap holes in classification, refusing holed caps, or removing the not-proved-equal stitching arm each fail the witness; an exact parameterization-equality proof for such planar-image edges was dropped because the witness does not need it. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 805 passes and debug tests 797 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the ten tensor-graph tests complete in about 1.2 s in release.",
+      "limits": "Holed-cap and curved-trim volumes stay typed. The difference with this block (a ring whose thickness vanishes on the section circle) is not admitted by any certified solid class. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

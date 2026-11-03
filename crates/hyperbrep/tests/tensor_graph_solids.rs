@@ -960,3 +960,95 @@ fn shared_wall_blocks_cut_tensor_tops_into_capped_solids() {
         }
     }
 }
+
+/// A block [-1,1]² × [-1,1/2] shares the bump's base and walls; its top cuts
+/// the tensor in the closed circle x² + y² = 1/2 inside the square. The
+/// intersection (min(x² + y², 1/2)) keeps a tensor disk and a cap with a
+/// circular hole; the union (max(x² + y², 1/2)) keeps a disk cap inside a
+/// holed tensor face. Both classify exactly, also on the rational seam point
+/// (1/2, 1/2), and replay cold.
+#[test]
+fn shared_wall_blocks_cut_closed_sections_into_holed_caps() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let block = builder::cuboid(pi(-1, -1, -1), Point3::new(1.into(), 1.into(), q(1, 2))).unwrap();
+    let common = boolean::intersection(&body, &block).unwrap();
+    let union = boolean::union(&body, &block).unwrap();
+    assert_eq!((common.len(), union.len()), (1, 1));
+    assert_eq!(common.model().faces().count(), 7);
+    assert_eq!(union.model().faces().count(), 11);
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    let half = n(1, 2);
+    let common_cases = vec![
+        (p(0.into(), 0.into(), n(-1, 2)), SolidPointLocation::Inside),
+        (
+            p(0.into(), 0.into(), 0.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (p(0.into(), 0.into(), n(1, 10)), SolidPointLocation::Outside),
+        (p(n(9, 10), 0.into(), n(2, 5)), SolidPointLocation::Inside),
+        (
+            p(n(9, 10), 0.into(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+        (p(n(9, 10), 0.into(), n(3, 5)), SolidPointLocation::Outside),
+        (
+            p(half.clone(), half.clone(), n(2, 5)),
+            SolidPointLocation::Inside,
+        ),
+        (
+            p(half.clone(), half.clone(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(half.clone(), half.clone(), n(3, 5)),
+            SolidPointLocation::Outside,
+        ),
+    ];
+    let union_cases = vec![
+        (p(0.into(), 0.into(), n(2, 5)), SolidPointLocation::Inside),
+        (
+            p(0.into(), 0.into(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+        (p(0.into(), 0.into(), n(3, 5)), SolidPointLocation::Outside),
+        (p(n(9, 10), 0.into(), n(7, 10)), SolidPointLocation::Inside),
+        (
+            p(n(9, 10), 0.into(), n(81, 100)),
+            SolidPointLocation::Boundary,
+        ),
+        (p(n(9, 10), 0.into(), n(9, 10)), SolidPointLocation::Outside),
+        (
+            p(half.clone(), half.clone(), n(2, 5)),
+            SolidPointLocation::Inside,
+        ),
+        (
+            p(half.clone(), half.clone(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(half.clone(), half.clone(), n(3, 5)),
+            SolidPointLocation::Outside,
+        ),
+    ];
+    for (result, cases) in [(&common, &common_cases), (&union, &union_cases)] {
+        let solid = result.bodies().next().unwrap();
+        for (point, expected) in cases {
+            assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
+        }
+        assert!(matches!(
+            solid.volume(),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        ));
+        let json = result.model().to_json().unwrap();
+        let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(cold.to_json().unwrap(), json);
+        let cold_solid = cold.solids().next().unwrap();
+        for (point, expected) in cases {
+            assert_eq!(&cold_solid.classify_point(point).unwrap(), expected);
+        }
+    }
+}

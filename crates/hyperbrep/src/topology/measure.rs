@@ -707,16 +707,23 @@ impl ArenaModel {
                 let determinant = graph.u.dot(&graph.v.cross(&graph.direction));
                 let a_form = graph.v.cross(&graph.direction);
                 let b_form = graph.direction.cross(&graph.u);
-                for cap in &graph.caps {
-                    let area = crate::error::classified(
-                        cap.boundary
-                            .boundary_loop()
+                let path_area = |path: &CurvePath2| -> Result<Real, QueryError> {
+                    Ok(crate::error::classified(
+                        path.boundary_loop()
                             .map_err(GeometryError::from)?
                             .signed_area(),
                     )
                     .map_err(GeometryError::from)
                     .and_then(resolve_planar_classification)?
-                    .ok_or(GeometryError::UnsupportedMeasurement)?;
+                    .ok_or(GeometryError::UnsupportedMeasurement)?
+                    .abs())
+                };
+                for cap in &graph.caps {
+                    // Holed caps have no measured straight-trim witness yet.
+                    if !cap.holes.is_empty() {
+                        return Err(GeometryError::UnsupportedMeasurement.into());
+                    }
+                    let area = path_area(&cap.boundary)?;
                     let map = |form: &Vector3, axis: &Vector3| {
                         (axis.dot(form) / &determinant).map_err(GeometryError::Numeric)
                     };

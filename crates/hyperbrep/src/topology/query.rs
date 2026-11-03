@@ -276,16 +276,29 @@ impl ArenaModel {
             let gram = &uu * &vv - &uv * &uv;
             let s = ((&vv * &du - &uv * &dv) / &gram).map_err(GeometryError::Numeric)?;
             let t = ((&uu * &dv - &uv * &du) / &gram).map_err(GeometryError::Numeric)?;
-            let location = match crate::error::classified(
-                cap.boundary.classify_point(&CurvePoint2::new(s, t).into()),
-            )
-            .map_err(GeometryError::from)?
-            {
-                Classification::Decided(location) => location,
-                Classification::Uncertain(reason) => {
-                    return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+            let probe: hypercurve::CurvePoint2 = CurvePoint2::new(s, t).into();
+            let classify = |path: &CurvePath2| -> Result<ContourPointLocation, QueryError> {
+                match crate::error::classified(path.classify_point(&probe))
+                    .map_err(GeometryError::from)?
+                {
+                    Classification::Decided(location) => Ok(location),
+                    Classification::Uncertain(reason) => {
+                        Err(GeometryError::PlanarClassificationUnresolved(reason).into())
+                    }
                 }
             };
+            // The cap's region is its outer boundary minus its holes.
+            let mut location = classify(&cap.boundary)?;
+            for hole in &cap.holes {
+                if location == ContourPointLocation::Outside {
+                    break;
+                }
+                match classify(hole)? {
+                    ContourPointLocation::Inside => location = ContourPointLocation::Outside,
+                    ContourPointLocation::Boundary => location = ContourPointLocation::Boundary,
+                    ContourPointLocation::Outside => {}
+                }
+            }
             if location == ContourPointLocation::Outside {
                 continue;
             }

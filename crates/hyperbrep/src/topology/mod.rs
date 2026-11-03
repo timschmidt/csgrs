@@ -521,6 +521,8 @@ struct CertifiedGraphCap {
     v: Vector3,
     height: Real,
     boundary: CurvePath2,
+    /// Inner boundaries of the cap's region, in the cap frame.
+    holes: Vec<CurvePath2>,
 }
 
 #[derive(Clone, Debug)]
