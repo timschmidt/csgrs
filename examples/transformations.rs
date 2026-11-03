@@ -13,23 +13,23 @@ const PATH: &str = "stl/examples/transformations";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let cube = solid::cube(r(1.5)).expect("valid primitive fixture");
+    let cube = solid::cube(1.5).expect("valid primitive fixture");
     write_mesh(
         &cube
-            .translated(r(2.0), r(0.0), r(0.0))
+            .translated(2.0, 0.0, 0.0)
             .expect("valid transform fixture"),
         "translated",
     );
     write_mesh(
-        &solid::rotate(&cube, r(30.0), r(45.0), r(10.0)).expect("valid transform fixture"),
+        &solid::rotate(&cube, 30.0, 45.0, 10.0).expect("valid transform fixture"),
         "rotated",
     );
     write_mesh(
-        &solid::scale(&cube, r(1.0), r(0.5), r(2.0)).expect("valid transform fixture"),
+        &solid::scale(&cube, 1.0, 0.5, 2.0).expect("valid transform fixture"),
         "scaled",
     );
     write_mesh(
-        &solid::scale(&cube, r(-1.0), r(1.0), r(1.0)).expect("valid transform fixture"),
+        &solid::scale(&cube, -1.0, 1.0, 1.0).expect("valid transform fixture"),
         "mirrored_x",
     );
 

@@ -878,7 +878,7 @@ coordinate-drop fix were not adopted, because neither adds exactness,
 completeness or speed and neither simplifies a production caller. A
 six-coefficient `AffineMap2` type with a checked `Matrix4` adapter would add a
 public type and a deprecated alias for `CurveRegion2::transform_affine`.
-`curve::try_transformed_with_context` already is that checked adapter: it
+`curve::transformed_with_context` already is that checked adapter: it
 keeps shear, nonuniform scale and reflection, rejects perspective and
 out-of-plane images with typed errors, divides out a constant homogeneous
 weight, and leaves the nonsingularity proof to Hypercurve. The six-coefficient

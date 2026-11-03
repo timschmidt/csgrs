@@ -52,55 +52,63 @@ fn unknown_zero() -> Real {
 #[test]
 fn zero_radius_is_invalid_input_instead_of_empty_geometry() {
     assert_eq!(
-        solid::metaballs(&[ball(0.into())], (3, 3, 3), 1.into(), 0.into()).failure_kind(),
+        solid::metaballs(&[ball(0.into())], (3, 3, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn negative_padding_is_invalid_input_instead_of_empty_geometry() {
     assert_eq!(
-        solid::metaballs_with_diagnostics(&[ball(1.into())], (3, 3, 3), 1.into(), (-1).into())
-            .failure_kind(),
+        solid::metaballs_with_context(
+            &[ball(1.into())],
+            (3, 3, 3),
+            1.into(),
+            (-1).into(),
+            csgrs::GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::with_diagnostics()
+        )
+        .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn unresolved_radius_is_undecided_instead_of_invalid_or_empty() {
     assert_eq!(
-        solid::metaballs(&[ball(unknown_zero())], (3, 3, 3), 1.into(), 0.into())
-            .failure_kind(),
+        solid::metaballs(&[ball(unknown_zero())], (3, 3, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::Undecided)
     );
 }
 #[test]
 fn empty_input_does_not_hide_invalid_iso_value() {
     assert_eq!(
-        solid::metaballs(&[], (3, 3, 3), 0.into(), 0.into()).failure_kind(),
+        solid::metaballs(&[], (3, 3, 3), 0, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn empty_input_does_not_hide_invalid_padding() {
     assert_eq!(
-        solid::metaballs(&[], (3, 3, 3), 1.into(), (-1).into()).failure_kind(),
+        solid::metaballs(&[], (3, 3, 3), 1, -1).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn resolution_is_validated_instead_of_silently_clamped() {
     assert_eq!(
-        solid::metaballs(&[ball(1.into())], (1, 3, 3), 1.into(), 0.into()).failure_kind(),
+        solid::metaballs(&[ball(1.into())], (1, 3, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn grid_overflow_is_resource_exhaustion() {
     assert_eq!(
-        solid::metaballs_with_diagnostics(
+        solid::metaballs_with_context(
             &[ball(1.into())],
             (usize::MAX, 2, 2),
             1.into(),
-            0.into()
+            0.into(),
+            csgrs::GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::with_diagnostics(),
         )
         .failure_kind(),
         Some(ValidationErrorKind::ResourceExhausted)
@@ -127,7 +135,7 @@ fn normalized_level_field_has_independently_known_exact_sampled_vertices() {
     // For one unit ball, core half-extent a=101/100 and resolution 3,
     // an axis edge crosses at (a²+1)/(2a); averaging its three crossings
     // gives each coordinate magnitude 20201/60600. No f32 construction is involved.
-    let mesh = solid::metaballs(&[ball(1.into())], (3, 3, 3), 1.into(), 0.into())
+    let mesh = solid::metaballs(&[ball(1.into())], (3, 3, 3), 1, 0)
         .into_mesh()
         .unwrap();
     let coordinate = (Real::from(20201) / Real::from(60600)).unwrap();
@@ -143,16 +151,23 @@ fn normalized_level_field_has_independently_known_exact_sampled_vertices() {
 fn sampled_body_has_exact_volume_topology_and_downstream_composition() {
     use csgrs::{GeometryCertainty, GeometryContext, solid::SolidExt};
     let balls = [ball(1.into())];
-    let result = solid::metaballs_with_diagnostics_and_context(
+    let result = solid::metaballs_with_context(
         &balls,
         (3, 3, 3),
         1.into(),
         0.into(),
         GeometryContext::APPROXIMATE_512,
+        csgrs::solid::SampleOptions::with_diagnostics(),
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);
-    let (mesh, diagnostics) = result.value;
+    let solid::SampledMesh {
+        mesh,
+        diagnostics: Some(diagnostics),
+    } = result.value
+    else {
+        panic!("requested diagnostics must be returned");
+    };
     assert!(
         mesh.is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())
             .unwrap()
@@ -171,8 +186,8 @@ fn sampled_body_has_exact_volume_topology_and_downstream_composition() {
     assert_eq!(diagnostics.zero_sample_count, 0);
     assert_eq!(diagnostics.positive_sample_count, 124);
     assert_eq!(diagnostics.min_finite_value, Some(-Real::one()));
-    assert!(solid::metaballs(&[ball(0.into())], (3, 3, 3), 1.into(), 0.into()).is_err());
-    let empty = solid::metaballs(&[], (3, 3, 3), 1.into(), 0.into()).unwrap();
+    assert!(solid::metaballs(&[ball(0.into())], (3, 3, 3), 1, 0).is_err());
+    let empty = solid::metaballs(&[], (3, 3, 3), 1, 0).unwrap();
     assert!(empty.positions.is_empty() && empty.triangles.is_empty());
     let restored = empty.try_union(&mesh).unwrap();
     let removed = restored
@@ -198,6 +213,7 @@ fn strict_field_errors_survive_approximate_meshing_and_recovery() {
             1.into(),
             0.into(),
             context,
+            csgrs::solid::SampleOptions::default(),
         )
         .unwrap_err();
         assert_eq!(error.kind(), ValidationErrorKind::Undecided);
@@ -216,14 +232,15 @@ fn strict_field_errors_survive_approximate_meshing_and_recovery() {
         2.into(),
         0.into(),
         GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);
     let expected = (Real::from(20201) / Real::from(60600)).unwrap();
-    assert!(result.value.positions.iter().all(|p| {
+    assert!(result.value.mesh.positions.iter().all(|p| {
         [&p.x, &p.y, &p.z]
             .into_iter()
             .all(|v| v == &expected || v == &(-&expected))
     }));
-    assert!(!result.value.triangles.is_empty());
+    assert!(!result.value.mesh.triangles.is_empty());
 }

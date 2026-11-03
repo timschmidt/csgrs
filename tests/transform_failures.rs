@@ -178,9 +178,9 @@ fn unknown_transform_is_not_invalid_input_or_empty_success() {
 #[test]
 fn exact_transforms_preserve_topology_volume_and_subsequent_composition() {
     let cube = solid::cube(Real::one()).unwrap();
-    let scaled = solid::scale(&cube, (-2).into(), 3.into(), 4.into()).unwrap();
-    let shifted = scaled.translated(5.into(), 6.into(), 7.into()).unwrap();
-    let rotated = solid::rotate(&shifted, 0.into(), 0.into(), 90.into()).unwrap();
+    let scaled = solid::scale(&cube, -2, 3, 4).unwrap();
+    let shifted = scaled.translated(5, 6, 7).unwrap();
+    let rotated = solid::rotate(&shifted, 0, 0, 90).unwrap();
     let reflected = solid::mirror(&rotated, &Plane::axis_aligned(0, 0.into())).unwrap();
     for mesh in [scaled, shifted, rotated, reflected] {
         // Independent signed tetrahedral volume: |det(scale)| * unit cube = 24.
@@ -202,19 +202,17 @@ fn exact_transforms_preserve_topology_volume_and_subsequent_composition() {
 
 #[test]
 fn canonical_empty_transforms_compose_and_mutated_indices_still_fail() {
-    let empty = solid::empty()
-        .translated(1.into(), 2.into(), 3.into())
-        .unwrap();
-    let empty = solid::scale(&empty, (-1).into(), 2.into(), 3.into()).unwrap();
-    let empty = solid::rotate(&empty, 0.into(), 0.into(), 90.into()).unwrap();
+    let empty = solid::empty().translated(1, 2, 3).unwrap();
+    let empty = solid::scale(&empty, -1, 2, 3).unwrap();
+    let empty = solid::rotate(&empty, 0, 0, 90).unwrap();
     let empty = solid::mirror(&empty, &Plane::axis_aligned(0, 0.into())).unwrap();
     assert!(empty.positions.is_empty() && empty.triangles.is_empty());
     let cube = solid::cube(Real::one()).unwrap();
     let mut restored = empty.try_union(&cube).unwrap();
-    restored.translated(1.into(), 0.into(), 0.into()).unwrap();
+    restored.translated(1, 0, 0).unwrap();
     std::sync::Arc::make_mut(&mut restored.triangles)[0].v0 = restored.positions.len();
     assert!(matches!(
-        restored.translated(1.into(), 0.into(), 0.into()),
+        restored.translated(1, 0, 0),
         Err(ValidationError::Mesh(
             HypermeshError::VertexIndexOutOfBounds { .. }
         ))

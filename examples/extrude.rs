@@ -9,9 +9,9 @@ const PATH: &str = "stl/examples/extrude";
 fn main() {
     fs::create_dir_all(PATH).unwrap();
 
-    let square = curve::square(r(1.5)).expect("valid planar fixture");
-    let circle = curve::circle(r(0.5), 32).expect("valid planar fixture");
-    let star = curve::star(5, r(1.2), r(0.45)).expect("valid sampled profile fixture");
+    let square = curve::square(1.5).expect("valid planar fixture");
+    let circle = curve::circle(0.5, 32).expect("valid planar fixture");
+    let star = curve::star(5, 1.2, 0.45).expect("valid sampled profile fixture");
 
     write_mesh(
         &curve::try_extrude(&square, r(1.0), GeometryContext::STRICT)
@@ -27,7 +27,7 @@ fn main() {
     );
     // Revolution profiles must stay on one side of the axis; translate the
     // circle first so the full turn produces a torus.
-    let profile = curve::translated(&circle, r(1.5), r(0.0)).expect("valid planar transform");
+    let profile = curve::translated(&circle, 1.5, 0.0).expect("valid planar transform");
     let revolved = curve::revolve(&profile, r(360.0), 48, GeometryContext::STRICT)
         .unwrap()
         .into_value();
@@ -41,7 +41,7 @@ fn main() {
         .collect::<Vec<_>>();
     write_mesh(
         &curve::try_sweep(
-            &curve::circle(r(0.08), 12).expect("valid planar fixture"),
+            &curve::circle(0.08, 12).expect("valid planar fixture"),
             &path,
             GeometryContext::STRICT,
         )

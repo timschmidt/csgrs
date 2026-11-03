@@ -24,6 +24,61 @@ Behavior and errors are unchanged: each kept name is the former `try_`
 function. `try_` names without a plain twin, such as `curve::try_extrude` and
 `SolidExt::try_union`, are not affected.
 
+## `GeometryContext` by value
+
+Every function, method and closure that took `&GeometryContext` now takes a
+`GeometryContext`, a one-byte `Copy` policy. Callers drop the borrow, as in
+`curve::try_extrude(&profile, height, GeometryContext::STRICT)`, and
+`Csg::run(|context| ...)` receives the policy by value. A borrow of a derived
+kernel context, such as `&GeometryContext::STRICT.mesh_context()`, is
+unchanged. Behavior is unchanged. None of these names were published:
+crates.io has 0.20.1, which has no `GeometryContext`.
+
+## Convenience constructors accept ordinary numbers
+
+The STRICT convenience functions of `solid` and `curve`, those without an
+explicit `GeometryContext` parameter, now take `impl IntoReal` for each scalar
+that was a `Real`, as `Csg` methods already did. So do `SolidExt::translated`,
+`rotated` and `scaled`. `Real` and `&Real` still convert exactly, integers
+convert exactly, `f32`/`f64` convert to their exact binary value, and NaN or an
+infinity is the existing `ValidationError::InvalidNumber`. Functions that take
+an explicit `GeometryContext` keep exact `Real` parameters.
+
+Two caller patterns no longer infer a type:
+
+- `solid::cube(2.into())` must become `solid::cube(2)` (or `Real::from(2)`);
+- a function item used as a function pointer, such as
+  `[solid::gyroid, solid::schwarz_p]`, needs concrete argument types at its
+  call, such as `sheet(&bounds, 4, Real::from(1), Real::from(0))`.
+
+Values are unchanged: each converted parameter is bound to `into_real()?` at the
+top of the function, and every example writes byte-identical files.
+
+## Sampled-field diagnostics are an option
+
+The six diagnostic variants of the sampled-field constructors are removed.
+Diagnostics are requested through a new `solid::SampleOptions` argument of the
+`_with_context` forms, and returned inside the outcome as
+`solid::SampledMesh { mesh, diagnostics }`. `diagnostics` is `Some` exactly
+when `SampleOptions::with_diagnostics()` requested it. The default collects
+none, because the report costs an exact sign and extremum comparison per
+sample. The policy stays an explicit argument and is not part of the options
+(P8). The plain `sdf`, `sdf_expr` and `metaballs` are unchanged. None of these
+names were published.
+
+| Removed | Use |
+| --- | --- |
+| `solid::sdf_with_diagnostics(f, res, min, max, iso)` | `solid::sdf_with_context(f, res, min, max, iso, GeometryContext::STRICT, SampleOptions::with_diagnostics())` |
+| `solid::sdf_with_diagnostics_and_context(..., context)` | `solid::sdf_with_context(..., context, SampleOptions::with_diagnostics())` |
+| `solid::sdf_expr_with_diagnostics`, `sdf_expr_with_diagnostics_and_context` | `solid::sdf_expr_with_context(..., context, SampleOptions::with_diagnostics())` |
+| `solid::metaballs_with_diagnostics`, `metaballs_with_diagnostics_and_context` | `solid::metaballs_with_context(..., context, SampleOptions::with_diagnostics())` |
+| `solid::sdf_with_context(..., context)` and the other two `_with_context` forms | add `SampleOptions::default()`; the mesh is `outcome.value.mesh` |
+
+A `(mesh, diagnostics)` tuple becomes
+`SampledMesh { mesh, diagnostics: Some(diagnostics) }`. Sampling, meshes,
+certainty and errors are unchanged. A test checks that requesting diagnostics
+changes neither the mesh nor the certainty.
+
 ## Modeling sessions and exact number conversion
 
 These additions are additive. Existing functions keep their signatures.

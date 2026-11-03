@@ -34,7 +34,7 @@ fn closure_uncertainty_is_not_successful_empty_geometry() {
     let zero = unknown_zero();
     let field = |_: &Point3| zero.clone();
     assert_eq!(
-        solid::sdf(field, (3, 3, 3), point(-1), point(1), 0.into()).failure_kind(),
+        solid::sdf(field, (3, 3, 3), point(-1), point(1), 0).failure_kind(),
         Some(ValidationErrorKind::Undecided)
     );
 }
@@ -43,12 +43,14 @@ fn closure_uncertainty_is_not_successful_empty_geometry() {
 fn diagnostic_uncertainty_is_not_nonfinite_empty_geometry() {
     let zero = unknown_zero();
     assert_eq!(
-        solid::sdf_with_diagnostics(
+        solid::sdf_with_context(
             |_| zero.clone(),
             (3, 3, 3),
             point(-1),
             point(1),
-            0.into()
+            0.into(),
+            GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::with_diagnostics(),
         )
         .failure_kind(),
         Some(ValidationErrorKind::Undecided)
@@ -59,7 +61,7 @@ fn diagnostic_uncertainty_is_not_nonfinite_empty_geometry() {
 fn invalid_expression_domains_remain_invalid_input() {
     let expr = SdfExpr::constant((-1).into()).sqrt();
     assert_eq!(
-        solid::sdf_expr(expr, (3, 3, 3), point(-1), point(1), 0.into()).failure_kind(),
+        solid::sdf_expr(expr, (3, 3, 3), point(-1), point(1), 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
@@ -71,8 +73,16 @@ fn diagnostic_expression_domains_remain_invalid_input() {
         (-1).into(),
     );
     assert_eq!(
-        solid::sdf_expr_with_diagnostics(expr, (3, 3, 3), point(-1), point(1), 0.into())
-            .failure_kind(),
+        solid::sdf_expr_with_context(
+            expr,
+            (3, 3, 3),
+            point(-1),
+            point(1),
+            0.into(),
+            GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::with_diagnostics()
+        )
+        .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
@@ -88,7 +98,8 @@ fn expression_branch_uncertainty_retains_its_category() {
             point(-1),
             point(1),
             0.into(),
-            GeometryContext::STRICT
+            GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::default()
         )
         .failure_kind(),
         Some(ValidationErrorKind::Undecided)
@@ -105,7 +116,8 @@ fn context_expression_domain_errors_are_distinct_from_uncertainty() {
             point(-1),
             point(1),
             0.into(),
-            GeometryContext::STRICT
+            GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::default()
         )
         .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
@@ -117,7 +129,7 @@ fn overflow_is_resource_exhaustion_before_sampling() {
     let field =
         |_: &Point3| -> Real { panic!("capacity must be checked before invoking the field") };
     assert_eq!(
-        solid::sdf(field, (usize::MAX, 2, 2), point(-1), point(1), 0.into()).failure_kind(),
+        solid::sdf(field, (usize::MAX, 2, 2), point(-1), point(1), 0).failure_kind(),
         Some(ValidationErrorKind::ResourceExhausted)
     );
 }
@@ -131,7 +143,8 @@ fn undersized_resolution_is_rejected_instead_of_clamped() {
             point(-1),
             point(1),
             0.into(),
-            GeometryContext::STRICT
+            GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::default()
         )
         .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
@@ -147,7 +160,7 @@ fn partial_sampling_failure_keeps_sample_index_and_native_source() {
         (3, 3, 3),
         point(-1),
         point(1),
-        0.into(),
+        0,
     )
     .unwrap_err();
     assert!(matches!(
@@ -168,16 +181,11 @@ fn partial_sampling_failure_keeps_sample_index_and_native_source() {
     );
     // A failure does not poison subsequent sampling or an empty composition.
     use csgrs::solid::SolidExt;
-    let empty = solid::sdf_expr(
-        SdfExpr::constant(1.into()),
-        (3, 3, 3),
-        point(-1),
-        point(1),
-        0.into(),
-    )
-    .unwrap();
+    let empty =
+        solid::sdf_expr(SdfExpr::constant(1.into()), (3, 3, 3), point(-1), point(1), 0)
+            .unwrap();
     assert!(empty.positions.is_empty() && empty.triangles.is_empty());
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let restored = empty.try_union(&cube).unwrap();
     assert_eq!(
         solid::bounding_box(&restored).unwrap(),
@@ -195,17 +203,24 @@ fn partial_sampling_failure_keeps_sample_index_and_native_source() {
 fn diagnostic_plane_has_independently_known_coordinates_and_counts() {
     // Samples x=-1,0,1 at iso=1/3: 18 negative and 9 positive.
     let third = (Real::one() / Real::from(3)).unwrap();
-    let result = solid::sdf_expr_with_diagnostics_and_context(
+    let result = solid::sdf_expr_with_context(
         SdfExpr::x(),
         (3, 3, 3),
         point(-1),
         point(1),
         third.clone(),
         GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::with_diagnostics(),
     )
     .unwrap();
     assert_eq!(result.certainty, csgrs::GeometryCertainty::Certified);
-    let (mesh, diagnostics) = result.value;
+    let solid::SampledMesh {
+        mesh,
+        diagnostics: Some(diagnostics),
+    } = result.value
+    else {
+        panic!("requested diagnostics must be returned");
+    };
     assert!(!mesh.triangles.is_empty());
     assert!(mesh.positions.iter().all(|p| p.x == third));
     assert_eq!(
@@ -225,13 +240,14 @@ fn diagnostic_plane_has_independently_known_coordinates_and_counts() {
 fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queries() {
     let expr = SdfExpr::x().add_expr(SdfExpr::constant(unknown_zero()));
     let sample = |context| {
-        solid::sdf_expr_with_diagnostics_and_context(
+        solid::sdf_expr_with_context(
             expr.clone(),
             (3, 3, 3),
             point(-1),
             point(1),
             0.into(),
             context,
+            csgrs::solid::SampleOptions::with_diagnostics(),
         )
     };
     assert_eq!(
@@ -243,7 +259,12 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
         approximate.certainty,
         csgrs::GeometryCertainty::Approximate512Consumed
     );
-    let preview = approximate.value.1.hypersdf_preview.unwrap();
+    let preview = approximate
+        .value
+        .diagnostics
+        .unwrap()
+        .hypersdf_preview
+        .unwrap();
     assert!(preview.is_self_consistent());
     assert_eq!(preview.grid_samples.samples.unknown_sign_count, 9);
     assert_eq!(
@@ -259,7 +280,8 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
             point(-1),
             point(1),
             0.into(),
-            GeometryContext::APPROXIMATE_512
+            GeometryContext::APPROXIMATE_512,
+            csgrs::solid::SampleOptions::default()
         )
         .failure_kind(),
         Some(ValidationErrorKind::Undecided)
@@ -271,7 +293,56 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
         point(1),
         0.into(),
         GeometryContext::APPROXIMATE_512,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap();
     assert_eq!(certified.certainty, csgrs::GeometryCertainty::Certified);
+}
+
+#[test]
+fn diagnostics_are_returned_exactly_when_requested_and_change_nothing_else() {
+    use csgrs::solid::SampleOptions;
+    let third = (Real::one() / Real::from(3)).unwrap();
+    for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+        let field = |options| {
+            solid::sdf_with_context(
+                |p: &Point3| p.x.clone(),
+                (3, 3, 3),
+                point(-1),
+                point(1),
+                third.clone(),
+                context,
+                options,
+            )
+            .unwrap()
+        };
+        let plain = field(SampleOptions::default());
+        let requested = field(SampleOptions::with_diagnostics());
+        assert!(plain.value.diagnostics.is_none());
+        assert_eq!(requested.value.diagnostics.unwrap().negative_sample_count, 18);
+        assert_eq!(plain.value.mesh, requested.value.mesh);
+        assert_eq!(plain.certainty, requested.certainty);
+        let strict =
+            solid::sdf(|p| p.x.clone(), (3, 3, 3), point(-1), point(1), third.clone());
+        assert_eq!(strict.unwrap(), plain.value.mesh);
+
+        let expression = |options| {
+            solid::sdf_expr_with_context(
+                SdfExpr::x(),
+                (3, 3, 3),
+                point(-1),
+                point(1),
+                third.clone(),
+                context,
+                options,
+            )
+            .unwrap()
+        };
+        let plain = expression(SampleOptions::default());
+        let requested = expression(SampleOptions::with_diagnostics());
+        assert!(plain.value.diagnostics.is_none());
+        assert_eq!(requested.value.diagnostics.unwrap().positive_sample_count, 9);
+        assert_eq!(plain.value.mesh, requested.value.mesh);
+        assert_eq!(plain.certainty, requested.certainty);
+    }
 }

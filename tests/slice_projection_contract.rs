@@ -38,7 +38,7 @@ fn half() -> Real {
     (Real::one() / Real::from(2)).unwrap()
 }
 fn triangle(points: Vec<Point3>) -> TriangleMesh {
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let mut face = cube.triangles[0];
     face.v0 = 0;
     face.v1 = 1;
@@ -52,9 +52,8 @@ fn volume_six(mesh: &TriangleMesh) -> Real {
     })
 }
 fn hollow_prism() -> TriangleMesh {
-    let outer = curve::square(4.into()).unwrap();
-    let hole =
-        curve::translated(&curve::square(2.into()).unwrap(), 1.into(), 1.into()).unwrap();
+    let outer = curve::square(4).unwrap();
+    let hole = curve::translated(&curve::square(2).unwrap(), 1, 1).unwrap();
     let profile = outer.boolean_region(&hole, BooleanOp::Difference).unwrap();
     assert_eq!(profile.filled_area().unwrap(), Some(12.into()));
     let mesh = curve::try_extrude(&profile, 2.into(), GeometryContext::STRICT).unwrap();
@@ -74,10 +73,7 @@ fn assert_hollow(region: &CurveRegion2) {
         Some(12.into()),
         "a section filled the hole"
     );
-    assert_eq!(
-        curve::contains_xy(region, 2.into(), 2.into()).unwrap(),
-        Some(false)
-    );
+    assert_eq!(curve::contains_xy(region, 2, 2).unwrap(), Some(false));
     assert_eq!(
         curve::contains_xy(region, half(), half()).unwrap(),
         Some(true)
@@ -95,7 +91,7 @@ fn assert_hollow(region: &CurveRegion2) {
 
 #[test]
 fn malformed_slice_is_an_error_not_empty_geometry() {
-    let error = solid::slice_z(&triangle(Vec::new()), 0.into())
+    let error = solid::slice_z(&triangle(Vec::new()), 0)
         .attempt()
         .unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
@@ -107,7 +103,7 @@ fn malformed_projection_is_an_error_not_empty_geometry() {
 }
 #[test]
 fn undecided_slice_is_an_error_not_empty_geometry() {
-    let mesh = solid::cube(1.into()).unwrap();
+    let mesh = solid::cube(1).unwrap();
     let error = solid::slice_z(&mesh, unknown_zero()).attempt().unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
 }
@@ -123,22 +119,19 @@ fn undecided_projection_is_an_error_not_empty_geometry() {
 }
 #[test]
 fn hollow_interior_slice_keeps_hole_and_composes() {
-    let (region, strings, paths) =
-        solid::slice_z(&hollow_prism(), 1.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&hollow_prism(), 1).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
 fn coplanar_bottom_slice_keeps_hole_and_composes() {
-    let (region, strings, paths) =
-        solid::slice_z(&hollow_prism(), 0.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&hollow_prism(), 0).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
 fn coplanar_top_slice_keeps_hole_and_composes() {
-    let (region, strings, paths) =
-        solid::slice_z(&hollow_prism(), 2.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&hollow_prism(), 2).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
@@ -151,35 +144,29 @@ fn face_permutation_and_global_reversal_preserve_hollow_set() {
         std::mem::swap(&mut face.v1, &mut face.v2);
     }
     let reversed = TriangleMesh::new(mesh.positions.to_vec(), faces);
-    assert_hollow(&solid::slice_z(&reversed, 1.into()).attempt().unwrap().0);
+    assert_hollow(&solid::slice_z(&reversed, 1).attempt().unwrap().0);
 }
 #[test]
 fn nested_material_shells_do_not_become_parity_holes() {
-    let outer = solid::cube(4.into()).unwrap();
+    let outer = solid::cube(4).unwrap();
     let inner = solid::transform(
-        &solid::cube(2.into()).unwrap(),
+        &solid::cube(2).unwrap(),
         &Matrix4::affine_translation([1.into(), 1.into(), 1.into()]),
     )
     .unwrap();
     let mesh = solid::merge(&[outer, inner]).expect("valid concatenation fixture");
-    let (region, strings, paths) = solid::slice_z(&mesh, 2.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 2).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(16.into()));
-    assert_eq!(
-        curve::contains_xy(&region, 2.into(), 2.into()).unwrap(),
-        Some(true)
-    );
+    assert_eq!(curve::contains_xy(&region, 2, 2).unwrap(), Some(true));
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
 fn duplicate_material_shells_do_not_cancel() {
-    let cube = solid::cube(2.into()).unwrap();
+    let cube = solid::cube(2).unwrap();
     let mesh = solid::merge(&[cube.clone(), cube]).expect("valid concatenation fixture");
-    let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 1).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(4.into()));
-    assert_eq!(
-        curve::contains_xy(&region, 1.into(), 1.into()).unwrap(),
-        Some(true)
-    );
+    assert_eq!(curve::contains_xy(&region, 1, 1).unwrap(), Some(true));
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
@@ -191,24 +178,21 @@ fn disconnected_hollow_components_preserve_both_voids() {
     )
     .unwrap();
     let mesh = solid::merge(&[first, second]).expect("valid concatenation fixture");
-    let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 1).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(24.into()));
     for x in [2, 8] {
-        assert_eq!(
-            curve::contains_xy(&region, x.into(), 2.into()).unwrap(),
-            Some(false)
-        );
+        assert_eq!(curve::contains_xy(&region, x, 2).unwrap(), Some(false));
     }
     assert!(strings.is_empty() && paths.is_empty());
 }
 #[test]
 fn canonical_empty_and_outside_slices_remain_consumable() {
     let empty = TriangleMesh::new(Vec::new(), Vec::new());
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     for mesh in [&empty, &cube] {
-        let (region, strings, paths) = solid::slice_z(mesh, 2.into()).attempt().unwrap();
+        let (region, strings, paths) = solid::slice_z(mesh, 2).attempt().unwrap();
         assert!(region.is_empty() && strings.is_empty() && paths.is_empty());
-        let square = curve::square(1.into()).unwrap();
+        let square = curve::square(1).unwrap();
         assert_eq!(
             region
                 .boolean_region(&square, BooleanOp::Union)
@@ -234,7 +218,7 @@ fn open_triangle_intersection_remains_an_open_wire() {
         Point3::new(2.into(), 0.into(), 1.into()),
         Point3::new(0.into(), 2.into(), 1.into()),
     ]);
-    let (region, strings, paths) = solid::slice_z(&mesh, 0.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 0).attempt().unwrap();
     assert!(region.is_empty() && paths.is_empty());
     assert_eq!(strings.len(), 1);
     assert_eq!(strings[0].segments().len(), 1);
@@ -261,27 +245,21 @@ fn cache_states_and_mutation_preserve_section_meaning() {
         cache::with_policy(policy, || {
             cache::clear();
             for _ in 0..2 {
-                assert_hollow(&solid::slice_z(&mesh, 1.into()).attempt().unwrap().0);
+                assert_hollow(&solid::slice_z(&mesh, 1).attempt().unwrap().0);
             }
-            assert!(
-                solid::slice_z(&mesh, 3.into())
-                    .attempt()
-                    .unwrap()
-                    .0
-                    .is_empty()
-            );
-            assert_hollow(&solid::slice_z(&mesh, 1.into()).attempt().unwrap().0);
+            assert!(solid::slice_z(&mesh, 3).attempt().unwrap().0.is_empty());
+            assert_hollow(&solid::slice_z(&mesh, 1).attempt().unwrap().0);
             let mut changed = mesh.clone();
             changed.positions = Vec::new().into();
-            assert!(solid::slice_z(&changed, 1.into()).attempt().is_err());
+            assert!(solid::slice_z(&changed, 1).attempt().is_err());
             assert!(solid::flatten(&changed).attempt().is_err());
-            assert_hollow(&solid::slice_z(&mesh, 1.into()).attempt().unwrap().0);
+            assert_hollow(&solid::slice_z(&mesh, 1).attempt().unwrap().0);
         });
     }
 }
 #[test]
 fn approximate_slice_never_certifies_a_later_strict_request() {
-    let mesh = solid::cube(1.into()).unwrap();
+    let mesh = solid::cube(1).unwrap();
     let z = unknown_zero();
     for context in [
         GeometryContext::STRICT,
@@ -309,11 +287,11 @@ fn reversed(mesh: &TriangleMesh) -> TriangleMesh {
 
 #[test]
 fn opposite_shells_cancel_interior_and_coplanar_sections() {
-    let cube = solid::cube(2.into()).unwrap();
+    let cube = solid::cube(2).unwrap();
     let mesh =
         solid::merge(&[cube.clone(), reversed(&cube)]).expect("valid concatenation fixture");
     for z in [0, 1, 2] {
-        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        let (region, strings, paths) = solid::slice_z(&mesh, z).attempt().unwrap();
         assert!(region.is_empty(), "opposite winding at Z={z}");
         assert!(strings.is_empty() && paths.is_empty());
     }
@@ -321,11 +299,11 @@ fn opposite_shells_cancel_interior_and_coplanar_sections() {
 
 #[test]
 fn signed_multiplicity_is_preserved_interior_and_coplanar() {
-    let cube = solid::cube(2.into()).unwrap();
+    let cube = solid::cube(2).unwrap();
     let mesh = solid::merge(&[cube.clone(), cube.clone(), reversed(&cube)])
         .expect("valid concatenation fixture");
     for z in [0, 1, 2] {
-        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        let (region, strings, paths) = solid::slice_z(&mesh, z).attempt().unwrap();
         assert_eq!(region.filled_area().unwrap(), Some(4.into()));
         assert!(strings.is_empty() && paths.is_empty());
     }
@@ -340,27 +318,24 @@ fn shared_on_plane_edges_do_not_change_hole_winding() {
     )
     .unwrap();
     let mesh = solid::merge(&[lower, upper]).expect("valid concatenation fixture");
-    let (region, strings, paths) = solid::slice_z(&mesh, 2.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 2).attempt().unwrap();
     assert_hollow(&region);
     assert!(strings.is_empty() && paths.is_empty());
 }
 
 #[test]
 fn vertex_touching_components_retain_both_material_regions() {
-    let first = solid::cube(2.into()).unwrap();
+    let first = solid::cube(2).unwrap();
     let second = solid::transform(
         &first,
         &Matrix4::affine_translation([2.into(), 2.into(), 0.into()]),
     )
     .unwrap();
     let mesh = solid::merge(&[first, second]).expect("valid concatenation fixture");
-    let (region, strings, paths) = solid::slice_z(&mesh, 1.into()).attempt().unwrap();
+    let (region, strings, paths) = solid::slice_z(&mesh, 1).attempt().unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(8.into()));
     for (x, y, inside) in [(1, 1, true), (3, 3, true), (1, 3, false), (3, 1, false)] {
-        assert_eq!(
-            curve::contains_xy(&region, x.into(), y.into()).unwrap(),
-            Some(inside)
-        );
+        assert_eq!(curve::contains_xy(&region, x, y).unwrap(), Some(inside));
     }
     assert!(strings.is_empty() && paths.is_empty());
 }
@@ -382,7 +357,7 @@ fn contextual_invalid_indices_preserve_the_native_diagnostic() {
 
 #[test]
 fn interleaved_opposite_faces_preserve_winding_after_permutation() {
-    let cube = solid::cube(2.into()).unwrap();
+    let cube = solid::cube(2).unwrap();
     for copies in [1, 2] {
         let mut operands = vec![cube.clone(); copies];
         operands.push(reversed(&cube));
@@ -396,7 +371,7 @@ fn interleaved_opposite_faces_preserve_winding_after_permutation() {
             faces.rotate_left(1);
             let permuted = TriangleMesh::new(mesh.positions.to_vec(), faces.clone());
             for z in [0, 1, 2] {
-                let (region, strings, paths) = solid::slice_z(&permuted, z.into())
+                let (region, strings, paths) = solid::slice_z(&permuted, z)
                     .attempt()
                     .unwrap_or_else(|error| {
                         panic!("copies={copies}, shift={shift}, z={z}: {error:?}")
@@ -418,7 +393,7 @@ fn thread_local_cache_modes_preserve_hollow_sections() {
         std::thread::spawn(move || {
             cache::with_policy(policy, || {
                 let mesh = hollow_prism();
-                assert_hollow(&solid::slice_z(&mesh, 1.into()).attempt().unwrap().0);
+                assert_hollow(&solid::slice_z(&mesh, 1).attempt().unwrap().0);
             })
         })
     });
@@ -446,7 +421,7 @@ fn independent_position_rows_preserve_the_same_section() {
         .collect();
     let mesh = TriangleMesh::new(positions, faces);
     for z in [0, 1, 2] {
-        let (region, strings, paths) = solid::slice_z(&mesh, z.into()).attempt().unwrap();
+        let (region, strings, paths) = solid::slice_z(&mesh, z).attempt().unwrap();
         assert_hollow(&region);
         assert!(strings.is_empty() && paths.is_empty());
     }
@@ -454,7 +429,7 @@ fn independent_position_rows_preserve_the_same_section() {
 
 #[test]
 fn shuffled_coincident_shell_faces_preserve_signed_set() {
-    let cube = solid::cube(2.into()).unwrap();
+    let cube = solid::cube(2).unwrap();
     let source =
         solid::merge(&[cube.clone(), reversed(&cube)]).expect("valid concatenation fixture");
     let mut faces = source.triangles.to_vec();
@@ -465,7 +440,7 @@ fn shuffled_coincident_shell_faces_preserve_signed_set() {
             faces.swap(i, (state % (i as u64 + 1)) as usize);
         }
         let mesh = TriangleMesh::new(source.positions.to_vec(), faces.clone());
-        let (region, strings, paths) = solid::slice_z(&mesh, 1.into())
+        let (region, strings, paths) = solid::slice_z(&mesh, 1)
             .attempt()
             .unwrap_or_else(|error| panic!("case={case}: {error:?}"));
         assert!(region.is_empty() && strings.is_empty() && paths.is_empty());

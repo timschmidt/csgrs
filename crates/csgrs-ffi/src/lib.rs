@@ -2436,7 +2436,7 @@ mod tests {
             inner: terminal_zero(&sine * &sine + &cosine * &cosine - Real::one()),
         };
         let square = curve_region_handle::<RealFamily>(ScalarCurve::from_native(
-            csgrs::curve::square(2.into()).unwrap(),
+            csgrs::curve::square(2).unwrap(),
         ));
         let mut output = ptr::null_mut();
         unsafe {

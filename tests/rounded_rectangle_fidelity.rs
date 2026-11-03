@@ -24,7 +24,7 @@ fn vertices(region: &CurveRegion2) -> Vec<[Real; 2]> {
 
 #[test]
 fn one_chord_per_corner_retains_all_straight_sides_and_exact_area() {
-    let region = curve::rounded_rectangle(4.into(), 2.into(), q(1, 2), 1).unwrap();
+    let region = curve::rounded_rectangle(4, 2, q(1, 2), 1).unwrap();
     // A 4x2 rectangle minus four right triangles with legs 1/2.
     assert_eq!(region.filled_area().unwrap(), Some(q(15, 2)));
     let expected = [
@@ -46,9 +46,7 @@ fn one_chord_per_corner_retains_all_straight_sides_and_exact_area() {
 fn clamped_capsules_keep_nonzero_straight_sides() {
     for (width, height) in [(4, 2), (2, 4)] {
         for radius in [1, 100] {
-            let region =
-                curve::rounded_rectangle(width.into(), height.into(), radius.into(), 1)
-                    .unwrap();
+            let region = curve::rounded_rectangle(width, height, radius, 1).unwrap();
             // The corner radius clamps to one: 8 - 4*(1/2) = 6.
             assert_eq!(region.filled_area().unwrap(), Some(6.into()));
             assert_eq!(vertices(&region).len(), 6);
@@ -108,12 +106,11 @@ fn original_published_sampling_resolutions_retain_tangent_vertices() {
 
 #[test]
 fn full_radius_and_sharp_corner_controls_remain_defined() {
-    let diamond = curve::rounded_rectangle(2.into(), 2.into(), 1.into(), 1).unwrap();
+    let diamond = curve::rounded_rectangle(2, 2, 1, 1).unwrap();
     assert_eq!(diamond.filled_area().unwrap(), Some(2.into()));
     assert_eq!(vertices(&diamond).len(), 4);
     for (radius, samples) in [(0, 3), (1, 0)] {
-        let sharp =
-            curve::rounded_rectangle(4.into(), 2.into(), radius.into(), samples).unwrap();
+        let sharp = curve::rounded_rectangle(4, 2, radius, samples).unwrap();
         assert_eq!(sharp.filled_area().unwrap(), Some(8.into()));
         assert_eq!(vertices(&sharp).len(), 4);
     }
@@ -121,7 +118,7 @@ fn full_radius_and_sharp_corner_controls_remain_defined() {
 
 #[test]
 fn algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas() {
-    let octants = curve::rounded_rectangle(4.into(), 2.into(), q(1, 2), 2).unwrap();
+    let octants = curve::rounded_rectangle(4, 2, q(1, 2), 2).unwrap();
     // Four quarter-circle sectors become eight triangles of central angle pi/4.
     let area = Real::from(7) + q(1, 2) * Real::from(2).sqrt().unwrap();
     // Real's structural equality does not identify differently ordered sums.
@@ -135,7 +132,7 @@ fn algebraic_corners_and_symbolic_dimensions_keep_independently_known_areas() {
         .value(),
         Some(std::cmp::Ordering::Equal)
     );
-    let symbolic = curve::rounded_rectangle(Real::pi(), 2.into(), 10.into(), 1).unwrap();
+    let symbolic = curve::rounded_rectangle(Real::pi(), 2, 10, 1).unwrap();
     assert_eq!(
         hyperlimit::compare_reals(
             &symbolic.filled_area().unwrap().unwrap(),
@@ -166,8 +163,7 @@ fn pipeline() -> csgrs::TriangleMesh {
     )
     .unwrap();
     assert_eq!(translated.certainty, GeometryCertainty::Certified);
-    let cutter =
-        curve::translated(&curve::square(1.into()).unwrap(), 11.into(), q(-5, 2)).unwrap();
+    let cutter = curve::translated(&curve::square(1).unwrap(), 11, q(-5, 2)).unwrap();
     let cut = hypercurve::evaluate_under(hyperlimit::PredicatePolicy::STRICT, || {
         translated
             .value

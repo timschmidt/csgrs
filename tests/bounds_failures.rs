@@ -70,10 +70,7 @@ fn bounds_reject_malformed_indices() {
 
 #[test]
 fn placement_preserves_exact_box_geometry_and_empty_composition() {
-    let source = solid::cuboid(2.into(), 4.into(), 6.into())
-        .unwrap()
-        .translated(7.into(), (-3).into(), 11.into())
-        .unwrap();
+    let source = solid::cuboid(2, 4, 6).unwrap().translated(7, -3, 11).unwrap();
     let centered = solid::center(&source).unwrap();
     let floated = solid::float(&centered).unwrap();
     for (mesh, minimum, maximum) in [
@@ -153,7 +150,7 @@ fn empty_curve_bounds_are_absent() {
         )
         .is_err()
     );
-    let rectangle = csgrs::curve::rectangle(2.into(), 3.into()).expect("valid planar fixture");
+    let rectangle = csgrs::curve::rectangle(2, 3).expect("valid planar fixture");
     let bounds = csgrs::curve::bounding_box(&rectangle).unwrap().unwrap();
     assert_eq!(bounds.mins, Point3::origin());
     assert_eq!(bounds.maxs, Point3::new(2.into(), 3.into(), 0.into()));
@@ -163,14 +160,14 @@ fn empty_curve_bounds_are_absent() {
 #[test]
 fn tpms_consumers_preserve_bounds_and_capacity_failures() {
     assert_eq!(
-        solid::gyroid(&uncertain_points(), 4, 1.into(), 0.into())
+        solid::gyroid(&uncertain_points(), 4, 1, 0)
             .unwrap_err()
             .kind(),
         ValidationErrorKind::Undecided
     );
     let mesh = solid::cube(Real::one()).unwrap();
     assert_eq!(
-        solid::gyroid(&mesh, usize::MAX, 1.into(), 0.into()).unwrap_err(),
+        solid::gyroid(&mesh, usize::MAX, 1, 0).unwrap_err(),
         ValidationError::CapacityOverflow
     );
 }
@@ -185,7 +182,7 @@ fn all_tpms_families_compose_on_empty_and_zero_thickness() {
     let unknown_zero =
         uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     for sheet in [solid::gyroid, solid::schwarz_p, solid::schwarz_d] {
-        let mesh = sheet(&empty, 4, 1.into(), 0.into()).unwrap();
+        let mesh = sheet(&empty, 4, Real::from(1), Real::from(0)).unwrap();
         assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
         let removed = mesh.try_union(&cube).unwrap().try_difference(&cube).unwrap();
         assert!(removed.positions.is_empty() && removed.triangles.is_empty());
@@ -206,7 +203,7 @@ fn all_tpms_families_compose_on_empty_and_zero_thickness() {
         solid::schwarz_d_solid,
     ] {
         for bounds in [&empty, &cube] {
-            let mesh = thick(bounds, 4, 1.into(), 0.into(), 0.into()).unwrap();
+            let mesh = thick(bounds, 4, Real::from(1), Real::from(0), Real::from(0)).unwrap();
             assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
             assert_eq!(
                 thick(bounds, 4, 1.into(), 0.into(), unknown_zero.clone())
@@ -230,9 +227,9 @@ fn all_tpms_families_compose_on_empty_and_zero_thickness() {
 #[test]
 fn tpms_invalid_parameters_are_not_successful_empty_models() {
     for mesh in [solid::empty(), solid::cube(Real::one()).unwrap()] {
-        assert!(solid::gyroid(&mesh, 4, 0.into(), 0.into()).is_err());
-        assert!(solid::schwarz_p_solid(&mesh, 4, 1.into(), 0.into(), (-1).into()).is_err());
-        assert!(solid::schwarz_d(&mesh, 1, 1.into(), 0.into()).is_err());
+        assert!(solid::gyroid(&mesh, 4, 0, 0).is_err());
+        assert!(solid::schwarz_p_solid(&mesh, 4, 1, 0, -1).is_err());
+        assert!(solid::schwarz_d(&mesh, 1, 1, 0).is_err());
     }
 }
 
@@ -250,6 +247,7 @@ fn shared_sampled_field_path_retains_native_failure_and_recovers() {
         Point3::new(1.into(), 1.into(), 1.into()),
         Real::zero(),
         context,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
@@ -271,8 +269,11 @@ fn shared_sampled_field_path_retains_native_failure_and_recovers() {
         Point3::new(1.into(), 1.into(), 1.into()),
         Real::zero(),
         context,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap();
     assert_eq!(complete.certainty, csgrs::GeometryCertainty::Certified);
-    assert!(complete.value.positions.is_empty() && complete.value.triangles.is_empty());
+    assert!(
+        complete.value.mesh.positions.is_empty() && complete.value.mesh.triangles.is_empty()
+    );
 }

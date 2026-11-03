@@ -79,7 +79,7 @@ use csgrs::io::stl::to_stl_binary_artifact;
 use hyperlattice::Matrix4;
 
 let source = solid::cube(Real::one())?;
-let shifted = solid::try_transform_with_context(
+let shifted = solid::transform_with_context(
     &source,
     &Matrix4::affine_translation([3.into(), 5.into(), 7.into()]),
     GeometryContext::STRICT,

@@ -44,21 +44,18 @@ fn main() {
 }
 
 fn render_readme_curves() {
-    render_curve(
-        "square",
-        &curve::square(r(2.0)).expect("valid planar fixture"),
-    );
+    render_curve("square", &curve::square(2.0).expect("valid planar fixture"));
     render_curve(
         "rectangle",
-        &curve::rectangle(r(2.4), r(1.35)).expect("valid planar fixture"),
+        &curve::rectangle(2.4, 1.35).expect("valid planar fixture"),
     );
     render_curve(
         "circle",
-        &curve::circle(r(1.0), 96).expect("valid planar fixture"),
+        &curve::circle(1.0, 96).expect("valid planar fixture"),
     );
     render_curve(
         "right_triangle",
-        &curve::right_triangle(r(2.0), r(1.5)).expect("valid planar fixture"),
+        &curve::right_triangle(2.0, 1.5).expect("valid planar fixture"),
     );
     render_curve(
         "polygon",
@@ -67,40 +64,39 @@ fn render_readme_curves() {
     );
     render_curve(
         "rounded_rectangle",
-        &curve::rounded_rectangle(r(2.4), r(1.5), r(0.28), 12).expect("valid planar fixture"),
+        &curve::rounded_rectangle(2.4, 1.5, 0.28, 12).expect("valid planar fixture"),
     );
     render_curve(
         "ellipse",
-        &curve::ellipse(r(2.3), r(1.3), 96).expect("valid planar fixture"),
+        &curve::ellipse(2.3, 1.3, 96).expect("valid planar fixture"),
     );
     render_curve(
         "regular_ngon",
-        &curve::regular_ngon(6, r(1.0)).expect("valid planar fixture"),
+        &curve::regular_ngon(6, 1.0).expect("valid planar fixture"),
     );
     render_curve(
         "curve_arrow",
-        &curve::arrow(r(2.2), r(0.35), r(0.8), r(1.0)).expect("valid sampled profile fixture"),
+        &curve::arrow(2.2, 0.35, 0.8, 1.0).expect("valid sampled profile fixture"),
     );
     render_curve(
         "trapezoid",
-        &curve::trapezoid(r(1.2), r(2.2), r(1.4), r(0.45))
-            .expect("valid sampled profile fixture"),
+        &curve::trapezoid(1.2, 2.2, 1.4, 0.45).expect("valid sampled profile fixture"),
     );
     render_curve(
         "star",
-        &curve::star(5, r(1.1), r(0.45)).expect("valid sampled profile fixture"),
+        &curve::star(5, 1.1, 0.45).expect("valid sampled profile fixture"),
     );
     render_curve(
         "teardrop",
-        &curve::teardrop(r(1.5), r(2.3), 96).expect("valid sampled profile fixture"),
+        &curve::teardrop(1.5, 2.3, 96).expect("valid sampled profile fixture"),
     );
     render_curve(
         "curve_egg",
-        &curve::egg(r(1.6), r(2.2), 96).expect("valid sampled profile fixture"),
+        &curve::egg(1.6, 2.2, 96).expect("valid sampled profile fixture"),
     );
     render_curve(
         "squircle",
-        &curve::squircle(r(2.0), r(1.6), 128).expect("valid sampled profile fixture"),
+        &curve::squircle(2.0, 1.6, 128).expect("valid sampled profile fixture"),
     );
     render_curve(
         "keyhole",
@@ -116,7 +112,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "heart",
-        &curve::heart(r(2.0), r(1.8), 160).expect("valid sampled profile fixture"),
+        &curve::heart(2.0, 1.8, 160).expect("valid sampled profile fixture"),
     );
     render_curve(
         "ring",
@@ -126,8 +122,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "pie_slice",
-        &curve::pie_slice(r(1.1), r(-35.0), r(115.0), 64)
-            .expect("valid sampled profile fixture"),
+        &curve::pie_slice(1.1, -35.0, 115.0, 64).expect("valid sampled profile fixture"),
     );
     render_curve(
         "crescent",
@@ -137,7 +132,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "supershape",
-        &curve::supershape(r(1.0), r(1.0), r(5.0), r(2.0), r(7.0), r(7.0), 160)
+        &curve::supershape(1.0, 1.0, 5.0, 2.0, 7.0, 7.0, 160)
             .expect("valid sampled profile fixture"),
     );
     render_curve(
@@ -166,27 +161,26 @@ fn render_readme_curves() {
     );
     render_curve(
         "involute_gear",
-        &curve::involute_gear(r(0.22), 14, r(20.0), r(0.02), r(0.01), 5)
+        &curve::involute_gear(0.22, 14, 20.0, 0.02, 0.01, 5)
             .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "cycloidal_gear",
-        &curve::cycloidal_gear(r(0.22), 14, r(0.275), r(0.02), 8)
+        &curve::cycloidal_gear(0.22, 14, 0.275, 0.02, 8)
             .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "involute_rack",
-        &curve::involute_rack(r(0.32), 7, r(20.0), r(0.02), r(0.01))
+        &curve::involute_rack(0.32, 7, 20.0, 0.02, 0.01)
             .expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "cycloidal_rack",
-        &curve::cycloidal_rack(r(0.32), 7, r(0.02), 12)
-            .expect("valid sampled mechanical fixture"),
+        &curve::cycloidal_rack(0.32, 7, 0.02, 12).expect("valid sampled mechanical fixture"),
     );
     render_curve(
         "airfoil_naca4",
-        &curve::airfoil_naca4(r(2.0), r(4.0), r(12.0), r(3.0), 96)
+        &curve::airfoil_naca4(2.0, 4.0, 12.0, 3.0, 96)
             .expect("valid sampled mechanical fixture"),
     );
     render_curve(
@@ -206,7 +200,7 @@ fn render_readme_curves() {
     let curve_balls = [(Point2::new(r(0.0), r(0.0)), r(1.0))];
     render_curve(
         "metaballs_2d",
-        &curve::metaballs(&curve_balls, (24, 24), r(1.0), r(0.0))
+        &curve::metaballs(&curve_balls, (24, 24), 1.0, 0.0)
             .expect("valid planar metaball fixture"),
     );
     render_curve("from_image", &readme_raster_shape());
@@ -244,25 +238,21 @@ fn render_readme_curves() {
     render_open_curves(
         "hilbert_strings",
         &[],
-        &curve::hilbert_strings(
-            &curve::square(r(2.0)).expect("valid planar fixture"),
-            4,
-            r(0.12),
-        )
-        .expect("exact Hilbert strings in a square"),
+        &curve::hilbert_strings(&curve::square(2.0).expect("valid planar fixture"), 4, 0.12)
+            .expect("exact Hilbert strings in a square"),
     );
 }
 
 fn render_readme_text() {
     render_curve(
         "truetype",
-        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), r(72.0))
+        &curve::truetype_text("CSG", include_bytes!("../asar.ttf"), 72.0)
             .expect("valid TrueType outlines"),
     );
     render_open_curves(
         "hershey_strings",
         &[],
-        &curve::hershey_strings("CSG", &hypercurve::hershey::fonts::ROWMANS, r(1.0))
+        &curve::hershey_strings("CSG", &hypercurve::hershey::fonts::ROWMANS, 1.0)
             .expect("valid Hershey strokes"),
     );
 }
@@ -278,43 +268,43 @@ fn readme_raster_shape() -> CurveRegion2 {
 }
 
 fn render_readme_meshes() {
-    render_mesh("cube", &solid::cube(r(2.0)).expect("valid primitive fixture"));
+    render_mesh("cube", &solid::cube(2.0).expect("valid primitive fixture"));
     render_mesh(
         "cuboid",
-        &solid::cuboid(r(1.4), r(2.3), r(0.95)).expect("valid primitive fixture"),
+        &solid::cuboid(1.4, 2.3, 0.95).expect("valid primitive fixture"),
     );
     render_mesh(
         "sphere",
-        &solid::sphere(r(1.0), 32, 16).expect("valid primitive fixture"),
+        &solid::sphere(1.0, 32, 16).expect("valid primitive fixture"),
     );
     render_mesh(
         "cylinder",
-        &solid::cylinder(r(1.0), r(2.0), 32).expect("valid primitive fixture"),
+        &solid::cylinder(1.0, 2.0, 32).expect("valid primitive fixture"),
     );
     render_mesh(
         "ellipsoid",
-        &solid::ellipsoid(r(1.25), r(0.8), r(1.65), 32, 16).expect("valid primitive fixture"),
+        &solid::ellipsoid(1.25, 0.8, 1.65, 32, 16).expect("valid primitive fixture"),
     );
     render_mesh(
         "frustum",
-        &solid::frustum(r(0.65), r(1.05), r(2.0), 32).expect("valid primitive fixture"),
+        &solid::frustum(0.65, 1.05, 2.0, 32).expect("valid primitive fixture"),
     );
     render_mesh(
         "frustum_between",
-        &solid::frustum_between(p3(-0.8, -0.5, -0.7), p3(0.8, 0.5, 1.2), r(0.65), r(0.3), 32)
+        &solid::frustum_between(p3(-0.8, -0.5, -0.7), p3(0.8, 0.5, 1.2), 0.65, 0.3, 32)
             .expect("valid primitive fixture"),
     );
     render_mesh(
         "octahedron",
-        &solid::octahedron(r(1.2)).expect("valid primitive fixture"),
+        &solid::octahedron(1.2).expect("valid primitive fixture"),
     );
     render_mesh(
         "icosahedron",
-        &solid::icosahedron(r(1.2)).expect("valid primitive fixture"),
+        &solid::icosahedron(1.2).expect("valid primitive fixture"),
     );
     render_mesh(
         "torus",
-        &solid::torus(r(1.25), r(0.35), 36, 14).expect("valid primitive fixture"),
+        &solid::torus(1.25, 0.35, 36, 14).expect("valid primitive fixture"),
     );
     render_mesh(
         "mesh_arrow",
@@ -381,7 +371,7 @@ fn render_readme_meshes() {
         .into_value(),
     );
 
-    let star = curve::star(5, r(1.0), r(0.45)).expect("valid sampled profile fixture");
+    let star = curve::star(5, 1.0, 0.45).expect("valid sampled profile fixture");
     render_mesh(
         "extrude",
         &curve::try_extrude(&star, r(0.65), csgrs::GeometryContext::STRICT)
@@ -408,9 +398,9 @@ fn render_readme_meshes() {
         .into_value(),
     );
     let revolve_profile = curve::translated(
-        &curve::circle(r(0.18), 32).expect("valid planar fixture"),
-        r(1.0),
-        r(0.0),
+        &curve::circle(0.18, 32).expect("valid planar fixture"),
+        1.0,
+        0.0,
     )
     .expect("valid planar transform fixture");
     render_mesh(
@@ -422,7 +412,7 @@ fn render_readme_meshes() {
     render_mesh(
         "sweep",
         &curve::try_sweep(
-            &curve::square(r(0.4)).expect("valid planar fixture"),
+            &curve::square(0.4).expect("valid planar fixture"),
             &[p3(0.0, 0.0, -0.8), p3(0.0, 0.0, 1.1)],
             GeometryContext::STRICT,
         )
@@ -433,30 +423,29 @@ fn render_readme_meshes() {
 
     render_mesh(
         "inverse",
-        &solid::inverse(&solid::sphere(r(1.0), 32, 16).expect("valid primitive fixture")),
+        &solid::inverse(&solid::sphere(1.0, 32, 16).expect("valid primitive fixture")),
     );
     render_mesh("csg", &cube_minus_translated_sphere());
     render_mesh(
         "convex_hull",
-        &solid::convex_hull(&solid::cube(r(1.2)).expect("valid primitive fixture"))
+        &solid::convex_hull(&solid::cube(1.2).expect("valid primitive fixture"))
             .expect("convex hull"),
     );
     render_mesh(
         "minkowski_sum",
         &solid::minkowski_sum(
-            &solid::cube(r(1.1)).expect("valid primitive fixture"),
-            &solid::octahedron(r(0.45)).expect("valid primitive fixture"),
+            &solid::cube(1.1).expect("valid primitive fixture"),
+            &solid::octahedron(0.45).expect("valid primitive fixture"),
         )
         .expect("Minkowski sum"),
     );
     let projection_source =
-        solid::frustum(r(0.65), r(1.05), r(2.0), 12).expect("valid primitive fixture");
+        solid::frustum(0.65, 1.05, 2.0, 12).expect("valid primitive fixture");
     render_curve(
         "flatten",
         &solid::flatten(&projection_source).expect("valid projection fixture"),
     );
-    let (slice, _, _) =
-        solid::slice_z(&projection_source, r(1.0)).expect("valid slice fixture");
+    let (slice, _, _) = solid::slice_z(&projection_source, 1.0).expect("valid slice fixture");
     render_curve("slice_z", &slice);
 
     render_implicit_meshes();
@@ -476,7 +465,7 @@ fn render_metaballs_mesh() {
     ];
     render_mesh(
         "metaballs_3d",
-        &solid::metaballs(&balls, (8, 8, 8), r(0.7), r(0.25)).expect("valid metaball fixture"),
+        &solid::metaballs(&balls, (8, 8, 8), 0.7, 0.25).expect("valid metaball fixture"),
     );
 }
 
@@ -493,7 +482,7 @@ fn render_sdf_mesh() {
             (16, 16, 16),
             p3(-1.0, -1.0, -1.0),
             p3(1.0, 1.0, 1.0),
-            r(0.0),
+            0.0,
         )
         .expect("valid SDF fixture"),
     );
@@ -501,33 +490,32 @@ fn render_sdf_mesh() {
 
 fn render_tpms_meshes() {
     // Keep implicit thumbnail meshes legible once their vertices are visible.
-    let tpms_box = solid::cube(r(2.0)).expect("valid primitive fixture");
+    let tpms_box = solid::cube(2.0).expect("valid primitive fixture");
     render_mesh(
         "gyroid",
-        &solid::gyroid_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
-            .expect("valid modeling fixture"),
+        &solid::gyroid_solid(&tpms_box, 24, 2.0, 0.0, 0.18).expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_p",
-        &solid::schwarz_p_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
+        &solid::schwarz_p_solid(&tpms_box, 24, 2.0, 0.0, 0.18)
             .expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_d",
-        &solid::schwarz_d_solid(&tpms_box, 24, r(2.0), r(0.0), r(0.18))
+        &solid::schwarz_d_solid(&tpms_box, 24, 2.0, 0.0, 0.18)
             .expect("valid modeling fixture"),
     );
     render_mesh(
         "gyroid_surface",
-        &solid::gyroid(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
+        &solid::gyroid(&tpms_box, 24, 2.0, 0.2).expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_p_surface",
-        &solid::schwarz_p(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
+        &solid::schwarz_p(&tpms_box, 24, 2.0, 0.2).expect("valid modeling fixture"),
     );
     render_mesh(
         "schwarz_d_surface",
-        &solid::schwarz_d(&tpms_box, 24, r(2.0), r(0.2)).expect("valid modeling fixture"),
+        &solid::schwarz_d(&tpms_box, 24, 2.0, 0.2).expect("valid modeling fixture"),
     );
 }
 
@@ -573,10 +561,10 @@ fn readme_loft_sections() -> Vec<Vec<Point3>> {
 }
 
 fn cube_minus_translated_sphere() -> TriangleMesh {
-    let cube = solid::cube(r(2.0)).expect("valid primitive fixture");
-    let sphere = solid::sphere(r(1.25), 16, 8)
+    let cube = solid::cube(2.0).expect("valid primitive fixture");
+    let sphere = solid::sphere(1.25, 16, 8)
         .expect("valid primitive fixture")
-        .translated(r(1.0), r(1.0), r(1.0))
+        .translated(1.0, 1.0, 1.0)
         .expect("valid transform fixture");
     let context = hypermesh::MeshContext::new(hypermesh::PredicatePolicy::APPROXIMATE_512);
     hypermesh::boolean(

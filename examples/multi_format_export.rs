@@ -7,7 +7,6 @@ use csgrs::{
     TriangleMesh,
     solid::{self, SolidExt},
 };
-use hyperlattice::Real;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Multi-Format Export Demo");
@@ -17,21 +16,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create various native meshes to demonstrate export.
 
     // 1. Simple cube
-    let cube: TriangleMesh = solid::center(&solid::cube(r(20.0))?)?;
+    let cube: TriangleMesh = solid::center(&solid::cube(20.0)?)?;
     export_to_obj(&cube, "cube", "Simple 20x20x20mm cube")?;
 
     // 2. Sphere
-    let sphere: TriangleMesh = solid::sphere(r(15.0), 32, 16)?;
+    let sphere: TriangleMesh = solid::sphere(15.0, 32, 16)?;
     export_to_obj(&sphere, "sphere", "Sphere with 15mm radius")?;
 
     // 3. Cylinder
-    let cylinder: TriangleMesh = solid::cylinder(r(8.0), r(25.0), 24)?;
+    let cylinder: TriangleMesh = solid::cylinder(8.0, 25.0, 24)?;
     export_to_obj(&cylinder, "cylinder", "Cylinder: 8mm radius, 25mm height")?;
 
     // 4. Complex boolean operation: cube with spherical cavity
-    let cube_large: TriangleMesh = solid::center(&solid::cube(r(30.0))?)?;
+    let cube_large: TriangleMesh = solid::center(&solid::cube(30.0)?)?;
     let sphere_cavity: TriangleMesh =
-        solid::sphere(r(12.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
+        solid::sphere(12.0, 24, 12)?.translated(5.0, 5.0, 0.0)?;
     let cube_with_cavity = cube_large.try_difference(&sphere_cavity).expect("difference");
     export_to_obj(
         &cube_with_cavity,
@@ -40,9 +39,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 5. Union operation: cube + sphere
-    let cube_small: TriangleMesh = solid::center(&solid::cube(r(16.0))?)?;
-    let sphere_union: TriangleMesh =
-        solid::sphere(r(10.0), 20, 10)?.translated(r(8.0), r(8.0), r(8.0))?;
+    let cube_small: TriangleMesh = solid::center(&solid::cube(16.0)?)?;
+    let sphere_union: TriangleMesh = solid::sphere(10.0, 20, 10)?.translated(8.0, 8.0, 8.0)?;
     let union_object = cube_small.try_union(&sphere_union).expect("union");
     export_to_obj(
         &union_object,
@@ -51,9 +49,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 6. Intersection operation
-    let cube_intersect: TriangleMesh = solid::center(&solid::cube(r(25.0))?)?;
+    let cube_intersect: TriangleMesh = solid::center(&solid::cube(25.0)?)?;
     let sphere_intersect: TriangleMesh =
-        solid::sphere(r(15.0), 24, 12)?.translated(r(5.0), r(5.0), r(0.0))?;
+        solid::sphere(15.0, 24, 12)?.translated(5.0, 5.0, 0.0)?;
     let intersection_object = cube_intersect
         .try_intersection(&sphere_intersect)
         .expect("intersection");
@@ -64,13 +62,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     // 7. More complex shape: cube with cylindrical hole
-    let cube_base: TriangleMesh = solid::center(&solid::cube(r(40.0))?)?;
-    let hole_cylinder: TriangleMesh = solid::rotate(
-        &solid::cylinder(r(6.0), r(50.0), 16)?,
-        r(90.0),
-        r(0.0),
-        r(0.0),
-    )?;
+    let cube_base: TriangleMesh = solid::center(&solid::cube(40.0)?)?;
+    let hole_cylinder: TriangleMesh =
+        solid::rotate(&solid::cylinder(6.0, 50.0, 16)?, 90.0, 0.0, 0.0)?;
     let cube_with_hole = cube_base.try_difference(&hole_cylinder).expect("difference");
     export_to_obj(
         &cube_with_hole,
@@ -123,10 +117,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("  • Online: Various web-based 3D viewers");
 
     Ok(())
-}
-
-fn r(value: f64) -> Real {
-    Real::try_from(value).expect("example values must be finite")
 }
 
 fn export_to_obj(
@@ -256,7 +246,7 @@ mod tests {
     #[test]
     fn test_obj_export() {
         // Test basic OBJ export functionality
-        let cube: TriangleMesh = solid::cube(r(10.0)).expect("valid primitive fixture");
+        let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
 
         #[cfg(feature = "obj-io")]
         {
@@ -276,8 +266,7 @@ mod tests {
 
     #[test]
     fn test_obj_content_format() {
-        let sphere: TriangleMesh =
-            solid::sphere(r(5.0), 8, 4).expect("valid primitive fixture"); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
         #[cfg(feature = "obj-io")]
         {
@@ -333,9 +322,8 @@ mod tests {
     #[test]
     fn test_boolean_operations_obj_export() {
         // Test that boolean operations export correctly
-        let cube: TriangleMesh = solid::cube(r(10.0)).expect("valid primitive fixture");
-        let sphere: TriangleMesh =
-            solid::sphere(r(6.0), 8, 4).expect("valid primitive fixture");
+        let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
+        let sphere: TriangleMesh = solid::sphere(6.0, 8, 4).expect("valid primitive fixture");
 
         #[cfg(feature = "obj-io")]
         {
@@ -365,7 +353,7 @@ mod tests {
     #[test]
     fn test_ply_export() {
         // Test basic PLY export functionality
-        let cube: TriangleMesh = solid::cube(r(10.0)).expect("valid primitive fixture");
+        let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
 
         #[cfg(feature = "ply-io")]
         {
@@ -408,8 +396,7 @@ mod tests {
 
     #[test]
     fn test_ply_format_structure() {
-        let sphere: TriangleMesh =
-            solid::sphere(r(5.0), 8, 4).expect("valid primitive fixture"); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
         #[cfg(feature = "ply-io")]
         {
@@ -473,7 +460,7 @@ mod tests {
     #[test]
     fn test_amf_export() {
         // Test basic AMF export functionality
-        let cube: TriangleMesh = solid::cube(r(10.0)).expect("valid primitive fixture");
+        let cube: TriangleMesh = solid::cube(10.0).expect("valid primitive fixture");
 
         #[cfg(feature = "amf-io")]
         {
@@ -506,8 +493,7 @@ mod tests {
 
     #[test]
     fn test_amf_with_color() {
-        let sphere: TriangleMesh =
-            solid::sphere(r(5.0), 8, 4).expect("valid primitive fixture"); // Low res for testing
+        let sphere: TriangleMesh = solid::sphere(5.0, 8, 4).expect("valid primitive fixture"); // Low res for testing
 
         #[cfg(feature = "amf-io")]
         {
@@ -539,7 +525,7 @@ mod tests {
 
     #[test]
     fn test_amf_xml_structure() {
-        let cube: TriangleMesh = solid::cube(r(8.0)).expect("valid primitive fixture");
+        let cube: TriangleMesh = solid::cube(8.0).expect("valid primitive fixture");
 
         #[cfg(feature = "amf-io")]
         {

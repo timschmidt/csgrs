@@ -6,6 +6,7 @@
 
 use crate::context::GeometryDecisions;
 use crate::errors::ValidationError;
+use crate::session::IntoReal;
 use crate::solid;
 use crate::{GeometryContext, GeometryOutcome};
 use hypercurve::{
@@ -259,13 +260,19 @@ pub fn empty() -> CurveRegion2 {
 /// Dimensions must be nonnegative. A certified zero dimension produces the
 /// canonical empty set after both arguments are validated. Negative or
 /// undecided dimensions fail; they never become successful empty geometry.
-pub fn rectangle(width: Real, length: Real) -> Result<CurveRegion2, ValidationError> {
+pub fn rectangle(
+    width: impl IntoReal,
+    length: impl IntoReal,
+) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let length = length.into_real()?;
     rectangle_with_context(width, length, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Axis-aligned square with its minimum corner at the origin.
-pub fn square(width: Real) -> Result<CurveRegion2, ValidationError> {
+pub fn square(width: impl IntoReal) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
     rectangle(width.clone(), width)
 }
 
@@ -274,7 +281,11 @@ pub fn square(width: Real) -> Result<CurveRegion2, ValidationError> {
 /// The radius is nonnegative and at least three segments are required, even
 /// for zero radius. Certification concerns the sampled polygon; no analytic
 /// circle fidelity bound is implied.
-pub fn circle(radius: Real, segments: usize) -> Result<CurveRegion2, ValidationError> {
+pub fn circle(
+    radius: impl IntoReal,
+    segments: usize,
+) -> Result<CurveRegion2, ValidationError> {
+    let radius = radius.into_real()?;
     circle_with_context(radius, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -344,7 +355,12 @@ pub fn regular_ngon_with_context(
 }
 
 /// Right triangle with its right-angle corner at the origin.
-pub fn right_triangle(width: Real, height: Real) -> Result<CurveRegion2, ValidationError> {
+pub fn right_triangle(
+    width: impl IntoReal,
+    height: impl IntoReal,
+) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let height = height.into_real()?;
     right_triangle_with_context(width, height, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -403,16 +419,22 @@ pub fn polygon_points(points: &[Point2]) -> Result<CurveRegion2, ValidationError
 
 /// Sampled ellipse.
 pub fn ellipse(
-    width: Real,
-    height: Real,
+    width: impl IntoReal,
+    height: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let height = height.into_real()?;
     ellipse_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Regular polygon.
-pub fn regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, ValidationError> {
+pub fn regular_ngon(
+    sides: usize,
+    radius: impl IntoReal,
+) -> Result<CurveRegion2, ValidationError> {
+    let radius = radius.into_real()?;
     regular_ngon_with_context(sides, radius, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -422,11 +444,15 @@ pub fn regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, Validati
 /// All four dimensions must be positive. Equal shaft and head widths share
 /// their shoulder endpoints; only those proven duplicates are omitted.
 pub fn arrow(
-    shaft_length: Real,
-    shaft_width: Real,
-    head_length: Real,
-    head_width: Real,
+    shaft_length: impl IntoReal,
+    shaft_width: impl IntoReal,
+    head_length: impl IntoReal,
+    head_width: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let shaft_length = shaft_length.into_real()?;
+    let shaft_width = shaft_width.into_real()?;
+    let head_length = head_length.into_real()?;
+    let head_width = head_width.into_real()?;
     arrow_with_context(
         shaft_length,
         shaft_width,
@@ -479,11 +505,15 @@ pub fn arrow_with_context(
 ///
 /// Widths and height must be positive. The horizontal top offset is unrestricted.
 pub fn trapezoid(
-    top_width: Real,
-    bottom_width: Real,
-    height: Real,
-    top_offset: Real,
+    top_width: impl IntoReal,
+    bottom_width: impl IntoReal,
+    height: impl IntoReal,
+    top_offset: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let top_width = top_width.into_real()?;
+    let bottom_width = bottom_width.into_real()?;
+    let height = height.into_real()?;
+    let top_offset = top_offset.into_real()?;
     trapezoid_with_context(
         top_width,
         bottom_width,
@@ -523,9 +553,11 @@ pub fn trapezoid_with_context(
 /// Requires at least three points and `outer_radius > inner_radius > 0`.
 pub fn star(
     num_points: usize,
-    outer_radius: Real,
-    inner_radius: Real,
+    outer_radius: impl IntoReal,
+    inner_radius: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let outer_radius = outer_radius.into_real()?;
+    let inner_radius = inner_radius.into_real()?;
     star_with_context(
         num_points,
         outer_radius,
@@ -572,10 +604,12 @@ pub fn star_with_context(
 /// Requires positive dimensions, `length > width / 2`, and at least two
 /// semicircle chords. The sampled boundary and its tip retain exact coordinates.
 pub fn teardrop(
-    width: Real,
-    length: Real,
+    width: impl IntoReal,
+    length: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let length = length.into_real()?;
     teardrop_with_context(width, length, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -616,10 +650,12 @@ pub fn teardrop_with_context(
 /// Requires positive dimensions and at least three samples. Sample extrema are
 /// normalized to the requested width and length; this does not certify an analytic surface.
 pub fn egg(
-    width: Real,
-    length: Real,
+    width: impl IntoReal,
+    length: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let length = length.into_real()?;
     egg_with_context(width, length, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -687,11 +723,14 @@ pub fn egg_with_context(
 /// Only coincident endpoints are omitted. Zero radius or zero corner segments
 /// selects the sharp rectangle. Dimensions and radius must be nonnegative.
 pub fn rounded_rectangle(
-    width: Real,
-    height: Real,
-    corner_radius: Real,
+    width: impl IntoReal,
+    height: impl IntoReal,
+    corner_radius: impl IntoReal,
     corner_segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let height = height.into_real()?;
+    let corner_radius = corner_radius.into_real()?;
     rounded_rectangle_with_context(
         width,
         height,
@@ -789,10 +828,12 @@ pub fn rounded_rectangle_with_context(
 /// Requires positive dimensions and at least three samples. The signed square
 /// roots of sampled sine and cosine define the represented polygon.
 pub fn squircle(
-    width: Real,
-    height: Real,
+    width: impl IntoReal,
+    height: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let height = height.into_real()?;
     squircle_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -925,11 +966,14 @@ pub fn ring(
 /// regularized zero-area sample represents the empty set.
 /// A full turn preserves the existing full-circle sampling with at least three vertices.
 pub fn pie_slice(
-    radius: Real,
-    start_angle_deg: Real,
-    end_angle_deg: Real,
+    radius: impl IntoReal,
+    start_angle_deg: impl IntoReal,
+    end_angle_deg: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let radius = radius.into_real()?;
+    let start_angle_deg = start_angle_deg.into_real()?;
+    let end_angle_deg = end_angle_deg.into_real()?;
     pie_slice_with_context(
         radius,
         start_angle_deg,
@@ -985,10 +1029,12 @@ pub fn pie_slice_with_context(
 /// Requires positive dimensions and at least eight samples. Sample extrema are
 /// normalized to the requested dimensions; topology and analytic fidelity are distinct.
 pub fn heart(
-    width: Real,
-    height: Real,
+    width: impl IntoReal,
+    height: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let width = width.into_real()?;
+    let height = height.into_real()?;
     heart_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1081,14 +1127,20 @@ pub fn crescent(
 /// defined scalar powers at every sample. Native scalar and topology failures remain typed.
 #[allow(clippy::too_many_arguments)]
 pub fn supershape(
-    a: Real,
-    b: Real,
-    m: Real,
-    n1: Real,
-    n2: Real,
-    n3: Real,
+    a: impl IntoReal,
+    b: impl IntoReal,
+    m: impl IntoReal,
+    n1: impl IntoReal,
+    n2: impl IntoReal,
+    n3: impl IntoReal,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let a = a.into_real()?;
+    let b = b.into_real()?;
+    let m = m.into_real()?;
+    let n1 = n1.into_real()?;
+    let n2 = n2.into_real()?;
+    let n3 = n3.into_real()?;
     supershape_with_context(a, b, m, n1, n2, n3, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1224,13 +1276,17 @@ pub fn circle_with_two_flats(
 /// Derived root radius and tooth widths must remain positive. The result is
 /// the finite sampled polygon, without an analytic-fidelity error bound.
 pub fn involute_gear(
-    module: Real,
+    module: impl IntoReal,
     teeth: usize,
-    pressure_angle_degrees: Real,
-    clearance: Real,
-    backlash: Real,
+    pressure_angle_degrees: impl IntoReal,
+    clearance: impl IntoReal,
+    backlash: impl IntoReal,
     segments_per_flank: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let module = module.into_real()?;
+    let pressure_angle_degrees = pressure_angle_degrees.into_real()?;
+    let clearance = clearance.into_real()?;
+    let backlash = backlash.into_real()?;
     involute_gear_with_context(
         module,
         teeth,
@@ -1283,12 +1339,15 @@ pub fn involute_gear_with_context(
 /// that meet or cross before the addendum circle or neighboring root gap.
 /// The finite sampled polygon has no analytic-fidelity error bound.
 pub fn cycloidal_gear(
-    module: Real,
+    module: impl IntoReal,
     teeth: usize,
-    generating_radius: Real,
-    clearance: Real,
+    generating_radius: impl IntoReal,
+    clearance: impl IntoReal,
     segments_per_flank: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let module = module.into_real()?;
+    let generating_radius = generating_radius.into_real()?;
+    let clearance = clearance.into_real()?;
     cycloidal_gear_with_context(
         module,
         teeth,
@@ -1331,12 +1390,16 @@ pub fn cycloidal_gear_with_context(
 /// Pressure angle must be in `(0, 90)` degrees, clearance and backlash
 /// nonnegative, and the resulting tooth widths and root gaps positive.
 pub fn involute_rack(
-    module: Real,
+    module: impl IntoReal,
     teeth: usize,
-    pressure_angle_degrees: Real,
-    clearance: Real,
-    backlash: Real,
+    pressure_angle_degrees: impl IntoReal,
+    clearance: impl IntoReal,
+    backlash: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let module = module.into_real()?;
+    let pressure_angle_degrees = pressure_angle_degrees.into_real()?;
+    let clearance = clearance.into_real()?;
+    let backlash = backlash.into_real()?;
     involute_rack_with_context(
         module,
         teeth,
@@ -1428,11 +1491,13 @@ pub fn involute_rack_with_context(
 /// segments and nonnegative clearance. A closed root land is a typed error.
 /// The finite sampled polygon has no analytic-fidelity error bound.
 pub fn cycloidal_rack(
-    module: Real,
+    module: impl IntoReal,
     teeth: usize,
-    clearance: Real,
+    clearance: impl IntoReal,
     segments_per_flank: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let module = module.into_real()?;
+    let clearance = clearance.into_real()?;
     cycloidal_rack_with_context(
         module,
         teeth,
@@ -1560,12 +1625,16 @@ pub fn cycloidal_rack_with_context(
 /// represented binary64 coefficient values and trailing-edge closure; it does
 /// not certify an analytic-fidelity error bound.
 pub fn airfoil_naca4(
-    max_camber: Real,
-    camber_position: Real,
-    thickness: Real,
-    chord: Real,
+    max_camber: impl IntoReal,
+    camber_position: impl IntoReal,
+    thickness: impl IntoReal,
+    chord: impl IntoReal,
     samples: usize,
 ) -> Result<CurveRegion2, ValidationError> {
+    let max_camber = max_camber.into_real()?;
+    let camber_position = camber_position.into_real()?;
+    let thickness = thickness.into_real()?;
+    let chord = chord.into_real()?;
     airfoil_naca4_with_context(
         max_camber,
         camber_position,
@@ -2088,8 +2157,9 @@ pub fn bspline_path_with_context(
 pub fn hilbert_strings(
     boundary: &CurveRegion2,
     order: usize,
-    padding: Real,
+    padding: impl IntoReal,
 ) -> Result<Vec<CurveString2>, ValidationError> {
+    let padding = padding.into_real()?;
     hilbert_strings_with_context(boundary, order, padding, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -2148,8 +2218,9 @@ pub fn hilbert_strings_with_context(
 pub fn hilbert_paths(
     boundary: &CurveRegion2,
     order: usize,
-    padding: Real,
+    padding: impl IntoReal,
 ) -> Result<Vec<CurvePathRegionTrim2>, ValidationError> {
+    let padding = padding.into_real()?;
     hilbert_paths_with_context(boundary, order, padding, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3396,9 +3467,11 @@ pub fn extrude_twisted(
 pub fn metaballs(
     balls: &[(Point2, Real)],
     resolution: (usize, usize),
-    iso_value: Real,
-    padding: Real,
+    iso_value: impl IntoReal,
+    padding: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let iso_value = iso_value.into_real()?;
+    let padding = padding.into_real()?;
     metaballs_with_context(balls, resolution, iso_value, padding, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3438,8 +3511,9 @@ pub fn from_image(
 pub fn truetype_text(
     text: &str,
     font_data: &[u8],
-    scale: Real,
+    scale: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let scale = scale.into_real()?;
     truetype_text_with_context(text, font_data, scale, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3470,8 +3544,9 @@ pub fn truetype_text_with_context(
 pub fn hershey_strings(
     text: &str,
     font: &hypercurve::hershey::Font<'_>,
-    size: Real,
+    size: impl IntoReal,
 ) -> Result<Vec<CurveString2>, ValidationError> {
+    let size = size.into_real()?;
     hershey_strings_with_context(text, font, size, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3586,9 +3661,11 @@ pub fn transformed_with_context(
 /// Applies an exact planar translation to a filled native region.
 pub fn translated(
     input: &CurveRegion2,
-    x: Real,
-    y: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
     translated_with_context(input, x, y, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3617,8 +3694,9 @@ pub fn translated_with_context(
 /// Rotates a filled native region counterclockwise about the origin in degrees.
 pub fn rotated(
     input: &CurveRegion2,
-    z_degrees: Real,
+    z_degrees: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let z_degrees = z_degrees.into_real()?;
     rotated_with_context(input, z_degrees, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3653,9 +3731,11 @@ pub fn rotated_with_context(
 /// region.
 pub fn scaled(
     input: &CurveRegion2,
-    x: Real,
-    y: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
 ) -> Result<CurveRegion2, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
     scaled_with_context(input, x, y, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
@@ -3684,9 +3764,11 @@ pub fn scaled_with_context(
 /// undecided classifications and native failures return typed errors.
 pub fn contains_xy(
     input: &CurveRegion2,
-    x: Real,
-    y: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
 ) -> Result<Option<bool>, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
     contains_xy_with_context(input, x, y, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -3740,10 +3822,13 @@ pub fn bounding_box_with_context(
 /// Returns the same native solid translation helper used by the 3D grammar.
 pub fn translated_solid(
     mesh: &TriangleMesh,
-    x: Real,
-    y: Real,
-    z: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
+    z: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
+    let z = z.into_real()?;
     solid::SolidExt::translated(mesh, x, y, z)
 }
 

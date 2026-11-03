@@ -76,8 +76,7 @@ fn boolean_failures<A: ScalarAdapter>() {
     // coincidence was the second undecided fixture; it is a cyclotomic
     // identity, which the scalar normal form now proves, so every operation
     // completes with the exact set.
-    let rotated =
-        curve::rotated(&curve::rotated(&square, 13.into()).unwrap(), (-13).into()).unwrap();
+    let rotated = curve::rotated(&curve::rotated(&square, 13).unwrap(), -13).unwrap();
     let r = ScalarCurve::<A>::from_native(rotated);
     let square_area = Some(Real::from(4));
     for operation in OPERATIONS {
@@ -129,7 +128,7 @@ fn revolve_and_profile_failures_retain_native_causes() {
 
 #[test]
 fn unresolved_revolve_angle_is_not_invalid_input_or_empty_geometry() {
-    let square = curve::square(2.into()).unwrap();
+    let square = curve::square(2).unwrap();
     let raw = ScalarCurve::<RawReal>::from_native(square.clone());
     let native =
         curve::revolve(&square, unresolved_zero(), 4, GeometryContext::STRICT).unwrap_err();
@@ -171,10 +170,8 @@ fn assert_set(region: &CurveRegion2, operation: BooleanOp, area: i32) {
 }
 
 fn composition<A: ScalarAdapter>() {
-    let a = ScalarCurve::<A>::from_native(curve::square(2.into()).unwrap());
-    let b = ScalarCurve::<A>::from_native(
-        curve::translated(a.native(), 1.into(), 1.into()).unwrap(),
-    );
+    let a = ScalarCurve::<A>::from_native(curve::square(2).unwrap());
+    let b = ScalarCurve::<A>::from_native(curve::translated(a.native(), 1, 1).unwrap());
     let empty = ScalarCurve::<A>::empty();
     for (operation, area) in OPERATIONS.into_iter().zip([7, 3, 1, 6]) {
         let result = boolean(&a, &b, operation).unwrap();

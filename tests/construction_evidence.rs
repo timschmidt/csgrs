@@ -43,7 +43,7 @@ fn local_validation_and_parent_composition_preserve_approximation() {
         MeshCertainty::Certified
     );
     assert_approximate(&mesh);
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let evidence = mesh.construction_evidence();
     assert_eq!(core::mem::size_of::<Evidence>(), 1);
     assert_eq!(
@@ -121,7 +121,7 @@ fn mutation_and_borrowed_views_expose_missing_history_without_erasing_known_fact
 #[test]
 fn boolean_batch_and_empty_bridges_keep_both_parents() {
     let mesh = approximate_mesh();
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let batch = hypermesh::boolean(
         &GeometryContext::STRICT.mesh_context(),
         &[mesh.as_ref(), cube.as_ref()],
@@ -180,7 +180,7 @@ fn boolean_batch_and_empty_bridges_keep_both_parents() {
 #[test]
 fn modeling_cache_keys_include_construction_qualifications() {
     use solid::cache::{CachePolicy, with_policy};
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let qualified = cube
         .clone()
         .with_inherited_construction(approximate_mesh().construction_evidence());
@@ -248,11 +248,11 @@ fn concurrent_local_proofs_do_not_upgrade_construction() {
 #[cfg(feature = "curve")]
 #[test]
 fn bare_curve_history_is_untracked_and_sampling_is_separate() {
-    let square = csgrs::curve::square(1.into()).unwrap();
+    let square = csgrs::curve::square(1).unwrap();
     let mesh = csgrs::curve::try_extrude(&square, 1.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(mesh.certainty, GeometryCertainty::Certified);
     assert!(mesh.value.construction_evidence().source_history_missing());
-    let sphere = solid::sphere(1.into(), 8, 4).unwrap();
+    let sphere = solid::sphere(1, 8, 4).unwrap();
     let evidence = sphere.construction_evidence();
     assert!(evidence.source_sampled());
     assert_eq!(evidence.predicate_certainty(), Some(MeshCertainty::Certified));

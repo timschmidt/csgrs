@@ -13,10 +13,10 @@ use hypermesh::{MeshCertainty, Point3};
 use hyperreal::RealSign;
 
 fn fixture(segments: usize) -> (TriangleMesh, TriangleMesh) {
-    let body = solid::cuboid(12.into(), 12.into(), 4.into()).unwrap();
-    let drill = solid::cylinder(2.into(), 6.into(), segments)
+    let body = solid::cuboid(12, 12, 4).unwrap();
+    let drill = solid::cylinder(2, 6, segments)
         .unwrap()
-        .translated(6.into(), 6.into(), (-1).into())
+        .translated(6, 6, -1)
         .unwrap();
     let result = body
         .try_difference_with_context(&drill, GeometryContext::STRICT)

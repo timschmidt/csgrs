@@ -40,50 +40,49 @@ fn unknown_zero() -> Real {
 #[test]
 fn zero_radius_is_invalid_instead_of_empty() {
     assert_eq!(
-        curve::metaballs(&one_ball(0.into()), (3, 3), 1.into(), 0.into()).failure_kind(),
+        curve::metaballs(&one_ball(0.into()), (3, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn unresolved_radius_preserves_uncertainty() {
     assert_eq!(
-        curve::metaballs(&one_ball(unknown_zero()), (3, 3), 1.into(), 0.into()).failure_kind(),
+        curve::metaballs(&one_ball(unknown_zero()), (3, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::Undecided)
     );
 }
 #[test]
 fn negative_padding_is_invalid() {
     assert_eq!(
-        curve::metaballs(&one_ball(1.into()), (3, 3), 1.into(), (-1).into()).failure_kind(),
+        curve::metaballs(&one_ball(1.into()), (3, 3), 1, -1).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn empty_input_cannot_hide_invalid_iso() {
     assert_eq!(
-        curve::metaballs(&[], (3, 3), 0.into(), 0.into()).failure_kind(),
+        curve::metaballs(&[], (3, 3), 0, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn empty_input_cannot_hide_invalid_padding() {
     assert_eq!(
-        curve::metaballs(&[], (3, 3), 1.into(), (-1).into()).failure_kind(),
+        curve::metaballs(&[], (3, 3), 1, -1).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn too_small_grid_is_not_empty_geometry() {
     assert_eq!(
-        curve::metaballs(&one_ball(1.into()), (1, 3), 1.into(), 0.into()).failure_kind(),
+        curve::metaballs(&one_ball(1.into()), (1, 3), 1, 0).failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
     );
 }
 #[test]
 fn grid_overflow_is_resource_exhaustion() {
     assert_eq!(
-        curve::metaballs(&one_ball(1.into()), (usize::MAX, 2), 1.into(), 0.into())
-            .failure_kind(),
+        curve::metaballs(&one_ball(1.into()), (usize::MAX, 2), 1, 0).failure_kind(),
         Some(ValidationErrorKind::ResourceExhausted)
     );
 }
@@ -91,18 +90,11 @@ fn grid_overflow_is_resource_exhaustion() {
 fn normalized_unit_source_has_exact_diamond_area() {
     // F=(iso-I)/(iso+I), a=101/100: each axis crossing is
     // (a^2+1)/(2a)=20201/20200. The four crossings bound a diamond of area 2b^2.
-    let region =
-        curve::metaballs(&one_ball(1.into()), (3, 3), 1.into(), 0.into()).into_region();
+    let region = curve::metaballs(&one_ball(1.into()), (3, 3), 1, 0).into_region();
     let b = (Real::from(20201) / Real::from(20200)).unwrap();
     assert_eq!(region.filled_area().unwrap(), Some(Real::from(2) * &b * &b));
-    assert_eq!(
-        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
-        Some(true)
-    );
-    assert_eq!(
-        curve::contains_xy(&region, 2.into(), 0.into()).unwrap(),
-        Some(false)
-    );
+    assert_eq!(curve::contains_xy(&region, 0, 0).unwrap(), Some(true));
+    assert_eq!(curve::contains_xy(&region, 2, 0).unwrap(), Some(false));
 }
 #[test]
 fn a_ring_of_sources_preserves_its_hole() {
@@ -114,19 +106,13 @@ fn a_ring_of_sources_preserves_its_hole() {
         &balls,
         (25, 25),
         (Real::from(11) / Real::from(10)).unwrap(),
-        0.into(),
+        0,
     )
     .into_region();
     assert!(!region.is_empty());
-    assert_eq!(
-        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
-        Some(false)
-    );
+    assert_eq!(curve::contains_xy(&region, 0, 0).unwrap(), Some(false));
     for (x, y) in [(2, 0), (-2, 0), (0, 2), (0, -2), (1, 1)] {
-        assert_eq!(
-            curve::contains_xy(&region, x.into(), y.into()).unwrap(),
-            Some(true)
-        );
+        assert_eq!(curve::contains_xy(&region, x, y).unwrap(), Some(true));
     }
 }
 
@@ -165,7 +151,7 @@ fn failed_construction_does_not_contaminate_later_policies_or_composition() {
         )
         .unwrap();
         assert_eq!(result.certainty, GeometryCertainty::Certified);
-        let empty = curve::metaballs(&[], (3, 3), 1.into(), 0.into()).unwrap();
+        let empty = curve::metaballs(&[], (3, 3), 1, 0).unwrap();
         let accumulated = empty.boolean_region(&result.value, BooleanOp::Union).unwrap();
         assert_eq!(
             accumulated.filled_area().unwrap(),
@@ -203,10 +189,7 @@ fn failed_construction_does_not_contaminate_later_policies_or_composition() {
 
 #[test]
 fn the_original_twelve_by_twelve_closed_fixture_remains_supported() {
-    let region = curve::metaballs(&one_ball(1.into()), (12, 12), 1.into(), 0.into()).unwrap();
+    let region = curve::metaballs(&one_ball(1.into()), (12, 12), 1, 0).unwrap();
     assert!(!region.is_empty());
-    assert_eq!(
-        curve::contains_xy(&region, 0.into(), 0.into()).unwrap(),
-        Some(true)
-    );
+    assert_eq!(curve::contains_xy(&region, 0, 0).unwrap(), Some(true));
 }

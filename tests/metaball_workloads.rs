@@ -24,10 +24,11 @@ fn validate(balls: &[MetaBall], resolution: usize, iso: Real, padding: Real) {
         iso,
         padding,
         GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
-    let mesh = outcome.value;
+    let mesh = outcome.value.mesh;
     assert!(!mesh.triangles.is_empty());
     assert!(
         mesh.is_closed_manifold_geometry(&GeometryContext::STRICT.mesh_context())

@@ -39,8 +39,8 @@ fn half() -> Real {
 
 #[test]
 fn primary_scale_rejects_singular_input_including_empty() {
-    for region in [curve::empty(), curve::square(1.into()).unwrap()] {
-        let error = curve::scaled(&region, 0.into(), 1.into())
+    for region in [curve::empty(), curve::square(1).unwrap()] {
+        let error = curve::scaled(&region, 0, 1)
             .attempt()
             .expect_err("singular scale became successful geometry");
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::InvalidInput);
@@ -50,7 +50,7 @@ fn primary_scale_rejects_singular_input_including_empty() {
 #[test]
 fn primary_transform_rejects_singular_input_including_empty() {
     let matrix = Matrix4::affine_nonuniform_scale([0.into(), 1.into(), 1.into()]);
-    for region in [curve::empty(), curve::square(1.into()).unwrap()] {
+    for region in [curve::empty(), curve::square(1).unwrap()] {
         assert!(curve::transformed(&region, &matrix).attempt().is_err());
     }
 }
@@ -58,9 +58,9 @@ fn primary_transform_rejects_singular_input_including_empty() {
 #[test]
 fn unknown_scale_does_not_become_empty_geometry() {
     let error = curve::scaled(
-        &curve::square(1.into()).unwrap(),
+        &curve::square(1).unwrap(),
         zero_unknown_to_bounded_predicates(),
-        1.into(),
+        1,
     )
     .attempt()
     .expect_err("unknown determinant became successful geometry");
@@ -69,7 +69,7 @@ fn unknown_scale_does_not_become_empty_geometry() {
 
 #[test]
 fn primary_query_distinguishes_uncertainty_from_boundary() {
-    let square = curve::square(1.into()).unwrap();
+    let square = curve::square(1).unwrap();
     let error = curve::contains_xy(&square, zero_unknown_to_bounded_predicates(), half())
         .attempt()
         .expect_err("unknown point location became a boundary result");
@@ -79,7 +79,7 @@ fn primary_query_distinguishes_uncertainty_from_boundary() {
 #[test]
 fn contextual_query_retains_the_native_blocker() {
     let error = curve::contains_xy_with_context(
-        &curve::square(1.into()).unwrap(),
+        &curve::square(1).unwrap(),
         zero_unknown_to_bounded_predicates(),
         half(),
         GeometryContext::STRICT,
@@ -98,7 +98,7 @@ fn contextual_query_retains_the_native_blocker() {
 
 #[test]
 fn supported_homogeneous_scale_is_divided_out() {
-    let square = curve::square(1.into()).unwrap();
+    let square = curve::square(1).unwrap();
     // On z=0: (x,y) -> (2*x+1, -3*y+2). The third column is irrelevant.
     // The 4D matrix need not be invertible for the planar map to be invertible.
     let values = [4, 0, 17, 2, 0, -6, 19, 4, 0, 0, 0, 0, 0, 0, 23, 2];
@@ -132,7 +132,7 @@ fn perspective_is_not_silently_discarded() {
     let matrix = Matrix4::from_row_major(
         [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1].map(Real::from),
     );
-    for region in [curve::empty(), curve::square(1.into()).unwrap()] {
+    for region in [curve::empty(), curve::square(1).unwrap()] {
         let error = curve::transformed(&region, &matrix)
             .attempt()
             .expect_err("perspective became an affine identity");
@@ -145,7 +145,7 @@ fn out_of_plane_geometry_is_not_silently_projected() {
     for (row, column) in [(2, 0), (2, 1), (2, 3)] {
         let mut matrix = Matrix4::identity();
         matrix.0[row][column] = 1.into();
-        for region in [curve::empty(), curve::square(1.into()).unwrap()] {
+        for region in [curve::empty(), curve::square(1).unwrap()] {
             let error = curve::transformed(&region, &matrix)
                 .attempt()
                 .expect_err("out-of-plane image became an XY projection");
@@ -158,7 +158,7 @@ fn out_of_plane_geometry_is_not_silently_projected() {
 fn zero_homogeneous_weight_is_not_finite_geometry() {
     let mut matrix = Matrix4::identity();
     matrix.0[3][3] = 0.into();
-    for region in [curve::empty(), curve::square(1.into()).unwrap()] {
+    for region in [curve::empty(), curve::square(1).unwrap()] {
         let error = curve::transformed(&region, &matrix)
             .attempt()
             .expect_err("zero homogeneous weight became finite geometry");
@@ -169,7 +169,7 @@ fn zero_homogeneous_weight_is_not_finite_geometry() {
 #[test]
 fn a_zero_homogeneous_coordinate_image_is_invalid_instead_of_unbounded() {
     let matrix = Matrix4::from_row_major(std::array::from_fn(|_| Real::zero()));
-    for region in [curve::empty(), curve::square(1.into()).unwrap()] {
+    for region in [curve::empty(), curve::square(1).unwrap()] {
         let error = curve::transformed(&region, &matrix).unwrap_err();
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::InvalidInput);
     }
@@ -177,7 +177,7 @@ fn a_zero_homogeneous_coordinate_image_is_invalid_instead_of_unbounded() {
 
 #[test]
 fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
-    let square = curve::square(1.into()).unwrap();
+    let square = curve::square(1).unwrap();
     let mut matrix = Matrix4::identity();
     matrix.0[2][3] = zero_unknown_to_bounded_predicates();
     for context in [
@@ -201,7 +201,7 @@ fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
 
 #[test]
 fn boundary_inside_outside_and_empty_queries_remain_definite() {
-    let square = curve::square(1.into()).unwrap();
+    let square = curve::square(1).unwrap();
     for (x, y, expected) in [
         (half(), half(), Some(true)),
         (0.into(), half(), None),
@@ -210,27 +210,21 @@ fn boundary_inside_outside_and_empty_queries_remain_definite() {
         assert_eq!(curve::contains_xy(&square, x, y).attempt().unwrap(), expected);
     }
     assert_eq!(
-        curve::contains_xy(&curve::empty(), 0.into(), 0.into())
-            .attempt()
-            .unwrap(),
+        curve::contains_xy(&curve::empty(), 0, 0).attempt().unwrap(),
         Some(false)
     );
 }
 
 #[test]
 fn canonical_empty_transforms_feed_subsequent_composition() {
-    let empty = curve::translated(&curve::empty(), 2.into(), 3.into())
-        .attempt()
-        .unwrap();
-    let empty = curve::scaled(&empty, (-2).into(), 3.into())
-        .attempt()
-        .unwrap();
-    let empty = curve::rotated(&empty, 90.into()).attempt().unwrap();
+    let empty = curve::translated(&curve::empty(), 2, 3).attempt().unwrap();
+    let empty = curve::scaled(&empty, -2, 3).attempt().unwrap();
+    let empty = curve::rotated(&empty, 90).attempt().unwrap();
     let empty = curve::transformed(&empty, &Matrix4::identity())
         .attempt()
         .unwrap();
     assert!(empty.is_empty());
-    let square = curve::square(2.into()).unwrap();
+    let square = curve::square(2).unwrap();
     let restored = empty.boolean_region(&square, BooleanOp::Union).unwrap();
     assert_eq!(restored.filled_area().unwrap(), Some(4.into()));
     assert!(
@@ -243,16 +237,14 @@ fn canonical_empty_transforms_feed_subsequent_composition() {
 
 #[test]
 fn strict_transforms_keep_holes_area_and_extrusion_volume() {
-    let square = curve::square(2.into()).unwrap();
-    let hole = curve::translated(&curve::square(1.into()).unwrap(), half(), half())
+    let square = curve::square(2).unwrap();
+    let hole = curve::translated(&curve::square(1).unwrap(), half(), half())
         .attempt()
         .unwrap();
     let cut = square.boolean_region(&hole, BooleanOp::Difference).unwrap();
-    let scaled = curve::scaled(&cut, (-2).into(), 3.into()).attempt().unwrap();
-    let moved = curve::translated(&scaled, 5.into(), (-4).into())
-        .attempt()
-        .unwrap();
-    let rotated = curve::rotated(&moved, 90.into()).attempt().unwrap();
+    let scaled = curve::scaled(&cut, -2, 3).attempt().unwrap();
+    let moved = curve::translated(&scaled, 5, -4).attempt().unwrap();
+    let rotated = curve::rotated(&moved, 90).attempt().unwrap();
     for region in [scaled, moved, rotated] {
         assert_eq!(region.filled_area().unwrap(), Some(18.into()));
         let mesh = curve::try_extrude(&region, 2.into(), GeometryContext::STRICT).unwrap();
@@ -350,7 +342,7 @@ fn scalar_adapter_keeps_plane_preserving_half_turns() {
 
 #[test]
 fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
-    let square = curve::square(1.into()).unwrap();
+    let square = curve::square(1).unwrap();
     let mut matrix = Matrix4::identity();
     curve::transformed(&square, &matrix).unwrap();
     // A nonzero exact offset remains nonzero under either policy.
@@ -375,8 +367,8 @@ fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
 
 #[test]
 fn affine_transform_commutes_with_a_regularized_cut() {
-    let square = curve::square(2.into()).unwrap();
-    let hole = curve::translated(&curve::square(1.into()).unwrap(), half(), half()).unwrap();
+    let square = curve::square(2).unwrap();
+    let hole = curve::translated(&curve::square(1).unwrap(), half(), half()).unwrap();
     let matrix = Matrix4::from_row_major(
         [2, 1, 0, 3, 0, -3, 0, -2, 0, 0, 1, 0, 0, 0, 0, 1].map(Real::from),
     );

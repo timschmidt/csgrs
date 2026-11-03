@@ -131,10 +131,7 @@ fn csgrs_region_query_controls_preserve_exact_and_inherited_certainty() {
                     .unwrap();
             assert_eq!(query.value, expected);
             assert_eq!(query.certainty, csgrs::GeometryCertainty::Certified);
-            assert_eq!(
-                csgrs::curve::contains_xy(&region, 5.into(), 5.into()).unwrap(),
-                expected
-            );
+            assert_eq!(csgrs::curve::contains_xy(&region, 5, 5).unwrap(), expected);
             let bounds = csgrs::curve::bounding_box_with_context(&region, context).unwrap();
             assert_eq!(bounds.value.is_none(), region.is_empty());
             assert_eq!(bounds.certainty, csgrs::GeometryCertainty::Certified);
@@ -186,9 +183,6 @@ fn csgrs_region_query_controls_preserve_exact_and_inherited_certainty() {
                 [Real::from(4), Real::from(4), Real::from(6), Real::from(6)]
             );
         }
-        assert_eq!(
-            csgrs::curve::contains_xy(&square, 5.into(), 5.into()).unwrap(),
-            Some(true)
-        );
+        assert_eq!(csgrs::curve::contains_xy(&square, 5, 5).unwrap(), Some(true));
     }
 }

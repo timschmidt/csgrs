@@ -241,7 +241,7 @@ fn tiny_closed_body_remains_usable_after_external_read_and_strict_composition() 
     let evidence = restored.construction_evidence();
     assert!(evidence.source_history_missing() && evidence.coordinates_projected());
     assert_eq!(evidence.predicate_certainty(), None);
-    let transformed = solid::scale(&restored, 2.into(), 2.into(), 2.into()).unwrap();
+    let transformed = solid::scale(&restored, 2, 2, 2).unwrap();
     assert_cube(&transformed, &(Real::from(2) * &side));
     let composed = solid::boolean_with_context(
         &restored,
@@ -267,7 +267,7 @@ fn tiny_closed_body_remains_usable_after_external_read_and_strict_composition() 
     let empty = reconstruct(&ply::to_ply(&removed, "removed").unwrap());
     assert!(empty.positions.is_empty() && empty.triangles.is_empty());
     assert_cube(
-        &empty.try_union(&solid::cube(1.into()).unwrap()).unwrap(),
+        &empty.try_union(&solid::cube(1).unwrap()).unwrap(),
         &Real::one(),
     );
     assert_eq!(

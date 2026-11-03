@@ -36,59 +36,50 @@ fn unresolved_zero() -> Real {
 
 #[test]
 fn arrow_rejects_nonpositive_dimensions() {
-    invalid(curve::arrow((-1).into(), 1.into(), 1.into(), 2.into()));
+    invalid(curve::arrow(-1, 1, 1, 2));
 }
 #[test]
 fn trapezoid_rejects_nonpositive_dimensions() {
-    invalid(curve::trapezoid(1.into(), (-1).into(), 1.into(), 0.into()));
+    invalid(curve::trapezoid(1, -1, 1, 0));
 }
 #[test]
 fn star_rejects_invalid_resolution() {
-    invalid(curve::star(2, 2.into(), 1.into()));
+    invalid(curve::star(2, 2, 1));
 }
 #[test]
 fn teardrop_rejects_invalid_dimensions() {
-    invalid(curve::teardrop((-1).into(), 2.into(), 4));
+    invalid(curve::teardrop(-1, 2, 4));
 }
 #[test]
 fn egg_rejects_invalid_dimensions() {
-    invalid(curve::egg(2.into(), (-1).into(), 4));
+    invalid(curve::egg(2, -1, 4));
 }
 #[test]
 fn squircle_rejects_invalid_resolution() {
-    invalid(curve::squircle(2.into(), 2.into(), 2));
+    invalid(curve::squircle(2, 2, 2));
 }
 #[test]
 fn sector_rejects_excessive_sweep() {
-    invalid(curve::pie_slice(1.into(), 0.into(), 361.into(), 4));
+    invalid(curve::pie_slice(1, 0, 361, 4));
 }
 #[test]
 fn heart_rejects_invalid_resolution() {
-    invalid(curve::heart(2.into(), 2.into(), 7));
+    invalid(curve::heart(2, 2, 7));
 }
 #[test]
 fn supershape_rejects_nonpositive_axes() {
-    invalid(curve::supershape(
-        0.into(),
-        1.into(),
-        4.into(),
-        2.into(),
-        2.into(),
-        2.into(),
-        8,
-    ));
+    invalid(curve::supershape(0, 1, 4, 2, 2, 2, 8));
 }
 #[test]
 fn scalar_domain_failure_does_not_become_empty_geometry() {
-    let error =
-        curve::supershape(1.into(), 1.into(), 4.into(), 0.into(), 2.into(), 2.into(), 8)
-            .attempt()
-            .expect_err("scalar domain failure became geometry");
+    let error = curve::supershape(1, 1, 4, 0, 2, 2, 8)
+        .attempt()
+        .expect_err("scalar domain failure became geometry");
     assert!(matches!(error, ValidationError::Scalar(_)));
 }
 #[test]
 fn undecided_dimensions_do_not_become_empty_geometry() {
-    let error = curve::arrow(unresolved_zero(), 1.into(), 1.into(), 2.into())
+    let error = curve::arrow(unresolved_zero(), 1, 1, 2)
         .attempt()
         .expect_err("undecided input became geometry");
     assert!(matches!(error, ValidationError::PredicateUndecided { .. }));
@@ -96,8 +87,8 @@ fn undecided_dimensions_do_not_become_empty_geometry() {
 #[test]
 fn checked_count_overflows_do_not_become_empty_geometry() {
     for result in [
-        curve::star(usize::MAX, 2.into(), 1.into()).attempt(),
-        curve::teardrop(1.into(), 2.into(), usize::MAX).attempt(),
+        curve::star(usize::MAX, 2, 1).attempt(),
+        curve::teardrop(1, 2, usize::MAX).attempt(),
     ] {
         assert!(matches!(result, Err(ValidationError::CapacityOverflow)));
     }
@@ -116,7 +107,7 @@ fn zero_area_sampled_sector_is_a_completed_empty_set() {
     .unwrap();
     assert_eq!(empty.certainty, csgrs::GeometryCertainty::Certified);
     assert!(empty.value.is_empty());
-    let square = curve::square(2.into()).unwrap();
+    let square = curve::square(2).unwrap();
     let union = empty
         .value
         .boolean_region(&square, hypercurve::BooleanOp::Union)
@@ -139,9 +130,7 @@ fn extruded_teardrop_does_not_certify_a_failed_profile() {
 }
 #[test]
 fn equal_arrow_widths_preserve_the_shaft_and_head() {
-    let region = curve::arrow(2.into(), 1.into(), 1.into(), 1.into())
-        .attempt()
-        .unwrap();
+    let region = curve::arrow(2, 1, 1, 1).attempt().unwrap();
     assert_eq!(
         region.filled_area().unwrap(),
         Some((Real::from(5) / Real::from(2)).unwrap())
@@ -310,14 +299,14 @@ fn independent_sampled_areas_and_context_receipts_agree() {
 #[test]
 fn positive_shape_ranges_and_zero_dimensions_are_explicit_errors() {
     for result in [
-        curve::arrow(0.into(), 1.into(), 1.into(), 2.into()),
-        curve::trapezoid(0.into(), 1.into(), 1.into(), 0.into()),
-        curve::star(3, 1.into(), 1.into()),
-        curve::teardrop(2.into(), 1.into(), 2),
-        curve::egg(1.into(), 0.into(), 3),
-        curve::squircle(0.into(), 1.into(), 3),
-        curve::pie_slice(1.into(), 0.into(), 0.into(), 1),
-        curve::heart(1.into(), 0.into(), 8),
+        curve::arrow(0, 1, 1, 2),
+        curve::trapezoid(0, 1, 1, 0),
+        curve::star(3, 1, 1),
+        curve::teardrop(2, 1, 2),
+        curve::egg(1, 0, 3),
+        curve::squircle(0, 1, 3),
+        curve::pie_slice(1, 0, 0, 1),
+        curve::heart(1, 0, 8),
     ] {
         assert_eq!(
             result.unwrap_err().kind(),
@@ -329,25 +318,17 @@ fn positive_shape_ranges_and_zero_dimensions_are_explicit_errors() {
 #[test]
 fn every_input_controlled_sampling_buffer_checks_capacity() {
     for result in [
-        curve::star(usize::MAX, 2.into(), 1.into()),
-        curve::teardrop(1.into(), 2.into(), usize::MAX),
-        curve::egg(1.into(), 2.into(), usize::MAX),
-        curve::squircle(1.into(), 2.into(), usize::MAX),
-        curve::pie_slice(1.into(), 0.into(), 90.into(), usize::MAX),
-        curve::heart(1.into(), 2.into(), usize::MAX),
-        curve::supershape(
-            1.into(),
-            1.into(),
-            4.into(),
-            2.into(),
-            2.into(),
-            2.into(),
-            usize::MAX,
-        ),
+        curve::star(usize::MAX, 2, 1),
+        curve::teardrop(1, 2, usize::MAX),
+        curve::egg(1, 2, usize::MAX),
+        curve::squircle(1, 2, usize::MAX),
+        curve::pie_slice(1, 0, 90, usize::MAX),
+        curve::heart(1, 2, usize::MAX),
+        curve::supershape(1, 1, 4, 2, 2, 2, usize::MAX),
     ] {
         assert!(matches!(result, Err(ValidationError::CapacityOverflow)));
     }
-    assert!(!curve::egg(1.into(), 2.into(), 4).unwrap().is_empty());
+    assert!(!curve::egg(1, 2, 4).unwrap().is_empty());
 }
 
 #[test]
@@ -365,7 +346,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
     );
     // Populate the identical five-point strict ring before using qualified
     // shoulder equality. A ring-cache proof must not erase that dependency.
-    curve::arrow(2.into(), 1.into(), 1.into(), 1.into()).unwrap();
+    curve::arrow(2, 1, 1, 1).unwrap();
     let result = curve::arrow_with_context(
         2.into(),
         1.into(),
@@ -393,7 +374,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
 
 #[test]
 fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
-    let arrow = curve::arrow(2.into(), 1.into(), 1.into(), 1.into()).unwrap();
+    let arrow = curve::arrow(2, 1, 1, 1).unwrap();
     let cutter =
         curve::translated(&curve::square(q(1, 2)).unwrap(), q(1, 2), q(-1, 4)).unwrap();
     let cut = arrow
@@ -436,16 +417,13 @@ fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
 fn clockwise_and_full_turn_sectors_retain_their_sampling_contract() {
     for end in [-90, 90] {
         assert_eq!(
-            curve::pie_slice(2.into(), 0.into(), end.into(), 1)
-                .unwrap()
-                .filled_area()
-                .unwrap(),
+            curve::pie_slice(2, 0, end, 1).unwrap().filled_area().unwrap(),
             Some(2.into())
         );
     }
     let expected = Real::from(3) * Real::from(3).sqrt().unwrap();
     for end in [-360, 360] {
-        let full = curve::pie_slice(2.into(), 0.into(), end.into(), 1).unwrap();
+        let full = curve::pie_slice(2, 0, end, 1).unwrap();
         assert_eq!(
             full.filled_area()
                 .unwrap()

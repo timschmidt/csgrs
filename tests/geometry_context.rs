@@ -368,8 +368,16 @@ fn sdf_meshing_consumes_the_selected_policy() {
     let point = |v| Point3::new(Real::from(v), Real::from(v), Real::from(v));
     let field = |p: &Point3| p.x.clone() + unresolved_zero();
     assert!(
-        solid::sdf_with_context(field, (3, 3, 3), point(-1), point(1), Real::zero(), STRICT)
-            .is_err()
+        solid::sdf_with_context(
+            field,
+            (3, 3, 3),
+            point(-1),
+            point(1),
+            Real::zero(),
+            STRICT,
+            csgrs::solid::SampleOptions::default()
+        )
+        .is_err()
     );
     let result = solid::sdf_with_context(
         field,
@@ -378,10 +386,11 @@ fn sdf_meshing_consumes_the_selected_policy() {
         point(1),
         Real::zero(),
         APPROXIMATE,
+        csgrs::solid::SampleOptions::default(),
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Approximate512Consumed);
-    assert!(!result.value.triangles.is_empty());
+    assert!(!result.value.mesh.triangles.is_empty());
 }
 
 #[test]

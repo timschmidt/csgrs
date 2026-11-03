@@ -19,6 +19,7 @@
 
 use crate::context::{GeometryContext, GeometryDecisions, GeometryOutcome};
 use crate::errors::ValidationError;
+use crate::session::IntoReal;
 use hyperlattice::{Aabb, Matrix4, Point3, Real, Vector3};
 use hypermesh::{
     BooleanExpression, BooleanOp, BooleanProgram, HypermeshError, HypermeshResult, Plane,
@@ -151,16 +152,20 @@ pub fn empty() -> TriangleMesh {
 }
 
 /// Axis-aligned cube with its minimum corner at the origin.
-pub fn cube(width: Real) -> Result<TriangleMesh, ValidationError> {
+pub fn cube(width: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
+    let width = width.into_real()?;
     cuboid(width.clone(), width.clone(), width)
 }
 
 /// Axis-aligned cuboid with its minimum corner at the origin.
 pub fn cuboid(
-    width: Real,
-    length: Real,
-    height: Real,
+    width: impl IntoReal,
+    length: impl IntoReal,
+    height: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let width = width.into_real()?;
+    let length = length.into_real()?;
+    let height = height.into_real()?;
     let parameters =
         PrimitiveParameters::Cuboid(width.clone(), length.clone(), height.clone());
     retained_primitive(parameters, || cuboid_uncached(width, length, height))
@@ -211,10 +216,11 @@ fn cuboid_uncached(
 
 /// Tessellated sphere centered at the origin.
 pub fn sphere(
-    radius: Real,
+    radius: impl IntoReal,
     segments: usize,
     stacks: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let radius = radius.into_real()?;
     let parameters = PrimitiveParameters::Sphere(radius.clone(), segments, stacks);
     retained_primitive(parameters, || sphere_uncached(radius, segments, stacks))
 }
@@ -304,21 +310,26 @@ fn sphere_uncached(
 
 /// Tessellated cylinder along +Z.
 pub fn cylinder(
-    radius: Real,
-    height: Real,
+    radius: impl IntoReal,
+    height: impl IntoReal,
     segments: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let radius = radius.into_real()?;
+    let height = height.into_real()?;
     frustum(radius.clone(), radius, height, segments)
 }
 
 /// Tessellated ellipsoid centered at the origin.
 pub fn ellipsoid(
-    radius_x: Real,
-    radius_y: Real,
-    radius_z: Real,
+    radius_x: impl IntoReal,
+    radius_y: impl IntoReal,
+    radius_z: impl IntoReal,
     segments: usize,
     stacks: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let radius_x = radius_x.into_real()?;
+    let radius_y = radius_y.into_real()?;
+    let radius_z = radius_z.into_real()?;
     let parameters = PrimitiveParameters::Ellipsoid(
         radius_x.clone(),
         radius_y.clone(),
@@ -368,11 +379,14 @@ fn ellipsoid_uncached(
 
 /// Tessellated conical frustum along +Z.
 pub fn frustum(
-    radius_bottom: Real,
-    radius_top: Real,
-    height: Real,
+    radius_bottom: impl IntoReal,
+    radius_top: impl IntoReal,
+    height: impl IntoReal,
     segments: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let radius_bottom = radius_bottom.into_real()?;
+    let radius_top = radius_top.into_real()?;
+    let height = height.into_real()?;
     frustum_between(
         Point3::origin(),
         Point3::new(Real::zero(), Real::zero(), height),
@@ -394,10 +408,12 @@ pub fn frustum(
 pub fn frustum_between(
     start: Point3,
     end: Point3,
-    start_radius: Real,
-    end_radius: Real,
+    start_radius: impl IntoReal,
+    end_radius: impl IntoReal,
     segments: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let start_radius = start_radius.into_real()?;
+    let end_radius = end_radius.into_real()?;
     let parameters = PrimitiveParameters::FrustumBetween(
         Box::new(start.clone()),
         Box::new(end.clone()),
@@ -483,7 +499,8 @@ fn frustum_between_uncached(
 }
 
 /// Regular octahedron centered at the origin.
-pub fn octahedron(radius: Real) -> Result<TriangleMesh, ValidationError> {
+pub fn octahedron(radius: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
+    let radius = radius.into_real()?;
     let parameters = PrimitiveParameters::Octahedron(radius.clone());
     retained_primitive(parameters, || octahedron_uncached(radius))
 }
@@ -516,7 +533,8 @@ fn octahedron_uncached(radius: Real) -> Result<TriangleMesh, ValidationError> {
 }
 
 /// Regular icosahedron centered at the origin.
-pub fn icosahedron(radius: Real) -> Result<TriangleMesh, ValidationError> {
+pub fn icosahedron(radius: impl IntoReal) -> Result<TriangleMesh, ValidationError> {
+    let radius = radius.into_real()?;
     let parameters = PrimitiveParameters::Icosahedron(radius.clone());
     retained_primitive(parameters, || icosahedron_uncached(radius))
 }
@@ -777,11 +795,13 @@ pub fn arrow(
 /// Tessellated torus around the Z axis.
 #[cfg(feature = "curve")]
 pub fn torus(
-    major_radius: Real,
-    minor_radius: Real,
+    major_radius: impl IntoReal,
+    minor_radius: impl IntoReal,
     major_segments: usize,
     minor_segments: usize,
 ) -> Result<TriangleMesh, ValidationError> {
+    let major_radius = major_radius.into_real()?;
+    let minor_radius = minor_radius.into_real()?;
     let parameters = PrimitiveParameters::Torus(
         major_radius.clone(),
         minor_radius.clone(),
@@ -1260,10 +1280,13 @@ fn try_transform_with_known_orientation(
 /// Rotates native geometry by Euler angles in degrees, reporting uncertainty.
 pub fn rotate(
     mesh: &TriangleMesh,
-    x: Real,
-    y: Real,
-    z: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
+    z: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
+    let z = z.into_real()?;
     rotate_with_context(mesh, x, y, z, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1289,10 +1312,13 @@ pub fn rotate_with_context(
 /// Scales native geometry independently along each axis, reporting degeneracy.
 pub fn scale(
     mesh: &TriangleMesh,
-    x: Real,
-    y: Real,
-    z: Real,
+    x: impl IntoReal,
+    y: impl IntoReal,
+    z: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let x = x.into_real()?;
+    let y = y.into_real()?;
+    let z = z.into_real()?;
     scale_with_context(mesh, x, y, z, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
@@ -1378,6 +1404,44 @@ pub fn inverse(mesh: &TriangleMesh) -> TriangleMesh {
     mesh.reversed_winding()
 }
 
+/// Optional inputs of the sampled-field constructors ([`sdf_with_context`],
+/// [`sdf_expr_with_context`] and [`metaballs_with_context`]).
+///
+/// The predicate policy is not an option: it is always passed explicitly.
+#[cfg(any(feature = "sdf", feature = "metaballs"))]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[non_exhaustive]
+pub struct SampleOptions {
+    /// Collect sample statistics while sampling. This costs an exact sign and
+    /// extremum comparison per sample, so it is off by default.
+    pub diagnostics: bool,
+}
+
+#[cfg(any(feature = "sdf", feature = "metaballs"))]
+impl SampleOptions {
+    /// Options that request diagnostics.
+    pub const fn with_diagnostics() -> Self {
+        Self { diagnostics: true }
+    }
+
+    fn retain<D>(self, (mesh, diagnostics): (TriangleMesh, D)) -> SampledMesh<D> {
+        SampledMesh {
+            mesh,
+            diagnostics: self.diagnostics.then_some(diagnostics),
+        }
+    }
+}
+
+/// A sampled mesh with the diagnostics its [`SampleOptions`] requested.
+#[cfg(any(feature = "sdf", feature = "metaballs"))]
+#[derive(Clone, Debug, PartialEq)]
+pub struct SampledMesh<D> {
+    /// The meshed sample grid.
+    pub mesh: TriangleMesh,
+    /// `Some` exactly when diagnostics were requested.
+    pub diagnostics: Option<D>,
+}
+
 /// Samples inverse-square metaballs through the native exact-coordinate sampler.
 ///
 /// This uses the continuous normalized field `(iso-I)/(iso+I)`, extended to -1
@@ -1390,33 +1454,25 @@ pub fn inverse(mesh: &TriangleMesh) -> TriangleMesh {
 pub fn metaballs(
     balls: &[MetaBall],
     resolution: (usize, usize, usize),
-    iso_value: Real,
-    padding: Real,
+    iso_value: impl IntoReal,
+    padding: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
-    metaballs_with_context(balls, resolution, iso_value, padding, GeometryContext::STRICT)
-        .map(|outcome| outcome.value)
-}
-
-/// Samples the normalized metaball field and returns diagnostics with typed failure.
-#[cfg(feature = "metaballs")]
-pub fn metaballs_with_diagnostics(
-    balls: &[MetaBall],
-    resolution: (usize, usize, usize),
-    iso_value: Real,
-    padding: Real,
-) -> Result<(TriangleMesh, MetaballDiagnostics), ValidationError> {
-    metaballs_with_diagnostics_and_context(
+    let iso_value = iso_value.into_real()?;
+    let padding = padding.into_real()?;
+    metaballs_with_context(
         balls,
         resolution,
         iso_value,
         padding,
         GeometryContext::STRICT,
+        SampleOptions::default(),
     )
-    .map(|outcome| outcome.value)
+    .map(|outcome| outcome.value.mesh)
 }
 
 /// Samples metaballs with the selected meshing policy, retaining local certainty.
 /// Native field construction and its conservative bounds remain strict.
+/// Diagnostics are collected only when `options` requests them.
 #[cfg(feature = "metaballs")]
 pub fn metaballs_with_context(
     balls: &[MetaBall],
@@ -1424,21 +1480,17 @@ pub fn metaballs_with_context(
     iso_value: Real,
     padding: Real,
     context: GeometryContext,
-) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
-    crate::implicit::metaballs::sample(balls, resolution, iso_value, padding, false, context)
-        .map(|outcome| outcome.map(|(mesh, _)| mesh))
-}
-
-/// Samples metaballs and retains diagnostics together with consumed certainty.
-#[cfg(feature = "metaballs")]
-pub fn metaballs_with_diagnostics_and_context(
-    balls: &[MetaBall],
-    resolution: (usize, usize, usize),
-    iso_value: Real,
-    padding: Real,
-    context: GeometryContext,
-) -> Result<GeometryOutcome<(TriangleMesh, MetaballDiagnostics)>, ValidationError> {
-    crate::implicit::metaballs::sample(balls, resolution, iso_value, padding, true, context)
+    options: SampleOptions,
+) -> Result<GeometryOutcome<SampledMesh<MetaballDiagnostics>>, ValidationError> {
+    crate::implicit::metaballs::sample(
+        balls,
+        resolution,
+        iso_value,
+        padding,
+        options.diagnostics,
+        context,
+    )
+    .map(|outcome| outcome.map(|sampled| options.retain(sampled)))
 }
 
 /// Samples an exact scalar field with native-real Surface Nets.
@@ -1454,8 +1506,9 @@ pub fn sdf(
     resolution: (usize, usize, usize),
     min: Point3,
     max: Point3,
-    iso_value: Real,
+    iso_value: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let iso_value = iso_value.into_real()?;
     sdf_with_context(
         field,
         resolution,
@@ -1463,28 +1516,9 @@ pub fn sdf(
         max,
         iso_value,
         GeometryContext::STRICT,
+        SampleOptions::default(),
     )
-    .map(|outcome| outcome.value)
-}
-
-/// Samples an SDF into native triangle geometry and returns sampling diagnostics.
-#[cfg(feature = "sdf")]
-pub fn sdf_with_diagnostics(
-    field: impl Fn(&Point3) -> Real,
-    resolution: (usize, usize, usize),
-    min: Point3,
-    max: Point3,
-    iso_value: Real,
-) -> Result<(TriangleMesh, SdfDiagnostics), ValidationError> {
-    sdf_with_diagnostics_and_context(
-        field,
-        resolution,
-        min,
-        max,
-        iso_value,
-        GeometryContext::STRICT,
-    )
-    .map(|outcome| outcome.value)
+    .map(|outcome| outcome.value.mesh)
 }
 
 /// Samples a Hypersdf expression with native-real Surface Nets.
@@ -1500,8 +1534,9 @@ pub fn sdf_expr(
     resolution: (usize, usize, usize),
     min: Point3,
     max: Point3,
-    iso_value: Real,
+    iso_value: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let iso_value = iso_value.into_real()?;
     sdf_expr_with_context(
         expression,
         resolution,
@@ -1509,32 +1544,14 @@ pub fn sdf_expr(
         max,
         iso_value,
         GeometryContext::STRICT,
+        SampleOptions::default(),
     )
-    .map(|outcome| outcome.value)
-}
-
-/// Samples a retained SDF expression and returns sampling diagnostics.
-#[cfg(feature = "sdf")]
-pub fn sdf_expr_with_diagnostics(
-    expression: hypersdf::SdfExpr,
-    resolution: (usize, usize, usize),
-    min: Point3,
-    max: Point3,
-    iso_value: Real,
-) -> Result<(TriangleMesh, SdfDiagnostics), ValidationError> {
-    sdf_expr_with_diagnostics_and_context(
-        expression,
-        resolution,
-        min,
-        max,
-        iso_value,
-        GeometryContext::STRICT,
-    )
-    .map(|outcome| outcome.value)
+    .map(|outcome| outcome.value.mesh)
 }
 
 /// Samples and meshes a scalar field with the selected policy, retaining errors and certainty.
 /// As with [`sdf`], certification covers the sampled grid, not the continuous field.
+/// Diagnostics are collected only when `options` requests them.
 #[cfg(feature = "sdf")]
 pub fn sdf_with_context(
     field: impl Fn(&Point3) -> Real,
@@ -1543,43 +1560,25 @@ pub fn sdf_with_context(
     max: Point3,
     iso_value: Real,
     context: GeometryContext,
-) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    options: SampleOptions,
+) -> Result<GeometryOutcome<SampledMesh<SdfDiagnostics>>, ValidationError> {
     crate::implicit::sdf::sample_with_context(
         |point| Ok(field(point)),
         resolution,
         min,
         max,
         iso_value,
-        false,
+        options.diagnostics,
         context,
     )
-    .map(|outcome| outcome.map(|(mesh, _)| mesh))
-}
-
-/// Samples a field with the selected policy and retains sampling diagnostics.
-#[cfg(feature = "sdf")]
-pub fn sdf_with_diagnostics_and_context(
-    field: impl Fn(&Point3) -> Real,
-    resolution: (usize, usize, usize),
-    min: Point3,
-    max: Point3,
-    iso_value: Real,
-    context: GeometryContext,
-) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
-    crate::implicit::sdf::sample_with_context(
-        |point| Ok(field(point)),
-        resolution,
-        min,
-        max,
-        iso_value,
-        true,
-        context,
-    )
+    .map(|outcome| outcome.map(|sampled| options.retain(sampled)))
 }
 
 /// Samples a Hypersdf expression and meshes its scalar values with the selected policy.
 /// Expression domain and branch checks remain strict even when meshing permits
 /// approximate predicates. Evaluation errors retain their cause and sample index.
+/// Requested diagnostics keep lossy preview samples, and their sign counts
+/// include only strict proofs, even under an approximate policy.
 #[cfg(feature = "sdf")]
 pub fn sdf_expr_with_context(
     expression: hypersdf::SdfExpr,
@@ -1588,28 +1587,18 @@ pub fn sdf_expr_with_context(
     max: Point3,
     iso_value: Real,
     context: GeometryContext,
-) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    options: SampleOptions,
+) -> Result<GeometryOutcome<SampledMesh<SdfDiagnostics>>, ValidationError> {
     crate::implicit::sdf::sample_expr_with_context(
-        expression, resolution, min, max, iso_value, false, context,
+        expression,
+        resolution,
+        min,
+        max,
+        iso_value,
+        options.diagnostics,
+        context,
     )
-    .map(|outcome| outcome.map(|(mesh, _)| mesh))
-}
-
-/// Samples an expression with the selected policy and retains diagnostics and certainty.
-/// Expression domain and branch checks remain strict. Preview samples remain lossy,
-/// and their sign counts include only strict proofs, even under an approximate policy.
-#[cfg(feature = "sdf")]
-pub fn sdf_expr_with_diagnostics_and_context(
-    expression: hypersdf::SdfExpr,
-    resolution: (usize, usize, usize),
-    min: Point3,
-    max: Point3,
-    iso_value: Real,
-    context: GeometryContext,
-) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
-    crate::implicit::sdf::sample_expr_with_context(
-        expression, resolution, min, max, iso_value, true, context,
-    )
+    .map(|outcome| outcome.map(|sampled| options.retain(sampled)))
 }
 
 /// Bounded gyroid solid sampled through the established SDF boundary.
@@ -1617,10 +1606,13 @@ pub fn sdf_expr_with_diagnostics_and_context(
 pub fn gyroid_solid(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
-    wall_thickness: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
+    wall_thickness: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
+    let wall_thickness = wall_thickness.into_real()?;
     crate::implicit::tpms::gyroid_solid(
         bounding_box(bounds)?.as_ref(),
         resolution,
@@ -1635,10 +1627,13 @@ pub fn gyroid_solid(
 pub fn schwarz_p_solid(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
-    wall_thickness: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
+    wall_thickness: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
+    let wall_thickness = wall_thickness.into_real()?;
     crate::implicit::tpms::schwarz_p_solid(
         bounding_box(bounds)?.as_ref(),
         resolution,
@@ -1653,10 +1648,13 @@ pub fn schwarz_p_solid(
 pub fn schwarz_d_solid(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
-    wall_thickness: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
+    wall_thickness: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
+    let wall_thickness = wall_thickness.into_real()?;
     crate::implicit::tpms::schwarz_d_solid(
         bounding_box(bounds)?.as_ref(),
         resolution,
@@ -1671,9 +1669,11 @@ pub fn schwarz_d_solid(
 pub fn gyroid(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
     crate::implicit::tpms::gyroid(bounding_box(bounds)?.as_ref(), resolution, scale, iso_value)
 }
 
@@ -1682,9 +1682,11 @@ pub fn gyroid(
 pub fn schwarz_p(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
     crate::implicit::tpms::schwarz_p(
         bounding_box(bounds)?.as_ref(),
         resolution,
@@ -1698,9 +1700,11 @@ pub fn schwarz_p(
 pub fn schwarz_d(
     bounds: &TriangleMesh,
     resolution: usize,
-    scale: Real,
-    iso_value: Real,
+    scale: impl IntoReal,
+    iso_value: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let scale = scale.into_real()?;
+    let iso_value = iso_value.into_real()?;
     crate::implicit::tpms::schwarz_d(
         bounding_box(bounds)?.as_ref(),
         resolution,
@@ -1871,8 +1875,9 @@ pub fn distribute_linear(
     mesh: &TriangleMesh,
     count: usize,
     direction: Vector3,
-    spacing: Real,
+    spacing: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let spacing = spacing.into_real()?;
     distribute_linear_with_context(mesh, count, direction, spacing, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1933,9 +1938,11 @@ pub fn distribute_grid(
     mesh: &TriangleMesh,
     rows: usize,
     columns: usize,
-    dx: Real,
-    dy: Real,
+    dx: impl IntoReal,
+    dy: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let dx = dx.into_real()?;
+    let dy = dy.into_real()?;
     distribute_grid_with_context(mesh, rows, columns, dx, dy, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
@@ -1992,10 +1999,13 @@ pub fn distribute_grid_with_context(
 pub fn distribute_arc(
     mesh: &TriangleMesh,
     count: usize,
-    radius: Real,
-    start_angle_degrees: Real,
-    end_angle_degrees: Real,
+    radius: impl IntoReal,
+    start_angle_degrees: impl IntoReal,
+    end_angle_degrees: impl IntoReal,
 ) -> Result<TriangleMesh, ValidationError> {
+    let radius = radius.into_real()?;
+    let start_angle_degrees = start_angle_degrees.into_real()?;
+    let end_angle_degrees = end_angle_degrees.into_real()?;
     distribute_arc_with_context(
         mesh,
         count,
@@ -2160,8 +2170,9 @@ pub fn dihedral_angle_with_context(
 /// Exact uniform-density mass properties through Hyperphysics.
 pub fn exact_mass_properties(
     mesh: &TriangleMesh,
-    density: Real,
+    density: impl IntoReal,
 ) -> Result<hyperphysics::MassPropertyReport3, ValidationError> {
+    let density = density.into_real()?;
     hyperphysics::triangle_mesh_uniform_density_mass_properties(mesh, density)
         .map_err(|error| ValidationError::Geometry(format!("{error:?}")))
 }
@@ -2232,7 +2243,8 @@ pub fn flatten_with_context(
 /// otherwise be empty. This operation does not certify manifoldness or
 /// inherited construction provenance, nor impose a total-work or byte bound.
 #[cfg(feature = "curve")]
-pub fn slice_z(mesh: &TriangleMesh, z: Real) -> Result<SliceResult, ValidationError> {
+pub fn slice_z(mesh: &TriangleMesh, z: impl IntoReal) -> Result<SliceResult, ValidationError> {
+    let z = z.into_real()?;
     slice_z_with_context(mesh, z, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
@@ -2616,11 +2628,26 @@ pub trait SolidExt: Sized {
     /// Apply a homogeneous transform.
     fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError>;
     /// Translate by an exact vector.
-    fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    fn translated(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError>;
     /// Rotate by exact angles in degrees about X, then Y, then Z. Same as [`rotate`].
-    fn rotated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    fn rotated(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError>;
     /// Scale by exact per-axis factors. Same as [`scale`].
-    fn scaled(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    fn scaled(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError>;
     /// Mirror across a plane. Same as [`mirror`].
     fn mirrored(&self, plane: &Plane) -> Result<Self, ValidationError>;
     /// Translate so the exact bounding-box center is at the origin. Same as [`center`].
@@ -2686,15 +2713,33 @@ impl SolidExt for TriangleMesh {
         transform(self, matrix)
     }
 
-    fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
-        transform(self, &Matrix4::affine_translation([x, y, z]))
+    fn translated(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError> {
+        transform(
+            self,
+            &Matrix4::affine_translation([x.into_real()?, y.into_real()?, z.into_real()?]),
+        )
     }
 
-    fn rotated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
+    fn rotated(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError> {
         rotate(self, x, y, z)
     }
 
-    fn scaled(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
+    fn scaled(
+        &self,
+        x: impl IntoReal,
+        y: impl IntoReal,
+        z: impl IntoReal,
+    ) -> Result<Self, ValidationError> {
         scale(self, x, y, z)
     }
 

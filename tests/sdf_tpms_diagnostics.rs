@@ -159,14 +159,23 @@ fn sdf_expr_preserves_exact_signs_below_float_range() {
         iso.clone(),
     )
     .expect("valid SDF fixture");
-    let (expression_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
+    let solid::SampledMesh {
+        mesh: expression_mesh,
+        diagnostics: Some(diagnostics),
+    } = solid::sdf_expr_with_context(
         SdfExpr::x().mul_expr(SdfExpr::constant(tiny)),
         (9, 9, 9),
         p3(-1.0, -1.0, -1.0),
         p3(1.0, 1.0, 1.0),
         iso,
+        csgrs::GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::with_diagnostics(),
     )
-    .expect("valid SDF fixture");
+    .map(|outcome| outcome.value)
+    .expect("valid SDF fixture")
+    else {
+        panic!("requested diagnostics must be returned");
+    };
 
     assert!(!closure_mesh.triangles.is_empty());
     assert_eq!(expression_mesh, closure_mesh);
@@ -262,14 +271,23 @@ fn sdf_expr_preview_tracks_nonzero_iso_surface() {
         r(1.0),
     )
     .expect("valid SDF fixture");
-    let (diagnostic_mesh, diagnostics) = solid::sdf_expr_with_diagnostics(
+    let solid::SampledMesh {
+        mesh: diagnostic_mesh,
+        diagnostics: Some(diagnostics),
+    } = solid::sdf_expr_with_context(
         expression,
         (17, 17, 17),
         p3(-2.0, -2.0, -2.0),
         p3(2.0, 2.0, 2.0),
         r(1.0),
+        csgrs::GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::with_diagnostics(),
     )
-    .expect("valid SDF fixture");
+    .map(|outcome| outcome.value)
+    .expect("valid SDF fixture")
+    else {
+        panic!("requested diagnostics must be returned");
+    };
 
     assert_eq!(diagnostic_mesh, direct_mesh);
     assert!(!diagnostic_mesh.triangles.is_empty());

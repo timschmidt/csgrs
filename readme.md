@@ -60,10 +60,12 @@ cargo run --example basic
 
 It writes `drilled_cube.stl`. The program is included as `examples/basic.rs`.
 `Csg` is a modeling session: it selects the predicate policy once and reports
-the weakest certainty of the whole chain. Its methods accept ordinary integers,
-`Real` values and exactly converted floats; use `csgrs::decimal("0.1")` or
-`csgrs::ratio(1, 10)` when you mean a decimal value, because `0.1_f64` is not
-1/10.
+the weakest certainty of the whole chain. Its methods, and the STRICT
+convenience functions of `solid` and `curve`, accept ordinary integers, `Real`
+values and exactly converted floats through `csgrs::IntoReal`; use
+`csgrs::decimal("0.1")` or `csgrs::ratio(1, 10)` when you mean a decimal
+value, because `0.1_f64` is not 1/10. Functions that take an explicit
+`GeometryContext` take exact `Real` values.
 
 <!-- quickstart:start -->
 ```rust
@@ -409,11 +411,13 @@ to an unspecified continuous sweep. Context forms retain every consumed
 predicate's certainty and native error cause. Section validation takes quadratic
 edge-pair work; total work, heap bytes and cancellation remain unbounded internally.
 
-`solid::empty()` is intentionally image-free. Diagnostic variants
-`metaballs_with_diagnostics` and `sdf_with_diagnostics` produce the same shape
-families while returning sampling reports. `sdf_expr` and
-`sdf_expr_with_diagnostics` accept retained `hypersdf::SdfExpr` values and
-produce the same SDF shape family. All four SDF constructors return `Result`:
+`solid::empty()` is intentionally image-free. `sdf_expr` and
+`sdf_expr_with_context` accept retained `hypersdf::SdfExpr` values and
+produce the same SDF shape family. The `_with_context` sampling forms take a
+`SampleOptions`; `SampleOptions::with_diagnostics()` also returns a sampling
+report in the outcome's `SampledMesh`, and the default collects none, because
+the report costs an exact sign and extremum comparison per sample. Requesting
+it changes neither the mesh nor its certainty. All four SDF constructors return `Result`:
 use `?` to propagate failures before passing a mesh downstream. Successful
 empty level surfaces remain `Ok`; invalid expression domains, undecided
 construction or extraction, and capacity exhaustion are errors with retained
@@ -422,7 +426,7 @@ Grid dimensions below two are rejected. Diagnostic
 queries also fail when their requested sign or extrema cannot be established.
 
 `*_with_context` variants retain the certainty of the decisions consumed under
-the selected policy, including `sdf_expr_with_diagnostics_and_context`.
+the selected policy, with or without requested diagnostics.
 Expression construction remains strict under either meshing policy. Diagnostic
 previews remain lossy and preserve only strict sign evidence; they may withhold
 samples accepted approximately by the mesh operation. The display backend also
@@ -440,8 +444,8 @@ expression growth, secondary extraction/preview allocations, total work and
 cancellation do not yet have internal bounds. The 3D metaball constructors share this native sampler and return `Result`.
 `MetaBall` reexports Hypersdf's retained `Metaball`; its `influence` returns a
 fallible exact inverse-square value, with no distant cutoff and a typed pole
-error at the center. `metaballs_with_context` and
-`metaballs_with_diagnostics_and_context` retain the certainty actually consumed.
+error at the center. `metaballs_with_context` retains the certainty actually
+consumed, with or without requested diagnostics.
 Radii and iso values must be positive, padding nonnegative, and every requested
 grid dimension at least two, including for empty inputs.
 
@@ -624,14 +628,14 @@ report. The existing convenience entry points retain their strict default.
 
 | Operation | Context-bearing API |
 |---|---|
-| Mesh transforms and positioning | `solid::try_transform_with_context`, `try_rotate_with_context`, `try_scale_with_context`, `try_mirror_with_context`, `try_center_with_context`, `try_float_with_context` |
-| Mesh bounds and queries | `solid::try_bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
+| Mesh transforms and positioning | `solid::transform_with_context`, `rotate_with_context`, `scale_with_context`, `mirror_with_context`, `center_with_context`, `float_with_context` |
+| Mesh bounds and queries | `solid::bounding_box_with_context`, `contains_point_with_context`, `polyline_intersections_with_context`, `dihedral_angle_with_context` |
 | Hulls, sums, copies, and polygon caps | `solid::convex_hull_with_context`, `minkowski_sum_with_context`, `minkowski_hull_with_context`, `distribute_linear_with_context`, `distribute_grid_with_context`, `distribute_arc_with_context`, `polyhedron_with_context`, `loft_with_context` |
 | Projection and slicing | `solid::flatten_with_context`, `slice_z_with_context` |
-| Native Real metaball meshing | `solid::metaballs_with_context`, `metaballs_with_diagnostics_and_context` |
-| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_with_diagnostics_and_context`, `sdf_expr_with_context`, `sdf_expr_with_diagnostics_and_context` |
+| Native Real metaball meshing | `solid::metaballs_with_context` |
+| Native Real SDF meshing | `solid::sdf_with_context`, `sdf_expr_with_context` |
 | Curve construction | `curve::polygon_with_context`, `rectangle_with_context`, `square_with_context`, `circle_with_context`, `ellipse_with_context`, `regular_ngon_with_context`, `rounded_rectangle_with_context`, `bezier_path_with_context`, `bezier_region_with_context`, `bspline_path_with_context`, `involute_gear_with_context`, `cycloidal_gear_with_context`, `involute_rack_with_context`, `cycloidal_rack_with_context`, `airfoil_naca4_with_context` |
-| Curve transforms and queries | `curve::try_transformed_with_context`, `try_translated_with_context`, `try_rotated_with_context`, `try_scaled_with_context`, `try_bounding_box_with_context`, `contains_xy_with_context`, `hilbert_paths_with_context`, `hilbert_strings_with_context` |
+| Curve transforms and queries | `curve::transformed_with_context`, `translated_with_context`, `rotated_with_context`, `scaled_with_context`, `bounding_box_with_context`, `contains_xy_with_context`, `hilbert_paths_with_context`, `hilbert_strings_with_context` |
 | Mesh imports | `io::obj::from_obj_with_context`, `from_obj_attributed_with_context`, `io::dxf::from_dxf_with_context`, `io::vrml::from_vrml_with_context` |
 | Gerber conversion | `io::gerber::import_gerber_with_context`, `export_gerber_with_options_and_context` |
 

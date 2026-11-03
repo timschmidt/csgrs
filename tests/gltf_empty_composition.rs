@@ -159,8 +159,8 @@ fn empty_scene_and_named_empty_objects_omit_geometry_without_losing_names() {
 
 #[test]
 fn mixed_scene_preserves_node_and_mesh_indices_and_continues_modeling() {
-    let cube = solid::cube(1.into()).unwrap();
-    let moved = cube.translated(3.into(), 2.into(), 1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
+    let moved = cube.translated(3, 2, 1).unwrap();
     let empty = solid::empty();
     let text = to_gltf_scene(
         "mixed",
@@ -226,7 +226,7 @@ fn mixed_scene_preserves_node_and_mesh_indices_and_continues_modeling() {
 
 #[test]
 fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
-    let cube = solid::cube(1.into()).unwrap();
+    let cube = solid::cube(1).unwrap();
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let mut points = cube.positions.to_vec();
@@ -248,7 +248,7 @@ fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
     // later local proofs cannot certify the original construction's intent.
     assert!(imported.construction_evidence().source_history_missing());
     assert_eq!(imported.construction_evidence().predicate_certainty(), None);
-    let transformed = solid::scale(&imported, 2.into(), 3.into(), 4.into()).unwrap();
+    let transformed = solid::scale(&imported, 2, 3, 4).unwrap();
     for (left, right, operation, nonempty) in [
         (&cube, &transformed, BooleanOp::Union, true),
         (&transformed, &cube, BooleanOp::Union, true),

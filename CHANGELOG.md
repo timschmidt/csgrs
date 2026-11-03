@@ -21,6 +21,13 @@ migrations, including changed serialized output, are listed in
 - Transforms and queries have one name each. The duplicate `try_` aliases and
   the `try_` prefix of their policy-taking variants were removed (see
   MIGRATIONS).
+- The STRICT convenience constructors and transforms accept ordinary numbers
+  through `IntoReal` (integers and `Real` exactly, `f64` as its exact binary
+  value); functions with an explicit `GeometryContext` keep `Real`.
+- `GeometryContext` is passed by value everywhere. SDF and metaball sampling
+  request diagnostics through `SampleOptions` and return them inside the
+  outcome's `SampledMesh`, replacing the six `_with_diagnostics` variants (see
+  MIGRATIONS).
 
 - SVG import/export consumes retained polynomial graph branches through
   Hypercurve. Polynomial reconstruction failures retain their native cause in
@@ -117,8 +124,8 @@ migrations, including changed serialized output, are listed in
   (count limits and cooperative cancellation), `polyline_intersections`,
   `dihedral_angle` and `materialize_finite`; the bounded TPMS wall solids
   `gyroid_solid`, `schwarz_p_solid` and `schwarz_d_solid`; SDF meshing from
-  retained `hypersdf::SdfExpr` values (`sdf_expr`); and `*_with_diagnostics`
-  variants of SDF and metaball sampling.
+  retained `hypersdf::SdfExpr` values (`sdf_expr`); and optional diagnostics
+  for SDF and metaball sampling.
 - Hilbert-curve infill clipped to a filled region: `curve::hilbert_paths`
   keeps trim records, and `hilbert_strings` returns plain curve strings.
 - `curve::extrude_twisted` with both end scales zero tapers the profile to

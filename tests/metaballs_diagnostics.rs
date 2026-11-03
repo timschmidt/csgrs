@@ -53,9 +53,22 @@ fn metaballs_generate_mesh_from_hyperreal_centers() {
         MetaBall::new(p3(-0.35, 0.0, 0.0), r(0.6)),
         MetaBall::new(p3(0.35, 0.0, 0.0), r(0.6)),
     ];
-    let (mesh, diagnostics) =
-        solid::metaballs_with_diagnostics(&balls, (6, 6, 6), r(0.35), r(0.2))
-            .expect("valid metaball fixture");
+    let solid::SampledMesh {
+        mesh,
+        diagnostics: Some(diagnostics),
+    } = solid::metaballs_with_context(
+        &balls,
+        (6, 6, 6),
+        r(0.35),
+        r(0.2),
+        csgrs::GeometryContext::STRICT,
+        csgrs::solid::SampleOptions::with_diagnostics(),
+    )
+    .map(|outcome| outcome.value)
+    .expect("valid metaball fixture")
+    else {
+        panic!("requested diagnostics must be returned");
+    };
 
     assert!(diagnostics.crossing_cell_count > 0);
     assert!(diagnostics.surface_nets_vertex_count > 0);
@@ -89,7 +102,44 @@ fn metaball_influence_preserves_its_pole_and_positive_finite_values() {
 fn metaballs_reject_unrepresentable_grid_dimensions() {
     let ball = MetaBall::new(p3(0.0, 0.0, 0.0), r(1.0));
     assert!(matches!(
-        solid::metaballs_with_diagnostics(&[ball], (usize::MAX, 2, 2), r(1.0), r(0.0)),
+        solid::metaballs_with_context(
+            &[ball],
+            (usize::MAX, 2, 2),
+            r(1.0),
+            r(0.0),
+            csgrs::GeometryContext::STRICT,
+            csgrs::solid::SampleOptions::with_diagnostics()
+        ),
         Err(csgrs::errors::ValidationError::CapacityOverflow)
     ));
+}
+
+#[test]
+fn metaball_diagnostics_are_returned_exactly_when_requested_and_change_nothing_else() {
+    use csgrs::solid::SampleOptions;
+    let balls = [
+        MetaBall::new(p3(-0.35, 0.0, 0.0), r(0.6)),
+        MetaBall::new(p3(0.35, 0.0, 0.0), r(0.6)),
+    ];
+    for context in [
+        csgrs::GeometryContext::STRICT,
+        csgrs::GeometryContext::APPROXIMATE_512,
+    ] {
+        let sample = |options| {
+            solid::metaballs_with_context(&balls, (6, 6, 6), r(0.35), r(0.2), context, options)
+                .expect("valid metaball fixture")
+        };
+        let plain = sample(SampleOptions::default());
+        let requested = sample(SampleOptions::with_diagnostics());
+        assert!(plain.value.diagnostics.is_none());
+        let diagnostics = requested.value.diagnostics.expect("requested diagnostics");
+        assert_eq!(
+            plain.value.mesh.positions.len(),
+            diagnostics.surface_nets_vertex_count
+        );
+        assert_eq!(plain.value.mesh, requested.value.mesh);
+        assert_eq!(plain.certainty, requested.certainty);
+        let strict = solid::metaballs(&balls, (6, 6, 6), r(0.35), r(0.2)).unwrap();
+        assert_eq!(strict, plain.value.mesh);
+    }
 }
