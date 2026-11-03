@@ -402,24 +402,55 @@ fn boundary_rational_similarity_views_retain_original_guards_and_contacts() {
         polynomial(&[&[], &[1]]),
     );
     assert!(source.rational_image(&pole).is_err());
-    for map in [
-        hypercurve::RationalMap2::new(
-            [polynomial(&[&[], &[2]]), polynomial(&[&[0, 3]])],
-            polynomial(&[&[1]]),
-        ),
-        hypercurve::RationalMap2::new(
-            [polynomial(&[&[], &[8], &[1]]), polynomial(&[&[0, 8]])],
-            polynomial(&[&[8]]),
-        ),
-    ] {
-        let image = source.rational_image(&map).unwrap();
-        let error = image
-            .intersect_curve(&line(0.into(), (-8).into(), 0.into(), 8.into()))
-            .unwrap_err();
-        assert!(
-            matches!(error, hypercurve::ExactCurveError::Blocked(blocker) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
-        );
-    }
+    // The exact affine map (2x, 3y) is not a similarity: its certified
+    // affine view pulls the line back, so the image of y = -2 meets x = 0
+    // once, transversally, at (0, -6) and source abscissa 0, while the
+    // original map stays authoritative.
+    let stretch = hypercurve::RationalMap2::new(
+        [polynomial(&[&[], &[2]]), polynomial(&[&[0, 3]])],
+        polynomial(&[&[1]]),
+    );
+    let image = source.rational_image(&stretch).unwrap();
+    assert_eq!(
+        image.polynomial_branch().unwrap().rational_maps(),
+        std::slice::from_ref(&stretch)
+    );
+    let relation = image
+        .intersect_curve(&line(0.into(), (-8).into(), 0.into(), 8.into()))
+        .unwrap();
+    assert!(relation.is_complete());
+    assert_eq!(relation.contacts().len(), 1);
+    let contact = &relation.contacts()[0];
+    assert!(
+        contact
+            .point()
+            .coincides_with(&CurvePoint2::from(Point2::from_values(0, -6)))
+            .unwrap()
+    );
+    assert!(
+        image
+            .point_at(&contact.first().parameter().unwrap())
+            .unwrap()
+            .coincides_with(contact.point())
+            .unwrap()
+    );
+    assert!(
+        contact
+            .tangent_cross_sign()
+            .is_some_and(|sign| sign != hyperreal::RealSign::Zero)
+    );
+    // A nonlinear rational image keeps its typed capability gap.
+    let curved = hypercurve::RationalMap2::new(
+        [polynomial(&[&[], &[8], &[1]]), polynomial(&[&[0, 8]])],
+        polynomial(&[&[8]]),
+    );
+    let image = source.rational_image(&curved).unwrap();
+    let error = image
+        .intersect_curve(&line(0.into(), (-8).into(), 0.into(), 8.into()))
+        .unwrap_err();
+    assert!(
+        matches!(error, hypercurve::ExactCurveError::Blocked(blocker) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
+    );
 }
 
 #[test]

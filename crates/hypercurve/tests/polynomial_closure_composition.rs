@@ -495,3 +495,85 @@ fn similarity_certified_rational_images_trim_inside_regions() {
         assert_eq!(end.partial_cmp(&q(1, 2)), Some(Ordering::Equal));
     }
 }
+
+/// Exact affine maps that are not similarities: a stretch and a reflecting
+/// stretch of the parabola branch y = x² keep their retained rational maps
+/// and trim inside the square [-1, 1]² to the source abscissas [-1/2, 1/2],
+/// where the mapped abscissa ±2x reaches the square's sides.
+#[test]
+fn affine_rational_images_trim_inside_regions() {
+    let polynomial = |rows: &[&[i32]]| {
+        BivariatePolynomial::new(
+            rows.iter()
+                .map(|r| r.iter().copied().map(Real::from).collect())
+                .collect(),
+        )
+    };
+    let topology = decompose_bivariate_curve(
+        &polynomial(&[&[0, 1], &[0], &[-1]]),
+        &BivariateCurveDomain {
+            first: [(-1).into(), 1.into()],
+            second: [(-1).into(), 2.into()],
+        },
+        Default::default(),
+    )
+    .unwrap();
+    let set = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+    let branch = &set.curves()[0];
+    let square = CurvePath2::try_new(vec![
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(-1, -1), Point2::from_values(1, -1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(1, -1), Point2::from_values(1, 1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(-1, 1)).unwrap(),
+        ),
+        Curve2::from(
+            LineSeg2::try_new(Point2::from_values(-1, 1), Point2::from_values(-1, -1)).unwrap(),
+        ),
+    ])
+    .unwrap();
+    let region = CurveRegion2::try_from_boundary_paths(&[square], FillRule::NonZero).unwrap();
+    let mut crossings = Vec::new();
+    for scale in [2, -2] {
+        // (u, v) -> (scale u, v).
+        let map = hypercurve::RationalMap2::new(
+            [polynomial(&[&[0], &[scale]]), polynomial(&[&[0, 1]])],
+            polynomial(&[&[1]]),
+        );
+        let mapped = branch.rational_image(&map).unwrap();
+        assert_eq!(
+            mapped.polynomial_branch().unwrap().rational_maps(),
+            std::slice::from_ref(&map)
+        );
+        let fragments = mapped.trim_inside_region_with_parameters(&region).unwrap();
+        assert_eq!(fragments.len(), 1, "scale {scale}");
+        let (start, end) = fragments[0].represented_parameter_range().unwrap();
+        assert_eq!(start.partial_cmp(&q(-1, 2)), Some(Ordering::Equal));
+        assert_eq!(end.partial_cmp(&q(1, 2)), Some(Ordering::Equal));
+        // The vertical line through the image of x = 1/4, traversed upward.
+        let side = Curve2::from(
+            LineSeg2::try_new(
+                Point2::new(q(scale, 4), (-1).into()),
+                Point2::new(q(scale, 4), 1.into()),
+            )
+            .unwrap(),
+        );
+        let relation = mapped.intersect_curve(&side).unwrap();
+        assert_eq!(relation.contacts().len(), 1, "scale {scale}");
+        crossings.push(relation.contacts()[0].tangent_cross_sign());
+    }
+    // A reflecting map reverses the image's orientation against the line.
+    let [stretched, reflected] = [crossings[0], crossings[1]];
+    assert!(stretched.is_some_and(|sign| sign != hyperreal::RealSign::Zero));
+    assert_eq!(
+        reflected,
+        stretched.map(|sign| match sign {
+            hyperreal::RealSign::Positive => hyperreal::RealSign::Negative,
+            hyperreal::RealSign::Negative => hyperreal::RealSign::Positive,
+            hyperreal::RealSign::Zero => hyperreal::RealSign::Zero,
+        })
+    );
+}

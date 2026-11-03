@@ -53,6 +53,13 @@ impl RationalMap2 {
     /// This does not replace the definition or discharge its denominator guard.
     /// Callers must retain the original admitted map and its source domain.
     pub(crate) fn rational_similarity(&self) -> Option<Similarity2> {
+        let [a, b, d, e, x, y] = self.rational_affine()?;
+        Similarity2::try_from_real_affine(a, b, d, e, x, y).ok()
+    }
+
+    /// The exact affine coefficients `[a, b, d, e, x, y]` of `(a u + b v + x,
+    /// d u + e v + y)` when this map's rational quotients are affine.
+    pub(crate) fn rational_affine(&self) -> Option<[Real; 6]> {
         let rational = |p: &BivariatePolynomial| -> Option<BivariatePolynomial> {
             Some(BivariatePolynomial::new(
                 p.coefficients
@@ -88,7 +95,18 @@ impl RationalMap2 {
         };
         let [a, b, x] = affine(&self.numerators[0])?;
         let [d, e, y] = affine(&self.numerators[1])?;
-        Similarity2::try_from_real_affine(a, b, d, e, x, y).ok()
+        Some([a, b, d, e, x, y])
+    }
+
+    /// The affine map `(a u + b v + x, d u + e v + y)` with unit weight.
+    pub(crate) fn from_affine([a, b, d, e, x, y]: &[Real; 6]) -> Self {
+        Self::new(
+            [
+                BivariatePolynomial::new(vec![vec![x.clone(), b.clone()], vec![a.clone()]]),
+                BivariatePolynomial::new(vec![vec![y.clone(), e.clone()], vec![d.clone()]]),
+            ],
+            BivariatePolynomial::new(vec![vec![Real::one()]]),
+        )
     }
 
     pub(crate) fn from_similarity(map: &Similarity2) -> Self {

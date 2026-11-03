@@ -488,6 +488,66 @@ impl PolynomialCurveBranch2 {
         Some(Some(image))
     }
 
+    /// The composed exact affine view `[a, b, d, e, x, y]` of every retained
+    /// map and the final similarity, when each map is certified affine and
+    /// the composition is nonsingular. The maps remain authoritative.
+    pub(crate) fn affine_view(&self) -> Option<[Real; 6]> {
+        let then = |first: [Real; 6], [a2, b2, d2, e2, x2, y2]: [Real; 6]| {
+            let [a1, b1, d1, e1, x1, y1] = first;
+            [
+                &a2 * &a1 + &b2 * &d1,
+                &a2 * &b1 + &b2 * &e1,
+                &d2 * &a1 + &e2 * &d1,
+                &d2 * &b1 + &e2 * &e1,
+                &a2 * &x1 + &b2 * &y1 + x2,
+                &d2 * &x1 + &e2 * &y1 + y2,
+            ]
+        };
+        let mut image = [
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+        ];
+        for map in &self.maps {
+            image = then(image, map.rational_affine()?);
+        }
+        if let Some(transform) = &self.transform {
+            let (a, b, d, e, x, y) = transform.affine_components();
+            image = then(
+                image,
+                [
+                    a.clone(),
+                    b.clone(),
+                    d.clone(),
+                    e.clone(),
+                    x.clone(),
+                    y.clone(),
+                ],
+            );
+        }
+        let [a, b, d, e, _, _] = &image;
+        let determinant = a * e - b * d;
+        if determinant.definitely_zero() || determinant.exact_rational_normal_form().is_none() {
+            return None;
+        }
+        Some(image)
+    }
+
+    /// Whether every retained map is certified as an exact affine map with
+    /// a nonzero determinant, so the branch's image is an injective affine
+    /// image of the source branch.
+    pub(crate) fn has_injective_affine_view(&self) -> bool {
+        self.maps.iter().all(|map| {
+            // The certified coefficients are exact rationals, so the
+            // determinant's zero test is decided.
+            map.rational_affine()
+                .is_some_and(|[a, b, d, e, _, _]| !(&a * &e - &b * &d).definitely_zero())
+        })
+    }
+
     /// Whether this branch lies in its polynomial's own plane.
     pub(crate) fn is_source_image(&self) -> bool {
         self.transform.is_none() && self.maps.is_empty()
@@ -507,7 +567,29 @@ impl PolynomialCurveBranch2 {
         // a guarded identity. Use its proved affine view only for the query;
         // returned points still replay every original map and denominator.
         let Some(transform) = self.similarity_view() else {
-            return Ok(None);
+            // Other exact nonsingular affine views pull the line's authored
+            // endpoints back through the inverse map.
+            let Some((inverse, reverses)) = self.inverse_affine_view() else {
+                return Ok(None);
+            };
+            let pull = |point: &crate::Point2| {
+                let [a, b, d, e, x, y] = &inverse;
+                crate::Point2::new(
+                    a * point.x() + b * point.y() + x,
+                    d * point.x() + e * point.y() + y,
+                )
+            };
+            let source_line =
+                crate::LineSeg2::try_new(pull(line.start()), pull(line.end())).map_err(invalid)?;
+            let map = crate::RationalMap2::from_affine(&inverse);
+            return self
+                .pulled_source_line_sections(
+                    &source_line,
+                    |point| point.rational_image(&map),
+                    reverses,
+                    policy,
+                )
+                .map(Some);
         };
         let Some(transform) = transform else {
             return self.source_line_sections(line, policy).map(Some);
@@ -516,6 +598,24 @@ impl PolynomialCurveBranch2 {
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
         self.image_source_line_sections(&source_line, &transform, policy)
             .map(Some)
+    }
+
+    /// The inverse `[a, b, d, e, x, y]` of the exact affine view, and whether
+    /// the view reverses orientation.
+    pub(crate) fn inverse_affine_view(&self) -> Option<([Real; 6], bool)> {
+        let [a, b, d, e, x, y] = self.affine_view()?;
+        let determinant = &a * &e - &b * &d;
+        let reverses = determinant.exact_rational_normal_form()?.is_negative();
+        let inverse = |value: Real| (value / &determinant).ok();
+        let (ia, ib, id, ie) = (
+            inverse(e.clone())?,
+            inverse(-b.clone())?,
+            inverse(-d.clone())?,
+            inverse(a.clone())?,
+        );
+        let ix = -(&ia * &x + &ib * &y);
+        let iy = -(&id * &x + &ie * &y);
+        Some(([ia, ib, id, ie, ix, iy], reverses))
     }
 
     /// Consumes an already certified source-chart support without a forward
@@ -542,12 +642,35 @@ impl PolynomialCurveBranch2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<PolynomialLineSections2> {
         let inverse = transform.inverse().map_err(invalid)?;
+        self.pulled_source_line_sections(
+            source_line,
+            |point| {
+                Ok(CurvePoint2::from(BezierSimilarityPoint2::new(
+                    point.clone(),
+                    inverse.clone(),
+                    policy,
+                )))
+            },
+            transform.reverses_orientation(),
+            policy,
+        )
+    }
+
+    /// Source-chart sections for a line already pulled back through an
+    /// invertible view; `pull` carries the retained endpoints into the
+    /// source chart and `reverses` records an orientation-reversing view.
+    fn pulled_source_line_sections(
+        &self,
+        source_line: &crate::LineSeg2,
+        pull: impl Fn(&CurvePoint2) -> ExactCurveResult<CurvePoint2>,
+        reverses: bool,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<PolynomialLineSections2> {
         let mut source = self.clone();
         source.transform = None;
         source.maps.clear();
-        source.endpoints = self.endpoints.clone().map(|point| {
-            CurvePoint2::from(BezierSimilarityPoint2::new(point, inverse.clone(), policy))
-        });
+        let [start, end] = &self.endpoints;
+        source.endpoints = [pull(start)?, pull(end)?];
         let mut sections = source.source_line_sections(source_line, policy)?;
         let PolynomialLineSections2::Isolated(points) = &mut sections else {
             // An invertible image preserves the complete support identity;
@@ -564,7 +687,7 @@ impl PolynomialCurveBranch2 {
             } else {
                 self.map_point(section.point.clone(), policy)?
             };
-            if transform.reverses_orientation() {
+            if reverses {
                 section.cross = section.cross.map(negate);
             }
         }

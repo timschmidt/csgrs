@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Polynomial branches whose retained rational maps are all certified exact
+  nonsingular affine maps (not only similarities) are no longer collapsed in
+  subdivision, intersect native lines through the inverse affine view (with
+  tangent signs flipped by reflecting views), and supply generated-chord
+  supports. Original maps stay authoritative; nonlinear rational images keep
+  their typed `Unsupported` frontier.
+
 - Intersect, locate points on and certify injectivity of polynomial branches
   whose retained rational maps are all certified exact similarities, through
   the public `PolynomialCurveBranch2::similarity_view`. Chord sections and

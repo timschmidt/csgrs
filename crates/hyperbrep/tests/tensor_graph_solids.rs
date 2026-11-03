@@ -703,6 +703,92 @@ fn blocks_piercing_tensor_tops_union_and_pocket_exactly() {
         }
         assert_eq!(cold_solid.volume().unwrap(), solid.volume().unwrap());
     }
+    // The block authored at half width and stretched by 2 along x only: its
+    // wall planes' frames are no longer similar to the patch chart, so the
+    // section pcurves carry exact non-similarity affine maps. Every result
+    // keeps its volume and classification.
+    let x_stretch = Matrix4::from_row_major([
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let slim = builder::cuboid(
+        Point3::new(q(-1, 4), q(-1, 2), q(-1, 2)),
+        Point3::new(q(1, 4), q(1, 2), 1.into()),
+    )
+    .unwrap()
+    .model()
+    .transformed(&x_stretch)
+    .unwrap();
+    let slim = BodySet::from_solid(slim.solids().next().unwrap());
+    let slim_union = boolean::union(&body, &slim).unwrap();
+    for (result, volume) in [
+        (&slim_union, q(15, 2)),
+        (&boolean::difference(&body, &slim).unwrap(), Real::from(6)),
+        (&boolean::intersection(&body, &slim).unwrap(), q(2, 3)),
+    ] {
+        assert_eq!(result.bodies().next().unwrap().volume().unwrap(), volume);
+    }
+    let slim_solid = slim_union.bodies().next().unwrap();
+    for (point, expected) in &union_cases {
+        assert_eq!(&slim_solid.classify_point(point).unwrap(), expected);
+    }
+    // Mirroring the stretch (x -> -2x) makes those maps reverse orientation.
+    let mirror = Matrix4::from_row_major([
+        (-2).into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let mirrored = builder::cuboid(
+        Point3::new(q(-1, 4), q(-1, 2), q(-1, 2)),
+        Point3::new(q(1, 4), q(1, 2), 1.into()),
+    )
+    .unwrap()
+    .model()
+    .transformed(&mirror)
+    .unwrap();
+    let mirrored = BodySet::from_solid(mirrored.solids().next().unwrap());
+    let mirrored_union = boolean::union(&body, &mirrored).unwrap();
+    assert_eq!(
+        mirrored_union.bodies().next().unwrap().volume().unwrap(),
+        q(15, 2)
+    );
+    assert_eq!(
+        boolean::difference(&body, &mirrored)
+            .unwrap()
+            .bodies()
+            .next()
+            .unwrap()
+            .volume()
+            .unwrap(),
+        Real::from(6)
+    );
     // A scaled rotation about z with a translation; the linear part has
     // determinant (36/25 + 64/25) * 2 = 8, which scales the cap terms too.
     let transform = Matrix4::from_row_major([

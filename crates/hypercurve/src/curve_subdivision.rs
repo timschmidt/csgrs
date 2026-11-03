@@ -64,7 +64,7 @@ impl CurveSourceSpan2 {
                 // map certified as an exact similarity (its original quotient
                 // still authoritative) is injective. Other rational maps may
                 // collapse the branch.
-                if branch.similarity_view().is_some() {
+                if branch.similarity_view().is_some() || branch.has_injective_affine_view() {
                     Classification::Decided(None)
                 } else {
                     Classification::Uncertain(UncertaintyReason::Unsupported)

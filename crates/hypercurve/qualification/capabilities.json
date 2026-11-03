@@ -4946,7 +4946,7 @@
         "P19",
         "P20"
       ],
-      "domain": "Boundary graph y=-2 with identity and removable-factor identity W=3+x, chained translated rotation/reflection maps, and an interleaved explicit reflection on [-2,2]^2. An original pole at x=0 and nonuniform/nonlinear map frontiers are separate guards.",
+      "domain": "Boundary graph y=-2 with identity and removable-factor identity W=3+x, chained translated rotation/reflection maps, and an interleaved explicit reflection on [-2,2]^2. A nonuniform affine stretch (2x,3y) meets x=0 exactly; an original pole at x=0 and a nonlinear map frontier are separate guards.",
       "origins": [
         "authored",
         "generated"
@@ -4958,7 +4958,7 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "Each rational map must be proved equal to a rational-coefficient similarity for this line-section view. Original maps, denominator guards, source parameters and branch selectors remain stored and authoritative. This is not general rational-map incidence.",
+      "semantics": "Each rational map must be proved equal to a rational-coefficient similarity, or to a nonsingular rational-coefficient affine map, for this line-section view. Original maps, denominator guards, source parameters and branch selectors remain stored and authoritative. This is not general rational-map incidence.",
       "claims": [
         {
           "stage": "incidence_order",
@@ -4982,11 +4982,16 @@
         },
         {
           "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The nonuniform affine stretch (2x,3y) keeps its original map and meets x=0 in exactly one transverse contact at the independently derived point (0,-6), whose stored parameter evaluates to that point."
+        },
+        {
+          "stage": "incidence_order",
           "outcome": "unsupported",
-          "assertion": "Nonuniform affine and nonlinear rational map cases retain their typed Unsupported frontier; these guards do not establish completed incidence."
+          "assertion": "A nonlinear rational map case retains its typed Unsupported frontier; this guard does not establish completed incidence."
         }
       ],
-      "oracle": "Independent coordinates (0,-2), (9,-1), (9,1); signed cross products under reversal/reflection/exchange; exact original map equality and three-piece overlap with later contact census.",
+      "oracle": "Independent coordinates (0,-2), (9,-1), (9,1) and (0,-6); signed cross products under reversal/reflection/exchange; exact original map equality and three-piece overlap with later contact census.",
       "timeout_seconds": 300
     },
     {

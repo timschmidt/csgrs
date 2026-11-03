@@ -4502,6 +4502,41 @@
       "validation": "New witness blocks_piercing_tensor_tops_union_and_pocket_exactly with the block [-1/2,1/2]^2 x [-1/2,1]: union (11 faces), difference (11 faces, a pocket) and intersection (6 faces) have exact volumes 15/2, 6 and 2/3, matching the independent values 20/3 + 3/2 - 2/3, 20/3 - 2/3 and the integral of x^2 + y^2 + 1/2 over the block; probes on step walls, caps, pocket floor and the tensor top classify exactly before and after byte-identical cold replay; a scaled rotation of determinant 8 maps the union to volume 60 and classifies mapped probes identically; the same block authored at half size and scaled by 2 (cap frame differing from the base frame, Jacobian 4) gives the same union volume. Mutations dropping the cap term, replacing the Jacobian by 1, or removing the step-wall decision each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 802 passes and debug tests 794 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the seven tensor-graph tests complete in about 0.33 s in release.",
       "limits": "Caps with curved boundaries (slab cuts) still have no exact area and stay typed. A block stretched non-uniformly fails in Hypercurve region trimming because its wall section pcurves carry non-similarity maps. Unions sharing walls with the tensor solid remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "hypercurve-affine-views-2026-11-02",
+      "work_packages": [
+        "WP04",
+        "WP06",
+        "WP12",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "change": "Hypercurve polynomial branches whose retained rational maps are all certified exact nonsingular affine maps (not only similarities) now participate in subdivision, native line sections and generated-chord supports: RationalMap2::rational_affine certifies rational-coefficient affine quotients (rational_similarity reuses it), PolynomialCurveBranch2::affine_view composes the maps and final similarity into one nonsingular affine view with an exact inverse, line sections pull the authored line back through that inverse and flip tangent signs for reflecting views, and subdivision accepts injective affine images as never collapsing to a point. Original maps remain authoritative; nonlinear rational images keep their typed Unsupported frontier. In hyperbrep this lets plane-side section pcurves of nonuniformly stretched or mirrored planar frames take part in Booleans.",
+      "source": [
+        "../../hypercurve/src/rational_map.rs",
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_curve_chord.rs",
+        "../../hypercurve/src/curve_subdivision.rs",
+        "../../hypercurve/tests/polynomial_closure_composition.rs",
+        "../../hypercurve/tests/polynomial_boundary_components.rs",
+        "../../hypercurve/qualification/capabilities.json",
+        "../../hypercurve/CHANGELOG.md",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "Hypercurve witness affine_rational_images_trim_inside_regions: the parabola branch y = x^2 under the stretch (2u, v) and the reflecting stretch (-2u, v) keeps its retained map, trims inside [-1,1]^2 to the source abscissas [-1/2, 1/2], and meets the vertical line through the image of x = 1/4 with opposite nonzero tangent signs. The contract test boundary_rational_similarity_views_retain_original_guards_and_contacts previously asserted a typed Unsupported for the nonuniform map (2x, 3y); it now asserts one transverse contact at the independently derived point (0, -6) with the original map retained, and still asserts the typed Unsupported for its nonlinear map; the capability record boundary_guarded_similarity is updated to match and the capability matrix qualifies. hyperbrep witness blocks_piercing_tensor_tops_union_and_pocket_exactly adds a block stretched by 2 along x and a mirrored one: unions, differences and intersections keep the exact volumes 15/2, 6 and 2/3 and the union probes classify identically. Mutations removing the subdivision acceptance, the line-section affine view, the chord-support affine view, or the reflection sign flip each fail a witness; an affine generalization of selected chord sections was removed because no witness needed it. On Rust stable: cargo fmt --check, strict Clippy for hypercurve (all targets, all features) and for hyperbrep and hyperbrep-io pass; hypercurve release all-feature tests report 3053 passes, 34 ignored, 0 failures; capability guard tests and the capability matrix pass; hyperbrep release 802 and debug 794 passes, hyperbrep-io 127; downstream hypercircuit 105, hyperpack 154, hypergraphics 34 and root csgrs all-feature 694 passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "General nonlinear rational images, and affine views with non-rational coefficients, remain typed. Other similarity-only Hypercurve paths (pair shared charts, selected chord and circle sections, point location) are unchanged. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

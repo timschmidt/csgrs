@@ -95,7 +95,10 @@ fn source_forms(
 ) -> ExactCurveResult<Option<[[Real; 3]; 2]>> {
     // Similarity-certified maps contribute their proved affine view.
     let Some(view) = branch.similarity_view() else {
-        return Ok(None);
+        // Other exact nonsingular affine views contribute their inverse.
+        return Ok(branch
+            .inverse_affine_view()
+            .map(|([a, b, d, e, x, y], _)| [[a, b, x], [d, e, y]]));
     };
     let Some(image) = view.as_ref() else {
         return Ok(Some([
