@@ -306,38 +306,8 @@ impl PlanarCurve3 {
             return Err(GeometryError::UnrepresentableParameter);
         };
         let defining = branch.topology().geometric_equation();
-        // Certify the unmapped source point in the branch's own chart, where
-        // its selection was made, then carry it through the exact affine
-        // view and prove it equal to the selected image.
-        let mut base = selected.clone();
-        while let Ok(
-            hypercurve::CurvePointDefinition2::RationalImage { source, .. }
-            | hypercurve::CurvePointDefinition2::Similarity { source, .. },
-        ) = base.definition()
-        {
-            base = source;
-        }
-        if let Some(source_point) = super::certified_scalar_point(&base, defining)? {
-            let image = match &view {
-                None => source_point,
-                Some(transform) => {
-                    let (a, b, d, e, x, y) = transform.affine_components();
-                    let (px, py) = (source_point.x(), source_point.y());
-                    CurvePoint2::new(a * px + b * py + x, d * px + e * py + y)
-                }
-            };
-            let candidate: hypercurve::CurvePoint2 = image.clone().into();
-            if [hypercurve::Axis2::X, hypercurve::Axis2::Y]
-                .into_iter()
-                .all(|axis| {
-                    matches!(
-                        selected.compare_coordinate(&candidate, axis),
-                        Ok(std::cmp::Ordering::Equal)
-                    )
-                })
-            {
-                return Ok(self.lift(&image));
-            }
+        if let Some(image) = certified_branch_point(&selected, branch)? {
+            return Ok(self.lift(&image));
         }
         let equation = match view {
             None => defining.clone(),
@@ -566,4 +536,48 @@ impl PlanarCurve3 {
             ..self.clone()
         })
     }
+}
+
+/// Certifies a selected point of a polynomial branch whose maps compose to
+/// an exact similarity view: the unmapped source point is certified in the
+/// branch's own chart, where its selection was made, carried through the
+/// view, and accepted only when proved equal to the selected image.
+pub(crate) fn certified_branch_point(
+    selected: &hypercurve::CurvePoint2,
+    branch: &hypercurve::PolynomialCurveBranch2,
+) -> GeometryResult<Option<CurvePoint2>> {
+    let Some(view) = branch.similarity_view() else {
+        return Ok(None);
+    };
+    let mut base = selected.clone();
+    while let Ok(
+        hypercurve::CurvePointDefinition2::RationalImage { source, .. }
+        | hypercurve::CurvePointDefinition2::Similarity { source, .. },
+    ) = base.definition()
+    {
+        base = source;
+    }
+    let Some(source_point) =
+        super::certified_scalar_point(&base, branch.topology().geometric_equation())?
+    else {
+        return Ok(None);
+    };
+    let image = match &view {
+        None => source_point,
+        Some(transform) => {
+            let (a, b, d, e, x, y) = transform.affine_components();
+            let (px, py) = (source_point.x(), source_point.y());
+            CurvePoint2::new(a * px + b * py + x, d * px + e * py + y)
+        }
+    };
+    let candidate: hypercurve::CurvePoint2 = image.clone().into();
+    let equal = [hypercurve::Axis2::X, hypercurve::Axis2::Y]
+        .into_iter()
+        .all(|axis| {
+            matches!(
+                selected.compare_coordinate(&candidate, axis),
+                Ok(std::cmp::Ordering::Equal)
+            )
+        });
+    Ok(equal.then_some(image))
 }

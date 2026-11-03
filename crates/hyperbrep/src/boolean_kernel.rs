@@ -4394,6 +4394,7 @@ fn retained_curve_face_intervals(
                 branch.image_transform().is_none() && branch.rational_maps().is_empty()
             })
             .map(|branch| branch.topology().geometric_equation());
+        let mapped = carrier.curve().polynomial_branch();
         let trimmed = match carrier.curve().trim_inside_region_with_parameters(&region) {
             Ok(fragments) => fragments,
             Err(ExactCurveError::Blocked(blocker)) => {
@@ -4450,6 +4451,7 @@ fn retained_curve_face_intervals(
                 fragment.start_boundary_contacts(),
                 canonical_surface,
                 defining,
+                mapped,
             )?
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4460,6 +4462,7 @@ fn retained_curve_face_intervals(
                 fragment.end_boundary_contacts(),
                 canonical_surface,
                 defining,
+                mapped,
             )?
             else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
@@ -4544,6 +4547,7 @@ fn model_boundary_contacts(
     contacts: &[CurveRegionBoundaryContact2],
     canonical_surface: Option<&Surface>,
     defining: Option<&hypersolve::BivariatePolynomial>,
+    mapped: Option<&hypercurve::PolynomialCurveBranch2>,
 ) -> Result<Option<Vec<SurfaceIntersectionBoundaryContact>>, GeometryError> {
     let face = model.face(face_id).expect("validated trim face");
     let mut translated = Vec::with_capacity(contacts.len());
@@ -4554,11 +4558,21 @@ fn model_boundary_contacts(
         let pcurve_point = match contact.point().and_then(|point| point.coordinates()) {
             Some(point) => point,
             None => {
-                let (Some(selected), Some(defining)) = (contact.point(), defining) else {
+                let Some(selected) = contact.point() else {
                     return Ok(None);
                 };
-                let Some(point) = crate::geometry::certified_scalar_point(selected, defining)?
-                else {
+                // A mapped branch's selected contact is certified in its
+                // source chart and carried through its exact view.
+                let point = match (defining, mapped) {
+                    (Some(defining), _) => {
+                        crate::geometry::certified_scalar_point(selected, defining)?
+                    }
+                    (None, Some(branch)) => {
+                        crate::geometry::certified_branch_point(selected, branch)?
+                    }
+                    (None, None) => None,
+                };
+                let Some(point) = point else {
                     return Ok(None);
                 };
                 certified = point;
@@ -7444,6 +7458,7 @@ fn trim_conic_to_planar_face(
                 fragment.start_boundary_contacts(),
                 Some(opposite_surface),
                 None,
+                None,
             )?
             else {
                 return Ok(FacePairTrim::Unresolved(UncertaintyReason::Unsupported));
@@ -7453,6 +7468,7 @@ fn trim_conic_to_planar_face(
                 face,
                 fragment.end_boundary_contacts(),
                 Some(opposite_surface),
+                None,
                 None,
             )?
             else {
@@ -7846,7 +7862,7 @@ mod tests {
                         fragment.end_boundary_contacts(),
                     ] {
                         let retained =
-                            model_boundary_contacts(&model, face_id, contacts, None, None)
+                            model_boundary_contacts(&model, face_id, contacts, None, None, None)
                                 .unwrap()
                                 .unwrap();
                         assert!(!retained.is_empty());

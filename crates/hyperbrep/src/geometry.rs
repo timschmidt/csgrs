@@ -59,7 +59,7 @@ use location::{
     locate_rational_bezier_parameters,
 };
 pub use planar_image::PlanarCurveGeometry;
-pub(crate) use planar_image::{PlanarCurve3, represented_curve_point};
+pub(crate) use planar_image::{PlanarCurve3, certified_branch_point, represented_curve_point};
 use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
 pub(crate) use rotation::RotationCurve3;
