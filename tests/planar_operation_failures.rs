@@ -82,7 +82,7 @@ fn contextual_query_retains_the_native_blocker() {
         &curve::square(1.into()).unwrap(),
         zero_unknown_to_bounded_predicates(),
         half(),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap_err();
     assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Undecided);
@@ -185,7 +185,7 @@ fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let result = curve::transformed_with_context(&square, &matrix, &context);
+        let result = curve::transformed_with_context(&square, &matrix, context);
         if context == GeometryContext::STRICT {
             let error = result
                 .attempt()
@@ -255,7 +255,7 @@ fn strict_transforms_keep_holes_area_and_extrusion_volume() {
     let rotated = curve::rotated(&moved, 90.into()).attempt().unwrap();
     for region in [scaled, moved, rotated] {
         assert_eq!(region.filled_area().unwrap(), Some(18.into()));
-        let mesh = curve::try_extrude(&region, 2.into(), &GeometryContext::STRICT).unwrap();
+        let mesh = curve::try_extrude(&region, 2.into(), GeometryContext::STRICT).unwrap();
         assert_eq!(mesh.certainty, GeometryCertainty::Certified);
         assert!(
             mesh.value
@@ -284,7 +284,7 @@ fn scalar_adapter_preserves_native_transform_errors() {
     for result in [
         square.scale(0.into(), 1.into(), 1.into()),
         square
-            .scale_with_context(0.into(), 1.into(), 1.into(), &GeometryContext::STRICT)
+            .scale_with_context(0.into(), 1.into(), 1.into(), GeometryContext::STRICT)
             .map(|outcome| outcome.value),
     ] {
         let error = result.unwrap_err();
@@ -317,10 +317,10 @@ fn scalar_adapter_rejects_out_of_plane_translation_and_rotation() {
         square.translate(0.into(), 0.into(), 1.into()),
         square.rotate(90.into(), 0.into(), 0.into()),
         square
-            .translate_with_context(0.into(), 0.into(), 1.into(), &GeometryContext::STRICT)
+            .translate_with_context(0.into(), 0.into(), 1.into(), GeometryContext::STRICT)
             .map(|outcome| outcome.value),
         square
-            .rotate_with_context(90.into(), 0.into(), 0.into(), &GeometryContext::STRICT)
+            .rotate_with_context(90.into(), 0.into(), 0.into(), GeometryContext::STRICT)
             .map(|outcome| outcome.value),
     ] {
         let error = result.expect_err("out-of-plane argument was ignored");
@@ -338,7 +338,7 @@ fn scalar_adapter_keeps_plane_preserving_half_turns() {
     for rotated in [
         square.rotate(180.0, 0.0, 0.0).unwrap(),
         square
-            .rotate_with_context(180.0, 0.0, 0.0, &GeometryContext::STRICT)
+            .rotate_with_context(180.0, 0.0, 0.0, GeometryContext::STRICT)
             .unwrap()
             .value,
     ] {
@@ -357,7 +357,7 @@ fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
     matrix.0[2][3] = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         assert_eq!(
-            curve::transformed_with_context(&square, &matrix, &context)
+            curve::transformed_with_context(&square, &matrix, context)
                 .unwrap_err()
                 .kind(),
             csgrs::errors::ValidationErrorKind::Unsupported

@@ -12,13 +12,12 @@ fn main() {
 
     let square = curve::square(r(2.0)).expect("valid planar fixture");
     let circle = curve::circle(r(1.0), 64).expect("valid planar fixture");
-    let ring = curve::ring(r(2.0), r(0.25), 64, &GeometryContext::APPROXIMATE_512)
+    let ring = curve::ring(r(2.0), r(0.25), 64, GeometryContext::APPROXIMATE_512)
         .expect("ring Boolean")
         .into_value();
-    let keyhole =
-        curve::keyhole(r(1.0), r(0.4), r(1.5), 32, &GeometryContext::APPROXIMATE_512)
-            .expect("keyhole Boolean")
-            .into_value();
+    let keyhole = curve::keyhole(r(1.0), r(0.4), r(1.5), 32, GeometryContext::APPROXIMATE_512)
+        .expect("keyhole Boolean")
+        .into_value();
 
     write_curve(&square, "square");
     write_curve(&circle, "circle");
@@ -53,7 +52,7 @@ fn write_curve(region: &CurveRegion2, name: &str) {
     fs::write(
         Path::new(PATH).join(name).with_extension("stl"),
         to_stl_binary(
-            &curve::try_triangulate(region, &csgrs::GeometryContext::STRICT)
+            &curve::try_triangulate(region, csgrs::GeometryContext::STRICT)
                 .unwrap()
                 .into_value(),
             name,

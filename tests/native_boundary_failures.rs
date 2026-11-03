@@ -50,10 +50,10 @@ fn polyhedron_failure<A: ScalarAdapter>() {
     );
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         assert_validation(
-            ScalarMesh::<A>::polyhedron_with_context(&points, faces, &context)
+            ScalarMesh::<A>::polyhedron_with_context(&points, faces, context)
                 .err()
                 .unwrap(),
-            solid::polyhedron_with_context(&native_points, faces, &context).unwrap_err(),
+            solid::polyhedron_with_context(&native_points, faces, context).unwrap_err(),
             ValidationErrorKind::InvalidInput,
         );
     }
@@ -79,10 +79,10 @@ fn polyhedron_failures_keep_native_causes_and_policy() {
         ValidationErrorKind::Undecided,
     );
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let native = solid::polyhedron_with_context(&points, faces, &context).unwrap_err();
+        let native = solid::polyhedron_with_context(&points, faces, context).unwrap_err();
         let kind = native.kind();
         assert_validation(
-            ScalarMesh::<RawReal>::polyhedron_with_context(&points, faces, &context)
+            ScalarMesh::<RawReal>::polyhedron_with_context(&points, faces, context)
                 .err()
                 .unwrap(),
             native,

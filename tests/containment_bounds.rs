@@ -34,7 +34,7 @@ fn check(mesh: &TriangleMesh, point: &Point3, expected: bool) {
         let native = mesh.contains_point(&context.mesh_context(), point).unwrap();
         assert_eq!(native.certainty, MeshCertainty::Certified);
         assert_eq!(native.value, expected);
-        let modeled = solid::contains_point_with_context(mesh, point, &context).unwrap();
+        let modeled = solid::contains_point_with_context(mesh, point, context).unwrap();
         assert_eq!(modeled.certainty, GeometryCertainty::Certified);
         assert_eq!(modeled.value, expected);
     }
@@ -137,7 +137,7 @@ fn approximate_boundary_equalities_keep_their_receipt() {
             let outcome = solid::contains_point_with_context(
                 &mesh,
                 &point,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )
             .unwrap();
             assert!(!outcome.value);

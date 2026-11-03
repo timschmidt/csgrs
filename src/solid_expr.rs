@@ -182,7 +182,7 @@ impl SolidExpr {
     /// inherits the construction evidence of every leaf.
     pub fn evaluate_with_context(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> Result<GeometryOutcome<TriangleMesh>> {
         let decisions = GeometryDecisions::new(context);
         let mut program = Program::default();
@@ -244,7 +244,7 @@ impl Program {
         &mut self,
         expr: &SolidExpr,
         above: &[&SolidExpr],
-        context: &GeometryContext,
+        context: GeometryContext,
         decisions: &GeometryDecisions,
     ) -> Result<u32> {
         let key = (
@@ -321,7 +321,7 @@ impl Program {
 fn apply(
     mesh: &TriangleMesh,
     transform: &Transform,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>> {
     match transform {
         Transform::Matrix(matrix) => solid::transform_with_context(mesh, matrix, context),

@@ -242,7 +242,7 @@ fn each_distribution_family_preserves_geometry_and_certainty() {
                         2,
                         Vector3::x(),
                         Real::from(3),
-                        &context,
+                        context,
                     ),
                     1 => solid::distribute_grid_with_context(
                         &cube,
@@ -250,7 +250,7 @@ fn each_distribution_family_preserves_geometry_and_certainty() {
                         2,
                         Real::from(3),
                         Real::from(3),
-                        &context,
+                        context,
                     ),
                     _ => solid::distribute_arc_with_context(
                         &cube,
@@ -258,7 +258,7 @@ fn each_distribution_family_preserves_geometry_and_certainty() {
                         Real::from(3),
                         Real::zero(),
                         Real::from(90),
-                        &context,
+                        context,
                     ),
                 }
                 .unwrap()
@@ -282,15 +282,15 @@ fn approximate_distribution_cannot_satisfy_a_strict_request() {
     let build = |context| {
         solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), Real::one(), context)
     };
-    let cold = build(&APPROXIMATE).unwrap();
-    let warm = build(&APPROXIMATE).unwrap();
+    let cold = build(APPROXIMATE).unwrap();
+    let warm = build(APPROXIMATE).unwrap();
     assert_eq!(cold.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(Arc::ptr_eq(&cold.value.positions, &warm.value.positions));
-    assert!(build(&STRICT).is_err());
+    assert!(build(STRICT).is_err());
     assert_eq!(cache::usage().distributions, 1);
     let uncached = cache::with_policy(CachePolicy::DISABLED, || {
-        assert!(build(&STRICT).is_err());
-        build(&APPROXIMATE).unwrap()
+        assert!(build(STRICT).is_err());
+        build(APPROXIMATE).unwrap()
     });
     assert_outcome_eq(&cold, &warm);
     assert_outcome_eq(&cold, &uncached);
@@ -308,13 +308,13 @@ fn all_active_caches_obey_their_limits_and_release_entries() {
                 2,
                 Vector3::x(),
                 Real::from(4),
-                &STRICT,
+                STRICT,
             )
             .unwrap();
             #[cfg(feature = "curve")]
             {
-                solid::flatten_with_context(&cube, &STRICT).unwrap();
-                solid::slice_z_with_context(&cube, Real::zero(), &STRICT).unwrap();
+                solid::flatten_with_context(&cube, STRICT).unwrap();
+                solid::slice_z_with_context(&cube, Real::zero(), STRICT).unwrap();
             }
             assert_eq!(
                 cache::usage(),
@@ -343,12 +343,12 @@ fn curve_results_preserve_boundaries_and_context_when_warm_or_disabled() {
     cache::clear();
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let z = unresolved_zero();
-    let sliced = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();
-    let warm = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();
+    let sliced = solid::slice_z_with_context(&cube, z.clone(), APPROXIMATE).unwrap();
+    let warm = solid::slice_z_with_context(&cube, z.clone(), APPROXIMATE).unwrap();
     assert_eq!(sliced.certainty, GeometryCertainty::Approximate512Consumed);
-    assert!(solid::slice_z_with_context(&cube, z.clone(), &STRICT).is_err());
+    assert!(solid::slice_z_with_context(&cube, z.clone(), STRICT).is_err());
     let uncached = cache::with_policy(CachePolicy::DISABLED, || {
-        solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap()
+        solid::slice_z_with_context(&cube, z.clone(), APPROXIMATE).unwrap()
     });
     for result in [warm, uncached] {
         assert_eq!(sliced.certainty, result.certainty);
@@ -365,13 +365,13 @@ fn curve_results_preserve_boundaries_and_context_when_warm_or_disabled() {
         vec![Triangle::new(0, 1, 2)],
     );
     for mesh in [cube, uncertain] {
-        let cold = solid::flatten_with_context(&mesh, &APPROXIMATE).unwrap();
-        let warm = solid::flatten_with_context(&mesh, &APPROXIMATE).unwrap();
+        let cold = solid::flatten_with_context(&mesh, APPROXIMATE).unwrap();
+        let warm = solid::flatten_with_context(&mesh, APPROXIMATE).unwrap();
         if cold.certainty == GeometryCertainty::Approximate512Consumed {
-            assert!(solid::flatten_with_context(&mesh, &STRICT).is_err());
+            assert!(solid::flatten_with_context(&mesh, STRICT).is_err());
         }
         let uncached = cache::with_policy(CachePolicy::DISABLED, || {
-            solid::flatten_with_context(&mesh, &APPROXIMATE).unwrap()
+            solid::flatten_with_context(&mesh, APPROXIMATE).unwrap()
         });
         assert_eq!(cold, warm);
         assert_eq!(cold, uncached);

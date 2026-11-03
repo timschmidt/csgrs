@@ -76,7 +76,7 @@ fn compound_union(binary64: bool) {
         &cube,
         &rotated,
         hypermesh::BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap_or_else(|error| {
         panic!("original strict compound-rotation union did not complete: {error}")
@@ -88,7 +88,7 @@ fn compound_union(binary64: bool) {
         &mesh,
         &cube,
         hypermesh::BooleanOp::Difference,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap_or_else(|error| {
         panic!("certified cube union could not continue to exact difference: {error}")
@@ -99,7 +99,7 @@ fn compound_union(binary64: bool) {
         &empty.value,
         &cube,
         hypermesh::BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(restored.certainty, GeometryCertainty::Certified);
@@ -140,7 +140,7 @@ fn compound_rotation_families_on_each_axis_retain_exact_continuation() {
                     &cube,
                     &rotated,
                     hypermesh::BooleanOp::Union,
-                    &context,
+                    context,
                 )
                 .unwrap_or_else(|error| panic!("axis {axis} family {family}: {error}"));
                 assert_eq!(union.certainty, GeometryCertainty::Certified);
@@ -149,7 +149,7 @@ fn compound_rotation_families_on_each_axis_retain_exact_continuation() {
                     &union.value,
                     &cube,
                     hypermesh::BooleanOp::Difference,
-                    &context,
+                    context,
                 )
                 .unwrap();
                 assert_eq!(empty.certainty, GeometryCertainty::Certified);
@@ -158,7 +158,7 @@ fn compound_rotation_families_on_each_axis_retain_exact_continuation() {
                     &empty.value,
                     &cube,
                     hypermesh::BooleanOp::Union,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 )
                 .unwrap();
                 assert_eq!(restored.certainty, GeometryCertainty::Certified);

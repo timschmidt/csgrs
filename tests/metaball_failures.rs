@@ -148,7 +148,7 @@ fn sampled_body_has_exact_volume_topology_and_downstream_composition() {
         (3, 3, 3),
         1.into(),
         0.into(),
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);
@@ -188,9 +188,9 @@ fn strict_field_errors_survive_approximate_meshing_and_recovery() {
     use csgrs::{GeometryCertainty, GeometryContext};
     use std::error::Error;
     for context in [
-        &GeometryContext::STRICT,
-        &GeometryContext::APPROXIMATE_512,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
+        GeometryContext::APPROXIMATE_512,
+        GeometryContext::STRICT,
     ] {
         let error = solid::metaballs_with_context(
             &[ball(unknown_zero())],
@@ -215,7 +215,7 @@ fn strict_field_errors_survive_approximate_meshing_and_recovery() {
         (3, 3, 3),
         2.into(),
         0.into(),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);

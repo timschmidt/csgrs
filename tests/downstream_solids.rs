@@ -129,7 +129,7 @@ fn near_coincident_rotated_cube_booleans_complete_exactly() {
                     &cube,
                     &rotated,
                     operation,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 )
                 .unwrap_or_else(|error| panic!("{label}: {error:?}"));
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified, "{label}");
@@ -235,9 +235,8 @@ fn assert_exact_cylinder_boolean(
     operation: hypermesh::BooleanOp,
     label: &str,
 ) -> TriangleMesh {
-    let outcome =
-        solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT)
-            .unwrap_or_else(|error| panic!("{label}: {error:?}"));
+    let outcome = solid::boolean_with_context(left, right, operation, GeometryContext::STRICT)
+        .unwrap_or_else(|error| panic!("{label}: {error:?}"));
     assert_eq!(outcome.certainty, GeometryCertainty::Certified, "{label}");
     let mesh = outcome.into_value();
     assert!(!mesh.triangles.is_empty(), "{label}: empty");
@@ -311,7 +310,7 @@ fn near_coincident_rotated_cylinder_booleans_complete_exactly() {
         &prism,
         &rotated,
         hypermesh::BooleanOp::Difference,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .expect("approximate difference");
     assert_eq!(approximate.certainty, GeometryCertainty::Certified);
@@ -476,9 +475,8 @@ fn strict_boolean(
     right: &TriangleMesh,
     operation: hypermesh::BooleanOp,
 ) -> TriangleMesh {
-    let outcome =
-        solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT)
-            .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
+    let outcome = solid::boolean_with_context(left, right, operation, GeometryContext::STRICT)
+        .unwrap_or_else(|error| panic!("{operation:?}: {error:?}"));
     assert_eq!(
         outcome.certainty,
         GeometryCertainty::Certified,

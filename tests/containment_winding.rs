@@ -123,8 +123,7 @@ fn check_queries(
                 native.value, expected,
                 "native query {twice:?} under {context:?}"
             );
-            let modeled =
-                solid::contains_point_with_context(source, &query, &context).unwrap();
+            let modeled = solid::contains_point_with_context(source, &query, context).unwrap();
             assert_eq!(modeled.certainty, GeometryCertainty::Certified);
             assert_eq!(modeled.value, expected, "modeling query {twice:?}");
         }
@@ -334,8 +333,7 @@ fn unary_regularization_and_containment_share_nonzero_set_meaning() {
             let expected = interior(&boxes, twice);
             for input in [&source, &regularized] {
                 let outcome =
-                    solid::contains_point_with_context(input, &point(twice), &context)
-                        .unwrap();
+                    solid::contains_point_with_context(input, &point(twice), context).unwrap();
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 assert_eq!(outcome.value, expected, "query {twice:?}");
             }
@@ -368,7 +366,7 @@ fn a_cancelled_flat_source_has_empty_regularized_interior() {
             point([0, 0, 1]),
         ] {
             let outcome =
-                solid::contains_point_with_context(&source, &query, &context).unwrap();
+                solid::contains_point_with_context(&source, &query, context).unwrap();
             assert_eq!(outcome.certainty, GeometryCertainty::Certified);
             assert!(!outcome.value);
         }
@@ -389,7 +387,7 @@ fn flat_source(copies: usize, z: i32) -> TriangleMesh {
 }
 
 fn regularize(
-    context: &GeometryContext,
+    context: GeometryContext,
     sources: &[&TriangleMesh],
     op: BooleanOp,
 ) -> TriangleMesh {
@@ -419,15 +417,15 @@ fn cancelled_flat_sheets_regularize_to_canonical_empty() {
                     .certainty,
                 MeshCertainty::Certified
             );
-            let output = regularize(&context, &[&source], BooleanOp::Union);
+            let output = regularize(context, &[&source], BooleanOp::Union);
             assert!(output.positions.is_empty());
             assert!(output.triangles.is_empty());
             assert!(
-                !solid::contains_point_with_context(&output, &point([0, 0, 0]), &context)
+                !solid::contains_point_with_context(&output, &point([0, 0, 0]), context)
                     .unwrap()
                     .value
             );
-            let continued = output.try_union_with_context(&source, &context).unwrap();
+            let continued = output.try_union_with_context(&source, context).unwrap();
             assert_eq!(continued.certainty, GeometryCertainty::Certified);
         }
     }
@@ -488,7 +486,7 @@ fn cancelled_flat_sheets_compose_with_a_closed_volume() {
                         } else {
                             [&cube, &flat]
                         };
-                        let output = regularize(&context, &sources, op);
+                        let output = regularize(context, &sources, op);
                         let empty = op == BooleanOp::Intersection
                             || (op == BooleanOp::Difference && reverse);
                         if empty {

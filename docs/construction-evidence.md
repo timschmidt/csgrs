@@ -82,11 +82,11 @@ let source = solid::cube(Real::one())?;
 let shifted = solid::try_transform_with_context(
     &source,
     &Matrix4::affine_translation([3.into(), 5.into(), 7.into()]),
-    &GeometryContext::STRICT,
+    GeometryContext::STRICT,
 )?;
 let model = solid::boolean_with_context(
     &shifted.value, &solid::empty(), hypermesh::BooleanOp::Union,
-    &GeometryContext::STRICT,
+    GeometryContext::STRICT,
 )?.value;
 let artifact = to_stl_binary_artifact(&model, "model")?;
 let imported = artifact.import()?;

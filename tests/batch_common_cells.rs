@@ -62,14 +62,14 @@ fn original_batch_shells_and_incremental_union_remain_consumable() {
     // Empty identity composition must validate and regularize all authored
     // shells, rather than concealing the formerly inconsistent arrangement.
     let batch = solid::empty()
-        .try_union_with_context(&merged, &context)
+        .try_union_with_context(&merged, context)
         .unwrap();
     assert_eq!(batch.certainty, GeometryCertainty::Certified);
     assert_cavity(&batch.value, [0, 0, 0]);
 
     let mut accumulated = solid::empty();
     for cell in &cells {
-        let outcome = accumulated.try_union_with_context(cell, &context).unwrap();
+        let outcome = accumulated.try_union_with_context(cell, context).unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
         accumulated = outcome.value;
     }
@@ -84,20 +84,20 @@ fn original_batch_shells_and_incremental_union_remain_consumable() {
     let moved = cells.iter().map(translate).collect::<Vec<_>>();
     let moved = solid::merge(&moved).unwrap();
     let moved = solid::empty()
-        .try_union_with_context(&moved, &context)
+        .try_union_with_context(&moved, context)
         .unwrap();
     assert_eq!(moved.certainty, GeometryCertainty::Certified);
     assert_cavity(&moved.value, offset);
 
     let removed = batch
         .value
-        .try_difference_with_context(&batch.value, &context)
+        .try_difference_with_context(&batch.value, context)
         .unwrap();
     assert_eq!(removed.certainty, GeometryCertainty::Certified);
     assert!(removed.value.positions.is_empty() && removed.value.triangles.is_empty());
     let restored = removed
         .value
-        .try_union_with_context(&batch.value, &context)
+        .try_union_with_context(&batch.value, context)
         .unwrap();
     assert_eq!(restored.certainty, GeometryCertainty::Certified);
     assert_cavity(&restored.value, [0, 0, 0]);

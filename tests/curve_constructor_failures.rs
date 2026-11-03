@@ -28,14 +28,14 @@ fn undecided_dimensions_do_not_become_empty_regions() {
 #[test]
 fn degenerate_dimensions_do_not_conceal_invalid_companions() {
     assert!(
-        curve::rectangle_with_context(Real::zero(), -Real::one(), &GeometryContext::STRICT)
+        curve::rectangle_with_context(Real::zero(), -Real::one(), GeometryContext::STRICT)
             .is_err()
     );
     assert!(
         curve::rectangle_with_context(
             Real::zero(),
             unresolved_zero(),
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -57,7 +57,7 @@ fn malformed_polygon_cannot_enter_a_downstream_pipeline() {
 
 #[test]
 fn native_polygon_cause_survives_the_modeling_wrapper() {
-    let error = curve::polygon_with_context(&[], &GeometryContext::STRICT).unwrap_err();
+    let error = curve::polygon_with_context(&[], GeometryContext::STRICT).unwrap_err();
     assert!(
         error.source().is_some(),
         "native cause was flattened: {error:?}"
@@ -67,18 +67,18 @@ fn native_polygon_cause_survives_the_modeling_wrapper() {
 #[test]
 fn compound_constructors_reject_invalid_parameters() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        assert!(curve::keyhole(Real::one(), -Real::one(), Real::one(), 4, &context).is_err());
-        assert!(curve::ring(Real::one(), -Real::one(), 4, &context).is_err());
-        assert!(curve::reuleaux(4, Real::one(), 6, &context).is_err());
+        assert!(curve::keyhole(Real::one(), -Real::one(), Real::one(), 4, context).is_err());
+        assert!(curve::ring(Real::one(), -Real::one(), 4, context).is_err());
+        assert!(curve::reuleaux(4, Real::one(), 6, context).is_err());
         assert!(
-            curve::crescent(Real::one(), Real::from(2), Real::zero(), 6, &context).is_err()
+            curve::crescent(Real::one(), Real::from(2), Real::zero(), 6, context).is_err()
         );
         assert!(
-            curve::circle_with_keyway(Real::one(), 4, Real::from(2), Real::one(), &context)
+            curve::circle_with_keyway(Real::one(), 4, Real::from(2), Real::one(), context)
                 .is_err()
         );
-        assert!(curve::circle_with_flat(Real::one(), 4, Real::one(), &context).is_err());
-        assert!(curve::circle_with_two_flats(Real::one(), 4, Real::one(), &context).is_err());
+        assert!(curve::circle_with_flat(Real::one(), 4, Real::one(), context).is_err());
+        assert!(curve::circle_with_two_flats(Real::one(), 4, Real::one(), context).is_err());
     }
 }
 
@@ -90,7 +90,7 @@ fn checked_compound_capacity_failure_is_not_successful_empty_geometry() {
             Real::from(4),
             Real::one(),
             usize::MAX,
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -103,7 +103,7 @@ fn undecided_compound_parameter_retains_a_typed_cause() {
         Real::one(),
         Real::one(),
         4,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap_err();
     assert!(
@@ -166,7 +166,7 @@ fn canonical_degeneracies_compose_and_invalid_companions_still_fail() {
         curve::ellipse(Real::zero(), Real::one(), 4),
         curve::regular_ngon(4, Real::zero()),
         curve::rounded_rectangle(Real::zero(), Real::one(), Real::one(), 2),
-        curve::circle_with_two_flats(Real::one(), 4, Real::zero(), &GeometryContext::STRICT)
+        curve::circle_with_two_flats(Real::one(), 4, Real::zero(), GeometryContext::STRICT)
             .map(csgrs::GeometryOutcome::into_value),
     ] {
         let empty = region.unwrap();
@@ -175,7 +175,7 @@ fn canonical_degeneracies_compose_and_invalid_companions_still_fail() {
         assert_eq!(restored.filled_area().unwrap(), Some(Real::one()));
         let removed = restored.boolean_region(&unit, BooleanOp::Difference).unwrap();
         let extruded =
-            curve::try_extrude(&removed, Real::one(), &GeometryContext::STRICT).unwrap();
+            curve::try_extrude(&removed, Real::one(), GeometryContext::STRICT).unwrap();
         assert!(extruded.value.positions.is_empty() && extruded.value.triangles.is_empty());
     }
     assert!(curve::ellipse(Real::zero(), -Real::one(), 4).is_err());
@@ -197,7 +197,7 @@ fn exact_constructor_sets_survive_triangulation_and_extrusion() {
         ),
     ] {
         assert_eq!(region.filled_area().unwrap(), Some(area.clone()));
-        let flat = curve::try_triangulate(&region, &GeometryContext::STRICT).unwrap();
+        let flat = curve::try_triangulate(&region, GeometryContext::STRICT).unwrap();
         let twice_area = flat
             .value
             .triangles
@@ -208,7 +208,7 @@ fn exact_constructor_sets_survive_triangulation_and_extrusion() {
             });
         assert_eq!(twice_area, Real::from(2) * &area);
         let solid =
-            curve::try_extrude(&region, Real::from(3), &GeometryContext::STRICT).unwrap();
+            curve::try_extrude(&region, Real::from(3), GeometryContext::STRICT).unwrap();
         assert!(solid.value.is_closed_manifold());
         let six_volume = solid
             .value
@@ -229,18 +229,18 @@ fn approximate_selection_and_consumption_are_distinct_and_do_not_poison_strict_c
     use csgrs::GeometryCertainty;
     for _ in 0..2 {
         assert!(
-            curve::square_with_context(unresolved_zero(), &GeometryContext::STRICT).is_err()
+            curve::square_with_context(unresolved_zero(), GeometryContext::STRICT).is_err()
         );
         let outcome =
-            curve::square_with_context(unresolved_zero(), &GeometryContext::APPROXIMATE_512)
+            curve::square_with_context(unresolved_zero(), GeometryContext::APPROXIMATE_512)
                 .unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
         assert!(outcome.value.is_empty());
         assert!(
-            curve::square_with_context(unresolved_zero(), &GeometryContext::STRICT).is_err()
+            curve::square_with_context(unresolved_zero(), GeometryContext::STRICT).is_err()
         );
-        let exact = curve::square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512)
-            .unwrap();
+        let exact =
+            curve::square_with_context(Real::one(), GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(exact.certainty, GeometryCertainty::Certified);
         assert_eq!(exact.value.filled_area().unwrap(), Some(Real::one()));
     }

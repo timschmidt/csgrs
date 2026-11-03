@@ -48,7 +48,7 @@ pub(super) fn finite_polygons(
         let mut polygons = Vec::with_capacity(components.len());
         for component in components {
             let profiles =
-                csgrs::curve::try_finite_profiles(component, &csgrs::GeometryContext::STRICT)
+                csgrs::curve::try_finite_profiles(component, csgrs::GeometryContext::STRICT)
                     .map_err(|error| failure("report-projection", source, error))?
                     .into_value();
             if profiles.len() != 1 {

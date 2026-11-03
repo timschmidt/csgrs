@@ -146,7 +146,7 @@ fn straight_path(length: Real) -> Vec<Point3> {
 fn check_prisms(region: &CurveRegion2, area: &Real, vertices: &[[Real; 2]], label: &str) {
     let height = q(3, 7);
     let expected = int(6) * area.clone() * height.clone();
-    for context in &CONTEXTS {
+    for context in CONTEXTS {
         let (extruded, extruded_volume) =
             exact_solid(curve::try_extrude(region, height.clone(), context), label);
         let (swept, swept_volume) = exact_solid(
@@ -311,7 +311,7 @@ fn quarter_revolution_preserves_the_authored_meridian() {
     for reversed in [false, true] {
         let (region, _, vertices) = holed_profile(reversed);
         let region = curve::translated(&region, sqrt2(), q(-1, 3)).expect("translation");
-        for context in &CONTEXTS {
+        for context in CONTEXTS {
             for angle in [int(90), int(-90)] {
                 let (mesh, volume) = exact_solid(
                     curve::revolve(&region, angle.clone(), 3, context),
@@ -358,7 +358,7 @@ fn full_revolution_of_an_exact_ring_is_closed_without_caps() {
             reversed,
         );
         let (mesh, _) = exact_solid(
-            curve::revolve(&region, int(360), 4, &GeometryContext::STRICT),
+            curve::revolve(&region, int(360), 4, GeometryContext::STRICT),
             "full revolution",
         );
         for [x, y] in outer.iter().chain(&hole) {
@@ -380,7 +380,7 @@ fn revolution_profile_touching_the_axis_collapses_axis_vertices() {
     let region = region(&[points], &[], false);
     for angle in [int(90), int(360)] {
         let (mesh, _) = exact_solid(
-            curve::revolve(&region, angle, 4, &GeometryContext::STRICT),
+            curve::revolve(&region, angle, 4, GeometryContext::STRICT),
             "axis profile",
         );
         let on_axis = mesh
@@ -399,7 +399,7 @@ fn partial_revolution_at_negative_radius_is_outward_oriented() {
         let region = region(std::slice::from_ref(&points), &[], reversed);
         for angle in [int(90), int(-90), int(360)] {
             let (mesh, volume) = exact_solid(
-                curve::revolve(&region, angle, 3, &GeometryContext::STRICT),
+                curve::revolve(&region, angle, 3, GeometryContext::STRICT),
                 "negative radius",
             );
             assert_eq!(
@@ -432,7 +432,7 @@ fn full_revolution_preserves_each_disjoint_components_authored_meridian() {
                     &region(std::slice::from_ref(&negative), &[], reversed),
                     int(360),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "negative component alone",
             );
@@ -441,7 +441,7 @@ fn full_revolution_preserves_each_disjoint_components_authored_meridian() {
                     &region(&[negative.clone(), positive.clone()], &[], reversed),
                     int(360),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "disjoint signed components",
             );
@@ -472,7 +472,7 @@ fn full_revolution_canonicalizes_integer_turn_coverage() {
                     &profile,
                     int(direction * 360),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "one turn",
             );
@@ -482,7 +482,7 @@ fn full_revolution_canonicalizes_integer_turn_coverage() {
                         &profile,
                         int(direction * turns * 360),
                         segments,
-                        &GeometryContext::STRICT,
+                        GeometryContext::STRICT,
                     ),
                     "repeated full coverage",
                 );
@@ -511,7 +511,7 @@ fn revolution_keeps_explicit_start_and_rejects_oversized_partial_turns() {
                     start.clone(),
                     int(angle),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "explicit start",
             );
@@ -531,13 +531,13 @@ fn revolution_keeps_explicit_start_and_rejects_oversized_partial_turns() {
                 &profile,
                 int(direction) * (int(360) - delta.clone()),
                 3,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
             "just below a full turn",
         );
         for angle in [int(450), int(360) + delta] {
             let error =
-                curve::revolve(&profile, int(direction) * angle, 3, &GeometryContext::STRICT)
+                curve::revolve(&profile, int(direction) * angle, 3, GeometryContext::STRICT)
                     .unwrap_err();
             assert_eq!(error, ValidationError::InvalidArguments);
         }
@@ -555,7 +555,7 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
                     &region(rings, &[], false),
                     int(360),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "composition source",
             )
@@ -573,7 +573,7 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
                     &body,
                     &tool,
                     BooleanOp::Difference,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 )
                 .map_err(ValidationError::from),
                 "remove positive component",
@@ -596,7 +596,7 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
                     &remaining,
                     &tool,
                     BooleanOp::Union,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 )
                 .map_err(ValidationError::from),
                 "restore positive component",
@@ -611,7 +611,7 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
             &body,
             &body,
             BooleanOp::Difference,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap();
         assert_eq!(empty.certainty, GeometryCertainty::Certified);
@@ -620,7 +620,7 @@ fn signed_revolution_composes_after_operand_drop_and_repeated_cuts() {
             &empty.value,
             &body,
             BooleanOp::Union,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap();
         assert!(strictly_equal(&six_volume(&recovered.value), &whole_volume));
@@ -638,7 +638,7 @@ fn revolution_winding_oracle_detects_unregularized_overlapping_components() {
                     &region(&[ring], &[], false),
                     int(360),
                     segments,
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 ),
                 "mutation piece",
             )
@@ -652,7 +652,7 @@ fn revolution_winding_oracle_detects_unregularized_overlapping_components() {
                 &region(&[right.clone(), left.clone()], &[], false),
                 int(360),
                 segments,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
             "regularized opposite components",
         );
@@ -667,7 +667,7 @@ fn revolution_profile_crossing_the_axis_is_invalid_input() {
         &region(&[points], &[], false),
         int(90),
         4,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput, "{error:?}");
@@ -931,7 +931,7 @@ fn full_revolution_regularizes_signed_material_without_phase_loss() {
             let folded = region(folded_materials, folded_holes, false);
             for segments in [3, 4, 5, 6] {
                 let (mesh, volume) = exact_solid(
-                    curve::revolve(&input, int(360), segments, &GeometryContext::STRICT),
+                    curve::revolve(&input, int(360), segments, GeometryContext::STRICT),
                     "axis-crossing full revolution",
                 );
                 check_rectangular_revolution_membership(&mesh, materials, holes, segments);
@@ -939,7 +939,7 @@ fn full_revolution_regularizes_signed_material_without_phase_loss() {
                     continue;
                 }
                 let (expected, expected_volume) = exact_solid(
-                    curve::revolve(&folded, int(360), segments, &GeometryContext::STRICT),
+                    curve::revolve(&folded, int(360), segments, GeometryContext::STRICT),
                     "folded full revolution",
                 );
                 assert!(
@@ -973,7 +973,7 @@ fn partial_revolution_beyond_a_half_turn_keeps_opposite_bodies_separate() {
             &region(&[right.clone(), left.clone()], &[], false),
             int(270),
             4,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
         "opposite loops",
     );
@@ -982,7 +982,7 @@ fn partial_revolution_beyond_a_half_turn_keeps_opposite_bodies_separate() {
             &region(&[right], &[], false),
             int(270),
             4,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
         "right loop",
     );
@@ -991,7 +991,7 @@ fn partial_revolution_beyond_a_half_turn_keeps_opposite_bodies_separate() {
             &region(&[left], &[], false),
             int(270),
             4,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
         "left loop",
     );
@@ -1010,7 +1010,7 @@ fn zero_end_scale_tapers_to_an_apex() {
         for height in [q(5, 3), q(-5, 3)] {
             let expected = int(2) * area.clone() * height.clone().abs();
             for slices in [1, 3] {
-                for context in &CONTEXTS {
+                for context in CONTEXTS {
                     let (mesh, volume) = exact_solid(
                         curve::extrude_twisted(
                             &profile,
@@ -1042,7 +1042,7 @@ fn zero_end_scale_tapers_to_an_apex() {
                 int(90),
                 zero_scale.clone(),
                 3,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
             "twisted taper",
         );
@@ -1066,7 +1066,7 @@ fn twisted_extrusion_names_its_invalid_parameters() {
             Real::zero(),
             [Real::one(), Real::one()],
             1,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap_err();
         assert_eq!(
@@ -1087,7 +1087,7 @@ fn twisted_extrusion_names_its_invalid_parameters() {
                 Real::zero(),
                 end_scale,
                 1,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .unwrap_err();
             assert_eq!(
@@ -1103,7 +1103,7 @@ fn twisted_extrusion_names_its_invalid_parameters() {
 #[test]
 fn nonzero_twist_keeps_the_exact_start_cap() {
     let (region, _, vertices) = holed_profile(false);
-    for context in &CONTEXTS {
+    for context in CONTEXTS {
         let (mesh, volume) = exact_solid(
             curve::extrude_twisted(&region, q(5, 3), int(90), [q(1, 2), q(2, 3)], 3, context),
             "twisted",
@@ -1129,7 +1129,7 @@ fn exact_sweeps_compose_through_strict_booleans() {
     // The holed profile has area 66/9; swept by 3/7 its six-fold volume is 132/7.
     let (profile, _, _) = holed_profile(true);
     let (body, body_volume) = exact_solid(
-        curve::try_sweep(&profile, &straight_path(q(3, 7)), &GeometryContext::STRICT),
+        curve::try_sweep(&profile, &straight_path(q(3, 7)), GeometryContext::STRICT),
         "body",
     );
     assert!(strictly_equal(&body_volume, &q(132, 7)));
@@ -1140,14 +1140,14 @@ fn exact_sweeps_compose_through_strict_booleans() {
         Point3::new(Real::zero(), Real::zero(), int(1)),
     ];
     let (tool, tool_volume) = exact_solid(
-        curve::try_sweep(&tool_profile, &tool_path, &GeometryContext::STRICT),
+        curve::try_sweep(&tool_profile, &tool_path, GeometryContext::STRICT),
         "tool",
     );
     let difference = solid::boolean_with_context(
         &body,
         &tool,
         BooleanOp::Difference,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("strict difference");
     let (difference, difference_volume) = exact_solid(Ok(difference), "difference");
@@ -1157,7 +1157,7 @@ fn exact_sweeps_compose_through_strict_booleans() {
         &difference,
         &tool,
         BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("strict union");
     let (_, union_volume) = exact_solid(Ok(union), "union");
@@ -1180,28 +1180,28 @@ fn sampled_nonlinear_profiles_remain_qualified() {
     .expect("closed cubic Bezier region");
     let path = straight_path(Real::one());
     for outcome in [
-        curve::try_extrude(&curved, Real::one(), &GeometryContext::STRICT),
-        curve::try_sweep(&curved, &path, &GeometryContext::STRICT),
+        curve::try_extrude(&curved, Real::one(), GeometryContext::STRICT),
+        curve::try_sweep(&curved, &path, GeometryContext::STRICT),
         curve::extrude_twisted(
             &curved,
             Real::one(),
             int(45),
             [Real::one(), Real::one()],
             2,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
         curve::revolve(
             &curve::translated(&curved, int(1), Real::zero()).expect("translation"),
             int(90),
             4,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
         // A full turn across the axis folds the sampled line profile.
         curve::revolve(
             &curve::translated(&curved, int(-1), Real::zero()).expect("translation"),
             int(360),
             8,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
     ] {
         let mesh = outcome.expect("sampled profile operation").into_value();

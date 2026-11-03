@@ -168,16 +168,16 @@ Rendered filled constructors:
 | <img src="docs/teardrop.png" width="144" alt="Filled teardrop with visible edges and vertices"/> | `curve::teardrop(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/curve_egg.png" width="144" alt="Filled egg with visible edges and vertices"/> | `curve::egg(width: Real, length: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/squircle.png" width="144" alt="Filled squircle with visible edges and vertices"/> | `curve::squircle(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
-| <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/keyhole.png" width="144" alt="Filled keyhole with visible edges and vertices"/> | `curve::keyhole(circle_radius: Real, handle_width: Real, handle_height: Real, segments: usize, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/reuleaux.png" width="144" alt="Filled Reuleaux polygon with visible exact curve edges and vertices"/> | `curve::reuleaux(sides: usize, diameter: Real, circle_segments: usize, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/heart.png" width="144" alt="Filled heart with visible edges and vertices"/> | `curve::heart(width: Real, height: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
-| <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/ring.png" width="144" alt="Filled annulus with visible exact curve edges and vertices"/> | `curve::ring(inner_diameter: Real, thickness: Real, segments: usize, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/pie_slice.png" width="144" alt="Filled circular sector with visible edges and vertices"/> | `curve::pie_slice(radius: Real, start_angle_deg: Real, end_angle_deg: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
-| <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/crescent.png" width="144" alt="Filled crescent with visible exact curve edges and vertices"/> | `curve::crescent(outer_radius: Real, inner_radius: Real, offset: Real, segments: usize, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/supershape.png" width="144" alt="Filled superformula shape with visible edges and vertices"/> | `curve::supershape(a: Real, b: Real, m: Real, n1: Real, n2: Real, n3: Real, segments: usize) -> Result<CurveRegion2, ValidationError>` |
-| <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
-| <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: &GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/circle_with_keyway.png" width="144" alt="Circle with a keyway and visible exact curve edges"/> | `curve::circle_with_keyway(radius: Real, segments: usize, key_width: Real, key_depth: Real, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/circle_with_flat.png" width="144" alt="Circle with one flat and visible exact curve edges"/> | `curve::circle_with_flat(radius: Real, segments: usize, flat_distance: Real, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
+| <img src="docs/circle_with_two_flats.png" width="144" alt="Circle with two flats and visible exact curve edges"/> | `curve::circle_with_two_flats(radius: Real, segments: usize, flat_distance: Real, context: GeometryContext) -> Result<GeometryOutcome<CurveRegion2>, ValidationError>` |
 | <img src="docs/involute_gear.png" width="144" alt="Filled involute gear profile with visible edges and vertices"/> | `curve::involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/cycloidal_gear.png" width="144" alt="Filled cycloidal gear profile with visible edges and vertices"/> | `curve::cycloidal_gear(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize) -> Result<CurveRegion2, ValidationError>` |
 | <img src="docs/involute_rack.png" width="144" alt="Filled involute rack profile with visible edges and vertices"/> | `curve::involute_rack(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real) -> Result<CurveRegion2, ValidationError>` |
@@ -338,11 +338,11 @@ These functions consume a `CurveRegion2` and return a native `TriangleMesh`:
 
 | Preview | Function |
 |---|---|
-| <img src="docs/extrude.png" width="144" alt="Planar star extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude(region: &CurveRegion2, height: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/extrude_vector.png" width="144" alt="Planar star vector-extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude_vector(region: &CurveRegion2, direction: Vector3, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/extrude_twisted.png" width="144" alt="Planar star twist-extruded into a solid with visible faces, edges, and vertices"/> | `curve::extrude_twisted(input: &CurveRegion2, height: Real, twist_degrees: Real, end_scale: [Real; 2], slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/revolve.png" width="144" alt="Planar region revolved into a solid with visible faces, edges, and vertices"/> | `curve::revolve(region: &CurveRegion2, angle_degrees: Real, segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/sweep.png" width="144" alt="Planar region swept along a path into a solid with visible faces, edges, and vertices"/> | `curve::try_sweep(region: &CurveRegion2, path: &[Point3], context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/extrude.png" width="144" alt="Planar star extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude(region: &CurveRegion2, height: Real, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/extrude_vector.png" width="144" alt="Planar star vector-extruded into a solid with visible faces, edges, and vertices"/> | `curve::try_extrude_vector(region: &CurveRegion2, direction: Vector3, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/extrude_twisted.png" width="144" alt="Planar star twist-extruded into a solid with visible faces, edges, and vertices"/> | `curve::extrude_twisted(input: &CurveRegion2, height: Real, twist_degrees: Real, end_scale: [Real; 2], slices: usize, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/revolve.png" width="144" alt="Planar region revolved into a solid with visible faces, edges, and vertices"/> | `curve::revolve(region: &CurveRegion2, angle_degrees: Real, segments: usize, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/sweep.png" width="144" alt="Planar region swept along a path into a solid with visible faces, edges, and vertices"/> | `curve::try_sweep(region: &CurveRegion2, path: &[Point3], context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/loft.png" width="144" alt="Corresponding planar sections lofted into a solid with visible faces, edges, and vertices"/> | `solid::loft(sections: &[Vec<Point3>]) -> Result<TriangleMesh, ValidationError>` |
 
 The extrusions, `revolve` and `try_sweep` use the exact coordinates of a
@@ -378,10 +378,10 @@ Functions in `csgrs::solid` return `TriangleMesh`:
 | <img src="docs/icosahedron.png" width="144" alt="Regular icosahedron with visible faces, edges, and vertices"/> | `solid::icosahedron(radius: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/mesh_arrow.png" width="144" alt="Three-dimensional arrow with visible faces, edges, and vertices"/> | `solid::arrow(start: Point3, direction: Vector3, segments: usize, mirrored: bool) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/torus.png" width="144" alt="Sampled torus with visible faces, edges, and vertices"/> | `solid::torus(major_radius: Real, minor_radius: Real, major_segments: usize, minor_segments: usize) -> Result<TriangleMesh, ValidationError>` |
-| <img src="docs/teardrop_cylinder.png" width="144" alt="Extruded teardrop solid with visible faces, edges, and vertices"/> | `solid::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
-| <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: &GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/teardrop_cylinder.png" width="144" alt="Extruded teardrop solid with visible faces, edges, and vertices"/> | `solid::teardrop_cylinder(width: Real, length: Real, height: Real, shape_segments: usize, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/spur_gear_involute.png" width="144" alt="Involute spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_involute(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/spur_gear_cycloid.png" width="144" alt="Cycloidal spur gear with visible faces, edges, and vertices"/> | `solid::spur_gear_cycloid(module: Real, teeth: usize, generating_radius: Real, clearance: Real, segments_per_flank: usize, thickness: Real, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
+| <img src="docs/helical_involute_gear.png" width="144" alt="Helical involute gear with visible faces, edges, and vertices"/> | `solid::helical_involute_gear(module: Real, teeth: usize, pressure_angle_degrees: Real, clearance: Real, backlash: Real, segments_per_flank: usize, thickness: Real, helix_angle_degrees: Real, slices: usize, context: GeometryContext) -> Result<GeometryOutcome<TriangleMesh>, ValidationError>` |
 | <img src="docs/metaballs_3d.png" width="144" alt="Sampled metaball solid with visible faces, edges, and vertices"/> | `solid::metaballs(balls: &[MetaBall], resolution: (usize, usize, usize), iso_value: Real, padding: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/sdf.png" width="144" alt="Sampled signed-distance-field solid with visible faces, edges, and vertices"/> | `solid::sdf(field: impl Fn(&Point3) -> Real, resolution: (usize, usize, usize), min: Point3, max: Point3, iso_value: Real) -> Result<TriangleMesh, ValidationError>` |
 | <img src="docs/gyroid.png" width="144" alt="Bounded gyroid solid with visible faces, edges, and vertices"/> | `solid::gyroid_solid(bounds: &TriangleMesh, resolution: usize, scale: Real, iso_value: Real, wall_thickness: Real) -> Result<TriangleMesh, ValidationError>` |
@@ -492,8 +492,8 @@ the Boolean batch API migration, bindings, and remaining proof-replay limits.
   `GeometryContext::STRICT`;
 - `try_union_with_context`, `try_difference_with_context`,
   `try_intersection_with_context`, and `try_xor_with_context` accept
-  `&GeometryContext` and return `HypermeshResult<GeometryOutcome<TriangleMesh>>`;
-- `transformed` and `translated`;
+  a `GeometryContext` and return `HypermeshResult<GeometryOutcome<TriangleMesh>>`;
+- `transformed`, `translated`, `rotated`, `scaled`, `mirrored` and `centered`;
 - `exact_bounds`;
 - `visit_native_triangles`.
 
@@ -604,7 +604,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .translated(Real::from(6), Real::from(6), Real::from(-1))?;
     let result = body.try_difference_with_context(
         &drill,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )?;
     println!("Predicate certainty: {:?}", result.certainty);
     let drilled_body = result.into_value();

@@ -126,7 +126,7 @@ fn quadratic_bezier_region_keeps_algebraic_fragments_until_meshing() {
 
     // Meshing is the explicit sampling boundary.
     let outcome =
-        curve::try_extrude(&scaled, r(1), &GeometryContext::STRICT).expect("extrusion");
+        curve::try_extrude(&scaled, r(1), GeometryContext::STRICT).expect("extrusion");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     let solid = outcome.into_value();
     assert_certified_closed_manifold(&solid, "extruded parabola");
@@ -202,7 +202,7 @@ fn round_offset_square_taper_keeps_its_exact_profile_measures() {
             r(0),
             [q(1, 2), q(1, 2)],
             slices,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .expect("taper");
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -301,7 +301,7 @@ fn circle_wall_from_opposite_offsets_keeps_one_hole() {
 
     // The extruded wall is one closed tube: genus one, so V - E + F = 0.
     let outcome =
-        curve::try_extrude(&wall, r(20), &GeometryContext::STRICT).expect("extrusion");
+        curve::try_extrude(&wall, r(20), GeometryContext::STRICT).expect("extrusion");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     let tube = outcome.into_value();
     assert_certified_closed_manifold(&tube, "wall");
@@ -334,7 +334,7 @@ fn collapsed_negative_offsets_are_empty_not_the_input() {
             assert_eq!(curve::bounding_box(&collapsed).expect("bounds"), None);
             // The empty result composes: extrusion is canonical empty and a
             // union with it keeps the other operand.
-            let mesh = curve::try_extrude(&collapsed, r(1), &GeometryContext::STRICT)
+            let mesh = curve::try_extrude(&collapsed, r(1), GeometryContext::STRICT)
                 .expect("extrusion of empty")
                 .into_value();
             assert!(mesh.positions.is_empty() && mesh.triangles.is_empty());
@@ -530,7 +530,7 @@ fn twisted_extrusion() -> TriangleMesh {
         r(135),
         [q(3, 4), q(5, 4)],
         12,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("twisted extrusion");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -585,7 +585,7 @@ fn twisted_extrusion_continues_through_strict_booleans() {
         &mesh,
         &solid::empty(),
         hypermesh::BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("strict union with empty");
     assert_eq!(regularized.certainty, GeometryCertainty::Certified);
@@ -601,7 +601,7 @@ fn twisted_extrusion_continues_through_strict_booleans() {
         &mesh,
         &tool,
         hypermesh::BooleanOp::Difference,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("strict difference");
     assert_eq!(cut.certainty, GeometryCertainty::Certified);

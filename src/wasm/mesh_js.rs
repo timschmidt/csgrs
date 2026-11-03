@@ -305,7 +305,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         self.inner
-            .try_union_with_context(&other.inner, &geometry_context(approximate_512))
+            .try_union_with_context(&other.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(mesh_error)
     }
@@ -317,7 +317,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         self.inner
-            .try_difference_with_context(&other.inner, &geometry_context(approximate_512))
+            .try_difference_with_context(&other.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(mesh_error)
     }
@@ -329,7 +329,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         self.inner
-            .try_intersection_with_context(&other.inner, &geometry_context(approximate_512))
+            .try_intersection_with_context(&other.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(mesh_error)
     }
@@ -341,7 +341,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         self.inner
-            .try_xor_with_context(&other.inner, &geometry_context(approximate_512))
+            .try_xor_with_context(&other.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(mesh_error)
     }
@@ -353,7 +353,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::transform_with_context(&self.inner, &matrix.inner, &context)
+        solid::transform_with_context(&self.inner, &matrix.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -374,7 +374,7 @@ impl MeshJs {
                 geometry_scalar(y, "y")?,
                 geometry_scalar(z, "z")?,
             ]),
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(geometry_error)
@@ -394,7 +394,7 @@ impl MeshJs {
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
             geometry_scalar(z, "z")?,
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(geometry_error)
@@ -414,7 +414,7 @@ impl MeshJs {
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
             geometry_scalar(z, "z")?,
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(geometry_error)
@@ -426,7 +426,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::center_with_context(&self.inner, &context)
+        solid::center_with_context(&self.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -437,7 +437,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::float_with_context(&self.inner, &context)
+        solid::float_with_context(&self.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -449,7 +449,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::mirror_with_context(&self.inner, &plane.inner, &context)
+        solid::mirror_with_context(&self.inner, &plane.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -460,7 +460,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::convex_hull_with_context(&self.inner, &context)
+        solid::convex_hull_with_context(&self.inner, context)
             .map(Into::into)
             .map_err(mesh_error)
     }
@@ -472,7 +472,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::minkowski_sum_with_context(&self.inner, &other.inner, &context)
+        solid::minkowski_sum_with_context(&self.inner, &other.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -495,7 +495,7 @@ impl MeshJs {
             max_pair_points: geometry_count(max_pair_points, "maxPairPoints")?,
             cancellation: None,
         };
-        solid::minkowski_sum_with_options(&self.inner, &other.inner, &options, &context)
+        solid::minkowski_sum_with_options(&self.inner, &other.inner, &options, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -508,7 +508,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::minkowski_hull_with_context(&self.inner, &other.inner, &context)
+        solid::minkowski_hull_with_context(&self.inner, &other.inner, context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -524,7 +524,7 @@ impl MeshJs {
         match solid::contains_point_with_context(
             &self.inner,
             &point.inner,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         ) {
             Ok(outcome) => Ok(outcome.map(Some).into()),
             Err(
@@ -543,7 +543,7 @@ impl MeshJs {
         &self,
         approximate_512: bool,
     ) -> Result<GeometryBoundsResultJs, JsValue> {
-        solid::bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
+        solid::bounding_box_with_context(&self.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(geometry_error)
     }

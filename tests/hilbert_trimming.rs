@@ -120,11 +120,11 @@ fn check(boundary: &CurveRegion2, expected: &[Run]) {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let outcome = curve::hilbert_paths_with_context(boundary, 1, r(0), &context)
+        let outcome = curve::hilbert_paths_with_context(boundary, 1, r(0), context)
             .expect("exact rational clipping must complete");
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
         assert_runs(&runs(&outcome.value), expected);
-        let strings = curve::hilbert_strings_with_context(boundary, 1, r(0), &context)
+        let strings = curve::hilbert_strings_with_context(boundary, 1, r(0), context)
             .expect("rational trims must remain native line strings");
         assert_eq!(strings.certainty, GeometryCertainty::Certified);
         let actual = strings
@@ -239,11 +239,11 @@ fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
     let square = curve::square(r(4)).unwrap();
     let empty = square.boolean_region(&square, BooleanOp::Difference).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let paths = curve::hilbert_paths_with_context(&empty, 1, r(0), &context).unwrap();
+        let paths = curve::hilbert_paths_with_context(&empty, 1, r(0), context).unwrap();
         assert!(paths.value.is_empty());
         assert_eq!(paths.certainty, GeometryCertainty::Certified);
         assert!(
-            curve::hilbert_strings_with_context(&empty, 1, r(0), &context)
+            curve::hilbert_strings_with_context(&empty, 1, r(0), context)
                 .unwrap()
                 .value
                 .is_empty()
@@ -255,7 +255,7 @@ fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
                         boundary,
                         order,
                         padding.clone(),
-                        &context
+                        context
                     )
                     .unwrap_err()
                     .kind(),
@@ -270,7 +270,7 @@ fn empty_results_invalid_parameters_and_subsequent_recovery_are_distinct() {
             }
         }
         assert_eq!(
-            curve::hilbert_paths_with_context(&square, 1, r(2), &context)
+            curve::hilbert_paths_with_context(&square, 1, r(2), context)
                 .unwrap_err()
                 .kind(),
             ValidationErrorKind::InvalidInput
@@ -308,7 +308,7 @@ fn unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions() {
             &empty,
             1,
             zero.clone(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         assert!(paths.value.is_empty());
@@ -317,7 +317,7 @@ fn unresolved_padding_keeps_its_policy_and_certainty_even_on_empty_regions() {
             &empty,
             1,
             zero.clone(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         assert!(strings.value.is_empty());
@@ -360,7 +360,7 @@ fn original_benchmark_and_render_grids_remain_complete() {
             &boundary,
             order,
             padding,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -402,7 +402,7 @@ fn algebraic_trim_endpoints_remain_authoritative_and_reusable() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let outcome = curve::hilbert_paths_with_context(&boundary, 2, r(0), &context).unwrap();
+        let outcome = curve::hilbert_paths_with_context(&boundary, 2, r(0), context).unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
         assert!(!outcome.value.is_empty());
         assert!(
@@ -443,7 +443,7 @@ fn algebraic_trim_endpoints_remain_authoritative_and_reusable() {
             );
         }
         assert_eq!(
-            curve::hilbert_strings_with_context(&boundary, 2, r(0), &context)
+            curve::hilbert_strings_with_context(&boundary, 2, r(0), context)
                 .unwrap_err()
                 .kind(),
             ValidationErrorKind::Unsupported

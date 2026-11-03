@@ -258,11 +258,11 @@ pub fn r(value: i64) -> Real {
 }
 
 fn difference(left: &TriangleMesh, right: &TriangleMesh) -> StepResult {
-    Ok(left.try_difference_with_context(right, &STRICT)?)
+    Ok(left.try_difference_with_context(right, STRICT)?)
 }
 
 fn union(left: &TriangleMesh, right: &TriangleMesh) -> StepResult {
-    Ok(left.try_union_with_context(right, &STRICT)?)
+    Ok(left.try_union_with_context(right, STRICT)?)
 }
 
 fn then(first: GeometryOutcome<TriangleMesh>, second: StepResult) -> StepResult {
@@ -488,7 +488,7 @@ pub fn cross_bars(steps: usize) -> (Chain, Vec<BoxSet>) {
 
 /// 4x4x16 bar extruded from a square profile, at `[x, x+4] x [y, y+4] x [-2, 14]`.
 pub fn bar_extrusion(x: i64, y: i64) -> TriangleMesh {
-    curve::try_extrude(&curve::square(r(4)).unwrap(), r(16), &STRICT)
+    curve::try_extrude(&curve::square(r(4)).unwrap(), r(16), STRICT)
         .unwrap()
         .value
         .translated(r(x), r(y), r(-2))
@@ -497,7 +497,7 @@ pub fn bar_extrusion(x: i64, y: i64) -> TriangleMesh {
 
 /// The same bar rotated 90 degrees about x, at `[x, x+4] x [-2, 14] x [z, z+4]`.
 pub fn rotated_bar(x: i64, z: i64) -> Result<TriangleMesh, ValidationError> {
-    let bar = curve::try_extrude(&curve::square(r(4))?, r(16), &STRICT)?.value;
+    let bar = curve::try_extrude(&curve::square(r(4))?, r(16), STRICT)?.value;
     solid::rotate(&bar, r(90), r(0), r(0))?.translated(r(x), r(14), r(z))
 }
 
@@ -673,7 +673,7 @@ pub fn round_trip_drills(format: &'static str, steps: usize) -> Chain {
                     obj::to_obj(&cut.value, "step")
                         .map_err(io_failure)?
                         .as_bytes(),
-                    &STRICT,
+                    STRICT,
                 )
                 .map_err(io_failure)?
                 .value
@@ -717,7 +717,7 @@ pub fn extruded_profile_cuts(steps: usize) -> (Chain, Vec<BoxSet>) {
                 [r(0), r(6)],
             ])
             .unwrap();
-            curve::try_extrude(&profile, r(3), &STRICT).unwrap().value
+            curve::try_extrude(&profile, r(3), STRICT).unwrap().value
         }),
         step: Box::new(move |k, body| {
             let cell = hole(k as i64);
@@ -728,7 +728,7 @@ pub fn extruded_profile_cuts(steps: usize) -> (Chain, Vec<BoxSet>) {
                 Real::new(cell.min[0].clone()),
                 Real::new(cell.min[1].clone()),
             )?;
-            let tool = curve::try_extrude(&square, r(5), &STRICT)?.value.translated(
+            let tool = curve::try_extrude(&square, r(5), STRICT)?.value.translated(
                 r(0),
                 r(0),
                 r(-1),
@@ -747,7 +747,7 @@ pub fn revolved_ring_cuts(steps: usize) -> Chain {
         initial: Box::new(|| {
             let profile =
                 curve::translated(&curve::rectangle(r(1), r(2)).unwrap(), r(2), r(0)).unwrap();
-            curve::revolve(&profile, r(360), 16, &STRICT).unwrap().value
+            curve::revolve(&profile, r(360), 16, STRICT).unwrap().value
         }),
         step: Box::new(|k, body| {
             let tool = solid::cuboid(r(1), r(4), r(8))?.translated(
@@ -776,7 +776,7 @@ pub fn planar_region_then_extrude(holes: i64) -> StepResult {
         .certified()
         .expect("strict planar Booleans are certified")?;
     }
-    let solid = curve::try_extrude(&region, r(4), &STRICT)?;
+    let solid = curve::try_extrude(&region, r(4), STRICT)?;
     let slot =
         solid::cuboid(r(4 * holes + 6), r(1), r(2))?.translated(r(-1), q(1, 2), r(1))?;
     then(solid.clone(), difference(&solid.value, &slot))

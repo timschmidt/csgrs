@@ -608,7 +608,7 @@ fn run() {
         let mesh = curve::try_extrude(
             black_box(&profile),
             Real::from(20_u8),
-            &csgrs::GeometryContext::STRICT,
+            csgrs::GeometryContext::STRICT,
         )
         .expect("extrusion")
         .into_value();
@@ -746,7 +746,7 @@ fn run() {
             black_box(&analysis_source),
             &Point3::new(Real::from(-20_i8), Real::zero(), Real::zero()),
             &Vector3::x(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("policy-authorized ray intersections")
         .value;

@@ -63,7 +63,7 @@ fn wall_section(
 }
 
 fn extrude(region: &CurveRegion2, height: Real) -> TriangleMesh {
-    let outcome = curve::try_extrude(region, height, &STRICT).expect("strict extrusion");
+    let outcome = curve::try_extrude(region, height, STRICT).expect("strict extrusion");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     outcome.into_value()
 }
@@ -282,7 +282,7 @@ fn walls_approaching_zero_thickness_stay_exact_and_zero_thickness_is_empty() {
     assert_six_volume(&body, &r(576), "zero-thickness enclosure");
     // A zero extrusion height, unlike a zero thickness, is invalid input.
     assert!(matches!(
-        curve::try_extrude(&outer, r(0), &STRICT),
+        curve::try_extrude(&outer, r(0), STRICT),
         Err(ValidationError::ZeroParameter { .. })
     ));
 }

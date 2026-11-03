@@ -31,11 +31,11 @@ fn bounds_and_positioning_propagate_policy_and_certainty() {
     assert!(solid::bounding_box(&mesh).is_err());
     assert!(solid::center(&mesh).is_err());
     assert!(solid::float(&mesh).is_err());
-    let bounds = solid::bounding_box_with_context(&mesh, &APPROXIMATE).unwrap();
+    let bounds = solid::bounding_box_with_context(&mesh, APPROXIMATE).unwrap();
     assert_eq!(bounds.certainty, GeometryCertainty::Approximate512Consumed);
     for positioned in [
-        solid::center_with_context(&mesh, &APPROXIMATE).unwrap(),
-        solid::float_with_context(&mesh, &APPROXIMATE).unwrap(),
+        solid::center_with_context(&mesh, APPROXIMATE).unwrap(),
+        solid::float_with_context(&mesh, APPROXIMATE).unwrap(),
     ] {
         assert_eq!(
             positioned.certainty,
@@ -43,19 +43,19 @@ fn bounds_and_positioning_propagate_policy_and_certainty() {
         );
         assert_eq!(positioned.value.positions.len(), 2);
     }
-    assert!(solid::bounding_box_with_context(&mesh, &STRICT).is_err());
+    assert!(solid::bounding_box_with_context(&mesh, STRICT).is_err());
 
     let adapted = csgrs::adapter::RawTriangleMesh::from_native(mesh);
     assert!(adapted.bounding_box().is_err());
     assert_eq!(
         adapted
-            .bounding_box_with_context(&APPROXIMATE)
+            .bounding_box_with_context(APPROXIMATE)
             .unwrap()
             .certainty,
         GeometryCertainty::Approximate512Consumed
     );
     assert_eq!(
-        adapted.center_with_context(&APPROXIMATE).unwrap().certainty,
+        adapted.center_with_context(APPROXIMATE).unwrap().certainty,
         GeometryCertainty::Approximate512Consumed
     );
 }
@@ -65,11 +65,11 @@ fn transformation_policy_does_not_allow_collapsed_geometry() {
     let mesh = solid::cube(Real::one()).expect("valid primitive fixture");
     let zero = unresolved_zero();
     assert!(
-        solid::scale_with_context(&mesh, zero.clone(), Real::one(), Real::one(), &STRICT)
+        solid::scale_with_context(&mesh, zero.clone(), Real::one(), Real::one(), STRICT)
             .is_err()
     );
     assert!(matches!(
-        solid::scale_with_context(&mesh, zero, Real::one(), Real::one(), &APPROXIMATE),
+        solid::scale_with_context(&mesh, zero, Real::one(), Real::one(), APPROXIMATE),
         Err(csgrs::errors::ValidationError::InvalidArguments)
     ));
     let mirror = hypermesh::Plane::axis_aligned(0, Real::zero());
@@ -78,18 +78,18 @@ fn transformation_policy_does_not_allow_collapsed_geometry() {
             solid::transform_with_context(
                 &mesh,
                 &Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]),
-                &context,
+                context,
             )
             .unwrap(),
-            solid::scale_with_context(&mesh, -Real::one(), Real::one(), Real::one(), &context)
+            solid::scale_with_context(&mesh, -Real::one(), Real::one(), Real::one(), context)
                 .unwrap(),
-            solid::mirror_with_context(&mesh, &mirror, &context).unwrap(),
+            solid::mirror_with_context(&mesh, &mirror, context).unwrap(),
             solid::rotate_with_context(
                 &mesh,
                 Real::zero(),
                 Real::zero(),
                 Real::from(90),
-                &context,
+                context,
             )
             .unwrap(),
         ] {
@@ -112,18 +112,18 @@ fn hulls_and_queries_accept_terminal_equality() {
     positions.push(Point3::new(unresolved_zero(), Real::zero(), Real::zero()));
     let mesh = TriangleMesh::new(positions, cube.triangles.to_vec());
     assert!(solid::convex_hull(&mesh).is_err());
-    let hull = solid::convex_hull_with_context(&mesh, &APPROXIMATE).unwrap();
+    let hull = solid::convex_hull_with_context(&mesh, APPROXIMATE).unwrap();
     assert_eq!(hull.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(hull.value.is_closed_manifold());
-    assert!(solid::minkowski_hull_with_context(&mesh, &cube, &STRICT).is_err());
-    let sum = solid::minkowski_hull_with_context(&mesh, &cube, &APPROXIMATE).unwrap();
+    assert!(solid::minkowski_hull_with_context(&mesh, &cube, STRICT).is_err());
+    let sum = solid::minkowski_hull_with_context(&mesh, &cube, APPROXIMATE).unwrap();
     assert_eq!(sum.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(sum.value.is_closed_manifold());
 
     // The represented-set sum ignores this same unreferenced symbolic position.
     // Retain the old point-set fixture above under its explicit operation name.
     for context in [STRICT, APPROXIMATE, STRICT] {
-        let sum = solid::minkowski_sum_with_context(&mesh, &cube, &context).unwrap();
+        let sum = solid::minkowski_sum_with_context(&mesh, &cube, context).unwrap();
         assert_eq!(sum.certainty, GeometryCertainty::Certified);
         assert!(
             sum.value
@@ -136,7 +136,7 @@ fn hulls_and_queries_accept_terminal_equality() {
     let half = (Real::one() / Real::from(2)).unwrap();
     let point = Point3::new(unresolved_zero(), half.clone(), half.clone());
     assert!(solid::contains_point(&cube, &point).is_err());
-    let inside = solid::contains_point_with_context(&cube, &point, &APPROXIMATE).unwrap();
+    let inside = solid::contains_point_with_context(&cube, &point, APPROXIMATE).unwrap();
     assert_eq!(
         inside.value,
         solid::contains_point(&cube, &Point3::new(Real::zero(), half.clone(), half.clone()))
@@ -149,7 +149,7 @@ fn hulls_and_queries_accept_terminal_equality() {
         Point3::new(Real::from(2), half.clone(), half),
     ];
     assert!(solid::polyline_intersections(&cube, &line).is_err());
-    let hits = solid::polyline_intersections_with_context(&cube, &line, &APPROXIMATE).unwrap();
+    let hits = solid::polyline_intersections_with_context(&cube, &line, APPROXIMATE).unwrap();
     assert_eq!(hits.certainty, GeometryCertainty::Approximate512Consumed);
     assert_eq!(hits.value.len(), 2);
 }
@@ -159,7 +159,7 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let step = Real::one() + unresolved_zero();
     assert!(
-        solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), Real::one(), &STRICT)
+        solid::distribute_grid_with_context(&cube, 1, 2, step.clone(), Real::one(), STRICT)
             .is_err()
     );
     for outcome in [
@@ -169,7 +169,7 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
             2,
             step.clone(),
             Real::one(),
-            &APPROXIMATE,
+            APPROXIMATE,
         )
         .unwrap(),
         solid::distribute_linear_with_context(
@@ -177,7 +177,7 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
             2,
             Vector3::x(),
             step.clone(),
-            &APPROXIMATE,
+            APPROXIMATE,
         )
         .unwrap(),
     ] {
@@ -190,12 +190,12 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
         2,
         step.clone(),
         Real::one(),
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert_eq!(replay.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(
-        solid::distribute_grid_with_context(&cube, 1, 2, step, Real::one(), &STRICT).is_err()
+        solid::distribute_grid_with_context(&cube, 1, 2, step, Real::one(), STRICT).is_err()
     );
     let arc = solid::distribute_arc_with_context(
         &cube,
@@ -203,7 +203,7 @@ fn distributions_do_not_reuse_approximate_results_for_strict_calls() {
         Real::from(4),
         Real::zero(),
         Real::from(270),
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert_eq!(arc.value.triangles.len(), 48);
@@ -219,7 +219,7 @@ fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
         .unwrap();
     assert!(body.difference(&drill).unwrap().native().is_closed_manifold());
     for context in [STRICT, APPROXIMATE] {
-        let result = body.difference_with_context(&drill, &context).unwrap();
+        let result = body.difference_with_context(&drill, context).unwrap();
         assert_eq!(result.certainty, GeometryCertainty::Certified);
         let topology = result
             .value
@@ -235,7 +235,7 @@ fn scalar_mesh_booleans_expose_context_without_losing_certainty() {
             let membership = solid::contains_point_with_context(
                 result.value.native(),
                 &Point3::new(x, y, z),
-                &STRICT,
+                STRICT,
             )
             .unwrap();
             assert_eq!(membership.certainty, GeometryCertainty::Certified);
@@ -253,15 +253,15 @@ fn scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean() {
         .unwrap();
     let a = TriangleMeshF64::from_native(cube);
     let b = TriangleMeshF64::from_native(translated);
-    assert!(a.difference_with_context(&b, &STRICT).is_err());
-    let approximate = a.difference_with_context(&b, &APPROXIMATE).unwrap();
+    assert!(a.difference_with_context(&b, STRICT).is_err());
+    let approximate = a.difference_with_context(&b, APPROXIMATE).unwrap();
     assert_eq!(
         approximate.certainty,
         GeometryCertainty::Approximate512Consumed
     );
     assert!(approximate.value.native().positions.is_empty());
     assert!(approximate.value.native().triangles.is_empty());
-    assert!(a.difference_with_context(&b, &STRICT).is_err());
+    assert!(a.difference_with_context(&b, STRICT).is_err());
 }
 
 #[cfg(feature = "curve")]
@@ -269,20 +269,20 @@ fn scalar_mesh_terminal_evidence_does_not_satisfy_a_later_strict_boolean() {
 fn slices_and_flattening_report_uncertainty_instead_of_empty_success() {
     let cube = solid::cube(Real::one()).expect("valid primitive fixture");
     let z = unresolved_zero();
-    assert!(solid::slice_z_with_context(&cube, z.clone(), &STRICT).is_err());
-    let sliced = solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE).unwrap();
+    assert!(solid::slice_z_with_context(&cube, z.clone(), STRICT).is_err());
+    let sliced = solid::slice_z_with_context(&cube, z.clone(), APPROXIMATE).unwrap();
     assert_eq!(sliced.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(!sliced.value.0.is_empty());
     assert_eq!(
-        solid::slice_z_with_context(&cube, z.clone(), &APPROXIMATE)
+        solid::slice_z_with_context(&cube, z.clone(), APPROXIMATE)
             .unwrap()
             .certainty,
         GeometryCertainty::Approximate512Consumed
     );
-    assert!(solid::slice_z_with_context(&cube, z, &STRICT).is_err());
+    assert!(solid::slice_z_with_context(&cube, z, STRICT).is_err());
     let invalid = TriangleMesh::new(Vec::new(), vec![hypermesh::Triangle::new(0, 1, 2)]);
-    assert!(solid::flatten_with_context(&invalid, &APPROXIMATE).is_err());
-    let projected = solid::flatten_with_context(&cube, &APPROXIMATE).unwrap();
+    assert!(solid::flatten_with_context(&invalid, APPROXIMATE).is_err());
+    let projected = solid::flatten_with_context(&cube, APPROXIMATE).unwrap();
     assert_eq!(projected.certainty, GeometryCertainty::Certified);
     assert!(!projected.value.is_empty());
 }
@@ -297,7 +297,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
             &square,
             unresolved_zero(),
             half.clone(),
-            &STRICT
+            STRICT
         )
         .is_err()
     );
@@ -305,7 +305,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
         &square,
         unresolved_zero(),
         half.clone(),
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert_eq!(boundary.value, None);
@@ -315,7 +315,7 @@ fn curve_queries_preserve_boundary_and_uncertainty_distinctions() {
             &square,
             half.clone(),
             half.clone(),
-            &context,
+            context,
         )
         .unwrap();
         assert_eq!(inside.value, Some(true));
@@ -337,7 +337,7 @@ fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
                 &square,
                 unresolved_zero(),
                 half.clone(),
-                &STRICT,
+                STRICT,
             )
         });
         assert!(
@@ -350,7 +350,7 @@ fn explicit_geometry_context_is_independent_of_enclosing_display_preview() {
                     &square,
                     unresolved_zero(),
                     half.clone(),
-                    &APPROXIMATE,
+                    APPROXIMATE,
                 )
             })
             .unwrap();
@@ -368,7 +368,7 @@ fn sdf_meshing_consumes_the_selected_policy() {
     let point = |v| Point3::new(Real::from(v), Real::from(v), Real::from(v));
     let field = |p: &Point3| p.x.clone() + unresolved_zero();
     assert!(
-        solid::sdf_with_context(field, (3, 3, 3), point(-1), point(1), Real::zero(), &STRICT)
+        solid::sdf_with_context(field, (3, 3, 3), point(-1), point(1), Real::zero(), STRICT)
             .is_err()
     );
     let result = solid::sdf_with_context(
@@ -377,7 +377,7 @@ fn sdf_meshing_consumes_the_selected_policy() {
         point(-1),
         point(1),
         Real::zero(),
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Approximate512Consumed);
@@ -392,9 +392,8 @@ fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
         [Real::one(), Real::one(), Real::zero()],
         [Real::zero(), Real::one(), unresolved_zero()],
     ];
-    assert!(solid::polyhedron_with_context(&points, &[&[0, 1, 2, 3]], &STRICT).is_err());
-    let face =
-        solid::polyhedron_with_context(&points, &[&[0, 1, 2, 3]], &APPROXIMATE).unwrap();
+    assert!(solid::polyhedron_with_context(&points, &[&[0, 1, 2, 3]], STRICT).is_err());
+    let face = solid::polyhedron_with_context(&points, &[&[0, 1, 2, 3]], APPROXIMATE).unwrap();
     assert_eq!(face.certainty, GeometryCertainty::Approximate512Consumed);
     assert_eq!(face.value.triangles.len(), 2);
 
@@ -408,15 +407,12 @@ fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
         [Real::from(3), Real::zero(), Real::zero()],
     ];
     assert!(
-        solid::polyhedron_with_context(&triangulated_points, &[&[0, 1, 2, 3, 4]], &STRICT)
+        solid::polyhedron_with_context(&triangulated_points, &[&[0, 1, 2, 3, 4]], STRICT)
             .is_err()
     );
-    let triangulated = solid::polyhedron_with_context(
-        &triangulated_points,
-        &[&[0, 1, 2, 3, 4]],
-        &APPROXIMATE,
-    )
-    .unwrap();
+    let triangulated =
+        solid::polyhedron_with_context(&triangulated_points, &[&[0, 1, 2, 3, 4]], APPROXIMATE)
+            .unwrap();
     assert_eq!(
         triangulated.certainty,
         GeometryCertainty::Approximate512Consumed
@@ -431,8 +427,8 @@ fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
         .map(|point| Point3::new(point.x.clone(), point.y.clone(), &point.z + Real::one()))
         .collect::<Vec<_>>();
     let sections = [bottom, top];
-    assert!(solid::loft_with_context(&sections, &STRICT).is_err());
-    let loft = solid::loft_with_context(&sections, &APPROXIMATE).unwrap();
+    assert!(solid::loft_with_context(&sections, STRICT).is_err());
+    let loft = solid::loft_with_context(&sections, APPROXIMATE).unwrap();
     assert_eq!(loft.certainty, GeometryCertainty::Approximate512Consumed);
     assert_eq!(loft.value.triangles.len(), 12);
     assert!(
@@ -447,15 +443,12 @@ fn polyhedron_and_loft_use_context_for_planarity_and_caps() {
 #[test]
 fn composite_curve_constructors_preserve_nested_predicate_certainty() {
     let distance = unresolved_zero();
-    assert!(
-        csgrs::curve::circle_with_flat(Real::one(), 8, distance.clone(), &STRICT).is_err()
-    );
+    assert!(csgrs::curve::circle_with_flat(Real::one(), 8, distance.clone(), STRICT).is_err());
     let clipped =
-        csgrs::curve::circle_with_flat(Real::one(), 8, distance, &APPROXIMATE).unwrap();
+        csgrs::curve::circle_with_flat(Real::one(), 8, distance, APPROXIMATE).unwrap();
     assert_eq!(clipped.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(!clipped.value.is_empty());
-    let bounds =
-        csgrs::curve::bounding_box_with_context(&clipped.value, &APPROXIMATE).unwrap();
+    let bounds = csgrs::curve::bounding_box_with_context(&clipped.value, APPROXIMATE).unwrap();
     assert_eq!(
         bounds.value.as_ref().unwrap().mins.y.to_f64_lossy().unwrap(),
         0.0
@@ -470,7 +463,7 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
         Real::one(),
         unresolved_zero(),
         8,
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert_eq!(rounded.certainty, GeometryCertainty::Approximate512Consumed);
@@ -532,16 +525,16 @@ fn javascript_mesh_results_expose_the_consumed_certainty() {
 fn obj_context_preserves_certified_concave_triangulation_and_parse_errors() {
     let source = b"v 0 0 0\nv 2 0 0\nv 2 2 0\nv 1 1 0\nv 0 2 0\nf 1 2 3 4 5\n";
     for context in [STRICT, APPROXIMATE] {
-        let imported = csgrs::io::obj::from_obj_with_context(&source[..], &context).unwrap();
+        let imported = csgrs::io::obj::from_obj_with_context(&source[..], context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);
         assert_eq!(imported.value.triangles.len(), 3);
         assert!(
-            csgrs::io::obj::from_obj_with_context(&b"v 0 0 0\nf 1 2 3\n"[..], &context)
+            csgrs::io::obj::from_obj_with_context(&b"v 0 0 0\nf 1 2 3\n"[..], context)
                 .is_err()
         );
         #[cfg(feature = "attributed")]
         assert_eq!(
-            csgrs::io::obj::from_obj_attributed_with_context(&source[..], &context)
+            csgrs::io::obj::from_obj_attributed_with_context(&source[..], context)
                 .unwrap()
                 .certainty,
             GeometryCertainty::Certified
@@ -556,7 +549,7 @@ fn dxf_context_preserves_exact_imports() {
         csgrs::io::dxf::to_dxf(&solid::cube(Real::one()).expect("valid primitive fixture"))
             .unwrap();
     for context in [STRICT, APPROXIMATE] {
-        let imported = csgrs::io::dxf::from_dxf_with_context(&source, &context).unwrap();
+        let imported = csgrs::io::dxf::from_dxf_with_context(&source, context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);
         assert_eq!(imported.value.triangles.len(), 12);
     }
@@ -582,7 +575,7 @@ Transform {
         3
     );
     for context in [STRICT, APPROXIMATE] {
-        let imported = csgrs::io::vrml::from_vrml_with_context(source, &context).unwrap();
+        let imported = csgrs::io::vrml::from_vrml_with_context(source, context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);
         assert_eq!(imported.value.mesh.triangles.len(), 3);
         assert_eq!(imported.value.ignored_degenerate_polygon_count, 0);
@@ -611,25 +604,25 @@ fn gerber_context_reaches_aperture_composition_and_projection() {
     use csgrs::io::gerber::{self, GerberExportOptions};
     let source =
         b"%FSLAX46Y46*%\n%MOMM*%\n%ADD10C,2*%\nD10*\nX0Y0D03*\nX1000000Y0D03*\nM02*\n";
-    let imported = gerber::import_gerber_with_context(source, &APPROXIMATE).unwrap();
+    let imported = gerber::import_gerber_with_context(source, APPROXIMATE).unwrap();
     assert_eq!(imported.certainty, GeometryCertainty::Certified);
     assert!(!gerber::import_gerber(source).unwrap().0.is_empty());
     assert!(!imported.value.0.is_empty());
     let exported = gerber::export_gerber_with_options_and_context(
         &imported.value.0,
         GerberExportOptions::default(),
-        &APPROXIMATE,
+        APPROXIMATE,
     )
     .unwrap();
     assert!(!exported.value.is_empty());
     assert!(
-        !gerber::import_gerber_with_context(&exported.value, &APPROXIMATE)
+        !gerber::import_gerber_with_context(&exported.value, APPROXIMATE)
             .unwrap()
             .value
             .0
             .is_empty()
     );
-    assert!(gerber::import_gerber_with_context(b"invalid", &APPROXIMATE).is_err());
+    assert!(gerber::import_gerber_with_context(b"invalid", APPROXIMATE).is_err());
 }
 
 #[cfg(feature = "gerber-io")]
@@ -639,10 +632,10 @@ fn gerber_boundary_contours_preserve_nested_parity_and_roundtrip() {
     use hypercurve::{Point2, RegionPointLocation};
     let source = b"%FSLAX46Y46*%\n%MOMM*%\n%ADD10C,0.1*%\nD10*\nG36*\nX0Y0D02*\nX10000000Y0D01*\nX10000000Y10000000D01*\nX0Y10000000D01*\nX0Y0D01*\nX2000000Y2000000D02*\nX8000000Y2000000D01*\nX8000000Y8000000D01*\nX2000000Y8000000D01*\nX2000000Y2000000D01*\nG37*\nM02*\n";
     for context in [GeometryContext::STRICT, APPROXIMATE] {
-        let imported = gerber::import_gerber_with_context(source, &context).unwrap();
+        let imported = gerber::import_gerber_with_context(source, context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);
         let exported = gerber::export_gerber(&imported.value.0).unwrap();
-        let restored = gerber::import_gerber_with_context(&exported, &context).unwrap();
+        let restored = gerber::import_gerber_with_context(&exported, context).unwrap();
         for region in [&imported.value.0, &restored.value.0] {
             for (x, y, expected) in [
                 (1, 1, RegionPointLocation::Inside),

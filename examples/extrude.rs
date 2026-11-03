@@ -14,13 +14,13 @@ fn main() {
     let star = curve::star(5, r(1.2), r(0.45)).expect("valid sampled profile fixture");
 
     write_mesh(
-        &curve::try_extrude(&square, r(1.0), &GeometryContext::STRICT)
+        &curve::try_extrude(&square, r(1.0), GeometryContext::STRICT)
             .unwrap()
             .into_value(),
         "square_extrude",
     );
     write_mesh(
-        &curve::try_extrude_vector(&star, v3(0.4, 0.25, 1.0), &GeometryContext::STRICT)
+        &curve::try_extrude_vector(&star, v3(0.4, 0.25, 1.0), GeometryContext::STRICT)
             .unwrap()
             .into_value(),
         "star_vector_extrude",
@@ -28,7 +28,7 @@ fn main() {
     // Revolution profiles must stay on one side of the axis; translate the
     // circle first so the full turn produces a torus.
     let profile = curve::translated(&circle, r(1.5), r(0.0)).expect("valid planar transform");
-    let revolved = curve::revolve(&profile, r(360.0), 48, &GeometryContext::STRICT)
+    let revolved = curve::revolve(&profile, r(360.0), 48, GeometryContext::STRICT)
         .unwrap()
         .into_value();
     write_mesh(&revolved, "circle_revolve");
@@ -43,7 +43,7 @@ fn main() {
         &curve::try_sweep(
             &curve::circle(r(0.08), 12).expect("valid planar fixture"),
             &path,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap()
         .into_value(),

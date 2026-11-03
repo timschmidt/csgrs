@@ -29,7 +29,7 @@ fn profile(shift: &Real) -> CurveRegion2 {
 fn validate(shift: Real) {
     let region = profile(&shift);
     assert_eq!(region.filled_area().unwrap(), Some(q(23, 3)));
-    for context in [&GeometryContext::STRICT, &GeometryContext::APPROXIMATE_512] {
+    for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         let flat = curve::try_triangulate(&region, context).unwrap();
         assert_eq!(flat.certainty, GeometryCertainty::Certified);
         let twice_area = flat.value.triangles.iter().fold(Real::zero(), |sum, t| {
@@ -76,10 +76,10 @@ fn extrusion_adapters_retain_native_failure_categories_and_sources() {
     let unknown_zero =
         uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
     for error in [
-        region.extrude(unknown_zero.clone(), &GeometryContext::STRICT),
+        region.extrude(unknown_zero.clone(), GeometryContext::STRICT),
         region.extrude_vector(
             [Real::zero(), Real::zero(), unknown_zero],
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         ),
     ] {
         let error = error.unwrap_err();
@@ -90,11 +90,11 @@ fn extrusion_adapters_retain_native_failure_categories_and_sources() {
         assert!(error.source().is_some());
     }
     let zero = region
-        .extrude(Real::zero(), &GeometryContext::STRICT)
+        .extrude(Real::zero(), GeometryContext::STRICT)
         .unwrap_err();
     let AdapterError::Construction(native) = zero else {
         panic!("lost invalid-input diagnostic: {zero:?}");
     };
     assert_eq!(native.kind(), ValidationErrorKind::InvalidInput);
-    assert!(region.extrude(Real::one(), &GeometryContext::STRICT).is_ok());
+    assert!(region.extrude(Real::one(), GeometryContext::STRICT).is_ok());
 }

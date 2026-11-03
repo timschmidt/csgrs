@@ -33,7 +33,7 @@ fn complete(
     left: &TriangleMesh,
     right: &TriangleMesh,
     expected: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> TriangleMesh {
     let outcome = solid::minkowski_sum_with_context(left, right, context).unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -63,7 +63,7 @@ fn disconnected_sum_keeps_gaps_and_composes() {
     let a = solid::merge(&[cube.clone(), cube.translated(r(4), r(0), r(0)).unwrap()]).unwrap();
     let b = solid::merge(&[cube.clone(), cube.translated(r(8), r(0), r(0)).unwrap()]).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let sum = complete(&a, &cube, r(16), &context);
+        let sum = complete(&a, &cube, r(16), context);
         assert!(!solid::contains_point(&sum, &p(3, 1, 1)).unwrap());
         assert!(solid::contains_point(&sum, &p(1, 1, 1)).unwrap());
         assert!(solid::contains_point(&sum, &p(5, 1, 1)).unwrap());
@@ -71,8 +71,8 @@ fn disconnected_sum_keeps_gaps_and_composes() {
         let removed = sum.try_difference(&sum).unwrap();
         assert!(removed.positions.is_empty() && removed.triangles.is_empty());
         let recovered = removed.try_union(&cube).unwrap();
-        complete(&recovered, &cube, r(8), &context);
-        let both = complete(&a, &b, r(32), &context);
+        complete(&recovered, &cube, r(8), context);
+        let both = complete(&a, &b, r(32), context);
         for x in [1, 5, 9, 13] {
             assert!(solid::contains_point(&both, &p(x, 1, 1)).unwrap());
         }
@@ -87,8 +87,8 @@ fn concave_sum_preserves_notch_and_commutes() {
     let source = l_prism();
     let cube = solid::cube(r(1)).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let sum = complete(&source, &cube, r(36), &context);
-        let reversed = complete(&cube, &source, r(36), &context);
+        let sum = complete(&source, &cube, r(36), context);
+        let reversed = complete(&cube, &source, r(36), context);
         for (point, inside) in [(p(3, 3, 1), false), (p(1, 3, 1), true), (p(3, 1, 1), true)] {
             assert_eq!(solid::contains_point(&sum, &point).unwrap(), inside);
             assert_eq!(solid::contains_point(&reversed, &point).unwrap(), inside);
@@ -117,16 +117,16 @@ fn hollow_nested_and_multiply_wound_solids_use_nonzero_winding() {
     let doubled = solid::merge(&[cube.clone(), cube.clone()]).unwrap();
     let cancelled = solid::merge(&[cube.clone(), cube.reversed_winding()]).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let sum = complete(&hollow, &cube, r(124), &context);
+        let sum = complete(&hollow, &cube, r(124), context);
         let hole = Point3::new(q(5, 2), q(5, 2), q(5, 2));
         assert!(!solid::contains_point(&sum, &hole).unwrap());
         assert!(solid::contains_point(&sum, &Point3::new(q(3, 2), q(5, 2), q(5, 2))).unwrap());
-        let full = complete(&nested, &cube, r(125), &context);
+        let full = complete(&nested, &cube, r(125), context);
         assert!(solid::contains_point(&full, &hole).unwrap());
-        complete(&doubled, &cube, r(8), &context);
-        complete(&cube.reversed_winding(), &cube, r(8), &context);
-        let empty = complete(&cancelled, &cube, r(0), &context);
-        complete(&empty.try_union(&cube).unwrap(), &cube, r(8), &context);
+        complete(&doubled, &cube, r(8), context);
+        complete(&cube.reversed_winding(), &cube, r(8), context);
+        let empty = complete(&cancelled, &cube, r(0), context);
+        complete(&empty.try_union(&cube).unwrap(), &cube, r(8), context);
     }
 }
 
@@ -138,10 +138,10 @@ fn source_storage_and_empty_identities_do_not_hide_failures() {
     let unused = TriangleMesh::new(positions, cube.triangles.to_vec());
     let empty = solid::empty();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let sum = complete(&unused, &cube, r(8), &context);
+        let sum = complete(&unused, &cube, r(8), context);
         assert!(!solid::contains_point(&sum, &Point3::new(r(10), q(1, 2), q(1, 2))).unwrap());
         for (a, b) in [(&cube, &empty), (&empty, &cube), (&empty, &empty)] {
-            complete(a, b, r(0), &context);
+            complete(a, b, r(0), context);
         }
         for bad in [
             TriangleMesh::new(vec![], vec![Triangle::new(0, 1, 2)]),
@@ -153,7 +153,7 @@ fn source_storage_and_empty_identities_do_not_hide_failures() {
             TriangleMesh::new(vec![p(0, 0, 0)], vec![Triangle::new(0, 0, 0)]),
         ] {
             for (a, b) in [(&bad, &empty), (&empty, &bad), (&bad, &cube)] {
-                let error = solid::minkowski_sum_with_context(a, b, &context).unwrap_err();
+                let error = solid::minkowski_sum_with_context(a, b, context).unwrap_err();
                 assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
                 assert!(matches!(error, ValidationError::Mesh(_)));
                 assert!(error.source().is_some());
@@ -161,7 +161,7 @@ fn source_storage_and_empty_identities_do_not_hide_failures() {
         }
     }
     // A native proof from the previous query must not validate mutated indices.
-    complete(&cube, &cube, r(8), &GeometryContext::STRICT);
+    complete(&cube, &cube, r(8), GeometryContext::STRICT);
     let mut changed = cube.clone();
     std::sync::Arc::make_mut(&mut changed.triangles)[0] = Triangle::new(0, 0, 0);
     assert!(matches!(
@@ -170,7 +170,7 @@ fn source_storage_and_empty_identities_do_not_hide_failures() {
             HypermeshError::DegenerateTriangle { .. }
         ))
     ));
-    complete(&cube, &cube, r(8), &GeometryContext::STRICT);
+    complete(&cube, &cube, r(8), GeometryContext::STRICT);
 }
 
 #[test]
@@ -192,7 +192,7 @@ fn limits_and_cancellation_fail_typed_then_recover() {
         },
     ] {
         let error =
-            solid::minkowski_sum_with_options(&a, &cube, &options, &GeometryContext::STRICT)
+            solid::minkowski_sum_with_options(&a, &cube, &options, GeometryContext::STRICT)
                 .unwrap_err();
         assert_eq!(error.kind(), ValidationErrorKind::ResourceExhausted);
         assert!(matches!(
@@ -207,14 +207,14 @@ fn limits_and_cancellation_fail_typed_then_recover() {
         ..Default::default()
     };
     assert!(matches!(
-        solid::minkowski_sum_with_options(&a, &cube, &options, &GeometryContext::STRICT),
+        solid::minkowski_sum_with_options(&a, &cube, &options, GeometryContext::STRICT),
         Err(ValidationError::Mesh(
             HypermeshError::OperationCancelled { .. }
         ))
     ));
     cancelled.store(false, Ordering::Relaxed);
     let recovered =
-        solid::minkowski_sum_with_options(&a, &cube, &options, &GeometryContext::STRICT)
+        solid::minkowski_sum_with_options(&a, &cube, &options, GeometryContext::STRICT)
             .unwrap();
     assert_eq!(recovered.certainty, GeometryCertainty::Certified);
     volume(&recovered.value, r(16));
@@ -250,12 +250,12 @@ fn sums_survive_linear_transforms_repetition_and_exact_small_gaps() {
         &source.transformed(&transform).unwrap(),
         &cube.transformed(&transform).unwrap(),
         r(864),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     );
     assert!(!solid::contains_point(&sum, &p(9, 10, 4)).unwrap());
     assert!(solid::contains_point(&sum, &p(5, 10, 4)).unwrap());
-    let first = complete(&source, &cube, r(36), &GeometryContext::STRICT);
-    let repeated = complete(&first, &cube, r(84), &GeometryContext::STRICT);
+    let first = complete(&source, &cube, r(36), GeometryContext::STRICT);
+    let repeated = complete(&first, &cube, r(84), GeometryContext::STRICT);
     assert!(!solid::contains_point(&repeated, &p(4, 4, 2)).unwrap());
     let delta = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
     let separated = solid::merge(&[
@@ -263,7 +263,7 @@ fn sums_survive_linear_transforms_repetition_and_exact_small_gaps() {
         cube.translated(r(2) + &delta, r(0), r(0)).unwrap(),
     ])
     .unwrap();
-    let sum = complete(&separated, &cube, r(16), &GeometryContext::STRICT);
+    let sum = complete(&separated, &cube, r(16), GeometryContext::STRICT);
     assert!(
         !solid::contains_point(&sum, &Point3::new(r(2) + &delta * q(1, 2), r(1), r(1)))
             .unwrap()
@@ -274,7 +274,7 @@ fn sums_survive_linear_transforms_repetition_and_exact_small_gaps() {
 fn referenced_symbolic_coordinates_preserve_policy_and_receipts() {
     let cube = solid::cube(r(1)).unwrap();
     let shifted = cube.translated(Real::pi(), r(0), r(0)).unwrap();
-    let sum = complete(&shifted, &cube, r(8), &GeometryContext::STRICT);
+    let sum = complete(&shifted, &cube, r(8), GeometryContext::STRICT);
     assert!(solid::contains_point(&sum, &Point3::new(Real::pi() + r(1), r(1), r(1))).unwrap());
     let mut positions = cube.positions.to_vec();
     let sine = Real::e().sin();
@@ -284,7 +284,7 @@ fn referenced_symbolic_coordinates_preserve_policy_and_receipts() {
     let first = solid::minkowski_sum(&source, &cube).unwrap_err();
     assert_eq!(first.kind(), ValidationErrorKind::Undecided);
     let approximate =
-        solid::minkowski_sum_with_context(&source, &cube, &GeometryContext::APPROXIMATE_512)
+        solid::minkowski_sum_with_context(&source, &cube, GeometryContext::APPROXIMATE_512)
             .unwrap();
     assert_eq!(
         approximate.certainty,
@@ -308,7 +308,7 @@ fn original_readme_and_full_example_inputs_complete_strictly() {
         &solid::cube(a).unwrap(),
         &solid::octahedron(b).unwrap(),
         expected,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     );
     // Keep examples/minkowski_sum.rs at its full original 16×8 sphere sampling.
     let side = Real::try_from(1.5_f64).unwrap();
@@ -316,7 +316,7 @@ fn original_readme_and_full_example_inputs_complete_strictly() {
     let cube = solid::cube(side.clone()).unwrap();
     let sphere = solid::sphere(radius.clone(), 16, 8).unwrap();
     let result =
-        solid::minkowski_sum_with_context(&cube, &sphere, &GeometryContext::STRICT).unwrap();
+        solid::minkowski_sum_with_context(&cube, &sphere, GeometryContext::STRICT).unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);
     result
         .value

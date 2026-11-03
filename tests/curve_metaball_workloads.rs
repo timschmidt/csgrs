@@ -8,7 +8,7 @@ fn validate(balls: &[(Point2, Real)], resolution: usize, padding: Real) {
         (resolution, resolution),
         1.into(),
         padding,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);

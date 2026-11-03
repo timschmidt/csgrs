@@ -19,7 +19,7 @@ fn fixture(segments: usize) -> (TriangleMesh, TriangleMesh) {
         .translated(6.into(), 6.into(), (-1).into())
         .unwrap();
     let result = body
-        .try_difference_with_context(&drill, &GeometryContext::STRICT)
+        .try_difference_with_context(&drill, GeometryContext::STRICT)
         .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Certified);
     (body, result.value)
@@ -27,7 +27,7 @@ fn fixture(segments: usize) -> (TriangleMesh, TriangleMesh) {
 
 fn assert_contains(mesh: &TriangleMesh, point: Point3, expected: bool) {
     let outcome =
-        solid::contains_point_with_context(mesh, &point, &GeometryContext::STRICT).unwrap();
+        solid::contains_point_with_context(mesh, &point, GeometryContext::STRICT).unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     assert_eq!(outcome.value, expected);
 }
@@ -85,7 +85,7 @@ fn strict_drills_preserve_polygonal_semantics_and_manifoldness() {
 fn assert_complete_composition(segments: usize) {
     let (body, drilled) = fixture(segments);
     let accumulated = solid::empty()
-        .try_union_with_context(&drilled, &GeometryContext::STRICT)
+        .try_union_with_context(&drilled, GeometryContext::STRICT)
         .unwrap();
     assert_eq!(accumulated.certainty, GeometryCertainty::Certified);
     assert_contains(
@@ -95,14 +95,14 @@ fn assert_complete_composition(segments: usize) {
     );
     let removed = accumulated
         .value
-        .try_difference_with_context(&body, &GeometryContext::STRICT)
+        .try_difference_with_context(&body, GeometryContext::STRICT)
         .unwrap();
     assert_eq!(removed.certainty, GeometryCertainty::Certified);
     assert!(removed.value.positions.is_empty());
     assert!(removed.value.triangles.is_empty());
     let rebuilt = removed
         .value
-        .try_union_with_context(&body, &GeometryContext::STRICT)
+        .try_union_with_context(&body, GeometryContext::STRICT)
         .unwrap();
     assert_eq!(rebuilt.certainty, GeometryCertainty::Certified);
     assert_eq!(

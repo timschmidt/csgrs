@@ -29,7 +29,7 @@ fn loft_revolve_and_sweep_accept_native_hyperreal_geometry() {
         &curve::square(r(1.0)).expect("valid planar fixture"),
         r(270.0),
         24,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("revolve")
     .into_value();
@@ -40,7 +40,7 @@ fn loft_revolve_and_sweep_accept_native_hyperreal_geometry() {
     let swept = curve::try_sweep(
         &curve::square(r(0.08)).expect("valid planar fixture"),
         &path,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .expect("sweep")
     .into_value();

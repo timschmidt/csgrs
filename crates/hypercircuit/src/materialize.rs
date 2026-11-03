@@ -122,7 +122,7 @@ impl MaterializationDecisions {
         self.consume_geometry(curve::rectangle_with_context(
             width,
             height,
-            &GeometryContext::new(self.predicates),
+            GeometryContext::new(self.predicates),
         ))
         .map_err(GeometryMaterializationError::Construction)
     }
@@ -137,7 +137,7 @@ impl MaterializationDecisions {
             input,
             x,
             y,
-            &self.geometry_context(),
+            self.geometry_context(),
         ))
         .map_err(GeometryMaterializationError::Construction)
     }
@@ -152,7 +152,7 @@ impl MaterializationDecisions {
             input,
             x,
             y,
-            &self.geometry_context(),
+            self.geometry_context(),
         ))
         .map_err(GeometryMaterializationError::Construction)
     }
@@ -165,7 +165,7 @@ impl MaterializationDecisions {
         self.consume_geometry(curve::rotated_with_context(
             input,
             z_degrees,
-            &self.geometry_context(),
+            self.geometry_context(),
         ))
         .map_err(GeometryMaterializationError::Construction)
     }
@@ -2113,7 +2113,7 @@ impl PcbMaterializationReport {
                 match decisions.consume_geometry(curve::try_extrude(
                     &profile,
                     layer.thickness.clone(),
-                    &decisions.geometry_context(),
+                    decisions.geometry_context(),
                 )) {
                     Ok(geometry) => {
                         match geometry.translated(Real::zero(), Real::zero(), z_start.clone()) {
@@ -2171,7 +2171,7 @@ impl PcbMaterializationReport {
                         match decisions.consume_geometry(curve::try_extrude(
                             &profile,
                             body.height.clone(),
-                            &decisions.geometry_context(),
+                            decisions.geometry_context(),
                         )) {
                             Ok(geometry) => {
                                 match geometry.translated(Real::zero(), Real::zero(), body_z) {
@@ -3027,7 +3027,7 @@ fn graphic_profile(
                     text,
                     &policy.font_data,
                     point_height,
-                    &decisions.geometry_context(),
+                    decisions.geometry_context(),
                 ))
                 .map_err(GeometryMaterializationError::Construction)?;
             let profile = decisions.rotated(&profile, rotation_degrees.clone())?;
@@ -4366,7 +4366,7 @@ mod tests {
         )
         .unwrap();
         let union = exact_compound_composition(&[circle, rectangle], &[], &decisions).unwrap();
-        let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
+        let profiles = curve::try_finite_profiles(&union, decisions.geometry_context())
             .unwrap()
             .into_value();
         assert_eq!(profiles.len(), 2);
@@ -4391,7 +4391,7 @@ mod tests {
         .unwrap();
 
         let union = exact_compound_composition(&[trace, via_land], &[], &decisions).unwrap();
-        let profiles = curve::try_finite_profiles(&union, &decisions.geometry_context())
+        let profiles = curve::try_finite_profiles(&union, decisions.geometry_context())
             .unwrap()
             .into_value();
         assert_eq!(profiles.len(), 1);
@@ -4501,7 +4501,7 @@ mod tests {
             &decisions,
         )
         .unwrap();
-        let profiles = curve::try_finite_profiles(&profile, &decisions.geometry_context())
+        let profiles = curve::try_finite_profiles(&profile, decisions.geometry_context())
             .unwrap()
             .into_value();
         let points = profiles[0].material().points();

@@ -80,7 +80,7 @@ const OPERATIONS: [&str; 5] = ["triangulate", "extrude", "twist-zero", "sweep", 
 fn model(
     profile: &CurveRegion2,
     operation: &str,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, csgrs::errors::ValidationError> {
     match operation {
         "triangulate" => curve::try_triangulate(profile, context),
@@ -143,7 +143,7 @@ fn check_exact_member(origin: Real, width: Real) {
         }
         let profile = CurveRegion2::try_from_native_contours(materials, Vec::new()).unwrap();
         for operation in OPERATIONS {
-            let result = model(&profile, operation, &context);
+            let result = model(&profile, operation, context);
             match result {
                 Ok(outcome) => {
                     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -234,7 +234,7 @@ fn exact_holes_survive_inside_a_curved_material_loop() {
             )
             .unwrap();
             for operation in OPERATIONS {
-                let outcome = model(&profile, operation, &GeometryContext::STRICT).unwrap();
+                let outcome = model(&profile, operation, GeometryContext::STRICT).unwrap();
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 assert!(outcome.value.construction_evidence().source_sampled());
                 assert!(
@@ -261,7 +261,7 @@ fn a_curved_hole_does_not_round_the_material_boundary() {
         )
         .unwrap();
         for operation in OPERATIONS {
-            let mesh = model(&profile, operation, &GeometryContext::STRICT)
+            let mesh = model(&profile, operation, GeometryContext::STRICT)
                 .unwrap()
                 .value;
             assert!(
@@ -307,7 +307,7 @@ fn mixed_spans_share_exact_curve_endpoints_and_keep_a_tiny_line() {
             )
             .unwrap();
             for operation in OPERATIONS {
-                let mesh = model(&profile, operation, &GeometryContext::STRICT)
+                let mesh = model(&profile, operation, GeometryContext::STRICT)
                     .unwrap()
                     .value;
                 for (x, y) in [
@@ -341,7 +341,7 @@ fn mixed_enclosure_retains_a_thin_wall_through_repeated_cuts() {
         )],
     )
     .unwrap();
-    let body = curve::try_extrude(&source, r(2), &GeometryContext::STRICT)
+    let body = curve::try_extrude(&source, r(2), GeometryContext::STRICT)
         .unwrap()
         .value;
     drop(source);

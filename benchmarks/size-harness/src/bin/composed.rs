@@ -23,7 +23,7 @@ fn workload(
 ) -> Result<(usize, usize, usize, GeometryCertainty), Box<dyn std::error::Error>> {
     let body: TriangleMesh = solid::cube(Real::from(black_box(width)))?;
     let profile = curve::square(Real::from(4))?;
-    let tool = curve::try_extrude(&profile, Real::from(16), &GeometryContext::STRICT)?;
+    let tool = curve::try_extrude(&profile, Real::from(16), GeometryContext::STRICT)?;
     let certainty = tool.certainty;
     let placed = tool
         .into_value()

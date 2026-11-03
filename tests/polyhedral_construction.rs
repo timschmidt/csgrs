@@ -38,7 +38,7 @@ fn volume(mesh: &TriangleMesh, expected: Real) {
     });
     exact(&six, &(r(6) * expected));
 }
-fn valid(mesh: &TriangleMesh, context: &GeometryContext) {
+fn valid(mesh: &TriangleMesh, context: GeometryContext) {
     mesh.validate_closed_pwn(&context.mesh_context()).unwrap();
     assert!(
         mesh.is_closed_manifold_geometry(&context.mesh_context())
@@ -72,7 +72,7 @@ fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
                 let face = solid::polyhedron_with_context(
                     &rows(&sections[0]),
                     &[&[0, 1, 2, 3, 4, 5]],
-                    &context,
+                    context,
                 )
                 .unwrap();
                 let twice_area = face.value.triangles.iter().fold(r(0), |sum, t| {
@@ -86,13 +86,13 @@ fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
                 let faces = prism_faces(6);
                 let face_refs = faces.iter().map(Vec::as_slice).collect::<Vec<_>>();
                 let polyhedron =
-                    solid::polyhedron_with_context(&authored, &face_refs, &context).unwrap();
-                valid(&polyhedron.value, &context);
+                    solid::polyhedron_with_context(&authored, &face_refs, context).unwrap();
+                valid(&polyhedron.value, context);
                 volume(&polyhedron.value, r(if reverse { -10 } else { 10 }));
 
-                let loft = solid::loft_with_context(&sections, &context).unwrap();
+                let loft = solid::loft_with_context(&sections, context).unwrap();
                 assert_eq!(loft.certainty, GeometryCertainty::Certified);
-                valid(&loft.value, &context);
+                valid(&loft.value, context);
                 volume(&loft.value, r(10));
                 // Area 5 times height 2, with a notch that must remain empty.
                 for (point, inside) in [
@@ -103,18 +103,18 @@ fn concave_faces_keep_authored_winding_and_lofts_compose_in_all_orders() {
                 }
                 let composed = loft
                     .value
-                    .try_union_with_context(&TriangleMesh::new(vec![], vec![]), &context)
+                    .try_union_with_context(&TriangleMesh::new(vec![], vec![]), context)
                     .unwrap();
-                valid(&composed.value, &context);
+                valid(&composed.value, context);
                 volume(&composed.value, r(10));
                 let removed = composed
                     .value
-                    .try_difference_with_context(&loft.value, &context)
+                    .try_difference_with_context(&loft.value, context)
                     .unwrap();
                 empty(&removed.value);
                 let recovered = removed
                     .value
-                    .try_union_with_context(&loft.value, &context)
+                    .try_union_with_context(&loft.value, context)
                     .unwrap();
                 volume(&recovered.value, r(10));
             }
@@ -140,7 +140,7 @@ fn loft_sides_use_the_documented_diagonal_and_reject_unequal_counts() {
             [bottom.clone(), top.clone()]
         };
         let mesh = solid::loft(&sections).unwrap();
-        valid(&mesh, &GeometryContext::STRICT);
+        valid(&mesh, GeometryContext::STRICT);
         let edges = mesh
             .triangles
             .iter()
@@ -182,7 +182,7 @@ fn concave_loft_orientation_survives_axis_projection_and_negative_travel() {
                 })
                 .collect::<Vec<_>>();
             let mesh = solid::loft(&sections).unwrap();
-            valid(&mesh, &GeometryContext::STRICT);
+            valid(&mesh, GeometryContext::STRICT);
             volume(&mesh, r(10));
         }
     }
@@ -197,30 +197,30 @@ fn redundant_sections_coalesce_without_losing_the_result_or_receipt() {
                 .iter()
                 .map(|&z| section(&square, z))
                 .collect::<Vec<_>>();
-            let result = solid::loft_with_context(&sections, &context).unwrap();
+            let result = solid::loft_with_context(&sections, context).unwrap();
             assert_eq!(result.certainty, GeometryCertainty::Certified);
-            valid(&result.value, &context);
+            valid(&result.value, context);
             volume(&result.value, r(8));
             empty(
                 &result
                     .value
-                    .try_difference_with_context(&result.value, &context)
+                    .try_difference_with_context(&result.value, context)
                     .unwrap()
                     .value,
             );
         }
         assert!(
-            solid::loft_with_context(&[section(&square, 0), section(&square, 0)], &context)
+            solid::loft_with_context(&[section(&square, 0), section(&square, 0)], context)
                 .is_err()
         );
         // Collinear boundary vertices are needed for side/cap conformity.
         let collinear = [(0, 0), (1, 0), (2, 0), (2, 2), (0, 2)];
         let mesh = solid::loft_with_context(
             &[section(&collinear, 0), section(&collinear, 2)],
-            &context,
+            context,
         )
         .unwrap();
-        valid(&mesh.value, &context);
+        valid(&mesh.value, context);
         volume(&mesh.value, r(8));
         assert!(mesh.value.triangles.iter().any(|t| t.indices().contains(&1)));
     }
@@ -239,8 +239,8 @@ fn invalid_faces_and_sections_fail_before_publishing_geometry() {
             let lower = section(ring, 0);
             let face = (0..lower.len()).collect::<Vec<_>>();
             for error in [
-                solid::polyhedron_with_context(&rows(&lower), &[&face], &context).unwrap_err(),
-                solid::loft_with_context(&[lower, section(ring, 2)], &context).unwrap_err(),
+                solid::polyhedron_with_context(&rows(&lower), &[&face], context).unwrap_err(),
+                solid::loft_with_context(&[lower, section(ring, 2)], context).unwrap_err(),
             ] {
                 assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
                 assert!(matches!(
@@ -255,7 +255,7 @@ fn invalid_faces_and_sections_fail_before_publishing_geometry() {
         let mut tilted = section(&square, 2);
         tilted[1].z = r(0);
         tilted[2].z = r(0);
-        let error = solid::loft_with_context(&[lower, tilted], &context).unwrap_err();
+        let error = solid::loft_with_context(&[lower, tilted], context).unwrap_err();
         assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
         assert!(matches!(
             error,
@@ -263,10 +263,10 @@ fn invalid_faces_and_sections_fail_before_publishing_geometry() {
         ));
         assert!(error.source().is_some());
         valid(
-            &solid::loft_with_context(&[section(&square, 0), section(&square, 2)], &context)
+            &solid::loft_with_context(&[section(&square, 0), section(&square, 2)], context)
                 .unwrap()
                 .value,
-            &context,
+            context,
         );
     }
 }
@@ -304,13 +304,13 @@ fn support_predicate_cause_survives_and_approximate_evidence_stays_qualified() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let outcome = solid::loft_with_context(&sections, &context);
+        let outcome = solid::loft_with_context(&sections, context);
         if context == GeometryContext::STRICT {
             assert_eq!(outcome.unwrap_err().kind(), ValidationErrorKind::Undecided);
         } else {
             let outcome = outcome.unwrap();
             assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
-            valid(&outcome.value, &context);
+            valid(&outcome.value, context);
         }
     }
 }
@@ -348,14 +348,14 @@ fn original_tetrahedron_and_square_loft_keep_independent_exact_volumes() {
     ];
     let tetra =
         solid::polyhedron(&points, &[&[0, 2, 1], &[0, 1, 3], &[0, 3, 2], &[1, 2, 3]]).unwrap();
-    valid(&tetra, &GeometryContext::STRICT);
+    valid(&tetra, GeometryContext::STRICT);
     volume(&tetra, q(4, 3));
     let loft = solid::loft(&[
         section(&[(-2, -2), (2, -2), (2, 2), (-2, 2)], 0),
         section(&[(-4, -4), (4, -4), (4, 4), (-4, 4)], 8),
     ])
     .unwrap();
-    valid(&loft, &GeometryContext::STRICT);
+    valid(&loft, GeometryContext::STRICT);
     volume(&loft, q(896, 3));
     volume(
         &loft.try_union(&TriangleMesh::new(vec![], vec![])).unwrap(),
@@ -387,7 +387,7 @@ fn original_readme_polyhedron_and_three_section_loft_keep_their_meaning() {
         ],
     )
     .unwrap();
-    valid(&pyramid, &GeometryContext::STRICT);
+    valid(&pyramid, GeometryContext::STRICT);
     volume(&pyramid, r(4) * height * q(1, 3));
 
     let parameters = [
@@ -407,7 +407,7 @@ fn original_readme_polyhedron_and_three_section_loft_keep_their_meaning() {
         })
         .collect::<Vec<_>>();
     let loft = solid::loft(&sections).unwrap();
-    valid(&loft, &GeometryContext::STRICT);
+    valid(&loft, GeometryContext::STRICT);
     // Each segment's rectangle area is quadratic in height. Simpson integration
     // is exact, independently of the chosen surface triangulation.
     let expected = parameters.windows(2).fold(r(0), |sum, p| {
@@ -436,14 +436,14 @@ fn approximate_section_coalescing_retains_its_qualification() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let result = solid::loft_with_context(&sections, &context);
+        let result = solid::loft_with_context(&sections, context);
         if context == GeometryContext::STRICT {
             assert_eq!(result.unwrap_err().kind(), ValidationErrorKind::Undecided);
         } else {
             let outcome = result.unwrap();
             assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
             assert_eq!(outcome.value.positions.len(), 8);
-            valid(&outcome.value, &context);
+            valid(&outcome.value, context);
             volume(&outcome.value, r(8));
         }
     }

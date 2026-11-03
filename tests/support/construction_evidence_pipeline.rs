@@ -85,7 +85,7 @@ fn run(source: &str, translation: &str, cache: &str) {
         cube.triangles.to_vec(),
         csgrs::ConstructionEvidence::DECLARED_COORDINATES,
     );
-    let strict = solid::convex_hull_with_context(&input, &GeometryContext::STRICT);
+    let strict = solid::convex_hull_with_context(&input, GeometryContext::STRICT);
     println!(
         "source-strict\t{:?}",
         strict.as_ref().map(|out| out.certainty)
@@ -96,7 +96,7 @@ fn run(source: &str, translation: &str, cache: &str) {
         assert_eq!(strict.unwrap().certainty, GeometryCertainty::Certified);
     }
     let hull =
-        solid::convex_hull_with_context(&input, &GeometryContext::APPROXIMATE_512).unwrap();
+        solid::convex_hull_with_context(&input, GeometryContext::APPROXIMATE_512).unwrap();
     let expected = if approximate {
         GeometryCertainty::Approximate512Consumed
     } else {
@@ -128,7 +128,7 @@ fn run(source: &str, translation: &str, cache: &str) {
     let shift = if lossy { q(10, 3) } else { Real::from(3) };
     let matrix = Matrix4::affine_translation([shift.clone(), 5.into(), 7.into()]);
     let transformed =
-        solid::transform_with_context(&hull.value, &matrix, &GeometryContext::STRICT).unwrap();
+        solid::transform_with_context(&hull.value, &matrix, GeometryContext::STRICT).unwrap();
     assert_eq!(transformed.certainty, GeometryCertainty::Certified);
     assert_eq!(transformed.value.construction_evidence(), evidence);
     println!(
@@ -140,14 +140,14 @@ fn run(source: &str, translation: &str, cache: &str) {
     let right = solid::transform_with_context(
         &cube,
         &Matrix4::affine_translation([&shift + Real::one(), 5.into(), 7.into()]),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     let composed = solid::boolean_with_context(
         &transformed.value,
         &right.value,
         BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(composed.certainty, GeometryCertainty::Certified);
@@ -208,7 +208,7 @@ fn run(source: &str, translation: &str, cache: &str) {
         &parsed,
         &solid::empty(),
         BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(repeated.certainty, GeometryCertainty::Certified);

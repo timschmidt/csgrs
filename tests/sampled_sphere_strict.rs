@@ -143,11 +143,10 @@ fn readme_booleans(segments: usize, stacks: usize) {
     let sphere = sampled_sphere(ball, segments, stacks);
     let strict = GeometryContext::STRICT;
     let start = Instant::now();
-    let union = certified(cube.try_union_with_context(&sphere, &strict).unwrap());
-    let difference = certified(cube.try_difference_with_context(&sphere, &strict).unwrap());
-    let intersection =
-        certified(cube.try_intersection_with_context(&sphere, &strict).unwrap());
-    let xor = certified(cube.try_xor_with_context(&sphere, &strict).unwrap());
+    let union = certified(cube.try_union_with_context(&sphere, strict).unwrap());
+    let difference = certified(cube.try_difference_with_context(&sphere, strict).unwrap());
+    let intersection = certified(cube.try_intersection_with_context(&sphere, strict).unwrap());
+    let xor = certified(cube.try_xor_with_context(&sphere, strict).unwrap());
     eprintln!(
         "{segments}x{stacks}: four strict Booleans in {:?}",
         start.elapsed()
@@ -194,7 +193,7 @@ fn assert_sphere_hull(segments: usize, stacks: usize) {
     let sphere = sampled_sphere(ball, segments, stacks);
     let start = Instant::now();
     let hull =
-        certified(solid::convex_hull_with_context(&sphere, &GeometryContext::STRICT).unwrap());
+        certified(solid::convex_hull_with_context(&sphere, GeometryContext::STRICT).unwrap());
     eprintln!(
         "{segments}x{stacks}: strict sphere hull in {:?}",
         start.elapsed()
@@ -251,8 +250,8 @@ fn readme_hull_of_rotated_cube_and_sphere_union_completes() {
     );
     let strict = GeometryContext::STRICT;
     let start = Instant::now();
-    let union = certified(cube.try_union_with_context(&sphere, &strict).unwrap());
-    let hull = certified(solid::convex_hull_with_context(&union, &strict).unwrap());
+    let union = certified(cube.try_union_with_context(&sphere, strict).unwrap());
+    let hull = certified(solid::convex_hull_with_context(&union, strict).unwrap());
     eprintln!("README hull pipeline in {:?}", start.elapsed());
     // Points inside the union are inside its hull.
     for sample in [[-0.5, 0.0, 0.0], [1.5, 1.0, -0.5], [0.4, 1.0, 0.0]] {
@@ -299,17 +298,17 @@ fn strict_results_compose_through_successive_operations() {
     let strict = GeometryContext::STRICT;
     let start = Instant::now();
     let carved = certified(
-        cube.try_difference_with_context(&sampled_sphere(first, 32, 16), &strict)
+        cube.try_difference_with_context(&sampled_sphere(first, 32, 16), strict)
             .unwrap(),
     );
     let carved_time = start.elapsed();
     let filled = certified(
         carved
-            .try_union_with_context(&sampled_sphere(second, 32, 16), &strict)
+            .try_union_with_context(&sampled_sphere(second, 32, 16), strict)
             .unwrap(),
     );
     let filled_time = start.elapsed() - carved_time;
-    let hull = certified(solid::convex_hull_with_context(&filled, &strict).unwrap());
+    let hull = certified(solid::convex_hull_with_context(&filled, strict).unwrap());
     let hull_time = start.elapsed() - carved_time - filled_time;
     eprintln!(
         "successive strict operations: difference {carved_time:?}, union {filled_time:?}, hull {hull_time:?}"

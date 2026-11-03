@@ -260,7 +260,7 @@ pub fn empty() -> CurveRegion2 {
 /// canonical empty set after both arguments are validated. Negative or
 /// undecided dimensions fail; they never become successful empty geometry.
 pub fn rectangle(width: Real, length: Real) -> Result<CurveRegion2, ValidationError> {
-    rectangle_with_context(width, length, &GeometryContext::STRICT)
+    rectangle_with_context(width, length, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -275,7 +275,7 @@ pub fn square(width: Real) -> Result<CurveRegion2, ValidationError> {
 /// for zero radius. Certification concerns the sampled polygon; no analytic
 /// circle fidelity bound is implied.
 pub fn circle(radius: Real, segments: usize) -> Result<CurveRegion2, ValidationError> {
-    circle_with_context(radius, segments, &GeometryContext::STRICT)
+    circle_with_context(radius, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -283,7 +283,7 @@ pub fn circle(radius: Real, segments: usize) -> Result<CurveRegion2, ValidationE
 pub fn rectangle_with_context(
     width: Real,
     height: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = rectangle_with(width, height, &decisions)?;
@@ -293,7 +293,7 @@ pub fn rectangle_with_context(
 /// Constructs a square with the selected policy and retains predicate certainty.
 pub fn square_with_context(
     width: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     rectangle_with_context(width.clone(), width, context)
 }
@@ -302,7 +302,7 @@ pub fn square_with_context(
 pub fn circle_with_context(
     radius: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = circle_with(radius, segments, &decisions)?;
@@ -314,7 +314,7 @@ pub fn ellipse_with_context(
     width: Real,
     height: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -338,14 +338,14 @@ pub fn ellipse_with_context(
 pub fn regular_ngon_with_context(
     sides: usize,
     radius: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     circle_with_context(radius, sides, context)
 }
 
 /// Right triangle with its right-angle corner at the origin.
 pub fn right_triangle(width: Real, height: Real) -> Result<CurveRegion2, ValidationError> {
-    right_triangle_with_context(width, height, &GeometryContext::STRICT)
+    right_triangle_with_context(width, height, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -353,7 +353,7 @@ pub fn right_triangle(width: Real, height: Real) -> Result<CurveRegion2, Validat
 pub fn right_triangle_with_context(
     width: Real,
     height: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let width_sign = nonnegative_with(&width, "width", &decisions)?;
@@ -377,13 +377,13 @@ pub fn right_triangle_with_context(
 /// Requires a valid ring with at least three vertices. Use [`empty`] for
 /// canonical absence; an empty or malformed ring is an error.
 pub fn polygon(points: &[[Real; 2]]) -> Result<CurveRegion2, ValidationError> {
-    polygon_with_context(points, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    polygon_with_context(points, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Publishes a filled ring with the selected policy and aggregate certainty.
 pub fn polygon_with_context(
     points: &[[Real; 2]],
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = ring_with(points, &decisions)?;
@@ -407,13 +407,13 @@ pub fn ellipse(
     height: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    ellipse_with_context(width, height, segments, &GeometryContext::STRICT)
+    ellipse_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Regular polygon.
 pub fn regular_ngon(sides: usize, radius: Real) -> Result<CurveRegion2, ValidationError> {
-    regular_ngon_with_context(sides, radius, &GeometryContext::STRICT)
+    regular_ngon_with_context(sides, radius, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -432,7 +432,7 @@ pub fn arrow(
         shaft_width,
         head_length,
         head_width,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -443,7 +443,7 @@ pub fn arrow_with_context(
     shaft_width: Real,
     head_length: Real,
     head_width: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     for (value, name) in [
@@ -489,7 +489,7 @@ pub fn trapezoid(
         bottom_width,
         height,
         top_offset,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -500,7 +500,7 @@ pub fn trapezoid_with_context(
     bottom_width: Real,
     height: Real,
     top_offset: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     positive_with(&top_width, "top_width", &decisions)?;
@@ -530,7 +530,7 @@ pub fn star(
         num_points,
         outer_radius,
         inner_radius,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -540,7 +540,7 @@ pub fn star_with_context(
     num_points: usize,
     outer_radius: Real,
     inner_radius: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(num_points, 3, "num_points")?;
@@ -576,7 +576,7 @@ pub fn teardrop(
     length: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    teardrop_with_context(width, length, segments, &GeometryContext::STRICT)
+    teardrop_with_context(width, length, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -585,7 +585,7 @@ pub fn teardrop_with_context(
     width: Real,
     length: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 2, "segments")?;
@@ -620,7 +620,7 @@ pub fn egg(
     length: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    egg_with_context(width, length, segments, &GeometryContext::STRICT)
+    egg_with_context(width, length, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -629,7 +629,7 @@ pub fn egg_with_context(
     width: Real,
     length: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -697,7 +697,7 @@ pub fn rounded_rectangle(
         height,
         corner_radius,
         corner_segments,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -708,7 +708,7 @@ pub fn rounded_rectangle_with_context(
     height: Real,
     corner_radius: Real,
     corner_segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let point_capacity = solid::capacity::<[Real; 2]>(
@@ -793,7 +793,7 @@ pub fn squircle(
     height: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    squircle_with_context(width, height, segments, &GeometryContext::STRICT)
+    squircle_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -802,7 +802,7 @@ pub fn squircle_with_context(
     width: Real,
     height: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -836,7 +836,7 @@ pub fn keyhole(
     handle_width: Real,
     handle_height: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -862,7 +862,7 @@ pub fn reuleaux(
     sides: usize,
     diameter: Real,
     circle_segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(sides, 3, "sides")?;
@@ -903,7 +903,7 @@ pub fn ring(
     inner_diameter: Real,
     thickness: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -935,7 +935,7 @@ pub fn pie_slice(
         start_angle_deg,
         end_angle_deg,
         segments,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -946,7 +946,7 @@ pub fn pie_slice_with_context(
     start_angle_deg: Real,
     end_angle_deg: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 1, "segments")?;
@@ -989,7 +989,7 @@ pub fn heart(
     height: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    heart_with_context(width, height, segments, &GeometryContext::STRICT)
+    heart_with_context(width, height, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -998,7 +998,7 @@ pub fn heart_with_context(
     width: Real,
     height: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 8, "segments")?;
@@ -1054,7 +1054,7 @@ pub fn crescent(
     inner_radius: Real,
     offset: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 6, "segments")?;
@@ -1089,7 +1089,7 @@ pub fn supershape(
     n3: Real,
     segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    supershape_with_context(a, b, m, n1, n2, n3, segments, &GeometryContext::STRICT)
+    supershape_with_context(a, b, m, n1, n2, n3, segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -1103,7 +1103,7 @@ pub fn supershape_with_context(
     n2: Real,
     n3: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -1131,7 +1131,7 @@ pub fn circle_with_keyway(
     segments: usize,
     key_width: Real,
     key_depth: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -1163,7 +1163,7 @@ pub fn circle_with_flat(
     radius: Real,
     segments: usize,
     flat_distance: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -1191,7 +1191,7 @@ pub fn circle_with_two_flats(
     radius: Real,
     segments: usize,
     flat_distance: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(segments, 3, "segments")?;
@@ -1238,7 +1238,7 @@ pub fn involute_gear(
         clearance,
         backlash,
         segments_per_flank,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -1251,7 +1251,7 @@ pub fn involute_gear_with_context(
     clearance: Real,
     backlash: Real,
     segments_per_flank: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(teeth, 4, "teeth")?;
@@ -1295,7 +1295,7 @@ pub fn cycloidal_gear(
         generating_radius,
         clearance,
         segments_per_flank,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -1307,7 +1307,7 @@ pub fn cycloidal_gear_with_context(
     generating_radius: Real,
     clearance: Real,
     segments_per_flank: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(teeth, 3, "teeth")?;
@@ -1343,7 +1343,7 @@ pub fn involute_rack(
         pressure_angle_degrees,
         clearance,
         backlash,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -1355,7 +1355,7 @@ pub fn involute_rack_with_context(
     pressure_angle_degrees: Real,
     clearance: Real,
     backlash: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(teeth, 1, "teeth")?;
@@ -1438,7 +1438,7 @@ pub fn cycloidal_rack(
         teeth,
         clearance,
         segments_per_flank,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -1449,7 +1449,7 @@ pub fn cycloidal_rack_with_context(
     teeth: usize,
     clearance: Real,
     segments_per_flank: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(teeth, 1, "teeth")?;
@@ -1572,7 +1572,7 @@ pub fn airfoil_naca4(
         thickness,
         chord,
         samples,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -1584,7 +1584,7 @@ pub fn airfoil_naca4_with_context(
     thickness: Real,
     chord: Real,
     samples: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     solid::sample_minimum(samples, 10, "samples")?;
@@ -1943,7 +1943,7 @@ pub fn bezier_path(
     control: &[[Real; 2]],
     display_segments: usize,
 ) -> Result<CurvePath2, ValidationError> {
-    bezier_path_with_context(control, display_segments, &GeometryContext::STRICT)
+    bezier_path_with_context(control, display_segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -1953,7 +1953,7 @@ pub fn bezier_path(
 pub fn bezier_path_with_context(
     control: &[[Real; 2]],
     display_segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurvePath2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if control.len() < 2 || display_segments < 1 {
@@ -1995,7 +1995,7 @@ pub fn bezier_region(
     control: &[[Real; 2]],
     display_segments: usize,
 ) -> Result<CurveRegion2, ValidationError> {
-    bezier_region_with_context(control, display_segments, &GeometryContext::STRICT)
+    bezier_region_with_context(control, display_segments, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -2003,7 +2003,7 @@ pub fn bezier_region(
 pub fn bezier_region_with_context(
     control: &[[Real; 2]],
     display_segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let path = decisions.consume_geometry(bezier_path_with_context(
@@ -2033,7 +2033,7 @@ pub fn bspline_path(
         control,
         degree,
         display_segments_per_span,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
 }
@@ -2043,7 +2043,7 @@ pub fn bspline_path_with_context(
     control: &[[Real; 2]],
     degree: usize,
     display_segments_per_span: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurvePath2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let minimum_control_count = degree
@@ -2090,7 +2090,7 @@ pub fn hilbert_strings(
     order: usize,
     padding: Real,
 ) -> Result<Vec<CurveString2>, ValidationError> {
-    hilbert_strings_with_context(boundary, order, padding, &GeometryContext::STRICT)
+    hilbert_strings_with_context(boundary, order, padding, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -2099,7 +2099,7 @@ pub fn hilbert_strings_with_context(
     boundary: &CurveRegion2,
     order: usize,
     padding: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Vec<CurveString2>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let paths = decisions
@@ -2150,7 +2150,7 @@ pub fn hilbert_paths(
     order: usize,
     padding: Real,
 ) -> Result<Vec<CurvePathRegionTrim2>, ValidationError> {
-    hilbert_paths_with_context(boundary, order, padding, &GeometryContext::STRICT)
+    hilbert_paths_with_context(boundary, order, padding, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -2162,7 +2162,7 @@ pub fn hilbert_paths_with_context(
     boundary: &CurveRegion2,
     order: usize,
     padding: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Vec<CurvePathRegionTrim2>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if order == 0
@@ -2252,7 +2252,7 @@ pub fn hilbert_paths_with_context(
 /// are sampled; predicate certainty does not certify fidelity to the source curves.
 pub fn try_triangulate(
     input: &CurveRegion2,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let mesh = try_triangulate_with(input, &decisions)?;
@@ -2324,7 +2324,7 @@ fn try_modeling_profiles_with(
 /// [`SAMPLED_PROFILE_CHORD_ERROR`].
 pub fn try_finite_profiles(
     input: &CurveRegion2,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Vec<FiniteRegionProfile2>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let profiles = try_finite_profiles_with(input, &decisions)?;
@@ -2355,7 +2355,7 @@ fn try_finite_profiles_with(
 pub fn try_extrude(
     region: &CurveRegion2,
     height: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     try_extrude_vector(
         region,
@@ -2371,7 +2371,7 @@ pub fn try_extrude(
 pub fn try_extrude_vector(
     region: &CurveRegion2,
     direction: Vector3,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let mesh = try_extrude_vector_with(region, direction, &decisions)?;
@@ -2651,7 +2651,7 @@ pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 2 {
@@ -2768,7 +2768,7 @@ pub fn revolve_from(
     start_degrees: Real,
     angle_degrees: Real,
     segments: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let swept = revolve(region, angle_degrees, segments, context)?;
     if start_degrees == Real::zero() {
@@ -3124,7 +3124,7 @@ fn sweep_initial_frame(
 pub fn try_sweep(
     region: &CurveRegion2,
     path: &[Point3],
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let mut deduplicated = Vec::with_capacity(path.len());
@@ -3286,7 +3286,7 @@ pub fn extrude_twisted(
     twist_degrees: Real,
     end_scale: [Real; 2],
     slices: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if slices < 1 {
@@ -3399,14 +3399,8 @@ pub fn metaballs(
     iso_value: Real,
     padding: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    metaballs_with_context(
-        balls,
-        resolution,
-        iso_value,
-        padding,
-        &GeometryContext::STRICT,
-    )
-    .map(GeometryOutcome::into_value)
+    metaballs_with_context(balls, resolution, iso_value, padding, GeometryContext::STRICT)
+        .map(GeometryOutcome::into_value)
 }
 
 /// Planar metaball sampling with the selected extraction policy and certainty.
@@ -3417,7 +3411,7 @@ pub fn metaballs_with_context(
     resolution: (usize, usize),
     iso_value: Real,
     padding: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     super::metaballs::sample(balls, resolution, iso_value, padding, context)
 }
@@ -3446,7 +3440,7 @@ pub fn truetype_text(
     font_data: &[u8],
     scale: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    truetype_text_with_context(text, font_data, scale, &GeometryContext::STRICT)
+    truetype_text_with_context(text, font_data, scale, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3456,7 +3450,7 @@ pub fn truetype_text_with_context(
     text: &str,
     font_data: &[u8],
     scale: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     positive_with(&scale, "font scale", &decisions)?;
@@ -3478,7 +3472,7 @@ pub fn hershey_strings(
     font: &hypercurve::hershey::Font<'_>,
     size: Real,
 ) -> Result<Vec<CurveString2>, ValidationError> {
-    hershey_strings_with_context(text, font, size, &GeometryContext::STRICT)
+    hershey_strings_with_context(text, font, size, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3488,7 +3482,7 @@ pub fn hershey_strings_with_context(
     text: &str,
     font: &hypercurve::hershey::Font<'_>,
     size: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Vec<CurveString2>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let strings = decisions.exact_curve(|| hypercurve::hershey::strings(text, font, size))?;
@@ -3523,7 +3517,7 @@ pub fn transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
 ) -> Result<CurveRegion2, ValidationError> {
-    transformed_with_context(input, matrix, &GeometryContext::STRICT)
+    transformed_with_context(input, matrix, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3531,7 +3525,7 @@ pub fn transformed(
 pub fn transformed_with_context(
     input: &CurveRegion2,
     matrix: &Matrix4,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     for value in [&matrix.0[3][0], &matrix.0[3][1]] {
@@ -3595,7 +3589,7 @@ pub fn translated(
     x: Real,
     y: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    translated_with_context(input, x, y, &GeometryContext::STRICT)
+    translated_with_context(input, x, y, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3604,7 +3598,7 @@ pub fn translated_with_context(
     input: &CurveRegion2,
     x: Real,
     y: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = decisions.exact_curve(|| {
@@ -3625,7 +3619,7 @@ pub fn rotated(
     input: &CurveRegion2,
     z_degrees: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    rotated_with_context(input, z_degrees, &GeometryContext::STRICT)
+    rotated_with_context(input, z_degrees, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3633,7 +3627,7 @@ pub fn rotated(
 pub fn rotated_with_context(
     input: &CurveRegion2,
     z_degrees: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let radians = (z_degrees * Real::pi() / Real::from(180_u16)).expect("180 is nonzero");
@@ -3662,7 +3656,7 @@ pub fn scaled(
     x: Real,
     y: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    scaled_with_context(input, x, y, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    scaled_with_context(input, x, y, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Applies the curve transform with the selected policy and aggregate certainty.
@@ -3670,7 +3664,7 @@ pub fn scaled_with_context(
     input: &CurveRegion2,
     x: Real,
     y: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let region = decisions.exact_curve(|| {
@@ -3693,7 +3687,7 @@ pub fn contains_xy(
     x: Real,
     y: Real,
 ) -> Result<Option<bool>, ValidationError> {
-    contains_xy_with_context(input, x, y, &GeometryContext::STRICT)
+    contains_xy_with_context(input, x, y, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -3704,7 +3698,7 @@ pub fn contains_xy_with_context(
     input: &CurveRegion2,
     x: Real,
     y: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Option<bool>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let classification =
@@ -3725,13 +3719,13 @@ pub fn contains_xy_with_context(
 /// certified envelope of its source curve over a rational parameter interval,
 /// which encloses the region but can be looser; see `CurveRegion2::bounds`.
 pub fn bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
-    bounding_box_with_context(input, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    bounding_box_with_context(input, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Computes curve bounds with the selected policy and aggregate certainty.
 pub fn bounding_box_with_context(
     input: &CurveRegion2,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Option<Aabb>>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let bounds = decisions.exact_curve(|| input.bounds())?.map(|bounds| {
@@ -3767,8 +3761,7 @@ mod tests {
         }
         let unit = square(Real::one()).unwrap();
         assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 1);
-        let warm =
-            square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512).unwrap();
+        let warm = square_with_context(Real::one(), GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(warm.certainty, crate::GeometryCertainty::Certified);
         let scaled = scaled(&warm.value, Real::from(2), Real::one()).unwrap();
         assert_eq!(scaled.filled_area().unwrap(), Some(Real::from(2)));
@@ -3784,7 +3777,7 @@ mod tests {
         );
         REGION_RING_CACHE.with_borrow_mut(Vec::clear);
         let outcome =
-            square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512).unwrap();
+            square_with_context(Real::one(), GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(outcome.certainty, crate::GeometryCertainty::Certified);
         assert_eq!(REGION_RING_CACHE.with_borrow(Vec::len), 0);
         let child = std::thread::spawn(|| {
@@ -3835,10 +3828,10 @@ mod tests {
             Point3::new(Real::zero(), Real::zero(), Real::one()),
         ];
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-            let empty = square_with_context(zero.clone(), &context).unwrap();
+            let empty = square_with_context(zero.clone(), context).unwrap();
             assert!(empty.value.is_empty());
             assert_eq!(empty.certainty, crate::GeometryCertainty::Certified);
-            let swept = try_sweep(&profile, &path, &context).unwrap();
+            let swept = try_sweep(&profile, &path, context).unwrap();
             assert_eq!(swept.certainty, crate::GeometryCertainty::Certified);
             assert_exact_solid_boundary(&swept.value, "certified duplicate sweep point");
             let six_volume =
@@ -3917,7 +3910,7 @@ mod tests {
             GeometryContext::APPROXIMATE_512,
             GeometryContext::STRICT,
         ] {
-            let profiles = try_finite_profiles(&region, &context);
+            let profiles = try_finite_profiles(&region, context);
             if context == GeometryContext::STRICT {
                 let error = profiles.unwrap_err();
                 assert_eq!(error.kind(), crate::errors::ValidationErrorKind::Undecided);
@@ -3942,7 +3935,7 @@ mod tests {
         let region: CurveRegion2 = circle(Real::from(2_u8), 32).expect("valid planar fixture");
         assert!(!region.is_empty());
         let mesh: TriangleMesh =
-            try_extrude(&region, Real::from(3_u8), &GeometryContext::STRICT)
+            try_extrude(&region, Real::from(3_u8), GeometryContext::STRICT)
                 .expect("native extrusion")
                 .into_value();
         assert!(!mesh.triangles.is_empty());
@@ -3954,16 +3947,15 @@ mod tests {
     #[test]
     fn profile_solid_constructors_share_closed_indexed_topology() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
-        let linear = try_extrude(&square, Real::from(2_u8), &GeometryContext::STRICT)
+        let linear = try_extrude(&square, Real::from(2_u8), GeometryContext::STRICT)
             .expect("linear extrusion")
             .into_value();
         assert!(linear.is_closed_manifold(), "linear extrusion");
         assert_exact_solid_boundary(&linear, "linear extrusion");
         assert!(signed_volume(&linear) > 0.0);
-        let linear_negative =
-            try_extrude(&square, Real::from(-2_i8), &GeometryContext::STRICT)
-                .expect("negative linear extrusion")
-                .into_value();
+        let linear_negative = try_extrude(&square, Real::from(-2_i8), GeometryContext::STRICT)
+            .expect("negative linear extrusion")
+            .into_value();
         assert!(
             linear_negative.is_closed_manifold(),
             "negative linear extrusion"
@@ -3976,7 +3968,7 @@ mod tests {
             Real::from(45_u8),
             [Real::one(), Real::one()],
             4,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .expect("valid twisted extrusion")
         .into_value();
@@ -3989,7 +3981,7 @@ mod tests {
             Point3::new(Real::zero(), Real::zero(), Real::one()),
             Point3::new(Real::zero(), Real::zero(), Real::from(2_u8)),
         ];
-        let swept = try_sweep(&square, &path, &GeometryContext::STRICT)
+        let swept = try_sweep(&square, &path, GeometryContext::STRICT)
             .expect("valid sweep")
             .into_value();
         assert!(swept.is_closed_manifold(), "sweep");
@@ -4003,14 +3995,14 @@ mod tests {
             [Real::one(), Real::one()],
         ])
         .expect("valid radial profile fixture");
-        let revolved = revolve(&radial, Real::from(360_u16), 16, &GeometryContext::STRICT)
+        let revolved = revolve(&radial, Real::from(360_u16), 16, GeometryContext::STRICT)
             .expect("valid revolution")
             .into_value();
         assert!(revolved.is_closed_manifold(), "revolution");
         assert_exact_solid_boundary(&revolved, "revolution");
         assert!(signed_volume(&revolved) > 0.0);
         for angle in [Real::from(180_u16), Real::from(-180_i16)] {
-            let partial = revolve(&radial, angle, 8, &GeometryContext::STRICT)
+            let partial = revolve(&radial, angle, 8, GeometryContext::STRICT)
                 .expect("valid partial revolution")
                 .into_value();
             assert!(partial.is_closed_manifold(), "partial revolution");
@@ -4033,29 +4025,29 @@ mod tests {
             b,
         ];
 
-        assert!(try_sweep(&square, &path, &GeometryContext::STRICT).is_err());
+        assert!(try_sweep(&square, &path, GeometryContext::STRICT).is_err());
     }
 
     #[test]
     fn degenerate_profile_solid_requests_do_not_claim_solids() {
         let square = square(Real::from(2_u8)).expect("valid planar fixture");
-        assert!(try_extrude(&square, Real::zero(), &GeometryContext::STRICT).is_err());
+        assert!(try_extrude(&square, Real::zero(), GeometryContext::STRICT).is_err());
         assert!(
             try_extrude_vector(
                 &square,
                 Vector3::from_xyz(Real::one(), Real::zero(), Real::zero()),
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .is_err()
         );
-        assert!(try_sweep(&square, &[Point3::origin()], &GeometryContext::STRICT).is_err());
-        assert!(revolve(&square, Real::from(360_u16), 2, &GeometryContext::STRICT).is_err());
+        assert!(try_sweep(&square, &[Point3::origin()], GeometryContext::STRICT).is_err());
+        assert!(revolve(&square, Real::from(360_u16), 2, GeometryContext::STRICT).is_err());
         assert!(
             revolve(
                 &square,
                 Real::from(180_u16),
                 usize::MAX,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .is_err()
         );
@@ -4066,7 +4058,7 @@ mod tests {
                 Real::zero(),
                 [Real::zero(), Real::one()],
                 2,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .is_err()
         );
@@ -4082,8 +4074,8 @@ mod tests {
             Point3::new(Real::zero(), Real::zero(), Real::one()),
         ];
 
-        assert!(try_sweep(&square, &path, &GeometryContext::STRICT).is_err());
-        let outcome = try_sweep(&square, &path, &GeometryContext::APPROXIMATE_512)
+        assert!(try_sweep(&square, &path, GeometryContext::STRICT).is_err());
+        let outcome = try_sweep(&square, &path, GeometryContext::APPROXIMATE_512)
             .expect("approximate-512 should deduplicate the symbolic zero point");
         assert_eq!(
             outcome.certainty,
@@ -4095,7 +4087,7 @@ mod tests {
     #[test]
     fn sweep_scalar_failures_keep_their_outcome_category() {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-            let decisions = GeometryDecisions::new(&context);
+            let decisions = GeometryDecisions::new(context);
             for problem in [
                 hyperreal::Problem::UnknownZero,
                 hyperreal::Problem::UnknownCertificate,
@@ -4161,39 +4153,39 @@ mod tests {
             Real::zero(),
             Real::one(),
             16,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(invalid_compound(ring(
             Real::one(),
             negative.clone(),
             16,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(invalid_compound(crescent(
             Real::one(),
             Real::from(2_u8),
             Real::zero(),
             16,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(invalid_compound(circle_with_keyway(
             Real::one(),
             16,
             Real::from(2_u8),
             Real::one(),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(invalid_compound(circle_with_flat(
             Real::one(),
             16,
             Real::one(),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(invalid_compound(circle_with_two_flats(
             Real::one(),
             16,
             Real::one(),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(
             airfoil_naca4(
@@ -4230,7 +4222,7 @@ mod tests {
             usize::MAX,
             Real::one(),
             16,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )));
         assert!(teardrop(Real::one(), Real::from(2_u8), usize::MAX).is_err());
         assert!(
@@ -4429,13 +4421,9 @@ mod tests {
                     (-&epsilon, Some(true)),
                     (epsilon.clone(), Some(false)),
                 ] {
-                    let location = contains_xy_with_context(
-                        &rack,
-                        x.clone(),
-                        y,
-                        &GeometryContext::STRICT,
-                    )
-                    .expect("exact rack pitch contact and displaced membership");
+                    let location =
+                        contains_xy_with_context(&rack, x.clone(), y, GeometryContext::STRICT)
+                            .expect("exact rack pitch contact and displaced membership");
                     assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
                     assert_eq!(location.value, expected);
                 }
@@ -4556,7 +4544,7 @@ mod tests {
         assert!(bezier_path(&controls, 0).is_err());
         assert!(bspline_path(&controls, 2, 0).is_err());
         assert!(matches!(
-            bezier_region_with_context(&controls, 16, &GeometryContext::STRICT),
+            bezier_region_with_context(&controls, 16, GeometryContext::STRICT),
             Err(ValidationError::InvalidArguments)
         ));
 
@@ -4570,7 +4558,7 @@ mod tests {
 
         let mesh = try_triangulate(
             &square(two).expect("valid planar fixture"),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .expect("square triangulation")
         .into_value();
@@ -4593,11 +4581,11 @@ mod tests {
             result.expect("nominal compound region").into_value()
         };
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-            let crescent = crescent(two.clone(), one.clone(), one.clone(), 16, &context)
+            let crescent = crescent(two.clone(), one.clone(), one.clone(), 16, context)
                 .expect("the symbolic crescent now has a strict scalar proof");
             assert_eq!(crescent.certainty, crate::GeometryCertainty::Certified);
             assert!(!crescent.value.is_empty());
-            let profiles = try_finite_profiles(&crescent.value, &GeometryContext::STRICT)
+            let profiles = try_finite_profiles(&crescent.value, GeometryContext::STRICT)
                 .expect("the certified crescent retains projectable boundary topology");
             assert_eq!(profiles.certainty, crate::GeometryCertainty::Certified);
             assert!(!profiles.value.is_empty());
@@ -4608,7 +4596,7 @@ mod tests {
                     &crescent.value,
                     Real::from(x),
                     Real::zero(),
-                    &GeometryContext::STRICT,
+                    GeometryContext::STRICT,
                 )
                 .expect("certified crescent membership");
                 assert_eq!(location.certainty, crate::GeometryCertainty::Certified);
@@ -4644,19 +4632,14 @@ mod tests {
                 one.clone(),
                 two.clone(),
                 16,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
-            compound(reuleaux(
-                3,
-                two.clone(),
-                24,
-                &GeometryContext::APPROXIMATE_512,
-            )),
+            compound(reuleaux(3, two.clone(), 24, GeometryContext::APPROXIMATE_512)),
             compound(ring(
                 one.clone(),
                 three_quarters.clone(),
                 16,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             pie_slice(one.clone(), Real::zero(), Real::from(90_u8), 8)
                 .expect("valid sampled profile fixture"),
@@ -4676,19 +4659,19 @@ mod tests {
                 24,
                 one.clone(),
                 three_quarters.clone(),
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             compound(circle_with_flat(
                 two.clone(),
                 24,
                 one.clone(),
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             compound(circle_with_two_flats(
                 two.clone(),
                 24,
                 one.clone(),
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             involute_gear(
                 one.clone(),
@@ -4711,7 +4694,7 @@ mod tests {
         for (index, shape) in shapes.into_iter().enumerate() {
             assert!(!shape.is_empty(), "planar catalog entry {index}");
             assert!(
-                !try_finite_profiles(&shape, &GeometryContext::APPROXIMATE_512)
+                !try_finite_profiles(&shape, GeometryContext::APPROXIMATE_512)
                     .unwrap_or_else(|error| {
                         panic!("finite catalog profile {index} failed: {error}")
                     })
@@ -4798,7 +4781,7 @@ mod native_boundary_source_probe {
             mesh.is_closed_manifold_geometry(&context.mesh_context())
                 .unwrap_err(),
         ];
-        let decisions = GeometryDecisions::new(&context);
+        let decisions = GeometryDecisions::new(context);
         let modeled = [
             validate_surface_mesh(mesh.clone(), &decisions).unwrap_err(),
             validate_closed_mesh(mesh, false, &decisions).unwrap_err(),
@@ -4836,7 +4819,7 @@ mod native_boundary_source_probe {
                 .unwrap()
                 .value
         );
-        let decisions = GeometryDecisions::new(&context);
+        let decisions = GeometryDecisions::new(context);
         for error in [
             validate_surface_mesh(mesh.clone(), &decisions).unwrap_err(),
             validate_closed_mesh(mesh, false, &decisions).unwrap_err(),

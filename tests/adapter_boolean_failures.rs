@@ -28,7 +28,7 @@ fn native_failure(
     a: &TriangleMesh,
     b: &TriangleMesh,
     operation: Operation,
-    context: Option<&GeometryContext>,
+    context: Option<GeometryContext>,
 ) -> ValidationError {
     let result = match (operation, context) {
         (Operation::Union, None) => a.try_union(b),
@@ -55,7 +55,7 @@ fn adapter_failure<A: ScalarAdapter>(
     a: &ScalarMesh<A>,
     b: &ScalarMesh<A>,
     operation: Operation,
-    context: Option<&GeometryContext>,
+    context: Option<GeometryContext>,
 ) -> AdapterError {
     let result = match (operation, context) {
         (Operation::Union, None) => a.union(b),
@@ -83,7 +83,7 @@ fn adapter_failure<A: ScalarAdapter>(
 fn preserves_failure<A: ScalarAdapter>(
     a: TriangleMesh,
     b: TriangleMesh,
-    contexts: &[Option<&GeometryContext>],
+    contexts: &[Option<GeometryContext>],
     kind: ValidationErrorKind,
 ) -> (usize, usize) {
     let a = ScalarMesh::<A>::from_native(a);
@@ -118,8 +118,8 @@ fn invalid_cases<A: ScalarAdapter>() -> (usize, usize) {
     let invalid = TriangleMesh::new(Vec::new(), vec![hypermesh::Triangle::new(0, 1, 2)]);
     let contexts = [
         None,
-        Some(&GeometryContext::STRICT),
-        Some(&GeometryContext::APPROXIMATE_512),
+        Some(GeometryContext::STRICT),
+        Some(GeometryContext::APPROXIMATE_512),
     ];
     let (mut structured, mut total) = (0, 0);
     for other in [solid::empty(), solid::cube(Real::one()).unwrap()] {
@@ -145,7 +145,7 @@ fn undecided_cases<A: ScalarAdapter>() -> (usize, usize) {
     preserves_failure::<A>(
         cube,
         shifted,
-        &[None, Some(&GeometryContext::STRICT)],
+        &[None, Some(GeometryContext::STRICT)],
         ValidationErrorKind::Undecided,
     )
 }

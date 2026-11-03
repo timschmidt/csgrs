@@ -107,14 +107,14 @@ fn boundary_failures<A: ScalarAdapter>() {
     let large = ScalarCurve::<A>::from_native(big.clone());
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         let angle = A::from_real(&Real::from(360)).unwrap();
-        let native = curve::revolve(&square, 360.into(), 1, &context).unwrap_err();
+        let native = curve::revolve(&square, 360.into(), 1, context).unwrap_err();
         let error = raw
-            .revolve(angle, 1, &context)
+            .revolve(angle, 1, context)
             .err()
             .expect("invalid resolution fails");
         assert_cause(error, native, ValidationErrorKind::InvalidInput);
-        let native = curve::try_finite_profiles(&big, &context).unwrap_err();
-        let error = large.region_profiles(&context).unwrap_err();
+        let native = curve::try_finite_profiles(&big, context).unwrap_err();
+        let error = large.region_profiles(context).unwrap_err();
         assert_cause(error, native, ValidationErrorKind::InvalidInput);
     }
 }
@@ -132,9 +132,9 @@ fn unresolved_revolve_angle_is_not_invalid_input_or_empty_geometry() {
     let square = curve::square(2.into()).unwrap();
     let raw = ScalarCurve::<RawReal>::from_native(square.clone());
     let native =
-        curve::revolve(&square, unresolved_zero(), 4, &GeometryContext::STRICT).unwrap_err();
+        curve::revolve(&square, unresolved_zero(), 4, GeometryContext::STRICT).unwrap_err();
     let error = raw
-        .revolve(unresolved_zero(), 4, &GeometryContext::STRICT)
+        .revolve(unresolved_zero(), 4, GeometryContext::STRICT)
         .unwrap_err();
     assert_cause(error, native, ValidationErrorKind::Undecided);
 }

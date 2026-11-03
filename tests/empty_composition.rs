@@ -62,7 +62,7 @@ fn empty_identities_remain_composable_under_both_policies() {
     let cube = solid::cube(Real::from(2)).expect("valid primitive fixture");
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for operation in OPERATIONS {
-            let outcome = solid::boolean_with_context(&empty, &empty, operation, &context)
+            let outcome = solid::boolean_with_context(&empty, &empty, operation, context)
                 .expect("two canonical empty sets compose");
             assert_eq!(outcome.certainty, GeometryCertainty::Certified);
             assert_empty(&outcome.value);
@@ -74,7 +74,7 @@ fn empty_identities_remain_composable_under_both_policies() {
                 } else {
                     (&cube, &empty)
                 };
-                let outcome = solid::boolean_with_context(left, right, operation, &context)
+                let outcome = solid::boolean_with_context(left, right, operation, context)
                     .expect("canonical empty is a supported modeling operand");
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 if operation == BooleanOp::Intersection
@@ -150,7 +150,7 @@ fn empty_shortcuts_preserve_invalid_operand_diagnostics_and_indices() {
                     } else {
                         (&empty, mesh)
                     };
-                    let error = solid::boolean_with_context(left, right, operation, &context)
+                    let error = solid::boolean_with_context(left, right, operation, context)
                         .expect_err("an empty operand must not conceal malformed geometry");
                     match kind {
                         0 => assert_eq!(error, HypermeshError::EmptyMesh { mesh_index }),
@@ -245,7 +245,7 @@ fn empty_operand_does_not_erase_uncertainty_in_input_validation() {
                 GeometryContext::APPROXIMATE_512,
                 GeometryContext::STRICT,
             ] {
-                let result = solid::boolean_with_context(left, right, operation, &context);
+                let result = solid::boolean_with_context(left, right, operation, context);
                 if context == GeometryContext::STRICT {
                     assert!(
                         matches!(
@@ -364,7 +364,7 @@ fn warming_then_mutating_an_operand_cannot_hide_invalid_topology() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for operation in OPERATIONS {
             assert_eq!(
-                solid::boolean_with_context(&empty, &source, operation, &context).unwrap_err(),
+                solid::boolean_with_context(&empty, &source, operation, context).unwrap_err(),
                 HypermeshError::OpenInput {
                     mesh_index: 1,
                     boundary_edges: 3

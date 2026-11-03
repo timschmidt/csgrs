@@ -83,7 +83,7 @@ fn original_published_sampling_resolutions_retain_tangent_vertices() {
             height.clone(),
             requested_radius,
             samples,
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap();
         assert_eq!(result.certainty, GeometryCertainty::Certified);
@@ -154,7 +154,7 @@ fn pipeline() -> csgrs::TriangleMesh {
         2.into(),
         q(1, 2),
         1,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(source.certainty, GeometryCertainty::Certified);
@@ -162,7 +162,7 @@ fn pipeline() -> csgrs::TriangleMesh {
         &source.value,
         10.into(),
         (-3).into(),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(translated.certainty, GeometryCertainty::Certified);
@@ -184,7 +184,7 @@ fn pipeline() -> csgrs::TriangleMesh {
             .unwrap()
             .is_empty()
     );
-    let solid = curve::try_extrude(&cut, 3.into(), &GeometryContext::STRICT).unwrap();
+    let solid = curve::try_extrude(&cut, 3.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(solid.certainty, GeometryCertainty::Certified);
     assert_solid(&solid.value);
     solid.value
@@ -214,7 +214,7 @@ fn dyadic_profile_pipeline_survives_the_obj_boundary_without_value_loss() {
     let mesh = pipeline();
     let exported = csgrs::io::obj::to_obj(&mesh, "rounded-hole").unwrap();
     let restored =
-        csgrs::io::obj::from_obj_with_context(exported.as_bytes(), &GeometryContext::STRICT)
+        csgrs::io::obj::from_obj_with_context(exported.as_bytes(), GeometryContext::STRICT)
             .unwrap();
     assert_eq!(restored.certainty, GeometryCertainty::Certified);
     // All coordinates in this fixture are dyadic and exactly representable at
@@ -235,7 +235,7 @@ fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
             4.into(),
             radius.clone(),
             1,
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -244,7 +244,7 @@ fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
         4.into(),
         radius.clone(),
         1,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(result.certainty, GeometryCertainty::Approximate512Consumed);
@@ -255,7 +255,7 @@ fn approximate_clamp_facts_remain_qualified_and_do_not_warm_strict_success() {
             4.into(),
             radius,
             1,
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -277,10 +277,10 @@ fn public_gerber_obrounds_retain_straight_sides_through_format_roundtrip() {
     use hypercurve::{Point2, RegionPointLocation};
     let source = b"%FSLAX46Y46*%\n%MOMM*%\n%ADD10O,4.0X2.0*%\nD10*\nX0Y0D03*\nM02*\n";
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-        let imported = gerber::import_gerber_with_context(source, &context).unwrap();
+        let imported = gerber::import_gerber_with_context(source, context).unwrap();
         assert_eq!(imported.certainty, GeometryCertainty::Certified);
         let exported = gerber::export_gerber(&imported.value.0).unwrap();
-        let restored = gerber::import_gerber_with_context(&exported, &context).unwrap();
+        let restored = gerber::import_gerber_with_context(&exported, context).unwrap();
         for region in [&imported.value.0, &restored.value.0] {
             for (x, y, expected) in [
                 (-1, -1, RegionPointLocation::Boundary),

@@ -65,11 +65,11 @@ fn invalid_inputs_and_derived_geometry_fail_through_every_primary_family() {
     }
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for result in [
-            curve::involute_gear_with_context(r(-1), 16, r(20), r(0), r(0), 4, &context),
-            curve::cycloidal_gear_with_context(r(1), 16, r(-1), r(0), 4, &context),
-            curve::involute_rack_with_context(r(1), 4, r(0), r(0), r(0), &context),
-            curve::cycloidal_rack_with_context(r(1), 4, r(-1), 8, &context),
-            curve::airfoil_naca4_with_context(r(-1), r(4), r(12), r(1), 20, &context),
+            curve::involute_gear_with_context(r(-1), 16, r(20), r(0), r(0), 4, context),
+            curve::cycloidal_gear_with_context(r(1), 16, r(-1), r(0), 4, context),
+            curve::involute_rack_with_context(r(1), 4, r(0), r(0), r(0), context),
+            curve::cycloidal_rack_with_context(r(1), 4, r(-1), 8, context),
+            curve::airfoil_naca4_with_context(r(-1), r(4), r(12), r(1), 20, context),
         ] {
             failure(result, InvalidInput);
         }
@@ -83,9 +83,9 @@ fn invalid_inputs_and_derived_geometry_fail_through_every_primary_family() {
                     r(0),
                     4,
                     height.clone(),
-                    &context,
+                    context,
                 ),
-                solid::spur_gear_cycloid(r(0), 16, r(1), r(0), 4, height.clone(), &context),
+                solid::spur_gear_cycloid(r(0), 16, r(1), r(0), 4, height.clone(), context),
                 solid::helical_involute_gear(
                     r(0),
                     16,
@@ -96,7 +96,7 @@ fn invalid_inputs_and_derived_geometry_fail_through_every_primary_family() {
                     height.clone(),
                     r(10),
                     3,
-                    &context,
+                    context,
                 ),
             ] {
                 failure(result, InvalidInput);
@@ -110,28 +110,20 @@ fn every_sampling_family_rejects_capacity_overflow_before_allocation() {
     for count in [usize::MAX, usize::MAX / 2] {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
             for result in [
-                curve::involute_gear_with_context(
-                    r(1),
-                    16,
-                    r(20),
-                    r(0),
-                    r(0),
-                    count,
-                    &context,
-                ),
-                curve::involute_gear_with_context(r(1), count, r(20), r(0), r(0), 4, &context),
-                curve::cycloidal_gear_with_context(r(1), 16, r(1), r(0), count, &context),
-                curve::cycloidal_gear_with_context(r(1), count, r(1), r(0), 4, &context),
-                curve::involute_rack_with_context(r(1), count, r(20), r(0), r(0), &context),
-                curve::cycloidal_rack_with_context(r(1), 4, r(0), count, &context),
-                curve::cycloidal_rack_with_context(r(1), count, r(0), 8, &context),
-                curve::airfoil_naca4_with_context(r(0), r(0), r(12), r(1), count, &context),
+                curve::involute_gear_with_context(r(1), 16, r(20), r(0), r(0), count, context),
+                curve::involute_gear_with_context(r(1), count, r(20), r(0), r(0), 4, context),
+                curve::cycloidal_gear_with_context(r(1), 16, r(1), r(0), count, context),
+                curve::cycloidal_gear_with_context(r(1), count, r(1), r(0), 4, context),
+                curve::involute_rack_with_context(r(1), count, r(20), r(0), r(0), context),
+                curve::cycloidal_rack_with_context(r(1), 4, r(0), count, context),
+                curve::cycloidal_rack_with_context(r(1), count, r(0), 8, context),
+                curve::airfoil_naca4_with_context(r(0), r(0), r(12), r(1), count, context),
             ] {
                 assert!(matches!(result, Err(ValidationError::CapacityOverflow)));
             }
             for result in [
-                solid::spur_gear_involute(r(1), 16, r(20), r(0), r(0), count, r(1), &context),
-                solid::spur_gear_cycloid(r(1), 16, r(1), r(0), count, r(1), &context),
+                solid::spur_gear_involute(r(1), 16, r(20), r(0), r(0), count, r(1), context),
+                solid::spur_gear_cycloid(r(1), 16, r(1), r(0), count, r(1), context),
                 solid::helical_involute_gear(
                     r(1),
                     16,
@@ -142,7 +134,7 @@ fn every_sampling_family_rejects_capacity_overflow_before_allocation() {
                     r(1),
                     r(10),
                     3,
-                    &context,
+                    context,
                 ),
             ] {
                 failure(result, ValidationErrorKind::ResourceExhausted);
@@ -177,7 +169,7 @@ fn undecided_parameters_do_not_become_empty_profiles_or_solids() {
                 r(0),
                 4,
                 r(1),
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
             solid::spur_gear_cycloid(
                 unresolved_zero(),
@@ -186,7 +178,7 @@ fn undecided_parameters_do_not_become_empty_profiles_or_solids() {
                 r(0),
                 4,
                 r(1),
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
             solid::helical_involute_gear(
                 unresolved_zero(),
@@ -198,7 +190,7 @@ fn undecided_parameters_do_not_become_empty_profiles_or_solids() {
                 r(1),
                 r(10),
                 3,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             ),
         ] {
             failure(result, ValidationErrorKind::Undecided);
@@ -229,7 +221,7 @@ fn independent_rack_area_membership_and_extrusion_compose() {
     let area = q(15, 4) * Real::pi() + q(29, 24) * r(3).sqrt().unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         let rack = profile(
-            curve::involute_rack_with_context(r(1), 2, r(30), r(0), r(0), &context).unwrap(),
+            curve::involute_rack_with_context(r(1), 2, r(30), r(0), r(0), context).unwrap(),
         );
         exact(&rack.filled_area().unwrap().unwrap(), &area);
         for (x, y, expected) in [
@@ -239,7 +231,7 @@ fn independent_rack_area_membership_and_extrusion_compose() {
             ((Real::pi() / r(2)).unwrap(), r(-2), Some(true)),
             (r(0), r(1), None),
         ] {
-            let location = curve::contains_xy_with_context(&rack, x, y, &context).unwrap();
+            let location = curve::contains_xy_with_context(&rack, x, y, context).unwrap();
             assert_eq!(location.certainty, GeometryCertainty::Certified);
             assert_eq!(location.value, expected);
         }
@@ -248,7 +240,7 @@ fn independent_rack_area_membership_and_extrusion_compose() {
         let union = translated
             .boolean_region(&curve::empty(), BooleanOp::Union)
             .unwrap();
-        let extruded = curve::try_extrude(&union, r(2), &context).unwrap();
+        let extruded = curve::try_extrude(&union, r(2), context).unwrap();
         assert_eq!(extruded.certainty, GeometryCertainty::Certified);
         volume_and_topology(&extruded.value, &(r(2) * &area));
         let empty = union
@@ -256,7 +248,7 @@ fn independent_rack_area_membership_and_extrusion_compose() {
             .unwrap();
         assert!(empty.is_empty());
         assert!(
-            curve::try_extrude(&empty, r(2), &context)
+            curve::try_extrude(&empty, r(2), context)
                 .unwrap()
                 .value
                 .triangles
@@ -310,7 +302,7 @@ fn approximate_validation_receipts_survive_cache_reuse_and_solid_composition() {
             r(12),
             r(1),
             20,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
@@ -334,9 +326,9 @@ fn approximate_validation_receipts_survive_cache_reuse_and_solid_composition() {
                 r(0),
                 3,
                 r(1),
-                &context,
+                context,
             ),
-            solid::spur_gear_cycloid(r(1), 16, r(1), unresolved_zero(), 3, r(1), &context),
+            solid::spur_gear_cycloid(r(1), 16, r(1), unresolved_zero(), 3, r(1), context),
             solid::helical_involute_gear(
                 r(1),
                 16,
@@ -347,7 +339,7 @@ fn approximate_validation_receipts_survive_cache_reuse_and_solid_composition() {
                 r(2),
                 r(15),
                 3,
-                &context,
+                context,
             ),
         ] {
             if context == GeometryContext::STRICT {
@@ -372,17 +364,17 @@ fn original_full_resolution_readme_and_benchmark_profiles_remain_certified() {
                 f(0.02),
                 f(0.01),
                 5,
-                &context,
+                context,
             ),
-            curve::cycloidal_gear_with_context(f(0.22), 14, f(0.275), f(0.02), 8, &context),
-            curve::involute_rack_with_context(f(0.32), 7, f(20.0), f(0.02), f(0.01), &context),
-            curve::cycloidal_rack_with_context(f(0.32), 7, f(0.02), 12, &context),
-            curve::airfoil_naca4_with_context(f(2.0), f(4.0), f(12.0), f(3.0), 96, &context),
-            curve::involute_gear_with_context(r(2), 20, r(20), r(0), r(0), 4, &context),
-            curve::cycloidal_gear_with_context(r(2), 12, r(2), r(0), 4, &context),
-            curve::involute_rack_with_context(r(2), 4, r(20), r(0), r(0), &context),
-            curve::cycloidal_rack_with_context(r(2), 4, r(0), 8, &context),
-            curve::airfoil_naca4_with_context(r(2), r(4), r(12), r(20), 80, &context),
+            curve::cycloidal_gear_with_context(f(0.22), 14, f(0.275), f(0.02), 8, context),
+            curve::involute_rack_with_context(f(0.32), 7, f(20.0), f(0.02), f(0.01), context),
+            curve::cycloidal_rack_with_context(f(0.32), 7, f(0.02), 12, context),
+            curve::airfoil_naca4_with_context(f(2.0), f(4.0), f(12.0), f(3.0), 96, context),
+            curve::involute_gear_with_context(r(2), 20, r(20), r(0), r(0), 4, context),
+            curve::cycloidal_gear_with_context(r(2), 12, r(2), r(0), 4, context),
+            curve::involute_rack_with_context(r(2), 4, r(20), r(0), r(0), context),
+            curve::cycloidal_rack_with_context(r(2), 4, r(0), 8, context),
+            curve::airfoil_naca4_with_context(r(2), r(4), r(12), r(20), 80, context),
         ] {
             profile(outcome.unwrap());
         }

@@ -36,7 +36,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
     real(value.clamp(-1.0e3, 1.0e3))
 }
 
-fn assert_curve_finite(region: &CurveRegion2, context: &GeometryContext) {
+fn assert_curve_finite(region: &CurveRegion2, context: GeometryContext) {
     let Ok(profiles) = curve::try_finite_profiles(region, context) else {
         return;
     };
@@ -153,20 +153,20 @@ fuzz_target!(|bytes: &[u8]| {
             Err(_) => return,
         },
         11 => {
-            let Ok(outcome) = curve::keyhole(a, b, c, segments, &context) else {
+            let Ok(outcome) = curve::keyhole(a, b, c, segments, context) else {
                 return;
             };
             outcome.into_value()
         },
         12 => {
-            let Ok(outcome) = curve::reuleaux(reuleaux_sides, a, reuleaux_segments, &context)
+            let Ok(outcome) = curve::reuleaux(reuleaux_sides, a, reuleaux_segments, context)
             else {
                 return;
             };
             outcome.into_value()
         },
         13 => {
-            let Ok(outcome) = curve::ring(a, b, segments, &context) else {
+            let Ok(outcome) = curve::ring(a, b, segments, context) else {
                 return;
             };
             outcome.into_value()
@@ -180,19 +180,39 @@ fuzz_target!(|bytes: &[u8]| {
             Err(_) => return,
         },
         16 => {
-            let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, &context)
+            let Ok(outcome) = curve::crescent(positive_a, positive_b, c, segments, context)
             else {
                 return;
             };
             outcome.into_value()
         },
-        17 => curve::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2)),
-        18 => {
-            curve::involute_gear(a, teeth, b.clone(), c, real(0.01) * b, segments.clamp(2, 6))
+        17 => match curve::airfoil_naca4(a, b, real(12.0), positive_a, segments.max(2)) {
+            Ok(region) => region,
+            Err(_) => return,
         },
-        19 => curve::cycloidal_gear(a, teeth, positive_b, b, segments.clamp(2, 6)),
-        20 => curve::involute_rack(a, teeth, b, c.clone(), real(0.01) * c),
-        21 => curve::cycloidal_rack(a, teeth, c, segments.clamp(4, 8)),
+        18 => match curve::involute_gear(
+            a,
+            teeth,
+            b.clone(),
+            c,
+            real(0.01) * b,
+            segments.clamp(2, 6),
+        ) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        19 => match curve::cycloidal_gear(a, teeth, positive_b, b, segments.clamp(2, 6)) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        20 => match curve::involute_rack(a, teeth, b, c.clone(), real(0.01) * c) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
+        21 => match curve::cycloidal_rack(a, teeth, c, segments.clamp(4, 8)) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         22 => {
             if bytes[idx % bytes.len()] & 1 == 0 {
                 match curve::teardrop(a, b, segments) {
@@ -224,26 +244,29 @@ fuzz_target!(|bytes: &[u8]| {
             }
         },
         24 => {
-            let Ok(outcome) = curve::circle_with_keyway(a, segments, b, c, &context) else {
+            let Ok(outcome) = curve::circle_with_keyway(a, segments, b, c, context) else {
                 return;
             };
             outcome.into_value()
         },
         25 => {
-            let Ok(outcome) = curve::circle_with_flat(a, segments, b, &context) else {
+            let Ok(outcome) = curve::circle_with_flat(a, segments, b, context) else {
                 return;
             };
             outcome.into_value()
         },
         26 => {
-            let Ok(outcome) = curve::circle_with_two_flats(a, segments, b, &context) else {
+            let Ok(outcome) = curve::circle_with_two_flats(a, segments, b, context) else {
                 return;
             };
             outcome.into_value()
         },
-        27 => curve::bezier_region(&curve_control, segments),
+        27 => match curve::bezier_region(&curve_control, segments) {
+            Ok(region) => region,
+            Err(_) => return,
+        },
         28 => {
-            if let Some(path) = curve::bspline_path(
+            if let Ok(path) = curve::bspline_path(
                 &curve_control,
                 bytes[idx % bytes.len()] as usize % 5,
                 segments,
@@ -279,12 +302,12 @@ fuzz_target!(|bytes: &[u8]| {
         },
     };
 
-    assert_curve_finite(&region, &context);
-    if let Ok(flat) = curve::try_triangulate(&region, &context) {
+    assert_curve_finite(&region, context);
+    if let Ok(flat) = curve::try_triangulate(&region, context) {
         support::validate_triangle_mesh(&flat.into_value(), false);
     }
     if !region.is_empty()
-        && let Ok(solid) = curve::try_extrude(&region, Real::one(), &context)
+        && let Ok(solid) = curve::try_extrude(&region, Real::one(), context)
     {
         support::validate_triangle_mesh(&solid.into_value(), true);
     }

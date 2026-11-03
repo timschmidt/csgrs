@@ -23,7 +23,7 @@ fn measure(
     for _ in 0..iterations {
         let start = Instant::now();
         let result =
-            black_box(body).try_difference_with_context(black_box(drill), black_box(&context));
+            black_box(body).try_difference_with_context(black_box(drill), black_box(context));
         elapsed_us.push(start.elapsed().as_micros());
         match result {
             Ok(outcome) => {

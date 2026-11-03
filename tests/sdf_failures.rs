@@ -88,7 +88,7 @@ fn expression_branch_uncertainty_retains_its_category() {
             point(-1),
             point(1),
             0.into(),
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .failure_kind(),
         Some(ValidationErrorKind::Undecided)
@@ -105,7 +105,7 @@ fn context_expression_domain_errors_are_distinct_from_uncertainty() {
             point(-1),
             point(1),
             0.into(),
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
@@ -131,7 +131,7 @@ fn undersized_resolution_is_rejected_instead_of_clamped() {
             point(-1),
             point(1),
             0.into(),
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .failure_kind(),
         Some(ValidationErrorKind::InvalidInput)
@@ -201,7 +201,7 @@ fn diagnostic_plane_has_independently_known_coordinates_and_counts() {
         point(-1),
         point(1),
         third.clone(),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(result.certainty, csgrs::GeometryCertainty::Certified);
@@ -235,10 +235,10 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
         )
     };
     assert_eq!(
-        sample(&GeometryContext::STRICT).failure_kind(),
+        sample(GeometryContext::STRICT).failure_kind(),
         Some(ValidationErrorKind::Undecided)
     );
-    let approximate = sample(&GeometryContext::APPROXIMATE_512).unwrap();
+    let approximate = sample(GeometryContext::APPROXIMATE_512).unwrap();
     assert_eq!(
         approximate.certainty,
         csgrs::GeometryCertainty::Approximate512Consumed
@@ -247,7 +247,7 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
     assert!(preview.is_self_consistent());
     assert_eq!(preview.grid_samples.samples.unknown_sign_count, 9);
     assert_eq!(
-        sample(&GeometryContext::STRICT).failure_kind(),
+        sample(GeometryContext::STRICT).failure_kind(),
         Some(ValidationErrorKind::Undecided)
     );
     // Choosing an approximate meshing policy does not authorize an approximate min branch.
@@ -259,7 +259,7 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
             point(-1),
             point(1),
             0.into(),
-            &GeometryContext::APPROXIMATE_512
+            GeometryContext::APPROXIMATE_512
         )
         .failure_kind(),
         Some(ValidationErrorKind::Undecided)
@@ -270,7 +270,7 @@ fn approximate_samples_do_not_certify_expression_branches_or_poison_strict_queri
         point(-1),
         point(1),
         0.into(),
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(certified.certainty, csgrs::GeometryCertainty::Certified);

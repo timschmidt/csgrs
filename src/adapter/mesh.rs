@@ -161,7 +161,7 @@ where
     pub fn union_with_context(
         &self,
         other: &Self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.inner
             .try_union_with_context(&other.inner, context)
@@ -173,7 +173,7 @@ where
     pub fn difference_with_context(
         &self,
         other: &Self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.inner
             .try_difference_with_context(&other.inner, context)
@@ -185,7 +185,7 @@ where
     pub fn intersection_with_context(
         &self,
         other: &Self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.inner
             .try_intersection_with_context(&other.inner, context)
@@ -197,7 +197,7 @@ where
     pub fn xor_with_context(
         &self,
         other: &Self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.inner
             .try_xor_with_context(&other.inner, context)
@@ -272,7 +272,7 @@ where
     pub fn transform_with_context(
         &self,
         matrix: &Matrix4,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::transform_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
@@ -285,7 +285,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::transform_with_context(
             &self.inner,
@@ -306,7 +306,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::scale_with_context(
             &self.inner,
@@ -325,7 +325,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::rotate_with_context(
             &self.inner,
@@ -341,7 +341,7 @@ where
     /// Applies the operation with the selected policy and aggregate certainty.
     pub fn center_with_context(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::center_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
@@ -351,7 +351,7 @@ where
     /// Applies the operation with the selected policy and aggregate certainty.
     pub fn float_with_context(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         solid::float_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
@@ -361,7 +361,7 @@ where
     /// Computes bounds before scalar conversion, retaining predicate certainty.
     pub fn bounding_box_with_context(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Option<Aabb3<A::Scalar>>>> {
         solid::bounding_box_with_context(&self.inner, context)?
             .try_map(|bounds| bounds.map(super::convert_bounds::<A>).transpose())
@@ -371,7 +371,7 @@ where
     pub fn polyhedron_with_context(
         points: &[[A::Scalar; 3]],
         faces: &[&[usize]],
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         let points = points
             .iter()

@@ -24,7 +24,7 @@ fn canonical_empty(mesh: &TriangleMesh) -> bool {
 fn families(
     mesh: &TriangleMesh,
     count: usize,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> [Result<GeometryOutcome<TriangleMesh>, ValidationError>; 3] {
     [
         solid::distribute_linear_with_context(mesh, count, Vector3::x(), r(3), context),
@@ -88,7 +88,7 @@ fn source_validation_precedes_zero_one_and_disjoint_copy_shortcuts() {
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for source in &sources {
             for count in [0, 1, 2] {
-                for result in families(source, count, &context) {
+                for result in families(source, count, context) {
                     let error = result.unwrap_err();
                     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
                     assert!(
@@ -101,7 +101,7 @@ fn source_validation_precedes_zero_one_and_disjoint_copy_shortcuts() {
                 }
             }
             assert!(
-                solid::distribute_grid_with_context(source, 0, 2, r(3), r(3), &context)
+                solid::distribute_grid_with_context(source, 0, 2, r(3), r(3), context)
                     .is_err()
             );
             for result in [
@@ -122,7 +122,7 @@ fn canonical_empty_and_zero_copy_outputs_remain_composable() {
     let empty = solid::empty();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for source in [&cube, &empty] {
-            for result in families(source, 0, &context) {
+            for result in families(source, 0, context) {
                 let outcome = result.unwrap();
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 assert!(canonical_empty(&outcome.value));
@@ -130,13 +130,13 @@ fn canonical_empty_and_zero_copy_outputs_remain_composable() {
                 volume(&restored, r(1));
                 let removed = restored.try_difference(&cube).unwrap();
                 assert!(canonical_empty(&removed));
-                for result in families(&removed, 2, &context) {
+                for result in families(&removed, 2, context) {
                     assert!(canonical_empty(&result.unwrap().value));
                 }
             }
         }
         // Empty input requires no copy buffers even for a very large count.
-        for result in families(&empty, usize::MAX, &context) {
+        for result in families(&empty, usize::MAX, context) {
             assert!(canonical_empty(&result.unwrap().value));
         }
     }
@@ -156,7 +156,7 @@ fn canonical_empty_and_zero_copy_outputs_remain_composable() {
 fn capacity_exhaustion_is_typed_and_leaves_subsequent_work_available() {
     let cube = solid::cube(r(1)).unwrap();
     cache::clear();
-    for result in families(&cube, usize::MAX, &GeometryContext::STRICT) {
+    for result in families(&cube, usize::MAX, GeometryContext::STRICT) {
         assert_eq!(
             result.unwrap_err().kind(),
             ValidationErrorKind::ResourceExhausted
@@ -186,7 +186,7 @@ fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
         2,
         pythagorean,
         r(1),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(certified.certainty, GeometryCertainty::Certified);
@@ -200,7 +200,7 @@ fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
     for policy in [CachePolicy::DEFAULT, CachePolicy::DISABLED] {
         cache::with_policy(policy, || {
             for _ in 0..2 {
-                let error = build(&GeometryContext::STRICT).unwrap_err();
+                let error = build(GeometryContext::STRICT).unwrap_err();
                 assert_eq!(error.kind(), ValidationErrorKind::Undecided);
                 assert!(
                     error
@@ -209,7 +209,7 @@ fn native_causes_and_consumed_certainty_survive_strict_approximate_strict() {
                         .downcast_ref::<HypermeshError>()
                         .is_some()
                 );
-                let approximate = build(&GeometryContext::APPROXIMATE_512).unwrap();
+                let approximate = build(GeometryContext::APPROXIMATE_512).unwrap();
                 assert_eq!(
                     approximate.certainty,
                     GeometryCertainty::Approximate512Consumed
@@ -313,7 +313,7 @@ fn concatenation_preserves_multiplicity_and_pwn_distributions_accept_it() {
         1,
         r(0),
         r(0),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);

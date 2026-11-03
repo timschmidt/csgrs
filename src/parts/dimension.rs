@@ -160,7 +160,7 @@ fn label_edges(
     let dx = &end.x - &start.x;
     let dy = &end.y - &start.y;
     let span = (&dx * &dx + &dy * &dy).sqrt()?;
-    let decisions = crate::context::GeometryDecisions::new(&crate::GeometryContext::STRICT);
+    let decisions = crate::context::GeometryDecisions::new(crate::GeometryContext::STRICT);
     if decisions.sign(&span, "dimension label projected span")? == hyperreal::RealSign::Zero {
         // A dimension viewed along its axis has no direction for a label.
         return Ok(Vec::new());

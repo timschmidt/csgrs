@@ -136,9 +136,9 @@ fn failed_construction_does_not_contaminate_later_policies_or_composition() {
     use hypercurve::BooleanOp;
     use std::error::Error;
     for context in [
-        &GeometryContext::STRICT,
-        &GeometryContext::APPROXIMATE_512,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
+        GeometryContext::APPROXIMATE_512,
+        GeometryContext::STRICT,
     ] {
         let error = curve::metaballs_with_context(
             &one_ball(unknown_zero()),
@@ -182,7 +182,7 @@ fn failed_construction_does_not_contaminate_later_policies_or_composition() {
                 .is_empty()
         );
         let mesh =
-            curve::try_extrude(&result.value, 2.into(), &GeometryContext::STRICT).unwrap();
+            curve::try_extrude(&result.value, 2.into(), GeometryContext::STRICT).unwrap();
         assert_eq!(mesh.certainty, GeometryCertainty::Certified);
         assert!(
             mesh.value

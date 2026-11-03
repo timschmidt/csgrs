@@ -10,7 +10,7 @@ fn sphere_diameter_ray_reports_only_surface_hits() {
     let mesh = solid::sphere(Real::from(10_u8), 32, 16).expect("valid primitive fixture");
     let origin = Point3::new(Real::from(-20_i8), Real::zero(), Real::zero());
     let outcome =
-        solid::ray_intersections(&mesh, &origin, &Vector3::x(), &GeometryContext::STRICT)
+        solid::ray_intersections(&mesh, &origin, &Vector3::x(), GeometryContext::STRICT)
             .unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     let hits = outcome.value;
@@ -24,7 +24,7 @@ fn sphere_diameter_ray_reports_only_surface_hits() {
         );
     }
     assert_eq!(
-        solid::ray_intersections(&mesh, &origin, &Vector3::x(), &GeometryContext::STRICT)
+        solid::ray_intersections(&mesh, &origin, &Vector3::x(), GeometryContext::STRICT)
             .unwrap()
             .value,
         hits,

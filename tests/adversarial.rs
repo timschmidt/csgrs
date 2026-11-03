@@ -142,7 +142,7 @@ fn curve_offset_and_extrude_keep_hyperreal_scalars() {
             &hypercurve::OffsetCornerStyle2::Miter { limit: r(4.0) },
         )
         .expect("offset");
-    let mesh = curve::try_extrude(&region, r(0.75), &csgrs::GeometryContext::STRICT)
+    let mesh = curve::try_extrude(&region, r(0.75), csgrs::GeometryContext::STRICT)
         .expect("extrude")
         .into_value();
 

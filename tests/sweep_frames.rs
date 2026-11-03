@@ -167,7 +167,7 @@ fn strict_sweep_completes_the_sampled_helix_of_the_extrude_example() {
     let profile = curve::circle(dyadic(0.08), 12).expect("valid profile fixture");
     let start = Instant::now();
     let outcome =
-        curve::try_sweep(&profile, &path, &GeometryContext::STRICT).expect("strict sweep");
+        curve::try_sweep(&profile, &path, GeometryContext::STRICT).expect("strict sweep");
     eprintln!("strict 40-slice helix sweep: {:?}", start.elapsed());
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     let mesh = outcome.into_value();
@@ -237,7 +237,7 @@ fn rational_rotation_minimizing_frames_are_exact_and_compose_with_a_cube() {
         unit(2, -10, 11, 15),
     ];
     let start = Instant::now();
-    let outcome = curve::try_sweep(&irregular_profile(), &path, &GeometryContext::STRICT)
+    let outcome = curve::try_sweep(&irregular_profile(), &path, GeometryContext::STRICT)
         .expect("strict sweep");
     let sweep_time = start.elapsed();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
@@ -303,7 +303,7 @@ fn rational_rotation_minimizing_frames_are_exact_and_compose_with_a_cube() {
     ]
     .map(|operation| {
         let outcome =
-            solid::boolean_with_context(&tube, &cube, operation, &GeometryContext::STRICT)
+            solid::boolean_with_context(&tube, &cube, operation, GeometryContext::STRICT)
                 .expect("strict Boolean with the swept solid");
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
         let mesh = outcome.into_value();
@@ -331,7 +331,7 @@ fn undecided_path_reversal_is_reported_as_undecided() {
         point(0, 0, 1),
         Point3::new(zero, Real::zero(), int(-1)),
     ];
-    let error = curve::try_sweep(&irregular_profile(), &path, &GeometryContext::STRICT)
+    let error = curve::try_sweep(&irregular_profile(), &path, GeometryContext::STRICT)
         .expect_err("strict refinement cannot decide the reversal");
     assert_eq!(
         error,
@@ -343,7 +343,7 @@ fn undecided_path_reversal_is_reported_as_undecided() {
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
     // The approximate terminal decides the zero, so the path reverses.
     assert_eq!(
-        curve::try_sweep(&irregular_profile(), &path, &GeometryContext::APPROXIMATE_512),
+        curve::try_sweep(&irregular_profile(), &path, GeometryContext::APPROXIMATE_512),
         Err(ValidationError::InvalidArguments)
     );
 }
@@ -354,7 +354,7 @@ fn initial_tangent_orientation_is_decided_under_the_policy() {
     let path = [point(0, 0, 0), point(0, 0, -10), point(10, 0, -20)];
     for context in CONTEXTS {
         let outcome =
-            curve::try_sweep(&irregular_profile(), &path, &context).expect("valid sweep");
+            curve::try_sweep(&irregular_profile(), &path, context).expect("valid sweep");
         assert_eq!(outcome.certainty, GeometryCertainty::Certified);
         let mesh = outcome.into_value();
         assert_certified_closed_solid(&mesh, "-z sweep");
@@ -377,14 +377,14 @@ fn initial_tangent_orientation_is_decided_under_the_policy() {
         point(10, 0, -20),
     ];
     assert_eq!(
-        curve::try_sweep(&irregular_profile(), &path, &GeometryContext::STRICT),
+        curve::try_sweep(&irregular_profile(), &path, GeometryContext::STRICT),
         Err(ValidationError::PredicateUndecided {
             predicate: "sweep initial tangent orientation",
             policy: PredicatePolicy::STRICT,
         })
     );
     let outcome =
-        curve::try_sweep(&irregular_profile(), &path, &GeometryContext::APPROXIMATE_512)
+        curve::try_sweep(&irregular_profile(), &path, GeometryContext::APPROXIMATE_512)
             .expect("the approximate terminal decides the axis");
     assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(outcome.value.is_closed_manifold());
@@ -407,7 +407,7 @@ fn invalid_sweep_paths_remain_invalid_arguments() {
     ];
     for path in invalid_paths {
         for context in CONTEXTS {
-            let error = curve::try_sweep(&irregular_profile(), &path, &context)
+            let error = curve::try_sweep(&irregular_profile(), &path, context)
                 .expect_err("invalid path");
             assert_eq!(error, ValidationError::InvalidArguments, "{path:?}");
             assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);

@@ -150,7 +150,7 @@ fn empty_and_solid_outputs_reimport_and_compose() {
     for original in [&empty, &cube] {
         let text = obj::to_obj(original, "model").unwrap();
         let restored =
-            obj::from_obj_with_context(text.as_bytes(), &GeometryContext::STRICT).unwrap();
+            obj::from_obj_with_context(text.as_bytes(), GeometryContext::STRICT).unwrap();
         assert_eq!(restored.certainty, GeometryCertainty::Certified);
         let restored = restored.value;
         if original.positions.is_empty() {

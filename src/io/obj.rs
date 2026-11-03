@@ -78,13 +78,13 @@ fn triangulate_face(
 
 /// Import OBJ vertex and face records into native triangle geometry.
 pub fn from_obj<R: BufRead>(reader: R) -> Result<TriangleMesh, IoError> {
-    from_obj_with_context(reader, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    from_obj_with_context(reader, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import OBJ geometry with the selected triangulation policy and aggregate certainty.
 pub fn from_obj_with_context<R: BufRead>(
     reader: R,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, IoError> {
     let decisions = GeometryDecisions::new(context);
     let mut positions = Vec::new();
@@ -132,7 +132,7 @@ pub fn from_obj_with_context<R: BufRead>(
 pub fn from_obj_attributed<R: BufRead>(
     reader: R,
 ) -> Result<crate::AttributedMesh<()>, IoError> {
-    from_obj_attributed_with_context(reader, &GeometryContext::STRICT)
+    from_obj_attributed_with_context(reader, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -140,7 +140,7 @@ pub fn from_obj_attributed<R: BufRead>(
 #[cfg(feature = "attributed")]
 pub fn from_obj_attributed_with_context<R: BufRead>(
     reader: R,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<crate::AttributedMesh<()>>, IoError> {
     let decisions = GeometryDecisions::new(context);
     let mut source_positions = Vec::new();

@@ -123,7 +123,7 @@ fn main() {
             Real::from(2),
             Real::from(6),
             24,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "reuleaux", 2, || {
@@ -131,7 +131,7 @@ fn main() {
             3,
             Real::from(6),
             24,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "ring", 4, || {
@@ -139,7 +139,7 @@ fn main() {
             Real::from(6),
             Real::from(2),
             24,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "pie_slice", 8, || {
@@ -164,7 +164,7 @@ fn main() {
             24,
             Real::from(2),
             Real::from(2),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "circle_with_flat", 2, || {
@@ -172,7 +172,7 @@ fn main() {
             Real::from(6),
             24,
             Real::from(2),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "circle_with_two_flats", 2, || {
@@ -180,7 +180,7 @@ fn main() {
             Real::from(6),
             24,
             Real::from(2),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_path(&config, "bezier", 8, || {
@@ -198,7 +198,7 @@ fn main() {
             Real::from(4),
             Real::from(3),
             24,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         ))
     });
     run_profile(&config, "involute_gear", 1, || {
@@ -278,7 +278,7 @@ fn main() {
         let mesh = curve::try_extrude(
             black_box(&curved_region),
             Real::from(2),
-            &csgrs::GeometryContext::STRICT,
+            csgrs::GeometryContext::STRICT,
         )
         .expect("extrusion")
         .into_value();

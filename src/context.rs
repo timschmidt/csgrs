@@ -138,9 +138,9 @@ pub(crate) struct GeometryDecisions {
 
 #[allow(dead_code)]
 impl GeometryDecisions {
-    pub(crate) const fn new(context: &GeometryContext) -> Self {
+    pub(crate) const fn new(context: GeometryContext) -> Self {
         Self {
-            context: *context,
+            context,
             mesh_context: context.mesh_context(),
             certainty: Cell::new(GeometryCertainty::Certified),
             construction: Cell::new(hypermesh::ConstructionEvidence::DECLARED_COORDINATES),

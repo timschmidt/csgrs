@@ -11,7 +11,7 @@ fn with_context(
     left: &TriangleMesh,
     right: &TriangleMesh,
     operation: BooleanOp,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> HypermeshResult<GeometryOutcome<TriangleMesh>> {
     match operation {
         BooleanOp::Union => left.try_union_with_context(right, context),
@@ -61,7 +61,7 @@ fn rational_booleans_stay_certified_with_either_context() {
     ] {
         let legacy = strict(&left, &right, operation).unwrap();
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
-            let outcome = with_context(&left, &right, operation, &context).unwrap();
+            let outcome = with_context(&left, &right, operation, context).unwrap();
             assert_eq!(outcome.certainty, GeometryCertainty::Certified);
             assert_eq!(outcome.value, legacy);
             assert!((signed_volume(&outcome.value) - volume).abs() < 1e-10);
@@ -73,7 +73,7 @@ fn rational_booleans_stay_certified_with_either_context() {
                     .into_value()
             );
             assert_eq!(
-                solid::boolean_with_context(&left, &right, operation, &context).unwrap(),
+                solid::boolean_with_context(&left, &right, operation, context).unwrap(),
                 outcome
             );
         }
@@ -108,14 +108,14 @@ fn every_boolean_reports_approximation_without_affecting_later_strict_calls() {
             Err(HypermeshError::PredicateUndecided { .. })
         ));
         let outcome =
-            with_context(&left, &right, operation, &GeometryContext::APPROXIMATE_512).unwrap();
+            with_context(&left, &right, operation, GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(outcome.certainty, GeometryCertainty::Approximate512Consumed);
         assert!((signed_volume(&outcome.value) - volume).abs() < 1e-10);
         if operation == BooleanOp::Intersection {
             assert!(outcome.value.triangles.is_empty());
         }
         assert!(matches!(
-            with_context(&left, &right, operation, &GeometryContext::STRICT),
+            with_context(&left, &right, operation, GeometryContext::STRICT),
             Err(HypermeshError::PredicateUndecided { .. })
         ));
         assert!(matches!(
@@ -140,7 +140,7 @@ fn context_booleans_preserve_input_errors() {
             BooleanOp::SymmetricDifference,
         ] {
             assert_eq!(
-                with_context(&invalid, &cube, operation, &context).unwrap_err(),
+                with_context(&invalid, &cube, operation, context).unwrap_err(),
                 HypermeshError::VertexIndexOutOfBounds {
                     index: 1,
                     vertex_count: 1,
@@ -161,7 +161,7 @@ fn drill_cylinder_completes_certifiably_with_either_context() {
     let strict = body.try_difference(&drill).unwrap();
     assert!(!strict.triangles.is_empty());
     let outcome = body
-        .try_difference_with_context(&drill, &GeometryContext::APPROXIMATE_512)
+        .try_difference_with_context(&drill, GeometryContext::APPROXIMATE_512)
         .unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     assert!(!outcome.value.triangles.is_empty());
@@ -176,7 +176,7 @@ fn drill_cylinder_completes_certifiably_with_either_context() {
         - 4.0 * (16.0 / 2.0) * 2.0_f64.powi(2) * (std::f64::consts::TAU / 16.0).sin();
     assert!((signed_volume(&outcome.value) - expected_volume).abs() < 1e-9);
     let repeated = body
-        .try_difference_with_context(&drill, &GeometryContext::STRICT)
+        .try_difference_with_context(&drill, GeometryContext::STRICT)
         .unwrap();
     assert_eq!(repeated.certainty, GeometryCertainty::Certified);
     assert_eq!(repeated.value, strict);

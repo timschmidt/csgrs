@@ -189,7 +189,7 @@ impl CurveRegionJs {
     #[wasm_bindgen(js_name = toRegionProfiles)]
     pub fn to_region_profiles(&self, approximate_512: bool) -> Result<JsValue, JsValue> {
         let outcome =
-            curve::try_finite_profiles(&self.inner, &geometry_context(approximate_512))
+            curve::try_finite_profiles(&self.inner, geometry_context(approximate_512))
                 .map_err(js_error)?;
         let profiles = outcome
             .value
@@ -232,7 +232,7 @@ impl CurveRegionJs {
 
     #[wasm_bindgen(js_name = toArrays)]
     pub fn to_arrays(&self, approximate_512: bool) -> Result<Object, JsValue> {
-        let outcome = curve::try_triangulate(&self.inner, &geometry_context(approximate_512))
+        let outcome = curve::try_triangulate(&self.inner, geometry_context(approximate_512))
             .map_err(crate::wasm::mesh_js::geometry_error)?;
         let mesh = outcome.value;
         let positions = mesh
@@ -369,7 +369,7 @@ impl CurveRegionJs {
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
-            &crate::GeometryContext::STRICT,
+            crate::GeometryContext::STRICT,
         )
         .map(GeometryOutcome::into_value)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -382,7 +382,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        curve::transformed_with_context(&self.inner, &matrix.inner, &context)
+        curve::transformed_with_context(&self.inner, &matrix.inner, context)
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }
@@ -399,7 +399,7 @@ impl CurveRegionJs {
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -415,7 +415,7 @@ impl CurveRegionJs {
         curve::rotated_with_context(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(degrees, "degrees")?,
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -433,7 +433,7 @@ impl CurveRegionJs {
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
-            &context,
+            context,
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -485,7 +485,7 @@ impl CurveRegionJs {
         &self,
         approximate_512: bool,
     ) -> Result<GeometryBoundsResultJs, JsValue> {
-        curve::bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
+        curve::bounding_box_with_context(&self.inner, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }
@@ -498,7 +498,7 @@ impl CurveRegionJs {
         curve::try_extrude(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(height, "height")?,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -514,7 +514,7 @@ impl CurveRegionJs {
             &self.inner,
             real_from_js_named(angle_degrees, "angleDegrees")?,
             segments,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -526,7 +526,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let path = path.into_iter().map(|point| point.inner).collect::<Vec<_>>();
-        curve::try_sweep(&self.inner, &path, &geometry_context(approximate_512))
+        curve::try_sweep(&self.inner, &path, geometry_context(approximate_512))
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }
@@ -550,7 +550,7 @@ impl CurveRegionJs {
                 real_from_js_named(end_scale_y, "endScaleY")?,
             ],
             slices,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -650,7 +650,7 @@ impl CurveRegionJs {
             crate::wasm::mesh_js::geometry_scalar(inner_diameter, "innerDiameter")?,
             crate::wasm::mesh_js::geometry_scalar(thickness, "thickness")?,
             segments,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)
@@ -678,7 +678,7 @@ impl CurveRegionJs {
             crate::wasm::mesh_js::geometry_scalar(inner_radius, "innerRadius")?,
             crate::wasm::mesh_js::geometry_scalar(offset, "offset")?,
             segments,
-            &geometry_context(approximate_512),
+            geometry_context(approximate_512),
         )
         .map(Into::into)
         .map_err(crate::wasm::mesh_js::geometry_error)

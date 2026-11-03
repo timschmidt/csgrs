@@ -12,7 +12,7 @@ pub(crate) fn sample(
     resolution: (usize, usize),
     iso_value: Real,
     padding: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<CurveRegion2>, ValidationError> {
     let (nx, ny) = resolution;
     let count = MarchingSquaresGrid::checked_sample_count([nx, ny])?;

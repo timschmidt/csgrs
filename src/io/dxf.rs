@@ -119,13 +119,13 @@ fn push_polygon(
 
 /// Imports supported DXF surface entities as native triangle geometry.
 pub fn from_dxf(data: &[u8]) -> Result<TriangleMesh, IoError> {
-    from_dxf_with_context(data, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    from_dxf_with_context(data, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import DXF surfaces using the selected predicates and triangulation policy.
 pub fn from_dxf_with_context(
     data: &[u8],
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, IoError> {
     let decisions = GeometryDecisions::new(context);
     let drawing = Drawing::load(&mut Cursor::new(data))?;

@@ -68,7 +68,7 @@ fuzz_target!(|bytes: &[u8]| {
     let tag = bytes[idx % bytes.len()] % 6;
     idx += 1;
     let mesh = match tag {
-        0 => curve::try_extrude(&region, decode_real(bytes, &mut idx), &context)
+        0 => curve::try_extrude(&region, decode_real(bytes, &mut idx), context)
             .map(csgrs::GeometryOutcome::into_value)
             .unwrap_or_else(|_| solid::empty()),
         1 => curve::try_extrude_vector(
@@ -78,7 +78,7 @@ fuzz_target!(|bytes: &[u8]| {
                 decode_real(bytes, &mut idx),
                 decode_real(bytes, &mut idx),
             ),
-            &context,
+            context,
         )
         .map(csgrs::GeometryOutcome::into_value)
         .unwrap_or_else(|_| solid::empty()),
@@ -95,7 +95,7 @@ fuzz_target!(|bytes: &[u8]| {
                     &Real::zero(),
                 )
                 .unwrap_or_else(|_| curve::empty());
-            match curve::revolve(&translated, angle, segments, &context) {
+            match curve::revolve(&translated, angle, segments, context) {
                 Ok(outcome) => outcome.into_value(),
                 Err(_) => solid_empty(),
             }
@@ -111,7 +111,7 @@ fuzz_target!(|bytes: &[u8]| {
                     decode_real(bytes, &mut idx),
                 ));
             }
-            curve::try_sweep(&region, &path, &context)
+            curve::try_sweep(&region, &path, context)
                 .map(csgrs::GeometryOutcome::into_value)
                 .unwrap_or_else(|_| solid::empty())
         },
@@ -145,7 +145,7 @@ fuzz_target!(|bytes: &[u8]| {
                 at_least_tolerance(decode_real(bytes, &mut idx).abs()),
             ];
             let slices = usize::from(bytes[idx % bytes.len()] % 16) + 1;
-            curve::extrude_twisted(&region, extrusion_height, twist, scale, slices, &context)
+            curve::extrude_twisted(&region, extrusion_height, twist, scale, slices, context)
                 .map(csgrs::GeometryOutcome::into_value)
                 .unwrap_or_else(|_| solid::empty())
         },

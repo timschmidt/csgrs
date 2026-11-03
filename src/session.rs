@@ -192,12 +192,12 @@ impl Csg {
     /// ```
     pub fn run<T, E>(
         &self,
-        operation: impl FnOnce(&GeometryContext) -> std::result::Result<GeometryOutcome<T>, E>,
+        operation: impl FnOnce(GeometryContext) -> std::result::Result<GeometryOutcome<T>, E>,
     ) -> Result<T>
     where
         Error: From<E>,
     {
-        Ok(self.record(operation(&self.context)?))
+        Ok(self.record(operation(self.context)?))
     }
 
     /// An axis-aligned cube with one corner at the origin.

@@ -185,13 +185,13 @@ pub(in crate::solid) fn retained_primitive(
 pub(in crate::solid) fn retained_distribution(
     mesh: &TriangleMesh,
     parameters: &DistributionParameters,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Option<GeometryOutcome<TriangleMesh>> {
     STATE.with_borrow(|state| {
         state.distributions.iter().find_map(|entry| {
             (entry.source.matches(mesh)
                 && &entry.parameters == parameters
-                && &entry.context == context)
+                && entry.context == context)
                 .then(|| entry.result.clone())
         })
     })
@@ -200,7 +200,7 @@ pub(in crate::solid) fn retained_distribution(
 pub(in crate::solid) fn retain_distribution(
     mesh: &TriangleMesh,
     parameters: DistributionParameters,
-    context: &GeometryContext,
+    context: GeometryContext,
     result: &GeometryOutcome<TriangleMesh>,
 ) {
     STATE.with_borrow_mut(|state| {
@@ -208,7 +208,7 @@ pub(in crate::solid) fn retain_distribution(
             CachedDistribution {
                 source: MeshStorage::new(mesh),
                 parameters,
-                context: *context,
+                context,
                 result: result.clone(),
             }
         });
@@ -241,11 +241,11 @@ pub(in crate::solid) fn retain_merge(meshes: &[TriangleMesh], result: &TriangleM
 #[cfg(feature = "curve")]
 pub(in crate::solid) fn retained_flatten(
     mesh: &TriangleMesh,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Option<GeometryOutcome<hypercurve::CurveRegion2>> {
     STATE.with_borrow(|state| {
         state.flattenings.iter().find_map(|entry| {
-            (entry.source.matches(mesh) && entry.context == *context)
+            (entry.source.matches(mesh) && entry.context == context)
                 .then(|| entry.region.clone())
         })
     })
@@ -254,14 +254,14 @@ pub(in crate::solid) fn retained_flatten(
 #[cfg(feature = "curve")]
 pub(in crate::solid) fn retain_flatten(
     mesh: &TriangleMesh,
-    context: &GeometryContext,
+    context: GeometryContext,
     region: &GeometryOutcome<hypercurve::CurveRegion2>,
 ) {
     STATE.with_borrow_mut(|state| {
         retain(&mut state.flattenings, state.policy.flattenings, || {
             CachedFlatten {
                 source: MeshStorage::new(mesh),
-                context: *context,
+                context,
                 region: region.clone(),
             }
         });
@@ -272,11 +272,11 @@ pub(in crate::solid) fn retain_flatten(
 pub(in crate::solid) fn retained_slice(
     mesh: &TriangleMesh,
     z: &Real,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Option<GeometryOutcome<crate::solid::SliceResult>> {
     STATE.with_borrow(|state| {
         state.slices.iter().find_map(|entry| {
-            (entry.source.matches(mesh) && &entry.z == z && entry.context == *context)
+            (entry.source.matches(mesh) && &entry.z == z && entry.context == context)
                 .then(|| entry.result.clone())
         })
     })
@@ -286,14 +286,14 @@ pub(in crate::solid) fn retained_slice(
 pub(in crate::solid) fn retain_slice(
     mesh: &TriangleMesh,
     z: Real,
-    context: &GeometryContext,
+    context: GeometryContext,
     result: &GeometryOutcome<crate::solid::SliceResult>,
 ) {
     STATE.with_borrow_mut(|state| {
         retain(&mut state.slices, state.policy.slices, || CachedSlice {
             source: MeshStorage::new(mesh),
             z,
-            context: *context,
+            context,
             result: result.clone(),
         });
     });

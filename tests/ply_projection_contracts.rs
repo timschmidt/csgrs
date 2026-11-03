@@ -247,7 +247,7 @@ fn tiny_closed_body_remains_usable_after_external_read_and_strict_composition() 
         &restored,
         &solid::empty(),
         BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(composed.certainty, GeometryCertainty::Certified);

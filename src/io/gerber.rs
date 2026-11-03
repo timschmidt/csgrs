@@ -110,13 +110,13 @@ pub type GerberImport = (CurveRegion2, Vec<CurveString2>, Vec<hypercurve::CurveP
 
 /// Parses Gerber into distinct native filled, string, and path carriers.
 pub fn import_gerber(data: &[u8]) -> Result<GerberImport, IoError> {
-    import_gerber_with_context(data, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    import_gerber_with_context(data, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Parses Gerber with the selected policy through region construction and composition.
 pub fn import_gerber_with_context(
     data: &[u8],
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<GerberImport>, IoError> {
     let decisions = GeometryDecisions::new(context);
     let region = parse_gerber(data, &decisions)?;
@@ -171,7 +171,7 @@ pub fn export_gerber_with_options(
     region: &CurveRegion2,
     options: GerberExportOptions,
 ) -> Result<Vec<u8>, IoError> {
-    export_gerber_with_options_and_context(region, options, &GeometryContext::STRICT)
+    export_gerber_with_options_and_context(region, options, GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
@@ -179,7 +179,7 @@ pub fn export_gerber_with_options(
 pub fn export_gerber_with_options_and_context(
     region: &CurveRegion2,
     options: GerberExportOptions,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<Vec<u8>>, IoError> {
     let decisions = GeometryDecisions::new(context);
 
@@ -1040,7 +1040,7 @@ fn flash_to_curve(
             let mut curve = curve::circle_with_context(
                 required_real(diameter * 0.5, "circle aperture radius")?,
                 64,
-                &GeometryContext::new(decisions.predicate_policy()),
+                GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Construction {
@@ -1062,7 +1062,7 @@ fn flash_to_curve(
                     curve::circle_with_context(
                         required_real(hole_diameter * 0.5, "circle aperture hole radius")?,
                         64,
-                        &GeometryContext::new(decisions.predicate_policy()),
+                        GeometryContext::new(decisions.predicate_policy()),
                     )
                     .map(|outcome| decisions.consume_geometry(outcome))
                     .map_err(|error| IoError::Construction {
@@ -1095,7 +1095,7 @@ fn flash_to_curve(
                 &curve::regular_ngon_with_context(
                     polygon.vertices as usize,
                     required_real(diameter * 0.5, "polygon aperture radius")?,
-                    &GeometryContext::new(decisions.predicate_policy()),
+                    GeometryContext::new(decisions.predicate_policy()),
                 )
                 .map(|outcome| decisions.consume_geometry(outcome))
                 .map_err(|error| IoError::Construction {
@@ -1103,7 +1103,7 @@ fn flash_to_curve(
                     source: error,
                 })?,
                 required_real(rotation, "polygon rotation")?,
-                &GeometryContext::new(decisions.predicate_policy()),
+                GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Construction {
@@ -1125,7 +1125,7 @@ fn flash_to_curve(
                     curve::circle_with_context(
                         required_real(hole_diameter * 0.5, "polygon aperture hole radius")?,
                         64,
-                        &GeometryContext::new(decisions.predicate_policy()),
+                        GeometryContext::new(decisions.predicate_policy()),
                     )
                     .map(|outcome| decisions.consume_geometry(outcome))
                     .map_err(|error| IoError::Construction {
@@ -1150,7 +1150,7 @@ fn flash_to_curve(
         &curve,
         required_real(center.x, "flash center x")?,
         required_real(center.y, "flash center y")?,
-        &GeometryContext::new(decisions.predicate_policy()),
+        GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Construction {
@@ -1200,7 +1200,7 @@ fn aperture_rect_curve(
                 required_real(height, "rectangular aperture height")?,
                 required_real(width.min(height) * 0.5, "obround aperture radius")?,
                 16,
-                &GeometryContext::new(decisions.predicate_policy()),
+                GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Construction {
@@ -1211,7 +1211,7 @@ fn aperture_rect_curve(
             curve::rectangle_with_context(
                 required_real(width, "rectangular aperture width")?,
                 required_real(height, "rectangular aperture height")?,
-                &GeometryContext::new(decisions.predicate_policy()),
+                GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Construction {
@@ -1221,7 +1221,7 @@ fn aperture_rect_curve(
         },
         required_real(-width * 0.5, "rectangular aperture x origin")?,
         required_real(-height * 0.5, "rectangular aperture y origin")?,
-        &GeometryContext::new(decisions.predicate_policy()),
+        GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Construction {
@@ -1244,7 +1244,7 @@ fn aperture_rect_curve(
             curve::circle_with_context(
                 required_real(hole_diameter * 0.5, "rectangular aperture hole radius")?,
                 64,
-                &GeometryContext::new(decisions.predicate_policy()),
+                GeometryContext::new(decisions.predicate_policy()),
             )
             .map(|outcome| decisions.consume_geometry(outcome))
             .map_err(|error| IoError::Construction {
@@ -1734,7 +1734,7 @@ fn repeat_curves(
                             target: "Real",
                         },
                     )?,
-                    &GeometryContext::new(decisions.predicate_policy()),
+                    GeometryContext::new(decisions.predicate_policy()),
                 )
                 .map(|outcome| decisions.consume_geometry(outcome))
                 .map_err(|error| IoError::Construction {
@@ -1762,7 +1762,7 @@ fn apply_aperture_transform(
         &curve,
         required_real(sx, "aperture mirror x")?,
         required_real(sy, "aperture mirror y")?,
-        &GeometryContext::new(decisions.predicate_policy()),
+        GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Construction {
@@ -1772,7 +1772,7 @@ fn apply_aperture_transform(
     curve::rotated_with_context(
         &scaled,
         required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
-        &GeometryContext::new(decisions.predicate_policy()),
+        GeometryContext::new(decisions.predicate_policy()),
     )
     .map(|outcome| decisions.consume_geometry(outcome))
     .map_err(|error| IoError::Construction {

@@ -126,7 +126,7 @@ fn main() {
                 )
                 .expect("valid sampled mechanical fixture"),
                 Real::from(2),
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .expect("involute extrusion")
             .into_value(),
@@ -134,7 +134,7 @@ fn main() {
                 &curve::cycloidal_gear(Real::from(2), 12, Real::from(2), Real::zero(), 4)
                     .expect("valid sampled mechanical fixture"),
                 Real::from(2),
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .expect("cycloidal extrusion")
             .into_value(),
@@ -174,19 +174,19 @@ fn main() {
                 Real::from(2),
                 Real::from(6),
                 24,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             compound_region(curve::reuleaux(
                 3,
                 Real::from(6),
                 24,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             compound_region(curve::ring(
                 Real::from(6),
                 Real::from(2),
                 24,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             curve::heart(Real::from(8), Real::from(8), 32)
                 .expect("valid sampled profile fixture"),
@@ -195,7 +195,7 @@ fn main() {
                 Real::from(4),
                 Real::from(3),
                 24,
-                &GeometryContext::APPROXIMATE_512,
+                GeometryContext::APPROXIMATE_512,
             )),
             curve::involute_gear(
                 Real::from(2),
@@ -259,7 +259,7 @@ fn main() {
     });
     config.run("feature", "profile_triangulate", "circle_64", 8, || {
         let triangles =
-            curve::try_triangulate(black_box(&curve_left), &GeometryContext::STRICT)
+            curve::try_triangulate(black_box(&curve_left), GeometryContext::STRICT)
                 .expect("triangulation")
                 .into_value()
                 .triangles
@@ -350,7 +350,7 @@ fn main() {
         1,
         || {
             let extrusion =
-                curve::try_extrude(&curve_left, Real::from(10), &GeometryContext::STRICT)
+                curve::try_extrude(&curve_left, Real::from(10), GeometryContext::STRICT)
                     .expect("extrusion")
                     .into_value();
             let radial = curve::transformed(
@@ -359,7 +359,7 @@ fn main() {
             )
             .expect("valid planar transform fixture");
             let revolution =
-                curve::revolve(&radial, Real::from(360), 32, &GeometryContext::STRICT)
+                curve::revolve(&radial, Real::from(360), 32, GeometryContext::STRICT)
                     .expect("revolution")
                     .into_value();
             let twist = curve::extrude_twisted(
@@ -368,7 +368,7 @@ fn main() {
                 Real::from(90),
                 [Real::one(), Real::one()],
                 16,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .expect("twisted extrusion")
             .into_value();
@@ -379,7 +379,7 @@ fn main() {
                     Point3::new(Real::zero(), Real::zero(), Real::from(4)),
                     Point3::new(Real::from(3), Real::zero(), Real::from(8)),
                 ],
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .expect("sweep")
             .into_value();
@@ -481,7 +481,7 @@ fn main() {
             &mesh,
             &Point3::new(Real::from(-20), Real::zero(), Real::zero()),
             &Vector3::x(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("policy-authorized ray intersections")
         .value;
@@ -500,7 +500,7 @@ fn main() {
             &mesh,
             &Point3::new(Real::from(-20), Real::zero(), Real::zero()),
             &Vector3::x(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("policy-authorized ray intersections")
         .value;
@@ -799,7 +799,7 @@ fn main() {
         Real::from(8),
         Real::from(2),
         48,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     ));
     config.run("feature", "profile_io", "svg_gerber_roundtrip", 1, || {
         let svg = csgrs::io::svg::export_svg(&io_curve, &[], &[]).expect("SVG");

@@ -106,19 +106,19 @@ where
 
     /// Applies a checked transform whose image remains in the XY plane.
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
-        self.transform_with_context(matrix, &GeometryContext::STRICT)
+        self.transform_with_context(matrix, GeometryContext::STRICT)
             .map(GeometryOutcome::into_value)
     }
 
     /// Translates the region; nonzero Z translation cannot remain planar.
     pub fn translate(&self, x: A::Scalar, y: A::Scalar, z: A::Scalar) -> AdapterResult<Self> {
-        self.translate_with_context(x, y, z, &GeometryContext::STRICT)
+        self.translate_with_context(x, y, z, GeometryContext::STRICT)
             .map(GeometryOutcome::into_value)
     }
 
     /// Scales the XY region. Z scale is validated at ingress and has no planar effect.
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
-        self.scale_with_context(sx, sy, sz, &GeometryContext::STRICT)
+        self.scale_with_context(sx, sy, sz, GeometryContext::STRICT)
             .map(GeometryOutcome::into_value)
     }
 
@@ -129,7 +129,7 @@ where
         y_degrees: A::Scalar,
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
-        self.rotate_with_context(x_degrees, y_degrees, z_degrees, &GeometryContext::STRICT)
+        self.rotate_with_context(x_degrees, y_degrees, z_degrees, GeometryContext::STRICT)
             .map(GeometryOutcome::into_value)
     }
 
@@ -143,7 +143,7 @@ where
     pub fn transform_with_context(
         &self,
         matrix: &Matrix4,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         curve::transformed_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
@@ -156,7 +156,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.transform_with_context(
             &Matrix4::affine_translation([
@@ -174,7 +174,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         self.transform_with_context(
             &Matrix4::affine_nonuniform_scale([
@@ -192,7 +192,7 @@ where
         x: A::Scalar,
         y: A::Scalar,
         z: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         let x = Matrix4::rotation_x(A::into_real(x)?.to_radians());
         let y = Matrix4::rotation_y(A::into_real(y)?.to_radians());
@@ -203,7 +203,7 @@ where
     /// Computes bounds before scalar conversion, retaining predicate certainty.
     pub fn bounding_box_with_context(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Option<Aabb3<A::Scalar>>>> {
         curve::bounding_box_with_context(&self.inner, context)?
             .try_map(|bounds| bounds.map(super::convert_bounds::<A>).transpose())
@@ -212,7 +212,7 @@ where
     /// Publishes a ring with the selected policy after promoting scalar coordinates.
     pub fn polygon_with_context(
         points: &[[A::Scalar; 2]],
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
         let points = points
             .iter()
@@ -227,7 +227,7 @@ where
     pub fn extrude(
         &self,
         height: A::Scalar,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         curve::try_extrude(&self.inner, A::into_real(height)?, context)
             .map(|outcome| outcome.map(ScalarMesh::from_native))
@@ -237,7 +237,7 @@ where
     pub fn extrude_vector(
         &self,
         direction: [A::Scalar; 3],
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         let [x, y, z] = scalar3_to_real::<A>(direction)?;
         curve::try_extrude_vector(&self.inner, Vector3::from_xyz(x, y, z), context)
@@ -249,7 +249,7 @@ where
         &self,
         angle_degrees: A::Scalar,
         segments: usize,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
         curve::revolve(&self.inner, A::into_real(angle_degrees)?, segments, context)
             .map(|outcome| outcome.map(ScalarMesh::from_native))
@@ -258,7 +258,7 @@ where
 
     pub fn region_profiles(
         &self,
-        context: &GeometryContext,
+        context: GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Vec<RegionProfile<A::Scalar>>>> {
         curve::try_finite_profiles(&self.inner, context)
             .map_err(AdapterError::from)?

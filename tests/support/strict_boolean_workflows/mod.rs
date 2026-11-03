@@ -34,7 +34,7 @@ fn operation(
     b: &TriangleMesh,
     op: BooleanOp,
 ) -> Result<GeometryOutcome<TriangleMesh>, String> {
-    solid::boolean_with_context(a, b, op, &GeometryContext::STRICT)
+    solid::boolean_with_context(a, b, op, GeometryContext::STRICT)
         .map_err(|e| format!("boolean-error {e:?}"))
 }
 fn check(

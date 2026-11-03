@@ -75,7 +75,7 @@ fuzz_target!(|bytes: &[u8]| {
         8 => solid::octahedron(a).ok(),
         9 => solid::icosahedron(a).ok(),
         10 => solid::torus(a, b, segments, segments).ok(),
-        11 => solid::teardrop_cylinder(a, b, c, segments, &context)
+        11 => solid::teardrop_cylinder(a, b, c, segments, context)
             .map(csgrs::GeometryOutcome::into_value)
             .ok(),
         12 => solid::spur_gear_involute(
@@ -86,11 +86,11 @@ fuzz_target!(|bytes: &[u8]| {
             real(0.01) * b,
             segments,
             c,
-            &context,
+            context,
         )
         .map(csgrs::GeometryOutcome::into_value)
         .ok(),
-        13 => solid::spur_gear_cycloid(a, teeth, positive_b, b, segments, c, &context)
+        13 => solid::spur_gear_cycloid(a, teeth, positive_b, b, segments, c, context)
             .map(csgrs::GeometryOutcome::into_value)
             .ok(),
         _ => solid::helical_involute_gear(
@@ -103,7 +103,7 @@ fuzz_target!(|bytes: &[u8]| {
             c,
             b,
             segments,
-            &context,
+            context,
         )
         .map(csgrs::GeometryOutcome::into_value)
         .ok(),

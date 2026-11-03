@@ -115,7 +115,7 @@ fn literal_cuboids_compose_through_a_strict_difference() {
     let tool =
         solid::cuboid(literal("0.1"), literal("2.5e-1"), literal("3E-1")).expect("cuboid");
     let outcome = body
-        .try_difference_with_context(&tool, &GeometryContext::STRICT)
+        .try_difference_with_context(&tool, GeometryContext::STRICT)
         .expect("strict difference");
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);
     let difference = outcome.into_value();

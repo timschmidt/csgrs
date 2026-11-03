@@ -139,7 +139,7 @@ pub(crate) fn sample_expr_with_context(
     max: Point3,
     iso_value: Real,
     collect_diagnostics: bool,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
     let preview_metric_status = collect_diagnostics.then(|| {
         if matches!(hreal_sign(&iso_value), Some(RealSign::Zero)) {
@@ -175,7 +175,7 @@ pub(crate) fn sample_with_context(
     max: Point3,
     iso_value: Real,
     collect_diagnostics: bool,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
     sample_indexed_with_context(
         |_, _, _, x, y, z| field(&Point3::new(x.clone(), y.clone(), z.clone())),
@@ -195,7 +195,7 @@ pub(super) fn sample_indexed_with_context(
     max: Point3,
     iso_value: Real,
     collect_diagnostics: bool,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
     sample_indexed(
         field,
@@ -224,7 +224,7 @@ fn sample_indexed(
     iso_value: Real,
     collect_diagnostics: bool,
     preview_metric_status: Option<SdfMetricStatus>,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, SdfDiagnostics)>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     let (nx, ny, nz, sample_count) = validated_resolution(resolution)?;

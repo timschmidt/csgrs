@@ -106,14 +106,14 @@ mod truetype {
         let font = text_font::font(false);
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
             let square =
-                curve::truetype_text_with_context("R", &font, unit_size(), &context).unwrap();
+                curve::truetype_text_with_context("R", &font, unit_size(), context).unwrap();
             assert_eq!(square.certainty, GeometryCertainty::Certified);
             exact(&area(&square.value), &r(10_000));
             inside(&square.value, 50, 50, Some(true));
             inside(&square.value, 101, 50, Some(false));
             inside(&square.value, 0, 50, None);
             let arch =
-                curve::truetype_text_with_context("Q", &font, unit_size(), &context).unwrap();
+                curve::truetype_text_with_context("Q", &font, unit_size(), context).unwrap();
             assert_eq!(arch.certainty, GeometryCertainty::Certified);
             // x(t)=100t, y(t)=200t(1-t), integral y dx = 10,000/3.
             exact(&area(&arch.value), &q(10_000, 3));
@@ -138,7 +138,7 @@ mod truetype {
                 .boolean_region(&moved, BooleanOp::Difference)
                 .unwrap();
             assert!(emptied.is_empty());
-            let mesh = curve::try_extrude(&square.value, r(2), &context).unwrap();
+            let mesh = curve::try_extrude(&square.value, r(2), context).unwrap();
             assert_eq!(mesh.certainty, GeometryCertainty::Certified);
             assert!(
                 mesh.value
@@ -211,7 +211,7 @@ mod truetype {
                     text,
                     include_bytes!("../asar.ttf"),
                     r(size),
-                    &context,
+                    context,
                 )
                 .unwrap();
                 assert_eq!(result.certainty, GeometryCertainty::Certified);
@@ -224,7 +224,7 @@ mod truetype {
                 assert!(!union.boundary_paths().unwrap().is_empty());
                 // Curved extrusion uses the documented finite profile boundary.
                 // Its local predicate certainty is not exact font-surface fidelity.
-                let mesh = curve::try_extrude(&union, r(2), &context).unwrap();
+                let mesh = curve::try_extrude(&union, r(2), context).unwrap();
                 assert_eq!(mesh.certainty, GeometryCertainty::Certified);
                 assert!(
                     mesh.value
@@ -312,7 +312,7 @@ mod hershey {
         for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
             for size in [r(1), r(-1), Real::pi()] {
                 let outcome =
-                    curve::hershey_strings_with_context("AA", &font, size.clone(), &context)
+                    curve::hershey_strings_with_context("AA", &font, size.clone(), context)
                         .unwrap();
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 assert_eq!(outcome.value.len(), 4);
@@ -335,7 +335,7 @@ mod hershey {
             }
             for text in ["", " \n\t"] {
                 let empty =
-                    curve::hershey_strings_with_context(text, &font, r(1), &context).unwrap();
+                    curve::hershey_strings_with_context(text, &font, r(1), context).unwrap();
                 assert!(empty.value.is_empty());
                 assert_eq!(empty.certainty, GeometryCertainty::Certified);
             }
@@ -344,8 +344,7 @@ mod hershey {
                 ("CSGRS", &fonts::FUTURAL, 2, 8, 85),
             ] {
                 let result =
-                    curve::hershey_strings_with_context(text, font, r(size), &context)
-                        .unwrap();
+                    curve::hershey_strings_with_context(text, font, r(size), context).unwrap();
                 assert_eq!(result.certainty, GeometryCertainty::Certified);
                 assert_eq!(result.value.len(), count);
                 assert_eq!(

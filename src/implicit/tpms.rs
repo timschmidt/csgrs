@@ -12,14 +12,14 @@ use std::collections::HashMap;
 use std::sync::OnceLock;
 
 fn sign(value: &Real, predicate: &'static str) -> Result<RealSign, ValidationError> {
-    GeometryDecisions::new(&GeometryContext::STRICT).sign(value, predicate)
+    GeometryDecisions::new(GeometryContext::STRICT).sign(value, predicate)
 }
 
 fn maximum(values: &[Real]) -> Result<Real, ValidationError> {
     let (first, rest) = values
         .split_first()
         .ok_or(ValidationError::InvalidArguments)?;
-    let decisions = GeometryDecisions::new(&GeometryContext::STRICT);
+    let decisions = GeometryDecisions::new(GeometryContext::STRICT);
     rest.iter().try_fold(first.clone(), |best, value| {
         decisions
             .decide(
@@ -60,7 +60,7 @@ fn tpms_from_indexed_sdf(
         bounds.maxs.clone(),
         iso_value,
         false,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .map(GeometryOutcome::into_value)
     .map(|(mesh, _)| mesh)

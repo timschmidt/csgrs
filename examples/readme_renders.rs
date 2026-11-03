@@ -104,19 +104,13 @@ fn render_readme_curves() {
     );
     render_curve(
         "keyhole",
-        &curve::keyhole(
-            r(0.75),
-            r(0.55),
-            r(1.2),
-            96,
-            &GeometryContext::APPROXIMATE_512,
-        )
-        .expect("keyhole Boolean")
-        .into_value(),
+        &curve::keyhole(r(0.75), r(0.55), r(1.2), 96, GeometryContext::APPROXIMATE_512)
+            .expect("keyhole Boolean")
+            .into_value(),
     );
     render_curve(
         "reuleaux",
-        &curve::reuleaux(3, r(1.5), 96, &GeometryContext::APPROXIMATE_512)
+        &curve::reuleaux(3, r(1.5), 96, GeometryContext::APPROXIMATE_512)
             .expect("Reuleaux intersections")
             .into_value(),
     );
@@ -126,7 +120,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "ring",
-        &curve::ring(r(1.4), r(0.35), 96, &GeometryContext::APPROXIMATE_512)
+        &curve::ring(r(1.4), r(0.35), 96, GeometryContext::APPROXIMATE_512)
             .expect("ring Boolean")
             .into_value(),
     );
@@ -137,7 +131,7 @@ fn render_readme_curves() {
     );
     render_curve(
         "crescent",
-        &curve::crescent(r(1.1), r(0.9), r(0.48), 96, &GeometryContext::APPROXIMATE_512)
+        &curve::crescent(r(1.1), r(0.9), r(0.48), 96, GeometryContext::APPROXIMATE_512)
             .expect("crescent Boolean")
             .into_value(),
     );
@@ -153,20 +147,20 @@ fn render_readme_curves() {
             96,
             r(0.45),
             r(0.35),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("keyway Boolean")
         .into_value(),
     );
     render_curve(
         "circle_with_flat",
-        &curve::circle_with_flat(r(1.0), 96, r(0.72), &GeometryContext::APPROXIMATE_512)
+        &curve::circle_with_flat(r(1.0), 96, r(0.72), GeometryContext::APPROXIMATE_512)
             .expect("single-flat Boolean")
             .into_value(),
     );
     render_curve(
         "circle_with_two_flats",
-        &curve::circle_with_two_flats(r(1.0), 96, r(0.72), &GeometryContext::APPROXIMATE_512)
+        &curve::circle_with_two_flats(r(1.0), 96, r(0.72), GeometryContext::APPROXIMATE_512)
             .expect("double-flat Boolean")
             .into_value(),
     );
@@ -335,7 +329,7 @@ fn render_readme_meshes() {
             r(2.3),
             r(0.8),
             48,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("teardrop cylinder")
         .into_value(),
@@ -350,7 +344,7 @@ fn render_readme_meshes() {
             r(0.01),
             5,
             r(0.5),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("involute spur gear")
         .into_value(),
@@ -364,7 +358,7 @@ fn render_readme_meshes() {
             r(0.02),
             8,
             r(0.5),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("cycloidal spur gear")
         .into_value(),
@@ -381,7 +375,7 @@ fn render_readme_meshes() {
             r(0.8),
             r(24.0),
             8,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("helical involute gear")
         .into_value(),
@@ -390,19 +384,15 @@ fn render_readme_meshes() {
     let star = curve::star(5, r(1.0), r(0.45)).expect("valid sampled profile fixture");
     render_mesh(
         "extrude",
-        &curve::try_extrude(&star, r(0.65), &csgrs::GeometryContext::STRICT)
+        &curve::try_extrude(&star, r(0.65), csgrs::GeometryContext::STRICT)
             .expect("extrude")
             .into_value(),
     );
     render_mesh(
         "extrude_vector",
-        &curve::try_extrude_vector(
-            &star,
-            v3(0.45, 0.25, 0.9),
-            &csgrs::GeometryContext::STRICT,
-        )
-        .expect("vector extrude")
-        .into_value(),
+        &curve::try_extrude_vector(&star, v3(0.45, 0.25, 0.9), csgrs::GeometryContext::STRICT)
+            .expect("vector extrude")
+            .into_value(),
     );
     render_mesh(
         "extrude_twisted",
@@ -412,7 +402,7 @@ fn render_readme_meshes() {
             r(95.0),
             [r(0.65), r(0.65)],
             10,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .expect("twisted extrude")
         .into_value(),
@@ -425,21 +415,16 @@ fn render_readme_meshes() {
     .expect("valid planar transform fixture");
     render_mesh(
         "revolve",
-        &curve::revolve(
-            &revolve_profile,
-            r(265.0),
-            32,
-            &csgrs::GeometryContext::STRICT,
-        )
-        .expect("revolve")
-        .into_value(),
+        &curve::revolve(&revolve_profile, r(265.0), 32, csgrs::GeometryContext::STRICT)
+            .expect("revolve")
+            .into_value(),
     );
     render_mesh(
         "sweep",
         &curve::try_sweep(
             &curve::square(r(0.4)).expect("valid planar fixture"),
             &[p3(0.0, 0.0, -0.8), p3(0.0, 0.0, 1.1)],
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .expect("sweep")
         .into_value(),

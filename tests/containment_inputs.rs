@@ -42,7 +42,7 @@ fn assert_invalid(mesh: &TriangleMesh, expected: HypermeshError) {
                 Err(expected.clone())
             );
             assert_eq!(
-                solid::contains_point_with_context(mesh, &query, &context),
+                solid::contains_point_with_context(mesh, &query, context),
                 Err(expected.clone())
             );
         }
@@ -55,7 +55,7 @@ fn canonical_empty_membership_is_certified_false() {
     let mesh = TriangleMesh::new(Vec::new(), Vec::new());
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         let result =
-            solid::contains_point_with_context(&mesh, &point(0, 0, 0), &context).unwrap();
+            solid::contains_point_with_context(&mesh, &point(0, 0, 0), context).unwrap();
         assert!(!result.value);
         assert_eq!(result.certainty, GeometryCertainty::Certified);
     }
@@ -171,7 +171,7 @@ fn closed_tetrahedron_answers_match_independent_halfspace_expectations() {
         ] {
             for (query, expected) in &queries {
                 let result =
-                    solid::contains_point_with_context(&input, query, &context).unwrap();
+                    solid::contains_point_with_context(&input, query, context).unwrap();
                 assert_eq!(result.value, *expected);
                 assert_eq!(result.certainty, GeometryCertainty::Certified);
             }
@@ -233,7 +233,7 @@ fn approximate_topology_fact_keeps_its_receipt_and_cannot_certify_strict_queries
         let result = solid::contains_point_with_context(
             &mesh,
             &query,
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         assert!(!result.value);

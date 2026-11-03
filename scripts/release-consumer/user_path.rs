@@ -51,7 +51,7 @@ fn stl_facets(bytes: &[u8]) -> Vec<[[f32; 3]; 3]> {
         .collect()
 }
 
-fn closed(mesh: &TriangleMesh, context: &GeometryContext) -> Result<bool> {
+fn closed(mesh: &TriangleMesh, context: GeometryContext) -> Result<bool> {
     Ok(mesh
         .is_closed_manifold_geometry(&context.mesh_context())?
         .into_value())
@@ -62,7 +62,7 @@ fn main() -> Result<()> {
 
     // Construct.
     let body = solid::cube(Real::from(12))?;
-    let bar = curve::try_extrude(&curve::square(Real::from(4))?, Real::from(16), &context)?
+    let bar = curve::try_extrude(&curve::square(Real::from(4))?, Real::from(16), context)?
         .into_value();
 
     // Transform: a translation and an exact quarter turn.
@@ -71,12 +71,12 @@ fn main() -> Result<()> {
         .translated(Real::from(4), Real::from(14), Real::from(4))?;
 
     // Compose, keeping the aggregate certainty of every consumed decision.
-    let drilled = body.try_difference_with_context(&drill, &context)?;
+    let drilled = body.try_difference_with_context(&drill, context)?;
     check(
         drilled.certainty == GeometryCertainty::Certified,
         "strict difference is not certified",
     )?;
-    let part = drilled.value.try_difference_with_context(&cross, &context)?;
+    let part = drilled.value.try_difference_with_context(&cross, context)?;
     check(
         part.certainty == GeometryCertainty::Certified,
         "second strict difference is not certified",
@@ -85,7 +85,7 @@ fn main() -> Result<()> {
 
     // Validate topology and geometry: a closed manifold with the exact
     // volume 12^3 - 4*4*12 - (4*4*12 - 4*4*4).
-    check(closed(&part, &context)?, "result is not a closed manifold")?;
+    check(closed(&part, context)?, "result is not a closed manifold")?;
     let expected = 6 * (1728 - 192 - (192 - 64));
     check(
         exactly(&six_volume(&part), expected),
@@ -138,7 +138,7 @@ fn main() -> Result<()> {
         obj::to_obj(&from_obj, "part")? == text,
         "OBJ reimport does not preserve the binary64 projection",
     )?;
-    check(closed(&from_obj, &context)?, "OBJ reimport is not closed")?;
+    check(closed(&from_obj, context)?, "OBJ reimport is not closed")?;
 
     // PLY writes per-corner vertices with generated normals. Its header must
     // declare exactly the rows that follow, with one face per triangle.

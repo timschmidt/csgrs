@@ -51,7 +51,7 @@ fn native_curve_boolean_outputs_can_be_extruded() {
     let region = left
         .boolean_region(&right, hypercurve::BooleanOp::Union)
         .expect("curve union");
-    let mesh = curve::try_extrude(&region, r(0.4), &csgrs::GeometryContext::STRICT)
+    let mesh = curve::try_extrude(&region, r(0.4), csgrs::GeometryContext::STRICT)
         .expect("extrude")
         .into_value();
 

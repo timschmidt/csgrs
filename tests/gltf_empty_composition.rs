@@ -257,7 +257,7 @@ fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
         (&transformed, &cube, BooleanOp::Difference, false),
     ] {
         let result =
-            solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT)
+            solid::boolean_with_context(left, right, operation, GeometryContext::STRICT)
                 .unwrap();
         assert_eq!(result.certainty, GeometryCertainty::Certified);
         assert!(result.value.construction_evidence().source_history_missing());

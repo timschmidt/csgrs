@@ -57,7 +57,7 @@ fn hollow_prism() -> TriangleMesh {
         curve::translated(&curve::square(2.into()).unwrap(), 1.into(), 1.into()).unwrap();
     let profile = outer.boolean_region(&hole, BooleanOp::Difference).unwrap();
     assert_eq!(profile.filled_area().unwrap(), Some(12.into()));
-    let mesh = curve::try_extrude(&profile, 2.into(), &GeometryContext::STRICT).unwrap();
+    let mesh = curve::try_extrude(&profile, 2.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(mesh.certainty, GeometryCertainty::Certified);
     assert_eq!(volume_six(&mesh.value), Real::from(144));
     assert!(
@@ -82,7 +82,7 @@ fn assert_hollow(region: &CurveRegion2) {
         curve::contains_xy(region, half(), half()).unwrap(),
         Some(true)
     );
-    let mesh = curve::try_extrude(region, 3.into(), &GeometryContext::STRICT).unwrap();
+    let mesh = curve::try_extrude(region, 3.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(mesh.certainty, GeometryCertainty::Certified);
     assert_eq!(volume_six(&mesh.value), Real::from(216));
     assert!(
@@ -218,7 +218,7 @@ fn canonical_empty_and_outside_slices_remain_consumable() {
             Some(1.into())
         );
         assert!(
-            curve::try_extrude(&region, 1.into(), &GeometryContext::STRICT)
+            curve::try_extrude(&region, 1.into(), GeometryContext::STRICT)
                 .unwrap()
                 .value
                 .triangles
@@ -288,7 +288,7 @@ fn approximate_slice_never_certifies_a_later_strict_request() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let result = solid::slice_z_with_context(&mesh, z.clone(), &context);
+        let result = solid::slice_z_with_context(&mesh, z.clone(), context);
         if context == GeometryContext::STRICT {
             assert_eq!(result.unwrap_err().kind(), ValidationErrorKind::Undecided);
         } else {
@@ -370,8 +370,8 @@ fn contextual_invalid_indices_preserve_the_native_diagnostic() {
     let mesh = triangle(Vec::new());
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         for error in [
-            solid::flatten_with_context(&mesh, &context).unwrap_err(),
-            solid::slice_z_with_context(&mesh, 0.into(), &context).unwrap_err(),
+            solid::flatten_with_context(&mesh, context).unwrap_err(),
+            solid::slice_z_with_context(&mesh, 0.into(), context).unwrap_err(),
         ] {
             assert!(matches!(error, ValidationError::Mesh(_)));
             assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);

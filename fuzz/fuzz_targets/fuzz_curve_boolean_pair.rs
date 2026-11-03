@@ -35,7 +35,7 @@ fn decode_real(bytes: &[u8], idx: &mut usize) -> Real {
 }
 
 fn assert_curve_finite(curve: &CurveRegion2) {
-    let Ok(profiles) = curve::try_finite_profiles(curve, &csgrs::GeometryContext::STRICT)
+    let Ok(profiles) = curve::try_finite_profiles(curve, csgrs::GeometryContext::STRICT)
     else {
         return;
     };

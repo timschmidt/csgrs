@@ -23,7 +23,7 @@ fn validate(balls: &[MetaBall], resolution: usize, iso: Real, padding: Real) {
         (resolution, resolution, resolution),
         iso,
         padding,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(outcome.certainty, GeometryCertainty::Certified);

@@ -36,14 +36,14 @@ pub struct VrmlMeshImport {
 /// Appearance, material, normal, color, and texture data are accepted but do
 /// not cross this geometry-only boundary.
 pub fn from_vrml(bytes: &[u8]) -> Result<VrmlMeshImport, IoError> {
-    from_vrml_with_context(bytes, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+    from_vrml_with_context(bytes, GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Import a VRML scene with the selected mesh and triangulation policy.
 /// Undecided degeneracy checks return an error instead of omitting geometry.
 pub fn from_vrml_with_context(
     bytes: &[u8],
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<VrmlMeshImport>, IoError> {
     let decisions = GeometryDecisions::new(context);
     let text = std::str::from_utf8(bytes)
@@ -963,7 +963,7 @@ Group { children [
             );
             for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
                 let outcome =
-                    super::from_vrml_with_context(source.as_bytes(), &context).unwrap();
+                    super::from_vrml_with_context(source.as_bytes(), context).unwrap();
                 assert_eq!(outcome.certainty, GeometryCertainty::Certified);
                 let mesh = outcome.value.mesh;
                 assert_eq!(mesh.triangles.len(), 3);

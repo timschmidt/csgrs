@@ -131,7 +131,7 @@ fn sampled_sphere_cut() -> Chain {
                 chains::r(-2),
                 chains::r(-15),
             )?;
-            Ok(body.try_difference_with_context(&tool, &chains::STRICT)?)
+            Ok(body.try_difference_with_context(&tool, chains::STRICT)?)
         }),
     }
 }

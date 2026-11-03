@@ -40,7 +40,7 @@ fn approximate_union() -> TriangleMesh {
         &cube,
         &touching,
         BooleanOp::Union,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     );
     assert!(matches!(
         strict,
@@ -50,7 +50,7 @@ fn approximate_union() -> TriangleMesh {
         &cube,
         &touching,
         BooleanOp::Union,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(union.certainty, GeometryCertainty::Approximate512Consumed);
@@ -81,18 +81,14 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
             BooleanOp::Difference,
             BooleanOp::Intersection,
         ] {
-            let retained = solid::boolean_with_context(
-                &union,
-                other,
-                operation,
-                &GeometryContext::STRICT,
-            )
-            .unwrap();
+            let retained =
+                solid::boolean_with_context(&union, other, operation, GeometryContext::STRICT)
+                    .unwrap();
             let fresh = solid::boolean_with_context(
                 &rebuilt,
                 other,
                 operation,
-                &GeometryContext::STRICT,
+                GeometryContext::STRICT,
             )
             .unwrap();
             assert_eq!(retained.certainty, GeometryCertainty::Certified);
@@ -116,7 +112,7 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
         &union,
         &enclosing,
         BooleanOp::Difference,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(reused.certainty, GeometryCertainty::Approximate512Consumed);
@@ -124,7 +120,7 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
         &rebuilt,
         &enclosing,
         BooleanOp::Difference,
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(fresh.certainty, GeometryCertainty::Certified);
@@ -132,7 +128,7 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
     let moved = solid::transform_with_context(
         &union,
         &translation(Real::from(5)),
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(moved.certainty, GeometryCertainty::Certified);
@@ -146,10 +142,10 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
 #[test]
 fn a_curve_conversion_never_reports_certified_mesh_history() {
     let union = approximate_union();
-    let section = solid::flatten_with_context(&union, &GeometryContext::STRICT).unwrap();
+    let section = solid::flatten_with_context(&union, GeometryContext::STRICT).unwrap();
     assert_eq!(section.certainty, GeometryCertainty::Certified);
     let extruded =
-        csgrs::curve::try_extrude(&section.value, Real::one(), &GeometryContext::STRICT)
+        csgrs::curve::try_extrude(&section.value, Real::one(), GeometryContext::STRICT)
             .unwrap();
     assert_eq!(extruded.certainty, GeometryCertainty::Certified);
     // The region carries no construction evidence, so the mesh reports
@@ -200,7 +196,7 @@ mod curve_receipts {
             &region,
             3.into(),
             4.into(),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap_err();
         assert!(matches!(
@@ -212,7 +208,7 @@ mod curve_receipts {
             &region,
             3.into(),
             4.into(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         drop(region);
@@ -223,7 +219,7 @@ mod curve_receipts {
                     &region,
                     Real::from(3) + half(),
                     Real::from(4) + half(),
-                    &GeometryContext::APPROXIMATE_512,
+                    GeometryContext::APPROXIMATE_512,
                 )
             })
             .unwrap();
@@ -284,11 +280,10 @@ mod curve_receipts {
             GeometryContext::APPROXIMATE_512,
             GeometryContext::STRICT,
         ] {
-            let inside =
-                curve::contains_xy_with_context(&union, Real::one(), half(), &context);
+            let inside = curve::contains_xy_with_context(&union, Real::one(), half(), context);
             let moved =
-                curve::translated_with_context(&union, Real::from(5), Real::zero(), &context);
-            let extruded = curve::try_extrude(&union, Real::one(), &context);
+                curve::translated_with_context(&union, Real::from(5), Real::zero(), context);
+            let extruded = curve::try_extrude(&union, Real::one(), context);
             if context == GeometryContext::STRICT {
                 assert_inherited_topology_blocker(inside.unwrap_err());
                 assert_inherited_topology_blocker(moved.unwrap_err());
@@ -303,7 +298,7 @@ mod curve_receipts {
                     &moved.value,
                     Real::from(6),
                     half(),
-                    &context,
+                    context,
                 )
                 .unwrap();
                 assert_eq!(
@@ -315,7 +310,7 @@ mod curve_receipts {
                         &moved.value,
                         Real::from(6),
                         half(),
-                        &GeometryContext::STRICT,
+                        GeometryContext::STRICT,
                     )
                     .unwrap_err(),
                 );
@@ -334,19 +329,15 @@ mod curve_receipts {
             }
             // Certified relative to the explicitly adopted retained boundary.
             let inside =
-                curve::contains_xy_with_context(&rebuilt, Real::one(), half(), &context)
+                curve::contains_xy_with_context(&rebuilt, Real::one(), half(), context)
                     .unwrap();
             assert_eq!(
                 (inside.certainty, inside.value),
                 (GeometryCertainty::Certified, Some(true))
             );
-            let moved = curve::translated_with_context(
-                &rebuilt,
-                Real::from(5),
-                Real::zero(),
-                &context,
-            )
-            .unwrap();
+            let moved =
+                curve::translated_with_context(&rebuilt, Real::from(5), Real::zero(), context)
+                    .unwrap();
             assert_eq!(moved.certainty, GeometryCertainty::Certified);
         }
     }
@@ -358,26 +349,26 @@ mod curve_receipts {
             &union,
             Real::from(5),
             Real::zero(),
-            &GeometryContext::APPROXIMATE_512,
+            GeometryContext::APPROXIMATE_512,
         )
         .unwrap();
         assert_eq!(moved.certainty, GeometryCertainty::Approximate512Consumed);
         assert_inherited_topology_blocker(
-            curve::try_extrude(&moved.value, Real::one(), &GeometryContext::STRICT)
+            curve::try_extrude(&moved.value, Real::one(), GeometryContext::STRICT)
                 .unwrap_err(),
         );
         let strict_chain = moved.clone().and_then(|region| {
-            curve::try_extrude(&region, Real::one(), &GeometryContext::STRICT)
+            curve::try_extrude(&region, Real::one(), GeometryContext::STRICT)
         });
         assert_inherited_topology_blocker(strict_chain.unwrap_err());
         let local =
-            curve::try_extrude(&moved.value, Real::one(), &GeometryContext::APPROXIMATE_512)
+            curve::try_extrude(&moved.value, Real::one(), GeometryContext::APPROXIMATE_512)
                 .unwrap();
         assert_eq!(local.certainty, GeometryCertainty::Approximate512Consumed);
         let chained = moved
             .clone()
             .and_then(|region| {
-                curve::try_extrude(&region, Real::one(), &GeometryContext::APPROXIMATE_512)
+                curve::try_extrude(&region, Real::one(), GeometryContext::APPROXIMATE_512)
             })
             .unwrap();
         assert_eq!(chained.certainty, GeometryCertainty::Approximate512Consumed);
@@ -426,15 +417,15 @@ mod curve_receipts {
             &rebuilt,
             Real::from(5),
             Real::zero(),
-            &GeometryContext::STRICT,
+            GeometryContext::STRICT,
         )
         .unwrap()
-        .and_then(|region| curve::try_extrude(&region, Real::one(), &GeometryContext::STRICT))
+        .and_then(|region| curve::try_extrude(&region, Real::one(), GeometryContext::STRICT))
         .unwrap();
         assert_eq!(strict.certainty, GeometryCertainty::Certified);
 
         let failed = moved.and_then(|region| {
-            curve::try_extrude(&region, Real::zero(), &GeometryContext::STRICT)
+            curve::try_extrude(&region, Real::zero(), GeometryContext::STRICT)
         });
         assert!(failed.is_err());
     }

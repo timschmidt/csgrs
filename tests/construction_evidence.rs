@@ -152,7 +152,7 @@ fn boolean_batch_and_empty_bridges_keep_both_parents() {
         &mesh,
         &mesh,
         BooleanOp::Difference,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
@@ -169,7 +169,7 @@ fn boolean_batch_and_empty_bridges_keep_both_parents() {
             BooleanOp::Difference,
         ] {
             let result =
-                solid::boolean_with_context(left, right, operation, &GeometryContext::STRICT)
+                solid::boolean_with_context(left, right, operation, GeometryContext::STRICT)
                     .unwrap();
             assert_eq!(result.certainty, GeometryCertainty::Certified);
             assert_approximate(&result.value);
@@ -208,7 +208,7 @@ fn modeling_cache_keys_include_construction_qualifications() {
                             count,
                             Vector3::x(),
                             3.into(),
-                            &context,
+                            context,
                         )
                         .unwrap();
                         assert_eq!(
@@ -249,7 +249,7 @@ fn concurrent_local_proofs_do_not_upgrade_construction() {
 #[test]
 fn bare_curve_history_is_untracked_and_sampling_is_separate() {
     let square = csgrs::curve::square(1.into()).unwrap();
-    let mesh = csgrs::curve::try_extrude(&square, 1.into(), &GeometryContext::STRICT).unwrap();
+    let mesh = csgrs::curve::try_extrude(&square, 1.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(mesh.certainty, GeometryCertainty::Certified);
     assert!(mesh.value.construction_evidence().source_history_missing());
     let sphere = solid::sphere(1.into(), 8, 4).unwrap();

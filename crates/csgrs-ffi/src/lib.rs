@@ -1190,7 +1190,7 @@ fn create_region_profiles<F: Family>(
     region: &CurveRegionOf<F>,
 ) -> FfiResult<F::CRegionProfiles> {
     let profiles = region
-        .region_profiles(&csgrs::GeometryContext::STRICT)?
+        .region_profiles(csgrs::GeometryContext::STRICT)?
         .into_value();
     let mut points = Vec::new();
     let mut ring_offsets = vec![0];
@@ -1767,7 +1767,7 @@ macro_rules! export_family {
                 let mesh = region
                     .extrude(
                         <$family as Family>::scalar_to_adapter(height)?,
-                        &csgrs::GeometryContext::STRICT,
+                        csgrs::GeometryContext::STRICT,
                     )?
                     .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
@@ -1786,7 +1786,7 @@ macro_rules! export_family {
                 let mesh = region
                     .extrude_vector(
                         <$family as Family>::vec3_to_adapter(direction)?,
-                        &csgrs::GeometryContext::STRICT,
+                        csgrs::GeometryContext::STRICT,
                     )?
                     .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
@@ -1807,7 +1807,7 @@ macro_rules! export_family {
                     .revolve(
                         <$family as Family>::scalar_to_adapter(angle_degrees)?,
                         segments,
-                        &csgrs::GeometryContext::STRICT,
+                        csgrs::GeometryContext::STRICT,
                     )?
                     .into_value();
                 unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }

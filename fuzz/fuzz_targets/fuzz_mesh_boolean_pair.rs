@@ -59,7 +59,7 @@ fuzz_target!(|bytes: &[u8]| {
             )
             .expect("valid planar fixture"),
             size_a,
-            &csgrs::GeometryContext::STRICT,
+            csgrs::GeometryContext::STRICT,
         )
         .map(csgrs::GeometryOutcome::into_value)
         .unwrap_or_else(|_| solid::empty()),

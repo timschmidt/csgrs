@@ -111,7 +111,7 @@ fn zero_area_sampled_sector_is_a_completed_empty_set() {
         0.into(),
         180.into(),
         1,
-        &GeometryContext::STRICT,
+        GeometryContext::STRICT,
     )
     .unwrap();
     assert_eq!(empty.certainty, csgrs::GeometryCertainty::Certified);
@@ -123,7 +123,7 @@ fn zero_area_sampled_sector_is_a_completed_empty_set() {
         .unwrap();
     assert_eq!(union.filled_area().unwrap(), Some(4.into()));
     assert!(
-        curve::try_extrude(&empty.value, 3.into(), &GeometryContext::STRICT)
+        curve::try_extrude(&empty.value, 3.into(), GeometryContext::STRICT)
             .unwrap()
             .value
             .triangles
@@ -133,7 +133,7 @@ fn zero_area_sampled_sector_is_a_completed_empty_set() {
 #[test]
 fn extruded_teardrop_does_not_certify_a_failed_profile() {
     assert!(
-        solid::teardrop_cylinder((-1).into(), 2.into(), 3.into(), 4, &GeometryContext::STRICT)
+        solid::teardrop_cylinder((-1).into(), 2.into(), 3.into(), 4, GeometryContext::STRICT)
             .is_err()
     );
 }
@@ -227,48 +227,42 @@ fn independent_sampled_areas_and_context_receipts_agree() {
         for (name, result, expected) in [
             (
                 "arrow",
-                curve::arrow_with_context(2.into(), 1.into(), 1.into(), 2.into(), &context),
+                curve::arrow_with_context(2.into(), 1.into(), 1.into(), 2.into(), context),
                 Real::from(3),
             ),
             (
                 "trapezoid",
-                curve::trapezoid_with_context(
-                    1.into(),
-                    3.into(),
-                    2.into(),
-                    5.into(),
-                    &context,
-                ),
+                curve::trapezoid_with_context(1.into(), 3.into(), 2.into(), 5.into(), context),
                 Real::from(4),
             ),
             (
                 "star",
-                curve::star_with_context(4, 2.into(), 1.into(), &context),
+                curve::star_with_context(4, 2.into(), 1.into(), context),
                 Real::from(4) * &sqrt2,
             ),
             (
                 "teardrop",
-                curve::teardrop_with_context(2.into(), 3.into(), 2, &context),
+                curve::teardrop_with_context(2.into(), 3.into(), 2, context),
                 Real::from(3),
             ),
             (
                 "egg",
-                curve::egg_with_context(2.into(), 4.into(), 4, &context),
+                curve::egg_with_context(2.into(), 4.into(), 4, context),
                 Real::from(4),
             ),
             (
                 "squircle",
-                curve::squircle_with_context(4.into(), 2.into(), 4, &context),
+                curve::squircle_with_context(4.into(), 2.into(), 4, context),
                 Real::from(4),
             ),
             (
                 "sector",
-                curve::pie_slice_with_context(2.into(), 0.into(), 90.into(), 1, &context),
+                curve::pie_slice_with_context(2.into(), 0.into(), 90.into(), 1, context),
                 Real::from(2),
             ),
             (
                 "heart",
-                curve::heart_with_context(2.into(), 2.into(), 8, &context),
+                curve::heart_with_context(2.into(), 2.into(), 8, context),
                 heart_area.clone(),
             ),
             (
@@ -281,7 +275,7 @@ fn independent_sampled_areas_and_context_receipts_agree() {
                     2.into(),
                     2.into(),
                     4,
-                    &context,
+                    context,
                 ),
                 Real::from(2),
             ),
@@ -303,7 +297,7 @@ fn independent_sampled_areas_and_context_receipts_agree() {
                 .unwrap();
             assert!(removed.is_empty(), "{name}");
             assert!(
-                curve::try_extrude(&removed, 3.into(), &context)
+                curve::try_extrude(&removed, 3.into(), context)
                     .unwrap()
                     .value
                     .triangles
@@ -365,7 +359,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
             1.into(),
             1.into(),
             head_width.clone(),
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -377,7 +371,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
         1.into(),
         1.into(),
         head_width.clone(),
-        &GeometryContext::APPROXIMATE_512,
+        GeometryContext::APPROXIMATE_512,
     )
     .unwrap();
     assert_eq!(
@@ -391,7 +385,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
             1.into(),
             1.into(),
             head_width,
-            &GeometryContext::STRICT
+            GeometryContext::STRICT
         )
         .is_err()
     );
@@ -406,7 +400,7 @@ fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
         .boolean_region(&cutter, hypercurve::BooleanOp::Difference)
         .unwrap();
     assert_eq!(cut.filled_area().unwrap(), Some(q(9, 4)));
-    let extruded = curve::try_extrude(&cut, 4.into(), &GeometryContext::STRICT).unwrap();
+    let extruded = curve::try_extrude(&cut, 4.into(), GeometryContext::STRICT).unwrap();
     assert_eq!(extruded.certainty, csgrs::GeometryCertainty::Certified);
     let check = |mesh: &csgrs::TriangleMesh| {
         assert!(
@@ -425,14 +419,14 @@ fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
     {
         let text = csgrs::io::obj::to_obj(&extruded.value, "sampled-arrow-hole").unwrap();
         let restored =
-            csgrs::io::obj::from_obj_with_context(text.as_bytes(), &GeometryContext::STRICT)
+            csgrs::io::obj::from_obj_with_context(text.as_bytes(), GeometryContext::STRICT)
                 .unwrap();
         assert_eq!(restored.certainty, csgrs::GeometryCertainty::Certified);
         assert_eq!(restored.value.positions, extruded.value.positions);
         check(&restored.value);
     }
     let solid =
-        solid::teardrop_cylinder(2.into(), 3.into(), 3.into(), 2, &GeometryContext::STRICT)
+        solid::teardrop_cylinder(2.into(), 3.into(), 3.into(), 2, GeometryContext::STRICT)
             .unwrap();
     assert_eq!(solid.certainty, csgrs::GeometryCertainty::Certified);
     check(&solid.value); // sampled area 3, height 3, volume 9

@@ -127,7 +127,7 @@ fn separate_components_may_have_opposite_projective_scale_signs() {
         csgrs::GeometryContext::STRICT,
         csgrs::GeometryContext::APPROXIMATE_512,
     ] {
-        let result = solid::transform_with_context(&mesh, &reciprocal_x(), &context).unwrap();
+        let result = solid::transform_with_context(&mesh, &reciprocal_x(), context).unwrap();
         assert_eq!(result.certainty, csgrs::GeometryCertainty::Certified);
         assert_eq!(result.value.positions.as_ref(), &expected);
         // The determinant is -1; reverse winding to preserve the represented orientation.
@@ -163,7 +163,7 @@ fn unknown_transform_is_not_invalid_input_or_empty_success() {
             zero.clone(),
             Real::one(),
             Real::one(),
-            &csgrs::GeometryContext::APPROXIMATE_512
+            csgrs::GeometryContext::APPROXIMATE_512
         ),
         Err(AdapterError::Construction(ValidationError::InvalidArguments))
     ));

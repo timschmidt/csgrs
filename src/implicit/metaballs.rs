@@ -62,7 +62,7 @@ pub(crate) fn sample(
     iso_value: Real,
     padding: Real,
     collect_diagnostics: bool,
-    context: &GeometryContext,
+    context: GeometryContext,
 ) -> Result<GeometryOutcome<(TriangleMesh, MetaballDiagnostics)>, ValidationError> {
     let (nx, ny, nz, _) = super::sdf::validated_resolution(resolution)?;
     let bordered =

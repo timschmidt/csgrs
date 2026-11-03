@@ -139,7 +139,7 @@ fn empty_curve_bounds_are_absent() {
         &curve,
         2,
         Real::zero(),
-        &csgrs::GeometryContext::STRICT,
+        csgrs::GeometryContext::STRICT,
     )
     .unwrap();
     assert!(paths.value.is_empty());
@@ -149,7 +149,7 @@ fn empty_curve_bounds_are_absent() {
             &curve,
             0,
             Real::zero(),
-            &csgrs::GeometryContext::STRICT
+            csgrs::GeometryContext::STRICT
         )
         .is_err()
     );
@@ -249,7 +249,7 @@ fn shared_sampled_field_path_retains_native_failure_and_recovers() {
         Point3::origin(),
         Point3::new(1.into(), 1.into(), 1.into()),
         Real::zero(),
-        &context,
+        context,
     )
     .unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::Undecided);
@@ -270,7 +270,7 @@ fn shared_sampled_field_path_retains_native_failure_and_recovers() {
         Point3::origin(),
         Point3::new(1.into(), 1.into(), 1.into()),
         Real::zero(),
-        &context,
+        context,
     )
     .unwrap();
     assert_eq!(complete.certainty, csgrs::GeometryCertainty::Certified);

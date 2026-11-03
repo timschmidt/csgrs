@@ -80,7 +80,7 @@ fn every_operator_matches_its_eager_operation() {
         (&ea ^ &eb, BooleanOp::SymmetricDifference),
     ] {
         let lazy = expression
-            .evaluate_with_context(&GeometryContext::STRICT)
+            .evaluate_with_context(GeometryContext::STRICT)
             .unwrap()
             .value;
         same_set(&lazy, &solid::boolean(&a, &b, operation).unwrap());
@@ -99,7 +99,7 @@ fn transforms_push_down_to_the_leaves() {
         .translated(-7, 0, 5)
         .unwrap();
     let lazy = expression
-        .evaluate_with_context(&GeometryContext::STRICT)
+        .evaluate_with_context(GeometryContext::STRICT)
         .unwrap()
         .value;
     let eager = translated(
@@ -129,7 +129,7 @@ fn empty_leaves_are_the_empty_set() {
     let empty = SolidExpr::from(solid::empty());
     let strict = GeometryContext::STRICT;
     let evaluate =
-        |expression: &SolidExpr| expression.evaluate_with_context(&strict).unwrap().value;
+        |expression: &SolidExpr| expression.evaluate_with_context(strict).unwrap().value;
     same_set(&evaluate(&(&cube | &empty)), &evaluate(&cube));
     same_set(&evaluate(&(&cube - &empty)), &evaluate(&cube));
     assert!(evaluate(&(&cube & &empty)).triangles.is_empty());
@@ -186,7 +186,7 @@ fn an_expression_builds_one_arrangement() {
                 acc | SolidExpr::from(mesh.clone())
             });
         expression
-            .evaluate_with_context(&GeometryContext::STRICT)
+            .evaluate_with_context(GeometryContext::STRICT)
             .unwrap();
     });
     let stepwise = arrangements(&|| {
@@ -230,7 +230,7 @@ fn drilled_block_timing() {
             acc - SolidExpr::from(hole.clone())
         });
         expression
-            .evaluate_with_context(&GeometryContext::STRICT)
+            .evaluate_with_context(GeometryContext::STRICT)
             .unwrap()
             .value
     });

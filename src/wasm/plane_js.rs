@@ -68,7 +68,7 @@ impl PlaneJs {
         c: &Point3Js,
         approximate_512: bool,
     ) -> Result<GeometryPlaneResultJs, JsValue> {
-        let decisions = GeometryDecisions::new(&geometry_context(approximate_512));
+        let decisions = GeometryDecisions::new(geometry_context(approximate_512));
         let nondegenerate = decisions.consume_mesh(
             Plane::points_are_nondegenerate(
                 decisions.mesh_context(),
@@ -125,7 +125,7 @@ impl PlaneJs {
         offset: f64,
         approximate_512: bool,
     ) -> Result<GeometryPlaneResultJs, JsValue> {
-        let decisions = GeometryDecisions::new(&geometry_context(approximate_512));
+        let decisions = GeometryDecisions::new(geometry_context(approximate_512));
         let [x, y, z] = normal.inner.0.clone();
         validate_normal(&[x.clone(), y.clone(), z.clone()], &decisions)?;
         Ok(decisions
@@ -165,7 +165,7 @@ impl PlaneJs {
         &self,
         approximate_512: bool,
     ) -> Result<GeometryMatrixResultJs, JsValue> {
-        let decisions = GeometryDecisions::new(&geometry_context(approximate_512));
+        let decisions = GeometryDecisions::new(geometry_context(approximate_512));
         self.inner
             .reflection_matrix(decisions.mesh_context())
             .map(|outcome| decisions.finish(decisions.consume_mesh(outcome)).into())
