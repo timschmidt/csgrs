@@ -3909,3 +3909,20 @@ were spot-checked. None has started. The hypercurve packages are:
 Each refactor must keep exact outputs, checksums and certainty identical under
 both policies. It must also keep dispatch-trace counts identical and show no
 benchmark or binary-size regression. The order of sign calls must not change.
+
+## Load-sensitive cancellation retention test (2026-11-03)
+
+`cancellation_release::cancelled_stalled_stroke_releases_its_temporary_heap`
+requires a warm cancelled attempt to retain under 1% of its peak heap. On a
+heavily loaded host (load average 22-37) it fails intermittently, even on
+`main` (`e83de9ee8c`): it failed 5 of 6 runs there, 1 of 4 on `062a289ad4`, and
+3 of 6 with the simplification packages applied. With load around 10 it
+passed. The failing runs retained 20-60 kB of a 4.1 MB peak in the fifth or
+sixth attempt. Which process-wide tables a one-second attempt warms depends
+on how far it gets, so warm-up can extend past the four attempts the test
+allows for.
+
+The test should not depend on host load. Options: warm until retention stops
+shrinking before measuring, compare retention across consecutive warm attempts
+instead of against a fixed fraction of the peak, or run the stalled
+computation for a fixed amount of work rather than a fixed wall time.

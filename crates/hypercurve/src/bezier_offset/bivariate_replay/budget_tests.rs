@@ -9,7 +9,7 @@ fn allowance(promotions: usize) -> WorkBudget {
 }
 
 fn fixture() -> ([BivariatePolynomial; 2], BezierParameter2, BezierParameter2) {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let first = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::one()],
         vec![],

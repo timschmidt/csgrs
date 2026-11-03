@@ -567,28 +567,17 @@ impl<'a> PreparedFilletCarrier2<'a> {
             // replays its own orientation. Extension rays may cross old cusps.
             let constant = policy.bounded_exact_predicate_pass(
                 || -> crate::CurveResult<Classification<Option<RealSign>>> {
-                    let analysis = match parallel
-                        .singularity_analysis_with_policy(&source.curve_parameter_range(), policy)?
-                    {
-                        Classification::Decided(analysis) => analysis,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let ranges = match analysis.regular_subranges(policy)? {
-                        Classification::Decided(ranges) => ranges,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let analysis = decided!(
+                        parallel.singularity_analysis_with_policy(
+                            &source.curve_parameter_range(),
+                            policy
+                        )?,
+                        Ok
+                    );
+                    let ranges = decided!(analysis.regular_subranges(policy)?, Ok);
                     let mut common = None;
                     for range in ranges {
-                        let parameter = match range.strict_interior_scalar(policy)? {
-                            Classification::Decided(parameter) => parameter,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let parameter = decided!(range.strict_interior_scalar(policy)?, Ok);
                         let sign = match parallel
                             .parallel_derivative_scale_sign(&parameter.into(), policy)?
                         {

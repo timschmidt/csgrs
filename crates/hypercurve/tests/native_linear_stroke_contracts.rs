@@ -1,3 +1,7 @@
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{
     CurvePath2, CurveRegion2, FillRule, LineSeg2, OffsetCap, OffsetCornerStyle2, Point2,
     PredicatePolicy, Real, RegionPointLocation, WorkBudget, WorkUsage, evaluate_under,
@@ -22,10 +26,7 @@ fn translated_reversed_strokes_keep_analytic_measurements_and_membership() {
         (0, -2, Real::from(2)),
     ];
     for (dx, dy, length) in cases {
-        for radius in [
-            (Real::one() / Real::from(7)).unwrap(),
-            Real::from(3).sqrt().unwrap(),
-        ] {
+        for radius in [r!(1 / 7), Real::from(3).sqrt().unwrap()] {
             let start = Point2::new(Real::pi() + Real::from(17), Real::from(-7));
             let end = Point2::new(start.x() + Real::from(dx), start.y() + Real::from(dy));
             let midpoint = Point2::new(

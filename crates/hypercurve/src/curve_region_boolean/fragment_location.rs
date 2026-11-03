@@ -559,12 +559,10 @@ impl<'a> CurveRegionBooleanContext<'a> {
         }
 
         let mut last_reason = UncertaintyReason::Unsupported;
-        let outer_bounds = match retained_probe_outer_bounds(boundary_carriers, &self.data.policy) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let outer_bounds = decided!(
+            retained_probe_outer_bounds(boundary_carriers, &self.data.policy),
+            Ok
+        );
         let fallback_count = boundary_carriers.len().saturating_mul(2).saturating_add(1);
         let ordinary_candidates = fallback_count.saturating_add(4);
         let prefer_axis_probes = boundary_carriers
@@ -769,15 +767,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     let filled_sides = if crossings.is_empty() {
                         &[][..]
                     } else {
-                        match boundary_region
-                            .filled_side_is_left_raw(&self.data.policy)
-                            .map_err(|cause| self.invalid(owner_carrier_index, cause))?
-                        {
-                            Classification::Decided(sides) => sides,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
+                        decided!(
+                            boundary_region
+                                .filled_side_is_left_raw(&self.data.policy)
+                                .map_err(|cause| self.invalid(owner_carrier_index, cause))?,
+                            Ok
+                        )
                     };
                     let mut last_contact = None::<(&CurveParameter2, RegionPointLocation)>;
                     for (parameter, cross_is_positive, loop_index) in crossings {

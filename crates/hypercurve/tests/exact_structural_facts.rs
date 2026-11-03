@@ -1,3 +1,4 @@
+#[macro_use]
 mod support;
 use hypercurve::{
     BulgeVertex2, Contour2, CurveRegion2, CurveString2, EndpointTangent2, FillRule,
@@ -35,10 +36,7 @@ fn endpoint_tangents_use_canonical_scalar_zero_knowledge() {
 
 #[test]
 fn point_facts_preserve_exact_scale_and_symbolic_dependencies() {
-    let rational = Point2::new(
-        (Real::one() / Real::from(3_i8)).unwrap(),
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-    );
+    let rational = Point2::new(r!(1 / 3), r!(2 / 3));
     let rational_facts = rational.structural_facts();
 
     assert!(rational_facts.all_exact_rational());

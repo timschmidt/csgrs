@@ -1,5 +1,9 @@
 //! Policy replay failures remain distinct from malformed boundaries.
 
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{
     BooleanOp, CurveCertainty, CurvePath2, CurvePoint2, CurveRegion2, ExactCurveError, FillRule,
     LineSeg2, Point2, PredicatePolicy, Real, RegionPointLocation, evaluate_under,
@@ -52,7 +56,7 @@ fn qualified_square(reversed: bool) -> CurveRegion2 {
 
 #[test]
 fn stricter_replay_of_a_qualified_loop_is_blocked_not_invalid() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let inside: CurvePoint2 = Point2::new(half.clone(), half).into();
     let square =
         CurveRegion2::try_from_boundary_paths(&[square_path(Real::zero())], FillRule::NonZero)
@@ -95,7 +99,7 @@ fn stricter_replay_of_a_qualified_loop_is_blocked_not_invalid() {
 
 #[test]
 fn replay_does_not_relabel_an_open_loop_or_weaken_a_strict_square() {
-    let gap = (Real::one() / Real::from(100)).unwrap();
+    let gap = r!(1 / 100);
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let invalid = evaluate_under(policy, || {
             CurveRegion2::try_from_boundary_paths(&[square_path(gap.clone())], FillRule::NonZero)
@@ -113,7 +117,7 @@ fn replay_does_not_relabel_an_open_loop_or_weaken_a_strict_square() {
 
 #[test]
 fn qualified_affine_continuation_keeps_its_closure_receipt() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     for reversed in [false, true] {
         let mut region = qualified_square(reversed);
         let mut witness = Point2::new(half.clone(), half.clone());

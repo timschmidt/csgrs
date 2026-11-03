@@ -2024,7 +2024,7 @@ fn circle_point(x: i64, y: i64) -> Point2 {
 fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
     let center = circle_point(1, 2);
     let source = QuadraticBezier2::new(circle_point(0, 0), circle_point(1, 0), circle_point(1, 1));
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let mut contact_count = 0;
@@ -2071,7 +2071,7 @@ fn analytic_parallel_intersects_independently_parameterized_circles_exactly() {
 
 #[test]
 fn analytic_parallel_circle_tangency_retains_zero_cross_evidence() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let half_sqrt_two = (Real::from(2_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for swap_axes in [false, true] {

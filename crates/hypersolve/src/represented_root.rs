@@ -2443,18 +2443,8 @@ pub fn dense_two_positive_square_root_sum_sign_at_projected_zero<C: SelectedAlge
             policy,
         )
     };
-    let retained = match one_root_sign(&expression.rational, &expression.first)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let candidate = match one_root_sign(&expression.second, &expression.product)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let retained = crate::decided!(one_root_sign(&expression.rational, &expression.first)?, Ok);
+    let candidate = crate::decided!(one_root_sign(&expression.second, &expression.product)?, Ok);
     if let Some(sign) = same_positive_root_sheet_signs(retained, candidate) {
         return Ok(Classification::Decided(sign));
     }
@@ -2481,18 +2471,14 @@ pub fn dense_two_positive_square_root_sum_sign_at_projected_zero<C: SelectedAlge
     })() else {
         return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
     };
-    let norm_rational = match dense_polynomial_tuple_sign(&norm_rational, sources, policy)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let norm_radical = match dense_polynomial_tuple_sign(&norm_radical, sources, policy)? {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let norm_rational = crate::decided!(
+        dense_polynomial_tuple_sign(&norm_rational, sources, policy)?,
+        Ok
+    );
+    let norm_radical = crate::decided!(
+        dense_polynomial_tuple_sign(&norm_radical, sources, policy)?,
+        Ok
+    );
     let norm = match (norm_rational, norm_radical) {
         (RealSign::Zero, _) | (_, RealSign::Zero) => RealSign::Zero,
         (first, second) if first == second => first,

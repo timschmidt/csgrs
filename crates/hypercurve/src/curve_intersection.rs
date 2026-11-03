@@ -3238,18 +3238,13 @@ impl CurveIntersectionOverlap2 {
             Classification::Decided(None) => return Ok(Classification::Decided(None)),
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         };
-        let order = match self
-            .first_range
-            .start()
-            .cmp_by_refinement(self.first_range.end(), policy)?
-        {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let clipped_order = match first.start().cmp_by_refinement(first.end(), policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let order = decided!(
+            self.first_range
+                .start()
+                .cmp_by_refinement(self.first_range.end(), policy)?,
+            Ok
+        );
+        let clipped_order = decided!(first.start().cmp_by_refinement(first.end(), policy)?, Ok);
         if order != clipped_order {
             first = CurveParameterRange2::new_validated(first.end().clone(), first.start().clone());
             second =
@@ -3685,14 +3680,14 @@ mod native_dispatch_tests {
                 .first()
                 .parameter_with_policy(&CurveContext::STRICT)
                 .unwrap(),
-            Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
+            Classification::Decided(r!(1 / 2).into())
         );
         assert_eq!(
             result.contacts()[0]
                 .second()
                 .parameter_with_policy(&CurveContext::STRICT)
                 .unwrap(),
-            Classification::Decided((Real::one() / Real::from(2_i8)).unwrap().into())
+            Classification::Decided(r!(1 / 2).into())
         );
     }
 
@@ -3810,10 +3805,7 @@ mod point_component_dispatch_tests {
                     constant.clone(),
                     certified(constant.reversed_with_policy(&policy).unwrap()),
                 ] {
-                    for (other, parameter) in [
-                        (&crossing, (Real::one() / Real::from(2)).unwrap()),
-                        (&ending, Real::zero()),
-                    ] {
+                    for (other, parameter) in [(&crossing, r!(1 / 2)), (&ending, Real::zero())] {
                         for swapped in [false, true] {
                             let (a, b) = if swapped {
                                 (other, &constant)
@@ -3973,11 +3965,7 @@ mod point_component_dispatch_tests {
             assert!(result.parameter_components().is_empty());
             let finite = certified(
                 source
-                    .subcurve_with_policy(
-                        Real::zero().into(),
-                        (Real::one() / Real::from(4)).unwrap().into(),
-                        &policy,
-                    )
+                    .subcurve_with_policy(Real::zero().into(), r!(1 / 4).into(), &policy)
                     .unwrap(),
             );
             let result = query(&finite, &line, &policy);
@@ -4225,10 +4213,7 @@ mod overlap_restriction_tests {
         );
         let second = Curve2::from(
             CircularArc2::try_from_center(
-                Point2::new(
-                    (Real::from(3) / Real::from(5)).unwrap(),
-                    (Real::from(4) / Real::from(5)).unwrap(),
-                ),
+                Point2::new(r!(3 / 5), r!(4 / 5)),
                 Point2::from_values(-1, 0),
                 Point2::from_values(0, 0),
                 false,

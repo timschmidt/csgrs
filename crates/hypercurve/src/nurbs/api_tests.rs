@@ -1405,7 +1405,7 @@ fn nurbs_evaluation_reuses_decomposition_and_preserves_exact_coordinates() {
         .point_at_with_policy(&r(1), &CurveContext::STRICT)
         .unwrap()
         .into_value();
-    assert_eq!(join.x(), &(Real::from(10) / Real::from(3)).unwrap());
+    assert_eq!(join.x(), &r!(10 / 3));
     assert_eq!(join.y(), &r(4));
     assert_eq!(
         curve

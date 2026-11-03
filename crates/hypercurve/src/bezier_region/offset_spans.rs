@@ -126,12 +126,7 @@ impl CurveTangent2 {
                     BezierSubcurve2::RationalQuadratic(_) | BezierSubcurve2::Rational(_) => {
                         let curve = RationalBezier2::try_from_subcurve(curve)?;
                         let parameter = if at_start { Real::zero() } else { Real::one() };
-                        match curve.derivative_at_classified(&parameter, policy) {
-                            Classification::Decided(derivative) => derivative,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
+                        decided!(curve.derivative_at_classified(&parameter, policy), Ok)
                     }
                 };
                 if derivative.zero_status() != hyperreal::ZeroKnowledge::NonZero
@@ -174,14 +169,11 @@ impl CurveTangent2 {
             ),
         };
         let range = if matches!(fragment, BezierSplitFragment2::SelectedFiber(_)) {
-            let analysis = match parallel.singularity_analysis_with_policy(&range, policy)? {
-                Classification::Decided(analysis) => analysis,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let mut ranges = match analysis.regular_subranges(policy)? {
-                Classification::Decided(ranges) => ranges,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let analysis = decided!(
+                parallel.singularity_analysis_with_policy(&range, policy)?,
+                Ok
+            );
+            let mut ranges = decided!(analysis.regular_subranges(policy)?, Ok);
             if at_start != reversed {
                 ranges.remove(0)
             } else {
@@ -417,12 +409,7 @@ pub(super) fn append_exact_algebraic_line_join(
                 } else {
                     crate::BezierAlgebraicChord2::try_new(from.clone(), to.clone(), policy)?
                 };
-                match chord {
-                    Classification::Decided(chord) => chord,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(chord, Ok)
             };
             let chord = chord
                 .with_certified_circle_transverse_endpoints(certified_circle_transverse_endpoints);
@@ -500,16 +487,14 @@ pub(super) fn exact_offset_spans_from_algebraic_endpoint_images(
     let source_subcurve = BezierSubcurve2::RationalQuadratic(source_curve.clone());
     let source_rational = RationalBezier2::try_from_subcurve(&source_subcurve)?;
     let (traversal_start, traversal_end) = if reversed { (end, start) } else { (start, end) };
-    let source_end = match crate::rational_bezier_general::exact_contact_point_evidence(
-        &source_rational,
-        traversal_end,
-        policy,
-    )? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let source_end = decided!(
+        crate::rational_bezier_general::exact_contact_point_evidence(
+            &source_rational,
+            traversal_end,
+            policy,
+        )?,
+        Ok
+    );
     let carrier_distance = if reversed {
         -distance
     } else {
@@ -578,63 +563,49 @@ pub(super) fn exact_offset_spans_from_algebraic_endpoint_images(
             }
         }
     };
-    let start_image = match endpoint_image(start)? {
-        Classification::Decided(image) => image,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let end_image = match endpoint_image(end)? {
-        Classification::Decided(image) => image,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let start_image = decided!(endpoint_image(start)?, Ok);
+    let end_image = decided!(endpoint_image(end)?, Ok);
     let offset_rational = RationalBezier2::try_from_subcurve(&offset_subcurve)?;
-    let offset_start = match crate::rational_bezier_general::exact_contact_point_evidence(
-        &offset_rational,
-        traversal_start,
-        policy,
-    )? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let offset_end = match crate::rational_bezier_general::exact_contact_point_evidence(
-        &offset_rational,
-        traversal_end,
-        policy,
-    )? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let start_tangent = match exact_circular_algebraic_endpoint_tangent(
-        &offset_rational,
-        traversal_start,
-        &offset_start,
-        &offset_circle,
-        source_arc.is_clockwise(),
-        reversed,
-        policy,
-    ) {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end_tangent = match exact_circular_algebraic_endpoint_tangent(
-        &offset_rational,
-        traversal_end,
-        &offset_end,
-        &offset_circle,
-        source_arc.is_clockwise(),
-        reversed,
-        policy,
-    ) {
-        Classification::Decided(tangent) => tangent,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let offset_start = decided!(
+        crate::rational_bezier_general::exact_contact_point_evidence(
+            &offset_rational,
+            traversal_start,
+            policy,
+        )?,
+        Ok
+    );
+    let offset_end = decided!(
+        crate::rational_bezier_general::exact_contact_point_evidence(
+            &offset_rational,
+            traversal_end,
+            policy,
+        )?,
+        Ok
+    );
+    let start_tangent = decided!(
+        exact_circular_algebraic_endpoint_tangent(
+            &offset_rational,
+            traversal_start,
+            &offset_start,
+            &offset_circle,
+            source_arc.is_clockwise(),
+            reversed,
+            policy,
+        ),
+        Ok
+    );
+    let end_tangent = decided!(
+        exact_circular_algebraic_endpoint_tangent(
+            &offset_rational,
+            traversal_end,
+            &offset_end,
+            &offset_circle,
+            source_arc.is_clockwise(),
+            reversed,
+            policy,
+        ),
+        Ok
+    );
     Ok(Classification::Decided(vec![ExactOffsetSpan2 {
         fragments: vec![BezierSplitFragment2::RetainedBezier {
             reversed,
@@ -662,18 +633,11 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
     let one = BezierParameter2::Exact(Real::one());
     let mut source_boundaries = vec![(zero.clone(), false)];
     for singularity in analysis.source_singularities() {
-        let after_zero = match singularity.cmp_by_refinement_with_policy(&zero, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let before_one = match singularity.cmp_by_refinement_with_policy(&one, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let after_zero = decided!(
+            singularity.cmp_by_refinement_with_policy(&zero, policy)?,
+            Ok
+        );
+        let before_one = decided!(singularity.cmp_by_refinement_with_policy(&one, policy)?, Ok);
         match (after_zero, before_one) {
             (std::cmp::Ordering::Equal, _) => source_boundaries[0].1 = true,
             (_, std::cmp::Ordering::Equal) => {}
@@ -785,12 +749,10 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
                             .map(|(point, tangent)| (point, CurveTangent2::AlgebraicChord(tangent)))
                     });
             }
-            let point = match exact_parallel_point_evidence(parallel, parameter, policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point = decided!(
+                exact_parallel_point_evidence(parallel, parameter, policy)?,
+                Ok
+            );
             let Some(parameter) = parameter.scalar() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             };
@@ -805,20 +767,12 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
             };
             Ok(Classification::Decided((point, tangent)))
         };
-        let (offset_start, start_tangent) =
-            match endpoint(source_range.start(), branch[0].1, start_scale)? {
-                Classification::Decided(endpoint) => endpoint,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-        let (offset_end, end_tangent) = match endpoint(source_range.end(), branch[1].1, end_scale)?
-        {
-            Classification::Decided(endpoint) => endpoint,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (offset_start, start_tangent) = decided!(
+            endpoint(source_range.start(), branch[0].1, start_scale)?,
+            Ok
+        );
+        let (offset_end, end_tangent) =
+            decided!(endpoint(source_range.end(), branch[1].1, end_scale)?, Ok);
 
         let mut endpoint_points = Vec::with_capacity(boundaries.len());
         for (index, (parameter, singular)) in boundaries.iter().enumerate() {
@@ -869,16 +823,14 @@ pub(super) fn exact_offset_spans_from_source_singular_parallel(
                 }
             })
             .collect();
-        let source_end = match crate::rational_bezier_general::exact_contact_point_evidence(
-            &source_rational,
-            source_range.end(),
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source_end = decided!(
+            crate::rational_bezier_general::exact_contact_point_evidence(
+                &source_rational,
+                source_range.end(),
+                policy,
+            )?,
+            Ok
+        );
         spans.push(ExactOffsetSpan2 {
             fragments,
             source_end,
@@ -960,11 +912,10 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
         BezierSubcurve2::Rational(curve) => BezierParallelSource2::Rational(curve.clone()),
     };
     let parallel = BezierParallel2::from_source(source, distance.clone());
-    let analysis =
-        match parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)? {
-            Classification::Decided(analysis) => analysis,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let analysis = decided!(
+        parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
+        Ok
+    );
     if !analysis.source_is_regular() {
         return exact_offset_spans_from_source_singular_parallel(
             curve, &parallel, &analysis, policy,
@@ -976,18 +927,8 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
     let zero = BezierParameter2::Exact(Real::zero());
     let one = BezierParameter2::Exact(Real::one());
     for cusp in analysis.parallel_cusps() {
-        let after_zero = match cusp.cmp_by_refinement_with_policy(&zero, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let before_one = match cusp.cmp_by_refinement_with_policy(&one, policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let after_zero = decided!(cusp.cmp_by_refinement_with_policy(&zero, policy)?, Ok);
+        let before_one = decided!(cusp.cmp_by_refinement_with_policy(&one, policy)?, Ok);
         if after_zero == std::cmp::Ordering::Greater && before_one == std::cmp::Ordering::Less {
             let order = cusp.cmp_by_refinement_with_policy(
                 boundaries
@@ -1025,14 +966,8 @@ pub(super) fn exact_offset_spans_from_materialized_curve(
     } else {
         exact_parallel_fragments(&parallel, &boundaries, false)
     };
-    let offset_start = match parallel.point_at_with_policy(&Real::zero(), policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let offset_end = match parallel.point_at_with_policy(&Real::one(), policy)? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let offset_start = decided!(parallel.point_at_with_policy(&Real::zero(), policy)?, Ok);
+    let offset_end = decided!(parallel.point_at_with_policy(&Real::one(), policy)?, Ok);
     let start_tangent = match parallel.derivative_at_with_policy(&Real::zero(), policy)? {
         Classification::Decided(derivative) => (derivative.dx().clone(), derivative.dy().clone()),
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
@@ -1280,12 +1215,7 @@ pub(super) fn exact_offset_span_from_algebraic_cusp_semicircle(
             // collapse.  Retain that point at both span boundaries and emit
             // no degenerate curve; adjacent parallels can then meet there and
             // the authoritative regularizer sees the lower-complexity loop.
-            let center = match fragment.semicircle().center_point_evidence(policy)? {
-                Classification::Decided(center) => center,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let center = decided!(fragment.semicircle().center_point_evidence(policy)?, Ok);
             return Ok(Classification::Decided(ExactOffsetSpan2 {
                 fragments: Vec::new(),
                 source_end,
@@ -1925,15 +1855,12 @@ pub(super) fn retained_parallel_range_scale_sign(
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RealSign>> {
-    let parameter = match range
-        .start()
-        .strict_scalar_between_ordered(range.end(), policy)?
-    {
-        Classification::Decided(parameter) => parameter,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameter = decided!(
+        range
+            .start()
+            .strict_scalar_between_ordered(range.end(), policy)?,
+        Ok
+    );
     parallel.parallel_derivative_scale_sign(&parameter.into(), policy)
 }
 
@@ -1944,14 +1871,11 @@ pub(super) fn exact_offset_spans_from_retained_parallel_fragment(
 ) -> CurveResult<Classification<Vec<ExactOffsetSpan2>>> {
     let parallel = fragment.parallel();
     let range = fragment.range();
-    let analysis = match parallel.singularity_analysis_with_policy(&range, policy)? {
-        Classification::Decided(analysis) => analysis,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let mut ranges = match analysis.regular_subranges(policy)? {
-        Classification::Decided(ranges) => ranges,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let analysis = decided!(
+        parallel.singularity_analysis_with_policy(&range, policy)?,
+        Ok
+    );
+    let mut ranges = decided!(analysis.regular_subranges(policy)?, Ok);
     if fragment.is_reversed() {
         ranges.reverse();
     }
@@ -2047,10 +1971,7 @@ pub(super) fn exact_offset_span_from_regular_parallel_range(
                 return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
             }
         }
-        match analysis.regular_subranges(policy)? {
-            Classification::Decided(ranges) => ranges,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
+        decided!(analysis.regular_subranges(policy)?, Ok)
     } else {
         vec![range.clone()]
     };
@@ -2095,10 +2016,10 @@ pub(super) fn exact_offset_span_from_regular_parallel_range(
         } else {
             range.end()
         };
-        let point = match exact_parallel_region_point_evidence(&composed, parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let point = decided!(
+            exact_parallel_region_point_evidence(&composed, parameter, policy)?,
+            Ok
+        );
         Ok(exact_parallel_region_endpoint_tangent(
             &composed, parallel, range, parameter, scale, reversed, policy,
         )?
@@ -2108,14 +2029,8 @@ pub(super) fn exact_offset_span_from_regular_parallel_range(
     // range the boundary keeps one derivative-scale sign; the composed
     // parallel's sign can differ beside a boundary cusp, where the offset
     // crosses the curvature radius, and must not orient the corner.
-    let (offset_start, start_tangent) = match endpoint(start_index, source_scale)? {
-        Classification::Decided(endpoint) => endpoint,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let (offset_end, end_tangent) = match endpoint(end_index, source_scale)? {
-        Classification::Decided(endpoint) => endpoint,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let (offset_start, start_tangent) = decided!(endpoint(start_index, source_scale)?, Ok);
+    let (offset_end, end_tangent) = decided!(endpoint(end_index, source_scale)?, Ok);
     let source_end = if let Some(point) = source_end {
         point.clone()
     } else if source_endpoints[end_index].is_some()
@@ -2128,10 +2043,10 @@ pub(super) fn exact_offset_span_from_regular_parallel_range(
         } else {
             range.end()
         };
-        match exact_parallel_region_point_evidence(parallel, parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        }
+        decided!(
+            exact_parallel_region_point_evidence(parallel, parameter, policy)?,
+            Ok
+        )
     };
 
     // Share each cut point between its incident fragments. Only cuts that need
@@ -2833,12 +2748,10 @@ pub(super) fn append_exact_offset_join(
         OffsetCornerStyle2::Round if !inward => {
             let opposite = match tangents_opposite {
                 Some(opposite) => opposite,
-                None => match curve_tangents_are_opposite(previous_tangent, next_tangent, policy) {
-                    Classification::Decided(opposite) => opposite,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
+                None => decided!(
+                    curve_tangents_are_opposite(previous_tangent, next_tangent, policy),
+                    Ok
+                ),
             };
             append_exact_round_join(
                 fragments,

@@ -627,12 +627,7 @@ mod tests {
         )
         .unwrap();
         let interval = decided(
-            BezierParameterInterval::try_new_with_policy(
-                (Real::one() / Real::from(2)).unwrap(),
-                Real::one(),
-                &policy,
-            )
-            .unwrap(),
+            BezierParameterInterval::try_new_with_policy(r!(1 / 2), Real::one(), &policy).unwrap(),
             family,
         )
         .unwrap();
@@ -686,11 +681,7 @@ mod tests {
             // evaluation must use that finite range, including after reversal.
             let end = decided(
                 selected_half_root_two()
-                    .affine_image_unbounded(
-                        &(Real::one() / Real::from(2)).unwrap(),
-                        &Real::from(-2),
-                        &policy,
-                    )
+                    .affine_image_unbounded(&r!(1 / 2), &Real::from(-2), &policy)
                     .unwrap(),
                 CurveFamily2::RationalBezier,
             )
@@ -710,12 +701,9 @@ mod tests {
                 curve.reversed_with_policy(&policy).unwrap().value,
             ] {
                 let point = curve
-                    .point_at_with_policy(
-                        &(Real::from(-7) / Real::from(4)).unwrap().into(),
-                        &policy,
-                    )
+                    .point_at_with_policy(&r!(-7 / 4).into(), &policy)
                     .unwrap();
-                let coordinate = (Real::from(14) / Real::from(3)).unwrap();
+                let coordinate = r!(14 / 3);
                 assert_point(
                     &point.value,
                     Point2::new(coordinate.clone(), coordinate),
@@ -737,7 +725,7 @@ mod tests {
         let parameter = selected_half_root_two();
         let source = Curve2::from(QuadraticBezier2::new(
             Point2::from_values(0, 0),
-            Point2::new((Real::one() / Real::from(2)).unwrap(), Real::zero()),
+            Point2::new(r!(1 / 2), Real::zero()),
             Point2::from_values(1, 1),
         ));
         let pole = Curve2::from(
@@ -758,7 +746,7 @@ mod tests {
                 &point.value,
                 Point2::new(
                     (Real::from(2).sqrt().unwrap() / Real::from(2)).unwrap(),
-                    (Real::one() / Real::from(2)).unwrap(),
+                    r!(1 / 2),
                 ),
                 &policy,
             );
@@ -779,10 +767,7 @@ mod tests {
         let arc = Curve2::from(
             CircularArc2::try_from_center(
                 Point2::from_values(1, 0),
-                Point2::new(
-                    (Real::from(3) / Real::from(5)).unwrap(),
-                    (Real::from(4) / Real::from(5)).unwrap(),
-                ),
+                Point2::new(r!(3 / 5), r!(4 / 5)),
                 Point2::from_values(0, 0),
                 true,
             )
@@ -845,9 +830,9 @@ mod tests {
 
     #[test]
     fn rational_cusp_endpoint_evaluation_retains_its_regular_branch_frame() {
-        let third = (Real::one() / Real::from(3)).unwrap();
+        let third = r!(1 / 3);
         let two_thirds = &third * Real::from(2);
-        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let quarter = r!(1 / 4);
         let source = RationalBezier2::try_new(
             vec![
                 Point2::from_values(1, -1),
@@ -943,7 +928,7 @@ mod tests {
     fn selected_fiber_evaluation_keeps_a_local_field_beyond_global_projection_budget() {
         let policy = CurveContext::STRICT;
         let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
-            (Real::one() / Real::from(2)).unwrap(),
+            r!(1 / 2),
             2,
             &policy,
         );

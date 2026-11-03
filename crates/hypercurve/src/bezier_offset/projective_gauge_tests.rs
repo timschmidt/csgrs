@@ -2,7 +2,7 @@
 use super::*;
 
 fn gauged_point(x_offset: i8, y: i8, gauge: i8) -> CurvePoint2 {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parameter = BezierAlgebraicParameter2::try_isolate(
         crate::BezierParameterPolynomial::try_new_power_basis(vec![
             -&half,

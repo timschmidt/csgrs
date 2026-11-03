@@ -544,12 +544,7 @@ impl BoardBoundaryGeometry {
         {
             return Ok(decision);
         }
-        let inset = match self.inset(clearance, policy)? {
-            Classification::Decided(inset) => inset,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let inset = hypersolve::decided!(self.inset(clearance, policy)?, Ok);
         Ok(inset
             .classify_point(point, policy)?
             .map(|location| location != RegionPointLocation::Outside))
@@ -633,12 +628,7 @@ impl BoardBoundaryGeometry {
         {
             return Ok(decision);
         }
-        let inset = match self.inset(clearance, policy)? {
-            Classification::Decided(inset) => inset,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let inset = hypersolve::decided!(self.inset(clearance, policy)?, Ok);
         for point in [start, end] {
             match inset.classify_point(point, policy)? {
                 Classification::Decided(RegionPointLocation::Outside) => {

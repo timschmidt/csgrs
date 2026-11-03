@@ -681,12 +681,7 @@ impl CurveRegion2 {
         // exact role/ownership sampling is not representable as Point2. Keep
         // that limitation at this finite boundary rather than blocking display
         // and meshing of otherwise decided Boolean output.
-        let filled_sides = match self.filled_side_is_left_raw(policy)? {
-            Classification::Decided(sides) => sides,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let filled_sides = decided!(self.filled_side_is_left_raw(policy)?, Ok);
         let roles = rings
             .iter()
             .zip(filled_sides)
@@ -2100,7 +2095,7 @@ mod tests {
         let value = y(&first)
             .add(&y(&second))
             .unwrap()
-            .scaled(&(Real::one() / Real::from(4)).unwrap())
+            .scaled(&r!(1 / 4))
             .unwrap();
         let Classification::Decided(parameter) =
             crate::bezier_offset::point_rational_form_parameter(
@@ -2413,7 +2408,7 @@ mod tests {
 
     #[test]
     fn modeling_samples_keep_native_cubic_endpoints() {
-        let third = (Real::one() / Real::from(3)).unwrap();
+        let third = r!(1 / 3);
         let a = Point2::new(third.clone(), Real::zero());
         let b = Point2::new(&third + Real::from(4), Real::zero());
         let path = CurvePath2::try_new(vec![

@@ -7355,13 +7355,7 @@ mod replay_tests {
         let point = replay(strict.into()).unwrap();
         assert!(
             point
-                .coincides_with(
-                    &Point2::new(
-                        (Real::from(-4) / Real::from(5)).unwrap(),
-                        (Real::from(3) / Real::from(5)).unwrap(),
-                    )
-                    .into()
-                )
+                .coincides_with(&Point2::new(r!(-4 / 5), r!(3 / 5),).into())
                 .unwrap()
         );
         assert!(

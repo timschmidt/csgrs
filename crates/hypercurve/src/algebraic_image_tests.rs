@@ -690,7 +690,7 @@ mod finite_parameter_interval_contract {
     fn exterior_root_images_preserve_equations_and_native_curve_domains() {
         let source = QuadraticBezier2::new(
             Point2::from_values(0, 0),
-            Point2::new((Real::one() / Real::from(2)).unwrap(), Real::zero()),
+            Point2::new(r!(1 / 2), Real::zero()),
             Point2::from_values(1, 1),
         );
         let native = Curve2::from(source.clone());

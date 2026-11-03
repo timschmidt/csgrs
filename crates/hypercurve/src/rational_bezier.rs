@@ -674,10 +674,7 @@ impl RationalQuadraticBezier2 {
         t: Real,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        let curve_point = match self.point_at_with_policy(t, policy) {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let curve_point = decided!(self.point_at_with_policy(t, policy));
         is_zero(&curve_point.distance_squared(point), policy)
             .map(Classification::Decided)
             .unwrap_or(Classification::Uncertain(UncertaintyReason::RealSign))
@@ -844,11 +841,9 @@ impl RationalQuadraticBezier2 {
         let c0 = a.clone();
         let c1 = &b - &(Real::from(2_i8) * &a);
         let c2 = &a - &b + &c;
-        let roots =
-            match polynomial_roots_in_unit_interval_with_endpoints(c0, c1, c2, &a, &c, policy) {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
+        let roots = decided!(polynomial_roots_in_unit_interval_with_endpoints(
+            c0, c1, c2, &a, &c, policy
+        ));
 
         let mut retained_roots = Vec::new();
         for root in roots {
@@ -1027,14 +1022,8 @@ fn rational_parameters_for_point(
     point: &Point2,
     policy: &CurveContext,
 ) -> Classification<Vec<Real>> {
-    let x_roots = match rational_axis_point_root_set(curve, point, Axis2::X, policy) {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let y_roots = match rational_axis_point_root_set(curve, point, Axis2::Y, policy) {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let x_roots = decided!(rational_axis_point_root_set(curve, point, Axis2::X, policy));
+    let y_roots = decided!(rational_axis_point_root_set(curve, point, Axis2::Y, policy));
     rational_point_parameters_from_root_sets(curve, point, x_roots, y_roots, policy)
 }
 
@@ -1245,7 +1234,7 @@ mod tests {
 
     #[test]
     fn retained_mixed_weight_circle_decides_disjoint_line_relations() {
-        let half_sqrt_two = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let half_sqrt_two = r!(1 / 2).sqrt().unwrap();
         let conic = RationalQuadraticBezier2::try_new(
             point(-1, 0),
             point(0, 0),
@@ -1282,7 +1271,7 @@ mod tests {
 
     #[test]
     fn quadratic_power_evaluation_fuses_exact_terms_and_preserves_symbolic_horner_form() {
-        let parameter = (Real::one() / Real::from(3_i8)).unwrap();
+        let parameter = r!(1 / 3);
         let coefficients = [Real::from(5_i8), Real::from(-7_i8), Real::from(11_i8)];
         let expected = ((&coefficients[2] * &parameter) + coefficients[1].clone()) * &parameter
             + coefficients[0].clone();

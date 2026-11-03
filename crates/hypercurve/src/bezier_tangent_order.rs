@@ -1989,7 +1989,7 @@ mod exact_real_status_tests {
             let other_parameter = selected_parameter(
                 vec![-Real::pi(), Real::zero(), Real::zero(), Real::from(32)],
                 Real::zero(),
-                (Real::one() / Real::from(2)).unwrap(),
+                r!(1 / 2),
                 &policy,
             );
             let vector = |parameter: &crate::BezierAlgebraicParameter2, x, y| {

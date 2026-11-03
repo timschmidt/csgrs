@@ -280,10 +280,7 @@ impl CurveEnvelopeAccumulator {
                 crate::bezier_region::retained_fragment_query_bounds(fragment, policy)
             }
         };
-        let curve_box = match bounds {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let curve_box = decided!(bounds);
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&curve_box) {
                 Classification::Decided(merged) => Some(merged),
@@ -320,10 +317,7 @@ fn retained_algebraic_source_interval_bounds(
     end: &BezierParameter2,
     policy: &CurveContext,
 ) -> Classification<Aabb2> {
-    let (range_start, range_end) = match parameter_interval_hull(start, end, policy) {
-        Classification::Decided(range) => range,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let (range_start, range_end) = decided!(parameter_interval_hull(start, end, policy));
     let subcurve = match source_curve.subcurve_between_exact(&range_start, &range_end, policy) {
         Ok(Classification::Decided(subcurve)) => subcurve,
         Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
@@ -393,17 +387,11 @@ fn retained_algebraic_source_extrema_bounds(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
-    let monotone_parameters = match retained_curve_monotone_parameters(source_curve, policy) {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let monotone_parameters = decided!(retained_curve_monotone_parameters(source_curve, policy));
     for parameter in monotone_parameters {
         match exact_parameter_inside_retained_range(start, end, &parameter, policy) {
             Some(true) => {
-                let point = match source_curve_point_at(source_curve, parameter, policy) {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                };
+                let point = decided!(source_curve_point_at(source_curve, parameter, policy));
                 match accumulator.include_endpoint(native_endpoint_interval(&point)) {
                     Classification::Decided(()) => {}
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
@@ -468,10 +456,7 @@ fn retained_curve_monotone_parameters(
                 return Classification::Uncertain(UncertaintyReason::Unsupported);
             }
         };
-        let axis_parameters = match axis_parameters {
-            Classification::Decided(axis_parameters) => axis_parameters,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let axis_parameters = decided!(axis_parameters);
         for parameter in axis_parameters {
             if push_unique_real(&mut parameters, parameter).is_none() {
                 return Classification::Uncertain(UncertaintyReason::Ordering);
@@ -584,10 +569,7 @@ impl EndpointEnvelopeAccumulator {
     fn include_endpoint(&mut self, endpoint: EndpointInterval) -> Classification<()> {
         let min = Point2::new(endpoint.x.lower, endpoint.y.lower);
         let max = Point2::new(endpoint.x.upper, endpoint.y.upper);
-        let endpoint_envelope = match Aabb2::from_points([&min, &max]) {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let endpoint_envelope = decided!(Aabb2::from_points([&min, &max]));
         self.envelope = match self.envelope.take() {
             Some(envelope) => match envelope.union(&endpoint_envelope) {
                 Classification::Decided(envelope) => Some(envelope),

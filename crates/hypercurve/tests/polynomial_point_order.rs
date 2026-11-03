@@ -1,5 +1,9 @@
 //! Point identity across independently retained polynomial event fibers.
 
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{Axis2, CurvePoint2, PolynomialCurveSet2, Real};
 use hypersolve::bivariate_topology::{
     BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
@@ -29,7 +33,7 @@ fn curves(rows: &[&[i64]]) -> PolynomialCurveSet2 {
 fn interior_and_event() -> (CurvePoint2, CurvePoint2) {
     let first = curves(&[&[0, 0, 1], &[0], &[-1]]);
     let second = curves(&[&[0, -1, 2], &[1, -2]]);
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     (
         first.curves()[3].point_at(&half.into()).unwrap(),
         second.curves()[1].end().clone(),
@@ -78,7 +82,7 @@ fn interior_and_event_points_compare_with_retained_base_relations() {
 
 #[test]
 fn replayed_event_points_keep_singleton_order_and_distinct_neighbors() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let tiny = (Real::one() / Real::from(1_u64 << 50)).unwrap();
     let tiny = &tiny * &tiny;
     for offset in [-tiny.clone(), Real::zero(), tiny] {

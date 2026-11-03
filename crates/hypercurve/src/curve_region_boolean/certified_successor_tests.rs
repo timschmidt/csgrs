@@ -86,7 +86,7 @@ fn exterior_circular_split_preserves_major_arc_and_algebraic_endpoints() {
             .restrict_certified(range.clone(), None, false, &policy)
             .unwrap();
         let y = ((Real::from(2) * Real::from(2).sqrt().unwrap()) / Real::from(3)).unwrap();
-        let x = (Real::from(-1) / Real::from(3)).unwrap();
+        let x = r!(-1 / 3);
         let points = [Point2::new(x.clone(), -&y), Point2::new(x, y)];
         let events = [range.start(), range.end()]
             .into_iter()
@@ -721,7 +721,7 @@ fn selected_field_algebraic_chord_rectangle(policy: &CurveContext) -> CurveRegio
 
 #[test]
 fn rational_circle_contact_certificate_keeps_coincident_supports_in_general_replay() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The selected circle has center (0,0) and radius one. Its center
         // comes from a line, so there is no concentric-parent certificate.
@@ -779,8 +779,8 @@ fn rational_circle_contact_certificate_keeps_coincident_supports_in_general_repl
 
 #[test]
 fn sibling_circle_tangency_preserves_half_chart_and_finite_range_ownership() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let three_quarters = &quarter * Real::from(3_i8);
     let parameters = [Real::zero(), half.clone(), Real::one()];
     let points = [
@@ -1123,7 +1123,7 @@ fn cusp_chord_pair_retains_an_interior_axis_contact() {
             .first_parameter()
             .as_algebraic_cusp()
             .expect("first carrier must retain the cusp parameter");
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         assert_eq!(
             cusp_parameter.order_to_real(&half, &policy).unwrap(),
             Classification::Decided(Ordering::Equal),
@@ -1741,7 +1741,7 @@ fn curve_trim_retains_selected_field_algebraic_chord_overlaps() {
             let [trimmed] = trimmed.value.as_slice() else {
                 panic!("the selected-field bottom edge must retain one exact interval");
             };
-            let width = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+            let width = r!(1 / 2).sqrt().unwrap();
             let mut expected = [
                 Point2::new(-width.clone(), Real::zero()),
                 Point2::new(width, Real::zero()),
@@ -2548,7 +2548,7 @@ fn algebraic_chord_pair_overlap_enters_region_intersection_evidence() {
         let interior = CurveParameter2::from_algebraic_chord(
             chord
                 .parameter_at_certified_support_point(
-                    Point2::new((Real::from(2) / Real::from(3)).unwrap(), Real::zero()).into(),
+                    Point2::new(r!(2 / 3), Real::zero()).into(),
                     &policy,
                 )
                 .unwrap(),
@@ -2740,7 +2740,7 @@ fn algebraic_chord_exact_linear_bezier_pair_replays_all_line_relations() {
 
 #[test]
 fn parallel_arc_contacts_use_the_requested_exterior_range() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     let parallel = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
     )
@@ -2894,7 +2894,7 @@ fn parallel_arc_contacts_retain_conic_parameters_across_elevation_and_reversal()
         Point2::from_values(1, 0),
         Point2::from_values(2, 1),
     )
-    .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
+    .parallel_left(r!(1 / 4))
     .unwrap();
     let arc = crate::CircularArc2::try_from_center(
         Point2::from_values(1, 0),
@@ -3019,10 +3019,7 @@ fn extended_conic_retains_certified_tangency_in_its_interior() {
         vec![
             Point2::from_values(-2, 19),
             Point2::from_values(-1, -17),
-            Point2::new(
-                Real::zero(),
-                (Real::from(41_i8) / Real::from(3_i8)).unwrap(),
-            ),
+            Point2::new(Real::zero(), r!(41 / 3)),
             Point2::from_values(1, -17),
             Point2::from_values(2, 19),
         ],
@@ -3031,7 +3028,7 @@ fn extended_conic_retains_certified_tangency_in_its_interior() {
     .unwrap();
     let parallel =
         BezierParallel2::from_source(crate::BezierParallelSource2::Rational(source), Real::zero());
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let point = Point2::from_values(0, -1);
     let center = Point2::from_values(0, 0);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -3113,10 +3110,7 @@ fn extended_conic_retains_certified_tangency_in_its_interior() {
         assert_eq!(contact.tangent_cross_sign, Some(RealSign::Zero));
         for (actual, expected) in [
             (&contact.first_parameter, half.clone()),
-            (
-                &contact.second_parameter,
-                (Real::one() / Real::from(3_i8)).unwrap(),
-            ),
+            (&contact.second_parameter, r!(1 / 3)),
         ] {
             assert_eq!(
                 actual.cmp_by_refinement(&expected.into(), &policy).unwrap(),
@@ -3388,7 +3382,7 @@ fn evidence_carrier_point(
 
 #[test]
 fn algebraic_chord_parallel_boolean_keeps_exterior_and_selected_ranges() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let retained = sqrt_half_parameter(&policy);
         for kind in 0..3 {
@@ -3783,19 +3777,10 @@ fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
             let regularized_ph_source = RationalBezier2::try_new(
                 vec![
                     Point2::from_values(0, 0),
-                    Point2::new(-(Real::one() / Real::from(4_i8)).unwrap(), Real::zero()),
-                    Point2::new(
-                        -(Real::one() / Real::from(3_i8)).unwrap(),
-                        -(Real::one() / Real::from(6_i8)).unwrap(),
-                    ),
-                    Point2::new(
-                        -(Real::one() / Real::from(6_i8)).unwrap(),
-                        -(Real::one() / Real::from(6_i8)).unwrap(),
-                    ),
-                    Point2::new(
-                        -(Real::one() / Real::from(6_i8)).unwrap(),
-                        (Real::one() / Real::from(3_i8)).unwrap(),
-                    ),
+                    Point2::new(-r!(1 / 4), Real::zero()),
+                    Point2::new(-r!(1 / 3), -r!(1 / 6)),
+                    Point2::new(-r!(1 / 6), -r!(1 / 6)),
+                    Point2::new(-r!(1 / 6), r!(1 / 3)),
                 ],
                 vec![Real::one(); 5],
             )
@@ -4076,7 +4061,7 @@ fn algebraic_chord_analytic_parallel_pair_replays_contacts_and_overlap() {
         // keep both forms in the collinear component authority.
         for algebraic_range_start in [
             BezierParameter2::Algebraic(normal_parameter.clone()),
-            BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap()),
+            BezierParameter2::Exact(r!(1 / 2).sqrt().unwrap()),
         ] {
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
@@ -5074,7 +5059,7 @@ fn curved_face_windings_preserve_crossings_tangencies_overlaps_and_nested_holes(
         ],
     ];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let weight = (Real::one() / Real::from(2)).unwrap().sqrt().unwrap();
+        let weight = r!(1 / 2).sqrt().unwrap();
         for reversed in [false, true] {
             for circles in &cases {
                 let paths = circles
@@ -5648,7 +5633,7 @@ fn unary_cusp_regularization_samples_sides_in_the_selected_field() {
 
 #[test]
 fn boolean_topology_seeds_a_general_cusp_run_from_an_adjacent_carrier() {
-    let local_start = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let local_start = r!(3 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = cusp_test_semicircle(&policy);
         let source_parameter = BezierParameter2::Algebraic(semicircle.cusp_parameter().clone());
@@ -5813,7 +5798,7 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
         let parabola = RationalBezier2::try_new(
             vec![
                 Point2::from_values(0, 0),
-                Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+                Point2::new(r!(1 / 2), Real::zero()),
                 Point2::from_values(1, 1),
             ],
             vec![Real::one(); 3],
@@ -5891,7 +5876,7 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
                 .unwrap(),
             Classification::Decided(RegionPointLocation::Inside),
         );
-        let ninth = (Real::one() / Real::from(9_i8)).unwrap();
+        let ninth = r!(1 / 9);
         let tangent_start = Point2::new(Real::from(2_i8), ninth.clone());
         let tangent_end = Point2::new(Real::from(2_i8), &ninth * Real::from(4_i8));
         let tangent_upper_right = Point2::new(Real::from(3_i8), &ninth * Real::from(4_i8));
@@ -5979,11 +5964,11 @@ fn affine_region_classifies_a_general_algebraic_cusp_point_in_its_source_field()
 
 #[test]
 fn cusp_overlap_clipping_maps_partial_carriers_in_both_orientations() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let two_fifths = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let two_fifths = r!(2 / 5);
+    let half = r!(1 / 2);
+    let three_fifths = r!(3 / 5);
+    let three_quarters = r!(3 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = cusp_test_semicircle(&policy);
         for (second, second_start, second_end, expected_first, expected_second) in [
@@ -6477,11 +6462,7 @@ fn selected_parallel_arrangement_splits_interior_cusps() {
             assert!(!normalized.value.is_empty());
             let expanded = normalized
                 .value
-                .offset_with_policy(
-                    (Real::one() / Real::from(64)).unwrap(),
-                    &crate::OffsetCornerStyle2::Round,
-                    &policy,
-                )
+                .offset_with_policy(r!(1 / 64), &crate::OffsetCornerStyle2::Round, &policy)
                 .unwrap();
             assert_eq!(expanded.certainty, crate::CurveCertainty::Certified);
             assert!(!expanded.value.is_empty());
@@ -7418,9 +7399,9 @@ fn certified_branch_order_matches_exact_vector_order() {
 #[test]
 fn native_affine_parallel_pairs_retain_selected_trim_parameters() {
     let policy = CurveContext::STRICT;
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let a = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
-    let b = (Real::from(3) / Real::from(4)).unwrap();
+    let b = r!(3 / 4);
     let epsilon = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
     let p = Point2::new(Real::from(2) * &a - Real::one(), half.clone());
     let q = Point2::new(half.clone(), half.clone());

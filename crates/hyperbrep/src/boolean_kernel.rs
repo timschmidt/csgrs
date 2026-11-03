@@ -4930,10 +4930,7 @@ fn parameter_lines_face_trim_intervals(
         return Ok(Classification::Decided(SupportedLineFaceTrim::Unbounded));
     }
     let region = planar_face_region(model, face)?;
-    let bounds = match crate::error::classified_present(region.bounds())? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let bounds = hypersolve::decided!(crate::error::classified_present(region.bounds())?, Ok);
     let mut intervals = Vec::new();
     for (origin, direction) in parameter_lines {
         let Some((span_start, span_end)) =
@@ -5301,30 +5298,16 @@ fn coplanar_boundary_split_traces(
                 .expect("validated coincident source vertex")
                 .represented_point()?;
             let direction = end - start;
-            let Some((span_start, span_end)) = (match spanning_segment_on_planar_face(
-                target_model,
-                target_face,
-                start,
-                &direction,
-            )? {
-                Classification::Decided(span) => span,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            }) else {
+            let Some((span_start, span_end)) = (hypersolve::decided!(
+                spanning_segment_on_planar_face(target_model, target_face, start, &direction,)?,
+                Ok
+            )) else {
                 continue;
             };
-            let fragments = match trim_segment_to_planar_face(
-                target_model,
-                target_face,
-                &span_start,
-                &span_end,
-            )? {
-                Classification::Decided(fragments) => fragments,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let fragments = hypersolve::decided!(
+                trim_segment_to_planar_face(target_model, target_face, &span_start, &span_end,)?,
+                Ok
+            );
             for fragment in fragments {
                 let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
                 let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
@@ -5428,10 +5411,7 @@ fn parameters_in_face_trim(
         surface.domain().v(),
         crate::SurfaceParameterDomain::Periodic { .. }
     ) {
-        let bounds = match crate::error::classified_present(region.bounds())? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let bounds = hypersolve::decided!(crate::error::classified_present(region.bounds())?, Ok);
         let mut lifted = Vec::new();
         for point in parameters {
             let u = periodic::periodic_offsets(
@@ -5613,10 +5593,7 @@ fn spanning_segment_on_planar_face(
 ) -> Result<Classification<Option<(Point3, Point3)>>, GeometryError> {
     let surface = face_surface(model, face);
     let region = planar_face_region(model, face)?;
-    let bounds = match crate::error::classified_present(region.bounds())? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let bounds = hypersolve::decided!(crate::error::classified_present(region.bounds())?, Ok);
     let projected_point = project_to_plane(surface, point)?;
     let projected_direction = {
         let projected_end = project_to_plane(surface, &(point.clone() + direction.clone()))?;
@@ -5782,20 +5759,15 @@ struct NativeContourProfile {
 fn native_contour_profiles(
     region: &CurveRegion2,
 ) -> Result<Classification<Vec<NativeContourProfile>>, GeometryError> {
-    let roles = match crate::error::classified(region.loop_roles()).map_err(GeometryError::from)? {
-        Classification::Decided(roles) => roles,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let native = match crate::error::classified_present(region.native_contours_fast_path())
-        .map_err(GeometryError::from)?
-    {
-        Classification::Decided(native) => native,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let roles = hypersolve::decided!(
+        crate::error::classified(region.loop_roles()).map_err(GeometryError::from)?,
+        Ok
+    );
+    let native = hypersolve::decided!(
+        crate::error::classified_present(region.native_contours_fast_path())
+            .map_err(GeometryError::from)?,
+        Ok
+    );
     let mut material_index = 0;
     let mut hole_index = 0;
     let mut contours_by_loop = Vec::with_capacity(roles.len());
@@ -5820,13 +5792,10 @@ fn native_contour_profiles(
     {
         return Err(GeometryError::UnsupportedPcurveContour);
     }
-    let profiles =
-        match crate::error::classified(region.boundary_profiles()).map_err(GeometryError::from)? {
-            Classification::Decided(profiles) => profiles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+    let profiles = hypersolve::decided!(
+        crate::error::classified(region.boundary_profiles()).map_err(GeometryError::from)?,
+        Ok
+    );
     profiles
         .into_iter()
         .map(|profile| {

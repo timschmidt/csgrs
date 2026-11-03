@@ -3276,24 +3276,12 @@ impl BezierAnalyticParallelPoint2 {
 
         let rational_sign = decided!(sign(rational)?, Ok);
         let radical_sign = decided!(sign(radical)?, Ok);
-        match (rational_sign, radical_sign) {
-            (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-                return Ok(Classification::Decided(sign));
-            }
-            (first, second) if first == second => {
-                return Ok(Classification::Decided(first));
-            }
-            _ => {}
-        }
-        let magnitude = polynomial_subtract(
-            &polynomial_multiply(&polynomial_multiply(rational, rational), speed_squared),
-            &polynomial_multiply(radical, radical),
-        );
-        Ok(match sign(&magnitude)? {
-            Classification::Decided(RealSign::Positive) => Classification::Decided(rational_sign),
-            Classification::Decided(RealSign::Negative) => Classification::Decided(radical_sign),
-            Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-            Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        two_term_sign(rational_sign, radical_sign, || {
+            let magnitude = polynomial_subtract(
+                &polynomial_multiply(&polynomial_multiply(rational, rational), speed_squared),
+                &polynomial_multiply(radical, radical),
+            );
+            sign(&magnitude)
         })
     }
 

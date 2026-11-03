@@ -14131,44 +14131,31 @@ fn algebraic_cusp_correlated_square_root_sum_sign_impl(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(&expression.rational, &expression.rational),
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.radical, &expression.radical),
-            radicand,
-        ),
-    );
-    let magnitude =
-        if let (BezierParameter2::Algebraic(first), BezierParameter2::Algebraic(second)) =
-            (first_parameter, second_parameter)
-        {
-            decided!(
-                bivariate_reduce_parameter_polynomials(
-                    &magnitude,
-                    first.polynomial(),
-                    second.polynomial(),
-                    policy,
-                )?,
-                Ok
-            )
-        } else {
-            magnitude
-        };
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    two_term_sign(rational, radical, || {
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(&expression.rational, &expression.rational),
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.radical, &expression.radical),
+                radicand,
+            ),
+        );
+        let magnitude =
+            if let (BezierParameter2::Algebraic(first), BezierParameter2::Algebraic(second)) =
+                (first_parameter, second_parameter)
+            {
+                decided!(
+                    bivariate_reduce_parameter_polynomials(
+                        &magnitude,
+                        first.polynomial(),
+                        second.polynomial(),
+                        policy,
+                    )?,
+                    Ok
+                )
+            } else {
+                magnitude
+            };
+        sign(&magnitude)
     })
 }
 
@@ -15726,3 +15713,36 @@ mod conversion_tests;
 
 #[cfg(test)]
 mod regression_tests;
+
+/// Signs a two-term sum from the signs of its terms.
+///
+/// The sum is decided directly when either sign is zero or both agree.
+/// Otherwise the terms have opposite signs, and `dominance` decides which
+/// one has the larger magnitude: positive selects `first`, negative selects
+/// `second`, and zero means the sum is exactly zero. The callers pass the
+/// sign of `A^2 S - B^2` for `A + B/sqrt(S)`, or of `A^2 - B^2 S` for
+/// `A + B sqrt(S)`.
+///
+/// `dominance` runs only when it is needed, and after both term signs were
+/// decided, so the order of sign evaluations is the one the callers wrote.
+pub(in crate::bezier_offset) fn two_term_sign(
+    first: RealSign,
+    second: RealSign,
+    dominance: impl FnOnce() -> CurveResult<Classification<RealSign>>,
+) -> CurveResult<Classification<RealSign>> {
+    match (first, second) {
+        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
+            return Ok(Classification::Decided(sign));
+        }
+        (first, second) if first == second => {
+            return Ok(Classification::Decided(first));
+        }
+        _ => {}
+    }
+    Ok(match dominance()? {
+        Classification::Decided(RealSign::Positive) => Classification::Decided(first),
+        Classification::Decided(RealSign::Negative) => Classification::Decided(second),
+        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
+        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    })
+}

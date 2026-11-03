@@ -1,3 +1,4 @@
+#[macro_use]
 mod support;
 use hypercurve::{
     BooleanOp, BulgeVertex2, Classification, Contour2, Curve2, CurveCertainty,
@@ -689,8 +690,8 @@ fn symbolic_general_line_region(control_y: Real, policy: &PredicatePolicy) -> Cu
     let bottom = RationalBezier2::try_new(
         vec![
             point(0, 0),
-            Point2::new((Real::from(4_i8) / Real::from(3_i8)).unwrap(), control_y),
-            Point2::new((Real::from(8_i8) / Real::from(3_i8)).unwrap(), Real::zero()),
+            Point2::new(r!(4 / 3), control_y),
+            Point2::new(r!(8 / 3), Real::zero()),
             point(4, 0),
         ],
         vec![Real::one(); 4],
@@ -1453,7 +1454,7 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     assert_eq!(outcome.certainty, CurveCertainty::Approximate512Consumed);
     assert_qualified_location(
         &outcome.value,
-        Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
+        Point2::new(Real::one(), r!(1 / 2)),
         RegionPointLocation::Inside,
     );
 
@@ -1468,7 +1469,7 @@ fn approximate_policy_reports_a_consumed_terminal_instead_of_relabeling_it_exact
     assert_eq!(batch.certainty, CurveCertainty::Approximate512Consumed);
     assert_qualified_location(
         batch.value.union(),
-        Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap()),
+        Point2::new(Real::one(), r!(1 / 2)),
         RegionPointLocation::Inside,
     );
 }
@@ -1781,7 +1782,7 @@ fn conic_general_batch_obeys_the_approximate_512_terminal() {
 fn point_query_reports_when_approximate_policy_decides_a_symbolic_boundary() {
     let (boundary_x, query_x) = support::terminally_equal_pair(Real::pi() + Real::e());
     let region = symbolic_rectangle(boundary_x);
-    let point = Point2::new(query_x, (Real::one() / Real::from(2_u8)).unwrap());
+    let point = Point2::new(query_x, r!(1 / 2));
 
     // STRICT cannot certify the symbolic boundary and must say so rather
     // than guess a location.
@@ -1949,7 +1950,7 @@ fn retained_regions_clip_shared_source_components_to_carrier_ranges() {
     assert!(results.difference().is_empty());
 
     let xor = results.xor();
-    let between_tops = Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
+    let between_tops = Point2::new(Real::zero(), r!(5 / 2));
     assert_location(xor, point(0, 1), RegionPointLocation::Outside);
     assert_location(xor, between_tops, RegionPointLocation::Inside);
 }
@@ -1968,14 +1969,8 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
         Curve2::from(LineSeg2::try_new(quadratic_end.clone(), quadratic_start.clone()).unwrap()),
     ])
     .unwrap();
-    let cubic_first_control = Point2::new(
-        (Real::from(-2_i8) / Real::from(3_i8)).unwrap(),
-        (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
-    );
-    let cubic_second_control = Point2::new(
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-        (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
-    );
+    let cubic_first_control = Point2::new(r!(-2 / 3), r!(-4 / 3));
+    let cubic_second_control = Point2::new(r!(2 / 3), r!(-4 / 3));
     let cubic = CurvePath2::try_new(vec![
         Curve2::from(CubicBezier2::new(
             quadratic_start.clone(),
@@ -2023,8 +2018,7 @@ fn retained_regions_clip_degree_equivalent_shared_images_to_carrier_ranges() {
             RegionPointLocation::Outside,
         );
         assert!(results.difference().is_empty());
-        let between_tops =
-            Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
+        let between_tops = Point2::new(Real::zero(), r!(5 / 2));
         assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
     }
 }
@@ -2097,8 +2091,7 @@ fn retained_regions_clip_mobius_reparameterized_conics_to_carrier_ranges() {
                 RegionPointLocation::Outside,
             );
             assert!(results.difference().is_empty());
-            let between_tops =
-                Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap());
+            let between_tops = Point2::new(Real::zero(), r!(5 / 2));
             assert_location(results.xor(), between_tops, RegionPointLocation::Inside);
         }
     }
@@ -2163,10 +2156,7 @@ fn retained_regions_clip_non_axis_monotone_mobius_cubic_components() {
     let narrow_clip = square_path(-20, -10, 20, -1);
     let wide_clip = square_path(-20, -10, 20, 0);
     let narrow_sample = point(4, -2);
-    let wide_only_sample = Point2::new(
-        Real::from(2_i8),
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-    );
+    let wide_only_sample = Point2::new(Real::from(2_i8), r!(-1 / 2));
 
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let narrow = boolean_paths(&polynomial, &narrow_clip, BooleanOp::Intersection, &policy);

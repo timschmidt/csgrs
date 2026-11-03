@@ -191,7 +191,7 @@ fn trivariate_factor_sign_propagates_normalization_exhaustion_before_policy_fall
         &trivariate_from_axis_bivariate_coefficients(&second, 0, [1, 2]).unwrap(),
     )
     .unwrap();
-    let parameter = BezierParameter2::Exact((Real::one() / Real::from(4)).unwrap());
+    let parameter = BezierParameter2::Exact(r!(1 / 4));
     let sign =
         || trivariate_bounded_factor_sign(&product, &parameter, &parameter, &parameter).unwrap();
     let expected = sign();

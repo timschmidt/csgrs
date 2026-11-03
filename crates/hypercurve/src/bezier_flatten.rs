@@ -419,19 +419,15 @@ fn segment_curves(
                 continue;
             }
         }
-        let fragments = match curve.native_bezier_fragments_raw(policy)? {
-            Classification::Decided(fragments) => fragments,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let fragments = decided!(curve.native_bezier_fragments_raw(policy)?, Ok);
         source_fragment_count += fragments.len();
         for fragment in fragments {
-            let polyline = match fragment
-                .native_curve()
-                .flatten_certified_with_policy(options, policy)
-            {
-                Classification::Decided(polyline) => polyline,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let polyline = decided!(
+                fragment
+                    .native_curve()
+                    .flatten_certified_with_policy(options, policy),
+                Ok
+            );
             max_depth = max_depth.max(polyline.certificate().max_depth());
             for point in polyline.points() {
                 append(point);
@@ -616,7 +612,7 @@ mod tests {
     #[test]
     fn homogeneous_representation_flattens_finite_mixed_controls() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let half = (Real::one() / Real::from(2)).unwrap();
+            let half = r!(1 / 2);
             let options =
                 BezierFlatteningOptions::try_new_with_policy(half.clone(), 12, &policy).unwrap();
             let curve = crate::RationalBezier2::try_new(
@@ -654,12 +650,8 @@ mod tests {
     #[test]
     fn flatness_certificate_covers_collinear_overshoot() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-            let options = BezierFlatteningOptions::try_new_with_policy(
-                (Real::one() / Real::from(16)).unwrap(),
-                12,
-                &policy,
-            )
-            .unwrap();
+            let options =
+                BezierFlatteningOptions::try_new_with_policy(r!(1 / 16), 12, &policy).unwrap();
             let curve = QuadraticBezier2::new(point(0, 0), point(4, 0), point(1, 0));
             let Classification::Decided(polyline) =
                 curve.flatten_certified_with_policy(&options, &policy)

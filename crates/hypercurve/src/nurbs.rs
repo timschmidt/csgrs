@@ -1117,12 +1117,7 @@ impl NurbsCurve2 {
     ) -> ExactCurveResult<Classification<&[BezierSubcurve2]>> {
         Ok(
             match resolve_cached_evaluation(&self.data.native_subcurves, policy, |attempt| {
-                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
-                    Classification::Decided(decomposition) => decomposition,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let decomposition = decided!(self.bezier_decomposition_with_policy(attempt)?, Ok);
                 Ok(Classification::Decided(
                     decomposition.native_beziers(attempt),
                 ))

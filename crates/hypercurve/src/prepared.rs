@@ -235,12 +235,7 @@ impl<'a> PreparedSegment2<'a> {
     pub fn contains_point(&self, point: &Point2, policy: &CurveContext) -> Classification<bool> {
         match self {
             Self::Line(line) => {
-                let side = match line.classify_point(point, policy) {
-                    Classification::Decided(side) => side,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
+                let side = decided!(line.classify_point(point, policy));
                 line.line_segment()
                     .contains_point_with_classified_side(point, side, policy)
             }
@@ -380,10 +375,9 @@ impl<'a> ContourQuery2<'a> {
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         }
 
-        let winding = match prepared_contour_winding_number_unchecked(self, point, policy) {
-            Classification::Decided(winding) => winding,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let winding = decided!(prepared_contour_winding_number_unchecked(
+            self, point, policy
+        ));
         let inside = match self.contour.fill_rule() {
             FillRule::NonZero => winding != 0,
             FillRule::EvenOdd => winding.rem_euclid(2) != 0,

@@ -142,12 +142,7 @@ fn compute_circular_arc_decomposition(
     if let Classification::Uncertain(reason) = validate_radius(arc, policy)? {
         return Ok(Classification::Uncertain(reason));
     }
-    let kind = match classify_sweep_with_policy(arc, policy)? {
-        Classification::Decided(kind) => kind,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let kind = decided!(classify_sweep_with_policy(arc, policy)?, Ok);
     let points = match kind {
         ArcSweepKind::Minor => vec![arc.start().clone(), arc.end().clone()],
         ArcSweepKind::Semicircle => vec![

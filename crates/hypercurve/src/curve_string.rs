@@ -609,14 +609,8 @@ impl CurveString2 {
         end_point: &Point2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveString2>> {
-        let start = match locate_trim_point(self, start_point, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let end = match locate_trim_point(self, end_point, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let start = decided!(locate_trim_point(self, start_point, policy)?, Ok);
+        let end = decided!(locate_trim_point(self, end_point, policy)?, Ok);
 
         match compare_trim_points(&start.trim_point, &end.trim_point, policy) {
             Some(Ordering::Less) => {}
@@ -759,10 +753,7 @@ impl CurveString2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        let source_param = match line_point_parameter(line, &target_point, policy)? {
-            Classification::Decided(param) => param,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let source_param = decided!(line_point_parameter(line, &target_point, policy)?, Ok);
         let outside = match endpoint {
             CurveStringEndpoint2::Start => compare_reals(&source_param, &Real::zero(), policy),
             CurveStringEndpoint2::End => compare_reals(&source_param, &Real::one(), policy),
@@ -837,10 +828,7 @@ impl CurveString2 {
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
 
-        let representative = match arc.representative_point_with_policy(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let representative = decided!(arc.representative_point_with_policy(policy)?, Ok);
         match extended_arc.contains_point_with_policy(&representative, policy) {
             Classification::Decided(true) => {}
             Classification::Decided(false) => {
@@ -1375,12 +1363,7 @@ fn locate_trim_point(
     for (segment_index, segment) in curve_string.segments().iter().enumerate() {
         match segment.contains_point_with_policy(point, policy) {
             Classification::Decided(true) => {
-                let param = match segment_point_parameter(segment, point, policy)? {
-                    Classification::Decided(param) => param,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let param = decided!(segment_point_parameter(segment, point, policy)?, Ok);
                 located.push(LocatedTrimPoint2 {
                     trim_point: CurveStringTrimPoint2::new(segment_index, param),
                     point: point.clone(),
@@ -1909,13 +1892,13 @@ mod line_trim_provenance_tests {
             center.translated(Real::from(5), Real::from(-3)),
         )
         .unwrap();
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let step = (Real::one() / Real::from(8)).unwrap();
+        let half = r!(1 / 2);
+        let step = r!(1 / 8);
         let offset = source.offset_left(half.clone()).unwrap();
         let other = source.offset_left(-half.clone()).unwrap();
         let range = ParamRange::new(
             (Real::one() / Real::from(3).sqrt().unwrap()).unwrap(),
-            (Real::from(3) / Real::from(4)).unwrap(),
+            r!(3 / 4),
         );
         for reversed in [false, true] {
             let line = if reversed {

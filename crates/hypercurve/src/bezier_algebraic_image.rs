@@ -1350,12 +1350,7 @@ impl RationalBezierAlgebraicPointImage2 {
         else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let parameter = match image.source_parameter(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(image.source_parameter(policy)?, Ok);
         let denominator_sign =
             match signed_coefficients_at_parameter(denominator, &parameter, policy)? {
                 Classification::Decided(RealSign::Zero) => {
@@ -1386,10 +1381,7 @@ impl RationalBezierAlgebraicPointImage2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<crate::bezier_offset::PointFormSource2>> {
         use hypersolve::BivariatePolynomial;
-        let evaluator = match self.predicate_evaluator(policy)? {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let evaluator = decided!(self.predicate_evaluator(policy)?, Ok);
         let lift =
             |p: &[Real]| BivariatePolynomial::new(p.iter().map(|c| vec![c.clone()]).collect());
         let map = crate::RationalMap2::new(
@@ -1704,13 +1696,13 @@ impl RationalBezierAlgebraicTangentImage2 {
         let parameter = if let Some(parameter) = self.retained_parameter() {
             BezierParameter2::Algebraic(parameter.clone())
         } else {
-            match BezierParameter2::from_algebraic_root_representation_unbounded(
-                self.parameter(),
-                policy,
-            )? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(
+                BezierParameter2::from_algebraic_root_representation_unbounded(
+                    self.parameter(),
+                    policy,
+                )?,
+                Ok
+            )
         };
         let (x, y, denominator) = self.coordinate_polynomials();
         match parameter {

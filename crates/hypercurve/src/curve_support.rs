@@ -43,10 +43,7 @@ fn subcurve_certified_outer_bounds(
     }
     let discover = || -> CurveResult<Classification<Aabb2>> {
         let rational = RationalBezier2::try_from_subcurve(curve)?;
-        let envelope = match rational.finite_discovery_envelope(range, policy)? {
-            Classification::Decided(envelope) => envelope,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let envelope = decided!(rational.finite_discovery_envelope(range, policy)?, Ok);
         let (start, end) = envelope
             .scalar_endpoints()
             .expect("a finite discovery envelope has represented bounds");

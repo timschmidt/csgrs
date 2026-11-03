@@ -1,3 +1,7 @@
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{Curve2, CurveParameter2, Point2};
 use hyperreal::Real;
 
@@ -70,15 +74,11 @@ fn selected_span_parameters_keep_root_evidence_in_a_nonunit_chart() {
         std::cmp::Ordering::Equal
     );
     assert_eq!(
-        authored
-            .compare(&(Real::from(17) / Real::from(4)).unwrap().into())
-            .unwrap(),
+        authored.compare(&r!(17 / 4).into()).unwrap(),
         std::cmp::Ordering::Greater
     );
     assert_eq!(
-        authored
-            .compare(&(Real::from(22) / Real::from(5)).unwrap().into())
-            .unwrap(),
+        authored.compare(&r!(22 / 5).into()).unwrap(),
         std::cmp::Ordering::Less
     );
     assert!(

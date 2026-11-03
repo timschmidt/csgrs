@@ -151,14 +151,14 @@ pub(super) fn projective_parameter_image(
     range: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<BezierParameter2>>> {
-    let mapped = match CurveParameter2::from(parameter.clone()).projective_image_unbounded(
-        numerator,
-        denominator,
-        policy,
-    )? {
-        Classification::Decided(mapped) => mapped,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let mapped = decided!(
+        CurveParameter2::from(parameter.clone()).projective_image_unbounded(
+            numerator,
+            denominator,
+            policy,
+        )?,
+        Ok
+    );
     match CurveParameterDomain2::new(range, None).contains_finite_parameter(&mapped, policy)? {
         Classification::Decided(true) => mapped
             .promoted_bezier_parameter_complete(policy)
@@ -337,12 +337,10 @@ pub(super) fn overlap_parameter_through_injective_axis(
         }
         Err(error) => return Err(error),
     };
-    let parameters = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameters = decided!(
+        polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+        Ok
+    );
     let mut matched = None;
     let mut unresolved = false;
     for parameter in parameters {
@@ -1192,23 +1190,16 @@ pub(crate) fn rational_parameter_image_matches(
             BezierParameter2::Exact(image).same_value(target, policy)
         }
         BezierParameter2::Algebraic(source) => {
-            let candidate = match conic_parameter_candidate(
-                source.polynomial().coefficients(),
-                &(numerator.to_vec(), denominator.to_vec()),
-                policy,
-            )? {
-                Classification::Decided(candidate) => candidate,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let candidate = decided!(
+                conic_parameter_candidate(
+                    source.polynomial().coefficients(),
+                    &(numerator.to_vec(), denominator.to_vec()),
+                    policy,
+                )?,
+                Ok
+            );
             {
-                let target_interval = match target.known_interval_with_policy(policy)? {
-                    Classification::Decided(interval) => interval,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let target_interval = decided!(target.known_interval_with_policy(policy)?, Ok);
                 let evidence = candidate.map.transform_in_interval(
                     &parameter_representation(source, policy),
                     &AlgebraicPolynomialValueInterval {
@@ -1290,16 +1281,10 @@ impl RationalParameterImageMap2 {
         {
             index
         } else {
-            let candidate = match conic_parameter_candidate(
-                source_polynomial,
-                &self.coefficients,
-                &strict_policy,
-            )? {
-                Classification::Decided(candidate) => candidate,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let candidate = decided!(
+                conic_parameter_candidate(source_polynomial, &self.coefficients, &strict_policy,)?,
+                Ok
+            );
             self.candidates
                 .push((source_polynomial.to_vec(), candidate));
             self.candidates.len() - 1
@@ -1409,18 +1394,8 @@ pub(super) fn conic_parameter_candidate(
     policy: &CurveContext,
 ) -> CurveResult<Classification<ConicParameterCandidate2>> {
     let strict = policy.strict_counterpart();
-    let mut numerator = match trim_power_polynomial(candidate.0.clone(), &strict) {
-        Classification::Decided(numerator) => numerator,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let mut denominator = match trim_power_polynomial(candidate.1.clone(), &strict) {
-        Classification::Decided(denominator) => denominator,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let mut numerator = decided!(trim_power_polynomial(candidate.0.clone(), &strict), Ok);
+    let mut denominator = decided!(trim_power_polynomial(candidate.1.clone(), &strict), Ok);
     if numerator
         .iter()
         .chain(&denominator)

@@ -114,12 +114,7 @@ impl RationalBezier2 {
             }));
         }
         if let Some(contacts) = self.retained_lineage_intersection_contacts(other, policy)? {
-            let contacts = match contacts {
-                Classification::Decided(contacts) => contacts,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let contacts = decided!(contacts, Ok);
             let candidates = intersection_candidates_from_contacts(&contacts);
             let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
@@ -140,12 +135,7 @@ impl RationalBezier2 {
             first_circle_parameters,
             second_circle_parameters,
         )? {
-            let contacts = match contacts {
-                Classification::Decided(contacts) => contacts,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let contacts = decided!(contacts, Ok);
             let candidates = intersection_candidates_from_contacts(&contacts);
             let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
@@ -160,12 +150,7 @@ impl RationalBezier2 {
             }));
         }
         if let Some(contacts) = self.retained_linear_image_contacts(other, policy)? {
-            let contacts = match contacts {
-                Classification::Decided(contacts) => contacts,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let contacts = decided!(contacts, Ok);
             let candidates = intersection_candidates_from_contacts(&contacts);
             let contact_cache = OnceLock::new();
             let _ = contact_cache.set(Ok(Classification::Decided(contacts)));
@@ -550,12 +535,10 @@ impl RationalBezier2 {
         // Bounds were already checked before the implicit-conic fast path.
         // Continue directly so an overlapping or inconclusive pair is not
         // boxed and compared a second time before resultant construction.
-        let candidates = match self.intersection_candidates_after_bounds_check(other, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            self.intersection_candidates_after_bounds_check(other, policy)?,
+            Ok
+        );
         self.replay_intersection_candidate_set(other, &candidates, policy)
     }
 
@@ -615,12 +598,10 @@ impl RationalBezier2 {
         let Some(equations) = rational_self_intersection_residual_system(basis) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let candidates = match project_symmetric_self_intersection_system(&equations, policy)? {
-            Classification::Decided(candidates) => candidates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let candidates = decided!(
+            project_symmetric_self_intersection_system(&equations, policy)?,
+            Ok
+        );
         let replayed = match &candidates {
             CurveIntersectionCandidates2::NoIntersection => {
                 RationalBezierIntersectionContacts2::NoIntersection
@@ -631,20 +612,18 @@ impl RationalBezier2 {
             CurveIntersectionCandidates2::Candidates {
                 first_parameters,
                 second_parameters,
-            } => match self.replay_intersection_candidates_with_pair_filter(
-                self,
-                first_parameters,
-                second_parameters,
-                true,
-                Some(&equations),
-                Some(fallback_point_evidence),
-                policy,
-            )? {
-                Classification::Decided(replayed) => replayed,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            } => decided!(
+                self.replay_intersection_candidates_with_pair_filter(
+                    self,
+                    first_parameters,
+                    second_parameters,
+                    true,
+                    Some(&equations),
+                    Some(fallback_point_evidence),
+                    policy,
+                )?,
+                Ok
+            ),
         };
         retain_unordered_rational_self_contacts(replayed, basis, policy)
     }
@@ -836,12 +815,8 @@ impl RationalBezier2 {
             ] {
                 match compare_reals(first_source, second_source, policy) {
                     Some(Ordering::Equal) => {
-                        let point = match self.point_at_classified(&first_parameter, policy) {
-                            Classification::Decided(point) => point,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let point =
+                            decided!(self.point_at_classified(&first_parameter, policy), Ok);
                         contacts.push(RationalBezierIntersectionContact2 {
                             first_parameter: BezierParameter2::Exact(first_parameter.clone()),
                             second_parameter: BezierParameter2::Exact(second_parameter.clone()),
@@ -1562,12 +1537,8 @@ impl RationalBezier2 {
                         }
                         let mut replayed = Vec::with_capacity(contacts.len());
                         for (first_parameter, second_parameter) in contacts {
-                            let point = match self.point_at_classified(&first_parameter, policy) {
-                                Classification::Decided(point) => point,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
+                            let point =
+                                decided!(self.point_at_classified(&first_parameter, policy), Ok);
                             replayed.push(RationalBezierIntersectionContact2 {
                                 first_parameter: BezierParameter2::Exact(first_parameter),
                                 second_parameter: BezierParameter2::Exact(second_parameter),
@@ -1676,26 +1647,22 @@ impl RationalBezier2 {
             CurveResultantParameter::Second,
             config,
         );
-        let first = match resultant_parameter_projection(
-            first,
-            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match resultant_parameter_projection(
-            second,
-            CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
-            policy,
-        )? {
-            Classification::Decided(projection) => projection,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(
+            resultant_parameter_projection(
+                first,
+                CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+                policy,
+            )?,
+            Ok
+        );
+        let second = decided!(
+            resultant_parameter_projection(
+                second,
+                CurveParameterDomain2::new(&CurveParameterRange2::unit(), None),
+                policy,
+            )?,
+            Ok
+        );
         Ok(Classification::Decided(match (first, second) {
             (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
                 CurveIntersectionCandidates2::NoIntersection

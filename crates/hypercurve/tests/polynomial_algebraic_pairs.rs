@@ -1,5 +1,9 @@
 //! Shared algebraic similarities preserve selected polynomial pair incidence.
 
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{
     BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
     BezierParameterPolynomial, BooleanOp, Curve2, CurveOverlapOrientation2, CurveParameter2,
@@ -127,8 +131,8 @@ fn check_image(transform: Similarity2, world_f: BivariatePolynomial, world_g: Bi
                 assert_eq!(s.compare(&t).unwrap(), Ordering::Equal);
                 // Eliminating y gives x^5+10x^3-x^2+35x-25. The retained
                 // contact is the root in (3/5,7/10), on the negative y branch.
-                let low = (Real::from(3) / Real::from(5)).unwrap();
-                let high = (Real::from(7) / Real::from(10)).unwrap();
+                let low = r!(3 / 5);
+                let high = r!(7 / 10);
                 assert_eq!(s.compare(&low.into()).unwrap(), Ordering::Greater);
                 assert_eq!(s.compare(&high.into()).unwrap(), Ordering::Less);
                 assert!(

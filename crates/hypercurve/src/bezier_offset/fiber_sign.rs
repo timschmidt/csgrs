@@ -2812,30 +2812,18 @@ pub(super) fn algebraic_selected_fiber_pair_square_root_sum_sign(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
+    two_term_sign(rational, radical, || {
+        if projected_magnitude_zero {
+            return Ok(Classification::Decided(RealSign::Zero));
         }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-    if projected_magnitude_zero {
-        return Ok(Classification::Decided(RealSign::Zero));
-    }
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(&expression.rational, &expression.rational),
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.radical, &expression.radical),
-            radicand,
-        ),
-    );
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(&expression.rational, &expression.rational),
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.radical, &expression.radical),
+                radicand,
+            ),
+        );
+        sign(&magnitude)
     })
 }
 
@@ -3012,39 +3000,27 @@ pub(super) fn algebraic_selected_fiber_root_radical_sum_sign(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
+    two_term_sign(rational, radical, || {
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.rational, &expression.rational),
+                speed_squared,
+            ),
+            &bivariate_multiply(&expression.radical, &expression.radical),
+        );
+        let magnitude = decided!(
+            bivariate_reduce_axis(
+                &magnitude,
+                retained.polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )?,
+            Ok
+        );
+        if magnitude == *incidence {
+            return Ok(Classification::Decided(RealSign::Zero));
         }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.rational, &expression.rational),
-            speed_squared,
-        ),
-        &bivariate_multiply(&expression.radical, &expression.radical),
-    );
-    let magnitude = decided!(
-        bivariate_reduce_axis(
-            &magnitude,
-            retained.polynomial(),
-            CurveResultantParameter::First,
-            policy,
-        )?,
-        Ok
-    );
-    if magnitude == *incidence {
-        return Ok(Classification::Decided(RealSign::Zero));
-    }
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        sign(&magnitude)
     })
 }
 
@@ -3068,39 +3044,27 @@ pub(super) fn algebraic_selected_fiber_root_square_root_sum_sign(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
+    two_term_sign(rational, radical, || {
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(&expression.rational, &expression.rational),
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.radical, &expression.radical),
+                radicand,
+            ),
+        );
+        let magnitude = decided!(
+            bivariate_reduce_axis(
+                &magnitude,
+                retained.polynomial(),
+                CurveResultantParameter::First,
+                policy,
+            )?,
+            Ok
+        );
+        if magnitude == *incidence {
+            return Ok(Classification::Decided(RealSign::Zero));
         }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(&expression.rational, &expression.rational),
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.radical, &expression.radical),
-            radicand,
-        ),
-    );
-    let magnitude = decided!(
-        bivariate_reduce_axis(
-            &magnitude,
-            retained.polynomial(),
-            CurveResultantParameter::First,
-            policy,
-        )?,
-        Ok
-    );
-    if magnitude == *incidence {
-        return Ok(Classification::Decided(RealSign::Zero));
-    }
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        sign(&magnitude)
     })
 }
 
@@ -3137,51 +3101,38 @@ pub(super) fn algebraic_selected_fiber_root_two_normal_sum_sign(
     };
     let center_sign = decided!(square_root_sign(&center_term)?, Ok);
     let candidate_sign = decided!(square_root_sign(&candidate_term)?, Ok);
-    match (center_sign, candidate_sign) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-
-    let center_square = bivariate_add(
-        &bivariate_multiply(&expression.rational, &expression.rational),
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.center, &expression.center),
-            center_speed_squared,
-        ),
-    );
-    let candidate_square = bivariate_multiply(
-        candidate_speed_squared,
-        &bivariate_add(
-            &bivariate_multiply(&expression.candidate, &expression.candidate),
+    two_term_sign(center_sign, candidate_sign, || {
+        let center_square = bivariate_add(
+            &bivariate_multiply(&expression.rational, &expression.rational),
             &bivariate_multiply(
-                &bivariate_multiply(&expression.product, &expression.product),
+                &bivariate_multiply(&expression.center, &expression.center),
                 center_speed_squared,
             ),
-        ),
-    );
-    let magnitude = BezierAlgebraicCuspTwoTermExpression2 {
-        rational: bivariate_subtract(&center_square, &candidate_square),
-        radical: bivariate_scale(
-            bivariate_subtract(
-                &bivariate_multiply(&expression.rational, &expression.center),
+        );
+        let candidate_square = bivariate_multiply(
+            candidate_speed_squared,
+            &bivariate_add(
+                &bivariate_multiply(&expression.candidate, &expression.candidate),
                 &bivariate_multiply(
-                    candidate_speed_squared,
-                    &bivariate_multiply(&expression.candidate, &expression.product),
+                    &bivariate_multiply(&expression.product, &expression.product),
+                    center_speed_squared,
                 ),
             ),
-            &Real::from(2_u8),
-        ),
-    };
-    Ok(match square_root_sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(center_sign),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(candidate_sign),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+        );
+        let magnitude = BezierAlgebraicCuspTwoTermExpression2 {
+            rational: bivariate_subtract(&center_square, &candidate_square),
+            radical: bivariate_scale(
+                bivariate_subtract(
+                    &bivariate_multiply(&expression.rational, &expression.center),
+                    &bivariate_multiply(
+                        candidate_speed_squared,
+                        &bivariate_multiply(&expression.candidate, &expression.product),
+                    ),
+                ),
+                &Real::from(2_u8),
+            ),
+        };
+        square_root_sign(&magnitude)
     })
 }
 
@@ -3204,41 +3155,28 @@ pub(super) fn algebraic_cusp_correlated_radical_sum_sign(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.rational, &expression.rational),
-            speed_squared,
-        ),
-        &bivariate_multiply(&expression.radical, &expression.radical),
-    );
-    let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
-        decided!(
-            bivariate_reduce_axis(
-                &magnitude,
-                cusp.polynomial(),
-                CurveResultantParameter::First,
-                policy,
-            )?,
-            Ok
-        )
-    } else {
-        magnitude
-    };
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    two_term_sign(rational, radical, || {
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.rational, &expression.rational),
+                speed_squared,
+            ),
+            &bivariate_multiply(&expression.radical, &expression.radical),
+        );
+        let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
+            decided!(
+                bivariate_reduce_axis(
+                    &magnitude,
+                    cusp.polynomial(),
+                    CurveResultantParameter::First,
+                    policy,
+                )?,
+                Ok
+            )
+        } else {
+            magnitude
+        };
+        sign(&magnitude)
     })
 }
 
@@ -3260,41 +3198,28 @@ pub(super) fn algebraic_cusp_independent_radical_sum_sign(
     };
     let rational = decided!(sign(&expression.rational)?, Ok);
     let radical = decided!(sign(&expression.radical)?, Ok);
-    match (rational, radical) {
-        (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
-            return Ok(Classification::Decided(sign));
-        }
-        (first, second) if first == second => {
-            return Ok(Classification::Decided(first));
-        }
-        _ => {}
-    }
-
-    let magnitude = bivariate_subtract(
-        &bivariate_multiply(
-            &bivariate_multiply(&expression.rational, &expression.rational),
-            speed_squared,
-        ),
-        &bivariate_multiply(&expression.radical, &expression.radical),
-    );
-    let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
-        decided!(
-            bivariate_reduce_axis(
-                &magnitude,
-                cusp.polynomial(),
-                CurveResultantParameter::First,
-                policy,
-            )?,
-            Ok
-        )
-    } else {
-        magnitude
-    };
-    Ok(match sign(&magnitude)? {
-        Classification::Decided(RealSign::Positive) => Classification::Decided(rational),
-        Classification::Decided(RealSign::Negative) => Classification::Decided(radical),
-        Classification::Decided(RealSign::Zero) => Classification::Decided(RealSign::Zero),
-        Classification::Uncertain(reason) => Classification::Uncertain(reason),
+    two_term_sign(rational, radical, || {
+        let magnitude = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_multiply(&expression.rational, &expression.rational),
+                speed_squared,
+            ),
+            &bivariate_multiply(&expression.radical, &expression.radical),
+        );
+        let magnitude = if let BezierParameter2::Algebraic(cusp) = cusp_parameter {
+            decided!(
+                bivariate_reduce_axis(
+                    &magnitude,
+                    cusp.polynomial(),
+                    CurveResultantParameter::First,
+                    policy,
+                )?,
+                Ok
+            )
+        } else {
+            magnitude
+        };
+        sign(&magnitude)
     })
 }
 

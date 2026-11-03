@@ -1146,21 +1146,19 @@ impl Contour2 {
         for source_vertex in 0..supports.len() {
             let left_source_edge = (source_vertex + supports.len() - 1) % supports.len();
             let right_source_edge = source_vertex;
-            let trajectory = match shape_preserving_vertex_trajectory(
-                source_vertex,
-                left_source_edge,
-                right_source_edge,
-                self.segments()[source_vertex].start().clone(),
-                &supports[left_source_edge],
-                &supports[right_source_edge],
-                orientation,
-                policy,
-            )? {
-                Classification::Decided(trajectory) => trajectory,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let trajectory = decided!(
+                shape_preserving_vertex_trajectory(
+                    source_vertex,
+                    left_source_edge,
+                    right_source_edge,
+                    self.segments()[source_vertex].start().clone(),
+                    &supports[left_source_edge],
+                    &supports[right_source_edge],
+                    orientation,
+                    policy,
+                )?,
+                Ok
+            );
             trajectories.push(trajectory);
         }
         Ok(Classification::Decided(trajectories))
@@ -1664,10 +1662,10 @@ impl Contour2 {
                 ));
             }
         }
-        let splices = match self.straight_skeleton_splice_events_with_policy(policy)? {
-            Classification::Decided(events) => events,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let splices = decided!(
+            self.straight_skeleton_splice_events_with_policy(policy)?,
+            Ok
+        );
         for splice in splices {
             if !update_minimum_real(&mut local_bound, splice.time(), policy) {
                 return Ok(Classification::Uncertain(

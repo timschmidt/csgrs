@@ -258,7 +258,7 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
 
 #[test]
 fn retained_incident_domains_admit_exterior_affine_endpoints() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parallel = RationalBezier2::try_new(
         vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
         vec![-Real::one(), Real::one()],
@@ -479,7 +479,7 @@ fn repeated_point_similarities_keep_one_original_selected_field() {
     };
     let translation = affine([1, 0, 0, 1, 3, -2]);
     let reflection = affine([0, 2, 2, 0, 0, 0]);
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let inverse = Similarity2::try_from_real_affine(
         Real::zero(),
         half.clone(),
@@ -1083,16 +1083,13 @@ fn chord_parallel_monotonicity_covers_the_retained_parameter_range() {
 fn chord_pair_bounds_refine_native_fibers_before_global_projection() {
     use crate::classify::LineSide::{Left, Right};
 
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let height = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
+    let height = r!(3 / 2);
     // alpha^65=1/2, u³=alpha, P(u)=(2u²,u). The chord from
     // P(u) to P(u)+(1,1) meets y=3/2 at (2u²-u+3/2,3/2).
     // Its raw [0,1] singleton makes the interval determinant touch zero;
     // native refinement suffices without the degree-195 global image.
-    let u = half
-        .clone()
-        .pow((Real::one() / Real::from(195)).unwrap())
-        .unwrap();
+    let u = half.clone().pow(r!(1 / 195)).unwrap();
     let expected = Point2::new(Real::from(2_i8) * &u * &u - &u + &height, height.clone());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
@@ -1173,7 +1170,7 @@ fn chord_pair_bounds_refine_native_fibers_before_global_projection() {
 
 #[test]
 fn conic_owned_endpoint_reuses_local_evidence_on_finite_ranges() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let selected =
             high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
@@ -1457,7 +1454,7 @@ fn conic_owned_endpoint_still_requires_a_pole_free_range() {
 
 #[test]
 fn chord_rational_contact_ownership_preserves_selected_fiber_parameters() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let beta = half.clone().sqrt().unwrap();
     let radius = beta.clone().sqrt().unwrap();
     let BezierParameter2::Algebraic(retained) =
@@ -1544,7 +1541,7 @@ fn chord_rational_contact_ownership_preserves_selected_fiber_parameters() {
 fn vector_tangent_predicates_replay_general_parameter_authorities() {
     use RealSign::{Negative, Positive, Zero};
 
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -1658,7 +1655,7 @@ fn regularized_vector_tangent_owns_selected_stationary_endpoints() {
         Point2::from_values(1, 0),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half, &policy);
         for reversed in [false, true] {
             let endpoint = Real::from(if reversed { 1_i8 } else { 0_i8 });
@@ -1701,7 +1698,7 @@ fn regularized_vector_tangent_owns_selected_stationary_endpoints() {
 
 #[test]
 fn bounded_point_import_preserves_a_cached_local_field() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -1773,7 +1770,7 @@ fn bounded_point_import_preserves_a_cached_local_field() {
 
 #[test]
 fn bounded_point_import_reuses_certified_native_fiber_parameters() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let expected_parameter = half.clone().sqrt().unwrap();
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -1873,7 +1870,7 @@ fn bounded_point_import_reuses_certified_native_fiber_parameters() {
 
 #[test]
 fn selected_fiber_points_reuse_projective_roots_without_global_promotion() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let sqrt_two = Real::from(2_i8).sqrt().unwrap();
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -1991,7 +1988,7 @@ fn selected_fiber_points_reuse_projective_roots_without_global_promotion() {
 
 #[test]
 fn nonquadratic_selected_fiber_keeps_its_defining_authority() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
         let incidence = BivariatePolynomial::new(vec![
@@ -2047,11 +2044,11 @@ fn clip_aligned_overlap_for_test(
 
 #[test]
 fn fiber_specialization_retains_native_quadratic_root_certificates() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let alpha = half.clone().sqrt().unwrap();
     let delta = (&alpha + &half * &half).sqrt().unwrap();
     for root in [-&half - &delta, -&half + &delta] {
-        let width = (Real::from(2_i8) / Real::from(7_i8)).unwrap();
+        let width = r!(2 / 7);
         let parameter = Real::average_pair(&(&root - &width), &(&root + &width));
         let rows: Vec<Vec<Real>> = [Real::one(), Real::pi(), -Real::pi()]
             .into_iter()
@@ -2130,7 +2127,7 @@ fn fiber_specialization_preserves_axis_order_and_ragged_zero_rows() {
 
 #[test]
 fn recursive_scalar_comparison_replays_exact_equality_before_approximation() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let other = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
     assert!(matches!(other, BezierParameter2::Algebraic(_)));
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
@@ -2185,7 +2182,7 @@ fn recursive_scalar_comparison_replays_exact_equality_before_approximation() {
 
 #[test]
 fn recursive_local_root_orders_against_close_coefficient_generators() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let native = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let source = bezier_parameter_root_representation(&native);
     let one = DenseTensorPolynomial::try_new(vec![1, 1], vec![Real::one()]).unwrap();
@@ -2213,7 +2210,7 @@ fn recursive_local_root_orders_against_close_coefficient_generators() {
     let tiny = Real::from(2_i8).powi_i64(-80).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [Real::one(), Real::from(-7_i8)] {
-            let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+            let eighth = r!(1 / 8);
             for (shift, expected, inside) in [
                 (-tiny.clone(), std::cmp::Ordering::Less, true),
                 (Real::zero(), std::cmp::Ordering::Equal, true),
@@ -2302,8 +2299,8 @@ fn recursive_local_root_orders_against_close_coefficient_generators() {
 
 #[test]
 fn retained_parameter_import_keeps_original_axes_and_tower() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let parameter =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::zero(), Real::one()]);
     let foreign = algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]);
@@ -2360,7 +2357,7 @@ fn retained_parameter_import_keeps_original_axes_and_tower() {
 
 #[test]
 fn exterior_chord_contact_deflation_preserves_other_contacts() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source =
         RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             Point2::from_values(0, 0),
@@ -2684,7 +2681,7 @@ fn recursive_projective_bounds_reuse_positive_denominator_certificate() {
 
 #[test]
 fn recursive_projective_bounds_enclose_scaled_nested_radicals() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
         -half.clone(),
         Real::zero(),
@@ -2766,7 +2763,7 @@ fn recursive_projective_bounds_enclose_scaled_nested_radicals() {
 
 #[test]
 fn recursive_projective_bounds_keep_unwitnessed_source_fallback() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
         -half.clone(),
         Real::zero(),
@@ -2813,7 +2810,7 @@ fn recursive_projective_bounds_keep_unwitnessed_source_fallback() {
 
 #[test]
 fn recursive_scalar_native_replay_preserves_selected_source_authority() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
         -half,
         Real::zero(),
@@ -2910,7 +2907,7 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
     }
 
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+        r!(-1 / 2),
         Real::zero(),
         Real::one(),
     ]));
@@ -2992,7 +2989,7 @@ fn recursive_projective_content_normalization_preserves_selected_fields() {
 
 #[test]
 fn recursive_scalar_publication_accepts_general_exact_witnesses() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
         -half.clone(),
         Real::zero(),
@@ -3048,7 +3045,7 @@ fn recursive_scalar_publication_accepts_general_exact_witnesses() {
 
 #[test]
 fn recursive_bounds_refine_each_shared_source_once() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let selected = high_degree_quadratic_selected_fiber_parameter_for_test(
         half.clone(),
         &CurveContext::STRICT,
@@ -3071,7 +3068,7 @@ fn recursive_bounds_refine_each_shared_source_once() {
     // The independent scalar oracle knows alpha=(1/2)^(1/65). The field
     // retains only its certified polynomial root. Every later value
     // reuses its predecessor both directly and under a positive radical.
-    let mut expected = half.pow((Real::one() / Real::from(65)).unwrap()).unwrap();
+    let mut expected = half.pow(r!(1 / 65)).unwrap();
     for depth in 1..=4 {
         let shift = Real::from(depth + 1);
         let radicand = value.add(&field.constant(shift.clone()).unwrap()).unwrap();
@@ -3148,7 +3145,7 @@ fn recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint() {
     let policy = CurveContext::STRICT;
     // This rational root lies beyond the compact witness proposal's
     // denominator range. Bisection discovers it in the native isolator.
-    let expected = (Real::from(65_i8) / Real::from(128_i16)).unwrap();
+    let expected = r!(65 / 128);
     let selected = high_degree_quadratic_selected_fiber_parameter_for_test(
         expected.clone().powi_i64(65).unwrap(),
         &policy,
@@ -3186,7 +3183,7 @@ fn recursive_source_refinement_keeps_its_equation_after_an_exact_midpoint() {
 
 #[test]
 fn recursive_sign_replays_correlated_real_witness_before_deep_intervals() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tiny = Real::from(2_i8).powi_i64(-256).unwrap();
     let source = bezier_parameter_root_representation(&algebraic_parameter(vec![
         -half.clone(),
@@ -3314,7 +3311,7 @@ fn recursive_real_witnesses_do_not_require_unused_selected_generators() {
 
 #[test]
 fn retained_real_witnesses_collapse_recursive_source_box_coefficients() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source_parameter = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let source = bezier_parameter_root_representation(&source_parameter);
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()])
@@ -3435,7 +3432,7 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
     let polynomial =
         DenseTensorPolynomial::try_new(vec![3, 1], vec![Real::one(), Real::one(), Real::one()])
             .unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     let enclose = |interval: &RealInterval, lower: &Real, upper: &Real| {
         assert!(interval.lower.exact_rational_ref().unwrap().is_dyadic());
         assert!(interval.upper.exact_rational_ref().unwrap().is_dyadic());
@@ -3482,9 +3479,7 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
             }
         }
     }
-    let mut source = bezier_parameter_root_representation(&BezierParameter2::Exact(
-        (Real::one() / Real::from(2_i8)).unwrap(),
-    ));
+    let mut source = bezier_parameter_root_representation(&BezierParameter2::Exact(r!(1 / 2)));
     source.interval.lower = third.clone();
     source.interval.upper = Real::from(2_i8) * third;
     let interval = dense_tensor_interval_with_coefficient_precision(
@@ -3500,10 +3495,7 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
     );
     // The generator enclosure must remain dyadic even when the square
     // root itself has a rational scale with an odd denominator.
-    for squared in [
-        (Real::one() / Real::from(9_i8)).unwrap(),
-        (Real::from(2_i8) / Real::from(9_i8)).unwrap(),
-    ] {
+    for squared in [r!(1 / 9), r!(2 / 9)] {
         let expected = squared.clone().sqrt().unwrap();
         let interval = RealInterval {
             lower: squared.clone(),
@@ -3521,11 +3513,7 @@ fn selected_zero_distance_source_axis_order_stays_in_its_correlated_field() {
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let selected = degree_nine_selected_fiber_parameter_for_test(
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            1,
-            &policy,
-        );
+        let selected = degree_nine_selected_fiber_parameter_for_test(r!(1 / 2), 1, &policy);
         let ordinary =
             BezierParameter2::Algebraic(selected.data.authority.data.retained_parameter.clone());
         let parallel = BezierParallel2::from_source(
@@ -3778,9 +3766,9 @@ fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
 
 #[test]
 fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     let two_thirds = &third * Real::from(2_i8);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let source = RationalBezier2::try_new(
         vec![
             Point2::from_values(1, -1),
@@ -3903,17 +3891,15 @@ fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
 
 #[test]
 fn finite_domain_admits_one_sided_source_cusp_contacts() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let third = r!(1 / 3);
+    let half = r!(1 / 2);
     let source = CubicBezier2::new(
         Point2::from_values(1, -1),
         Point2::new(-third.clone(), Real::one()),
         Point2::new(-third, -Real::one()),
         Point2::from_values(1, 1),
     );
-    let parallel = source
-        .parallel_left(-(Real::one() / Real::from(4_i8)).unwrap())
-        .unwrap();
+    let parallel = source.parallel_left(-r!(1 / 4)).unwrap();
     let before = CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
         BezierParameter2::Exact(Real::zero()),
         BezierParameter2::Exact(half.clone()),
@@ -4000,8 +3986,8 @@ fn finite_domain_admits_one_sided_source_cusp_contacts() {
         );
         let interior =
             CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
-                BezierParameter2::Exact((Real::one() / Real::from(4_i8)).unwrap()),
-                BezierParameter2::Exact((Real::from(3_i8) / Real::from(4_i8)).unwrap()),
+                BezierParameter2::Exact(r!(1 / 4)),
+                BezierParameter2::Exact(r!(3 / 4)),
             ));
         let interior_cusp = parallel
             .parallel_intersections_in_domain(
@@ -4076,17 +4062,15 @@ fn odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal() {
     // but its ordinary source diagonal is not a component of the
     // branch-oriented pair system. The branches meet only at isolated
     // off-diagonal parameters.
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let third = r!(1 / 3);
+    let half = r!(1 / 2);
     let source = CubicBezier2::new(
         Point2::from_values(1, -1),
         Point2::new(-third.clone(), Real::one()),
         Point2::new(-third, -Real::one()),
         Point2::from_values(1, 1),
     );
-    let parallel = source
-        .parallel_left(-(Real::one() / Real::from(4_i8)).unwrap())
-        .unwrap();
+    let parallel = source.parallel_left(-r!(1 / 4)).unwrap();
     let before = BezierParameterRange2::new_validated(
         BezierParameter2::Exact(Real::zero()),
         BezierParameter2::Exact(half.clone()),
@@ -4147,10 +4131,8 @@ fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
         vec![Real::one(), Real::from(2_i8), Real::one()],
     )
     .unwrap();
-    let parallel = BezierParallel2::from_source(
-        BezierParallelSource2::Rational(source),
-        (Real::one() / Real::from(10_i8)).unwrap(),
-    );
+    let parallel =
+        BezierParallel2::from_source(BezierParallelSource2::Rational(source), r!(1 / 10));
     let endpoint = match parallel
         .point_at_with_policy(&Real::one(), &policy)
         .unwrap()
@@ -4256,17 +4238,12 @@ fn general_analytic_circle_overlap(
 
 #[test]
 fn mapped_overlap_retains_distinct_selected_inverse_keys_and_rebuilds_expired_values() {
-    let BezierParameter2::Algebraic(retained_parameter) = algebraic_parameter(vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]) else {
+    let BezierParameter2::Algebraic(retained_parameter) =
+        algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()])
+    else {
         panic!("the selected base parameter must be algebraic");
     };
-    let values = [
-        (Real::one() / Real::from(3_i8)).unwrap(),
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-    ];
+    let values = [r!(1 / 3), r!(2 / 3)];
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_, _, overlap) = general_analytic_circle_overlap(&policy);
@@ -4338,7 +4315,7 @@ fn selected_fiber_rational_quarter(
     exact_center: bool,
     policy: &CurveContext,
 ) -> (BezierAlgebraicCuspSemicircle2, RationalBezier2) {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -4472,8 +4449,8 @@ fn translated_selected_contact_import_omits_the_unused_center() {
 }
 
 fn check_selected_fiber_rational_overlap(exact_center: bool) {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for (policy, consume_terminal) in [
         (CurveContext::APPROXIMATE_512, false),
         (CurveContext::STRICT, false),
@@ -4561,13 +4538,7 @@ fn check_selected_fiber_rational_overlap(exact_center: bool) {
                     (overlap.other_end_parameter(), endpoints[1].clone()),
                     (
                         interior,
-                        (
-                            third.clone(),
-                            Point2::new(
-                                (Real::from(-3_i8) / Real::from(10_i8)).unwrap(),
-                                (Real::from(3_i8) / Real::from(5_i8)).unwrap(),
-                            ),
-                        ),
+                        (third.clone(), Point2::new(r!(-3 / 10), r!(3 / 5))),
                     ),
                 ] {
                     let angle = if circle.is_clockwise() {
@@ -4644,8 +4615,8 @@ fn selected_fiber_rational_overlap_replays_certified_policy() {
 
 #[test]
 fn selected_fiber_circle_overlap_does_not_prove_source_parameter_identity() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_, _, overlap) = selected_fiber_rational_quarter_overlap(&policy);
         let retained = overlap
@@ -4707,7 +4678,7 @@ fn selected_fiber_circle_overlap_does_not_prove_source_parameter_identity() {
 
 #[test]
 fn selected_fiber_rational_component_publishes_its_isolated_endpoint() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let opposite_quarter = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
             Point2::new(half.clone(), Real::one()),
@@ -4825,7 +4796,7 @@ fn selected_fiber_rational_component_publishes_its_isolated_endpoint() {
 
 #[test]
 fn selected_fiber_rational_component_rejects_the_conjugate_circle() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for exact_center in [false, true] {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let (base, _) = selected_fiber_rational_quarter(exact_center, &policy);
@@ -4962,7 +4933,7 @@ fn selected_fiber_angle_query_observes_its_requested_policy() {
 #[test]
 fn mapped_parallel_angle_query_observes_requested_policy() {
     let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let Classification::Decided(parameter) = overlap
         .cusp_parameter_for_other(
             &region_parameter(BezierParameter2::Exact(half)),
@@ -4984,7 +4955,7 @@ fn mapped_parallel_angle_query_observes_requested_policy() {
 fn mapped_rational_angle_query_observes_requested_policy() {
     let policy = CurveContext::STRICT;
     let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
-    let height = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let height = r!(4 / 5);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::zero(), height.clone()),
@@ -5230,9 +5201,9 @@ fn mapped_chord_angle_query_observes_requested_policy() {
     assert_mapped_angle_query_policy(&parameter);
     assert_eq!(
         parameter.parameter_bracket(1, &policy).unwrap(),
-        Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(
-            (Real::one() / Real::from(2_i8)).unwrap(),
-        )),
+        Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Exact(r!(
+            1 / 2
+        ),)),
     );
 }
 
@@ -5643,9 +5614,7 @@ fn retained_chord_fallback_affine_queries_match_certified_bounds() {
         &policy,
         "affine oracle independent chord",
     );
-    let offset = chord
-        .parallel_left_retained((Real::one() / Real::from(8_i8)).unwrap(), &policy)
-        .unwrap();
+    let offset = chord.parallel_left_retained(r!(1 / 8), &policy).unwrap();
     // Exercise the retained authorities directly: public dispatch may
     // prefer another exact representation for these same contacts.
     for (family, result) in [
@@ -5739,7 +5708,7 @@ fn mapped_overlap_angle_queries_observe_requested_policy() {
     else {
         panic!("the selected halves must retain their shared quadrant");
     };
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     for parameter in [
         overlap.first_start_parameter(),
         overlap.second_end_parameter(),
@@ -5761,9 +5730,7 @@ fn mapped_overlap_angle_queries_observe_requested_policy() {
     let (_, _, analytic_overlap) = general_analytic_circle_overlap(&policy);
     let Classification::Decided(source) = analytic_overlap
         .cusp_parameter_for_other(
-            &region_parameter(BezierParameter2::Exact(
-                (Real::one() / Real::from(2_i8)).unwrap(),
-            )),
+            &region_parameter(BezierParameter2::Exact(r!(1 / 2))),
             &policy,
         )
         .unwrap()
@@ -5772,7 +5739,7 @@ fn mapped_overlap_angle_queries_observe_requested_policy() {
     };
     let mapped = overlap.map_parameter(&source, false);
     assert_mapped_angle_query_policy(&mapped);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let three_quarters = Real::from(3_i8) * &half * &half;
     let Classification::Decided(bracket) = mapped.parameter_bracket(8, &policy).unwrap() else {
         panic!("the transported analytic cut must refine its source enclosure");
@@ -5787,11 +5754,7 @@ fn mapped_overlap_angle_queries_observe_requested_policy() {
         Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal)
     ));
     assert_eq!(
-        compare_reals(
-            &(end - start),
-            &(Real::one() / Real::from(32_i8)).unwrap(),
-            &policy
-        ),
+        compare_reals(&(end - start), &r!(1 / 32), &policy),
         Some(std::cmp::Ordering::Less),
     );
 }
@@ -5803,7 +5766,7 @@ fn mapped_parallel_bracket_cache_does_not_launder_a_terminal() {
     else {
         panic!("the analytic overlap must retain its parallel map");
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let zero = crate::test_support::terminally_unresolved_zero();
     // The source quarter's endpoint is (0, 2); its inward unit parallel
     // is (0, 1), the selected semicircle's exact angular midpoint.
@@ -5852,7 +5815,7 @@ fn mapped_parallel_bracket_cache_does_not_launder_a_terminal() {
 #[test]
 fn mapped_circle_inverse_cache_retains_policy_without_strong_source_ownership() {
     let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let Classification::Decided(source) = overlap
         .cusp_parameter_for_other(
             &region_parameter(BezierParameter2::Exact(half.clone())),
@@ -5953,8 +5916,8 @@ fn mapped_circle_inverse_cache_retains_policy_without_strong_source_ownership() 
 #[test]
 fn mapped_circle_rational_cache_preserves_consumed_policy() {
     let (_, _, overlap) = general_analytic_circle_overlap(&CurveContext::STRICT);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let Classification::Decided(parameter) = overlap
         .cusp_parameter_for_other(
             &region_parameter(BezierParameter2::Exact(half)),
@@ -6027,7 +5990,7 @@ fn mapped_circle_diameter_cache_preserves_consumed_policy() {
         )
         .unwrap(),
     );
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parameter = BezierParameter2::Exact(half.clone());
     let cache = BezierAlgebraicCuspSemicircleParameterCache2::default();
     let query = |attempt: &CurveContext| {
@@ -6103,7 +6066,7 @@ fn selected_fiber_quartile_parameters(
     BezierAlgebraicSelectedFiberParameter2,
     Real,
 ) {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let Classification::Decided(polynomial) =
         BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![-half.clone(), Real::zero(), Real::one()],
@@ -6265,7 +6228,7 @@ fn selected_projection_replays_selected_boundaries_under_the_original_policy() {
                 let (first, second, _) = selected_fiber_quartile_parameters(attempt);
                 let retained = first.data.authority.data.retained_parameter.clone();
                 let mut endpoints = Vec::new();
-                let half = (Real::one() / Real::from(2)).unwrap();
+                let half = r!(1 / 2);
                 // Each bracket contains exactly one root of the factored
                 // quartile relation. Keep these deliberately coarse so
                 // the isolation envelope also contains excluded roots.
@@ -6566,8 +6529,8 @@ fn algebraic_chord_is_one_word_and_reverses_without_rounding() {
 
 #[test]
 fn split_chord_linear_tangents_reuse_the_oriented_support() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let three_quarters = r!(3 / 4);
     let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 3)).unwrap();
     let parallel = QuadraticBezier2::from_line_segment(line)
         .parallel_left(Real::zero())
@@ -6685,7 +6648,7 @@ fn nested_procedural_chord_reversals_match_exact_side_and_winding() {
                         }),
                     );
                     let line = oracle.exact_line().unwrap();
-                    let midpoint = line.point_at((Real::one() / Real::from(2)).unwrap());
+                    let midpoint = line.point_at(r!(1 / 2));
                     for side in [-1, 1] {
                         let query = midpoint
                             .translated(&normal_x * Real::from(side), &normal_y * Real::from(side));
@@ -6911,7 +6874,7 @@ fn chord_pair_orders_support_intersections_beyond_a_finite_witness() {
             RealSign::Positive,
             &policy,
         );
-        let before = Point2::new((Real::from(3_i8) / Real::from(2_i8)).unwrap(), Real::zero());
+        let before = Point2::new(r!(3 / 2), Real::zero());
         let after = Point2::from_values(3, 0);
         for (carrier, before_order, after_order) in [
             (
@@ -7155,8 +7118,8 @@ fn algebraic_chord_rejects_a_certified_zero_length() {
 
 #[test]
 fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(first_parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -7277,7 +7240,7 @@ fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
 
 #[test]
 fn represented_circle_incidence_replays_retained_similarity_points() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
         QuadraticBezier2::from_line_segment(
             LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1)).unwrap(),
@@ -7413,7 +7376,7 @@ fn represented_circle_retained_point_incidence_observes_requested_policy() {
 
 #[test]
 fn correlated_algebraic_point_oblique_projection_is_exact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(parameter) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -7479,8 +7442,8 @@ fn independent_algebraic_point_oblique_projections_compare_exactly() {
     );
     let opaque = epsilon.cos() - Real::one();
     assert_eq!(opaque.zero_status(), ZeroKnowledge::Unknown);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let BezierParameter2::Algebraic(first_parameter) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -7531,8 +7494,8 @@ fn independent_algebraic_point_oblique_projections_compare_exactly() {
 
 #[test]
 fn independent_field_algebraic_chord_intersects_rational_curve_under_both_policies() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let two_thirds = Real::from(2_i8) * &third;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(first_parameter) =
@@ -7628,7 +7591,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
             ) if contacts.is_empty()
         ));
 
-        let sixth = (Real::one() / Real::from(6_i8)).unwrap();
+        let sixth = r!(1 / 6);
         let tangent =
             RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
                 Point2::new(sixth.clone(), Real::one()),
@@ -7709,7 +7672,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
         let contained = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(
                 LineSeg2::try_new(
-                    Point2::new((Real::from(3_i8) / Real::from(5_i8)).unwrap(), Real::zero()),
+                    Point2::new(r!(3 / 5), Real::zero()),
                     Point2::new(two_thirds.clone(), Real::zero()),
                 )
                 .unwrap(),
@@ -7820,8 +7783,8 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
 
 #[test]
 fn retained_offset_chord_rational_intersections_select_the_physical_support() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let third = r!(1 / 3);
+    let half = r!(1 / 2);
     let two_thirds = Real::from(2_i8) * &third;
     let line = |start: Point2, end: Point2| {
         RationalBezier2::try_new(vec![start, end], vec![Real::one(), Real::one()]).unwrap()
@@ -7884,15 +7847,9 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
         );
         let tangent = RationalBezier2::try_new(
             vec![
-                Point2::new(
-                    &translation_x + (Real::one() / Real::from(6_i8)).unwrap(),
-                    Real::one(),
-                ),
+                Point2::new(&translation_x + r!(1 / 6), Real::one()),
                 Point2::new(&translation_x + &two_thirds, Real::from(-1_i8)),
-                Point2::new(
-                    &translation_x + (Real::from(7_i8) / Real::from(6_i8)).unwrap(),
-                    Real::one(),
-                ),
+                Point2::new(&translation_x + r!(7 / 6), Real::one()),
             ],
             vec![Real::one(), Real::one(), Real::one()],
         )
@@ -8174,8 +8131,8 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
             vec![CurveBoundaryInteriorSide2::Right],
         )
         .unwrap();
-        let cutter_left = (Real::from(13_i8) / Real::from(5_i8)).unwrap();
-        let cutter_right = (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+        let cutter_left = r!(13 / 5);
+        let cutter_right = r!(8 / 3);
         let lower_left = Point2::new(cutter_left.clone(), Real::from(-2_i8));
         let lower_right = Point2::new(cutter_right.clone(), Real::from(-2_i8));
         let upper_right = Point2::new(cutter_right.clone(), Real::one());
@@ -8235,8 +8192,8 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
 
 #[test]
 fn independent_field_chord_retains_both_noninjective_endpoint_preimages() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let third = r!(1 / 3);
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(endpoint_parameter) =
             algebraic_parameter(vec![-third.clone(), Real::zero(), Real::one()])
@@ -8666,7 +8623,7 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
 
 #[test]
 fn chord_pair_axis_order_reuses_analytic_support_coordinates() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parameter = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
     let source = RationalBezier2::try_new(
         vec![
@@ -8763,7 +8720,7 @@ fn chord_pair_axis_order_reuses_analytic_support_coordinates() {
 
 #[test]
 fn mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     let source = RationalBezier2::try_new(
         vec![
@@ -8781,7 +8738,7 @@ fn mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field() {
                     .parallel_left((Real::from(normal) / Real::from(20_i8)).unwrap())
                     .unwrap(),
                 algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
-                (Real::one() / Real::from(30_i8)).unwrap(),
+                r!(1 / 30),
                 &policy,
             );
             let translated = |dx: i8, dy: i8| {
@@ -8868,11 +8825,9 @@ fn mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field() {
 fn cardinal_algebraic_parallel_projects_source_coordinates_exactly() {
     for requested in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let outcome = crate::policy::resolve_certified_value(&requested, |policy| {
-            let BezierParameter2::Algebraic(parameter) = algebraic_parameter(vec![
-                -(Real::one() / Real::from(2_i8)).unwrap(),
-                Real::zero(),
-                Real::one(),
-            ]) else {
+            let BezierParameter2::Algebraic(parameter) =
+                algebraic_parameter(vec![-r!(1 / 2), Real::zero(), Real::one()])
+            else {
                 unreachable!("sqrt(1/2) must remain algebraic");
             };
             let endpoint = |height: i8| {
@@ -9205,8 +9160,8 @@ fn retained_offset_chord_pair_intersects_the_physical_supports() {
 
 #[test]
 fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(first_parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -9409,8 +9364,8 @@ fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
 
 #[test]
 fn independent_field_chord_retains_a_third_contact_in_its_recursive_field() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(first_parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -9503,7 +9458,7 @@ fn independent_field_chord_retains_a_third_contact_in_its_recursive_field() {
 
 #[test]
 fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -9580,7 +9535,7 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
         // at the paired parameters alpha and 1-alpha because
         // y/x = t(1-t).  For alpha = sqrt(1/2), the latter point is
         // strictly inside the chord from the origin to C(alpha).
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
         let repeated_contact_source =
             RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(CubicBezier2::new(
                 Point2::from_values(1, 0),
@@ -9808,7 +9763,7 @@ fn general_algebraic_cusp_semicircle(
     BezierAlgebraicParameter2,
     BezierAlgebraicCuspSemicircle2,
 ) {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = CubicBezier2::new(
         Point2::new(Real::zero(), Real::zero()),
         Point2::new(Real::zero(), Real::from(4_i8)),
@@ -9837,7 +9792,7 @@ fn general_algebraic_cusp_semicircle(
 
 #[test]
 fn general_algebraic_cusp_semicircle_is_exact_shared_and_oriented() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_parallel, parameter, semicircle) =
             general_algebraic_cusp_semicircle(quarter.clone(), true, &policy);
@@ -9852,7 +9807,7 @@ fn general_algebraic_cusp_semicircle_is_exact_shared_and_oriented() {
 
         let zero = Real::zero();
         let one = Real::one();
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let one_quarter = quarter.clone();
         let three_quarters = Real::one() - &one_quarter;
         let Classification::Decided(start) = semicircle.point_at(&zero, &policy).unwrap() else {
@@ -9927,7 +9882,7 @@ fn retained_rational_image_coordinate_order_uses_the_shared_root_field() {
     else {
         panic!("the quadratic root must remain algebraic");
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for denominator_sign in [1_i8, -1_i8] {
             let scale = Real::from(denominator_sign);
@@ -10088,7 +10043,7 @@ fn rational_incidence_derivative_is_the_exact_tangent_cross_sign_authority() {
 
 #[test]
 fn algebraic_cusp_semicircle_similarities_transform_the_shared_frame_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let preserving = Similarity2::try_from_real_affine(
         Real::zero(),
         Real::from(-2_i8),
@@ -10242,11 +10197,11 @@ fn direct_algebraic_circle_similarities_retain_center_and_cardinal_evidence() {
 fn chord_normal_and_parallel_contacts_share_native_point_identity() {
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
-        Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+        Point2::new(r!(1 / 2), Real::zero()),
         Point2::from_values(1, 1),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+        let radius = r!(1 / 4);
         let native =
             || algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)]);
         let parameter = native();
@@ -10404,7 +10359,7 @@ fn selected_chord_normal_contact_accepts_complementary_radial_sign() {
         };
         assert_eq!(*radial_product_sign, RealSign::Negative);
 
-        let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+        let fifth = r!(1 / 5);
         let Classification::Decided(Some(target)) =
             BezierAlgebraicCuspSemicircle2::from_retained_center_and_certified_unit_normal(
                 &center,
@@ -10452,7 +10407,7 @@ fn selected_chord_normal_contact_accepts_complementary_radial_sign() {
 
 #[test]
 fn direct_algebraic_circle_left_offsets_cover_collapse_crossing_and_reversal() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(parameter) =
             algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
@@ -10546,16 +10501,13 @@ fn direct_algebraic_circle_left_offsets_cover_collapse_crossing_and_reversal() {
             panic!("the reversed selected-circle parallel must construct");
         };
         assert!(offset.is_reversed());
-        assert_eq!(
-            offset.semicircle().radial_distance(),
-            &(Real::from(5_i8) / Real::from(2_i8)).unwrap(),
-        );
+        assert_eq!(offset.semicircle().radial_distance(), &r!(5 / 2),);
     }
 }
 
 #[test]
 fn direct_algebraic_circle_cardinal_offsets_translate_cached_endpoint_fields() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(parameter) =
             algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)])
@@ -10660,7 +10612,7 @@ fn direct_algebraic_circle_cardinal_offsets_translate_cached_endpoint_fields() {
         else {
             panic!("the direct selected circle must construct");
         };
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
         let Classification::Decided(noncardinal) = BezierAlgebraicCuspSemicircleFragment2::try_new(
             circle,
             BezierAlgebraicCuspSemicircleParameter2::Exact(third.clone()),
@@ -10697,7 +10649,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
         std::mem::size_of::<BezierAlgebraicCuspChordPoint2>(),
         std::mem::size_of::<Arc<()>>(),
     );
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let check_orthogonal_support = |point: &CurvePoint2, axis: Axis2, lower: Real| {
             let (dx, dy, direction) = match axis {
@@ -10950,9 +10902,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
                 contact
                     .other_parameter()
                     .cmp_by_refinement(
-                        &region_parameter(BezierParameter2::Exact(
-                            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-                        )),
+                        &region_parameter(BezierParameter2::Exact(r!(2 / 3),)),
                         &policy,
                     )
                     .unwrap(),
@@ -11378,7 +11328,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
 
 #[test]
 fn algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -11942,8 +11892,8 @@ fn algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints() {
 
 #[test]
 fn algebraic_cusp_rational_parameter_map_brackets_an_interior_contact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let vertical = RationalBezier2::try_new(
         vec![
             Point2::new(half.clone(), Real::from(-2_i8)),
@@ -12031,8 +11981,8 @@ fn algebraic_cusp_rational_parameter_map_brackets_an_interior_contact() {
 }
 
 fn non_ph_parallel_touching_upper_unit_circle(at_top: bool) -> BezierParallel2 {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
     let five_quarters = Real::one() + &quarter;
     let nine_quarters = Real::from(2_i8) + &quarter;
     let source = if at_top {
@@ -12044,19 +11994,17 @@ fn non_ph_parallel_touching_upper_unit_circle(at_top: bool) -> BezierParallel2 {
     } else {
         QuadraticBezier2::new(
             Point2::new(Real::one(), quarter.clone()),
-            Point2::new((Real::from(3_i8) / Real::from(2_i8)).unwrap(), quarter),
+            Point2::new(r!(3 / 2), quarter),
             Point2::new(Real::from(2_i8), five_quarters),
         )
     };
-    source
-        .parallel_left(-(Real::one() / Real::from(4_i8)).unwrap())
-        .unwrap()
+    source.parallel_left(-r!(1 / 4)).unwrap()
 }
 
 #[test]
 fn algebraic_cusp_semicircle_intersects_a_general_analytic_parallel_exactly() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
     let three_quarters = Real::one() - &quarter;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
@@ -12332,8 +12280,8 @@ fn pair_radial_circle_intersects_a_general_analytic_parallel_exactly() {
             std::mem::size_of::<usize>(),
         );
         let retained = map.contact_parameter(contact);
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let half = r!(1 / 2);
+        let three_quarters = r!(3 / 4);
         assert_eq!(
             retained.order_to_real(&half, &policy).unwrap(),
             Classification::Decided(std::cmp::Ordering::Greater),
@@ -12379,20 +12327,11 @@ fn pair_radial_circle_extends_over_the_regular_analytic_incident_ray() {
         // under the exact shift `s = t - 2`; its unit-circle tangency is
         // the regular exterior parameter `t = 2`.
         let parallel = QuadraticBezier2::new(
-            Point2::new(
-                Real::from(-2_i8),
-                (Real::from(21_i8) / Real::from(4_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(13_i8) / Real::from(4_i8)).unwrap(),
-            ),
-            Point2::new(
-                Real::from(-1_i8),
-                (Real::from(9_i8) / Real::from(4_i8)).unwrap(),
-            ),
+            Point2::new(Real::from(-2_i8), r!(21 / 4)),
+            Point2::new(r!(-3 / 2), r!(13 / 4)),
+            Point2::new(Real::from(-1_i8), r!(9 / 4)),
         )
-        .parallel_left(-(Real::one() / Real::from(4_i8)).unwrap())
+        .parallel_left(-r!(1 / 4))
         .unwrap()
         .transform_similarity(&quarter_turn)
         .unwrap();
@@ -12592,12 +12531,12 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert_eq!(
             overlap
                 .cusp_end_parameter()
-                .order_to_real(&(Real::one() / Real::from(2_i8)).unwrap(), &policy,)
+                .order_to_real(&r!(1 / 2), &policy,)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Equal),
         );
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let three_quarters = Real::one() - &quarter;
         let partial_range = BezierParameterRange2::new_validated(
             BezierParameter2::Exact(quarter.clone()),
@@ -12639,7 +12578,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert_eq!(
             partial_overlap
                 .cusp_end_parameter()
-                .order_to_real(&(Real::one() / Real::from(2_i8)).unwrap(), &policy)
+                .order_to_real(&r!(1 / 2), &policy)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Less),
         );
@@ -12682,7 +12621,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert_eq!(
             reversed_overlap
                 .cusp_end_parameter()
-                .order_to_real(&(Real::one() / Real::from(2_i8)).unwrap(), &policy)
+                .order_to_real(&r!(1 / 2), &policy)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Equal),
         );
@@ -12714,9 +12653,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         assert_eq!(
             forward_cut
                 .same_value(
-                    &region_parameter(BezierParameter2::Exact(
-                        (Real::one() / Real::from(3_i8)).unwrap(),
-                    )),
+                    &region_parameter(BezierParameter2::Exact(r!(1 / 3),)),
                     &policy,
                 )
                 .unwrap(),
@@ -12854,8 +12791,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         let [rational_source_overlap] = rational_source_overlaps.as_slice() else {
             panic!("the rational quarter must have one monotone selected cell");
         };
-        let expected_rational_cut =
-            BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
+        let expected_rational_cut = BezierParameter2::Exact(r!(1 / 3));
         let Classification::Decided(cross_field_cusp_cut) = rational_source_overlap
             .cusp_parameter_for_other(&region_parameter(expected_rational_cut.clone()), &policy)
             .unwrap()
@@ -12906,11 +12842,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
                 .unwrap(),
             Classification::Decided(true),
         );
-        let algebraic_native_cut = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let algebraic_native_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(algebraic_rational_cusp_cut) = rational_source_overlap
             .cusp_parameter_for_other(&region_parameter(algebraic_native_cut.clone()), &policy)
             .unwrap()
@@ -12933,7 +12865,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         else {
             panic!("the nonrational rational-carrier cut must bound a circle fragment");
         };
-        for offset_distance in [(Real::one() / Real::from(4_i8)).unwrap(), Real::from(2_i8)] {
+        for offset_distance in [r!(1 / 4), Real::from(2_i8)] {
             let Classification::Decided(Some(mapped_cut_offset)) = mapped_cut_fragment
                 .offset_left(&offset_distance, &policy)
                 .unwrap()
@@ -13073,13 +13005,8 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         .unwrap();
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
-        let mapped_cap_offset_work = || {
-            mapped_cap.offset_with_policy(
-                (Real::one() / Real::from(8_i8)).unwrap(),
-                &crate::OffsetCornerStyle2::Bevel,
-                &policy,
-            )
-        };
+        let mapped_cap_offset_work =
+            || mapped_cap.offset_with_policy(r!(1 / 8), &crate::OffsetCornerStyle2::Bevel, &policy);
         #[cfg(feature = "dispatch-trace")]
         let mapped_cap_offset = hyperreal::dispatch_trace::with_recording(mapped_cap_offset_work);
         #[cfg(not(feature = "dispatch-trace"))]
@@ -13316,7 +13243,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         // The retained implicit circle certifies the shared component;
         // the target's injective coordinate then constructs the exact
         // preimage. For t^2=1/2, the target cut satisfies s^4=1/2.
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
         let nonlinear_rational_quarter = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::one(), Real::zero()),
@@ -13365,7 +13292,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             panic!("the nonlinear rational circle must retain one selected cell");
         };
         let nonlinear_expected = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+            r!(-1 / 2),
             Real::zero(),
             Real::zero(),
             Real::zero(),
@@ -13620,8 +13547,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         let [partial_rational_overlap] = partial_rational_evidence.overlaps() else {
             panic!("the shortened cusp must retain one rational overlap");
         };
-        let expected_rational_cut =
-            BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
+        let expected_rational_cut = BezierParameter2::Exact(r!(1 / 3));
         assert_eq!(
             partial_rational_overlap
                 .overlap()
@@ -13907,7 +13833,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         hyperreal::dispatch_trace::reset();
         let parallel_mapped_cap_offset_work = || {
             parallel_mapped_cap.offset_with_policy(
-                (Real::one() / Real::from(8_i8)).unwrap(),
+                r!(1 / 8),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
             )
@@ -14069,7 +13995,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         hyperreal::dispatch_trace::reset();
         let nested_mixed_offset_work = || {
             nested_mixed_cap.offset_with_policy(
-                (Real::one() / Real::from(8_i8)).unwrap(),
+                r!(1 / 8),
                 &crate::OffsetCornerStyle2::Bevel,
                 &policy,
             )
@@ -14103,10 +14029,10 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
             synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
                 .transform_similarity(
                     &Similarity2::try_from_real_affine(
-                        (Real::from(4_i8) / Real::from(5_i8)).unwrap(),
+                        r!(4 / 5),
                         (-Real::from(3_i8) / Real::from(5_i8)).unwrap(),
-                        (Real::from(3_i8) / Real::from(5_i8)).unwrap(),
-                        (Real::from(4_i8) / Real::from(5_i8)).unwrap(),
+                        r!(3 / 5),
+                        r!(4 / 5),
                         Real::from(4_i8),
                         Real::from(3_i8),
                     )
@@ -14204,11 +14130,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         )
         .unwrap();
         let correlated_mixed_offset = correlated_mixed_cap
-            .offset_with_policy(
-                (Real::one() / Real::from(8_i8)).unwrap(),
-                &crate::OffsetCornerStyle2::Bevel,
-                &policy,
-            )
+            .offset_with_policy(r!(1 / 8), &crate::OffsetCornerStyle2::Bevel, &policy)
             .unwrap_or_else(|error| {
                 panic!("a correlated mixed mapped cap must offset exactly: {error:?}")
             });
@@ -14218,11 +14140,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         );
         let correlated_mixed_reoffset = correlated_mixed_offset
             .value
-            .offset_with_policy(
-                (Real::one() / Real::from(16_i8)).unwrap(),
-                &crate::OffsetCornerStyle2::Bevel,
-                &policy,
-            )
+            .offset_with_policy(r!(1 / 16), &crate::OffsetCornerStyle2::Bevel, &policy)
             .unwrap_or_else(|error| {
                 panic!("a correlated mixed mapped cap must re-offset exactly: {error:?}")
             });
@@ -14235,15 +14153,9 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
         let nonlinear_analytic_source = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::from(2_i8), Real::zero()),
-                Point2::new(Real::from(2_i8), (Real::one() / Real::from(2_i8)).unwrap()),
-                Point2::new(
-                    (Real::from(46_i8) / Real::from(25_i8)).unwrap(),
-                    (Real::from(32_i8) / Real::from(25_i8)).unwrap(),
-                ),
-                Point2::new(
-                    (Real::from(6_i8) / Real::from(5_i8)).unwrap(),
-                    Real::from(2_i8),
-                ),
+                Point2::new(Real::from(2_i8), r!(1 / 2)),
+                Point2::new(r!(46 / 25), r!(32 / 25)),
+                Point2::new(r!(6 / 5), Real::from(2_i8)),
                 Point2::new(Real::zero(), Real::from(2_i8)),
             ],
             vec![
@@ -14672,11 +14584,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
 fn similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
-        let analytic_cut = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let analytic_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(cusp_cut) = overlap
             .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
             .unwrap()
@@ -14764,11 +14672,7 @@ fn similarity_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
 fn chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (semicircle, parallel, overlap) = general_analytic_circle_overlap(&policy);
-        let analytic_cut = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let analytic_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(cusp_cut) = overlap
             .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
             .unwrap()
@@ -14817,7 +14721,7 @@ fn chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
                     );
                 }
             };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, complementary))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -14827,7 +14731,7 @@ fn chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
         assert!(!complementary);
         assert_inverts(&overlap, &chamfer_cut);
 
-        let setback = (Real::from(7_i8) / Real::from(4_i8)).unwrap();
+        let setback = r!(7 / 4);
         let Classification::Decided(Some((chamfer_cut, _, complementary))) = fragment
             .endpoint_chord_setback_cut(false, &setback, true, &policy)
             .unwrap()
@@ -14879,7 +14783,7 @@ fn chamfer_transported_mapped_cusp_cut_inverts_on_analytic_overlap() {
 
 #[test]
 fn transverse_chamfer_cut_inverts_by_radial_incidence() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::zero(), half.clone()),
@@ -14955,7 +14859,7 @@ fn transverse_chamfer_cut_inverts_by_radial_incidence() {
         .unwrap() else {
             panic!("the transverse cut must bound a retained circle fragment");
         };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -15000,11 +14904,7 @@ fn transverse_chamfer_cut_inverts_by_radial_incidence() {
 fn selected_fiber_overlap_inverts_transported_mapped_cusp_cut() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (source_semicircle, _, source_overlap) = general_analytic_circle_overlap(&policy);
-        let analytic_cut = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let analytic_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(source_cut) = source_overlap
             .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
             .unwrap()
@@ -15023,7 +14923,7 @@ fn selected_fiber_overlap_inverts_transported_mapped_cusp_cut() {
         else {
             panic!("the mapped cut must bound a retained circle fragment");
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let quarter_turn = Similarity2::try_from_real_affine(
             Real::zero(),
             Real::from(-1_i8),
@@ -15094,11 +14994,7 @@ fn selected_fiber_overlap_inverts_transported_mapped_cusp_cut() {
 #[test]
 fn selected_fiber_tangent_correspondence_retains_local_image() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = degree_nine_selected_fiber_parameter_for_test(
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            32_768,
-            &policy,
-        );
+        let source = degree_nine_selected_fiber_parameter_for_test(r!(1 / 2), 32_768, &policy);
         let tangent = [vec![Real::zero(), Real::one()], vec![Real::one()]];
 
         #[cfg(feature = "dispatch-trace")]
@@ -15156,11 +15052,7 @@ fn mixed_circle_overlap_maps_replay_reversed_complementary_cuts() {
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (circle, _, right_overlap) = general_analytic_circle_overlap(&policy);
-        let parameter = algebraic_parameter(vec![
-            -(Real::one() / Real::from(2)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let parameter = algebraic_parameter(vec![-r!(1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(BezierAlgebraicCuspSemicircleParameter2::Mapped(right)) =
             right_overlap
                 .cusp_parameter_for_other(&parameter.clone().into(), &policy)
@@ -15219,11 +15111,7 @@ fn selected_fiber_mapped_cut_inverts_on_analytic_overlap() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (analytic_semicircle, analytic_parallel, analytic_overlap) =
             general_analytic_circle_overlap(&policy);
-        let analytic_cut = algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
+        let analytic_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
         let Classification::Decided(analytic_cusp_cut) = analytic_overlap
             .cusp_parameter_for_other(&region_parameter(analytic_cut.clone()), &policy)
             .unwrap()
@@ -15242,7 +15130,7 @@ fn selected_fiber_mapped_cut_inverts_on_analytic_overlap() {
         else {
             panic!("the analytic cut must bound a retained circle fragment");
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let to_selected = Similarity2::try_from_real_affine(
             Real::zero(),
             Real::from(-1_i8),
@@ -15411,7 +15299,7 @@ fn selected_fiber_mapped_cut_inverts_on_analytic_overlap() {
 
 #[test]
 fn mapped_point_inversion_maps_every_structural_overlap_carrier_directly() {
-    let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+    let one_third = r!(1 / 3);
     let two_thirds = Real::one() - &one_third;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -15514,8 +15402,8 @@ fn mapped_point_inversion_maps_zero_image_parameter_components_directly() {
         vec![Real::one(), Real::one()],
     )
     .unwrap();
-    let one_third = (Real::one() / Real::from(3_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let one_third = r!(1 / 3);
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parallel_rational_evidence) = constant_parallel
@@ -15612,7 +15500,7 @@ fn mapped_point_inversion_maps_zero_image_parameter_components_directly() {
 
 #[test]
 fn transverse_mapped_cut_inverts_by_point_on_all_overlap_carriers() {
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let four_fifths = r!(4 / 5);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::zero(), four_fifths.clone()),
@@ -15735,7 +15623,7 @@ fn transverse_mapped_cut_inverts_by_point_on_all_overlap_carriers() {
 
 #[test]
 fn similarity_transported_transverse_mapped_cut_inverts_by_point() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::zero(), half.clone()),
@@ -15848,7 +15736,7 @@ fn similarity_transported_transverse_mapped_cut_inverts_by_point() {
 
 #[test]
 fn selected_fiber_transverse_mapped_cut_inverts_by_point() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::from(-1_i8), half.clone()),
@@ -15965,7 +15853,7 @@ fn selected_fiber_transverse_mapped_cut_inverts_by_point() {
         .unwrap() else {
             panic!("the selected transverse cut must bound a circle fragment");
         };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -16077,17 +15965,14 @@ fn selected_fiber_transverse_mapped_cut_inverts_by_point() {
 
 #[test]
 fn selected_fiber_analytic_transverse_cut_inverts_by_point() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // At t=1/2 the source is (3/10,-1/5) with tangent (4,3).
     // Its unit left parallel is therefore (-3/10,3/5), the interior
     // t=1/2 point of the selected rational quarter, and the two carrier
     // tangents are transverse there.
     let cutter = QuadraticBezier2::new(
         Point2::from_values(-1, -1),
-        Point2::new(
-            (Real::from(-2_i8) / Real::from(5_i8)).unwrap(),
-            (Real::from(-9_i8) / Real::from(10_i8)).unwrap(),
-        ),
+        Point2::new(r!(-2 / 5), r!(-9 / 10)),
         Point2::from_values(3, 2),
     )
     .parallel_left(Real::one())
@@ -16171,7 +16056,7 @@ fn selected_fiber_analytic_transverse_cut_inverts_by_point() {
         .unwrap() else {
             panic!("the analytic selected cut must bound a circle fragment");
         };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -16253,7 +16138,7 @@ fn selected_fiber_analytic_transverse_cut_inverts_by_point() {
 }
 
 fn nonrepresented_center_rational_quarter() -> (Real, RationalBezier2) {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     let center_x = third.clone().sqrt().unwrap();
     let quarter = RationalBezier2::try_new(
         vec![
@@ -16300,13 +16185,9 @@ fn nonrepresented_center_analytic_quarter_source(center_x: &Real) -> RationalBez
 
 #[test]
 fn independently_encoded_nonrepresented_analytic_circle_publishes_overlap() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     let center_x = third.sqrt().unwrap();
-    let algebraic_target = algebraic_parameter(vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]);
+    let algebraic_target = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
     let source = nonrepresented_center_analytic_quarter_source(&center_x);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -16356,7 +16237,7 @@ fn independently_encoded_nonrepresented_analytic_circle_publishes_overlap() {
             Classification::Decided(true),
         );
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let partial_range = BezierParameterRange2::new_validated(
             BezierParameter2::Exact(quarter.clone()),
             BezierParameter2::Exact(Real::one() - &quarter),
@@ -16423,17 +16304,17 @@ fn independently_encoded_nonrepresented_analytic_circle_publishes_overlap() {
 
 #[test]
 fn independently_encoded_nonrepresented_noncircular_analytic_contact_completes() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     let center_x = third.sqrt().unwrap();
-    let two_fifths = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let two_fifths = r!(2 / 5);
+    let half = r!(1 / 2);
     let source = QuadraticBezier2::new(
         Point2::new(center_x.clone(), Real::from(-1_i8)),
         Point2::new(&center_x + &two_fifths, -half.clone()),
         Point2::new(&center_x + Real::from(4_i8), Real::from(2_i8)),
     );
-    let six_fifths = (Real::from(6_i8) / Real::from(5_i8)).unwrap();
-    let twenty_one_tenths = (Real::from(21_i8) / Real::from(10_i8)).unwrap();
+    let six_fifths = r!(6 / 5);
+    let twenty_one_tenths = r!(21 / 10);
     let endpoint_source = QuadraticBezier2::new(
         Point2::new(center_x.clone(), Real::from(-1_i8)),
         Point2::new(&center_x + six_fifths, -twenty_one_tenths),
@@ -16482,7 +16363,7 @@ fn independently_encoded_nonrepresented_noncircular_analytic_contact_completes()
             Some(RealSign::Negative | RealSign::Positive)
         ));
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let included_range = BezierParameterRange2::new_validated(
             BezierParameter2::Exact(quarter.clone()),
             BezierParameter2::Exact(Real::one() - &quarter),
@@ -16613,8 +16494,8 @@ fn independently_encoded_nonrepresented_noncircular_analytic_contact_completes()
 #[test]
 fn nonrepresented_center_transverse_chamfer_inverts_by_correlated_point() {
     let (center_x, quarter) = nonrepresented_center_rational_quarter();
-    let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let three_fifths = r!(3 / 5);
+    let four_fifths = r!(4 / 5);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(center_x.clone(), three_fifths.clone()),
@@ -16702,7 +16583,7 @@ fn nonrepresented_center_transverse_chamfer_inverts_by_correlated_point() {
         .unwrap() else {
             panic!("the nonrepresented-center cut must bound a circle fragment");
         };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -16742,11 +16623,7 @@ fn nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority() {
         .parallel_left(Real::one())
         .unwrap();
     assert!(analytic_parallel.data.certified_ph_offset.set(None).is_ok());
-    let algebraic_target = algebraic_parameter(vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]);
+    let algebraic_target = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let target_semicircle = synthetic_independent_unit_cusp_semicircle_with_center_x(
@@ -16790,7 +16667,7 @@ fn nonrepresented_center_nonrational_chamfer_inverts_with_retained_authority() {
         .unwrap() else {
             panic!("the algebraic conic cut must bound a circle fragment");
         };
-        let setback = (Real::one() / Real::from(4_i8)).unwrap();
+        let setback = r!(1 / 4);
         let Classification::Decided(Some((chamfer_cut, _, false))) = fragment
             .endpoint_chord_setback_cut(false, &setback, false, &policy)
             .unwrap()
@@ -17118,18 +16995,10 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                     vec![
                         Point2::new(Real::from(-2_i8), Real::zero()),
                         Point2::new(Real::from(-2_i8), Real::one()),
-                        Point2::new(
-                            (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
-                            Real::from(2_i8),
-                        ),
+                        Point2::new(r!(-4 / 3), Real::from(2_i8)),
                         Point2::new(Real::zero(), Real::from(2_i8)),
                     ],
-                    vec![
-                        Real::one(),
-                        (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
-                        Real::from(2_i8),
-                        Real::from(4_i8),
-                    ],
+                    vec![Real::one(), r!(4 / 3), Real::from(2_i8), Real::from(4_i8)],
                 )
                 .map(|curve| {
                     curve.with_implicit_quadratic_conic(
@@ -17148,11 +17017,7 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                 let left = left_gauged.parallel_left(Real::from(-1_i8)).unwrap();
                 assert!(right.data.certified_ph_offset.set(None).is_ok());
                 assert!(left.data.certified_ph_offset.set(None).is_ok());
-                let native_cut = algebraic_parameter(vec![
-                    (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-                    Real::zero(),
-                    Real::one(),
-                ]);
+                let native_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
                 let mapped_cut = |parallel: &BezierParallel2, native_cut: &BezierParameter2| {
                     let Classification::Decided(
                         BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
@@ -17213,7 +17078,7 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                         .unwrap(),
                     Classification::Decided(false),
                 );
-                let half = (Real::one() / Real::from(2_i8)).unwrap();
+                let half = r!(1 / 2);
                 assert_eq!(
                     right_cut.order_to_real(&half, &policy).unwrap(),
                     Classification::Decided(std::cmp::Ordering::Less),
@@ -17301,11 +17166,7 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                 #[cfg(feature = "dispatch-trace")]
                 hyperreal::dispatch_trace::reset();
                 let offset_work = || {
-                    cap.offset_with_policy(
-                        (Real::one() / Real::from(8_i8)).unwrap(),
-                        &crate::OffsetCornerStyle2::Bevel,
-                        &policy,
-                    )
+                    cap.offset_with_policy(r!(1 / 8), &crate::OffsetCornerStyle2::Bevel, &policy)
                 };
                 #[cfg(feature = "dispatch-trace")]
                 let offset = hyperreal::dispatch_trace::with_recording(offset_work);
@@ -17421,7 +17282,7 @@ fn algebraic_cusp_semicircle_pair_replays_independent_selected_roots() {
         Real::zero(),
     )
     .unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
         let second = synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy)
@@ -18698,7 +18559,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 hyperreal::dispatch_trace::reset();
                 let common_offset_work = || {
                     common_cap.offset_with_policy(
-                        (Real::one() / Real::from(8_i8)).unwrap(),
+                        r!(1 / 8),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
                     )
@@ -18721,7 +18582,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 hyperreal::dispatch_trace::reset();
                 let common_reoffset_work = || {
                     common_offset.value.offset_with_policy(
-                        (Real::one() / Real::from(16_i8)).unwrap(),
+                        r!(1 / 16),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
                     )
@@ -18865,7 +18726,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 hyperreal::dispatch_trace::reset();
                 let offset_work = || {
                     cap.offset_with_policy(
-                        (Real::one() / Real::from(8_i8)).unwrap(),
+                        r!(1 / 8),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
                     )
@@ -18919,7 +18780,7 @@ fn algebraic_cusp_semicircle_reoffsets_independent_field_oblique_chord_cap() {
                 hyperreal::dispatch_trace::reset();
                 let reoffset_work = || {
                     offset.value.offset_with_policy(
-                        (Real::one() / Real::from(16_i8)).unwrap(),
+                        r!(1 / 16),
                         &crate::OffsetCornerStyle2::Bevel,
                         &policy,
                     )
@@ -19090,8 +18951,8 @@ fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() 
         Real::zero(),
     )
     .unwrap();
-    let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let three_fifths = r!(3 / 5);
+    let four_fifths = r!(4 / 5);
     let oblique_to_origin = Similarity2::try_from_real_affine(
         three_fifths.clone(),
         -four_fifths.clone(),
@@ -19101,12 +18962,12 @@ fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() 
         Real::from(4_i8),
     )
     .unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
-    let three_eighths = (Real::from(3_i8) / Real::from(8_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
+    let two_thirds = r!(2 / 3);
+    let three_quarters = r!(3 / 4);
+    let three_eighths = r!(3 / 8);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
         let foreign = || synthetic_reducible_cusp_semicircle((1, 4), ((1, 5), (1, 3)), &policy);
@@ -19325,10 +19186,7 @@ fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() 
         };
         assert_endpoint(
             &translated_offset_fragment,
-            Point2::new(
-                Real::from(2_i8),
-                (Real::from(7_i8) / Real::from(2_i8)).unwrap(),
-            ),
+            Point2::new(Real::from(2_i8), r!(7 / 2)),
         );
         for transform in [
             Similarity2::try_from_real_affine(
@@ -19382,7 +19240,7 @@ fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() 
         let rational_wide_arc = RationalBezier2::from(
             RationalQuadraticBezier2::try_new(
                 Point2::new(three_fifths.clone(), four_fifths.clone()),
-                Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(4_i8)).unwrap()),
+                Point2::new(Real::zero(), r!(5 / 4)),
                 Point2::new(-three_fifths.clone(), four_fifths.clone()),
                 Real::from(5_i8),
                 Real::from(8_i8),
@@ -19548,7 +19406,7 @@ fn algebraic_cusp_semicircle_pair_maps_full_partial_and_endpoint_only_overlap() 
                     Real::from(2_i8) * &three_fifths,
                     Real::from(2_i8) * &four_fifths,
                 ),
-                Point2::new(Real::zero(), (Real::from(5_i8) / Real::from(2_i8)).unwrap()),
+                Point2::new(Real::zero(), r!(5 / 2)),
                 Point2::new(
                     Real::from(-2_i8) * &three_fifths,
                     Real::from(2_i8) * &four_fifths,
@@ -19911,7 +19769,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
         Real::from(-3_i8),
     )
     .unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
@@ -20214,7 +20072,7 @@ fn curve_region_offset_transports_an_internal_correlated_circle_partition() {
 
 #[test]
 fn selected_circle_partition_coalescing_obeys_terminal_policy() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let sine = Real::e().sin();
     let cosine = Real::e().cos();
     let terminal_delta = &sine * &sine + &cosine * &cosine - Real::one();
@@ -20282,7 +20140,7 @@ fn benchmark_correlated_circle_partition_offset_driver() {
     use std::time::Instant;
 
     let policy = CurveContext::STRICT;
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let region = |partition: &str| {
         let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
         let mut fragments = Vec::new();
@@ -20547,11 +20405,7 @@ fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
             .unwrap(),
         )
     };
-    let algebraic_cut = algebraic_parameter(vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]);
+    let algebraic_cut = algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]);
     let mapped_cut = |carrier: &RationalBezier2| {
         let Classification::Decided(BezierAlgebraicCuspSemicircleRationalIntersections2::Mapped {
             overlaps,
@@ -20674,18 +20528,10 @@ fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
         vec![
             Point2::new(Real::from(-2_i8), Real::zero()),
             Point2::new(Real::from(-2_i8), Real::one()),
-            Point2::new(
-                (Real::from(-4_i8) / Real::from(3_i8)).unwrap(),
-                Real::from(2_i8),
-            ),
+            Point2::new(r!(-4 / 3), Real::from(2_i8)),
             Point2::new(Real::zero(), Real::from(2_i8)),
         ],
-        vec![
-            Real::one(),
-            (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
-            Real::from(2_i8),
-            Real::from(4_i8),
-        ],
+        vec![Real::one(), r!(4 / 3), Real::from(2_i8), Real::from(4_i8)],
     )
     .map(|curve| {
         curve.with_implicit_quadratic_conic(
@@ -20755,7 +20601,7 @@ fn benchmark_nonendpoint_rational_mapped_cap_offset_driver() {
         .map(|value| value.parse::<u64>().unwrap())
         .unwrap_or(1);
     assert!(iterations > 0);
-    let distance = (Real::one() / Real::from(8_i8)).unwrap();
+    let distance = r!(1 / 8);
     let cap_from_arc = |arc: BezierAlgebraicCuspSemicircleFragment2| -> Option<CurveRegion2> {
         let Classification::Decided(Some(chord_end)) =
             arc.endpoint_point_evidence(true, &policy).ok()?
@@ -21004,7 +20850,7 @@ fn benchmark_pair_mapped_lens_offset_driver() {
         .ok()
     };
     let prebuilt = lens();
-    let distance = (Real::one() / Real::from(8_i8)).unwrap();
+    let distance = r!(1 / 8);
     let offset = |region: &CurveRegion2| {
         region
             .offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
@@ -21231,7 +21077,7 @@ fn benchmark_nested_chord_mapped_cap_offset_driver() {
     };
     let prebuilt_mapped = cap(true);
     let prebuilt_direct = cap(false);
-    let distance = (Real::one() / Real::from(8_i8)).unwrap();
+    let distance = r!(1 / 8);
     let offset = |region: &CurveRegion2| {
         region
             .offset_with_policy(distance.clone(), &crate::OffsetCornerStyle2::Bevel, &policy)
@@ -21419,8 +21265,8 @@ fn benchmark_independent_oblique_chord_cap_offset_driver() {
         )
         .ok()
     };
-    let first_distance = (Real::one() / Real::from(8_i8)).unwrap();
-    let second_distance = (Real::one() / Real::from(16_i8)).unwrap();
+    let first_distance = r!(1 / 8);
+    let second_distance = r!(1 / 16);
     let first_offset = |region: &CurveRegion2| {
         region
             .offset_with_policy(
@@ -21586,8 +21432,8 @@ fn algebraic_cusp_semicircle_forward_ray_obeys_half_open_winding() {
 
 #[test]
 fn selected_circle_bounds_cover_exterior_parallel_centers() {
-    let half = (Real::one() / Real::from(2_u8)).unwrap();
-    let radius = (Real::one() / Real::from(4_u8)).unwrap();
+    let half = r!(1 / 2);
+    let radius = r!(1 / 4);
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -21640,7 +21486,7 @@ fn selected_circle_bounds_cover_exterior_parallel_centers() {
             let t = Real::from(sign) * Real::from(2).sqrt().unwrap();
             let center = Point2::new(
                 &t - (&t / Real::from(3)).unwrap(),
-                Real::from(2) + (Real::one() / Real::from(6)).unwrap(),
+                Real::from(2) + r!(1 / 6),
             );
             for (coordinate, minimum, maximum) in [
                 (center.x(), bounds.min_x(), bounds.max_x()),
@@ -21661,7 +21507,7 @@ fn selected_circle_bounds_cover_exterior_parallel_centers() {
 
 #[test]
 fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_, _, semicircle) = general_algebraic_cusp_semicircle(quarter.clone(), true, &policy);
         let Classification::Decided(bounds) = semicircle.conservative_bounds(&policy).unwrap()
@@ -21671,7 +21517,7 @@ fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
         for parameter in [
             Real::zero(),
             quarter.clone(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
+            r!(1 / 2),
             Real::one() - &quarter,
             Real::one(),
         ] {
@@ -21704,7 +21550,7 @@ fn algebraic_cusp_semicircle_conservative_bounds_contain_exact_images() {
 
 #[test]
 fn algebraic_cusp_circle_rational_system_replays_shared_source_endpoint() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (parallel, parameter, semicircle) =
             general_algebraic_cusp_semicircle(half.clone(), false, &policy);
@@ -21859,7 +21705,7 @@ fn assert_mixed_circle_intersections(
 #[test]
 fn rational_circle_overlap_preserves_an_isolated_parameter_visit() {
     let target = rational_circle_with_isolated_visit();
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let circle = synthetic_independent_unit_cusp_semicircle(&policy);
         for reversed in [false, true] {
@@ -21915,8 +21761,8 @@ fn rational_circle_overlap_preserves_an_isolated_parameter_visit() {
 
 #[test]
 fn selected_fiber_circle_overlap_preserves_an_isolated_parameter_visit() {
-    let half = (Real::one() / Real::from(2)).unwrap();
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let transform = Similarity2::try_from_real_affine(
         Real::zero(),
         -Real::one(),
@@ -22201,7 +22047,7 @@ fn clipped_circle_contact_reuses_its_interior_parameter_authority() {
             panic!("circle component missing")
         };
         let overlap = &overlaps[0];
-        let cut = BezierParameter2::Exact((Real::from(7) / Real::from(8)).unwrap());
+        let cut = BezierParameter2::Exact(r!(7 / 8));
         let Classification::Decided(parameter) = overlap
             .cusp_parameter_for_other(&cut.clone().into(), &policy)
             .unwrap()
@@ -22253,7 +22099,7 @@ fn clipped_circle_contact_reuses_its_interior_parameter_authority() {
         assert_eq!(
             point.same_point(
                 &target
-                    .point_at_with_policy(&(Real::from(7) / Real::from(8)).unwrap(), &policy)
+                    .point_at_with_policy(&r!(7 / 8), &policy)
                     .unwrap()
                     .into(),
                 &policy
@@ -22277,9 +22123,7 @@ fn reconstructed_circle_overlap_reuses_parameter_identity_and_inverse() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = synthetic_independent_unit_cusp_semicircle(&policy);
         let rotated = first.transform_similarity(&quarter_turn).unwrap();
-        let source = BezierAlgebraicCuspSemicircleParameter2::Exact(
-            (Real::from(3) / Real::from(4)).unwrap(),
-        );
+        let source = BezierAlgebraicCuspSemicircleParameter2::Exact(r!(3 / 4));
         for reversed in [false, true] {
             let second = if reversed {
                 rotated.reversed()
@@ -22368,13 +22212,13 @@ fn synthetic_independent_unit_cusp_semicircle_with_center_x(
     source_x_numerator: Vec<Real>,
     policy: &CurveContext,
 ) -> BezierAlgebraicCuspSemicircle2 {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     synthetic_selected_cusp_semicircle(
         source_x_numerator,
         vec![Real::zero()],
         third,
-        (Real::one() / Real::from(2_i8)).unwrap(),
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+        r!(1 / 2),
+        r!(2 / 3),
         Real::one(),
         false,
         policy,
@@ -22445,9 +22289,9 @@ fn selected_circle_parameter_location_preserves_ascending_range_inclusions_when_
     use BezierAlgebraicCuspSemicircleIncidentLocation2::{End, Interior, Start};
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
+        let half = r!(1 / 2);
+        let three_quarters = r!(3 / 4);
         let circle = synthetic_independent_unit_cusp_semicircle(&policy);
         let parameter =
             |value: &Real| BezierAlgebraicCuspSemicircleParameter2::Exact(value.clone());
@@ -22617,7 +22461,7 @@ fn synthetic_reducible_cusp_semicircle(
 fn curve_region_retains_and_classifies_an_algebraic_cusp_semicircle() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let center = semicircle
             .center_point_image(&policy)
             .unwrap()
@@ -22897,7 +22741,7 @@ fn curve_region_boolean_clips_correlated_partial_cusp_overlaps() {
 
 #[test]
 fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_field() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_parallel, source_parameter, semicircle) =
             general_algebraic_cusp_semicircle(quarter.clone(), false, &policy);
@@ -22919,7 +22763,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
         let end_parallel = semicircle
             .end_parallel()
             .expect("an analytic cusp retains its ending parallel");
-        let local_start = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let local_start = r!(3 / 4);
         let regular_span = |parallel: &BezierParallel2| {
             let range = match BezierParameterRange2::try_new_with_policy(
                 BezierParameter2::Exact(local_start.clone()),
@@ -22985,10 +22829,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
                 "adjacent contacts: {contacts:?}"
             );
         }
-        let excluded_range = BezierParameterRange2::from_exact(
-            Real::zero(),
-            (Real::one() / Real::from(4_i8)).unwrap(),
-        );
+        let excluded_range = BezierParameterRange2::from_exact(Real::zero(), r!(1 / 4));
         for parallel in [&start_parallel, &end_parallel] {
             let Classification::Decided(
                 BezierAlgebraicCuspSemicircleParallelIntersections2::Mapped {
@@ -23126,7 +22967,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
 
 #[test]
 fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The circle center is alpha=sqrt(1/3). The query x-coordinate is
         // the independently selected beta=sqrt(1/2), so no rationalized
@@ -23216,9 +23057,9 @@ fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {
 
 #[test]
 fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
+    let fifth = r!(1 / 5);
     let two_fifths = Real::from(2_i8) * &fifth;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let upper = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
@@ -23464,10 +23305,10 @@ fn trivariate_affine_axis_substitution_preserves_all_axis_orders() {
             })
             .collect(),
     };
-    let scale = (Real::from(-3_i8) / Real::from(2_i8)).unwrap();
-    let offset = (Real::from(7_i8) / Real::from(11_i8)).unwrap();
-    let retained_value = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
-    let remaining_value = (Real::from(4_i8) / Real::from(7_i8)).unwrap();
+    let scale = r!(-3 / 2);
+    let offset = r!(7 / 11);
+    let retained_value = r!(2 / 5);
+    let remaining_value = r!(4 / 7);
     let evaluate_trivariate = |values: &[Real; 3]| {
         polynomial
             .coefficients
@@ -23521,8 +23362,8 @@ fn trivariate_binary_axis_substitutions_preserve_all_axis_orders() {
             })
             .collect(),
     };
-    let left_value = (Real::from(2_i8) / Real::from(5_i8)).unwrap();
-    let right_value = (Real::from(4_i8) / Real::from(7_i8)).unwrap();
+    let left_value = r!(2 / 5);
+    let right_value = r!(4 / 7);
     let evaluate_trivariate = |values: &[Real; 3]| {
         polynomial
             .coefficients
@@ -23575,21 +23416,9 @@ fn trivariate_binary_axis_substitutions_preserve_all_axis_orders() {
 #[test]
 fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
     let parameters = [
-        algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]),
-        algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]),
-        algebraic_parameter(vec![
-            (Real::from(-1_i8) / Real::from(5_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]),
+        algebraic_parameter(vec![r!(-1 / 2), Real::zero(), Real::one()]),
+        algebraic_parameter(vec![r!(-1 / 3), Real::zero(), Real::one()]),
+        algebraic_parameter(vec![r!(-1 / 5), Real::zero(), Real::one()]),
     ];
     let tensor = |values: [[[i8; 2]; 2]; 2]| TrivariatePolynomial {
         coefficients: values
@@ -23644,8 +23473,8 @@ fn multi_affine_box_sign_matches_generic_bernstein_conversion() {
 }
 
 fn nonaffine_three_field_chord_fixture() -> ([BezierParameter2; 3], TrivariatePolynomial) {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let parameters = [
         algebraic_parameter(vec![-half, Real::zero(), Real::one()]),
         algebraic_parameter(vec![-third, Real::zero(), Real::one()]),
@@ -23805,7 +23634,7 @@ fn dense_projection_single_radical_replays_the_authored_sheet() {
     let map = exact_chord_normal_dense_test_map();
     let scalar = |value| DenseTensorPolynomial::from_axis_polynomial(1, 0, &[value]).unwrap();
     let zero = scalar(Real::zero());
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for first in [false, true] {
             for sign in [-1_i8, 1] {
@@ -23972,7 +23801,7 @@ fn recursive_field_shares_zero_towers_and_folds_identities() {
 
 #[test]
 fn retained_chord_incidence_replays_independently_allocated_coefficient_fields() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let alpha =
@@ -24168,10 +23997,10 @@ fn recursive_field_embeddings_do_not_consume_approximate_generator_equalities() 
 
 #[test]
 fn retained_polynomial_base_roots_select_the_nonnegative_sheet_on_any_axis() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for parameter in [
-            BezierParameter2::Exact((Real::one() / Real::from(4_i8)).unwrap()),
+            BezierParameter2::Exact(r!(1 / 4)),
             BezierParameter2::Exact(half.clone()),
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
         ] {
@@ -24559,8 +24388,8 @@ fn analytic_axis_order_reuses_polynomial_speed_across_reduced_tangent_fields() {
 
 #[test]
 fn analytic_axis_order_replays_a_local_root_in_the_other_points_field() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let alpha = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
@@ -24686,7 +24515,7 @@ fn analytic_axis_order_replays_a_local_root_in_the_other_points_field() {
 
 #[test]
 fn analytic_axis_and_circle_predicates_keep_positive_frame_sheet_and_weight_sign() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parameter = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [Real::one(), -Real::from(2_i8).sqrt().unwrap(), Real::pi()] {
@@ -24783,7 +24612,7 @@ fn analytic_scalar_predicates_distinguish_stationary_points_from_source_poles() 
         }
         let point = BezierAnalyticParallelPoint2::new(
             pole.parallel_left(Real::zero()).unwrap(),
-            BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap()),
+            BezierParameter2::Exact(r!(1 / 2)),
             &policy,
         );
         assert_eq!(
@@ -24806,8 +24635,8 @@ fn analytic_axis_predicates_replay_local_polynomial_roots() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
     let field = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameters) = recursive_projective_polynomial_parameters(
@@ -24997,8 +24826,8 @@ fn recursive_circle_queries_preserve_tangent_scale_and_local_roots() {
 
 #[test]
 fn recursive_chord_parallel_retains_owned_roots_across_exterior_ranges() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -25090,7 +24919,7 @@ fn recursive_chord_parallel_retains_owned_roots_across_exterior_ranges() {
 
 #[test]
 fn translated_parallel_endpoint_does_not_certify_source_incidence() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half, Real::zero()),
@@ -25150,8 +24979,8 @@ fn translated_parallel_endpoint_does_not_certify_source_incidence() {
 
 #[test]
 fn recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let three_quarters = Real::one() - &quarter;
     // With t=4u-2, this is P=(t,t^2/2) on the authored u interval.
     let parallel = QuadraticBezier2::new(
@@ -25527,9 +25356,7 @@ fn recursive_polynomial_predicates_reuse_the_retained_field_relation() {
         )
         .unwrap();
     let relation = vec![
-        radical
-            .scale(&((Real::from(-1_i8) / Real::from(3_i8)).unwrap()))
-            .unwrap(),
+        radical.scale(&(r!(-1 / 3))).unwrap(),
         field.constant(Real::zero()).unwrap(),
         field.constant(Real::zero()).unwrap(),
         field.constant(Real::one()).unwrap(),
@@ -25628,9 +25455,7 @@ fn recursive_polynomial_queries_reuse_a_selected_proper_factor() {
     // G(t)=t^3-sqrt(5)/3 has one unit root. P(t)=G(t)*(t-2)
     // selects that same root without making all of P's roots roots of G.
     let factor = vec![
-        radical
-            .scale(&((Real::from(-1_i8) / Real::from(3_i8)).unwrap()))
-            .unwrap(),
+        radical.scale(&(r!(-1 / 3))).unwrap(),
         field.constant(Real::zero()).unwrap(),
         field.constant(Real::zero()).unwrap(),
         field.constant(Real::one()).unwrap(),
@@ -25684,7 +25509,7 @@ fn recursive_ordered_field_isolation_does_not_guess_polynomial_degree() {
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
     assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let coefficients = [-half, Real::one(), epsilon]
         .into_iter()
         .map(|value| field.constant(value).unwrap())
@@ -25719,7 +25544,7 @@ fn quadratic_crossing_retains_its_root_when_optional_refinement_is_uncertain() {
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let epsilon = Real::one() - Real::from(2_i8).powi_i64(-600).unwrap().cos();
     assert_eq!(real_sign(&epsilon, &CurveContext::STRICT), None);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let coefficients = [-half.clone(), Real::one(), epsilon]
         .into_iter()
         .map(|value| field.constant(value).unwrap())
@@ -25824,7 +25649,7 @@ fn recursive_polynomial_refinement_reuses_certified_bounds_and_identity() {
     let scalar =
         |value| DenseTensorPolynomial::try_new(Vec::new(), vec![Real::from(value)]).unwrap();
     let field = RecursiveQuadraticField::base(Vec::new(), scalar(2), scalar(3)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The unique unit root of t^3-1/2 is not dyadic. Its ordered-field
         // isolator remains the authority through every refinement request.
@@ -26077,8 +25902,8 @@ fn shifted_square_relation(
 #[ignore = "open: a query source absent from a retained root's base is not joined"]
 fn recursive_polynomial_root_signs_queries_over_an_independent_source() {
     // alpha = 2 sqrt(1/2) and beta = 2 sqrt(3/4) are selected unit roots.
-    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
-    let beta_source = selected_square_root_source((Real::from(3_i8) / Real::from(4_i8)).unwrap());
+    let alpha_source = selected_square_root_source(r!(1 / 2));
+    let beta_source = selected_square_root_source(r!(3 / 4));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let root_field = selected_source_field(vec![alpha_source.clone()]);
         // T^2 - (2 + alpha) is -(1 + alpha) < 0 at 1 and 2 - alpha > 0 at 2.
@@ -26163,11 +25988,11 @@ fn recursive_polynomial_root_signs_queries_over_an_independent_source() {
 /// Neither root is refined to separation or promoted to a global parameter.
 #[test]
 fn recursive_polynomial_roots_compare_through_retained_defining_signs() {
-    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
+    let alpha_source = selected_square_root_source(r!(1 / 2));
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     let interval = |lower: Real, upper: Real| (lower, upper);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
+    let three_halves = r!(3 / 2);
     let rising = [RealSign::Negative, RealSign::Positive];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let field = selected_source_field(vec![alpha_source.clone()]);
@@ -26297,7 +26122,7 @@ fn recursive_polynomial_roots_compare_through_retained_defining_signs() {
 /// leave no entry, and only the first comparison replays the relation.
 #[test]
 fn recursive_root_retains_its_proved_native_equality() {
-    let alpha_source = selected_square_root_source((Real::one() / Real::from(2_i8)).unwrap());
+    let alpha_source = selected_square_root_source(r!(1 / 2));
     let quartic = |perturbation: Real| {
         algebraic_parameters(vec![
             Real::one() + perturbation,
@@ -26326,7 +26151,7 @@ fn recursive_root_retains_its_proved_native_equality() {
         .clone();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let field = selected_source_field(vec![alpha_source.clone()]);
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         // x^2 - (2 + alpha) / 4 is negative at 1/2 and positive at 1.
         let relation = shifted_square_relation(&field, &alpha_source)
             .into_iter()
@@ -26342,7 +26167,7 @@ fn recursive_root_retains_its_proved_native_equality() {
         let root = local_polynomial_root(
             &field,
             relation,
-            ((Real::one() / Real::from(2_i8)).unwrap(), Real::one()),
+            (r!(1 / 2), Real::one()),
             [RealSign::Negative, RealSign::Positive],
             &policy,
         );
@@ -26402,7 +26227,7 @@ fn recursive_root_retains_its_proved_native_equality() {
 fn recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse() {
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [Real::one(), Real::from(-1_i8)] {
             for already_collapsed in [false, true] {
@@ -26505,8 +26330,8 @@ fn recursive_polynomial_crossing_signs_survive_exact_midpoint_collapse() {
 #[test]
 fn chord_normal_dense_sheet_replay_rejects_conjugate_roots() {
     let map = exact_chord_normal_dense_test_map();
-    let tenth = (Real::one() / Real::from(10_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let tenth = r!(1 / 10);
+    let half = r!(1 / 2);
     let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
     // t - 1/2 + sqrt(1)/10 + sqrt(1)/10 has the authored root 3/10.
     // Its complete norm also contains the conjugate roots 1/2 and 7/10;
@@ -26533,10 +26358,7 @@ fn chord_normal_dense_sheet_replay_rejects_conjugate_roots() {
         assert_eq!(roots.len(), 1);
         assert_eq!(
             roots[0]
-                .cmp_by_refinement_with_policy(
-                    &BezierParameter2::Exact((Real::from(3_i8) / Real::from(10_i8)).unwrap()),
-                    &policy,
-                )
+                .cmp_by_refinement_with_policy(&BezierParameter2::Exact(r!(3 / 10)), &policy,)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Equal)
         );
@@ -26546,7 +26368,7 @@ fn chord_normal_dense_sheet_replay_rejects_conjugate_roots() {
 #[test]
 fn chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components() {
     let map = exact_chord_normal_dense_test_map();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let zero = DenseTensorPolynomial::zero(vec![1]).unwrap();
     let even = TwoSquareRootExpression {
         rational: DenseTensorPolynomial::from_axis_polynomial(
@@ -26577,12 +26399,7 @@ fn chord_normal_dense_sheet_replay_keeps_even_roots_and_zero_components() {
         else {
             panic!("the even authored root must survive exact replay")
         };
-        assert_eq!(
-            roots,
-            vec![BezierParameter2::Exact(
-                (Real::one() / Real::from(2_i8)).unwrap()
-            )]
-        );
+        assert_eq!(roots, vec![BezierParameter2::Exact(r!(1 / 2))]);
         assert!(matches!(
             chord_normal_dense_expression_parameters(
                 &map,
@@ -26649,8 +26466,8 @@ fn dense_chord_normal_chord(
 
 #[test]
 fn oblique_retained_offset_chord_reuses_exact_line_contacts() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let tenth = (Real::one() / Real::from(10_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let tenth = r!(1 / 10);
     let target = RationalBezier2::try_new(
         vec![
             Point2::new(quarter.clone(), Real::from(-1_i8)),
@@ -26701,10 +26518,10 @@ fn oblique_retained_offset_chord_reuses_exact_line_contacts() {
         let [contact] = contacts.as_slice() else {
             panic!("the oblique retained-offset crossing must be unique: {contacts:?}");
         };
-        let a = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
-        let b = (Real::one() / Real::from(3_i8)).unwrap().sqrt().unwrap();
+        let a = r!(1 / 2).sqrt().unwrap();
+        let b = r!(1 / 3).sqrt().unwrap();
         let length = (&a * &a + &b * &b).sqrt().unwrap();
-        let x = (Real::one() / Real::from(4_i8)).unwrap();
+        let x = r!(1 / 4);
         let y = &b - ((&b * &x + &tenth * length) / &a).unwrap();
         let expected = CurvePoint2::from(Point2::new(x, y));
         let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(fast)) =
@@ -26815,7 +26632,7 @@ fn recursive_projective_kernel_imports_similarity_of_algebraic_endpoints() {
         Real::from(-3_i8),
     )
     .unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let target = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(
             Point2::new(quarter.clone(), Real::from(-1_i8)),
@@ -27043,7 +26860,7 @@ fn rational_unit_circle_quarter(
     weight_sign: i8,
 ) -> RationalQuadraticBezier2 {
     let weight_sign = Real::from(weight_sign);
-    let middle_weight = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap() * &weight_sign;
+    let middle_weight = r!(1 / 2).sqrt().unwrap() * &weight_sign;
     RationalQuadraticBezier2::try_new(
         start,
         control,
@@ -27327,7 +27144,7 @@ fn rank_independent_chord_normal_circle_partitions_folded_rational_overlap() {
             "the folded overlap must use represented component replay: {trace:?}",
         );
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let Classification::Decided(partial_arc) = folded_quarter
             .subcurve_between_exact_with_policy(&Real::zero(), &quarter, &policy)
             .unwrap()
@@ -27495,7 +27312,7 @@ rank_independent_public_boolean_case!(
 
 #[test]
 fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let tangent = CurvePoint2::from(strict_tangent_chord_query_point());
         let (_, quarter, overlap) = selected_fiber_rational_quarter_overlap(&policy);
@@ -27560,7 +27377,7 @@ fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
 
 #[test]
 fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parallel = RationalQuadraticBezier2::try_unit_end_weights(
         Point2::from_values(2, 0),
         Point2::from_values(2, 1),
@@ -27622,7 +27439,7 @@ fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
 }
 
 fn recursive_test_point(point: &Point2, policy: &CurveContext) -> CurvePoint2 {
-    let fifth = (Real::one() / Real::from(5)).unwrap();
+    let fifth = r!(1 / 5);
     let start = point.translated(Real::from(4) * &fifth, -Real::from(3) * &fifth);
     let end = start.translated(Real::from(3), Real::from(4));
     let Classification::Decided(chord) =
@@ -27710,8 +27527,8 @@ fn displaced_algebraic_point_incidence_reuses_its_retained_field() {
 
 #[test]
 fn recursive_incidence_preserves_selected_point_fields() {
-    let fifth = (Real::one() / Real::from(5)).unwrap();
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let fifth = r!(1 / 5);
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -27847,7 +27664,7 @@ fn recursive_incidence_preserves_selected_point_fields() {
 
 #[test]
 fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(1, 0),
         Point2::from_values(-1, 0),
@@ -27937,7 +27754,7 @@ fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
 
 #[test]
 fn recursive_incidence_preserves_exterior_domains_and_pole_barriers() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     let parallel = RationalBezier2::try_new(
         vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
         vec![-Real::one(), Real::one()],
@@ -27997,7 +27814,7 @@ fn recursive_incidence_preserves_exterior_domains_and_pole_barriers() {
 
 #[test]
 fn retained_point_membership_preserves_domains_and_regular_barriers() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parallel = RationalBezier2::try_new(
         vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
         vec![-Real::one(), Real::one()],
@@ -28096,7 +27913,7 @@ fn retained_point_membership_preserves_domains_and_regular_barriers() {
 
 #[test]
 fn retained_point_incidence_visits_all_preimages_and_can_stop_at_one() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(4, 0),
         Point2::from_values(2, 0),
@@ -28212,7 +28029,7 @@ fn point_incidence_checks_regular_frames_at_each_isolated_contact() {
         Point2::from_values(1, 0),
     );
     let parallel = source.parallel_left(Real::one()).unwrap();
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (height, expected) in [(1, Real::from(3) * &quarter), (-1, quarter.clone())] {
             let Classification::Decided(BezierParallelIncidence2::Parameters(parameters)) =
@@ -28324,7 +28141,7 @@ fn correlated_point_incidence_retains_exterior_contact_parameters() {
     let parallel = RationalBezier2::try_new(
         vec![
             Point2::from_values(2, 4),
-            Point2::new((Real::one() / Real::from(2)).unwrap(), Real::from(-2)),
+            Point2::new(r!(1 / 2), Real::from(-2)),
             Point2::from_values(-1, 1),
         ],
         vec![Real::one(), -Real::one(), Real::one()],
@@ -28339,7 +28156,7 @@ fn correlated_point_incidence_retains_exterior_contact_parameters() {
         else {
             panic!("the query keeps independent selected endpoint fields")
         };
-        let anchor = (Real::from(9) / Real::from(4)).unwrap();
+        let anchor = r!(9 / 4);
         let range =
             CurveParameterRange2::new_validated(anchor.clone().into(), Real::from(3).into());
         let Classification::Decided(incident) = parallel
@@ -28386,7 +28203,7 @@ fn correlated_point_incidence_retains_exterior_contact_parameters() {
 
 #[test]
 fn zero_distance_retained_point_membership_keeps_stationary_sources() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     // P(s)=((s-2)²,0) is finite through its stationary point. Squaring
     // against its zero speed would spuriously admit the negative query.
     let parallel = QuadraticBezier2::new(
@@ -28464,7 +28281,7 @@ fn analytic_parallel_classifies_correlated_chord_pair_points() {
                     panic!("the translated line chart must construct")
                 };
                 let target = target.parallel_left(Real::zero()).unwrap();
-                for upper in [(Real::one() / Real::from(4)).unwrap(), Real::one()] {
+                for upper in [r!(1 / 4), Real::one()] {
                     let end = &shift + &upper;
                     let range = CurveParameterRange2::new_validated(
                         shift.clone().into(),
@@ -28509,7 +28326,7 @@ fn correlated_point_membership_replays_exterior_rational_domains() {
     let parallel = RationalBezier2::try_new(
         vec![
             Point2::from_values(2, 4),
-            Point2::new((Real::one() / Real::from(2)).unwrap(), Real::from(-2)),
+            Point2::new(r!(1 / 2), Real::from(-2)),
             Point2::from_values(-1, 1),
         ],
         vec![Real::one(), -Real::one(), Real::one()],
@@ -28524,11 +28341,8 @@ fn correlated_point_membership_replays_exterior_rational_domains() {
         else {
             panic!("the query must retain its correlated defining supports")
         };
-        for (start, expected) in [
-            (Real::from(2), true),
-            ((Real::from(9) / Real::from(4)).unwrap(), false),
-        ] {
-            let end = (Real::from(5) / Real::from(2)).unwrap();
+        for (start, expected) in [(Real::from(2), true), (r!(9 / 4), false)] {
+            let end = r!(5 / 2);
             for reversed in [false, true] {
                 let range = if reversed {
                     CurveParameterRange2::new_validated(end.clone().into(), start.clone().into())
@@ -28566,7 +28380,7 @@ fn correlated_point_membership_replays_exterior_rational_domains() {
 
 #[test]
 fn dense_chord_normal_tangency_retains_a_finite_endpoint() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let expected = CurvePoint2::from(Point2::from_values(1, 0));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The independently selected endpoint fields define y=-1 and x=1.
@@ -28961,10 +28775,7 @@ fn dense_chord_normal_circle_extends_over_an_independent_analytic_speed() {
         // authored [0,1] range.
         let source = QuadraticBezier2::new(
             Point2::from_values(-2, 0),
-            Point2::new(
-                (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-                Real::from(-1_i8),
-            ),
+            Point2::new(r!(-3 / 2), Real::from(-1_i8)),
             Point2::from_values(-1, -1),
         );
         let parallel = source.parallel_left(Real::from(-1_i8)).unwrap();
@@ -29113,7 +28924,7 @@ fn dense_chord_normal_incident_circle_retains_its_component() {
 
 #[test]
 fn dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let circle = dense_chord_normal_unit_semicircle(&policy);
         let disjoint = dense_chord_normal_chord(
@@ -29189,7 +29000,7 @@ fn dense_chord_normal_rejects_disjoint_and_finitely_clipped_chords() {
 
 #[test]
 fn dense_chord_normal_retains_rational_contacts_and_circle_components() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let secant = RationalBezier2::try_new(
         vec![
             Point2::new(half.clone(), Real::from(-2_i8)),
@@ -29298,7 +29109,7 @@ fn dense_chord_normal_retains_rational_contacts_and_circle_components() {
 #[test]
 fn dense_tuple_sign_binds_exact_points_and_preserves_the_selected_root() {
     let mut source = bezier_parameter_root_representation(&algebraic_parameter(vec![
-        -(Real::one() / Real::from(2)).unwrap(),
+        -r!(1 / 2),
         Real::zero(),
         Real::zero(),
         Real::one(),
@@ -29363,10 +29174,7 @@ fn quadrivariate_selected_tuple_sign_reduces_axis_relations_exactly() {
     let parameters = four_selected_square_root_parameters();
     let polynomial = dense_tensor_from_terms(
         [3, 1, 1, 1],
-        [
-            ([2, 0, 0, 0], Real::one()),
-            ([0, 0, 0, 0], -(Real::one() / Real::from(2_i8)).unwrap()),
-        ],
+        [([2, 0, 0, 0], Real::one()), ([0, 0, 0, 0], -r!(1 / 2))],
     );
     assert_eq!(
         quadrivariate_parameter_tuple_sign_by_refinement(
@@ -30283,7 +30091,7 @@ fn quadratic_factor_sign_multiplies_exact_nonzero_factor_signs() {
         ],
     };
     let polynomial = trivariate_multiply(&negative, &positive);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parameter = BezierParameter2::Exact(half);
     assert_eq!(
         trivariate_bounded_factor_sign(&polynomial, &parameter, &parameter, &parameter,).unwrap(),
@@ -30324,8 +30132,8 @@ fn trivariate_linear_resultant_certifies_every_axis_order() {
 #[test]
 fn trivariate_linear_resultant_rejects_a_foreign_conjugate() {
     let (mut parameters, polynomial) = nonaffine_three_field_chord_fixture();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let twenty_one_halves = (Real::from(21_i8) / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
+    let twenty_one_halves = r!(21 / 2);
     // Multiplying gamma's defining polynomial by x^2-1/2 makes the
     // resultant vanish for the actual chord root and the foreign root
     // sqrt(1/2). The selected isolator below retains only the latter.
@@ -30347,8 +30155,8 @@ fn trivariate_linear_resultant_rejects_a_foreign_conjugate() {
         Classification::Uncertain(reason) => panic!("foreign polynomial: {reason:?}"),
     };
     let interval = match BezierParameterInterval::try_new_with_policy(
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-        (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+        r!(2 / 3),
+        r!(3 / 4),
         &CurveContext::STRICT,
     )
     .unwrap()
@@ -30422,11 +30230,7 @@ fn trivariate_quotient_reduction_preserves_every_axis() {
             })
     };
     for axis in 0..3 {
-        let mut values = [
-            (Real::from(2_i8) / Real::from(5_i8)).unwrap(),
-            (Real::from(3_i8) / Real::from(7_i8)).unwrap(),
-            (Real::from(4_i8) / Real::from(9_i8)).unwrap(),
-        ];
+        let mut values = [r!(2 / 5), r!(3 / 7), r!(4 / 9)];
         values[axis] = Real::one();
         let reduced = trivariate_reduce_axis_mod_defining(polynomial.clone(), axis, &defining)
             .expect("the bounded quotient reduction must fit");
@@ -30460,9 +30264,9 @@ fn defining_polynomial_reduction_certifies_nonlinear_three_field_zero() {
 
 #[test]
 fn multiplicative_cubic_three_field_zero_is_exact_in_every_axis_order() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let sixth = (Real::one() / Real::from(6_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
+    let sixth = r!(1 / 6);
     let factors = [
         algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]),
         algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]),
@@ -30526,9 +30330,9 @@ fn multiplicative_cubic_three_field_zero_is_exact_in_every_axis_order() {
 
 #[test]
 fn multiplicative_root_relation_rejects_a_different_selected_root() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
+    let fifth = r!(1 / 5);
     let first = algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]);
     let second = algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]);
     let foreign = algebraic_parameter(vec![-fifth, Real::zero(), Real::zero(), Real::one()]);
@@ -30544,7 +30348,7 @@ fn multiplicative_root_relation_rejects_a_different_selected_root() {
 #[test]
 fn exact_real_parameter_relation_accepts_the_exact_arithmetic_status() {
     let left_value = (Real::one() / Real::pi()).unwrap();
-    let right_value = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+    let right_value = r!(1 / 2).sqrt().unwrap();
     let result_value = &left_value + &right_value;
     let left = BezierParameter2::Exact(left_value);
     let right = BezierParameter2::Exact(right_value);
@@ -30593,8 +30397,8 @@ fn square_free_cubic_lift_retains_top_slice_content() {
 
 #[test]
 fn additive_cubic_three_field_zero_is_exact_in_every_axis_order() {
-    let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
-    let thirtieth = (Real::one() / Real::from(30_i8)).unwrap();
+    let twentieth = r!(1 / 20);
+    let thirtieth = r!(1 / 30);
     let summands = [
         algebraic_parameter(vec![-twentieth, Real::zero(), Real::zero(), Real::one()]),
         algebraic_parameter(vec![-thirtieth, Real::zero(), Real::zero(), Real::one()]),
@@ -30602,12 +30406,12 @@ fn additive_cubic_three_field_zero_is_exact_in_every_axis_order() {
     // If a^3=1/20, b^3=1/30, and s=a+b, then
     // (s^3-1/12)^3-27*(1/600)*s^3 = 0.
     let mut sum_defining = vec![Real::zero(); 10];
-    sum_defining[0] = -(Real::one() / Real::from(1728_i16)).unwrap();
-    sum_defining[3] = -(Real::from(29_i8) / Real::from(1200_i16)).unwrap();
-    sum_defining[6] = -(Real::one() / Real::from(4_i8)).unwrap();
+    sum_defining[0] = -r!(1 / 1728);
+    sum_defining[3] = -r!(29 / 1200);
+    sum_defining[6] = -r!(1 / 4);
     sum_defining[9] = Real::one();
     let sum = algebraic_parameter(sum_defining);
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let fifth = r!(1 / 5);
     let foreign = algebraic_parameter(vec![-fifth, Real::zero(), Real::zero(), Real::one()]);
     assert!(exact_parameter_binary_relation(
         &summands[0],
@@ -30675,8 +30479,8 @@ fn additive_cubic_three_field_zero_is_exact_in_every_axis_order() {
 }
 
 fn nonlinear_rational_three_field_parameters() -> [BezierParameter2; 3] {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     [
         algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]),
         algebraic_parameter(vec![-third, Real::zero(), Real::zero(), Real::one()]),
@@ -30719,11 +30523,7 @@ fn projected_three_field_candidate_retains_selected_root_correlation() {
         .unwrap()
     );
 
-    let unrelated = algebraic_parameter(vec![
-        (Real::from(-2_i8) / Real::from(5_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]);
+    let unrelated = algebraic_parameter(vec![r!(-2 / 5), Real::zero(), Real::one()]);
     assert!(
         !projected_selected_trivariate_candidate_has_box_root(
             &incidence,
@@ -30764,9 +30564,9 @@ fn projected_three_field_candidate_retains_selected_root_correlation() {
 
 #[test]
 fn selected_pair_subresultant_certifies_an_even_root_after_selected_degree_drop() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
+    let four_fifths = r!(4 / 5);
     let alpha = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let beta_parameters = algebraic_parameters(vec![
         &third * &four_fifths,
@@ -30796,11 +30596,7 @@ fn selected_pair_subresultant_certifies_an_even_root_after_selected_degree_drop(
         .unwrap()
     );
 
-    let unrelated = algebraic_parameter(vec![
-        (Real::from(-2_i8) / Real::from(5_i8)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]);
+    let unrelated = algebraic_parameter(vec![r!(-2 / 5), Real::zero(), Real::one()]);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
@@ -30840,8 +30636,8 @@ fn selected_pair_subresultant_certifies_an_even_root_after_selected_degree_drop(
 }
 
 fn independent_pair_radial_unit_circle(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2 {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let fifth = r!(1 / 5);
     let two_fifths = Real::from(2_i8) * &fifth;
     // C1=(alpha,alpha), alpha^2=1/2, and
     // C2=(beta,2 beta), beta^2=1/5, are independent unit-circle
@@ -30862,7 +30658,7 @@ fn independent_pair_radial_unit_circle(policy: &CurveContext) -> BezierAlgebraic
         vec![Real::zero(), Real::from(2_i8)],
         fifth,
         two_fifths,
-        (Real::one() / Real::from(2_i8)).unwrap(),
+        r!(1 / 2),
         Real::one(),
         true,
         policy,
@@ -30906,14 +30702,14 @@ fn independent_pair_radial_unit_circle(policy: &CurveContext) -> BezierAlgebraic
 }
 
 fn recursively_pair_radial_half(policy: &CurveContext) -> BezierAlgebraicCuspSemicircle2 {
-    let ninth = (Real::one() / Real::from(9_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let ninth = r!(1 / 9);
+    let half = r!(1 / 2);
     let pair = independent_pair_radial_unit_circle(policy);
     let ordinary = synthetic_selected_cusp_semicircle(
         vec![Real::zero(), Real::from(3_i8)],
         vec![Real::zero()],
         ninth,
-        (Real::one() / Real::from(4_i8)).unwrap(),
+        r!(1 / 4),
         half.clone(),
         Real::one(),
         true,
@@ -30952,13 +30748,13 @@ fn recursively_pair_radial_rational_center_half(
     policy: &CurveContext,
 ) -> BezierAlgebraicCuspSemicircle2 {
     let first = independent_pair_radial_unit_circle(policy);
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let fifth = r!(1 / 5);
     let second = synthetic_selected_cusp_semicircle(
         vec![Real::zero(), Real::from(3_i8)],
         vec![Real::from(-1_i8)],
-        (Real::one() / Real::from(9_i8)).unwrap(),
-        (Real::one() / Real::from(4_i8)).unwrap(),
-        (Real::one() / Real::from(2_i8)).unwrap(),
+        r!(1 / 9),
+        r!(1 / 4),
+        r!(1 / 2),
         Real::one(),
         true,
         policy,
@@ -30992,7 +30788,7 @@ fn recursively_pair_radial_rational_center_half(
             &first,
             parameter_map.first_contact_parameter(contact),
             Real::one(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
+            r!(1 / 2),
             false,
             policy,
         )
@@ -31049,7 +30845,7 @@ pub(crate) fn recursively_line_contact_radial_half(
             &support,
             contact.cusp_parameter,
             support.radial_distance().clone(),
-            (Real::one() / Real::from(4_i8)).unwrap(),
+            r!(1 / 4),
             false,
             policy,
         )
@@ -31133,8 +30929,8 @@ fn recursive_radial_closure_chords_sign_a_shared_exact_vertex() {
 
 #[test]
 fn recursive_rational_contact_orients_a_retained_radial_endpoint() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
+    let half = r!(1 / 2);
+    let nine_tenths = r!(9 / 10);
     let source = QuadraticBezier2::new(
         Point2::from_values(-1, -1),
         Point2::new(half, -nine_tenths),
@@ -31204,7 +31000,7 @@ fn retained_semicircle_bracket_refinement_honors_requested_depth() {
         panic!("the unit interval must construct exactly");
     };
     let initial = BezierAlgebraicCuspSemicircleParameterBracket2::Interval(initial);
-    let root = (Real::one() / Real::from(3_i8)).unwrap();
+    let root = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(BezierAlgebraicCuspSemicircleParameterBracket2::Interval(
             refined,
@@ -31218,10 +31014,7 @@ fn retained_semicircle_bracket_refinement_honors_requested_depth() {
         else {
             panic!("one third cannot become exact under dyadic bisection");
         };
-        assert_eq!(
-            refined.end() - refined.start(),
-            (Real::one() / Real::from(256_i16)).unwrap(),
-        );
+        assert_eq!(refined.end() - refined.start(), r!(1 / 256),);
         assert!(
             compare_reals(refined.start(), &root, &CurveContext::STRICT)
                 != Some(std::cmp::Ordering::Greater)
@@ -31235,7 +31028,7 @@ fn retained_semicircle_bracket_refinement_honors_requested_depth() {
 
 #[test]
 fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
-    let ninth = (Real::one() / Real::from(9_i8)).unwrap();
+    let ninth = r!(1 / 9);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let pair = independent_pair_radial_unit_circle(&policy);
         // gamma^2=1/9 on the positive isolator, so this center is exactly
@@ -31244,8 +31037,8 @@ fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
             vec![Real::zero(), Real::from(3_i8)],
             vec![Real::zero()],
             ninth.clone(),
-            (Real::one() / Real::from(4_i8)).unwrap(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
+            r!(1 / 4),
+            r!(1 / 2),
             Real::one(),
             true,
             &policy,
@@ -31288,7 +31081,7 @@ fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
             };
             assert!(represented_x.is_valid());
             assert!(represented_y.is_valid());
-            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let half = r!(1 / 2);
             assert!(matches!(
                 compare_reals(&represented_x.interval.lower, &half, &CurveContext::STRICT),
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -31348,11 +31141,7 @@ fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
             if policy == CurveContext::STRICT {
                 assert_eq!(
                     point
-                        .axis_coordinate_order_to_real(
-                            Axis2::X,
-                            &(Real::one() / Real::from(2_i8)).unwrap(),
-                            &policy,
-                        )
+                        .axis_coordinate_order_to_real(Axis2::X, &r!(1 / 2), &policy,)
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
@@ -31396,7 +31185,7 @@ fn pair_radial_circle_intersects_an_ordinary_selected_circle_exactly() {
 
 #[test]
 fn recursively_pair_radial_circle_materializes_its_exact_frame() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let encloses = |representation: &AlgebraicRootRepresentation, value: &Real| {
         compare_reals(&representation.interval.lower, value, &CurveContext::STRICT)
             != Some(std::cmp::Ordering::Greater)
@@ -31450,10 +31239,7 @@ fn recursively_pair_radial_circle_materializes_its_exact_frame() {
         let Classification::Decided(translated) = translated else {
             panic!("the translated recursive frame must materialize: {translated:?}");
         };
-        assert!(encloses(
-            &translated.center[0],
-            &(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-        ));
+        assert!(encloses(&translated.center[0], &r!(3 / 2),));
         assert!(encloses(&translated.unit_radial[0], &half));
     }
 }
@@ -31514,9 +31300,7 @@ fn recursively_pair_radial_cap_offsets_exactly() {
             let round = matches!(style, crate::OffsetCornerStyle2::Round);
             #[cfg(feature = "dispatch-trace")]
             hyperreal::dispatch_trace::reset();
-            let offset_work = || {
-                cap.offset_with_policy((Real::one() / Real::from(8_i8)).unwrap(), &style, &policy)
-            };
+            let offset_work = || cap.offset_with_policy(r!(1 / 8), &style, &policy);
             #[cfg(feature = "dispatch-trace")]
             let offset = hyperreal::dispatch_trace::with_recording(offset_work);
             #[cfg(not(feature = "dispatch-trace"))]
@@ -31615,8 +31399,8 @@ fn recursively_pair_radial_cap_offsets_exactly() {
 
 #[test]
 fn recursively_pair_radial_circle_intersects_a_rational_quadratic_without_representation() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
+    let half = r!(1 / 2);
+    let nine_tenths = r!(9 / 10);
     let source = QuadraticBezier2::new(
         Point2::from_values(-1, -1),
         Point2::new(half, -nine_tenths),
@@ -31710,8 +31494,8 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
         }
     };
     debug_stage("construct");
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
+    let half = r!(1 / 2);
+    let nine_tenths = r!(9 / 10);
     let source = QuadraticBezier2::new(
         Point2::from_values(-1, -1),
         Point2::new(half, -nine_tenths),
@@ -31848,10 +31632,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
             RationalBezier2::try_new(vec![start, end], vec![Real::one(); 2]).unwrap(),
         ),
     };
-    let rational_remote = Point2::new(
-        (Real::from(1_i8) / Real::from(2_i8)).unwrap(),
-        Real::from(-4_i8),
-    );
+    let rational_remote = Point2::new(r!(1 / 2), Real::from(-4_i8));
     let rational_region = CurveRegion2::try_new_with_loop_topology(
         vec![
             CurveRegionBoundaryLoop2::new(
@@ -31936,13 +31717,8 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
     #[cfg(feature = "dispatch-trace")]
     hyperreal::dispatch_trace::reset();
     debug_stage("reoffset-start");
-    let reoffset_work = || {
-        reentry.offset_with_policy(
-            (Real::one() / Real::from(100_i8)).unwrap(),
-            &OffsetCornerStyle2::Bevel,
-            &policy,
-        )
-    };
+    let reoffset_work =
+        || reentry.offset_with_policy(r!(1 / 100), &OffsetCornerStyle2::Bevel, &policy);
     #[cfg(feature = "dispatch-trace")]
     let reoffset = hyperreal::dispatch_trace::with_recording(reoffset_work);
     #[cfg(not(feature = "dispatch-trace"))]
@@ -32105,12 +31881,7 @@ fn recursive_projective_chord_handles_finite_contact_multiplicities() {
         ));
 
         for (name, source, expected_cross, expected_parameter) in [
-            (
-                "tangent",
-                &tangent,
-                Some(RealSign::Zero),
-                Some((Real::one() / Real::from(2_i8)).unwrap()),
-            ),
+            ("tangent", &tangent, Some(RealSign::Zero), Some(r!(1 / 2))),
             ("transverse", &transverse, Some(RealSign::Positive), None),
             (
                 "endpoint",
@@ -32256,9 +32027,7 @@ fn recursive_projective_oblique_chord_handles_even_contact_multiplicity() {
             contact
                 .other_parameter
                 .same_value(
-                    &region_parameter(BezierParameter2::Exact(
-                        (Real::one() / Real::from(2_i8)).unwrap(),
-                    )),
+                    &region_parameter(BezierParameter2::Exact(r!(1 / 2),)),
                     &policy,
                 )
                 .unwrap(),
@@ -32305,8 +32074,8 @@ fn recursive_projective_oblique_chord_handles_even_contact_multiplicity() {
 
 #[test]
 fn recursively_pair_radial_rational_circle_component_maps_both_directions_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
+    let three_halves = r!(3 / 2);
     let circular_conic = Arc::new(RationalQuadraticCircle2 {
         center: Point2::new(Real::zero(), Real::from(-1_i8)),
         radius_squared: &half * &half,
@@ -32318,7 +32087,7 @@ fn recursively_pair_radial_rational_circle_component_maps_both_directions_exactl
         Real::one(),
         Real::zero(),
         Real::from(2_i8),
-        (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+        r!(3 / 4),
     ]);
     let quarters = [
         (
@@ -32486,9 +32255,7 @@ fn recursively_pair_radial_rational_circle_component_maps_both_directions_exactl
             );
         }
 
-        let exact_cusp = BezierAlgebraicCuspSemicircleParameter2::Exact(
-            (Real::one() / Real::from(3_i8)).unwrap(),
-        );
+        let exact_cusp = BezierAlgebraicCuspSemicircleParameter2::Exact(r!(1 / 3));
         let containing = overlaps.iter().find(|overlap| {
             matches!(
                 exact_cusp
@@ -32526,8 +32293,8 @@ fn recursively_pair_radial_rational_circle_component_maps_both_directions_exactl
 
 #[test]
 fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
-    let half = (Real::one() / Real::from(2)).unwrap();
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -32608,11 +32375,9 @@ fn analytic_point_clones_reuse_the_certified_recursive_field() {
             Point2::from_values(1, 0),
         );
         let point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
-            source
-                .parallel_left((Real::one() / Real::from(3)).unwrap())
-                .unwrap(),
-            BezierParameter2::Exact((Real::one() / Real::from(2)).unwrap()),
-            (Real::one() / Real::from(4)).unwrap(),
+            source.parallel_left(r!(1 / 3)).unwrap(),
+            BezierParameter2::Exact(r!(1 / 2)),
+            r!(1 / 4),
             &policy,
         );
         let Classification::Decided(Some(first)) =
@@ -32645,7 +32410,7 @@ fn analytic_point_clones_reuse_the_certified_recursive_field() {
 
 #[test]
 fn recursive_selected_radial_rational_kernel_retains_singular_circle_contacts() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let singular_parameter = BezierParameter2::Exact(half);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let recursive = recursively_pair_radial_rational_center_half(&policy);
@@ -32788,9 +32553,9 @@ fn recursive_selected_radial_line_image_preserves_target_orientation() {
 
 #[test]
 fn recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let nine_tenths = (Real::from(9_i8) / Real::from(10_i8)).unwrap();
-    let distance = (Real::one() / Real::from(20_i8)).unwrap();
+    let half = r!(1 / 2);
+    let nine_tenths = r!(9 / 10);
+    let distance = r!(1 / 20);
     let source = QuadraticBezier2::new(
         Point2::from_values(-1, -1),
         Point2::new(half, -nine_tenths),
@@ -32917,10 +32682,10 @@ fn recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel() {
 
 #[test]
 fn recursively_pair_radial_circles_intersect_and_recurse_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
-    let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
+    let seven_eighths = r!(7 / 8);
     let translate = Similarity2::try_from_real_affine(
         Real::one(),
         Real::zero(),
@@ -33049,10 +32814,10 @@ fn recursively_pair_radial_circles_intersect_and_recurse_exactly() {
 
 #[test]
 fn independently_encoded_recursive_circles_intersect_and_recurse_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
-    let seven_eighths = (Real::from(7_i8) / Real::from(8_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
+    let seven_eighths = r!(7 / 8);
     let translate = Similarity2::try_from_real_affine(
         Real::one(),
         Real::zero(),
@@ -33180,8 +32945,8 @@ fn independently_encoded_recursive_circles_intersect_and_recurse_exactly() {
 
 #[test]
 fn independently_encoded_rotated_recursive_circles_intersect_exactly() {
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let fifth = r!(1 / 5);
+    let half = r!(1 / 2);
     let rotate = Similarity2::try_from_real_affine(
         Real::from(4_i8) * &fifth,
         Real::from(-3_i8) * &fifth,
@@ -33262,7 +33027,7 @@ fn independently_encoded_rotated_recursive_circles_intersect_exactly() {
 
 #[test]
 fn independently_encoded_scaled_rotated_recursive_circles_intersect_exactly() {
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let fifth = r!(1 / 5);
     let scale_rotate = Similarity2::try_from_real_affine(
         Real::from(8_i8) * &fifth,
         Real::from(-6_i8) * &fifth,
@@ -33371,7 +33136,7 @@ fn independently_encoded_scaled_rotated_recursive_circles_intersect_exactly() {
 
 #[test]
 fn differently_factored_selected_roots_share_frame_axes_and_translation() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(parameter) =
         algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()])
     else {
@@ -33492,8 +33257,8 @@ fn unrelated_recursive_circle_centers_intersect_exactly() {
 
 #[test]
 fn represented_recursive_contact_centers_handle_exact_tangency() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let support = recursively_pair_radial_half(&policy).complementary_half();
         let author = recursively_pair_radial_rational_center_half(&policy);
@@ -33600,7 +33365,7 @@ fn represented_recursive_contact_centers_handle_exact_tangency() {
             assert_tangent(second_half, first_half, tangent_dot);
         }
 
-        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let three_halves = r!(3 / 2);
         let Classification::Decided(Some(internal_parent)) = support
             .scaled_radial_distance(&three_halves, &policy)
             .unwrap()
@@ -33700,8 +33465,8 @@ fn nonstructural_recursive_centers_handle_exact_tangency() {
 
 #[test]
 fn independently_reencoded_recursive_parent_handles_exact_tangency() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let authored_parent = recursively_pair_radial_half(&policy).complementary_half();
         let author = recursively_pair_radial_rational_center_half(&policy);
@@ -33796,9 +33561,9 @@ fn independently_reencoded_recursive_parent_handles_exact_tangency() {
 fn independently_encoded_recursive_circles_map_all_coincident_half_relations() {
     // Counterclockwise quarter turn about the retained rational center
     // (0,-1): translation is C-RC=(-1,-1).
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let third = r!(1 / 3);
+    let two_thirds = r!(2 / 3);
+    let three_quarters = r!(3 / 4);
     let quarter_turn = Similarity2::try_from_real_affine(
         Real::zero(),
         Real::from(-1_i8),
@@ -33917,7 +33682,7 @@ fn independently_encoded_recursive_circles_map_all_coincident_half_relations() {
 
 #[test]
 fn pair_radial_authored_tangency_survives_scaled_reflection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let reflection = Similarity2::try_from_real_affine(
         Real::from(-3_i8),
         Real::zero(),
@@ -34095,7 +33860,7 @@ fn recursive_line_contact_circles_reject_disjoint_supports_without_flattening() 
 
 #[test]
 fn recursive_line_contact_circles_publish_transverse_contacts_without_flattening() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let translate = Similarity2::try_from_real_affine(
         Real::one(),
         Real::zero(),
@@ -34141,7 +33906,7 @@ fn recursive_line_contact_circles_publish_transverse_contacts_without_flattening
 
 #[test]
 fn recursive_line_contact_circles_publish_tangent_contacts_without_flattening() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let translate = Similarity2::try_from_real_affine(
         Real::one(),
         Real::zero(),
@@ -34214,15 +33979,15 @@ fn recursive_line_contact_circles_publish_tangent_contacts_without_flattening() 
 
 #[test]
 fn pair_radial_circle_maps_partial_ordinary_circle_overlap_exactly() {
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let pair = independent_pair_radial_unit_circle(&policy);
         let ordinary = synthetic_selected_cusp_semicircle(
             vec![Real::zero()],
             vec![Real::zero()],
             third.clone(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            r!(1 / 2),
+            r!(2 / 3),
             Real::one(),
             false,
             &policy,
@@ -34254,16 +34019,16 @@ fn pair_radial_circle_maps_partial_ordinary_circle_overlap_exactly() {
 
 #[test]
 fn pair_radial_circle_handles_aligned_and_antipodal_ordinary_overlaps() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let unit_component = half.sqrt().unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let pair = independent_pair_radial_unit_circle(&policy);
         let ordinary = synthetic_selected_cusp_semicircle(
             vec![Real::zero()],
             vec![Real::zero()],
-            (Real::one() / Real::from(3_i8)).unwrap(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            r!(1 / 3),
+            r!(1 / 2),
+            r!(2 / 3),
             Real::one(),
             false,
             &policy,
@@ -34304,7 +34069,7 @@ fn pair_radial_circle_handles_aligned_and_antipodal_ordinary_overlaps() {
 
 #[test]
 fn pair_radial_circle_handles_ordinary_tangent_disjoint_and_concentric_supports() {
-    let ninth = (Real::one() / Real::from(9_i8)).unwrap();
+    let ninth = r!(1 / 9);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let pair = independent_pair_radial_unit_circle(&policy);
         let ordinary = |center_scale: i8, radius: i8| {
@@ -34312,8 +34077,8 @@ fn pair_radial_circle_handles_ordinary_tangent_disjoint_and_concentric_supports(
                 vec![Real::zero(), Real::from(center_scale)],
                 vec![Real::zero()],
                 ninth.clone(),
-                (Real::one() / Real::from(4_i8)).unwrap(),
-                (Real::one() / Real::from(2_i8)).unwrap(),
+                r!(1 / 4),
+                r!(1 / 2),
                 Real::from(radius),
                 true,
                 &policy,
@@ -34417,7 +34182,7 @@ fn independently_pair_radial_circles_intersect_exactly() {
             };
             assert!(represented_x.is_valid());
             assert!(represented_y.is_valid());
-            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let half = r!(1 / 2);
             assert!(matches!(
                 compare_reals(&represented_x.interval.lower, &half, &CurveContext::STRICT),
                 Some(std::cmp::Ordering::Less | std::cmp::Ordering::Equal),
@@ -34467,11 +34232,7 @@ fn independently_pair_radial_circles_intersect_exactly() {
             if policy == CurveContext::STRICT {
                 assert_eq!(
                     point
-                        .axis_coordinate_order_to_real(
-                            Axis2::X,
-                            &(Real::one() / Real::from(2_i8)).unwrap(),
-                            &policy,
-                        )
+                        .axis_coordinate_order_to_real(Axis2::X, &r!(1 / 2), &policy,)
                         .unwrap(),
                     Classification::Decided(std::cmp::Ordering::Equal),
                 );
@@ -35079,7 +34840,7 @@ fn pair_radial_circle_rejects_disjoint_and_finitely_clipped_four_field_chords() 
 
 #[test]
 fn pair_radial_circle_retains_an_algebraic_rational_tangency() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tangent = RationalBezier2::try_new(
         vec![
             Point2::new(Real::one(), -half.clone()),
@@ -35151,7 +34912,7 @@ fn pair_radial_circle_retains_an_algebraic_rational_tangency() {
 
 #[test]
 fn rational_circle_tangent_dot_follows_both_traversals() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let cutter = RationalBezier2::try_new(
         vec![
             Point2::new(Real::from(-1_i8), half.clone()),
@@ -35268,7 +35029,7 @@ fn pair_radial_circle_retains_rational_circle_components() {
     )
     .unwrap();
     let overlap_end = algebraic_parameter(vec![Real::from(-1_i8), Real::from(2_i8), Real::one()]);
-    let cusp_cut = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let cusp_cut = r!(3 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let circle = independent_pair_radial_unit_circle(&policy);
@@ -35829,8 +35590,8 @@ fn bounded_nonic_coupled_factor_rational_three_field_zero_is_exact() {
 
 #[test]
 fn rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let parameters = [
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]),
         algebraic_parameter(vec![-half, Real::zero(), Real::one()]),
@@ -35885,7 +35646,7 @@ fn rank_independent_projection_crosses_the_dense_trivariate_boundary_exactly() {
 
 #[test]
 fn selected_trivariate_projection_cold_continuation_removes_degree_cap() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let first = algebraic_parameter(vec![-half, Real::zero(), Real::zero(), Real::one()]);
     let second = BezierParameter2::Exact(Real::zero());
     // t - x^2 = 0 at x^3 = 1/2. Eliminating x has target degree three,
@@ -35966,8 +35727,8 @@ fn selected_trivariate_projection_cold_continuation_removes_degree_cap() {
 
 #[test]
 fn translated_distinct_field_chord_zero_is_exact_in_strict() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     // alpha=sqrt(1/2), beta=1-alpha, gamma=alpha-1/2.
     // The independently represented points (alpha,0), (0,beta), and
     // (gamma,gamma) are collinear because alpha*beta=gamma and
@@ -35994,9 +35755,9 @@ fn translated_distinct_field_chord_zero_is_exact_in_strict() {
 
 #[test]
 fn scaled_distinct_field_chord_zero_is_exact_in_strict() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let eighth = (Real::one() / Real::from(8_i8)).unwrap();
-    let eighteenth = (Real::one() / Real::from(18_i8)).unwrap();
+    let half = r!(1 / 2);
+    let eighth = r!(1 / 8);
+    let eighteenth = r!(1 / 18);
     // alpha=sqrt(1/2), beta=alpha/2, gamma=alpha/3. The same three
     // coordinate forms are collinear because alpha*beta =
     // gamma*(alpha+beta). The independently represented fields expose
@@ -36022,8 +35783,8 @@ fn scaled_distinct_field_chord_zero_is_exact_in_strict() {
 
 #[test]
 fn nonaffine_distinct_field_chord_zero_is_exact_in_strict() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     // alpha=sqrt(1/2), beta=sqrt(1/3), and
     // gamma=alpha*beta/(alpha+beta). Gamma is the unique unit root of
     // x^4-10*x^2+1. The three coordinate forms remain exactly collinear,
@@ -36060,9 +35821,9 @@ fn nested_independent_cusp_disks_complete_all_region_booleans() {
         let first = synthetic_selected_cusp_semicircle(
             center_numerator.clone(),
             vec![Real::zero()],
-            (Real::one() / Real::from(3_i8)).unwrap(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
+            r!(1 / 3),
+            r!(1 / 2),
+            r!(2 / 3),
             Real::one(),
             false,
             &policy,
@@ -36070,9 +35831,9 @@ fn nested_independent_cusp_disks_complete_all_region_booleans() {
         let second = synthetic_selected_cusp_semicircle(
             center_numerator,
             vec![Real::zero()],
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+            r!(1 / 2),
+            r!(2 / 3),
+            r!(3 / 4),
             Real::from(3_i8),
             false,
             &policy,
@@ -36182,13 +35943,13 @@ fn algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root(
         assert_eq!(
             overlap
                 .cusp_end_parameter()
-                .order_to_real(&(Real::one() / Real::from(2_i8)).unwrap(), &policy)
+                .order_to_real(&r!(1 / 2), &policy)
                 .unwrap(),
             Classification::Decided(std::cmp::Ordering::Equal),
         );
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let quarter = r!(1 / 4);
+        let one_third = r!(1 / 3);
         let cusp_cut = BezierAlgebraicCuspSemicircleParameter2::Exact(quarter.clone());
         let Classification::Decided(rational_cut) = overlap
             .other_parameter_for_cusp(&cusp_cut, &policy)
@@ -36299,7 +36060,7 @@ fn algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root(
             folded_overlaps[1].orientation(),
             CurveOverlapOrientation2::Reversed,
         );
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for (overlap, expected_start, expected_end) in [
             (&folded_overlaps[0], Real::zero(), half.clone()),
             (&folded_overlaps[1], half.clone(), Real::one()),
@@ -36383,7 +36144,7 @@ fn exact_parallel_is_one_word_and_distances_share_lazy_source_kernel() {
     assert!(Arc::ptr_eq(&parallel.data.source, &redistanced.data.source));
     assert!(parallel.data.source.differential.get().is_none());
     assert!(parallel.data.source.unit_ph_speed.get().is_none());
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     assert!(matches!(
         clone
             .point_at_with_policy(&half, &CurveContext::STRICT)
@@ -36528,7 +36289,7 @@ fn homogeneous_representation_retains_exterior_ph_branch() {
 
 #[test]
 fn exact_parallel_distances_reuse_the_certified_source_speed() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 1)).unwrap();
         let sources = [
@@ -36683,7 +36444,7 @@ fn source_circle_incidence_does_not_require_source_regularity() {
         Point2::from_values(1, 0),
     );
     let parallel = source.parallel_left(Real::zero()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameters) = parallel
             .source_circle_incidence(
@@ -36711,7 +36472,7 @@ fn selected_third_axis_incident_domain_stops_before_the_regular_barrier() {
                 vec![Real::from(6_i8), Real::from(-5_i8), Real::one()],
                 Real::one(),
                 BezierParameterRayDirection2::Increasing,
-                (Real::from(5_i8) / Real::from(2_i8)).unwrap(),
+                r!(5 / 2),
                 Real::from(2_i8),
             ),
             (
@@ -36747,7 +36508,7 @@ fn selected_third_axis_incident_domain_stops_before_the_regular_barrier() {
 fn procedural_endpoint_chord_replays_complete_parallel_contacts() {
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
-        Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+        Point2::new(r!(1 / 2), Real::zero()),
         Point2::from_values(1, 1),
     )
     .parallel_left(Real::zero())
@@ -36790,10 +36551,10 @@ fn procedural_endpoint_chord_replays_complete_parallel_contacts() {
 fn recursive_projective_chord_replays_nonzero_analytic_parallel() {
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
-        Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+        Point2::new(r!(1 / 2), Real::zero()),
         Point2::from_values(1, 1),
     )
-    .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
+    .parallel_left(r!(1 / 4))
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let chord = dense_chord_normal_chord(
@@ -36918,8 +36679,8 @@ fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber()
         .parallel_left(distance)
         .unwrap()
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameters =
             algebraic_parameters(vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)]);
@@ -36952,7 +36713,7 @@ fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber()
                 ),
                 (
                     horizontal_parallel(half.clone(), quarter.clone()),
-                    (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
+                    r!(3 / 4),
                 ),
             ] {
                 for projected in [true, false] {
@@ -37029,22 +36790,16 @@ fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber()
             // constructed source parameter.
             for (parallel, anchor, direction, expected) in [
                 (
-                    horizontal_parallel(
-                        (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                        Real::zero(),
-                    ),
+                    horizontal_parallel(r!(3 / 2), Real::zero()),
                     Real::one(),
                     BezierParameterRayDirection2::Increasing,
-                    (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                    r!(3 / 2),
                 ),
                 (
-                    horizontal_parallel(
-                        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-                        Real::zero(),
-                    ),
+                    horizontal_parallel(r!(-1 / 2), Real::zero()),
                     Real::zero(),
                     BezierParameterRayDirection2::Decreasing,
-                    (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
+                    r!(-1 / 2),
                 ),
             ] {
                 let incident = incident_domain(&parallel, anchor, direction, &policy);
@@ -37158,10 +36913,7 @@ fn selected_dense_kernel_projects_cubic_past_foreign_wide_components() {
         let [root] = roots.as_slice() else {
             panic!("the selected cubic must own one unit root: {roots:?}");
         };
-        assert_eq!(
-            root.scalar(),
-            Some(&(Real::one() / Real::from(2_i8)).unwrap())
-        );
+        assert_eq!(root.scalar(), Some(&r!(1 / 2)));
         #[cfg(feature = "dispatch-trace")]
         assert_eq!(
             hyperreal::dispatch_trace::take_trace().path_count(
@@ -37330,7 +37082,7 @@ fn recursive_projective_chord_replays_identically_zero_norm_sheet() {
 
 #[test]
 fn regular_rational_parallel_components_select_exterior_speed_sheets() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for cached in [false, true] {
             let source = QuadraticBezier2::new(
@@ -37406,12 +37158,10 @@ fn regular_rational_parallel_components_select_exterior_speed_sheets() {
 
 #[test]
 fn regular_rational_parallel_components_retain_exterior_collinear_bounds() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
-    let BezierParameter2::Algebraic(retained) = algebraic_parameter(vec![
-        -(Real::one() / Real::from(2)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ]) else {
+    let quarter = r!(1 / 4);
+    let BezierParameter2::Algebraic(retained) =
+        algebraic_parameter(vec![-r!(1 / 2), Real::zero(), Real::one()])
+    else {
         panic!("the selected base root must remain algebraic");
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -37426,13 +37176,9 @@ fn regular_rational_parallel_components_retain_exterior_collinear_bounds() {
                 let pole = if negative_tangent {
                     Real::from(4)
                 } else {
-                    (Real::from(2) / Real::from(5)).unwrap()
+                    r!(2 / 5)
                 };
-                vec![
-                    -pole.clone(),
-                    (Real::one() / Real::from(2)).unwrap() - &pole,
-                    Real::one() - pole,
-                ]
+                vec![-pole.clone(), r!(1 / 2) - &pole, Real::one() - pole]
             };
             let source = RationalBezier2::try_new(
                 [4, 2, 1]
@@ -37483,12 +37229,12 @@ fn regular_rational_parallel_components_retain_exterior_collinear_bounds() {
                                 (
                                     vec![Real::one(), Real::from(2), Real::one()],
                                     Real::from(-2),
-                                    -(Real::from(3) / Real::from(2)).unwrap(),
+                                    -r!(3 / 2),
                                 )
                             } else {
                                 (
                                     vec![Real::from(4), Real::from(-4), Real::one()],
-                                    (Real::from(5) / Real::from(2)).unwrap(),
+                                    r!(5 / 2),
                                     Real::from(3),
                                 )
                             };
@@ -37715,14 +37461,14 @@ fn regularized_nonconstant_ph_quotient_materializes_exact_component() {
         Real::zero(),
         Real::from(-1_i8),
         Real::one(),
-        (Real::one() / Real::from(3_i8)).unwrap(),
-        -(Real::one() / Real::from(2_i8)).unwrap(),
+        r!(1 / 3),
+        -r!(1 / 2),
     ];
     let source_y = vec![
         Real::zero(),
         Real::zero(),
         Real::from(-1_i8),
-        (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
+        r!(4 / 3),
         Real::zero(),
     ];
     let x_controls = power_to_bernstein_coefficients(&source_x, 4).unwrap();
@@ -37744,9 +37490,9 @@ fn regularized_nonconstant_ph_quotient_materializes_exact_component() {
         Classification::Decided(None),
     ));
 
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let materialize = |range: BezierParameterRange2| {
             let range = CurveParameterRange2::from_bezier_range(range);
@@ -37861,7 +37607,7 @@ fn regularized_retracing_line_chord_publishes_exact_component() {
         Point2::from_values(-1, 1),
     );
     let parallel = source.parallel_left(Real::one()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = dense_chord_normal_point(
             2,
@@ -37968,8 +37714,8 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
     );
     let opaque = epsilon.cos() - Real::one();
     assert_eq!(opaque.zero_status(), ZeroKnowledge::Unknown);
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let third = r!(1 / 3);
+    let quarter = r!(1 / 4);
     let shoulder = -((&opaque + Real::one()) * quarter);
     let source = RationalBezier2::try_new(
         vec![
@@ -37993,8 +37739,8 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
         .is_none(),
         "the unresolved leading coefficient must make monic GCD normalization unsupported",
     );
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let two_thirds = r!(2 / 3);
     let start_q = source
         .point_at_with_policy(&two_thirds, &CurveContext::STRICT)
         .unwrap()
@@ -38033,11 +37779,9 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
             "the GCD-independent certificate must own the frame: {trace:?}",
         );
 
-        let BezierParameter2::Algebraic(normal_parameter) = algebraic_parameter(vec![
-            -(Real::one() / Real::from(2_i8)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]) else {
+        let BezierParameter2::Algebraic(normal_parameter) =
+            algebraic_parameter(vec![-r!(1 / 2), Real::zero(), Real::one()])
+        else {
             panic!("the unit normal must remain algebraic")
         };
         let normal_representation = parameter_representation(&normal_parameter, &policy);
@@ -38244,8 +37988,8 @@ fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
     .parallel_left(Real::zero())
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = r!(1 / 2);
+        let third = r!(1 / 3);
         let BezierParameter2::Algebraic(first_parameter) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
         else {
@@ -38313,7 +38057,7 @@ fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
 
 #[test]
 fn incident_source_circle_stops_at_the_first_projective_pole() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let increasing = RationalBezier2::try_new(
             vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
@@ -38322,8 +38066,8 @@ fn incident_source_circle_stops_at_the_first_projective_pole() {
         .unwrap()
         .parallel_left(Real::zero())
         .unwrap();
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
-        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let one_third = r!(1 / 3);
+        let three_halves = r!(3 / 2);
         let decreasing = RationalBezier2::try_new(
             vec![
                 Point2::from_values(0, 0),
@@ -38340,7 +38084,7 @@ fn incident_source_circle_stops_at_the_first_projective_pole() {
                 Point2::from_values(1, 0),
                 Real::one(),
                 BezierParameterRayDirection2::Increasing,
-                (Real::from(8_i8) / Real::from(5_i8)).unwrap(),
+                r!(8 / 5),
             ),
             (
                 decreasing,
@@ -38372,8 +38116,8 @@ fn incident_source_circle_stops_at_the_first_projective_pole() {
 
 #[test]
 fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let source = RationalBezier2::try_new(
         vec![
             Point2::from_values(0, 0),
@@ -38384,7 +38128,7 @@ fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
     )
     .unwrap();
     let parallel = source.parallel_left(Real::zero()).unwrap();
-    let expected = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let expected = r!(3 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameters) = parallel
             .source_circle_incidence_on_incident_ray(
@@ -38407,10 +38151,10 @@ fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
 
 #[test]
 fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let radius = (Real::from(13_i8) / Real::from(5_i8)).unwrap();
-    let height = (Real::from(61_i8) / Real::from(25_i8)).unwrap();
-    let expected = (Real::from(6_i8) / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let radius = r!(13 / 5);
+    let height = r!(61 / 25);
+    let expected = r!(6 / 5);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half, Real::zero()),
@@ -38446,9 +38190,9 @@ fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
         };
         assert_eq!(parameter.scalar(), Some(&expected));
 
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let direction_x = (Real::from(5_i8) / Real::from(13_i8)).unwrap();
-        let direction_y = (Real::from(12_i8) / Real::from(13_i8)).unwrap();
+        let half = r!(1 / 2);
+        let direction_x = r!(5 / 13);
+        let direction_y = r!(12 / 13);
         let algebraic_parallel = QuadraticBezier2::new(
             Point2::from_values(0, 0),
             Point2::new(half.clone(), Real::zero()),
@@ -38456,10 +38200,7 @@ fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
         )
         .parallel_left(half.clone())
         .unwrap();
-        let line_start = Point2::new(
-            Real::one() - (Real::from(6_i8) / Real::from(13_i8)).unwrap(),
-            Real::one() + (Real::from(5_i8) / Real::from(26_i8)).unwrap(),
-        );
+        let line_start = Point2::new(Real::one() - r!(6 / 13), Real::one() + r!(5 / 26));
         let line = LineSeg2::try_new(
             line_start.clone(),
             line_start.translated(
@@ -38516,7 +38257,7 @@ fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
 fn parallel_projection_keeps_independent_finite_and_extension_domains() {
     let zero = Real::zero();
     let one = Real::one();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let quarter = &half * &half;
     let alpha = Real::from(2_i8).sqrt().unwrap();
     // Independent factors give exact Cartesian products:
@@ -38732,7 +38473,7 @@ fn parallel_projection_owns_overlapping_domain_roots_once() {
 
 #[test]
 fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let half = &quarter + &quarter;
     let three_quarters = &half + &quarter;
     let parallel = QuadraticBezier2::new(
@@ -38808,8 +38549,8 @@ fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
 
 #[test]
 fn incident_parabola_parallel_circle_retains_exact_and_algebraic_contacts() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let expected = (Real::from(6_i8) / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let expected = r!(6 / 5);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -38817,11 +38558,8 @@ fn incident_parabola_parallel_circle_retains_exact_and_algebraic_contacts() {
     )
     .parallel_left(half)
     .unwrap();
-    let center = Point2::new(
-        Real::one(),
-        (Real::from(3923_i64) / Real::from(2150_i64)).unwrap(),
-    );
-    let radius = (Real::from(349_i64) / Real::from(1075_i64)).unwrap();
+    let center = Point2::new(Real::one(), r!(3923 / 2150));
+    let radius = r!(349 / 1075);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(contacts) = parallel
             .circle_incidence_on_incident_ray(
@@ -38855,7 +38593,7 @@ fn incident_parabola_parallel_circle_retains_exact_and_algebraic_contacts() {
 
 #[test]
 fn algebraic_parallel_incident_domain_bridges_and_stops_at_speed_barrier() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let endpoint = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
         let stationary_source = QuadraticBezier2::new(
@@ -39163,7 +38901,7 @@ fn represented_derivative_scale_fast_path_matches_polynomial_certificate() {
             .unwrap(),
         ),
     ];
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let radical = Real::from(2_i8).sqrt().unwrap();
     let distances = [-radical.clone(), -half.clone(), Real::zero(), half, radical];
 
@@ -39191,8 +38929,8 @@ fn represented_derivative_scale_fast_path_matches_polynomial_certificate() {
 #[test]
 fn general_algebraic_cusp_points_are_exact_rational_images() {
     let point = |x, y| Point2::new(Real::from(x), Real::from(y));
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let three_quarters = &half + &quarter;
     let parallel = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0))
         .parallel_left(half.clone())
@@ -39607,7 +39345,7 @@ fn closed_parallel_turn_certificate_rejects_multiple_traversal() {
 fn analytic_parallel_self_intersection_removes_the_parameter_diagonal() {
     let point = |x, y| Point2::new(Real::from(x), Real::from(y));
     let source = CubicBezier2::new(point(0, 0), point(1, 4), point(3, -4), point(4, 0));
-    let distance = (Real::one() / Real::from(2_u8)).unwrap();
+    let distance = r!(1 / 2);
     let parallel = source.parallel_left(distance).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let result = match parallel.unit_self_intersections(&policy).unwrap() {
@@ -39693,7 +39431,7 @@ fn closed_source_diagonal_is_removed_before_residual_component_scan() {
 fn radical_component_saturation_retains_norm_intersections() {
     let t = BivariatePolynomial::new(vec![vec![Real::zero()], vec![Real::one()]]);
     let u = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let common = bivariate_subtract(&bivariate_multiply(&t, &t), &bivariate_multiply(&u, &u));
     let first_residual = bivariate_add(&t, &BivariatePolynomial::new(vec![vec![-half.clone()]]));
     let second_residual = bivariate_add(&u, &BivariatePolynomial::new(vec![vec![-half.clone()]]));
@@ -39765,7 +39503,7 @@ fn radical_component_saturation_retains_norm_intersections() {
 fn selected_structural_parallel_overlap_replays_off_diagonal_contacts() {
     let point = |x, y| Point2::new(Real::from(x), Real::from(y));
     let source = CubicBezier2::new(point(0, 0), point(1, 4), point(3, -4), point(4, 0));
-    let distance = (Real::one() / Real::from(2_u8)).unwrap();
+    let distance = r!(1 / 2);
     let parallel = source.parallel_left(distance).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let system =
@@ -39840,7 +39578,7 @@ fn parallel_contact_domains_keep_independent_extensions_and_components() {
             .parallel_left(distance)
             .unwrap()
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let first = line_parallel(
         Point2::from_values(0, -1),
         Point2::from_values(1, -1),
@@ -40172,17 +39910,14 @@ fn ordered_self_contact_domains_retain_axis_roles_after_restriction() {
 fn incident_source_component_with_unequal_distances_retains_its_residual_system() {
     let first = QuadraticBezier2::new(
         Point2::from_values(0, 0),
-        Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+        Point2::new(r!(1 / 2), Real::zero()),
         Point2::from_values(1, 1),
     )
-    .parallel_left((Real::one() / Real::from(2_i8)).unwrap())
+    .parallel_left(r!(1 / 2))
     .unwrap();
     let second = QuadraticBezier2::new(
         Point2::from_values(1, 1),
-        Point2::new(
-            (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-            Real::from(2_i8),
-        ),
+        Point2::new(r!(3 / 2), Real::from(2_i8)),
         Point2::from_values(2, 4),
     )
     .parallel_left(Real::one())
@@ -40318,7 +40053,7 @@ fn direct_parallel_pair_branch(
 
 #[test]
 fn finite_parallel_pair_components_obey_exact_domain_boundaries() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let quarter = &half * &half;
     let first_source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -40464,18 +40199,18 @@ fn finite_parallel_pair_components_obey_exact_domain_boundaries() {
 
 #[test]
 fn zero_distance_parallel_pairs_keep_exterior_contacts() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     let first_range = CurveParameterRange2::new_validated(Real::one().into(), Real::from(3).into());
     let second_range =
         CurveParameterRange2::new_validated(Real::from(2).into(), Real::from(4).into());
     let first_source = QuadraticBezier2::new(
         Point2::from_values(-2, 0),
-        Point2::new(-(Real::from(3) / Real::from(2)).unwrap(), Real::zero()),
+        Point2::new(-r!(3 / 2), Real::zero()),
         Point2::from_values(-1, 0),
     );
     let second_source = QuadraticBezier2::new(
         Point2::from_values(0, -3),
-        Point2::new(Real::zero(), -(Real::from(5) / Real::from(2)).unwrap()),
+        Point2::new(Real::zero(), -r!(5 / 2)),
         Point2::from_values(0, -2),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -41150,7 +40885,7 @@ fn ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact() {
 
 #[test]
 fn ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet() {
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for cached in [false, true] {
             // P(t)=((t-2)^2,0) has unit-chart speed 4-2t. Its left
@@ -41823,7 +41558,7 @@ fn analytic_parallel_point_retains_tangent_displacement_in_one_frame() {
 #[test]
 fn projective_quadratic_conic_inverse_survives_elevation_and_reversal() {
     let selected = algebraic_parameter(vec![
-        -(Real::one() / Real::from(2)).unwrap(),
+        -r!(1 / 2),
         Real::one(),
         Real::zero(),
         Real::zero(),
@@ -41862,7 +41597,7 @@ fn projective_quadratic_conic_inverse_survives_elevation_and_reversal() {
                     let parallel = source.parallel_left(Real::zero()).unwrap();
                     for parameter in [
                         BezierParameter2::Exact(Real::zero()),
-                        BezierParameter2::Exact((Real::one() / Real::from(3)).unwrap()),
+                        BezierParameter2::Exact(r!(1 / 3)),
                         selected.clone(),
                         BezierParameter2::Exact(Real::one()),
                     ] {
@@ -41901,7 +41636,7 @@ fn projective_quadratic_conic_inverse_survives_elevation_and_reversal() {
 
 #[test]
 fn quadratic_conic_inverse_reuses_retained_point_field() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let selected = algebraic_parameter(vec![
         -half,
         Real::one(),
@@ -41972,8 +41707,8 @@ fn quadratic_conic_inverse_reuses_retained_point_field() {
 
 #[test]
 fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
-    let fifth = (Real::one() / Real::from(5)).unwrap();
-    let weight = (Real::one() / Real::from(2)).unwrap().sqrt().unwrap();
+    let fifth = r!(1 / 5);
+    let weight = r!(1 / 2).sqrt().unwrap();
     let source = RationalBezier2::try_new(
         vec![
             Point2::from_values(-1, 0),
@@ -42055,10 +41790,7 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
 fn recursive_parallel_interval_filter_preserves_exact_zeros() {
     let source = QuadraticBezier2::new(
         Point2::from_values(-2, 0),
-        Point2::new(
-            (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-            -Real::one(),
-        ),
+        Point2::new(r!(-3 / 2), -Real::one()),
         Point2::from_values(-1, -1),
     );
     let parallel = source.parallel_left(-Real::one()).unwrap();
@@ -42261,7 +41993,7 @@ fn analytic_predicate_image_keeps_its_native_field_after_scalar_cache_warms() {
     let parameter = algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)]);
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
-        Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+        Point2::new(r!(1 / 2), Real::zero()),
         Point2::from_values(1, 1),
     )
     .parallel_left(Real::zero())
@@ -42402,7 +42134,7 @@ fn unseeded_circle_tangency_reuses_multiplicity_only_on_regular_branches() {
             assert_eq!(contacts[0].0.scalar(), Some(&Real::zero()));
             assert_eq!(contacts[0].1, Some(RealSign::Zero));
         }
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let source = QuadraticBezier2::new(
             Point2::from_values(0, 0),
             Point2::new(half.clone(), Real::zero()),
@@ -42420,10 +42152,7 @@ fn unseeded_circle_tangency_reuses_multiplicity_only_on_regular_branches() {
             .circle_incidence(
                 &Point2::new(Real::one(), half),
                 &Real::one(),
-                &CurveParameterRange2::new_validated(
-                    Real::zero().into(),
-                    (Real::one() / Real::from(4_i8)).unwrap().into(),
-                ),
+                &CurveParameterRange2::new_validated(Real::zero().into(), r!(1 / 4).into()),
                 &[],
                 &policy,
             )
@@ -42892,7 +42621,7 @@ fn chord_normal_recursive_frame_retains_center_and_oriented_unit_normal() {
 
 #[test]
 fn parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let alpha = half.clone().sqrt().unwrap();
     let polynomial = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -43157,7 +42886,7 @@ fn selected_parallel_normal_circle_retains_every_represented_point_exactly() {
         Point2::from_values(2, 1),
     );
     let center_support = source.parallel_left(Real::one()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let center_parameter = BezierParameter2::Exact(half.clone());
     let radius = Real::from(3_i8);
 
@@ -43340,13 +43069,13 @@ fn selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter() {
         Point2::from_values(2, 0),
     );
     let center_support = source.parallel_left(Real::zero()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let center_parameter = BezierParameter2::Exact(half);
     let three = Real::from(3_i8);
     let two = Real::from(2_i8);
     let one = Real::one();
-    let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let three_fifths = r!(3 / 5);
+    let four_fifths = r!(4 / 5);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(center) = center_support
@@ -43437,7 +43166,7 @@ fn selected_parallel_normal_circle_pair_decides_every_concentric_case() {
         Point2::from_values(2, 1),
     );
     let center_support = source.parallel_left(Real::one()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let build = |radius| {
@@ -43487,7 +43216,7 @@ fn selected_parallel_normal_circle_pair_decides_every_concentric_case() {
 
 #[test]
 fn selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (first, second, retained_root) = selected_fiber_quartile_parameters(&policy);
         assert_eq!(
@@ -43530,7 +43259,7 @@ fn selected_fiber_scalar_is_compact_exact_and_ordered_without_a_norm() {
 
 #[test]
 fn incident_selected_fiber_projection_honors_the_requested_resultant_schedule() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -43609,7 +43338,7 @@ fn incident_selected_fiber_projection_honors_the_requested_resultant_schedule() 
 
 #[test]
 fn selected_scalar_promotion_uses_its_finite_isolator() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
     else {
@@ -43658,7 +43387,7 @@ fn selected_scalar_promotion_uses_its_finite_isolator() {
 
 #[test]
 fn selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
     else {
@@ -43743,7 +43472,7 @@ fn selected_norm_isolation_preserves_exterior_exact_and_algebraic_roots() {
 
 #[test]
 fn degenerate_fiber_projection_cannot_discard_an_exterior_selected_root() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let Classification::Decided(polynomial) =
         BezierParameterPolynomial::try_new_power_basis_with_policy(
             vec![Real::one(), -half, Real::from(-2_i8), Real::one()],
@@ -43805,17 +43534,9 @@ fn degenerate_fiber_projection_cannot_discard_an_exterior_selected_root() {
 #[test]
 fn tangent_inverse_retains_exterior_selected_domain_evidence() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let exact = BezierParameter2::Exact((Real::one() / Real::from(4)).unwrap());
-        let algebraic = algebraic_parameter(vec![
-            -(Real::one() / Real::from(2)).unwrap(),
-            Real::zero(),
-            Real::one(),
-        ]);
-        let selected = degree_nine_selected_fiber_parameter_for_test(
-            (Real::one() / Real::from(2)).unwrap(),
-            32_768,
-            &policy,
-        );
+        let exact = BezierParameter2::Exact(r!(1 / 4));
+        let algebraic = algebraic_parameter(vec![-r!(1 / 2), Real::zero(), Real::one()]);
+        let selected = degree_nine_selected_fiber_parameter_for_test(r!(1 / 2), 32_768, &policy);
         let tangent = [vec![Real::zero(), Real::one()], vec![Real::one()]];
         for (source, original) in [
             (
@@ -43893,7 +43614,7 @@ fn tangent_inverse_retains_exterior_selected_domain_evidence() {
 #[test]
 fn finite_circle_tangent_inverse_replays_independent_cuts() {
     use crate::curve_intersection::CurveCircleOverlap2 as Overlap;
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let quarter = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
             Point2::from_values(1, 0),
@@ -44433,7 +44154,7 @@ fn finite_one_field_point_inverse_clips_selected_endpoints_and_evaluates_local_s
 fn compact_point_inverse_parameter(
     policy: &CurveContext,
 ) -> BezierAlgebraicSelectedFiberParameter2 {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(alpha) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -44889,7 +44610,7 @@ fn finite_circle_component_inverse_charts(
         // this active cell. Its denominator changes sign there, so a whole-
         // unit finiteness check would incorrectly reject both exact images.
         let basis = target.homogeneous_power_basis().unwrap();
-        let factor = [(Real::one() / Real::from(2)).unwrap(), -Real::one()];
+        let factor = [r!(1 / 2), -Real::one()];
         let controls: Vec<_> = [&basis.x_numerator, &basis.y_numerator, &basis.weight]
             .into_iter()
             .map(|coefficients| {
@@ -45054,7 +44775,7 @@ fn finite_circle_components_replay_pair_radial_and_recursive_inverses() {
             &finite_chart_unit_quarter(),
             &policy,
         );
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let transform = Similarity2::try_from_real_affine(
             half.clone(),
             Real::zero(),
@@ -45075,7 +44796,7 @@ fn finite_circle_components_replay_pair_radial_and_recursive_inverses() {
 
 #[test]
 fn denominator_sign_excludes_a_pole_outside_selected_bounds() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45135,7 +44856,7 @@ fn denominator_sign_excludes_a_pole_outside_selected_bounds() {
             let Classification::Decided(bounds) = bounds else {
                 panic!("finite bounds must exclude the pole in the outer isolator");
             };
-            for parameter in [Real::from(2), (Real::from(5) / Real::from(2)).unwrap()] {
+            for parameter in [Real::from(2), r!(5 / 2)] {
                 let Classification::Decided(point) =
                     curve.point_at_affine_classified(&parameter, &policy)
                 else {
@@ -45177,7 +44898,7 @@ fn denominator_sign_excludes_a_pole_outside_selected_bounds() {
 
 #[test]
 fn finite_fiber_roots_keep_selected_boundary_ownership() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45240,7 +44961,7 @@ fn finite_fiber_roots_keep_selected_boundary_ownership() {
 
 #[test]
 fn bounded_general_resultant_isolates_only_the_requested_selected_fiber_range() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
     else {
@@ -45255,8 +44976,8 @@ fn bounded_general_resultant_isolates_only_the_requested_selected_fiber_range() 
         Real::from(50_i8),
     ]]);
     let range = BezierParameterRange2::new_validated(
-        BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap()),
-        BezierParameter2::Exact((Real::from(2_i8) / Real::from(3_i8)).unwrap()),
+        BezierParameter2::Exact(r!(1 / 3)),
+        BezierParameter2::Exact(r!(2 / 3)),
     );
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -45285,7 +45006,7 @@ fn bounded_general_resultant_isolates_only_the_requested_selected_fiber_range() 
 
 #[test]
 fn selected_fiber_root_isolation_rejoins_uncapped_depth() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45375,7 +45096,7 @@ fn selected_fiber_root_isolation_rejoins_uncapped_depth() {
 
 #[test]
 fn selected_fiber_predicate_handles_a_retained_root_becoming_exact_after_64_steps() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let retained_value = Real::new(
         hyperreal::Rational::from_bigint_fraction(
             num::BigInt::from(1_u8),
@@ -45471,7 +45192,7 @@ fn selected_fiber_comparison_reuses_high_degree_affine_root_identity() {
         unreachable!()
     };
     let retained = BezierAlgebraicParameter2::from_certified_singleton(polynomial, interval);
-    let scale = (Real::from(3) / Real::from(4)).unwrap();
+    let scale = r!(3 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(mapped) = BezierParameter2::Algebraic(retained.clone())
             .affine_image_unbounded(&scale, &Real::zero(), &policy)
@@ -45485,7 +45206,7 @@ fn selected_fiber_comparison_reuses_high_degree_affine_root_identity() {
             &policy,
         )
         .parameter(IsolatedRootInterval {
-            lower: (Real::one() / Real::from(2)).unwrap(),
+            lower: r!(1 / 2),
             upper: Real::one(),
             exact_root: None,
             distinct_root_count: 1,
@@ -45625,7 +45346,7 @@ fn selected_fiber_chart_uncertainty_preserves_exact_coefficient_replay() {
 
 #[test]
 fn selected_fiber_comparison_accepts_a_newly_represented_root() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
     else {
@@ -45682,8 +45403,8 @@ fn selected_fiber_comparison_accepts_a_newly_represented_root() {
 
 #[test]
 fn selected_fiber_import_and_refinement_retain_the_known_scalar_representation() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45745,7 +45466,7 @@ fn selected_fiber_import_and_refinement_retain_the_known_scalar_representation()
 
 #[test]
 fn selected_fiber_equality_requires_selected_root_containment() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45808,7 +45529,7 @@ fn selected_fiber_equality_requires_selected_root_containment() {
 
 #[test]
 fn selected_fiber_diagonal_identity_preserves_distinct_root_ownership() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -45873,7 +45594,7 @@ fn selected_fiber_diagonal_identity_preserves_distinct_root_ownership() {
 
 #[test]
 fn selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let epsilon = Real::new(
         hyperreal::Rational::from_bigint_fraction(
             num::BigInt::from(1_u8),
@@ -45957,7 +45678,7 @@ fn selected_fiber_predicate_sign_refines_past_the_policy_terminal_under_strict()
 
 #[test]
 fn selected_norm_carriers_exclude_foreign_endpoint_roots() {
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let alpha = half.clone().sqrt().unwrap();
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
@@ -46071,11 +45792,7 @@ fn selected_norm_carriers_exclude_foreign_endpoint_roots() {
 
 #[test]
 fn selected_norm_carriers_preserve_repeated_interior_roots() {
-    let defining = vec![
-        -(Real::one() / Real::from(2)).unwrap(),
-        Real::zero(),
-        Real::one(),
-    ];
+    let defining = vec![-r!(1 / 2), Real::zero(), Real::one()];
     let selected = algebraic_parameter(defining.clone());
     let BezierParameter2::Algebraic(retained) = &selected else {
         panic!("the selected identity fiber has an irrational source root");
@@ -46198,7 +45915,7 @@ fn selected_norm_carriers_preserve_repeated_interior_roots() {
 
 #[test]
 fn selected_fiber_norm_isolation_refines_past_the_old_limit() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let alpha = half.clone().sqrt().unwrap();
     let BezierParameter2::Algebraic(retained) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
@@ -46304,7 +46021,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
     };
     assert_eq!(folded.exact_point_witness(), Some(&Real::pi()));
 
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let dyadic = |bits| {
         Real::new(
             hyperreal::Rational::from_bigint_fraction(
@@ -46577,7 +46294,7 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
 
 #[test]
 fn resource_blocked_selected_analytic_point_materializes_at_cold_boundary() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
     )
@@ -46615,9 +46332,9 @@ fn resource_blocked_selected_analytic_point_materializes_at_cold_boundary() {
 
 #[test]
 fn correlated_degree_fifteen_selected_square_speed_points_reduce_locally() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-    let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+    let half = r!(1 / 2);
+    let three_fifths = r!(3 / 5);
+    let four_fifths = r!(4 / 5);
     let mut control_points = vec![Point2::new(three_fifths.clone(), four_fifths.clone()); 15];
     control_points.push(Point2::new(
         &three_fifths + Real::from(32_768_i32),
@@ -46636,12 +46353,7 @@ fn correlated_degree_fifteen_selected_square_speed_points_reduce_locally() {
             parameter_representation(&parameter.data.authority.data.retained_parameter, &policy);
         for (distance, tangent_distance, translation_x, translation_y) in [
             (Real::zero(), Real::zero(), Real::zero(), Real::zero()),
-            (
-                (Real::from(2_i8) / Real::from(7_i8)).unwrap(),
-                (Real::one() / Real::from(3_i8)).unwrap(),
-                (Real::one() / Real::from(11_i8)).unwrap(),
-                (Real::from(-1_i8) / Real::from(13_i8)).unwrap(),
-            ),
+            (r!(2 / 7), r!(1 / 3), r!(1 / 11), r!(-1 / 13)),
         ] {
             let point = BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
                 source.clone().parallel_left(distance.clone()).unwrap(),
@@ -46696,7 +46408,7 @@ fn correlated_degree_fifteen_selected_square_speed_points_reduce_locally() {
 
 #[test]
 fn correlated_degree_fifteen_nonsquare_speed_points_project_final_images() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let control_points = (0_i64..=15)
         .map(|index| {
             let x = (Real::from(index) / Real::from(15_i8)).unwrap();
@@ -46716,7 +46428,7 @@ fn correlated_degree_fifteen_nonsquare_speed_points_project_final_images() {
         let point = BezierAnalyticParallelPoint2::new_with_tangent_distance_parameter(
             source.clone().parallel_left(Real::one()).unwrap(),
             BezierAnalyticParallelPointParameter2::SelectedFiber(parameter),
-            (Real::one() / Real::from(3_i8)).unwrap(),
+            r!(1 / 3),
             &policy,
         );
         let outcome = crate::policy::resolve_certified_operation(&policy, |attempt| {
@@ -46761,7 +46473,7 @@ fn correlated_degree_fifteen_nonsquare_speed_points_project_final_images() {
 
 #[test]
 fn selected_fiber_affine_chart_round_trip_avoids_global_projection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter =
             degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
@@ -46777,7 +46489,7 @@ fn selected_fiber_affine_chart_round_trip_avoids_global_projection() {
             mapped.promoted_bezier_parameter(&policy).unwrap(),
             Classification::Uncertain(_)
         ));
-        let inverse_scale = (Real::one() / Real::from(2_i8)).unwrap();
+        let inverse_scale = r!(1 / 2);
         let inverse_offset = inverse_scale.clone();
         let Classification::Decided(restored) = mapped
             .affine_image_unbounded(&inverse_scale, &inverse_offset, &policy)
@@ -46805,9 +46517,7 @@ fn selected_fiber_affine_chart_round_trip_avoids_global_projection() {
             panic!("a pole-free reversed projective chart must decide exactly");
         };
         assert_eq!(
-            reversed
-                .order_to_real(&(Real::from(2_i8) / Real::from(3_i8)).unwrap(), &policy,)
-                .unwrap(),
+            reversed.order_to_real(&r!(2 / 3), &policy,).unwrap(),
             Classification::Decided(std::cmp::Ordering::Greater),
         );
         let Classification::Decided(reversed_round_trip) = reversed
@@ -46831,7 +46541,7 @@ fn selected_fiber_affine_chart_round_trip_avoids_global_projection() {
 
 #[test]
 fn selected_fiber_projective_chart_round_trip_avoids_global_projection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter =
             degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
@@ -46868,7 +46578,7 @@ fn selected_fiber_projective_chart_round_trip_avoids_global_projection() {
 
 #[test]
 fn common_scalar_gap_refines_mixed_native_parameters_without_projection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let radical = half.clone().sqrt().unwrap();
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
@@ -46999,8 +46709,8 @@ fn common_scalar_gap_refines_mixed_native_parameters_without_projection() {
 
 #[test]
 fn selected_fiber_distinct_fields_order_before_bounded_global_projection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = degree_nine_selected_fiber_parameter_for_test(half.clone(), 32_768, &policy);
         let second = degree_nine_selected_fiber_parameter_for_test(third.clone(), 64, &policy);
@@ -47036,7 +46746,7 @@ fn selected_fiber_distinct_fields_order_before_bounded_global_projection() {
 
 #[test]
 fn selected_fiber_distinct_field_equality_uses_only_the_512_bit_terminal() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let one_over_1024 = (Real::one() / Real::from(1_024_i16)).unwrap();
 
     let strict_first =
@@ -47178,7 +46888,7 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
             )
             .unwrap();
 
-            let distance = (Real::one() / Real::from(10_i8)).unwrap();
+            let distance = r!(1 / 10);
             let split_offset = split_region
                 .offset_with_policy(distance.clone(), &OffsetCornerStyle2::Round, &policy)
                 .expect("selected Boolean-only cuts must offset through the retained carrier");
@@ -47227,7 +46937,7 @@ fn selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate
         Point2::from_values(2, 1),
     );
     let center_support = source.parallel_left(Real::one()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let Classification::Decided(Some(circle)) =
         BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
             center_support.clone(),
@@ -47262,7 +46972,7 @@ fn selected_parallel_normal_circle_uses_direct_exact_winding() {
     )
     .parallel_left(Real::zero())
     .unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(circle)) =
@@ -47356,8 +47066,8 @@ fn selected_parallel_contact_map_orders_the_exact_angular_parameter() {
     )
     .parallel_left(Real::zero())
     .unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let three_quarters = &half + &quarter;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -47683,11 +47393,7 @@ fn recursive_local_isolation_reuses_exact_signs_below_interval_precision() {
     // witness still proves positivity, including under APPROXIMATE_512.
     assert!(value.bounded_interval_sign(0..=512).is_none());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        for gauge in [
-            Real::one(),
-            (Real::from(-7_i8) / Real::from(97_i8)).unwrap(),
-            -Real::pi(),
-        ] {
+        for gauge in [Real::one(), r!(-7 / 97), -Real::pi()] {
             // g * (t - 2^-600 * sqrt(2)) has precisely this one positive
             // root. A negative gauge must preserve the same selection;
             // the pi gauge also prevents rational-content normalization
@@ -47731,7 +47437,7 @@ fn recursive_local_isolation_reuses_exact_signs_below_interval_precision() {
 
 #[test]
 fn recursive_parameter_projection_preserves_roots_through_refinement_and_charts() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let one = DenseTensorPolynomial::try_new(vec![], vec![Real::one()]).unwrap();
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     let large = Real::from(2_i8).powi_i64(1024).unwrap() + Real::from(17_i8);
@@ -48159,8 +47865,8 @@ fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
         Point2::from_values(2, 1),
     );
     let center_support = source.parallel_left(Real::one()).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let root_five = Real::from(5_i8).sqrt().unwrap();
     let inverse_speed = (Real::one() / root_five).unwrap();
     let center_x = Real::one() - &inverse_speed;
@@ -48248,7 +47954,7 @@ fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
 
 #[test]
 fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let root_three_half = (Real::from(3_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
     let support = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
@@ -48415,8 +48121,8 @@ fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fibe
     )
     .parallel_left(Real::zero())
     .unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(polynomial) =
@@ -48552,7 +48258,7 @@ fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fibe
 
 #[test]
 fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
     )
@@ -48920,7 +48626,7 @@ fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
             vec![CurveBoundaryInteriorSide2::Left],
         )
         .unwrap();
-        let setback = (Real::one() / Real::from(16_i8)).unwrap();
+        let setback = r!(1 / 16);
         let chamfers = region
             .chamfer_loop_vertex_by_setbacks_with_policy(
                 0,
@@ -49104,7 +48810,7 @@ fn weighted_selected_center_tangent_line_stays_recursive() {
 
 #[test]
 fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let center = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let center_source = bezier_parameter_root_representation(&center);
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()])
@@ -49119,7 +48825,7 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
     )
     .parallel_left(Real::zero())
     .unwrap();
-    let setback = (Real::one() / Real::from(16_i8)).unwrap();
+    let setback = r!(1 / 16);
     let setback_squared = &setback * &setback;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -49127,10 +48833,10 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
             curved_source_parallel.clone(),
             QuadraticBezier2::new(
                 Point2::from_values(0, 0),
-                Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::zero()),
+                Point2::new(r!(1 / 2), Real::zero()),
                 Point2::from_values(2, 0),
             )
-            .parallel_left((Real::one() / Real::from(4_i8)).unwrap())
+            .parallel_left(r!(1 / 4))
             .unwrap(),
         ] {
             let field = RecursiveQuadraticField::base(
@@ -49323,9 +49029,9 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
 
 #[test]
 fn selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fiber() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let one_third = (Real::one() / Real::from(3_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let one_third = r!(1 / 3);
+    let quarter = r!(1 / 4);
     // x(t)=t+t^2 and alpha^2+alpha=1/2 make the selected
     // algebraic frame's Cartesian center exactly (1/2, 0). The retained
     // alpha remains genuinely algebraic, so the coincident rational
@@ -49499,10 +49205,7 @@ fn selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fibe
         };
         assert_eq!(
             point.same_point(
-                &CurvePoint2::from(Point2::new(
-                    -(Real::one() / Real::from(10_i8)).unwrap(),
-                    (Real::from(4_i8) / Real::from(5_i8)).unwrap(),
-                )),
+                &CurvePoint2::from(Point2::new(-r!(1 / 10), r!(4 / 5),)),
                 &policy,
             ),
             Classification::Decided(true),
@@ -49612,8 +49315,8 @@ fn selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fibe
 
 #[test]
 fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let source = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -49721,7 +49424,7 @@ fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
 
 #[test]
 fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -50078,7 +49781,7 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
                 limit: Real::from(4_i8),
             },
         ] {
-            let distance = (Real::one() / Real::from(10_i8)).unwrap();
+            let distance = r!(1 / 10);
             let selected_offset = selected_region
                 .offset_with_policy(distance.clone(), &style, &policy)
                 .unwrap_or_else(|error| {
@@ -50238,7 +49941,7 @@ fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_compone
 
 #[test]
 fn selected_parallel_normal_incident_circle_selects_the_positive_speed_component() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // x(u)=u+u^2 and alpha^2+alpha=1/2 retain a genuinely
     // algebraic selected center at (1/2, 0).
     let support = QuadraticBezier2::new(
@@ -50329,8 +50032,8 @@ fn selected_parallel_normal_incident_circle_selects_the_positive_speed_component
 
 #[test]
 fn selected_source_range_retains_incident_endpoint_and_contacts_locally() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     // P(u)=(u,0). The unit circle centered at u=1/4+2s meets
     // [2s,2s+2] once, at u=5/4+2s, including exterior source ranges.
     let support = QuadraticBezier2::new(
@@ -50438,7 +50141,7 @@ fn selected_source_range_retains_incident_endpoint_and_contacts_locally() {
 
 #[test]
 fn selected_fiber_interval_supports_exact_and_nonexact_exterior_roots() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let three_halves = &Real::from(3_i8) * &half;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // Retain alpha=1/2 as algebraic construction evidence. Refinement
@@ -50533,7 +50236,7 @@ fn selected_fiber_interval_supports_exact_and_nonexact_exterior_roots() {
 
 #[test]
 fn selected_polynomial_image_saturates_a_foreign_repeated_source_component() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let image = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::one()],
         vec![Real::from(-1_i8), Real::one()],
@@ -50592,7 +50295,7 @@ fn selected_polynomial_image_saturates_a_foreign_repeated_source_component() {
 
 #[test]
 fn selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_components() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(center) =
         algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
     else {
@@ -50631,12 +50334,10 @@ fn selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_co
         product: zero.clone(),
         center: zero.clone(),
         candidate: one.clone(),
-        rational: BivariatePolynomial::new(vec![vec![
-            -(Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-        ]]),
+        rational: BivariatePolynomial::new(vec![vec![-r!(3 / 2)]]),
     };
     let square_range = BezierParameterRange2::from_exact(Real::from(2_i8), Real::from(3_i8));
-    let square_contact = (Real::from(5_i8) / Real::from(2_i8)).unwrap();
+    let square_contact = r!(5 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
@@ -50738,7 +50439,7 @@ fn selected_parallel_normal_positive_dimensional_projection_rejects_conjugate_co
 
 #[test]
 fn selected_fiber_positive_dimensional_projection_reports_authored_continuum() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
     let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
     let target = QuadraticBezier2::from_line_segment(
@@ -50801,29 +50502,14 @@ fn selected_fiber_positive_dimensional_projection_reports_authored_continuum() {
 
 #[test]
 fn algebraic_center_fixed_distance_projects_complete_high_degree_fiber() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let target = RationalBezier2::try_new(
         vec![
-            Point2::new(
-                (Real::from(-7_i8) / Real::from(10_i8)).unwrap(),
-                (Real::from(-13_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(-9_i8) / Real::from(20_i8)).unwrap(),
-                (Real::from(-8_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(3_i8) / Real::from(10_i8)).unwrap(),
-                (Real::one() / Real::from(15_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(51_i8) / Real::from(20_i8)).unwrap(),
-                (Real::from(12_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(93_i8) / Real::from(10_i8)).unwrap(),
-                (Real::from(27_i8) / Real::from(5_i8)).unwrap(),
-            ),
+            Point2::new(r!(-7 / 10), r!(-13 / 5)),
+            Point2::new(r!(-9 / 20), r!(-8 / 5)),
+            Point2::new(r!(3 / 10), r!(1 / 15)),
+            Point2::new(r!(51 / 20), r!(12 / 5)),
+            Point2::new(r!(93 / 10), r!(27 / 5)),
         ],
         vec![Real::one(); 5],
     )
@@ -50831,7 +50517,7 @@ fn algebraic_center_fixed_distance_projects_complete_high_degree_fiber() {
     .parallel_left(Real::one())
     .unwrap();
     let center = algebraic_parameter(vec![-half, Real::one(), Real::one()]);
-    let setback = (Real::one() / Real::from(100_i8)).unwrap();
+    let setback = r!(1 / 100);
     let radius_squared = &setback * &setback;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let incidence = target
@@ -50853,7 +50539,7 @@ fn algebraic_center_fixed_distance_projects_complete_high_degree_fiber() {
 
 #[test]
 fn fixed_distance_retains_selected_candidates_in_both_range_orientations() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let quarter = &half * &half;
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -50867,7 +50553,7 @@ fn fixed_distance_retains_selected_candidates_in_both_range_orientations() {
     // their selected fibers local, so reversing the search interval
     // must not discard them through an ascending-only scalar filter.
     let mut coefficients = vec![Real::zero(); 12];
-    coefficients[0] = -(Real::one() / Real::from(4096_i32)).unwrap();
+    coefficients[0] = -r!(1 / 4096);
     coefficients[11] = Real::one();
     let center = CurveParameter2::from(algebraic_parameter(coefficients));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -50932,7 +50618,7 @@ fn fixed_distance_retains_selected_candidates_in_both_range_orientations() {
 
 #[test]
 fn algebraic_center_fixed_distance_covers_adjacent_and_incident_ray() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // P(t)=(t^2,t) is regular everywhere. For alpha^2=1/2, the
     // fixed-distance circle centered at P(alpha) with r^2=2 contains
     // P(-alpha), strictly beyond the decreasing endpoint ray.
@@ -50983,7 +50669,7 @@ fn algebraic_center_fixed_distance_covers_adjacent_and_incident_ray() {
 
 #[test]
 fn algebraic_center_fixed_distance_stops_before_speed_barrier() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // P(t)=(t^2,0) has its first decreasing speed barrier at t=0.
     // The unit-distance mate t=-sqrt(3/2) is therefore on a different
     // regular component and must not leak into endpoint extension.
@@ -51015,7 +50701,7 @@ fn algebraic_center_fixed_distance_stops_before_speed_barrier() {
 
 #[test]
 fn selected_fiber_center_retains_nonlinear_fixed_distance_incident_cut() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let setback = Real::from(2_i8).sqrt().unwrap();
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
@@ -51081,8 +50767,8 @@ fn selected_fiber_center_retains_nonlinear_fixed_distance_incident_cut() {
 
 #[test]
 fn high_degree_quadratic_selected_center_stays_local_on_nonlinear_carrier() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let setback = (Real::one() / Real::from(10_i8)).unwrap();
+    let half = r!(1 / 2);
+    let setback = r!(1 / 10);
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(Real::zero(), half.clone()),
@@ -51121,7 +50807,7 @@ fn high_degree_quadratic_selected_center_stays_local_on_nonlinear_carrier() {
 
 #[test]
 fn selected_fiber_pair_tangent_correlation_stays_in_degree_130_local_field() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // The retained base has degree 65 and each selected fiber is
     // quadratic, so either ordinary scalar projection has degree 130.
     // The authored equation (v-u)^2 has an even contact and defeats the
@@ -51187,7 +50873,7 @@ fn selected_fiber_pair_tangent_correlation_stays_in_degree_130_local_field() {
 
 #[test]
 fn selected_fiber_pair_subresultant_rejects_foreign_image_conjugate() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tangent = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::zero(), Real::one()],
         vec![Real::zero(), Real::from(-2_i8)],
@@ -51245,7 +50931,7 @@ fn selected_fiber_pair_subresultant_rejects_foreign_image_conjugate() {
 
 #[test]
 fn selected_fiber_pair_correlation_deflates_repeated_fibers() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tangent = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::zero(), Real::one()],
         vec![Real::zero(), Real::from(-2_i8)],
@@ -51309,7 +50995,7 @@ fn selected_fiber_pair_correlation_deflates_repeated_fibers() {
 
 #[test]
 fn selected_fiber_deflation_excludes_foreign_critical_roots() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(alpha) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -51357,14 +51043,14 @@ fn selected_fiber_deflation_excludes_foreign_critical_roots() {
 
 #[test]
 fn selected_fiber_center_replays_nonlinear_two_normal_fixed_distance() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let setback = (Real::from(17_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
     let parallel = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(Real::zero(), half.clone()),
         Point2::from_values(2, 1),
     )
-    .parallel_left((Real::from(3_i8) / Real::from(4_i8)).unwrap())
+    .parallel_left(r!(3 / 4))
     .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -51518,7 +51204,7 @@ fn selected_fiber_fixed_distance_descends_from_conjugate_circle_component() {
 
 #[test]
 fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let exact_support = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
     )
@@ -51537,18 +51223,9 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
     // (3,4), and therefore has unit left normal (-4/5,3/5). Its unit
     // left parallel meets the selected circle at (-1/2,0) transversely.
     let target = QuadraticBezier2::new(
-        Point2::new(
-            (Real::from(-7_i8) / Real::from(10_i8)).unwrap(),
-            (Real::from(-13_i8) / Real::from(5_i8)).unwrap(),
-        ),
-        Point2::new(
-            (Real::from(-1_i8) / Real::from(5_i8)).unwrap(),
-            (Real::from(-3_i8) / Real::from(5_i8)).unwrap(),
-        ),
-        Point2::new(
-            (Real::from(23_i8) / Real::from(10_i8)).unwrap(),
-            (Real::from(7_i8) / Real::from(5_i8)).unwrap(),
-        ),
+        Point2::new(r!(-7 / 10), r!(-13 / 5)),
+        Point2::new(r!(-1 / 5), r!(-3 / 5)),
+        Point2::new(r!(23 / 10), r!(7 / 5)),
     )
     .parallel_left(Real::one())
     .unwrap();
@@ -51557,26 +51234,11 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
     // the source regular on the complete unit interval.
     let reparameterized_target = RationalBezier2::try_new(
         vec![
-            Point2::new(
-                (Real::from(-7_i8) / Real::from(10_i8)).unwrap(),
-                (Real::from(-13_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(-9_i8) / Real::from(20_i8)).unwrap(),
-                (Real::from(-8_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(3_i8) / Real::from(10_i8)).unwrap(),
-                (Real::one() / Real::from(15_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(51_i8) / Real::from(20_i8)).unwrap(),
-                (Real::from(12_i8) / Real::from(5_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(93_i8) / Real::from(10_i8)).unwrap(),
-                (Real::from(27_i8) / Real::from(5_i8)).unwrap(),
-            ),
+            Point2::new(r!(-7 / 10), r!(-13 / 5)),
+            Point2::new(r!(-9 / 20), r!(-8 / 5)),
+            Point2::new(r!(3 / 10), r!(1 / 15)),
+            Point2::new(r!(51 / 20), r!(12 / 5)),
+            Point2::new(r!(93 / 10), r!(27 / 5)),
         ],
         vec![Real::one(); 5],
     )
@@ -51707,7 +51369,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
                 &exact_center_circle,
                 reparameterized_contact_evidence.cusp_parameter(),
                 exact_center_circle.radial_distance().clone(),
-                (Real::one() / Real::from(10_i8)).unwrap(),
+                r!(1 / 10),
                 false,
                 &policy,
             )
@@ -51792,11 +51454,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
         #[cfg(feature = "dispatch-trace")]
         hyperreal::dispatch_trace::reset();
         let transverse_offset_work = || {
-            transverse_region.offset_with_policy(
-                (Real::one() / Real::from(10_i8)).unwrap(),
-                &OffsetCornerStyle2::Round,
-                &policy,
-            )
+            transverse_region.offset_with_policy(r!(1 / 10), &OffsetCornerStyle2::Round, &policy)
         };
         #[cfg(feature = "dispatch-trace")]
         let transverse_offset = hyperreal::dispatch_trace::with_recording(transverse_offset_work);
@@ -51863,7 +51521,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
                 "the selected-normal route must not construct the superseded represented chord-normal frame: {transverse_offset_trace:?}",
             );
         }
-        let setback = (Real::one() / Real::from(100_i8)).unwrap();
+        let setback = r!(1 / 100);
         let fillet = transverse_region
             .fillet_loop_vertex_with_policy(
                 0,
@@ -51964,7 +51622,7 @@ fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one
 
 #[test]
 fn algebraic_selected_fiber_incident_chart_preserves_affine_authority() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let BezierParameter2::Algebraic(retained_parameter) =
         algebraic_parameter(vec![-half, Real::zero(), Real::one()])
     else {
@@ -51995,7 +51653,7 @@ fn algebraic_selected_fiber_incident_chart_preserves_affine_authority() {
             Classification::Decided(BezierParameter2::Exact(Real::from(2_i8))),
         );
 
-        let barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+        let barrier = BezierParameter2::Exact(r!(3 / 2));
         assert!(matches!(
             selected_fiber_parameters_on_incident_ray(
                 &incidence,
@@ -52014,7 +51672,7 @@ fn algebraic_selected_fiber_incident_chart_preserves_affine_authority() {
 #[test]
 #[ignore = "long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build"]
 fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -52023,18 +51681,9 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
     .parallel_left(Real::zero())
     .unwrap();
     let target = QuadraticBezier2::new(
-        Point2::new(
-            (Real::from(-7_i8) / Real::from(10_i8)).unwrap(),
-            (Real::from(-13_i8) / Real::from(5_i8)).unwrap(),
-        ),
-        Point2::new(
-            (Real::from(-1_i8) / Real::from(5_i8)).unwrap(),
-            (Real::from(-3_i8) / Real::from(5_i8)).unwrap(),
-        ),
-        Point2::new(
-            (Real::from(23_i8) / Real::from(10_i8)).unwrap(),
-            (Real::from(7_i8) / Real::from(5_i8)).unwrap(),
-        ),
+        Point2::new(r!(-7 / 10), r!(-13 / 5)),
+        Point2::new(r!(-1 / 5), r!(-3 / 5)),
+        Point2::new(r!(23 / 10), r!(7 / 5)),
     )
     .parallel_left(Real::one())
     .unwrap();
@@ -52105,8 +51754,8 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
         // range discards unrelated full-carrier projection roots before
         // their expensive selected-branch replay while keeping t=1/2
         // strictly interior.
-        let target_start_parameter = (Real::from(83_i16) / Real::from(190_i16)).unwrap();
-        let target_end_parameter = (Real::from(389_i16) / Real::from(684_i16)).unwrap();
+        let target_start_parameter = r!(83 / 190);
+        let target_end_parameter = r!(389 / 684);
         let Classification::Decided(target_fragment) = BezierParallelFragment2::try_new(
             target.clone(),
             BezierParameterRange2::new_validated(
@@ -52197,7 +51846,7 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
 
 #[test]
 fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -52274,7 +51923,7 @@ fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
             panic!("the algebraic selected circle must construct");
         };
         let second_half = first_half.complementary_half();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let three_quarters = &half + &quarter;
         let partial_first_half = |start: Real, end: Real| {
             let Classification::Decided(fragment) =
@@ -52360,7 +52009,7 @@ fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
 
 #[test]
 fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
         Point2::from_values(0, 0),
         Point2::new(half.clone(), Real::zero()),
@@ -52441,7 +52090,7 @@ fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
             panic!("the algebraic selected circle must construct");
         };
         let second_half = first_half.complementary_half();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let three_quarters = &half + &quarter;
         let partial_first_half = |start: Real, end: Real| {
             let Classification::Decided(fragment) =
@@ -52541,7 +52190,7 @@ fn exact_parallel_similarity_transports_points_derivatives_and_structure() {
         Point2::from_values(1, 2),
         Point2::from_values(3, 1),
     );
-    let distance = (Real::one() / Real::from(2_i8)).unwrap();
+    let distance = r!(1 / 2);
     let parallel = source.parallel_left(distance).unwrap();
     let transform = Similarity2::try_from_real_affine(
         Real::zero(),
@@ -52559,7 +52208,7 @@ fn exact_parallel_similarity_transports_points_derivatives_and_structure() {
         BezierParallelSource2::Quadratic(_)
     ));
 
-    let parameter = (Real::one() / Real::from(3_i8)).unwrap();
+    let parameter = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(source_point) =
             parallel.point_at_with_policy(&parameter, &policy).unwrap()
@@ -52624,7 +52273,7 @@ fn exact_parallel_reflection_negates_scaled_left_distance() {
     };
     assert!(transformed_source.retained_exact_line_image().is_some());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let Classification::Decided(point) = parallel.point_at_with_policy(&half, &policy).unwrap()
         else {
             panic!("source line parallel point became uncertain");
@@ -52693,14 +52342,8 @@ fn rational_component_domain_clips_increasing_and_decreasing_maps_exactly() {
         let [(increasing, std::cmp::Ordering::Less)] = increasing.domains.as_slice() else {
             panic!("increasing map did not produce one increasing domain");
         };
-        assert_eq!(
-            increasing.retained_start.scalar(),
-            Some(&(Real::one() / Real::from(4_i8)).unwrap())
-        );
-        assert_eq!(
-            increasing.retained_end.scalar(),
-            Some(&(Real::from(3_i8) / Real::from(4_i8)).unwrap())
-        );
+        assert_eq!(increasing.retained_start.scalar(), Some(&r!(1 / 4)));
+        assert_eq!(increasing.retained_end.scalar(), Some(&r!(3 / 4)));
         assert_eq!(increasing.lifted_start.scalar(), Some(&Real::zero()));
         assert_eq!(increasing.lifted_end.scalar(), Some(&Real::one()));
 
@@ -52727,14 +52370,8 @@ fn rational_component_domain_clips_increasing_and_decreasing_maps_exactly() {
         let [(decreasing, std::cmp::Ordering::Greater)] = decreasing.domains.as_slice() else {
             panic!("decreasing map did not produce one decreasing domain");
         };
-        assert_eq!(
-            decreasing.retained_start.scalar(),
-            Some(&(Real::one() / Real::from(4_i8)).unwrap())
-        );
-        assert_eq!(
-            decreasing.retained_end.scalar(),
-            Some(&(Real::from(3_i8) / Real::from(4_i8)).unwrap())
-        );
+        assert_eq!(decreasing.retained_start.scalar(), Some(&r!(1 / 4)));
+        assert_eq!(decreasing.retained_end.scalar(), Some(&r!(3 / 4)));
         assert_eq!(decreasing.lifted_start.scalar(), Some(&Real::one()));
         assert_eq!(decreasing.lifted_end.scalar(), Some(&Real::zero()));
     }
@@ -52807,7 +52444,7 @@ fn rational_component_domains_split_noninjective_and_pole_separated_maps() {
         else {
             panic!("noninjective map did not produce two oriented domains");
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         assert_eq!(ascending.retained_start.scalar(), Some(&Real::zero()));
         assert_eq!(ascending.retained_end.scalar(), Some(&half));
         assert_eq!(ascending.lifted_start.scalar(), Some(&Real::zero()));
@@ -52817,7 +52454,7 @@ fn rational_component_domains_split_noninjective_and_pole_separated_maps() {
         assert_eq!(descending.lifted_start.scalar(), Some(&Real::one()));
         assert_eq!(descending.lifted_end.scalar(), Some(&Real::zero()));
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let pole_split = parameter_lift_map(
             vec![-quarter.clone(), Real::one()],
             vec![Real::from(-1_i8), Real::from(2_i8)],
@@ -52844,7 +52481,7 @@ fn rational_component_domains_split_noninjective_and_pole_separated_maps() {
         else {
             panic!("pole-separated map did not retain both finite branches");
         };
-        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let three_quarters = r!(3 / 4);
         assert_eq!(first.retained_start.scalar(), Some(&Real::zero()));
         assert_eq!(first.retained_end.scalar(), Some(&quarter));
         assert_eq!(first.lifted_start.scalar(), Some(&quarter));
@@ -52882,10 +52519,7 @@ fn rational_component_domains_retain_isolated_closed_square_touches() {
         let [point] = partition.isolated_points.as_slice() else {
             panic!("isolated component touch was not retained exactly once");
         };
-        assert_eq!(
-            point.retained_parameter.scalar(),
-            Some(&(Real::one() / Real::from(2_i8)).unwrap())
-        );
+        assert_eq!(point.retained_parameter.scalar(), Some(&r!(1 / 2)));
         assert_eq!(point.lifted_parameter.scalar(), Some(&Real::zero()));
     }
 }
@@ -52893,9 +52527,8 @@ fn rational_component_domains_retain_isolated_closed_square_touches() {
 #[test]
 fn rational_component_range_checks_reject_only_relevant_roots() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let quarter = BezierParameter2::Exact((Real::one() / Real::from(4_i8)).unwrap());
-        let three_quarters =
-            BezierParameter2::Exact((Real::from(3_i8) / Real::from(4_i8)).unwrap());
+        let quarter = BezierParameter2::Exact(r!(1 / 4));
+        let three_quarters = BezierParameter2::Exact(r!(3 / 4));
         assert_eq!(
             polynomial_is_rootless_on_parameter_range(
                 &[Real::from(-1_i8), Real::from(10_i8)],
@@ -53004,7 +52637,7 @@ fn rational_component_certificate_replays_equations_branch_and_poles() {
         let [overlap] = vanishing.overlaps.as_ref() else {
             panic!("the positive half of the rational component was not retained");
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         assert_eq!(
             overlap.first_range().scalar_endpoints(),
             Some((&half, &Real::one()))
@@ -53046,7 +52679,7 @@ fn rational_component_certificate_replays_equations_branch_and_poles() {
         };
         assert_eq!(
             overlap.first_range().scalar_endpoints(),
-            Some((&Real::zero(), &(Real::one() / Real::from(3_i8)).unwrap()))
+            Some((&Real::zero(), &r!(1 / 3)))
         );
         assert_eq!(
             overlap.second_range().scalar_endpoints(),
@@ -53061,7 +52694,7 @@ fn parallel_pair_component_selector_owns_a_selected_tangent_event() {
         vec![Real::zero(), Real::one()],
         vec![Real::from(-1_i8)],
     ]);
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let tangent_cross = BivariatePolynomial::new(vec![vec![-half.clone()], vec![Real::one()]]);
     for (norm_residual, event_is_selected) in [(Real::from(-1_i8), true), (Real::one(), false)] {
         let system = BezierParallelPairEquationSystem2 {
@@ -53146,7 +52779,7 @@ fn parallel_self_component_selector_keeps_one_ordered_half() {
         second_distance_sign: RealSign::Positive,
         weight_product: BivariatePolynomial::new(vec![vec![Real::one()]]),
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let config = CurveIntersectionResultantConfig {
             min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
@@ -53253,16 +52886,13 @@ fn parallel_pair_selector_splits_a_reducible_boundary_factor() {
                 assert!(evidence.overlaps.iter().any(|overlap| {
                     overlap.orientation() == CurveOverlapOrientation2::Reversed
                         && overlap.second_range().scalar_endpoints()
-                            == Some((
-                                &Real::one(),
-                                &(Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-                            ))
+                            == Some((&Real::one(), &r!(3 / 4)))
                 }));
                 if expected_overlaps == 2 {
                     assert!(evidence.overlaps.iter().any(|overlap| {
                         overlap.orientation() == CurveOverlapOrientation2::Same
                             && overlap.second_range().scalar_endpoints()
-                                == Some((&Real::zero(), &(Real::one() / Real::from(4_i8)).unwrap()))
+                                == Some((&Real::zero(), &r!(1 / 4)))
                     }));
                 }
             }
@@ -53859,8 +53489,8 @@ fn incident_component_charts_clip_exact_regular_barriers() {
         vec![Real::from(-1_i8)],
     ]);
     let system = positive_component_selector_system(&support_before_barriers);
-    let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
-    let second_barrier = BezierParameter2::Exact((Real::from(-1_i8) / Real::from(2_i8)).unwrap());
+    let first_barrier = BezierParameter2::Exact(r!(3 / 2));
+    let second_barrier = BezierParameter2::Exact(r!(-1 / 2));
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -53937,7 +53567,7 @@ fn incident_component_charts_clip_exact_regular_barriers() {
         assert!(!excluded.has_components());
         assert!(excluded.selected_pairs.is_empty());
 
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for axis_support in [
             BivariatePolynomial::new(vec![vec![-half.clone()], vec![Real::one()]]),
             BivariatePolynomial::new(vec![vec![-half, Real::one()]]),
@@ -54179,7 +53809,7 @@ fn incident_component_charts_transport_an_isolated_selected_event() {
         second_distance_sign: RealSign::Positive,
         weight_product: BivariatePolynomial::new(vec![vec![Real::one()]]),
     };
-    let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+    let first_barrier = BezierParameter2::Exact(r!(3 / 2));
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -54400,10 +54030,10 @@ fn incident_constraint_retains_isolated_roots_after_component_analysis() {
         vec![Real::one(), Real::one()],
         vec![Real::from(-1_i8)],
     ]);
-    let five_quarters = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+    let five_quarters = r!(5 / 4);
     let constraint =
         BivariatePolynomial::new(vec![vec![-five_quarters.clone()], vec![Real::one()]]);
-    let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+    let first_barrier = BezierParameter2::Exact(r!(3 / 2));
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -54452,12 +54082,7 @@ fn incident_constraint_retains_isolated_roots_after_component_analysis() {
             parallel_parameters,
             vec![BezierParameter2::Exact(five_quarters.clone())],
         );
-        assert_eq!(
-            other_parameters,
-            vec![BezierParameter2::Exact(
-                (Real::one() / Real::from(4_i8)).unwrap(),
-            )],
-        );
+        assert_eq!(other_parameters, vec![BezierParameter2::Exact(r!(1 / 4),)],);
     }
 }
 
@@ -54535,10 +54160,7 @@ fn incident_pair_projection_accepts_a_non_source_radical_component() {
             Some(BezierParallelPairDomainProjection2::Components(components)) if !components.is_empty(),
         ));
 
-        let fixed_first = BivariatePolynomial::new(vec![
-            vec![-(Real::one() / Real::from(2_i8)).unwrap()],
-            vec![Real::one()],
-        ]);
+        let fixed_first = BivariatePolynomial::new(vec![vec![-r!(1 / 2)], vec![Real::one()]]);
         let axis_system = BezierParallelPairEquationSystem2 {
             first_equation: fixed_first.clone(),
             second_equation: fixed_first.clone(),
@@ -54591,7 +54213,7 @@ fn incident_pair_projection_accepts_a_non_source_radical_component() {
             norm_residual: BivariatePolynomial::new(vec![vec![Real::from(-1_i8)]]),
             ..system.clone()
         };
-        let first_barrier = BezierParameter2::Exact((Real::from(3_i8) / Real::from(2_i8)).unwrap());
+        let first_barrier = BezierParameter2::Exact(r!(3 / 2));
         let Some(BezierParallelPairDomainProjection2::Enumerated { projection, .. }) =
             project_parallel_pair_without_components_in_domain(
                 &isolated_system,
@@ -55007,7 +54629,7 @@ fn nonlinear_parameter_component_maps_and_clips_its_exact_branch() {
 
 #[test]
 fn nonlinear_parameter_component_maps_a_degree_135_selected_scalar_locally() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // alpha^9 = 1/2 and u^15 = alpha make the ordinary projection of
         // u degree 135.  The component v=u^2 must keep both scalars over
@@ -55071,7 +54693,7 @@ fn nonlinear_parameter_component_maps_a_degree_135_selected_scalar_locally() {
 #[test]
 fn finite_component_transport_composes_maps_without_rebasing_its_proof() {
     let policy = CurveContext::STRICT;
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let parameter = |value: Real| BezierParameter2::Exact(value);
     // Both v=u and v=1-u lie in the unit square. The upper branch is
     // rank one: clipping its bounds alone does not carry that identity.
@@ -55092,8 +54714,8 @@ fn finite_component_transport_composes_maps_without_rebasing_its_proof() {
         ])),
         fiber_root_ranks: [1, 1],
         witness: BezierParallelIntersectionParameterPair2 {
-            parallel_parameter: parameter((Real::from(3) / Real::from(4)).unwrap()),
-            other_parameter: parameter((Real::from(3) / Real::from(4)).unwrap()),
+            parallel_parameter: parameter(r!(3 / 4)),
+            other_parameter: parameter(r!(3 / 4)),
         },
     };
     let Classification::Decided(mut transported) = original
@@ -55478,12 +55100,9 @@ fn rational_component_partitions_odd_even_and_endpoint_branch_zeros() {
         vec![Real::one()],
     ]);
     let reversed = parameter_lift_map(vec![Real::one(), Real::from(-1_i8)], vec![Real::one()]);
-    let crossing_branch = BivariatePolynomial::new(vec![vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::one(),
-    ]]);
+    let crossing_branch = BivariatePolynomial::new(vec![vec![r!(-1 / 2), Real::one()]]);
     let zero = Real::zero();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let one = Real::one();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -55687,7 +55306,7 @@ fn rational_component_system_discards_only_the_identically_zero_branch() {
         vec![Real::zero(), Real::one()],
         vec![Real::from(-1_i8)],
     ]);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
     let selected = BivariatePolynomial::new(vec![
         vec![-quarter.clone(), Real::one()],
         vec![Real::from(-1_i8)],
@@ -55707,7 +55326,7 @@ fn rational_component_system_discards_only_the_identically_zero_branch() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let three_quarters = r!(3 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(system)) =
@@ -55733,8 +55352,8 @@ fn rational_component_system_discards_only_the_identically_zero_branch() {
 
 #[test]
 fn rational_component_system_retains_residual_isolated_candidates() {
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
     let component = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::from(-1_i8)],
         vec![Real::one()],
@@ -55785,7 +55404,7 @@ fn rational_component_system_retains_residual_isolated_candidates() {
 
 #[test]
 fn branch_zero_component_pair_suppresses_the_same_residual_candidate() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let component = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::from(-1_i8)],
         vec![Real::one()],
@@ -55858,7 +55477,7 @@ fn branch_zero_component_pair_suppresses_the_same_residual_candidate() {
 
 #[test]
 fn nonrational_rational_parameter_component_uses_exact_real_coefficients() {
-    let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+    let alpha = r!(1 / 2).sqrt().unwrap();
     let component =
         BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()], vec![-alpha.clone()]]);
     let equations = [
@@ -55906,7 +55525,7 @@ fn nonrational_implicit_parameter_component_uses_exact_real_coefficients() {
     // u^2 + u - sqrt(1/2)t = 0 has one smooth branch in the authored
     // square. Its endpoint and defining component are non-rational, but
     // all topology remains exact Real arithmetic.
-    let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+    let alpha = r!(1 / 2).sqrt().unwrap();
     let component = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::one(), Real::one()],
         vec![-alpha.clone()],
@@ -55997,8 +55616,8 @@ fn rational_component_system_enumerates_split_quadratic_components() {
         vec![Real::one()],
     ]);
     let common = bivariate_multiply(&first_component, &second_component);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
     let first_residual = BivariatePolynomial::new(vec![vec![-quarter.clone()], vec![Real::one()]]);
     let second_residual = BivariatePolynomial::new(vec![vec![-half.clone(), Real::one()]]);
     let equations = [
@@ -56323,7 +55942,7 @@ fn regular_implicit_parameter_component_partitions_turning_events() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(system)) =
@@ -56363,14 +55982,10 @@ fn regular_implicit_parameter_component_sorts_multiple_turning_events() {
     // turning events at t=1/4 and t=3/4. The graph remains strictly
     // inside the lifted domain, so all three monotone cells are retained.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-            Real::one(),
-        ],
-        vec![(Real::from(-3_i8) / Real::from(16_i8)).unwrap()],
-        vec![(Real::one() / Real::from(2_i8)).unwrap()],
-        vec![(Real::from(-1_i8) / Real::from(3_i8)).unwrap()],
+        vec![r!(-3 / 2), Real::one(), Real::one()],
+        vec![r!(-3 / 16)],
+        vec![r!(1 / 2)],
+        vec![r!(-1 / 3)],
     ]);
     let equations = [
         component.clone(),
@@ -56381,8 +55996,8 @@ fn regular_implicit_parameter_component_sorts_multiple_turning_events() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(system)) =
@@ -56429,11 +56044,7 @@ fn regular_implicit_parameter_component_retains_a_lifted_boundary_tangency() {
     // it partitions two valid closed-domain cells instead of looking like
     // a transverse root entering or leaving the authored square.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(-1_i8) / Real::from(4_i8)).unwrap(),
-            Real::one(),
-            Real::one(),
-        ],
+        vec![r!(-1 / 4), Real::one(), Real::one()],
         vec![Real::one()],
         vec![Real::from(-1_i8)],
     ]);
@@ -56446,7 +56057,7 @@ fn regular_implicit_parameter_component_retains_a_lifted_boundary_tangency() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(system)) =
@@ -56484,7 +56095,7 @@ fn regular_implicit_parameter_component_transports_multiple_monotone_graphs() {
     // the full retained interval. H_u never vanishes on either branch and
     // H_t is strictly positive, so root order pairs their endpoints
     // without a Cartesian branch expansion.
-    let sixteenth = (Real::one() / Real::from(16_i8)).unwrap();
+    let sixteenth = r!(1 / 16);
     let component = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::from(-1_i8), Real::one()],
         vec![sixteenth.clone()],
@@ -56548,13 +56159,9 @@ fn regular_implicit_parameter_component_partitions_multiple_turning_graphs() {
     // Both turn at t=1/2, but in opposite lifted directions. Exact fiber
     // order assigns the two critical pairs to their respective graphs.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(9_i8) / Real::from(128_i16)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(-1_i8) / Real::from(32_i8)).unwrap()],
-        vec![(Real::one() / Real::from(32_i8)).unwrap()],
+        vec![r!(9 / 128), Real::from(-1_i8), Real::one()],
+        vec![r!(-1 / 32)],
+        vec![r!(1 / 32)],
     ]);
     let equations = [
         component.clone(),
@@ -56566,7 +56173,7 @@ fn regular_implicit_parameter_component_partitions_multiple_turning_graphs() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(system)) =
@@ -56628,11 +56235,7 @@ fn regular_implicit_parameter_cells_partition_a_closed_oval() {
     // global graph coordinate. Two retained-projection folds and two
     // lifted-direction turns partition the oval into four exact cells.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(7_i8) / Real::from(16_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
+        vec![r!(7 / 16), Real::from(-1_i8), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -56641,9 +56244,9 @@ fn regular_implicit_parameter_cells_partition_a_closed_oval() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
+    let three_quarters = r!(3 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -56695,11 +56298,7 @@ fn regular_implicit_parameter_cells_partition_an_algebraic_oval() {
     // fold fibers and irrational lifted turning coordinates. The event
     // neighborhoods therefore exercise local-field closed fiber counts.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
+        vec![r!(3 / 8), Real::from(-1_i8), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -56708,7 +56307,7 @@ fn regular_implicit_parameter_cells_partition_an_algebraic_oval() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -56764,13 +56363,9 @@ fn regular_implicit_parameter_cells_partition_an_algebraic_oval() {
 
 #[test]
 fn regular_implicit_parameter_cells_partition_a_nonrational_coefficient_oval() {
-    let alpha = (Real::one() / Real::from(8_i8)).unwrap().sqrt().unwrap();
+    let alpha = r!(1 / 8).sqrt().unwrap();
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(5_i8) / Real::from(16_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
+        vec![r!(5 / 16), Real::from(-1_i8), Real::one()],
         vec![Real::from(-2_i8) * &alpha],
         vec![Real::one()],
     ]);
@@ -56779,11 +56374,7 @@ fn regular_implicit_parameter_cells_partition_a_nonrational_coefficient_oval() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let event_polynomial = vec![
-        (Real::one() / Real::from(16_i8)).unwrap(),
-        Real::from(-2_i8) * alpha,
-        Real::one(),
-    ];
+    let event_polynomial = vec![r!(1 / 16), Real::from(-2_i8) * alpha, Real::one()];
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(event_roots)) =
             polynomial_unit_interval_roots(&event_polynomial, &policy).unwrap()
@@ -56802,10 +56393,7 @@ fn regular_implicit_parameter_cells_partition_a_nonrational_coefficient_oval() {
                 event_root.scalar().expect("event root is represented"),
             );
             assert_eq!(
-                real_sign(
-                    &(&specialized[0] - (Real::one() / Real::from(4_i8)).unwrap()),
-                    &policy,
-                ),
+                real_sign(&(&specialized[0] - r!(1 / 4)), &policy,),
                 Some(RealSign::Zero),
                 "the exact critical fiber did not specialize to (u - 1/2)^2"
             );
@@ -56865,20 +56453,12 @@ fn regular_implicit_parameter_cells_connect_multiple_disjoint_ovals() {
     // event neighborhoods separate both folds and all four turns before
     // gap ranks connect the independent components.
     let lower = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(19_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(19 / 64), r!(-1 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
     let upper = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(51_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(51 / 64), r!(-3 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -56888,9 +56468,9 @@ fn regular_implicit_parameter_cells_connect_multiple_disjoint_ovals() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let three_eighths = (Real::from(3_i8) / Real::from(8_i8)).unwrap();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let five_eighths = (Real::from(5_i8) / Real::from(8_i8)).unwrap();
+    let three_eighths = r!(3 / 8);
+    let half = r!(1 / 2);
+    let five_eighths = r!(5 / 8);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -56939,28 +56519,17 @@ fn regular_implicit_parameter_cells_connect_multiple_disjoint_ovals() {
 #[test]
 fn positive_dimensional_branch_gate_distinguishes_shared_support_from_crossings() {
     let lower = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(19_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(19 / 64), r!(-1 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
     let upper = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(51_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(51 / 64), r!(-3 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
     let component = bivariate_multiply(&lower, &upper);
-    let crossing = BivariatePolynomial::new(vec![vec![
-        (Real::from(-1_i8) / Real::from(4_i8)).unwrap(),
-        Real::one(),
-    ]]);
+    let crossing = BivariatePolynomial::new(vec![vec![r!(-1 / 4), Real::one()]]);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert_eq!(
@@ -56978,20 +56547,12 @@ fn positive_dimensional_branch_gate_distinguishes_shared_support_from_crossings(
 #[test]
 fn implicit_component_discards_zero_branch_factors_and_keeps_the_quotient() {
     let lower = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(19_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(19 / 64), r!(-1 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
     let upper = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(51_i8) / Real::from(64_i8)).unwrap(),
-            (Real::from(-3_i8) / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(51 / 64), r!(-3 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -57000,7 +56561,7 @@ fn implicit_component_discards_zero_branch_factors_and_keeps_the_quotient() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap());
+    let half = BezierParameter2::Exact(r!(1 / 2));
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(empty)) = certify_regular_implicit_parameter_component(
@@ -57045,17 +56606,15 @@ fn implicit_component_discards_zero_branch_factors_and_keeps_the_quotient() {
 fn regular_implicit_parameter_cells_clip_transverse_domain_crossings() {
     // H(t,u)=u-2t+1/2 enters u=0 at t=1/4 and exits u=1 at
     // t=3/4. The component is smooth and has no projection critical point.
-    let component = BivariatePolynomial::new(vec![
-        vec![(Real::one() / Real::from(2_i8)).unwrap(), Real::one()],
-        vec![Real::from(-2_i8)],
-    ]);
+    let component =
+        BivariatePolynomial::new(vec![vec![r!(1 / 2), Real::one()], vec![Real::from(-2_i8)]]);
     let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -57089,11 +56648,7 @@ fn regular_implicit_parameter_cells_retain_an_isolated_boundary_point() {
     // H(t,u)=(t-1/2)^2+(u+1/4)^2-1/16 touches the square only
     // at (1/2,0). The exact cell topology has no edge and one isolated pair.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::one() / Real::from(4_i8)).unwrap(),
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            Real::one(),
-        ],
+        vec![r!(1 / 4), r!(1 / 2), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -57102,7 +56657,7 @@ fn regular_implicit_parameter_cells_retain_an_isolated_boundary_point() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -57130,13 +56685,9 @@ fn implicit_parameter_cells_partition_an_interior_cusp() {
     // left incidence, and two right incidences. Both branches terminate
     // independently at the singular parameter pair.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(-3_i8) / Real::from(4_i8)).unwrap()],
-        vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
+        vec![r!(3 / 8), Real::from(-1_i8), Real::one()],
+        vec![r!(-3 / 4)],
+        vec![r!(3 / 2)],
         vec![Real::from(-1_i8)],
     ]);
     let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
@@ -57144,7 +56695,7 @@ fn implicit_parameter_cells_partition_an_interior_cusp() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -57187,13 +56738,9 @@ fn repeated_implicit_cusp_retains_one_square_free_branch_set() {
     // parameter topology. The same singular-cell engine must emit the two
     // geometric half-branches once under either policy.
     let cusp = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(-3_i8) / Real::from(4_i8)).unwrap()],
-        vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
+        vec![r!(3 / 8), Real::from(-1_i8), Real::one()],
+        vec![r!(-3 / 4)],
+        vec![r!(3 / 2)],
         vec![Real::from(-1_i8)],
     ]);
     let repeated = bivariate_multiply(&cusp, &cusp);
@@ -57202,7 +56749,7 @@ fn repeated_implicit_cusp_retains_one_square_free_branch_set() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let initial = certify_implicit_parameter_component_once(
@@ -57289,21 +56836,17 @@ fn implicit_parameter_cells_split_every_branch_at_an_interior_node() {
     // H(t,u)=(u-1/2)^2-(t-1/2)^2(t+1)/4 is irreducible over the
     // rationals and has two real branches crossing at (1/2,1/2).
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(3_i8) / Real::from(16_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(3_i8) / Real::from(16_i8)).unwrap()],
+        vec![r!(3 / 16), Real::from(-1_i8), Real::one()],
+        vec![r!(3 / 16)],
         vec![],
-        vec![(Real::from(-1_i8) / Real::from(4_i8)).unwrap()],
+        vec![r!(-1 / 4)],
     ]);
     let branch = BivariatePolynomial::new(vec![vec![Real::one()]]);
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -57346,11 +56889,7 @@ fn implicit_parameter_cells_retain_an_isolated_singular_point() {
     // H(t,u)=(t-1/2)^2+(u-1/2)^2 has one real point and no real
     // incident branch. Distinct-root fiber counting must retain the point.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::one() / Real::from(2_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
+        vec![r!(1 / 2), Real::from(-1_i8), Real::one()],
         vec![Real::from(-1_i8)],
         vec![Real::one()],
     ]);
@@ -57359,7 +56898,7 @@ fn implicit_parameter_cells_retain_an_isolated_singular_point() {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(Some(evidence)) = certify_regular_implicit_parameter_component(
@@ -57416,14 +56955,10 @@ fn regular_implicit_parameter_component_ranks_algebraic_multi_graph_turns() {
     // algebraic. Local-field Sturm counting ranks each pair without
     // sampling or assuming that independent resultant roots correspond.
     let component = BivariatePolynomial::new(vec![
-        vec![
-            (Real::one() / Real::from(16_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(-1_i8) / Real::from(64_i8)).unwrap()],
+        vec![r!(1 / 16), Real::from(-1_i8), Real::one()],
+        vec![r!(-1 / 64)],
         vec![],
-        vec![(Real::one() / Real::from(64_i8)).unwrap()],
+        vec![r!(1 / 64)],
     ]);
     let equations = [
         component.clone(),
@@ -57545,10 +57080,7 @@ fn regular_implicit_parameter_component_partitions_at_an_isolated_branch_zero() 
         component.clone(),
         bivariate_scale(component, &Real::from(2_i8)),
     ];
-    let branch = BivariatePolynomial::new(vec![vec![
-        (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-        Real::one(),
-    ]]);
+    let branch = BivariatePolynomial::new(vec![vec![r!(-1 / 2), Real::one()]]);
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
@@ -57573,10 +57105,7 @@ fn regular_implicit_parameter_component_partitions_at_an_isolated_branch_zero() 
                 .map(|(_, end)| end),
             Some(&Real::one())
         );
-        assert_eq!(
-            overlap.second_range().start().scalar(),
-            Some(&(Real::one() / Real::from(2_i8)).unwrap())
-        );
+        assert_eq!(overlap.second_range().start().scalar(), Some(&r!(1 / 2)));
         assert!(!overlap.includes_start());
         assert!(overlap.includes_end());
     }
@@ -57589,33 +57118,23 @@ fn implicit_component_partitions_even_endpoint_and_singular_branch_zeros() {
         vec![Real::from(-3_i8)],
         vec![Real::from(-1_i8)],
     ]);
-    let punctured_branch = BivariatePolynomial::new(vec![vec![
-        (Real::one() / Real::from(4_i8)).unwrap(),
-        Real::from(-1_i8),
-        Real::one(),
-    ]]);
+    let punctured_branch =
+        BivariatePolynomial::new(vec![vec![r!(1 / 4), Real::from(-1_i8), Real::one()]]);
     let start_branch = BivariatePolynomial::new(vec![vec![Real::zero(), Real::one()]]);
     let negative_punctured_branch = bivariate_scale(punctured_branch.clone(), &Real::from(-1_i8));
     let cusp = BivariatePolynomial::new(vec![
-        vec![
-            (Real::from(3_i8) / Real::from(8_i8)).unwrap(),
-            Real::from(-1_i8),
-            Real::one(),
-        ],
-        vec![(Real::from(-3_i8) / Real::from(4_i8)).unwrap()],
-        vec![(Real::from(3_i8) / Real::from(2_i8)).unwrap()],
+        vec![r!(3 / 8), Real::from(-1_i8), Real::one()],
+        vec![r!(-3 / 4)],
+        vec![r!(3 / 2)],
         vec![Real::from(-1_i8)],
     ]);
-    let cusp_branch = BivariatePolynomial::new(vec![
-        vec![(Real::from(-1_i8) / Real::from(2_i8)).unwrap()],
-        vec![Real::one()],
-    ]);
+    let cusp_branch = BivariatePolynomial::new(vec![vec![r!(-1 / 2)], vec![Real::one()]]);
     let config = CurveIntersectionResultantConfig {
         min_precision: PARALLEL_INTERSECTION_RESULTANT_PRECISION,
         max_resultant_degree: MAX_PARALLEL_INTERSECTION_RESULTANT_DEGREE,
     };
     let zero = Real::zero();
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let one = Real::one();
     let regular_retained_parameter = CurveResultantParameter::First;
 
@@ -57771,7 +57290,7 @@ fn regular_implicit_component_excludes_off_component_critical_points() {
             overlap.first_range().scalar_endpoints(),
             Some((&Real::zero(), &Real::one()))
         );
-        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let three_quarters = r!(3 / 4);
         assert_eq!(
             overlap.second_range().scalar_endpoints(),
             Some((&three_quarters, &Real::one()))
@@ -57791,8 +57310,8 @@ fn repeated_implicit_component_multiplicity_is_not_topology() {
         vec![Real::from(-3_i8)],
     ]);
     let repeated = bivariate_multiply(&component, &component);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
     let equations = [
         bivariate_multiply(
             &repeated,
@@ -57911,8 +57430,8 @@ fn regular_implicit_component_retains_residual_isolated_candidates() {
         vec![Real::from(-3_i8)],
         vec![Real::from(-1_i8)],
     ]);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
     let equations = [
         bivariate_multiply(
             &component,
@@ -58001,10 +57520,7 @@ fn rational_component_system_filters_split_components_independently() {
         assert_eq!(overlap.orientation(), CurveOverlapOrientation2::Reversed);
         assert_eq!(
             overlap.second_range().scalar_endpoints(),
-            Some((
-                &Real::one(),
-                &(Real::from(3_i8) / Real::from(4_i8)).unwrap()
-            ))
+            Some((&Real::one(), &r!(3 / 4)))
         );
     }
 }
@@ -58046,7 +57562,7 @@ fn bivariate_bernstein_sign_excludes_only_strict_unit_square_misses() {
 
 #[test]
 fn bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis_with_policy(
@@ -58124,7 +57640,7 @@ fn bivariate_parameter_box_sign_keeps_boundary_zeros_and_bernstein_fallback() {
 
 #[test]
 fn poincare_miranda_preconditions_rotated_transverse_system_exactly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // F=(t-1/2)+(u-1/2), G=(t-1/2)-(u-1/2). The zero is transverse and
     // unique, but neither authored row has strict signs on an opposing
     // pair of square faces. The exact midpoint-Jacobian adjugate rotates
@@ -58158,7 +57674,7 @@ fn poincare_miranda_preconditions_rotated_transverse_system_exactly() {
 
 #[test]
 fn rational_component_probe_is_not_an_authoritative_negative() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     // D=(t-2)(t-3)(t-5) makes every fixed fast probe see the genuine
     // component D(t)u-N(t) collapse to a nonzero constant. On [0,1],
     // N/D=t/2-1/D is finite, increasing, and lies strictly inside [0,1].
@@ -58169,8 +57685,8 @@ fn rational_component_probe_is_not_an_authoritative_negative() {
         vec![Real::from(5_i8), Real::one()],
         vec![-half, Real::zero()],
     ]);
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-    let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+    let quarter = r!(1 / 4);
+    let three_quarters = r!(3 / 4);
     let first_residual = BivariatePolynomial::new(vec![vec![-quarter], vec![Real::one()]]);
     let second_residual = BivariatePolynomial::new(vec![vec![-three_quarters, Real::one()]]);
     let equations = [
@@ -58199,10 +57715,7 @@ fn rational_component_probe_is_not_an_authoritative_negative() {
         );
         assert_eq!(
             overlap.second_range().scalar_endpoints(),
-            Some((
-                &(Real::one() / Real::from(30_i8)).unwrap(),
-                &(Real::from(5_i8) / Real::from(8_i8)).unwrap()
-            ))
+            Some((&r!(1 / 30), &r!(5 / 8)))
         );
     }
 }
@@ -58257,7 +57770,7 @@ fn bounded_parameter_lifts_rejoin_the_uncapped_authority() {
     // The common solution is `t^3 = 1/2`, `u = 1/2`. The cubic retained
     // dependence exceeds the artificial hot budget while the authored
     // nullity-one fiber still has an exact constant lift.
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let first = BivariatePolynomial::new(vec![
         vec![Real::zero(), Real::one()],
         vec![],
@@ -58537,7 +58050,7 @@ fn sibling_normal_offsets_of_one_chord_keep_their_separation() {
 #[test]
 fn recursive_formula_roots_compare_in_equivalent_rebuilt_fields() {
     use std::cmp::Ordering;
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let tiny = Real::from(2).powi_i64(-600).unwrap();
     let mut missing = Vec::new();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -58550,7 +58063,7 @@ fn recursive_formula_roots_compare_in_equivalent_rebuilt_fields() {
             "negative",
             "conjugate",
         ] {
-            let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+            let source = selected_square_root_source(r!(1 / 2));
             // alpha=2sqrt(1/2)=sqrt(2), z=sqrt(2+alpha), so 1<z<2.
             let base = selected_source_field(vec![source.clone()]);
             let radicand = base
@@ -58712,8 +58225,8 @@ fn recursive_formula_roots_compare_in_equivalent_rebuilt_fields() {
 
 #[test]
 fn recursive_formula_rebasing_keeps_foreign_sources_and_denominators_typed() {
-    let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
-    let foreign_source = selected_square_root_source((Real::from(3) / Real::from(4)).unwrap());
+    let source = selected_square_root_source(r!(1 / 2));
+    let foreign_source = selected_square_root_source(r!(3 / 4));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let field = selected_source_field(vec![source.clone()]);
         for denominator in [Real::zero(), -Real::one()] {
@@ -58759,9 +58272,9 @@ fn recursive_formula_rebasing_keeps_foreign_sources_and_denominators_typed() {
 
 /// The larger unit root of 8x^4-8x^2+1, retained over alpha=sqrt(1/2).
 fn recursive_comparison_quartic_root(policy: &CurveContext) -> BezierRecursiveProjectiveParameter2 {
-    let source = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let source = selected_square_root_source(r!(1 / 2));
     let field = selected_source_field(vec![source.clone()]);
-    let quarter = (Real::one() / Real::from(4)).unwrap();
+    let quarter = r!(1 / 4);
     let relation = shifted_square_relation(&field, &source)
         .into_iter()
         .enumerate()
@@ -58776,7 +58289,7 @@ fn recursive_comparison_quartic_root(policy: &CurveContext) -> BezierRecursivePr
     local_polynomial_root(
         &field,
         relation,
-        ((Real::one() / Real::from(2)).unwrap(), Real::one()),
+        (r!(1 / 2), Real::one()),
         [RealSign::Negative, RealSign::Positive],
         policy,
     )
@@ -58906,9 +58419,7 @@ fn recursive_native_comparison_exhaustion_retries_without_caching_failure() {
     use crate::{WorkBudget, WorkKind, evaluate_with_budget};
     use std::cmp::Ordering;
     let root = recursive_comparison_quartic_root(&CurveContext::STRICT);
-    let native = BezierParameter2::Algebraic(independently_selected_quartic_root(
-        (Real::from(3) / Real::from(4)).unwrap(),
-    ));
+    let native = BezierParameter2::Algebraic(independently_selected_quartic_root(r!(3 / 4)));
     for policy in [
         CurveContext::STRICT,
         CurveContext::APPROXIMATE_512,
@@ -58975,7 +58486,7 @@ fn recursive_native_comparison_exhaustion_retries_without_caching_failure() {
 #[test]
 fn recursive_native_comparison_preserves_odd_and_even_multiplicity() {
     use std::cmp::Ordering;
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let small = Real::from(2).powi_i64(-200).unwrap();
     for multiplicity in [1, 2, 3] {
         let mut coefficients = vec![Real::one()];
@@ -59050,7 +58561,7 @@ fn recursive_native_comparison_preserves_odd_and_even_multiplicity() {
 #[test]
 fn recursive_native_approximate_terminal_never_caches_exact_equality() {
     let zero = crate::test_support::terminally_unresolved_zero();
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let half = r!(1 / 2);
     let base = selected_source_field(vec![]);
     let field = base
         .extension(base.constant(half.clone()).unwrap())
@@ -59137,7 +58648,7 @@ fn recursive_native_approximate_terminal_never_caches_exact_equality() {
 #[test]
 fn recursive_formula_comparisons_replay_equivalent_extension_towers() {
     use std::cmp::Ordering;
-    let alpha = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
+    let alpha = selected_square_root_source(r!(1 / 2));
     let tower = |depth: usize, conjugate: bool| {
         let mut field = selected_source_field(vec![alpha.clone()]);
         let alpha_value = doubled_source_value(&field, &alpha);
@@ -59254,8 +58765,8 @@ fn recursive_formula_comparisons_replay_equivalent_extension_towers() {
 #[test]
 fn recursive_formula_source_order_preserves_value_and_typed_local_decline() {
     use std::cmp::Ordering;
-    let alpha = selected_square_root_source((Real::one() / Real::from(2)).unwrap());
-    let beta = selected_square_root_source((Real::from(3) / Real::from(4)).unwrap());
+    let alpha = selected_square_root_source(r!(1 / 2));
+    let beta = selected_square_root_source(r!(3 / 4));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reverse in [false, true] {
             let sources = if reverse {

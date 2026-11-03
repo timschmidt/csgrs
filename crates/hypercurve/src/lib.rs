@@ -16,6 +16,11 @@
 #[macro_use]
 extern crate hypersolve;
 
+// `r!` exact literals for unit tests; declared before every module that uses it.
+#[cfg(test)]
+#[macro_use]
+mod test_macros;
+
 #[cfg(test)]
 mod algebraic_image_tests;
 mod arc_bezier;

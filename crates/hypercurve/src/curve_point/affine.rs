@@ -158,22 +158,22 @@ impl CurvePointAffineForm2 {
                 policy,
             );
         }
-        let first = match crate::bezier_offset::point_affine_form_image(
-            &self.source,
-            &self.coefficients,
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let second = match crate::bezier_offset::point_affine_form_image(
-            &other.source,
-            &other.coefficients,
-            policy,
-        )? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let first = decided!(
+            crate::bezier_offset::point_affine_form_image(
+                &self.source,
+                &self.coefficients,
+                policy,
+            )?,
+            Ok
+        );
+        let second = decided!(
+            crate::bezier_offset::point_affine_form_image(
+                &other.source,
+                &other.coefficients,
+                policy,
+            )?,
+            Ok
+        );
         crate::bezier_offset::algebraic_chord_point_coordinate_order(
             &first,
             &second,

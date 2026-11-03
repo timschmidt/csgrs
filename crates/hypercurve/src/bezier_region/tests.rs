@@ -1366,9 +1366,9 @@ fn one_fragment_selected_corner_region(reversed: bool, policy: &CurveContext) ->
 
 #[test]
 fn retained_selected_corner_trim_keeps_distinct_bounded_fields_local() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
+    let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
             half.clone(),
@@ -1818,8 +1818,8 @@ fn repeated_circle_corner_restrictions_preserve_only_outer_tangency() {
 
 #[test]
 fn resource_blocked_selected_range_enters_shared_fillet_kernel_directly() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
             half.clone(),
@@ -1902,7 +1902,7 @@ fn resource_blocked_selected_range_enters_shared_fillet_kernel_directly() {
 
 #[test]
 fn resource_blocked_selected_offset_span_completes_its_cold_projection() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let end = q(3, 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
@@ -1957,8 +1957,8 @@ fn resource_blocked_selected_offset_span_completes_its_cold_projection() {
 
 #[test]
 fn resource_blocked_selected_corner_chamfers_in_its_affine_fiber() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let setback = q(1, 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
@@ -2285,8 +2285,8 @@ fn nonlinear_selected_corner_chamfers_through_retained_fixed_distance_image() {
 
 #[test]
 fn one_fragment_selected_native_extensions_keep_the_local_fiber() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let third = (Real::one() / Real::from(3_i8)).unwrap();
+    let half = r!(1 / 2);
+    let third = r!(1 / 3);
     let setback = q(1, 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
@@ -2717,8 +2717,8 @@ fn selected_parallel_companion_fillets_without_range_promotion() {
 
 #[test]
 fn resource_blocked_selected_boundary_fillets_and_reconstructs_in_place() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let radius = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let radius = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
             half.clone(),
@@ -2970,10 +2970,7 @@ fn retained_nonlinear_extension_region(reversed: bool, policy: &CurveContext) ->
     let mut fragments = vec![
         materialized(BezierSubcurve2::Quadratic(QuadraticBezier2::new(
             p(-1, 1),
-            Point2::new(
-                (Real::from(-1_i8) / Real::from(2_i8)).unwrap(),
-                Real::zero(),
-            ),
+            Point2::new(r!(-1 / 2), Real::zero()),
             p(0, 0),
         ))),
         materialized(BezierSubcurve2::Quadratic(
@@ -3014,8 +3011,8 @@ fn retained_rational_extension_region(reversed: bool, policy: &CurveContext) -> 
         end: BezierParameter2::Exact(Real::one()),
         curve,
     };
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     // R(t) = (t / (2 - t), (t / (2 - t))^2). The edited endpoint is
     // R(1) = (1, 1), and its increasing incident cell ends at the pole
     // t = 2. Setback sqrt(68) has the represented exterior contact
@@ -3215,7 +3212,7 @@ fn assert_one_fragment_edit_shape(
 
 #[test]
 fn one_fragment_selected_loop_chamfers_from_one_interval() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
+    let setback = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
@@ -3747,7 +3744,7 @@ fn retained_analytic_corners_preserve_normalized_sets() {
 
 #[test]
 fn one_fragment_materialized_loop_chamfers_to_one_middle_interval() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
+    let setback = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = one_fragment_materialized_corner_region(reversed, &policy);
@@ -3779,7 +3776,7 @@ fn one_fragment_materialized_loop_chamfers_to_one_middle_interval() {
 
 #[test]
 fn one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
+    let setback = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = one_fragment_materialized_corner_region(reversed, &policy);
@@ -3866,7 +3863,7 @@ fn one_fragment_materialized_loop_extends_algebraic_chamfer_cuts_once() {
 
 #[test]
 fn one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
+    let setback = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
@@ -3940,8 +3937,8 @@ fn one_fragment_selected_loop_extends_chamfer_cuts_on_its_analytic_carrier() {
 
 #[test]
 fn one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelope() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
-    let distance = (Real::one() / Real::from(4_i8)).unwrap();
+    let setback = r!(1 / 2);
+    let distance = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let seam = p(0, 0);
@@ -4023,7 +4020,7 @@ fn one_fragment_nonzero_parallel_loop_extends_chamfer_cuts_on_one_finite_envelop
 
 #[test]
 fn one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source() {
-    let setback = (Real::one() / Real::from(2_i8)).unwrap();
+    let setback = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             for (previous_setback, next_setback) in [
@@ -4061,7 +4058,7 @@ fn one_fragment_selected_loop_one_sided_chamfers_do_not_duplicate_the_source() {
 
 #[test]
 fn one_fragment_selected_loop_fillets_from_one_interval() {
-    let radius = (Real::one() / Real::from(4_i8)).unwrap();
+    let radius = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = one_fragment_selected_corner_region(reversed, &policy);
@@ -4102,7 +4099,7 @@ fn one_fragment_selected_loop_fillets_from_one_interval() {
 #[test]
 fn one_fragment_ph_loop_fillets_through_rational_self_contact() {
     let root_three = Real::from(3_i8).sqrt().unwrap();
-    let control_x = (Real::one() / Real::from(18_i8)).unwrap();
+    let control_x = r!(1 / 18);
     let control_y = -((Real::one() / (&root_three * Real::from(6_i8))).unwrap());
     let radius = ((Real::from(7_i8) * &root_three) / Real::from(768_i16)).unwrap();
     let seam = p(0, 0);
@@ -4176,18 +4173,12 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
     // The exterior cuts at -1/2 and 3/2 enclose two source lobes touching
     // at P(0)=P(1). Regularization may split that interval across loops.
     let root_three = Real::from(3_i8).sqrt().unwrap();
-    let control_x = (Real::one() / Real::from(18_i8)).unwrap();
+    let control_x = r!(1 / 18);
     let control_y = -((&root_three / Real::from(18_i8)).unwrap());
     let radius = ((Real::from(13_i8) * &root_three) / Real::from(48_i8)).unwrap();
     let setback = (Real::from(7_i8).sqrt().unwrap() / Real::from(8_i8)).unwrap();
-    let previous_cut = Point2::new(
-        (Real::one() / Real::from(4_i8)).unwrap(),
-        (&root_three / Real::from(8_i8)).unwrap(),
-    );
-    let next_cut = Point2::new(
-        -(Real::one() / Real::from(4_i8)).unwrap(),
-        (&root_three / Real::from(8_i8)).unwrap(),
-    );
+    let previous_cut = Point2::new(r!(1 / 4), (&root_three / Real::from(8_i8)).unwrap());
+    let next_cut = Point2::new(-r!(1 / 4), (&root_three / Real::from(8_i8)).unwrap());
     let source = CubicBezier2::new(
         p(0, 0),
         Point2::new(control_x.clone(), control_y.clone()),
@@ -4319,7 +4310,7 @@ fn closed_ph_corner_edits_preserve_both_normalized_source_lobes() {
 #[test]
 fn one_fragment_retained_ph_loop_extends_fillet_on_one_analytic_carrier() {
     let root_three = Real::from(3_i8).sqrt().unwrap();
-    let control_x = (Real::one() / Real::from(18_i8)).unwrap();
+    let control_x = r!(1 / 18);
     let control_y = -((&root_three / Real::from(18_i8)).unwrap());
     let radius = ((Real::from(13_i8) * &root_three) / Real::from(48_i8)).unwrap();
     let source = CubicBezier2::new(
@@ -4447,7 +4438,7 @@ fn parallel_pair_fillet_region(
     policy: &CurveContext,
 ) -> CurveRegion2 {
     let fragment = |start: Point2, end: Point2, retained: bool| {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let curve = QuadraticBezier2::new(start.clone(), start.lerp(&end, half), end.clone());
         if retained {
             let parallel = curve
@@ -4551,12 +4542,8 @@ fn sqrt_half_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
     let Classification::Decided(polynomial) = polynomial else {
         panic!("the exact polynomial must be decided");
     };
-    let interval = BezierParameterInterval::try_new_with_policy(
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-        (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-        policy,
-    )
-    .expect("the isolating interval is valid");
+    let interval = BezierParameterInterval::try_new_with_policy(r!(2 / 3), r!(3 / 4), policy)
+        .expect("the isolating interval is valid");
     let Classification::Decided(interval) = interval else {
         panic!("the exact interval must be decided");
     };
@@ -4578,12 +4565,8 @@ fn sqrt_third_algebraic_parameter(policy: &CurveContext) -> BezierParameter2 {
     let Classification::Decided(polynomial) = polynomial else {
         panic!("the exact polynomial must be decided");
     };
-    let interval = BezierParameterInterval::try_new_with_policy(
-        (Real::one() / Real::from(2_i8)).unwrap(),
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-        policy,
-    )
-    .expect("the isolating interval is valid");
+    let interval = BezierParameterInterval::try_new_with_policy(r!(1 / 2), r!(2 / 3), policy)
+        .expect("the isolating interval is valid");
     let Classification::Decided(interval) = interval else {
         panic!("the exact interval must be decided");
     };
@@ -4649,7 +4632,7 @@ fn selected_circle_neighbor_region(
         panic!("the nonzero selected semicircle must be decided");
     };
 
-    let alpha = (Real::one() / Real::from(2_i8)).unwrap();
+    let alpha = r!(1 / 2);
     let half_sqrt_two = alpha.clone().sqrt().unwrap();
     let start = Point2::new(&alpha + Real::one(), Real::zero());
     let join = Point2::new(&alpha - Real::one(), Real::zero());
@@ -4747,7 +4730,7 @@ fn selected_circle_neighbor_region(
             else {
                 panic!("the neighboring selected semicircle must be decided");
             };
-            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let half = r!(1 / 2);
             let Classification::Decided(neighbor_fragment) =
                 crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
                     neighbor_support,
@@ -4774,7 +4757,7 @@ fn selected_circle_neighbor_region(
                 .parallel_left(Real::zero())
                 .expect("the neighboring curved analytic parallel is valid")
             } else {
-                let half = (Real::one() / Real::from(2_i8)).unwrap();
+                let half = r!(1 / 2);
                 QuadraticBezier2::new(join.clone(), join.lerp(&arc_end, half), arc_end.clone())
                     .parallel_left(Real::zero())
                     .expect("the neighboring exact-line parallel is valid")
@@ -4792,7 +4775,7 @@ fn selected_circle_neighbor_region(
             BezierSplitFragment2::AnalyticParallel(analytic)
         }
         SelectedCircleFilletNeighbor2::DirectBezier => {
-            let one_quarter = (Real::one() / Real::from(4_i8)).unwrap();
+            let one_quarter = r!(1 / 4);
             BezierSplitFragment2::Materialized {
                 start: BezierParameter2::Exact(Real::zero()),
                 end: BezierParameter2::Exact(Real::one()),
@@ -4817,14 +4800,7 @@ fn selected_circle_neighbor_region(
             crate::BezierAlgebraicCuspSemicircleFragment2::full(support, policy),
         ),
         neighbor,
-        quadratic_fragment(
-            arc_end,
-            Point2::new(
-                &alpha + (Real::one() / Real::from(2_i8)).unwrap(),
-                (Real::one() / Real::from(2_i8)).unwrap(),
-            ),
-            start,
-        ),
+        quadratic_fragment(arc_end, Point2::new(&alpha + r!(1 / 2), r!(1 / 2)), start),
     ];
     let interior_side = if reversed {
         fragments = fragments
@@ -5536,7 +5512,7 @@ fn selected_circle_and_retained_rational_arc_fillet_exactly() {
                     .fillet_loop_vertex_with_policy(
                         0,
                         corner,
-                        &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
+                        &crate::CurveFillet2::new(r!(1 / 10)),
                         CurveCornerMode2::TrimOnly,
                         &policy,
                     )
@@ -6295,8 +6271,8 @@ fn collapsed_chord_pair_center_classifies_an_analytic_parallel() {
 
 #[test]
 fn selected_parallel_normal_circle_and_line_fillet_retains_recursive_contact() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
+    let three_halves = r!(3 / 2);
     let upper = Point2::new(Real::zero(), half.clone());
     let lower = Point2::new(Real::zero(), -half.clone());
 
@@ -6948,7 +6924,7 @@ fn selected_circle_pair_with_rationalizable_support_fillet_exactly() {
                 .fillet_loop_vertex_with_policy(
                     0,
                     corner,
-                    &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
+                    &crate::CurveFillet2::new(r!(1 / 10)),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -9602,7 +9578,7 @@ fn selected_circle_and_analytic_parallel_fillet_exactly() {
                 .fillet_loop_vertex_with_policy(
                     0,
                     corner,
-                    &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
+                    &crate::CurveFillet2::new(r!(1 / 10)),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -9862,7 +9838,7 @@ fn selected_circle_and_direct_bezier_share_the_parallel_fillet_kernel() {
                 .fillet_loop_vertex_with_policy(
                     0,
                     corner,
-                    &crate::CurveFillet2::new((Real::one() / Real::from(10_i8)).unwrap()),
+                    &crate::CurveFillet2::new(r!(1 / 10)),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )
@@ -9933,8 +9909,8 @@ fn positive_inverse_sqrt_parameter(denominator: i8, policy: &CurveContext) -> Be
 
 #[test]
 fn algebraic_query_winding_mixes_genuine_parallel_and_native_fragments() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
-    let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+    let half = r!(1 / 2);
+    let quarter = r!(1 / 4);
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(half, Real::zero()), p(1, 1));
     let parallel = source.parallel_left(quarter).unwrap();
     let query_curve =
@@ -10193,7 +10169,7 @@ fn algebraic_side_ray_skips_retained_rational_contacts_across_loops() {
 
 #[test]
 fn algebraic_side_ray_skips_genuine_parallel_contacts_across_loops() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1));
     let distance = Real::from(3_i8).sqrt().unwrap();
     let parallel = source.parallel_left(distance).unwrap();
@@ -10312,7 +10288,7 @@ fn boundary_side_rays_skip_retained_cusp_contacts_across_loops() {
             represented_support.clone(),
             &policy,
         );
-        let query = Point2::new((Real::one() / Real::from(2_i8)).unwrap(), Real::from(-1_i8));
+        let query = Point2::new(r!(1 / 2), Real::from(-1_i8));
         assert_eq!(
             represented
                 .contains_point(&CurvePoint2::from(query.clone()), &policy)
@@ -10410,9 +10386,7 @@ fn boundary_side_rays_skip_retained_cusp_contacts_across_loops() {
             Classification::Decided(RetainedRayWinding::Winding(-1)),
         );
         let source_parameter = CurveParameter2::from_algebraic_cusp(
-            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(
-                (Real::one() / Real::from(2_i8)).unwrap(),
-            ),
+            crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(r!(1 / 2)),
         );
         let oblique_ray = BezierRay2 {
             line: LineSeg2::try_new(
@@ -10793,8 +10767,8 @@ fn algebraic_retained_range_ray_winding_handles_crossing_multiplicity() {
         let BezierParameter2::Algebraic(alpha_root) = &alpha else {
             panic!("sqrt(1/2) must remain algebraic");
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let eighth = (Real::one() / Real::from(8_i8)).unwrap();
+        let half = r!(1 / 2);
+        let eighth = r!(1 / 8);
         let query_curve = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::zero(), half.clone()),
@@ -11468,7 +11442,7 @@ fn nonlinear_algebraic_endpoint_images_reenter_exact_offset_kernel() {
 fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let region = independent_field_algebraic_chord_region(&policy, false);
-        let tenth = (Real::one() / Real::from(10_i8)).unwrap();
+        let tenth = r!(1 / 10);
         assert_eq!(
             region
                 .classify_point_with_policy(&Point2::new(tenth.clone(), tenth).into(), &policy)
@@ -11495,19 +11469,13 @@ fn independent_field_algebraic_chord_closes_and_classifies_a_region() {
 
 #[test]
 fn independent_field_chord_publishes_nonzero_parallel_line_overlap() {
-    let tenth = (Real::one() / Real::from(10_i8)).unwrap();
-    let high = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
-    let low = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
+    let tenth = r!(1 / 10);
+    let high = r!(2 / 3);
+    let low = r!(3 / 5);
     let independent_parallel = QuadraticBezier2::from_line_segment(
         LineSeg2::try_new(
-            Point2::new(
-                -tenth.clone(),
-                (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap(),
-            ),
-            Point2::new(
-                -tenth.clone(),
-                (Real::one() / Real::from(3_i8)).unwrap().sqrt().unwrap(),
-            ),
+            Point2::new(-tenth.clone(), r!(1 / 2).sqrt().unwrap()),
+            Point2::new(-tenth.clone(), r!(1 / 3).sqrt().unwrap()),
         )
         .unwrap(),
     )
@@ -11717,12 +11685,12 @@ fn independent_field_chord_crosses_a_genuine_analytic_parallel_boolean() {
             assert!(chord.exact_line().is_none());
             assert!(chord.strict_provenance_support_line(&policy).is_none());
 
-            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-            let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
+            let quarter = r!(1 / 4);
+            let twentieth = r!(1 / 20);
             let source = QuadraticBezier2::new(
                 p(-1, 0),
                 Point2::new(Real::zero(), -quarter),
-                Point2::new(Real::one(), (Real::one() / Real::from(2_i8)).unwrap()),
+                Point2::new(Real::one(), r!(1 / 2)),
             );
             let parallel = source
                 .parallel_left(twentieth)
@@ -11823,8 +11791,8 @@ fn independent_field_chord_replays_a_genuine_parallel_endpoint_contact() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parallel_parameter = positive_inverse_sqrt_parameter(2, &policy);
         let independent_parameter = positive_inverse_sqrt_parameter(3, &policy);
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let three_quarters = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let half = r!(1 / 2);
+        let three_quarters = r!(3 / 4);
         let endpoint_source = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::zero(), half.clone()),
@@ -11859,7 +11827,7 @@ fn independent_field_chord_replays_a_genuine_parallel_endpoint_contact() {
             }
         };
 
-        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let three_halves = r!(3 / 2);
         let distance = (three_halves.sqrt().unwrap() / Real::from(4_i8)).unwrap();
         let source = QuadraticBezier2::new(
             p(0, 0),
@@ -11923,7 +11891,7 @@ fn nonrepresented_chord_parallel_corner_region(
     policy: &CurveContext,
     reversed: bool,
 ) -> CurveRegion2 {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel_parameter = BezierParameter2::Exact(half.clone());
     let independent_parameter = positive_inverse_sqrt_parameter(3, policy);
     let source = QuadraticBezier2::new(
@@ -12015,7 +11983,7 @@ fn nonrepresented_chord_parallel_corner_region(
 }
 
 fn nonrepresented_chord_line_corner_region(policy: &CurveContext, reversed: bool) -> CurveRegion2 {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let selected_parameter = positive_inverse_sqrt_parameter(2, policy);
     let source = RationalBezier2::try_new(
         vec![p(0, 0), Point2::new(half, Real::zero()), p(1, 1)],
@@ -12267,7 +12235,7 @@ fn nonrepresented_chord_rational_arc_corner_region(
     assert!(previous.exact_line().is_none());
     assert!(previous.strict_provenance_support_line(policy).is_none());
 
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let selected_coordinate = half.sqrt().unwrap();
     let arc_start = Point2::new(selected_coordinate.clone(), selected_coordinate.clone());
     let arc_control = Point2::new(
@@ -12473,7 +12441,7 @@ fn nonrepresented_chord_selected_circle_corner_region(
 
 #[test]
 fn nonrepresented_cardinal_chord_pair_fillets_through_shared_carriers() {
-    let radius = (Real::one() / Real::from(100_i16)).unwrap();
+    let radius = r!(1 / 100);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = nonrepresented_cardinal_chord_pair_corner_region(&policy, reversed);
@@ -12825,10 +12793,7 @@ fn independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly() {
                     panic!("the chord-normal center must be exact: {reason:?}")
                 }
             };
-            let selected_midpoint = match circle
-                .point_evidence_at(&(Real::one() / Real::from(2_i8)).unwrap(), &policy)
-                .unwrap()
-            {
+            let selected_midpoint = match circle.point_evidence_at(&r!(1 / 2), &policy).unwrap() {
                 Classification::Decided(point) => bounds(point),
                 Classification::Uncertain(reason) => {
                     panic!("the selected-half midpoint must be exact: {reason:?}")
@@ -12973,10 +12938,7 @@ fn independent_oblique_chord_pair_fillet_crosses_algebraic_chords_exactly() {
 
 #[test]
 fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
-    for radius in [
-        (Real::one() / Real::from(100_i16)).unwrap(),
-        (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-    ] {
+    for radius in [r!(1 / 100), r!(3 / 2)] {
         let radius_squared = &radius * &radius;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
@@ -13045,11 +13007,7 @@ fn nonrepresented_chord_and_retained_rational_arc_share_the_fillet_kernel() {
                                 fillet_spans += 1;
                                 // Check the actual curve, independently of the
                                 // retained circle provenance and radius tag.
-                                for parameter in [
-                                    Real::zero(),
-                                    (Real::one() / Real::from(2_i8)).unwrap(),
-                                    Real::one(),
-                                ] {
+                                for parameter in [Real::zero(), r!(1 / 2), Real::one()] {
                                     let Classification::Decided(point) =
                                         curve.point_at_with_policy(parameter, &policy)
                                     else {
@@ -13192,7 +13150,7 @@ fn selected_corner_candidates_reenter_normalization_with_retained_contacts() {
 
 #[test]
 fn general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_kernel() {
-    let radius = (Real::one() / Real::from(100_i16)).unwrap();
+    let radius = r!(1 / 100);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region =
@@ -13279,7 +13237,7 @@ fn general_nonrepresented_chord_and_retained_rational_arc_complete_the_fillet_ke
 
 #[test]
 fn major_retained_rational_arc_and_general_chord_share_the_fillet_kernel() {
-    let radius = (Real::one() / Real::from(100_i16)).unwrap();
+    let radius = r!(1 / 100);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             for elevated in [false, true] {
@@ -13314,7 +13272,7 @@ fn major_retained_rational_arc_and_general_chord_share_the_fillet_kernel() {
 
 #[test]
 fn nonrepresented_chord_and_selected_circle_complete_the_fillet_kernel() {
-    let radius = (Real::one() / Real::from(10_i8)).unwrap();
+    let radius = r!(1 / 10);
     let radius_squared = &radius * &radius;
     let interior = Point2::new(q(1, 2).sqrt().unwrap(), q(1, 2));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -13577,12 +13535,7 @@ fn selected_circle_extension_reconstructs_every_half_chart_path() {
             // boundary, and a diameter setback lands at the antipode.
             for start_endpoint in [false, true] {
                 let trim = source
-                    .endpoint_chord_setback_cut(
-                        start_endpoint,
-                        &(Real::one() / Real::from(10_i8)).unwrap(),
-                        false,
-                        &policy,
-                    )
+                    .endpoint_chord_setback_cut(start_endpoint, &r!(1 / 10), false, &policy)
                     .unwrap();
                 let Classification::Decided(Some((_, _, false))) = trim else {
                     panic!(
@@ -13590,7 +13543,7 @@ fn selected_circle_extension_reconstructs_every_half_chart_path() {
                     );
                 };
                 for (setback, expected_complement) in [
-                    ((Real::one() / Real::from(10_i8)).unwrap(), false),
+                    (r!(1 / 10), false),
                     (Real::one(), true),
                     (Real::from(2_i8), true),
                 ] {
@@ -13647,7 +13600,7 @@ fn selected_circle_extension_reconstructs_every_half_chart_path() {
 
 #[test]
 fn nonrepresented_chord_line_corner_fillets_through_shared_carriers() {
-    let radius = (Real::one() / Real::from(100_i16)).unwrap();
+    let radius = r!(1 / 100);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = nonrepresented_chord_line_corner_region(&policy, reversed);
@@ -13736,7 +13689,7 @@ fn nonrepresented_chord_line_corner_fillets_through_shared_carriers() {
 
 #[test]
 fn nonrepresented_chord_parallel_corner_fillets_without_reintersection() {
-    let radius = (Real::one() / Real::from(100_i16)).unwrap();
+    let radius = r!(1 / 100);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for reversed in [false, true] {
             let region = nonrepresented_chord_parallel_corner_region(&policy, reversed);
@@ -13846,7 +13799,7 @@ fn retained_offset_independent_chord_crosses_a_genuine_analytic_parallel() {
                 _ => None,
             })
             .expect("the retained triangle has one algebraic chord");
-        let twentieth = (Real::one() / Real::from(20_i8)).unwrap();
+        let twentieth = r!(1 / 20);
         let offset = chord
             .parallel_left_retained(twentieth.clone(), &policy)
             .expect("the independent chord has an exact retained parallel");
@@ -13871,16 +13824,13 @@ fn retained_offset_independent_chord_crosses_a_genuine_analytic_parallel() {
         assert!(offset.exact_line().is_none());
         assert!(offset.strict_provenance_support_line(&policy).is_none());
 
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let quarter = r!(1 / 4);
         let translated =
             |point: Point2| point.translated(translation_x.clone(), translation_y.clone());
         let source = QuadraticBezier2::new(
             translated(p(-1, 0)),
             translated(Point2::new(Real::zero(), -quarter)),
-            translated(Point2::new(
-                Real::one(),
-                (Real::one() / Real::from(2_i8)).unwrap(),
-            )),
+            translated(Point2::new(Real::one(), r!(1 / 2))),
         );
         let parallel = source
             .parallel_left(twentieth)
@@ -14053,7 +14003,7 @@ fn selected_cusp_parabola_range(
 
 #[test]
 fn selected_parallel_offset_partitions_existing_cusps_before_composition() {
-    let distance = (Real::one() / Real::from(16_i8)).unwrap();
+    let distance = r!(1 / 16);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (parallel, fragment) =
             selected_cusp_parabola_range(CurveParameterRange2::unit(), &policy);
@@ -14144,7 +14094,7 @@ fn selected_parallel_offset_partitions_existing_cusps_before_composition() {
 
 #[test]
 fn selected_parallel_coalescing_requires_regular_cells() {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (_, first) = selected_cusp_parabola_range(
             CurveParameterRange2::new_validated(Real::zero().into(), half.clone().into()),
@@ -14323,8 +14273,8 @@ fn selected_parallel_offset_preserves_stationary_branch_frames() {
 #[test]
 fn retained_parallel_offset_composition_respects_traversal_orientation() {
     let policy = CurveContext::STRICT;
-    let tenth = (Real::one() / Real::from(10_i8)).unwrap();
-    let fifth = (Real::one() / Real::from(5_i8)).unwrap();
+    let tenth = r!(1 / 10);
+    let fifth = r!(1 / 5);
     let source = QuadraticBezier2::new(p(1, 0), p(1, 1), p(0, 1));
     let parallel = source.parallel_left(-tenth.clone()).unwrap();
     let range = BezierParameterRange2::new_validated(
@@ -14364,7 +14314,7 @@ fn retained_parallel_offset_composition_respects_traversal_orientation() {
 #[test]
 fn retained_parallel_offset_composition_splits_new_cusps_in_traversal_order() {
     let policy = CurveContext::STRICT;
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let source = QuadraticBezier2::new(p(0, 0), Point2::new(half.clone(), Real::zero()), p(1, 1));
     let parallel = source.parallel_left(Real::zero()).unwrap();
     let range = BezierParameterRange2::new_validated(
@@ -14447,7 +14397,7 @@ fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions(
     assert!(matches!(
         exact_offset_spans_from_retained_parallel_fragment(
             RetainedParallelOffsetFragmentRef2::Analytic(&first),
-            &(Real::one() / Real::from(10_i8)).unwrap(),
+            &r!(1 / 10),
             &construction_policy,
         ),
         Ok(Classification::Decided(_))
@@ -14562,7 +14512,7 @@ fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions(
             ),
         ),
     ];
-    let distance = (Real::one() / Real::from(10_i8)).unwrap();
+    let distance = r!(1 / 10);
     for (split_region, unsplit_region) in region_pairs {
         let mut reference = None;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -14589,7 +14539,7 @@ fn retained_parallel_offset_coalesces_non_cusp_algebraic_arrangement_partitions(
 #[test]
 fn retained_parallel_offset_preserves_algebraic_cusp_partition() {
     let construction_policy = CurveContext::STRICT;
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = CubicBezier2::new(p(0, 0), p(0, 4), p(4, -4), p(4, 0))
         .parallel_left(half)
         .expect("the source has an exact analytic parallel");
@@ -14856,12 +14806,8 @@ fn exact_line_fragment_lowering_rejects_nonlinear_algebraic_source() {
     let Classification::Decided(polynomial) = polynomial else {
         panic!("the exact polynomial must be decided");
     };
-    let interval = BezierParameterInterval::try_new_with_policy(
-        (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-        (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-        &policy,
-    )
-    .expect("the isolating interval is valid");
+    let interval = BezierParameterInterval::try_new_with_policy(r!(2 / 3), r!(3 / 4), &policy)
+        .expect("the isolating interval is valid");
     let Classification::Decided(interval) = interval else {
         panic!("the exact interval must be decided");
     };
@@ -14878,14 +14824,8 @@ fn exact_line_fragment_lowering_rejects_nonlinear_algebraic_source() {
     let source = RationalBezier2::try_new(
         vec![
             Point2::new(Real::from(-1_i8), Real::zero()),
-            Point2::new(
-                Real::from(-1_i8),
-                (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
-            ),
-            Point2::new(
-                (Real::from(-1_i8) / Real::from(3_i8)).unwrap(),
-                (Real::from(-2_i8) / Real::from(3_i8)).unwrap(),
-            ),
+            Point2::new(Real::from(-1_i8), r!(-1 / 3)),
+            Point2::new(r!(-1 / 3), r!(-2 / 3)),
             Point2::new(Real::one(), Real::one()),
         ],
         vec![Real::one(); 4],
@@ -15009,7 +14949,7 @@ fn authored_region_clones_share_certified_normalization_without_retaining_the_in
             normalized
                 .value
                 .classify_point_with_policy(
-                    &Point2::new(Real::one(), (Real::one() / Real::from(2)).unwrap()).into(),
+                    &Point2::new(Real::one(), r!(1 / 2)).into(),
                     &CurveContext::STRICT,
                 )
                 .unwrap()
@@ -15363,7 +15303,7 @@ fn rational_quadratic_fragment(
     control: Point2,
     end: Point2,
 ) -> BezierSplitFragment2 {
-    let half = (Real::one() / Real::from(2_i8)).unwrap();
+    let half = r!(1 / 2);
     BezierSplitFragment2::Materialized {
         start: BezierParameter2::Exact(Real::zero()),
         end: BezierParameter2::Exact(Real::one()),
@@ -15569,7 +15509,7 @@ fn irrational_weight_semicircle_region_recovers_exact_native_accelerator() {
     )
     .unwrap()
     .into_value();
-    let point = Point2::new(Real::one(), (Real::one() / Real::from(2_u8)).unwrap());
+    let point = Point2::new(Real::one(), r!(1 / 2));
     assert_eq!(
         region
             .classify_point_with_policy(&point.clone().into(), &policy)

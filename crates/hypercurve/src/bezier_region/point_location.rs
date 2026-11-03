@@ -206,24 +206,15 @@ pub(super) fn classify_algebraic_point_against_line_loop(
 ) -> CurveResult<Classification<ContourPointLocation>> {
     let mut winding = 0_i32;
     for fragment in boundary_loop.fragments() {
-        let line = match retained_line_fragment_segment(fragment, policy)? {
-            Classification::Decided(line) => line,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let start_order = match point.coordinate_order_to_real(false, line.start().y(), policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let end_order = match point.coordinate_order_to_real(false, line.end().y(), policy)? {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let line = decided!(retained_line_fragment_segment(fragment, policy)?, Ok);
+        let start_order = decided!(
+            point.coordinate_order_to_real(false, line.start().y(), policy)?,
+            Ok
+        );
+        let end_order = decided!(
+            point.coordinate_order_to_real(false, line.end().y(), policy)?,
+            Ok
+        );
         if matches!(
             (start_order, end_order),
             (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
@@ -231,25 +222,19 @@ pub(super) fn classify_algebraic_point_against_line_loop(
         ) {
             continue;
         }
-        let side = match point.oriented_line_side(line.start(), line.end(), policy)? {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let side = decided!(
+            point.oriented_line_side(line.start(), line.end(), policy)?,
+            Ok
+        );
         if side == LineSide::On {
-            let start_x = match point.coordinate_order_to_real(true, line.start().x(), policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let end_x = match point.coordinate_order_to_real(true, line.end().x(), policy)? {
-                Classification::Decided(order) => order,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let start_x = decided!(
+                point.coordinate_order_to_real(true, line.start().x(), policy)?,
+                Ok
+            );
+            let end_x = decided!(
+                point.coordinate_order_to_real(true, line.end().x(), policy)?,
+                Ok
+            );
             if !matches!(
                 (start_x, end_x),
                 (std::cmp::Ordering::Less, std::cmp::Ordering::Less)
@@ -346,12 +331,10 @@ pub(super) fn classify_algebraic_point_against_retained_loop_with_cusps(
     certify_boundary: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<ContourPointLocation>> {
-    let fragments = match prepare_algebraic_ray_retained_fragments(boundary_loop, policy)? {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let fragments = decided!(
+        prepare_algebraic_ray_retained_fragments(boundary_loop, policy)?,
+        Ok
+    );
 
     if certify_boundary {
         for fragment in &fragments {
@@ -442,12 +425,8 @@ pub(super) fn prepare_algebraic_ray_retained_fragments(
         match fragment {
             BezierSplitFragment2::AlgebraicChord(chord) => {
                 if chord.exact_line().is_some() {
-                    let fragment = match retained_fragment_algebraic_ray_curve(fragment, policy)? {
-                        Classification::Decided(fragment) => fragment,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let fragment =
+                        decided!(retained_fragment_algebraic_ray_curve(fragment, policy)?, Ok);
                     fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
                     continue;
                 }
@@ -455,12 +434,7 @@ pub(super) fn prepare_algebraic_ray_retained_fragments(
                 fragments.push(AlgebraicRayRetainedFragment2::AlgebraicChord(chord.clone()));
             }
             BezierSplitFragment2::AlgebraicCuspSemicircle(fragment) => {
-                let evaluator = match fragment.algebraic_ray_evaluator(policy)? {
-                    Classification::Decided(evaluator) => evaluator,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let evaluator = decided!(fragment.algebraic_ray_evaluator(policy)?, Ok);
                 fragments.push(AlgebraicRayRetainedFragment2::AlgebraicCusp(evaluator));
             }
             _ => match retained_fragment_algebraic_ray_curve(fragment, policy)? {
@@ -468,13 +442,10 @@ pub(super) fn prepare_algebraic_ray_retained_fragments(
                     fragments.push(AlgebraicRayRetainedFragment2::Rational(fragment));
                 }
                 Classification::Uncertain(UncertaintyReason::Unsupported) => {
-                    let fragment =
-                        match retained_fragment_analytic_algebraic_ray_curve(fragment, policy)? {
-                            Classification::Decided(fragment) => fragment,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                    let fragment = decided!(
+                        retained_fragment_analytic_algebraic_ray_curve(fragment, policy)?,
+                        Ok
+                    );
                     fragments.push(AlgebraicRayRetainedFragment2::AnalyticParallel(fragment));
                 }
                 Classification::Uncertain(reason) => {
@@ -674,12 +645,7 @@ pub(super) fn algebraic_ray_retained_fragments_winding(
                 }
             }
         };
-        let delta = match delta {
-            Classification::Decided(delta) => delta,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let delta = decided!(delta, Ok);
         winding = winding.checked_add(delta).ok_or_else(|| {
             CurveError::Topology("algebraic ray winding exceeds the region counter".into())
         })?;
@@ -827,12 +793,10 @@ pub(super) fn retained_fragment_algebraic_ray_curve(
                     && crate::classify::in_closed_unit_interval(end, policy) == Some(true)
             })
         {
-            let curve = match curve.subcurve_between_exact_with_policy(start, end, policy)? {
-                Classification::Decided(curve) => curve,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let curve = decided!(
+                curve.subcurve_between_exact_with_policy(start, end, policy)?,
+                Ok
+            );
             (curve, None)
         } else {
             (curve, Some(range))
@@ -1068,15 +1032,12 @@ pub(super) fn algebraic_point_rational_curve_ray_winding(
             policy,
         );
     }
-    let weight_sign = match fragment
-        .curve
-        .denominator_sign(&CurveParameterRange2::unit())
-    {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let weight_sign = decided!(
+        fragment
+            .curve
+            .denominator_sign(&CurveParameterRange2::unit()),
+        Ok
+    );
     let controls = fragment
         .curve
         .homogeneous_controls()
@@ -1101,28 +1062,21 @@ pub(super) fn algebraic_point_rational_curve_ray_winding(
             weight_sign,
             policy,
         )?;
-        let side = match side {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let side = decided!(side, Ok);
         if !side.zero && (!side.negative || !side.positive) {
             continue;
         }
-        let ahead = match algebraic_ray_control_sign_hull(
-            &controls,
-            point,
-            direction_x,
-            direction_y,
-            weight_sign,
-            policy,
-        )? {
-            Classification::Decided(ahead) => ahead,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let ahead = decided!(
+            algebraic_ray_control_sign_hull(
+                &controls,
+                point,
+                direction_x,
+                direction_y,
+                weight_sign,
+                policy,
+            )?,
+            Ok
+        );
         if (side.first == Some(RealSign::Zero) && ahead.first == Some(RealSign::Zero))
             || (side.last == Some(RealSign::Zero) && ahead.last == Some(RealSign::Zero))
         {
@@ -1218,12 +1172,7 @@ pub(super) fn algebraic_point_retained_rational_curve_ray_winding(
         .retained_range
         .as_ref()
         .expect("retained algebraic ray winding requires a retained range");
-    let weight_sign = match fragment.curve.denominator_sign(range) {
-        Classification::Decided(sign) => sign,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let weight_sign = decided!(fragment.curve.denominator_sign(range), Ok);
     let side_x = -direction_y.clone();
     let side_y = direction_x.clone();
     let incidence =
@@ -1260,13 +1209,10 @@ pub(super) fn algebraic_point_retained_rational_curve_ray_winding(
     let denominator_sign = product_sign(point.denominator_sign(), weight_sign);
     let mut winding = 0_i32;
     for parameter in parameters {
-        let [start, end] = match retained_curve_region_parameter_orders(&parameter, range, policy)?
-        {
-            Classification::Decided(orders) => orders,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let [start, end] = decided!(
+            retained_curve_region_parameter_orders(&parameter, range, policy)?,
+            Ok
+        );
         use std::cmp::Ordering::{Equal, Greater, Less};
         if start == Less || end == Greater || (start == Equal && end == Equal) {
             continue;
@@ -1300,18 +1246,16 @@ pub(super) fn algebraic_point_retained_rational_curve_ray_winding(
         let (before_positive, after_positive) = loop {
             derivative_order += 1;
             derivative = algebraic_ray_bivariate_second_derivative(&derivative);
-            let derivative_sign = match algebraic_selected_correlated_predicate_sign(
-                &incidence,
-                &derivative,
-                point.retained_parameter(),
-                &parameter,
-                policy,
-            )? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let derivative_sign = decided!(
+                algebraic_selected_correlated_predicate_sign(
+                    &incidence,
+                    &derivative,
+                    point.retained_parameter(),
+                    &parameter,
+                    policy,
+                )?,
+                Ok
+            );
             if derivative_sign != RealSign::Zero {
                 let after_positive =
                     product_sign(derivative_sign, denominator_sign) == RealSign::Positive;
@@ -2030,17 +1974,15 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
                 certified_origin_parameter
                     .map(|parameter| (parameter, origin.parameter_crossing_direction(reversed)))
             });
-            let relation = match parallel.relation_to_supporting_line_on_regular_range(
-                &ray.line,
-                &regular_range,
-                certified_crossing,
-                policy,
-            )? {
-                Classification::Decided(relation) => relation,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let relation = decided!(
+                parallel.relation_to_supporting_line_on_regular_range(
+                    &ray.line,
+                    &regular_range,
+                    certified_crossing,
+                    policy,
+                )?,
+                Ok
+            );
             match relation {
                 BezierLineContactRelation::ControlHullDisjoint { .. }
                 | BezierLineContactRelation::NoContact => {}
@@ -2275,12 +2217,7 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
         } else {
             relation
         };
-        let relation = match relation {
-            Classification::Decided(relation) => relation,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let relation = decided!(relation, Ok);
         match relation {
             BezierLineContactRelation::ControlHullDisjoint { .. }
             | BezierLineContactRelation::NoContact => {}
@@ -2381,13 +2318,10 @@ pub(super) fn classify_point_with_retained_ray_skipping_origin(
                                 if let Some(order) = control_hull_order {
                                     Classification::Decided(order)
                                 } else {
-                                    let contact_point =
-                                        match subcurve_point_at(curve, parameter.clone(), policy) {
-                                            Classification::Decided(point) => point,
-                                            Classification::Uncertain(reason) => {
-                                                return Ok(Classification::Uncertain(reason));
-                                            }
-                                        };
+                                    let contact_point = decided!(
+                                        subcurve_point_at(curve, parameter.clone(), policy),
+                                        Ok
+                                    );
                                     let delta_x = contact_point.x() - point.x();
                                     let delta_y = contact_point.y() - point.y();
                                     let projection = Real::dot2_refs(
@@ -2482,10 +2416,7 @@ pub(super) fn retained_curve_region_parameter_orders(
     policy: &CurveContext,
 ) -> CurveResult<Classification<[std::cmp::Ordering; 2]>> {
     let parameter = CurveParameter2::from(parameter.clone());
-    let start = match parameter.cmp_by_refinement(range.start(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let start = decided!(parameter.cmp_by_refinement(range.start(), policy)?, Ok);
     Ok(parameter
         .cmp_by_refinement(range.end(), policy)?
         .map(|end| [start, end]))
@@ -2516,19 +2447,10 @@ pub(super) fn native_loop_bounds(
     let Some(first) = boundary_loop.fragments().first() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    let mut bounds = match subcurve_query_bounds(first, policy) {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let mut bounds = decided!(subcurve_query_bounds(first, policy));
     for fragment in &boundary_loop.fragments()[1..] {
-        let fragment_bounds = match subcurve_query_bounds(fragment, policy) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        bounds = match bounds.union(&fragment_bounds) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let fragment_bounds = decided!(subcurve_query_bounds(fragment, policy));
+        bounds = decided!(bounds.union(&fragment_bounds));
     }
     Classification::Decided(bounds)
 }
@@ -2541,19 +2463,10 @@ pub(super) fn retained_loop_query_bounds(
     let Some(first) = fragments.next() else {
         return Classification::Uncertain(UncertaintyReason::Unsupported);
     };
-    let mut bounds = match retained_fragment_query_bounds(first, policy) {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let mut bounds = decided!(retained_fragment_query_bounds(first, policy));
     for fragment in fragments {
-        let fragment_bounds = match retained_fragment_query_bounds(fragment, policy) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        bounds = match bounds.union(&fragment_bounds) {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let fragment_bounds = decided!(retained_fragment_query_bounds(fragment, policy));
+        bounds = decided!(bounds.union(&fragment_bounds));
     }
     Classification::Decided(bounds)
 }
@@ -2687,15 +2600,15 @@ pub(super) fn classify_point_with_ray(
         }
         let control_hull_order =
             subcurve_control_hull_strict_order(fragment, point, direction_x, direction_y, policy);
-        let relation = match subcurve_relation_to_line_with_contacts(
-            fragment,
-            &ray.line,
-            Some((direction_x, direction_y)),
-            policy,
-        ) {
-            Classification::Decided(relation) => relation,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let relation = decided!(
+            subcurve_relation_to_line_with_contacts(
+                fragment,
+                &ray.line,
+                Some((direction_x, direction_y)),
+                policy,
+            ),
+            Ok
+        );
         match relation {
             BezierLineContactRelation::ControlHullDisjoint { .. }
             | BezierLineContactRelation::NoContact => {}
@@ -2714,16 +2627,10 @@ pub(super) fn classify_point_with_ray(
                                 if let Some(order) = control_hull_order {
                                     Classification::Decided(order)
                                 } else {
-                                    let contact_point = match subcurve_point_at(
-                                        fragment,
-                                        parameter.clone(),
-                                        policy,
-                                    ) {
-                                        Classification::Decided(point) => point,
-                                        Classification::Uncertain(reason) => {
-                                            return Ok(Classification::Uncertain(reason));
-                                        }
-                                    };
+                                    let contact_point = decided!(
+                                        subcurve_point_at(fragment, parameter.clone(), policy,),
+                                        Ok
+                                    );
                                     let delta_x = contact_point.x() - point.x();
                                     let delta_y = contact_point.y() - point.y();
                                     let projection = Real::dot2_refs(
@@ -2904,11 +2811,10 @@ pub(super) fn retained_line_contact_winding_delta(
 ) -> CurveResult<Classification<i32>> {
     let unit = CurveParameterRange2::unit();
     let range = range.unwrap_or(&unit);
-    let [start, end] =
-        match retained_curve_region_parameter_orders(contact.parameter(), range, policy)? {
-            Classification::Decided(orders) => orders,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let [start, end] = decided!(
+        retained_curve_region_parameter_orders(contact.parameter(), range, policy)?,
+        Ok
+    );
     use std::cmp::Ordering::{Equal, Greater, Less};
     if start == Less || end == Greater || (start == Equal && end == Equal) {
         return Ok(Classification::Decided(0));

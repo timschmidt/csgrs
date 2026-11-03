@@ -566,7 +566,7 @@ fn represented_multi_split_materializes_connected_rational_fragments() {
 #[test]
 fn rational_algebraic_contact_split_retains_exact_derivative_images() {
     let policy = CurveContext::STRICT;
-    let half = || (Real::from(1) / Real::from(2)).unwrap();
+    let half = || r!(1 / 2);
     let parabola = crate::RationalBezier2::try_new(
         vec![
             Point2::new(Real::zero(), Real::zero()),

@@ -1,3 +1,7 @@
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::*;
 use hypersolve::{BivariatePolynomial, IsolatedRootInterval};
 use std::cmp::Ordering;
@@ -236,9 +240,7 @@ fn rational_quotient_guards_survive_cold_native_replay_and_subdivision() {
             Ordering::Equal
         );
         assert_eq!(export_svg_document(&geometry).unwrap(), text);
-        let half = end
-            .affine_image(&(Real::one() / Real::from(2)).unwrap(), &Real::zero())
-            .unwrap();
+        let half = end.affine_image(&r!(1 / 2), &Real::zero()).unwrap();
         let (first, second) = curve.split_at(half).unwrap();
         assert!(first.end().coincides_with(&second.start()).unwrap());
         let again = SvgGeometry2::new(
@@ -273,7 +275,7 @@ fn rational_quotient_guards_survive_cold_native_replay_and_subdivision() {
     let source: Curve2 = RationalBezier2::try_new(
         vec![
             Point2::from_values(0, 0),
-            Point2::new((Real::one() / Real::from(2)).unwrap(), 0.into()),
+            Point2::new(r!(1 / 2), 0.into()),
             Point2::from_values(1, 1),
         ],
         vec![Real::one(); 3],

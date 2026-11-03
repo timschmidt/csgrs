@@ -190,7 +190,7 @@ mod tests {
         let sine = angle.clone().sin();
         let cosine = angle.cos();
         let opaque_one = sine.clone() * sine + cosine.clone() * cosine;
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
 
         for displacement in [&opaque_one - &half, &half - &opaque_one] {
             let remainder = terminal_periodic_remainder(

@@ -103,10 +103,7 @@ impl RationalPointImage2 {
                 policy,
             ),
         };
-        let source = match source {
-            Classification::Decided(source) => source,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let source = decided!(source);
         self.map.bounds(&source).map_or(
             Classification::Uncertain(UncertaintyReason::Predicate),
             Classification::Decided,
@@ -150,8 +147,7 @@ mod tests {
                 2.into(),
             ])
             .unwrap(),
-            BezierParameterInterval::try_new((Real::from(3) / Real::from(4)).unwrap(), 1.into())
-                .unwrap(),
+            BezierParameterInterval::try_new(r!(3 / 4), 1.into()).unwrap(),
         )
         .unwrap();
         crate::CurveParameter2::from(BezierParameter2::Algebraic(alpha))

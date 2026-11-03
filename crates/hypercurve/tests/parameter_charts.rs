@@ -1,3 +1,7 @@
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use std::cmp::Ordering;
 
 use hypercurve::{
@@ -41,12 +45,7 @@ fn affine_charts_retain_selected_root_identity_and_orientation() {
                 .unwrap(),
             Ordering::Less
         );
-        replayed = mapped
-            .affine_image(
-                &(Real::from(-1) / Real::from(4)).unwrap(),
-                &(Real::from(9) / Real::from(4)).unwrap(),
-            )
-            .unwrap();
+        replayed = mapped.affine_image(&r!(-1 / 4), &r!(9 / 4)).unwrap();
         assert_eq!(
             original.cmp_by_refinement(&replayed).unwrap(),
             Ordering::Equal
@@ -76,10 +75,7 @@ fn affine_charts_preserve_an_already_learned_scalar_witness() {
         BezierParameterInterval::try_new(Real::zero(), Real::one()).unwrap(),
     )
     .unwrap();
-    assert_eq!(
-        root.represented_exact_point().unwrap(),
-        Some((Real::one() / Real::from(3)).unwrap())
-    );
+    assert_eq!(root.represented_exact_point().unwrap(), Some(r!(1 / 3)));
     let mapped = BezierParameter2::Algebraic(root)
         .affine_image(&Real::from(3), &Real::from(2))
         .unwrap();
@@ -135,8 +131,8 @@ fn authored_restrictions_preserve_scalar_charts_and_reversed_traversal() {
         )
         .unwrap(),
     );
-    let quarter = (Real::one() / Real::from(4)).unwrap();
-    let half = (Real::one() / Real::from(2)).unwrap();
+    let quarter = r!(1 / 4);
+    let half = r!(1 / 2);
     let restricted = source
         .restrict_source(
             CurveParameterRange2::try_new(

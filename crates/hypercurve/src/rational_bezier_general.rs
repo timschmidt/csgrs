@@ -362,12 +362,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveParameter2>>> {
         let promoted = |parameter: &CurveParameter2| -> CurveResult<_> {
-            let parameter = match parameter.promoted_bezier_parameter_complete(policy)? {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parameter = decided!(parameter.promoted_bezier_parameter_complete(policy)?, Ok);
             Ok(
                 Self::map_parameter_between_curves(source, target, &parameter, policy)?
                     .map(|mapped| mapped.map(CurveParameter2::from)),
@@ -711,12 +706,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
                 );
             }
         };
-        let mapped = match mapped {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let mapped = decided!(mapped, Ok);
         let target_range = CurveParameterRange2::from_bezier_range(target_range.clone());
         Ok(CurveParameterDomain2::new(&target_range, None)
             .contains_finite_parameter(&mapped, policy)?
@@ -731,12 +721,7 @@ impl RationalBezierOverlapParameterCorrespondence2 {
         first_to_second: bool,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Option<CurveParameter2>>> {
-        let parameter = match parameter.promoted_bezier_parameter_complete(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(parameter.promoted_bezier_parameter_complete(policy)?, Ok);
         let mapped = if first_to_second {
             self.map_first_to_second(&parameter, first_range, second_range, policy)
         } else {
@@ -1081,14 +1066,8 @@ fn project_retained_lineage_residual_system(
             policy,
         )
     };
-    let first = match project(CurveResultantParameter::First)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let second = match project(CurveResultantParameter::Second)? {
-        Classification::Decided(projection) => projection,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let first = decided!(project(CurveResultantParameter::First)?, Ok);
+    let second = decided!(project(CurveResultantParameter::Second)?, Ok);
     Ok(Classification::Decided(match (first, second) {
         (ResultantParameterProjection::Empty, _) | (_, ResultantParameterProjection::Empty) => {
             CurveIntersectionCandidates2::NoIntersection
@@ -1132,13 +1111,13 @@ fn project_symmetric_self_intersection_system(
     // removed. Their rootless fibers do not describe self-contacts. Saturate
     // only with the shared algebraic domain certificate, preserving every
     // genuine component and the original parameter chart for replay.
-    let primitive = match hypersolve::saturate_rootless_bivariate_axis_factors(
-        equations,
-        [[&Real::zero(), &Real::one()]; 2],
-    ) {
-        Classification::Decided(primitive) => primitive,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let primitive = decided!(
+        hypersolve::saturate_rootless_bivariate_axis_factors(
+            equations,
+            [[&Real::zero(), &Real::one()]; 2],
+        ),
+        Ok
+    );
     let equations = primitive.as_ref().unwrap_or(equations);
     let report = resultant_bivariate_polynomial_system_complete(
         &equations[0],
@@ -2153,16 +2132,10 @@ impl RationalBezier2 {
                     Classification::Uncertain(reason) => return Classification::Uncertain(reason),
                 }
             }
-            let next = match Aabb2::from_points(&points) {
-                Classification::Decided(bounds) => bounds,
-                Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-            };
+            let next = decided!(Aabb2::from_points(&points));
             bounds = Some(match bounds {
                 None => next,
-                Some(bounds) => match bounds.union(&next) {
-                    Classification::Decided(bounds) => bounds,
-                    Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-                },
+                Some(bounds) => decided!(bounds.union(&next)),
             });
         }
         Classification::Decided(bounds.expect("a positive-degree finite curve has a bound"))
@@ -2250,13 +2223,13 @@ impl RationalBezier2 {
         {
             return Ok(Classification::Decided(Vec::new()));
         }
-        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
-            coefficients.to_vec(),
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let polynomial = decided!(
+            BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
+                coefficients.to_vec(),
+                policy,
+            )?,
+            Ok
+        );
         polynomial.isolate_unit_interval_roots_with_policy(policy)
     }
 
@@ -2297,21 +2270,17 @@ impl RationalBezier2 {
         if first_nonzero != last_nonzero {
             return Ok(Classification::Decided(false));
         }
-        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
-            coefficients.to_vec(),
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let polynomial = decided!(
+            BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
+                coefficients.to_vec(),
+                policy,
+            )?,
+            Ok
+        );
+        let roots = decided!(
+            polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+            Ok
+        );
         for root in roots {
             if root
                 .scalar()
@@ -2503,10 +2472,7 @@ impl RationalBezier2 {
                 BezierLineContactRelation::Contacts { contacts }
             });
         }
-        let weight_sign = match weight_sign {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let weight_sign = decided!(weight_sign);
         let weighted_distances = self.homogeneous_line_distances(line, weight_sign, policy);
 
         exact_line_contact_relation_from_bernstein_distances(weighted_distances, policy)
@@ -2581,10 +2547,7 @@ impl RationalBezier2 {
         if self.degree() != 2 || self.retained_circular_conic().is_none() {
             return self.relation_to_line_with_contacts(line, policy);
         }
-        let weight_sign = match self.denominator_sign(&crate::CurveParameterRange2::unit()) {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let weight_sign = decided!(self.denominator_sign(&crate::CurveParameterRange2::unit()));
         let weighted_distances = self.homogeneous_line_distances(line, weight_sign, policy);
         let Ok(distances) = <Vec<Real> as TryInto<[Real; 3]>>::try_into(weighted_distances) else {
             return Classification::Uncertain(UncertaintyReason::Unsupported);
@@ -2836,18 +2799,8 @@ impl RationalBezier2 {
         right.reverse();
         let left_lineage = self.data.lineage.subrange(&Real::zero(), parameter);
         let right_lineage = self.data.lineage.subrange(parameter, &Real::one());
-        let left = match from_homogeneous(left, left_lineage, policy)? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let right = match from_homogeneous(right, right_lineage, policy)? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let left = decided!(from_homogeneous(left, left_lineage, policy)?, Ok);
+        let right = decided!(from_homogeneous(right, right_lineage, policy)?, Ok);
         Ok(Classification::Decided((left, right)))
     }
 
@@ -2891,12 +2844,7 @@ impl RationalBezier2 {
                 return Ok(Classification::Uncertain(UncertaintyReason::Ordering));
             }
             Some(std::cmp::Ordering::Equal) => {
-                let point = match self.point_at_classified(start, policy) {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(self.point_at_classified(start, policy), Ok);
                 self.retain_root_image_injectivity(policy);
                 return Self::try_new_with_lineage(
                     vec![point; self.degree() + 1],
@@ -2914,12 +2862,7 @@ impl RationalBezier2 {
         {
             return Ok(Classification::Decided(self.clone()));
         }
-        let (left, _) = match self.split_at_exact_with_policy(end, policy)? {
-            Classification::Decided(split) => split,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let (left, _) = decided!(self.split_at_exact_with_policy(end, policy)?, Ok);
         if crate::classify::compare_reals(start, &Real::zero(), policy)
             == Some(std::cmp::Ordering::Equal)
         {
@@ -2965,15 +2908,10 @@ impl RationalBezier2 {
             Some(coefficients) => coefficients,
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let transformed_weight = match BezierParameterPolynomial::try_new_power_basis_with_policy(
-            transformed_weight,
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let transformed_weight = decided!(
+            BezierParameterPolynomial::try_new_power_basis_with_policy(transformed_weight, policy,)?,
+            Ok
+        );
         match transformed_weight.isolate_unit_interval_roots_with_policy(policy)? {
             Classification::Decided(roots) if roots.is_empty() => {}
             Classification::Decided(_) => {
@@ -3003,17 +2941,17 @@ impl RationalBezier2 {
         if let Some(circle) = self.data.lineage.root.circular_conic.get() {
             let _ = root.circular_conic.set(Arc::clone(circle));
         }
-        let curve = match from_homogeneous(
-            controls,
-            RationalBezierLineage {
-                root,
-                range: ParamRange::new(Real::zero(), Real::one()),
-            },
-            policy,
-        )? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let curve = decided!(
+            from_homogeneous(
+                controls,
+                RationalBezierLineage {
+                    root,
+                    range: ParamRange::new(Real::zero(), Real::one()),
+                },
+                policy,
+            )?,
+            Ok
+        );
         if self.data.exact_line_image.is_some() {
             let line = LineSeg2::try_new(curve.start().clone(), curve.end().clone()).ok();
             let mut data =
@@ -3706,21 +3644,11 @@ impl RationalBezier2 {
     ) -> CurveResult<Classification<bool>> {
         let (point, curve, target) = match (first.scalar(), second.scalar()) {
             (Some(parameter), _) => {
-                let point = match self.point_at_classified(parameter, policy) {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(self.point_at_classified(parameter, policy), Ok);
                 (point, other, second)
             }
             (None, Some(parameter)) => {
-                let point = match other.point_at_classified(parameter, policy) {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(other.point_at_classified(parameter, policy), Ok);
                 (point, self, first)
             }
             (None, None) => {
@@ -3827,12 +3755,10 @@ impl RationalBezier2 {
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameterRange2>> {
         policy.strict_predicate_pass(|| {
-            let ([start, end], [lower, upper]) = match CurveParameterDomain2::new(range, None)
-                .finite_envelope(policy)?
-            {
-                Classification::Decided(envelope) => envelope,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let ([start, end], [lower, upper]) = decided!(
+                CurveParameterDomain2::new(range, None).finite_envelope(policy)?,
+                Ok
+            );
             // Discovery bounds schedule algebra; they need no incidence with
             // an authored endpoint. Keep irrational endpoint expressions out
             // of fiber subdivision and Sturm boundary coefficients. Any pole
@@ -3872,12 +3798,10 @@ impl RationalBezier2 {
                 }
                 Err(error) => return Err(error),
             };
-            let poles = match CurveParameterDomain2::new(&envelope, None)
-                .finite_roots(&polynomial, policy)?
-            {
-                Classification::Decided(poles) => poles,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let poles = decided!(
+                CurveParameterDomain2::new(&envelope, None).finite_roots(&polynomial, policy)?,
+                Ok
+            );
             let mut left_pole: Option<CurveParameter2> = None;
             let mut right_pole: Option<CurveParameter2> = None;
             for pole in poles {
@@ -3932,21 +3856,11 @@ impl RationalBezier2 {
                 }
             }
             let lower = match left_pole {
-                Some(pole) => match pole.strict_scalar_between_ordered(start, policy)? {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
+                Some(pole) => decided!(pole.strict_scalar_between_ordered(start, policy)?, Ok),
                 None => lower.clone(),
             };
             let upper = match right_pole {
-                Some(pole) => match end.strict_scalar_between_ordered(&pole, policy)? {
-                    Classification::Decided(value) => value,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                },
+                Some(pole) => decided!(end.strict_scalar_between_ordered(&pole, policy)?, Ok),
                 None => upper.clone(),
             };
             Ok(Classification::Decided(
@@ -4262,10 +4176,7 @@ impl RationalBezier2 {
         other: &Self,
         policy: &CurveContext,
     ) -> Classification<RationalBezierSharedComponentReplay> {
-        let shared_quadratic_conic = match self.shares_implicit_quadratic_conic(other, policy) {
-            Classification::Decided(shared) => shared,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let shared_quadratic_conic = decided!(self.shares_implicit_quadratic_conic(other, policy));
         if !shared_quadratic_conic {
             match self.certified_line_image_overlap(other, policy) {
                 Classification::Decided(Some(overlap)) => {
@@ -4421,17 +4332,12 @@ impl RationalBezier2 {
         let mut overlap = None;
         for first_index in 0..contacts.len() {
             for second_index in first_index + 1..contacts.len() {
-                let candidate = match self.overlap_between_contacts(
+                let candidate = decided!(self.overlap_between_contacts(
                     other,
                     &contacts[first_index],
                     &contacts[second_index],
                     policy,
-                ) {
-                    Classification::Decided(candidate) => candidate,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
+                ));
                 let Some(candidate) = candidate else {
                     continue;
                 };
@@ -4649,17 +4555,17 @@ impl RationalBezier2 {
         if coefficients_decided && !positive && !negative {
             return Ok(Classification::Decided(false));
         }
-        let polynomial = match BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
-            coefficients.to_vec(),
-            policy,
-        )? {
-            Classification::Decided(polynomial) => polynomial,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let roots = match polynomial.isolate_unit_interval_roots_with_policy(policy)? {
-            Classification::Decided(roots) => roots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let polynomial = decided!(
+            BezierParameterPolynomial::try_new_bernstein_basis_with_policy(
+                coefficients.to_vec(),
+                policy,
+            )?,
+            Ok
+        );
+        let roots = decided!(
+            polynomial.isolate_unit_interval_roots_with_policy(policy)?,
+            Ok
+        );
         let parameter = BezierParameter2::Exact(parameter.clone());
         for root in roots {
             match parameter.same_value(&root, policy)? {
@@ -5157,12 +5063,7 @@ impl RationalBezier2 {
             .iter()
             .map(|coefficient| coefficient / &basis.weight[0])
             .collect::<Result<Vec<_>, _>>()?;
-        let dependent = match trim_power_polynomial(dependent, policy) {
-            Classification::Decided(dependent) => dependent,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let dependent = decided!(trim_power_polynomial(dependent, policy), Ok);
         Ok(Classification::Decided(Some(PolynomialGraph2 {
             axis,
             origin,
@@ -6001,12 +5902,10 @@ pub(crate) fn resultant_parameter_projection(
                 Classification::Uncertain(_) => false,
             };
         if within_unit {
-            let roots = match square_free.isolate_square_free_unit_interval_roots(policy)? {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let roots = decided!(
+                square_free.isolate_square_free_unit_interval_roots(policy)?,
+                Ok
+            );
             let mut parameters = Vec::with_capacity(roots.len());
             for root in roots {
                 if !domain.is_closed_unit() {
@@ -6045,12 +5944,7 @@ pub(crate) fn resultant_parameter_projection(
             return extend_resultant_parameter_projection(&polynomial, parameters, domain, policy);
         }
     }
-    let parameters = match domain.finite_roots(&polynomial, policy)? {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let parameters = decided!(domain.finite_roots(&polynomial, policy)?, Ok);
     extend_resultant_parameter_projection(&polynomial, parameters, domain, policy)
 }
 
@@ -6085,16 +5979,14 @@ fn extend_resultant_parameter_projection(
     policy: &CurveContext,
 ) -> CurveResult<Classification<ResultantParameterProjection>> {
     if let Some(extension) = domain.extension {
-        let exterior = match polynomial.isolate_incident_ray_roots_with_policy(
-            extension.anchor,
-            extension.direction,
-            policy,
-        )? {
-            Classification::Decided(parameters) => parameters,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let exterior = decided!(
+            polynomial.isolate_incident_ray_roots_with_policy(
+                extension.anchor,
+                extension.direction,
+                policy,
+            )?,
+            Ok
+        );
         for parameter in exterior {
             // The actual finite span owns shared roots, even beyond a ray's
             // barrier. Roots inside the original unit interval belong to this
@@ -6107,12 +5999,10 @@ fn extend_resultant_parameter_projection(
                 }
             }
             if let Some(barrier) = extension.barrier {
-                let ordering = match parameter.cmp_by_refinement_with_policy(barrier, policy)? {
-                    Classification::Decided(ordering) => ordering,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let ordering = decided!(
+                    parameter.cmp_by_refinement_with_policy(barrier, policy)?,
+                    Ok
+                );
                 let before_barrier = match extension.direction {
                     BezierParameterRayDirection2::Decreasing => ordering == Ordering::Greater,
                     BezierParameterRayDirection2::Increasing => ordering == Ordering::Less,
@@ -7024,7 +6914,7 @@ mod tests {
 
     #[test]
     fn bounded_curve_resultants_rejoin_the_uncapped_authority() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let first_equation = BivariatePolynomial::new(vec![
             vec![Real::zero(), Real::one()],
             vec![Real::zero()],
@@ -7047,8 +6937,8 @@ mod tests {
             CurveIntersectionResultantStatus::DegreeBoundExceeded,
         );
 
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
-        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
+        let two_thirds = r!(2 / 3);
         let cubic = RationalBezier2::try_new(
             vec![
                 Point2::from_values(0, 0),
@@ -7157,11 +7047,7 @@ mod tests {
                 Point2::from_values(1, 1),
                 Point2::from_values(2, 0),
             ],
-            vec![
-                Real::one(),
-                -(Real::one() / Real::from(2_i8)).unwrap(),
-                Real::one(),
-            ],
+            vec![Real::one(), -r!(1 / 2), Real::one()],
         )
         .unwrap()
     }
@@ -7205,11 +7091,7 @@ mod tests {
                     let correspondence = RationalBezierOverlapParameterCorrespondence2::new(
                         &first, &second, &policy,
                     );
-                    for t in [
-                        Real::zero(),
-                        (Real::one() / Real::from(3)).unwrap(),
-                        Real::one(),
-                    ] {
+                    for t in [Real::zero(), r!(1 / 3), Real::one()] {
                         let parameter = BezierParameter2::Exact(t.clone());
                         let mut expected = (&t / (Real::from(2) - &t)).unwrap();
                         if reversed {
@@ -7237,11 +7119,7 @@ mod tests {
             }
             let complementary = RationalBezier2::try_new(
                 first.affine_control_points().unwrap().to_vec(),
-                vec![
-                    Real::one(),
-                    (Real::one() / Real::from(2)).unwrap(),
-                    Real::one(),
-                ],
+                vec![Real::one(), r!(1 / 2), Real::one()],
             )
             .unwrap();
             assert!(
@@ -7301,10 +7179,7 @@ mod tests {
             assert_eq!(
                 contacts[0]
                     .parameter()
-                    .cmp_by_interval_with_policy(
-                        &BezierParameter2::Exact((Real::one() / Real::from(2_i8)).unwrap()),
-                        &policy
-                    )
+                    .cmp_by_interval_with_policy(&BezierParameter2::Exact(r!(1 / 2)), &policy)
                     .unwrap(),
                 Classification::Decided(Ordering::Equal)
             );
@@ -7327,7 +7202,7 @@ mod tests {
     #[test]
     fn homogeneous_representation_preserves_exact_split() {
         let source = finite_mixed_weight_quadratic();
-        let split = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let split = r!(2 / 3);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided((left, right)) =
                 source.split_at_exact_with_policy(&split, &policy).unwrap()
@@ -7377,7 +7252,7 @@ mod tests {
             vec![Real::one(), Real::one()],
         )
         .unwrap();
-        let alpha = (Real::one() / Real::from(2_i8)).unwrap().sqrt().unwrap();
+        let alpha = r!(1 / 2).sqrt().unwrap();
         let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
         for (lower, upper) in [
             (alpha.clone(), Real::pi()),
@@ -7531,8 +7406,8 @@ mod tests {
 
     #[test]
     fn affine_subcurve_retains_zero_intermediate_weight_without_a_pole() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let half = r!(1 / 2);
+        let two_thirds = r!(2 / 3);
         let source = RationalBezier2::try_new(
             vec![
                 Point2::from_values(0, 0),
@@ -7565,7 +7440,7 @@ mod tests {
 
     #[test]
     fn affine_subcurve_rejects_a_crossed_projective_pole() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let source = RationalBezier2::try_new(
             vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
             vec![Real::one(), half],
@@ -7583,9 +7458,9 @@ mod tests {
 
     #[test]
     fn affine_subcurve_materializes_a_finite_rational_parabola_extension() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-        let three_halves = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
+        let three_halves = r!(3 / 2);
         let source = RationalBezier2::try_new(
             vec![
                 Point2::from_values(0, 0),
@@ -7609,7 +7484,7 @@ mod tests {
     #[test]
     fn deferred_parametric_point_reuses_source_polynomials_for_exact_equality() {
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-half, Real::zero(), Real::one()],
@@ -7663,7 +7538,7 @@ mod tests {
     fn exact_contact_evidence_reuses_a_retained_high_degree_image() {
         let policy = CurveContext::STRICT;
         let mut coefficients = vec![Real::zero(); 42];
-        coefficients[0] = (Real::from(-1_i8) / Real::from(2_i8)).unwrap();
+        coefficients[0] = r!(-1 / 2);
         coefficients[41] = Real::one();
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis_with_policy(coefficients, &policy)
@@ -7731,11 +7606,7 @@ mod tests {
             Point2::new(Real::from(9_i8), Real::from(9_i8)),
         ];
         let fixtures = [
-            (
-                vec![Real::one(); 4],
-                (Real::one() / Real::from(4_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-            ),
+            (vec![Real::one(); 4], r!(1 / 4), r!(3 / 4)),
             (
                 vec![
                     Real::one(),
@@ -7743,8 +7614,8 @@ mod tests {
                     Real::from(4_i8),
                     Real::from(8_i8),
                 ],
-                (Real::one() / Real::from(7_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(5_i8)).unwrap(),
+                r!(1 / 7),
+                r!(3 / 5),
             ),
         ];
 
@@ -7889,7 +7760,7 @@ mod tests {
                 vec![Real::one(); 2],
             )
             .unwrap();
-            let half = (Real::one() / Real::from(2)).unwrap();
+            let half = r!(1 / 2);
             let Classification::Decided(point) = source
                 .subcurve_between_exact_with_policy(&half, &half, &policy)
                 .unwrap()
@@ -8076,8 +7947,8 @@ mod tests {
 
     #[test]
     fn exact_degree_elevated_line_recovers_linear_parameter_transport() {
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let third = r!(1 / 3);
+        let half = r!(1 / 2);
         let elevated = RationalBezier2::try_new(
             vec![
                 Point2::new(Real::zero(), half.clone()),
@@ -8160,11 +8031,7 @@ mod tests {
                 source.homogeneous_controls()
             );
             assert_eq!(reduced.weights(), source.weights());
-            for parameter in [
-                Real::zero(),
-                (Real::one() / Real::from(3_i8)).unwrap(),
-                Real::one(),
-            ] {
+            for parameter in [Real::zero(), r!(1 / 3), Real::one()] {
                 assert_eq!(
                     reduced
                         .point_at_with_policy(&parameter, &CurveContext::STRICT)
@@ -8179,7 +8046,7 @@ mod tests {
 
     #[test]
     fn minimal_degree_reduction_preserves_infinite_controls_and_authored_poles() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let controls = [
             // A finite semicircle with an infinite middle control.
             vec![
@@ -8305,9 +8172,9 @@ mod tests {
         )
         .unwrap();
         let unit = BezierParameterRange2::from_exact(Real::zero(), Real::one());
-        let first_parameter = BezierParameter2::Exact((Real::one() / Real::from(3_i8)).unwrap());
-        let same_expected = (Real::one() / Real::from(5_i8)).unwrap();
-        let reversed_expected = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+        let first_parameter = BezierParameter2::Exact(r!(1 / 3));
+        let same_expected = r!(1 / 5);
+        let reversed_expected = r!(4 / 5);
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for (second, expected) in [(&same, &same_expected), (&reversed, &reversed_expected)] {
@@ -8338,12 +8205,10 @@ mod tests {
     #[test]
     fn range_projective_correspondence_maps_and_inverts_oriented_ranges() {
         for shift in [Real::from(-2), Real::zero(), Real::from(2)] {
-            let first_range = BezierParameterRange2::from_exact(
-                &shift + (Real::one() / Real::from(4_i8)).unwrap(),
-                &shift + (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-            );
-            let second_low = &shift + (Real::one() / Real::from(5_i8)).unwrap();
-            let second_high = &shift + (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+            let first_range =
+                BezierParameterRange2::from_exact(&shift + r!(1 / 4), &shift + r!(3 / 4));
+            let second_low = &shift + r!(1 / 5);
+            let second_high = &shift + r!(4 / 5);
             let scale = Real::from(2_i8);
 
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -8473,17 +8338,13 @@ mod tests {
                 Point2::new(20.into(), 4.into()),
                 Point2::new(29.into(), 7.into()),
             ],
-            vec![
-                Real::one(),
-                (Real::one() / Real::from(2_i8)).unwrap(),
-                Real::one(),
-            ],
+            vec![Real::one(), r!(1 / 2), Real::one()],
         )
         .unwrap();
         let line = RationalBezier2::try_new(
             vec![
                 Point2::new(20.into(), (-11).into()),
-                Point2::new(20.into(), (Real::from(-1_i8) / Real::from(2_i8)).unwrap()),
+                Point2::new(20.into(), r!(-1 / 2)),
                 Point2::new(20.into(), 10.into()),
             ],
             vec![Real::one(); 3],
@@ -8497,19 +8358,13 @@ mod tests {
         };
         assert_eq!(contacts.len(), 1);
         assert!(contacts[0].is_certified_transverse());
-        assert_eq!(
-            contacts[0].first_parameter().scalar(),
-            Some(&(Real::one() / Real::from(2_i8)).unwrap())
-        );
-        assert_eq!(
-            contacts[0].second_parameter().scalar(),
-            Some(&(Real::from(17_i8) / Real::from(21_i8)).unwrap())
-        );
+        assert_eq!(contacts[0].first_parameter().scalar(), Some(&r!(1 / 2)));
+        assert_eq!(contacts[0].second_parameter().scalar(), Some(&r!(17 / 21)));
     }
 
     #[test]
     fn exact_line_image_route_replays_algebraic_conic_contact() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let conic = RationalBezier2::try_new(
             vec![
                 Point2::new(17.into(), 7.into()),
@@ -8522,7 +8377,7 @@ mod tests {
         let line = RationalBezier2::try_new(
             vec![
                 Point2::new(25.into(), (-11).into()),
-                Point2::new(25.into(), (Real::from(-1_i8) / Real::from(2_i8)).unwrap()),
+                Point2::new(25.into(), r!(-1 / 2)),
                 Point2::new(25.into(), 10.into()),
             ],
             vec![Real::one(); 3],
@@ -8649,7 +8504,7 @@ mod tests {
             panic!("nonsingular rational quadratic did not produce a parameter map");
         };
         let (numerator, denominator) = &parameter_map.primary;
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
 
         for parameter in [Real::zero(), third, Real::one()] {
             let image = (Real::eval_poly(numerator, &parameter)
@@ -8662,7 +8517,7 @@ mod tests {
     #[test]
     fn conic_parameter_primary_map_defers_fallback_image_polynomial() {
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-half, Real::zero(), Real::one()],
@@ -8715,7 +8570,7 @@ mod tests {
 
     #[test]
     fn rational_parameter_image_map_reuses_quotient_authority_across_isolators() {
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let third = r!(1 / 3);
         let two_thirds = Real::from(2_i8) * &third;
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(polynomial) =
@@ -8746,14 +8601,8 @@ mod tests {
                 };
                 BezierParameter2::Algebraic(parameter)
             };
-            let first = make_parameter(
-                (Real::one() / Real::from(4_i8)).unwrap(),
-                (Real::one() / Real::from(2_i8)).unwrap(),
-            );
-            let second = make_parameter(
-                (Real::one() / Real::from(2_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-            );
+            let first = make_parameter(r!(1 / 4), r!(1 / 2));
+            let second = make_parameter(r!(1 / 2), r!(3 / 4));
             let mut map = RationalParameterImageMap2::new(
                 vec![Real::zero(), Real::one()],
                 vec![Real::one()],
@@ -8786,7 +8635,7 @@ mod tests {
     #[test]
     fn conic_parameter_refines_primary_map_before_constructing_fallback() {
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let Classification::Decided(polynomial) =
             BezierParameterPolynomial::try_new_power_basis_with_policy(
                 vec![-half.clone(), Real::zero(), Real::one()],
@@ -8839,9 +8688,9 @@ mod tests {
 
     #[test]
     fn rational_image_selection_reuses_learned_exact_scalar_views() {
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let quarter = (Real::one() / Real::from(4)).unwrap();
-        let margin = (Real::one() / Real::from(16)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
+        let margin = r!(1 / 16);
         for value in [half.clone().sqrt().unwrap(), Real::pi() * &quarter] {
             for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
                 let Classification::Decided(polynomial) =
@@ -8912,8 +8761,8 @@ mod tests {
 
     #[test]
     fn rational_image_selection_refines_competing_deflated_isolators() {
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // (t-1/2)(t^2-1/2) has two unit roots. The retained isolator of
             // the second factor may include 1/2, which it no longer defines.
@@ -8928,7 +8777,7 @@ mod tests {
             };
             let Classification::Decided(interval) = BezierParameterInterval::try_new_with_policy(
                 quarter.clone(),
-                (Real::from(5) / Real::from(8)).unwrap(),
+                r!(5 / 8),
                 &CurveContext::STRICT,
             )
             .unwrap() else {
@@ -9010,7 +8859,7 @@ mod tests {
 
     #[test]
     fn rational_image_selection_certifies_unit_endpoints_before_admission() {
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(polynomial) =
                 BezierParameterPolynomial::try_new_power_basis_with_policy(
@@ -9336,8 +9185,8 @@ mod tests {
 
     #[test]
     fn implicit_conic_contacts_retain_source_parameter_point_image_first() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let third = (Real::one() / Real::from(3_i8)).unwrap();
+        let half = r!(1 / 2);
+        let third = r!(1 / 3);
         let two_thirds = Real::from(2_i8) * &third;
         let conic = RationalBezier2::try_new(
             vec![
@@ -9495,22 +9344,14 @@ mod tests {
         );
 
         let first_trimmed = match first
-            .subcurve_between_exact_with_policy(
-                &Real::zero(),
-                &(Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-                &policy,
-            )
+            .subcurve_between_exact_with_policy(&Real::zero(), &r!(3 / 4), &policy)
             .unwrap()
         {
             Classification::Decided(curve) => curve,
             Classification::Uncertain(reason) => panic!("first trim blocked: {reason:?}"),
         };
         let second_trimmed = match second
-            .subcurve_between_exact_with_policy(
-                &(Real::one() / Real::from(4_i8)).unwrap(),
-                &Real::one(),
-                &policy,
-            )
+            .subcurve_between_exact_with_policy(&r!(1 / 4), &Real::one(), &policy)
             .unwrap()
         {
             Classification::Decided(curve) => curve,
@@ -9572,7 +9413,7 @@ mod tests {
             vec![Real::one(); degree + 1],
         )
         .unwrap();
-        let parameter = (Real::one() / Real::from(2_u8)).unwrap();
+        let parameter = r!(1 / 2);
         let policy = CurveContext::STRICT;
 
         let point = curve.point_at_with_policy(&parameter, &policy).unwrap();
@@ -9641,10 +9482,7 @@ mod tests {
         );
         assert_eq!(
             curve
-                .derivative_is_certified_nonzero_at(
-                    &(Real::one() / Real::from(2_u8)).unwrap(),
-                    &policy,
-                )
+                .derivative_is_certified_nonzero_at(&r!(1 / 2), &policy,)
                 .unwrap(),
             Classification::Decided(true)
         );
@@ -9933,7 +9771,7 @@ mod tests {
             panic!("the negative-weight line crossing must be decided");
         };
         assert_eq!(contacts.len(), 1);
-        let half = (Real::one() / Real::from(2_u8)).unwrap();
+        let half = r!(1 / 2);
         assert_eq!(contacts[0].parameter().scalar(), Some(&half));
         assert_eq!(
             contacts[0].crossing_direction(),
@@ -9994,7 +9832,7 @@ mod tests {
                 .collect(),
         )
         .unwrap();
-        let parameter = (Real::one() / Real::from(3_u8)).unwrap();
+        let parameter = r!(1 / 3);
         let policy = CurveContext::STRICT;
 
         let actual = curve.point_at_with_policy(&parameter, &policy).unwrap();

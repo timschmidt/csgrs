@@ -183,20 +183,11 @@ impl Aabb2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
 
-        let mut bbox = match Self::from_segment(first)? {
-            Classification::Decided(bbox) => bbox,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let mut bbox = decided!(Self::from_segment(first)?, Ok);
 
         for segment in segments {
-            let segment_bbox = match Self::from_segment(segment)? {
-                Classification::Decided(bbox) => bbox,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            bbox = match bbox.union(&segment_bbox) {
-                Classification::Decided(bbox) => bbox,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let segment_bbox = decided!(Self::from_segment(segment)?, Ok);
+            bbox = decided!(bbox.union(&segment_bbox), Ok);
         }
 
         Ok(Classification::Decided(bbox))
@@ -243,20 +234,11 @@ impl Aabb2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
 
-        let mut bbox = match Self::from_contour(first)? {
-            Classification::Decided(bbox) => bbox,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let mut bbox = decided!(Self::from_contour(first)?, Ok);
 
         for contour in contours {
-            let contour_bbox = match Self::from_contour(contour)? {
-                Classification::Decided(bbox) => bbox,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            bbox = match bbox.union(&contour_bbox) {
-                Classification::Decided(bbox) => bbox,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let contour_bbox = decided!(Self::from_contour(contour)?, Ok);
+            bbox = decided!(bbox.union(&contour_bbox), Ok);
         }
 
         Ok(Classification::Decided(bbox))
@@ -481,24 +463,18 @@ impl Aabb2 {
     /// `None` means the boxes are disjoint or their intersection has positive
     /// extent in at least one axis. Uncertain coordinate order remains explicit.
     pub fn singleton_intersection(&self, other: &Self) -> Classification<Option<Point2>> {
-        let x = match singleton_interval_intersection(
+        let x = decided!(singleton_interval_intersection(
             self.min_x(),
             self.max_x(),
             other.min_x(),
             other.max_x(),
-        ) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
-        let y = match singleton_interval_intersection(
+        ));
+        let y = decided!(singleton_interval_intersection(
             self.min_y(),
             self.max_y(),
             other.min_y(),
             other.max_y(),
-        ) {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        ));
         Classification::Decided(x.zip(y).map(|(x, y)| Point2::new(x, y)))
     }
 }

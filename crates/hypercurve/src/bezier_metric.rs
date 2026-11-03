@@ -501,15 +501,10 @@ fn inverse_length_parameter_region_for_controls(
     let two = Real::from(2_i8);
     for _ in 0..search_depth {
         let mid = ((&low + &high) / &two)?;
-        let mid_bounds = match prefix_length_bounds_for_controls(
-            controls.clone(),
-            mid.clone(),
-            metric_depth,
-            policy,
-        )? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let mid_bounds = decided!(
+            prefix_length_bounds_for_controls(controls.clone(), mid.clone(), metric_depth, policy,)?,
+            Ok
+        );
         let lower_cmp = compare_reals(&target_length, mid_bounds.lower(), policy);
         let upper_cmp = compare_reals(&target_length, mid_bounds.upper(), policy);
         match (lower_cmp, upper_cmp) {
@@ -529,11 +524,10 @@ fn inverse_length_parameter_region_for_controls(
         }
     }
 
-    let high_bounds =
-        match prefix_length_bounds_for_controls(controls, high.clone(), metric_depth, policy)? {
-            Classification::Decided(bounds) => bounds,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let high_bounds = decided!(
+        prefix_length_bounds_for_controls(controls, high.clone(), metric_depth, policy)?,
+        Ok
+    );
     let span = match arc_length_span(low, high) {
         Ok(span) => span,
         Err(reason) => return Ok(Classification::Uncertain(reason)),
@@ -769,7 +763,7 @@ mod tests {
     #[test]
     fn inverse_length_linear_image_keeps_exact_parameter_certificate() {
         let curve = linear_quadratic();
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let region = decided(
             curve
                 .inverse_length_parameter_region_with_policy(

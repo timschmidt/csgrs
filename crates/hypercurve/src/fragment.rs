@@ -366,11 +366,10 @@ fn split_marker_matches_source_arc(
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     }
 
-    let expected_param =
-        match source_arc.sweep_fraction_for_incident_point(&marker.point, policy)? {
-            Classification::Decided(param) => param,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+    let expected_param = decided!(
+        source_arc.sweep_fraction_for_incident_point(&marker.point, policy)?,
+        Ok
+    );
     match compare_reals(&marker.param, &expected_param, policy) {
         Some(Ordering::Equal) => Ok(Classification::Decided(())),
         Some(_) if policy.is_edge_preview() => {
@@ -391,15 +390,15 @@ pub(crate) fn split_contour_at_intersections(
 ) -> CurveResult<Classification<ContourFragmentSet>> {
     validate_contour_intersection_evidence_against_contour(contour, intersections, &[operand])?;
 
-    let markers = match ContourSplitMarkers::from_intersections_with_policy(
-        contour,
-        intersections,
-        operand,
-        policy,
-    ) {
-        Classification::Decided(markers) => markers,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let markers = decided!(
+        ContourSplitMarkers::from_intersections_with_policy(
+            contour,
+            intersections,
+            operand,
+            policy,
+        ),
+        Ok
+    );
 
     ContourFragmentSet::from_split_markers_with_policy(contour, &markers, policy)
 }
@@ -415,14 +414,10 @@ pub(crate) fn split_contour_at_self_intersections(
         &[crate::ContourOperand::First, crate::ContourOperand::Second],
     )?;
 
-    let markers = match ContourSplitMarkers::from_self_intersections_with_policy(
-        contour,
-        intersections,
-        policy,
-    ) {
-        Classification::Decided(markers) => markers,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let markers = decided!(
+        ContourSplitMarkers::from_self_intersections_with_policy(contour, intersections, policy,),
+        Ok
+    );
 
     ContourFragmentSet::from_split_markers_with_policy(contour, &markers, policy)
 }
@@ -483,17 +478,17 @@ fn append_segment_fragments(
             }
         }
 
-        let segment = match build_fragment_segment(
-            source_segment,
-            start,
-            end,
-            unsplit_source_segment,
-            line_support.as_ref(),
-            policy,
-        )? {
-            Classification::Decided(segment) => segment,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let segment = decided!(
+            build_fragment_segment(
+                source_segment,
+                start,
+                end,
+                unsplit_source_segment,
+                line_support.as_ref(),
+                policy,
+            )?,
+            Ok
+        );
         fragments.push(ContourFragment {
             source_segment_index: segment_index,
             source_segment_start_point: source_segment.start().clone(),

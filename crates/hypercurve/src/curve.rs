@@ -2278,12 +2278,7 @@ impl Curve2 {
     ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
         Ok(
             match resolve_cached_evaluation(&self.data.rational_evaluators, policy, |attempt| {
-                let fragments = match self.native_bezier_fragments_raw(attempt)? {
-                    Classification::Decided(fragments) => fragments,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let fragments = decided!(self.native_bezier_fragments_raw(attempt)?, Ok);
                 fragments
                     .iter()
                     .map(|fragment| rationalize_subcurve(fragment.native_curve(), self.family()))
@@ -3056,15 +3051,11 @@ impl CurvePath2 {
             }
         }
 
-        let boundary = match self
-            .boundary_loop_raw(policy)
-            .map_err(|error| remap_operation(error, CurveOperation2::Classification))?
-        {
-            Classification::Decided(boundary) => boundary,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let boundary = decided!(
+            self.boundary_loop_raw(policy)
+                .map_err(|error| remap_operation(error, CurveOperation2::Classification))?,
+            Ok
+        );
         boundary.classify_point_raw(point, policy).map_err(|cause| {
             ExactCurveError::invalid(
                 CurveOperation2::Classification,
@@ -3110,12 +3101,7 @@ impl CurvePath2 {
                 |attempt| {
                     let mut capacity = 0_usize;
                     for curve in &self.data.curves {
-                        let native = match curve.native_bezier_fragments_raw(attempt)? {
-                            Classification::Decided(native) => native,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let native = decided!(curve.native_bezier_fragments_raw(attempt)?, Ok);
                         capacity += native.len();
                     }
                     let mut fragments = Vec::with_capacity(capacity);
@@ -3313,14 +3299,13 @@ fn classify_native_arc_chord_path(
         Classification::Decided(side) => side,
         Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
     };
-    let representative = match arc
-        .representative_point_with_policy(policy)
-        .map_err(|cause| {
-            ExactCurveError::invalid(CurveOperation2::NativeTopology, arc_curve.family(), cause)
-        })? {
-        Classification::Decided(point) => point,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let representative = decided!(
+        arc.representative_point_with_policy(policy)
+            .map_err(|cause| {
+                ExactCurveError::invalid(CurveOperation2::NativeTopology, arc_curve.family(), cause)
+            })?,
+        Ok
+    );
     let arc_side = match chord.classify_point_with_policy(&representative, policy) {
         Classification::Decided(LineSide::On) => {
             return Err(ExactCurveError::invalid(
@@ -3690,12 +3675,7 @@ fn promote_native_bezier_fragments(
             )?]))
         }
         Some(CurveGeometry2::CircularArc(value)) => {
-            let decomposition = match decompose_circular_arc(value, policy)? {
-                Classification::Decided(decomposition) => decomposition,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let decomposition = decided!(decompose_circular_arc(value, policy)?, Ok);
             Ok(Classification::Decided(
                 decomposition
                     .spans()
@@ -3744,12 +3724,7 @@ fn promote_native_bezier_fragments(
             )?]))
         }
         Some(CurveGeometry2::PolynomialBSpline(value)) => {
-            let decomposition = match value.bezier_decomposition_with_policy(policy)? {
-                Classification::Decided(decomposition) => decomposition,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let decomposition = decided!(value.bezier_decomposition_with_policy(policy)?, Ok);
             Ok(Classification::Decided(
                 decomposition
                     .native_spans()
@@ -3760,18 +3735,8 @@ fn promote_native_bezier_fragments(
             ))
         }
         Some(CurveGeometry2::Nurbs(value)) => {
-            let decomposition = match value.bezier_decomposition_with_policy(policy)? {
-                Classification::Decided(decomposition) => decomposition,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let subcurves = match value.native_subcurves_raw(policy)? {
-                Classification::Decided(subcurves) => subcurves,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let decomposition = decided!(value.bezier_decomposition_with_policy(policy)?, Ok);
+            let subcurves = decided!(value.native_subcurves_raw(policy)?, Ok);
             debug_assert_eq!(decomposition.spans().len(), subcurves.len());
             Ok(Classification::Decided(
                 decomposition
@@ -5461,12 +5426,12 @@ mod tests {
             center.translated(Real::from(5), Real::from(-3)),
         )
         .unwrap();
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let step = (Real::one() / Real::from(8)).unwrap();
+        let half = r!(1 / 2);
+        let step = r!(1 / 8);
         let offset = source.offset_left(half.clone()).unwrap();
         let other = source.offset_left(-half.clone()).unwrap();
         let start = (Real::one() / Real::from(3).sqrt().unwrap()).unwrap();
-        let end = (Real::from(3) / Real::from(4)).unwrap();
+        let end = r!(3 / 4);
         for reversed in [false, true] {
             let line = if reversed {
                 offset.reversed()
@@ -5906,8 +5871,8 @@ mod tests {
     #[test]
     fn fillet_center_contacts_keep_source_orientation_across_support_cusps() {
         let p = Point2::from_values;
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
         let curve = QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0));
         let authored = Curve2::from(curve.clone());
         let line = LineSeg2::try_new(p(0, 0), p(4, 0)).unwrap();
@@ -6025,7 +5990,7 @@ mod tests {
     #[test]
     fn parallel_derivative_orientation_replays_unprojectable_selected_fibers() {
         let p = Point2::from_values;
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let parallel = QuadraticBezier2::new(p(4, 0), p(3, 4), p(2, 0))
             .parallel_left(half.clone())
             .unwrap();
@@ -6064,7 +6029,7 @@ mod tests {
             true,
         )
         .unwrap();
-        let radius = (Real::one() / Real::from(4)).unwrap();
+        let radius = r!(1 / 4);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // These finite charts need not meet at the authored vertex. Each
             // extension permission belongs to its own source and is applied
@@ -6113,7 +6078,7 @@ mod tests {
 
     #[test]
     fn fillet_parallel_domains_expand_only_the_authorized_source() {
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let first = QuadraticBezier2::new(
             Point2::from_values(0, 0),
             Point2::new(half.clone(), Real::zero()),
@@ -6364,7 +6329,7 @@ mod tests {
             assert_eq!(exterior.start(), &source.point_at(start.clone()));
             assert_eq!(exterior.end(), source.start());
             assert_eq!(
-                exterior.point_at((Real::one() / Real::from(2_i8)).unwrap()),
+                exterior.point_at(r!(1 / 2)),
                 source.point_at(middle.clone())
             );
         }
@@ -6379,8 +6344,8 @@ mod tests {
             Point2::from_values(0, 0),
         );
         let source = Curve2::from(cubic.clone());
-        let next_parameter = (Real::one() / Real::from(4_i8)).unwrap();
-        let previous_parameter = (Real::from(3_i8) / Real::from(4_i8)).unwrap();
+        let next_parameter = r!(1 / 4);
+        let previous_parameter = r!(3 / 4);
         let next_point = cubic.point_at(next_parameter.clone());
         let previous_point = cubic.point_at(previous_parameter.clone());
         let next = CornerCut2 {
@@ -6410,14 +6375,11 @@ mod tests {
             let Some(CurveGeometry2::CubicBezier(body)) = body.geometry() else {
                 unreachable!();
             };
-            assert_eq!(
-                body.point_at((Real::one() / Real::from(2_i8)).unwrap()),
-                cubic.point_at((Real::one() / Real::from(2_i8)).unwrap())
-            );
+            assert_eq!(body.point_at(r!(1 / 2)), cubic.point_at(r!(1 / 2)));
         }
 
         let next_parameter = (-Real::one() / Real::from(4_i8)).unwrap();
-        let previous_parameter = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+        let previous_parameter = r!(5 / 4);
         let next_point = cubic.point_at(next_parameter.clone());
         let previous_point = cubic.point_at(previous_parameter.clone());
         let next = CornerCut2 {
@@ -6446,10 +6408,7 @@ mod tests {
             let Some(CurveGeometry2::CubicBezier(body)) = body.geometry() else {
                 unreachable!();
             };
-            assert_eq!(
-                body.point_at((Real::one() / Real::from(2_i8)).unwrap()),
-                cubic.point_at((Real::one() / Real::from(2_i8)).unwrap())
-            );
+            assert_eq!(body.point_at(r!(1 / 2)), cubic.point_at(r!(1 / 2)));
         }
     }
 
@@ -6485,7 +6444,7 @@ mod tests {
 
     #[test]
     fn native_arc_and_nonrepresented_chord_share_extension_projection() {
-        let radius = (Real::one() / Real::from(100_i16)).unwrap();
+        let radius = r!(1 / 100);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let selected_parameter = selected_inverse_square_parameter(2, &policy);
             let diagonal = RationalBezier2::try_new(
@@ -6522,7 +6481,7 @@ mod tests {
                 crate::bezier_offset::BezierAlgebraicChordAxisDirection2::PositiveY,
                 &policy,
             );
-            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let half = r!(1 / 2);
             let selected_coordinate = half.sqrt().unwrap();
             let arc_start = Point2::new(selected_coordinate.clone(), selected_coordinate.clone());
             let arc_end = Point2::new(
@@ -6605,8 +6564,8 @@ mod tests {
 
     #[test]
     fn represented_rational_corner_extension_materializes_before_its_pole() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
         let source = Curve2::from(
             RationalBezier2::try_new(
                 vec![
@@ -6614,15 +6573,11 @@ mod tests {
                     Point2::new(half, Real::zero()),
                     Point2::from_values(1, 1),
                 ],
-                vec![
-                    Real::one(),
-                    (Real::one() / Real::from(2_i8)).unwrap(),
-                    quarter,
-                ],
+                vec![Real::one(), r!(1 / 2), quarter],
             )
             .unwrap(),
         );
-        let parameter = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let parameter = r!(3 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let extended = materialize_corner_cut(
                 &source,
@@ -6649,8 +6604,8 @@ mod tests {
 
     #[test]
     fn rational_chamfer_solver_retains_pre_pole_extension() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
-        let quarter = (Real::one() / Real::from(4_i8)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
         let previous = Curve2::from(
             RationalBezier2::try_new(
                 vec![
@@ -6666,7 +6621,7 @@ mod tests {
             LineSeg2::try_new(Point2::from_values(1, 1), Point2::from_values(1, 12)).unwrap(),
         );
         let setback = Real::from(68_i8).sqrt().unwrap();
-        let expected_parameter = (Real::from(3_i8) / Real::from(2_i8)).unwrap();
+        let expected_parameter = r!(3 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let previous_carrier =
                 exact_corner_carrier(&previous, true, CurveOperation2::Chamfer, &policy)
@@ -6761,7 +6716,7 @@ mod tests {
 
     #[test]
     fn resource_blocked_selected_parallel_parameter_retains_local_fillet_frame() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
                 half.clone(),
@@ -6777,8 +6732,8 @@ mod tests {
             // `(3/5 + 32768*t^15, 4/5)`.  Its selected contact with the unit
             // circle about `(alpha, 0)` is transverse and has global
             // parameter degree 135.
-            let three_fifths = (Real::from(3_i8) / Real::from(5_i8)).unwrap();
-            let four_fifths = (Real::from(4_i8) / Real::from(5_i8)).unwrap();
+            let three_fifths = r!(3 / 5);
+            let four_fifths = r!(4 / 5);
             let mut control_points =
                 vec![Point2::new(three_fifths.clone(), four_fifths.clone()); 15];
             control_points.push(Point2::new(
@@ -6850,7 +6805,7 @@ mod tests {
                 .unwrap(),
             )
         };
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
                 half.clone(),
@@ -6923,13 +6878,13 @@ mod tests {
 
     #[test]
     fn selected_cusp_rational_contact_retains_mapped_point() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         // P(t)=(t^2, t^3-t/2) keeps the center parameter and radial frame
         // genuinely algebraic while P(sqrt(1/2))=(1/2, 0). The short x-axis
         // cutter therefore has one represented fiber root at the leftmost
         // circle point without collapsing the selected frame itself.
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
-        let one_sixth = (Real::one() / Real::from(6_i8)).unwrap();
+        let one_third = r!(1 / 3);
+        let one_sixth = r!(1 / 6);
         let support = CubicBezier2::new(
             Point2::from_values(0, 0),
             Point2::new(Real::zero(), -one_sixth),
@@ -7001,7 +6956,7 @@ mod tests {
 
     #[test]
     fn resource_blocked_selected_parameter_has_exact_cold_promotion() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let selected = crate::bezier_offset::degree_nine_selected_fiber_parameter_for_test(
                 half.clone(),
@@ -7036,12 +6991,9 @@ mod tests {
         let Classification::Decided(polynomial) = polynomial else {
             panic!("the selected quadratic must be decided");
         };
-        let interval = crate::BezierParameterInterval::try_new_with_policy(
-            (Real::from(2_i8) / Real::from(3_i8)).unwrap(),
-            (Real::from(3_i8) / Real::from(4_i8)).unwrap(),
-            policy,
-        )
-        .expect("the selected interval is valid");
+        let interval =
+            crate::BezierParameterInterval::try_new_with_policy(r!(2 / 3), r!(3 / 4), policy)
+                .expect("the selected interval is valid");
         let Classification::Decided(interval) = interval else {
             panic!("the selected interval must be decided");
         };
@@ -7105,7 +7057,7 @@ mod tests {
             ),
             false,
         );
-        let radius = (Real::one() / Real::from(2_i8)).unwrap();
+        let radius = r!(1 / 2);
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for reversed in [false, true] {
@@ -7197,7 +7149,7 @@ mod tests {
             ),
             false,
         );
-        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+        let radius = r!(1 / 4);
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let semicircle = rationalizable_selected_semicircle(&policy);
@@ -7305,7 +7257,7 @@ mod tests {
             }
             _ => unreachable!(),
         });
-        let radius = (Real::one() / Real::from(4_i8)).unwrap();
+        let radius = r!(1 / 4);
 
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let semicircle = rationalizable_selected_semicircle(&policy);
@@ -7419,9 +7371,9 @@ mod tests {
             else {
                 panic!("an identical selected support must publish one pair overlap");
             };
-            let eighth = (Real::one() / Real::from(8_i8)).unwrap();
-            let quarter = (Real::one() / Real::from(4_i8)).unwrap();
-            let half = (Real::one() / Real::from(2_i8)).unwrap();
+            let eighth = r!(1 / 8);
+            let quarter = r!(1 / 4);
+            let half = r!(1 / 2);
             let three_quarters = &half + &quarter;
             let fragment = |start: Real, end: Real| {
                 let fragment = crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
@@ -7493,8 +7445,8 @@ mod tests {
             let complementary =
                 CircularArc2::try_from_center(end, start, center, support.is_clockwise())
                     .expect("the opposite half has one native arc chart");
-            let eighth = (Real::one() / Real::from(8_i8)).unwrap();
-            let three_eighths = (Real::from(3_i8) / Real::from(8_i8)).unwrap();
+            let eighth = r!(1 / 8);
+            let three_eighths = r!(3 / 8);
             let fragment = crate::BezierAlgebraicCuspSemicircleFragment2::try_new(
                 support,
                 crate::bezier_offset::BezierAlgebraicCuspSemicircleParameter2::Exact(eighth),

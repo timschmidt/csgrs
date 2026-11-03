@@ -127,14 +127,8 @@ impl CurvePointRationalForm2 {
                 )
                 .map(|sign| sign.map(sign_order));
             }
-            let first = match self.parameter_with_policy(policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let second = match other.parameter_with_policy(policy)? {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let first = decided!(self.parameter_with_policy(policy)?, Ok);
+            let second = decided!(other.parameter_with_policy(policy)?, Ok);
             first.cmp_by_refinement(&second, policy)
         })
     }

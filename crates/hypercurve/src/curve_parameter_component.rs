@@ -155,10 +155,7 @@ impl ComponentParameterChart2 {
         let Some((finite, inclusion, direction)) = &self.finite_owner else {
             return Ok(Classification::Decided(vec![self.interval.clone()]));
         };
-        let endpoints = match finite.ordered_endpoints(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let endpoints = decided!(finite.ordered_endpoints(policy)?, Ok);
         let (endpoints, inclusion) = if *direction == BezierParameterRayDirection2::Increasing {
             (endpoints, *inclusion)
         } else {
@@ -200,12 +197,7 @@ impl ComponentParameterChart2 {
             let included = if included {
                 false
             } else {
-                match self.interval.contains(&mapped, policy)? {
-                    Classification::Decided(inside) => inside,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                decided!(self.interval.contains(&mapped, policy)?, Ok)
             };
             let mapped = match mapped.cmp_by_refinement(range.start(), policy)? {
                 Classification::Decided(order) if order.is_le() => range.start().clone(),
@@ -686,10 +678,7 @@ pub(super) fn retain_finite_parallel_components(
     }
     let mut charts = [None, None];
     for (domain, chart) in domains.into_iter().zip(&mut charts) {
-        let [lower, upper] = match domain.finite.ordered_endpoints(policy)? {
-            Classification::Decided(endpoints) => endpoints,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let [lower, upper] = decided!(domain.finite.ordered_endpoints(policy)?, Ok);
         *chart = Some(ComponentParameterChart2 {
             numerator: [Real::zero(), Real::one()],
             denominator: [Real::one(), Real::zero()],

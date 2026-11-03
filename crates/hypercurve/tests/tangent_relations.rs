@@ -1,3 +1,7 @@
+#[macro_use]
+#[path = "../src/test_macros.rs"]
+mod test_macros;
+
 use hypercurve::{
     Curve2, CurveCertainty, CurvePath2, CurveRegion2, FillRule, LineSeg2, OffsetCap,
     OffsetCornerStyle2, Point2, PredicatePolicy, QuadraticBezier2, Real, RegionPointLocation,
@@ -13,7 +17,7 @@ fn retained_parallel_line_strokes_preserve_certified_rebuilds() {
     for source_kind in [0, 1, 2, 3] {
         let source = QuadraticBezier2::new(p(0, 0), p(1, 1), p(2, 1));
         let distance = if source_kind == 3 {
-            -(Real::one() / Real::from(10)).unwrap()
+            -r!(1 / 10)
         } else {
             Real::zero()
         };
@@ -58,7 +62,7 @@ fn retained_parallel_line_strokes_preserve_certified_rebuilds() {
                 let outcome = evaluate_under(policy, || {
                     CurveRegion2::stroke_path(
                         &path,
-                        (Real::one() / Real::from(10)).unwrap(),
+                        r!(1 / 10),
                         &OffsetCornerStyle2::Round,
                         OffsetCap::Round,
                     )

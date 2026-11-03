@@ -997,12 +997,7 @@ impl PolynomialSplineCurve2 {
     ) -> ExactCurveResult<Classification<&[RationalBezier2]>> {
         Ok(
             match resolve_cached_evaluation(&self.data.rational_spans, policy, |attempt| {
-                let decomposition = match self.bezier_decomposition_with_policy(attempt)? {
-                    Classification::Decided(decomposition) => decomposition,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let decomposition = decided!(self.bezier_decomposition_with_policy(attempt)?, Ok);
                 decomposition
                     .native_spans()
                     .iter()

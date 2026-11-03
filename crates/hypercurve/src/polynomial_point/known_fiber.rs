@@ -117,7 +117,7 @@ mod tests {
     fn source() -> CurvePoint2 {
         CurvePointDefinition2::PolynomialFiber {
             equation: p(&[&[0, 0, 0, 1], &[-1]]),
-            parameter: (Real::one() / Real::from(2)).unwrap().into(),
+            parameter: r!(1 / 2).into(),
             root: IsolatedRootInterval {
                 lower: 0.into(),
                 upper: 1.into(),

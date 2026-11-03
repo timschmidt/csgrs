@@ -100,19 +100,12 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let tangent = match curve.tangent_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(image) => image,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let second_derivative =
-            match curve.second_derivative_at_algebraic_parameter(parameter, policy)? {
-                Classification::Decided(image) => image,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let point = decided!(curve.point_at_algebraic_parameter(parameter, policy)?, Ok);
+        let tangent = decided!(curve.tangent_at_algebraic_parameter(parameter, policy)?, Ok);
+        let second_derivative = decided!(
+            curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
+            Ok
+        );
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
@@ -130,24 +123,16 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let tangent = match curve.tangent_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(image) => image,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
-        let second_derivative =
-            match curve.second_derivative_at_algebraic_parameter(parameter, policy)? {
-                Classification::Decided(image) => image,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-        let third_derivative =
-            match curve.third_derivative_at_algebraic_parameter(parameter, policy)? {
-                Classification::Decided(image) => image,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+        let point = decided!(curve.point_at_algebraic_parameter(parameter, policy)?, Ok);
+        let tangent = decided!(curve.tangent_at_algebraic_parameter(parameter, policy)?, Ok);
+        let second_derivative = decided!(
+            curve.second_derivative_at_algebraic_parameter(parameter, policy)?,
+            Ok
+        );
+        let third_derivative = decided!(
+            curve.third_derivative_at_algebraic_parameter(parameter, policy)?,
+            Ok
+        );
         Ok(Classification::Decided(Self {
             data: Arc::new(BezierAlgebraicEndpointImageData::Materialized {
                 parameter: parameter.clone(),
@@ -165,10 +150,7 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let point = decided!(curve.point_at_algebraic_parameter(parameter, policy)?, Ok);
         let mut derivatives =
             match curve.derivatives_at_algebraic_parameter(parameter, 3, policy)? {
                 Classification::Decided(images) => images.into_iter(),
@@ -196,10 +178,7 @@ impl BezierAlgebraicEndpointImage2 {
         parameter: &BezierAlgebraicParameter2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let point = match curve.point_at_algebraic_parameter(parameter, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let point = decided!(curve.point_at_algebraic_parameter(parameter, policy)?, Ok);
         let mut derivatives =
             match curve.derivatives_at_algebraic_parameter(parameter, 3, policy)? {
                 Classification::Decided(images) => images.into_iter(),

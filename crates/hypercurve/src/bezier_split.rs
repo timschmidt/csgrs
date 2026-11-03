@@ -632,12 +632,7 @@ impl<'a> CurveParameterDomain2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<([&'a CurveParameter2; 2], [&'a Real; 2])>> {
         policy.strict_predicate_pass(|| {
-            let endpoints = match self.finite.ordered_endpoints(policy)? {
-                Classification::Decided(endpoints) => endpoints,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let endpoints = decided!(self.finite.ordered_endpoints(policy)?, Ok);
             let (Some((lower, _)), Some((_, upper))) = (
                 endpoints[0].finite_envelope_bounds(),
                 endpoints[1].finite_envelope_bounds(),
@@ -654,12 +649,7 @@ impl<'a> CurveParameterDomain2<'a> {
         policy: &CurveContext,
     ) -> CurveResult<Classification<bool>> {
         policy.strict_predicate_pass(|| {
-            let [lower, upper] = match self.finite.ordered_endpoints(policy)? {
-                Classification::Decided(endpoints) => endpoints,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let [lower, upper] = decided!(self.finite.ordered_endpoints(policy)?, Ok);
             parameter_is_in_ordered_range(parameter, lower, upper, self.inclusion, policy)
         })
     }
@@ -705,18 +695,12 @@ impl<'a> CurveParameterDomain2<'a> {
             return polynomial.isolate_unit_interval_roots_with_policy(policy);
         }
         policy.strict_predicate_pass(|| {
-            let ([lower, upper], [outer_lower, outer_upper]) = match self.finite_envelope(policy)? {
-                Classification::Decided(envelope) => envelope,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let roots = match polynomial.isolate_interval_roots(outer_lower, outer_upper, policy)? {
-                Classification::Decided(roots) => roots,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let ([lower, upper], [outer_lower, outer_upper]) =
+                decided!(self.finite_envelope(policy)?, Ok);
+            let roots = decided!(
+                polynomial.isolate_interval_roots(outer_lower, outer_upper, policy)?,
+                Ok
+            );
             let mut retained = Vec::with_capacity(roots.len());
             for root in roots {
                 match parameter_is_in_ordered_range(
@@ -1054,14 +1038,8 @@ pub(crate) fn intersect_parameter_ranges(
     second: &CurveParameterRange2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<Option<[CurveParameter2; 2]>>> {
-    let [first_low, first_high] = match first.ordered_endpoints(policy)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
-    let [second_low, second_high] = match second.ordered_endpoints(policy)? {
-        Classification::Decided(bounds) => bounds,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let [first_low, first_high] = decided!(first.ordered_endpoints(policy)?, Ok);
+    let [second_low, second_high] = decided!(second.ordered_endpoints(policy)?, Ok);
     let low = match first_low.cmp_by_refinement(second_low, policy)? {
         Classification::Decided(Ordering::Less) => second_low,
         Classification::Decided(Ordering::Equal) => {
@@ -1345,16 +1323,12 @@ impl BezierSelectedFiberFragment2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
-        let parameter = match self
-            .range
-            .start()
-            .strict_scalar_between_ordered(self.range.end(), policy)?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(
+            self.range
+                .start()
+                .strict_scalar_between_ordered(self.range.end(), policy)?,
+            Ok
+        );
         match &self.source {
             // Selected ranges may lie on the source's extension beyond the
             // unit span; the affine chart evaluates any finite parameter.
@@ -1381,15 +1355,12 @@ impl BezierParallelFragment2 {
         range: BezierParameterRange2,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Self>> {
-        let order = match range
-            .start()
-            .cmp_by_refinement_with_policy(range.end(), policy)?
-        {
-            Classification::Decided(order) => order,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let order = decided!(
+            range
+                .start()
+                .cmp_by_refinement_with_policy(range.end(), policy)?,
+            Ok
+        );
         let (range, reversed) = match order {
             Ordering::Less => (range, false),
             Ordering::Greater => (range.reversed(), true),
@@ -1413,12 +1384,10 @@ impl BezierParallelFragment2 {
                 }
             }
         } else {
-            let analysis = match parallel.singularity_analysis_with_policy(&active_range, policy)? {
-                Classification::Decided(analysis) => analysis,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let analysis = decided!(
+                parallel.singularity_analysis_with_policy(&active_range, policy)?,
+                Ok
+            );
             for singularity in analysis.source_singularities() {
                 match parameter_in_range(singularity, &range, true, policy)? {
                     Classification::Decided(true) => {
@@ -1494,16 +1463,12 @@ impl BezierParallelFragment2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Point2>> {
-        let parameter = match self
-            .range
-            .start()
-            .strict_scalar_between_ordered(self.range.end(), policy)?
-        {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let parameter = decided!(
+            self.range
+                .start()
+                .strict_scalar_between_ordered(self.range.end(), policy)?,
+            Ok
+        );
         self.parallel.point_at_with_policy(&parameter, policy)
     }
 }
@@ -1514,18 +1479,14 @@ fn parameter_in_range(
     include_endpoints: bool,
     policy: &CurveContext,
 ) -> CurveResult<Classification<bool>> {
-    let start = match parameter.cmp_by_refinement_with_policy(range.start(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
-    let end = match parameter.cmp_by_refinement_with_policy(range.end(), policy)? {
-        Classification::Decided(order) => order,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let start = decided!(
+        parameter.cmp_by_refinement_with_policy(range.start(), policy)?,
+        Ok
+    );
+    let end = decided!(
+        parameter.cmp_by_refinement_with_policy(range.end(), policy)?,
+        Ok
+    );
     Ok(Classification::Decided(if include_endpoints {
         !start.is_lt() && !end.is_gt()
     } else {
@@ -2234,10 +2195,7 @@ impl RationalQuadraticBezier2 {
         let strict = policy.strict_counterpart();
         validate_exact_range(start, end, &strict)?;
         if compare_reals(start, end, &strict) == Some(Ordering::Equal) {
-            let point = match self.point_at_with_policy(start.clone(), &strict) {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let point = decided!(self.point_at_with_policy(start.clone(), &strict), Ok);
             return Ok(Classification::Decided(BezierSubcurve2::RationalQuadratic(
                 RationalQuadraticBezier2::try_new(
                     point.clone(),
@@ -2340,14 +2298,14 @@ impl RationalQuadraticBezier2 {
         let first = start.lerp(&control, &t);
         let second = control.lerp(&end, &t);
         let contact = first.lerp(&second, &t);
-        let left = match self.materialize_homogeneous_subcurve(
-            [start, first, contact.clone()],
-            retained_common_weight_sign,
-            &strict,
-        )? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let left = decided!(
+            self.materialize_homogeneous_subcurve(
+                [start, first, contact.clone()],
+                retained_common_weight_sign,
+                &strict,
+            )?,
+            Ok
+        );
         Ok(self
             .materialize_homogeneous_subcurve(
                 [contact, second, end],
@@ -2450,13 +2408,12 @@ where
     for parameter in parameters {
         validate_parameter(parameter, policy)?;
         let parameter = if promote_exact_points {
-            match parameter
-                .clone()
-                .promote_represented_exact_point_with_policy(policy)?
-            {
-                Classification::Decided(parameter) => parameter,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            }
+            decided!(
+                parameter
+                    .clone()
+                    .promote_represented_exact_point_with_policy(policy)?,
+                Ok
+            )
         } else {
             parameter.clone()
         };
@@ -2528,12 +2485,7 @@ where
                 if start_exact.exact_rational_ref().is_some()
                     && end_exact.exact_rational_ref().is_some() =>
             {
-                let curve = match materialize(start_exact, end_exact)? {
-                    Classification::Decided(curve) => curve,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let curve = decided!(materialize(start_exact, end_exact)?, Ok);
                 fragments.push(BezierSplitFragment2::Materialized { start, end, curve });
             }
             _ => {
@@ -2686,7 +2638,7 @@ mod line_split_provenance_tests {
     fn affine_line_splits_keep_endpoint_contacts_and_their_direction() {
         use crate::bezier::BezierParallelLineTangentContact2;
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let start = Point2::from_values(0, 0);
         let end = Point2::from_values(1, 0);
         let first = QuadraticBezier2::new(
@@ -2781,8 +2733,8 @@ mod line_split_provenance_tests {
     #[test]
     fn affine_line_splits_keep_support_offset_and_traversal() {
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let step = (Real::one() / Real::from(8)).unwrap();
+        let half = r!(1 / 2);
+        let step = r!(1 / 8);
         let root = Real::from(2).sqrt().unwrap();
         let center = Point2::new(root.clone(), Real::from(3).sqrt().unwrap());
         let source = crate::LineSeg2::try_new(

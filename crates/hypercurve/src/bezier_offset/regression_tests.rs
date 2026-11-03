@@ -2049,7 +2049,7 @@ mod retained_structural_pair_domain_regression {
     fn retained_structural_correspondence_preserves_off_diagonal_contact_domains() {
         let point = |x, y| Point2::from_values(x, y);
         let source = CubicBezier2::new(point(0, 0), point(1, 4), point(3, -4), point(4, 0));
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let parallel = source.parallel_left(half.clone()).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let Classification::Decided(reference) =

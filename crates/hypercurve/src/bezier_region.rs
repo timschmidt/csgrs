@@ -956,12 +956,7 @@ pub(crate) fn path_retained_fragments(
             }
             fragments.extend(spans.iter().map(|span| span.fragment.clone()));
         } else {
-            let native = match curve.native_bezier_fragments_raw(policy)? {
-                Classification::Decided(native) => native,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let native = decided!(curve.native_bezier_fragments_raw(policy)?, Ok);
             // Path joins certify the authored curves' outer endpoints.
             // A spline can still have a discontinuous interior knot, so
             // certify its promoted span joins before retaining a cycle.
@@ -1026,10 +1021,7 @@ impl CurveRegionBoundaryLoop2 {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let fragments = match path_retained_fragments(path, policy)? {
-            Classification::Decided(fragments) => fragments,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let fragments = decided!(path_retained_fragments(path, policy)?, Ok);
         Self::try_new_from_certified_connected_chain(fragments, None, policy)
             .map(Classification::Decided)
             .map_err(|cause| {
@@ -3277,10 +3269,7 @@ impl CurveRegion2 {
     ) -> CurveResult<Classification<(Vec<CurveRegionLoopRole>, Vec<Contour2>)>> {
         let mut contours = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary_loop in &self.data.boundary_loops {
-            let contour = match retained_line_loop_to_contour(boundary_loop, policy)? {
-                Classification::Decided(contour) => contour,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let contour = decided!(retained_line_loop_to_contour(boundary_loop, policy)?, Ok);
             contours.push(contour);
         }
 
@@ -3401,10 +3390,7 @@ impl CurveRegion2 {
                 }
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             }
-            let sample = match native_loop_sample_point(native_loop, policy) {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let sample = decided!(native_loop_sample_point(native_loop, policy), Ok);
             sample_points.push(sample);
             signed_areas.push(area);
         }
@@ -3731,12 +3717,7 @@ impl CurveRegion2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<Vec<CurveRegionProfile2<'_>>>> {
-        let roles = match self.loop_roles_raw(policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let roles = decided!(self.loop_roles_raw(policy)?, Ok);
         if roles.len() != self.data.boundary_loops.len() {
             return Err(CurveError::Topology(
                 "curve-region role count is inconsistent with boundary loops".into(),
@@ -3767,15 +3748,10 @@ impl CurveRegion2 {
             if *role != CurveRegionLoopRole::Hole {
                 continue;
             }
-            let point = match retained_loop_sample_point_evidence(
-                &self.data.boundary_loops[hole_index],
-                policy,
-            )? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point = decided!(
+                retained_loop_sample_point_evidence(&self.data.boundary_loops[hole_index], policy,)?,
+                Ok
+            );
 
             let mut owner: Option<usize> = None;
             for (profile_index, profile) in profiles.iter().enumerate() {
@@ -3792,15 +3768,10 @@ impl CurveRegion2 {
                     ) => match owner {
                         None => owner = Some(profile_index),
                         Some(owner_index) => {
-                            let candidate_point = match retained_loop_sample_point_evidence(
-                                profile.material,
-                                policy,
-                            )? {
-                                Classification::Decided(point) => point,
-                                Classification::Uncertain(reason) => {
-                                    return Ok(Classification::Uncertain(reason));
-                                }
-                            };
+                            let candidate_point = decided!(
+                                retained_loop_sample_point_evidence(profile.material, policy,)?,
+                                Ok
+                            );
                             let current_owner = &profiles[owner_index];
                             let current_material_index = current_owner.material_loop_index;
                             let candidate_inside_owner =
@@ -3815,15 +3786,13 @@ impl CurveRegion2 {
                                     ContourPointLocation::Inside | ContourPointLocation::Boundary,
                                 ) => owner = Some(profile_index),
                                 Classification::Decided(ContourPointLocation::Outside) => {
-                                    let owner_point = match retained_loop_sample_point_evidence(
-                                        current_owner.material,
-                                        policy,
-                                    )? {
-                                        Classification::Decided(point) => point,
-                                        Classification::Uncertain(reason) => {
-                                            return Ok(Classification::Uncertain(reason));
-                                        }
-                                    };
+                                    let owner_point = decided!(
+                                        retained_loop_sample_point_evidence(
+                                            current_owner.material,
+                                            policy,
+                                        )?,
+                                        Ok
+                                    );
                                     let owner_inside_candidate =
                                         classify_point_evidence_against_retained_loop(
                                             self,
@@ -4284,21 +4253,15 @@ impl CurveRegion2 {
         options: &BezierFlatteningOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CurveRegionCertifiedSegmentationResult2>> {
-        let paths = match self.boundary_paths_for_operation(CurveOperation2::Subdivision, policy)? {
-            Classification::Decided(paths) => paths,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let roles = match self
-            .loop_roles_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Subdivision, cause))?
-        {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let paths = decided!(
+            self.boundary_paths_for_operation(CurveOperation2::Subdivision, policy)?,
+            Ok
+        );
+        let roles = decided!(
+            self.loop_roles_raw(policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Subdivision, cause))?,
+            Ok
+        );
         let fill_rules = self
             .data
             .authored_fill_rules()
@@ -4316,12 +4279,7 @@ impl CurveRegion2 {
         let mut holes = Vec::new();
         let mut loop_evidence = Vec::with_capacity(paths.len());
         for ((path, role), fill_rule) in paths.iter().zip(roles).zip(fill_rules) {
-            let segmented = match path.segment_certified_with_policy(options, policy)? {
-                Classification::Decided(segmented) => segmented,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let segmented = decided!(path.segment_certified_with_policy(options, policy)?, Ok);
             let mut segments = Vec::with_capacity(segmented.points().len().saturating_sub(1));
             for edge in segmented.points().windows(2) {
                 segments.push(Segment2::Line(
@@ -4463,23 +4421,15 @@ impl CurveRegion2 {
             return linear_stroke::native_line_stroke(line, &half_width, cap_style, policy)
                 .map(Classification::Decided);
         }
-        let closed = match crate::curve::curve_path_is_closed(path, policy) {
-            Classification::Decided(closed) => closed,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let closed = decided!(crate::curve::curve_path_is_closed(path, policy), Ok);
         // Generated curves keep their retained fragments, so a stroke of a
         // filleted or chamfered path offsets the same exact carriers a region
         // offset would, rather than requiring a native Bezier image.
-        let source_fragments = match path_retained_fragments(path, policy)
-            .map_err(|error| error.with_operation(CurveOperation2::Offset))?
-        {
-            Classification::Decided(fragments) => fragments,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let source_fragments = decided!(
+            path_retained_fragments(path, policy)
+                .map_err(|error| error.with_operation(CurveOperation2::Offset))?,
+            Ok
+        );
         let (start_point, end_point) = (path.start(), path.end());
         let (Some(path_start), Some(path_end)) =
             (start_point.coordinates(), end_point.coordinates())
@@ -4488,25 +4438,17 @@ impl CurveRegion2 {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
         let (path_start, path_end) = (path_start.clone(), path_end.clone());
-        let left_spans =
-            match exact_offset_span_runs_from_open_path(&source_fragments, &half_width, policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(spans) => spans,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let left_spans = decided!(
+            exact_offset_span_runs_from_open_path(&source_fragments, &half_width, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+            Ok
+        );
         let right_distance = -half_width.clone();
-        let right_spans =
-            match exact_offset_span_runs_from_open_path(&source_fragments, &right_distance, policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(spans) => spans,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+        let right_spans = decided!(
+            exact_offset_span_runs_from_open_path(&source_fragments, &right_distance, policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+            Ok
+        );
         if left_spans.len() != right_spans.len() || left_spans.is_empty() {
             return Err(curve_region_edit_error(
                 CurveOperation2::Offset,
@@ -4528,32 +4470,22 @@ impl CurveRegion2 {
         let mut band_loops = Vec::with_capacity(band_capacity);
         let mut band_filled_sides = Vec::with_capacity(band_capacity);
         for (right, left) in right_spans.iter().zip(&left_spans) {
-            let boundary = match exact_offset_span_band_loop(right, left, None, None, policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(boundary) => boundary,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let boundary = decided!(
+                exact_offset_span_band_loop(right, left, None, None, policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Ok
+            );
             band_loops.push(boundary);
             band_filled_sides.push(true);
         }
 
         for index in 0..join_count {
             let next = (index + 1) % left_spans.len();
-            let reversal = match exact_offset_spans_form_reversal(
-                &left_spans[index],
-                &left_spans[next],
-                policy,
-            )
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(reversal) => reversal,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let reversal = decided!(
+                exact_offset_spans_form_reversal(&left_spans[index], &left_spans[next], policy,)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Ok
+            );
             // Both signed offset sides describe the same join at an exact
             // 180-degree turn. Round owns one oriented semicircular sector
             // from the positive side; bevel and bounded miter reduce to the
@@ -4563,20 +4495,17 @@ impl CurveRegion2 {
             }
             let sides = [(&left_spans, &half_width), (&right_spans, &right_distance)];
             for (spans, distance) in sides.into_iter().take(if reversal { 1 } else { 2 }) {
-                let corner = match exact_offset_corner_band(
-                    &spans[index],
-                    &spans[next],
-                    distance,
-                    corner_style,
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(corner) => corner,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let corner = decided!(
+                    exact_offset_corner_band(
+                        &spans[index],
+                        &spans[next],
+                        distance,
+                        corner_style,
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                    Ok
+                );
                 if let Some((boundary, filled_side_is_left)) = corner {
                     band_loops.push(boundary);
                     band_filled_sides.push(filled_side_is_left);
@@ -4594,19 +4523,10 @@ impl CurveRegion2 {
                     }
                 }
                 OffsetCap::Square => {
-                    let start_tangent = match exact_path_endpoint_unit_tangent(path, true, policy)?
-                    {
-                        Classification::Decided(tangent) => tangent,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let end_tangent = match exact_path_endpoint_unit_tangent(path, false, policy)? {
-                        Classification::Decided(tangent) => tangent,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let start_tangent =
+                        decided!(exact_path_endpoint_unit_tangent(path, true, policy)?, Ok);
+                    let end_tangent =
+                        decided!(exact_path_endpoint_unit_tangent(path, false, policy)?, Ok);
                     let start_dx = &start_tangent.0 * &half_width;
                     let start_dy = &start_tangent.1 * &half_width;
                     let start_extension = LineSeg2::try_new(
@@ -4842,18 +4762,15 @@ impl CurveRegion2 {
             } else {
                 distance.clone()
             };
-            let span_runs = match exact_offset_span_runs_from_boundary_loop(
-                boundary_loop,
-                &signed_left_distance,
-                policy,
-            )
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(runs) => runs,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let span_runs = decided!(
+                exact_offset_span_runs_from_boundary_loop(
+                    boundary_loop,
+                    &signed_left_distance,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Ok
+            );
             if span_runs.is_empty() {
                 return Err(curve_region_edit_error(
                     CurveOperation2::Offset,
@@ -4996,15 +4913,11 @@ impl CurveRegion2 {
             Some(RealSign::Zero) => return Ok(Classification::Decided(self.clone())),
             None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
         };
-        let filled_sides = match self
-            .filled_side_is_left_raw(policy)
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-        {
-            Classification::Decided(sides) => sides,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let filled_sides = decided!(
+            self.filled_side_is_left_raw(policy)
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+            Ok
+        );
         if filled_sides.len() != self.data.boundary_loops.len() {
             return Err(curve_region_edit_error(
                 CurveOperation2::Offset,
@@ -5015,15 +4928,11 @@ impl CurveRegion2 {
             ));
         }
         if distance_positive {
-            let roles = match self
-                .loop_roles_raw(policy)
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(roles) => roles,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let roles = decided!(
+                self.loop_roles_raw(policy)
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Ok
+            );
             // Dilation is represented most compactly by its complete offset
             // boundary walk, whose unary arrangement regularizes concave
             // self-contacts of material loops. A hole that closes past its
@@ -5077,18 +4986,15 @@ impl CurveRegion2 {
                 None => return Ok(Classification::Uncertain(UncertaintyReason::RealSign)),
             };
             let opposite_distance = -signed_left_distance.clone();
-            let span_runs = match exact_offset_span_runs_from_boundary_loop(
-                boundary_loop,
-                &signed_left_distance,
-                policy,
-            )
-            .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-            {
-                Classification::Decided(runs) => runs,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let span_runs = decided!(
+                exact_offset_span_runs_from_boundary_loop(
+                    boundary_loop,
+                    &signed_left_distance,
+                    policy,
+                )
+                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                Ok
+            );
             let opposite_runs = match exact_offset_span_runs_from_boundary_loop(
                 boundary_loop,
                 &opposite_distance,
@@ -5178,20 +5084,17 @@ impl CurveRegion2 {
                     .then_some(&spans[previous_index].source_end);
                 let end_vertex = is_corner(&spans[span_index], &spans[next_index])
                     .then_some(&spans[span_index].source_end);
-                let band = match exact_offset_span_band_loop(
-                    &opposite_spans[span_index],
-                    &spans[span_index],
-                    start_vertex,
-                    end_vertex,
-                    policy,
-                )
-                .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?
-                {
-                    Classification::Decided(band) => band,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let band = decided!(
+                    exact_offset_span_band_loop(
+                        &opposite_spans[span_index],
+                        &spans[span_index],
+                        start_vertex,
+                        end_vertex,
+                        policy,
+                    )
+                    .map_err(|cause| curve_region_edit_error(CurveOperation2::Offset, cause))?,
+                    Ok
+                );
                 band_loops.push(band);
                 band_filled_sides.push(band_filled_side_is_left);
             }
@@ -5297,12 +5200,7 @@ impl CurveRegion2 {
                 }
             }
         }
-        let roles = match self.loop_roles_raw(policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let roles = decided!(self.loop_roles_raw(policy)?, Ok);
         self.region_from_line_contours(&contours, &roles)
             .map(Classification::Decided)
     }
@@ -5531,12 +5429,7 @@ impl CurveRegion2 {
         if self.data.boundary_loops.is_empty() {
             return Ok(Classification::Decided(RegionPointLocation::Outside));
         }
-        let predicates = match point.predicate_evaluator(policy)? {
-            Classification::Decided(predicates) => predicates,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let predicates = decided!(point.predicate_evaluator(policy)?, Ok);
         let mut inside = false;
         let mut signed_depth = 0_i32;
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
@@ -5807,22 +5700,15 @@ impl CurveRegion2 {
                 "algebraic boundary-side ray source is not a retained algebraic fragment".into(),
             ));
         };
-        let point = match point.predicate_evaluator(policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(point.predicate_evaluator(policy)?, Ok);
         let side_x = -direction_y.clone();
         let side_y = direction_x.clone();
         let mut windings = Vec::with_capacity(self.data.boundary_loops.len());
         for (loop_index, boundary_loop) in self.data.boundary_loops.iter().enumerate() {
-            let fragments = match prepare_algebraic_ray_retained_fragments(boundary_loop, policy)? {
-                Classification::Decided(fragments) => fragments,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let fragments = decided!(
+                prepare_algebraic_ray_retained_fragments(boundary_loop, policy)?,
+                Ok
+            );
             match algebraic_ray_retained_fragments_admit_direction(
                 &fragments, &point, &side_x, &side_y, policy,
             )? {
@@ -5834,20 +5720,18 @@ impl CurveRegion2 {
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let winding = match algebraic_ray_retained_fragments_winding(
-                &fragments,
-                &point,
-                &direction_x,
-                &direction_y,
-                (loop_index == source_loop_index).then_some(source_fragment_index),
-                true,
-                policy,
-            )? {
-                Classification::Decided(winding) => winding,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let winding = decided!(
+                algebraic_ray_retained_fragments_winding(
+                    &fragments,
+                    &point,
+                    &direction_x,
+                    &direction_y,
+                    (loop_index == source_loop_index).then_some(source_fragment_index),
+                    true,
+                    policy,
+                )?,
+                Ok
+            );
             windings.push(winding);
         }
         Ok(Classification::Decided(windings))
@@ -6052,12 +5936,7 @@ impl CurveRegion2 {
             };
             magnitudes.push(magnitude);
         }
-        let roles = match self.loop_roles_raw(policy)? {
-            Classification::Decided(roles) => roles,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let roles = decided!(self.loop_roles_raw(policy)?, Ok);
         if roles.len() != magnitudes.len() {
             return Err(CurveError::Topology(
                 "curve-region filled-area role count is inconsistent with boundary loops".into(),
@@ -6742,25 +6621,14 @@ fn retained_line_fragment_endpoints(
                     return Ok(Classification::Uncertain(reason));
                 }
             }
-            let start = match retained_bezier_endpoint_point(
-                start,
-                start_image.as_ref(),
-                source_curve,
-                policy,
-            ) {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let end =
-                match retained_bezier_endpoint_point(end, end_image.as_ref(), source_curve, policy)
-                {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+            let start = decided!(
+                retained_bezier_endpoint_point(start, start_image.as_ref(), source_curve, policy,),
+                Ok
+            );
+            let end = decided!(
+                retained_bezier_endpoint_point(end, end_image.as_ref(), source_curve, policy),
+                Ok
+            );
             let points = if *reversed {
                 (end, start)
             } else {
@@ -6792,24 +6660,18 @@ fn retained_line_fragment_endpoints(
             let Some((start_parameter, end_parameter)) = fragment.range().scalar_endpoints() else {
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             };
-            let start = match fragment
-                .parallel()
-                .point_at_with_policy(start_parameter, policy)?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
-            let end = match fragment
-                .parallel()
-                .point_at_with_policy(end_parameter, policy)?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let start = decided!(
+                fragment
+                    .parallel()
+                    .point_at_with_policy(start_parameter, policy)?,
+                Ok
+            );
+            let end = decided!(
+                fragment
+                    .parallel()
+                    .point_at_with_policy(end_parameter, policy)?,
+                Ok
+            );
             Ok(Classification::Decided(if fragment.is_reversed() {
                 (end, start)
             } else {
@@ -6820,18 +6682,8 @@ fn retained_line_fragment_endpoints(
             let line = if let Some(line) = chord.exact_line() {
                 line
             } else {
-                let start = match retained_native_line_point(chord.start(), policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let end = match retained_native_line_point(chord.end(), policy)? {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let start = decided!(retained_native_line_point(chord.start(), policy)?, Ok);
+                let end = decided!(retained_native_line_point(chord.end(), policy)?, Ok);
                 LineSeg2::try_new(start, end)?
             };
             Ok(Classification::Decided((
@@ -6891,10 +6743,10 @@ fn retained_line_fragment_endpoints(
                 }
                 Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
             }
-            let start = match retained_native_line_point(fragment.start_point(), policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let start = decided!(
+                retained_native_line_point(fragment.start_point(), policy)?,
+                Ok
+            );
             Ok(retained_native_line_point(fragment.end_point(), policy)?.map(|end| (start, end)))
         }
     }
@@ -6933,12 +6785,7 @@ pub(crate) fn retained_line_fragment_segment(
     fragment: &BezierSplitFragment2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<LineSeg2>> {
-    let endpoints = match retained_line_fragment_endpoints(fragment, policy)? {
-        Classification::Decided(endpoints) => endpoints,
-        Classification::Uncertain(reason) => {
-            return Ok(Classification::Uncertain(reason));
-        }
-    };
+    let endpoints = decided!(retained_line_fragment_endpoints(fragment, policy)?, Ok);
     // Endpoint admission above proves the represented image. When the source
     // also retains an affine line chart, transport its support and signed offset
     // relation through this selected interval instead of discarding that proof.
@@ -7244,7 +7091,7 @@ mod single_loop_corner_publication_tests {
                 .fillet_loop_vertex_with_policy(
                     0,
                     corner,
-                    &crate::CurveFillet2::new((Real::one() / Real::from(2)).unwrap()),
+                    &crate::CurveFillet2::new(r!(1 / 2)),
                     CurveCornerMode2::TrimOnly,
                     &policy,
                 )

@@ -1,3 +1,4 @@
+#[macro_use]
 mod support;
 use hypercurve::{
     BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2, CurveCertainty,
@@ -152,7 +153,7 @@ fn boundary_curves_reenter_boolean_without_native_conversion() {
 }
 
 fn quadratic_line(start: Point2, end: Point2) -> Curve2 {
-    let midpoint = start.lerp(&end, (Real::one() / Real::from(2_u8)).unwrap());
+    let midpoint = start.lerp(&end, r!(1 / 2));
     QuadraticBezier2::new(start, midpoint, end).into()
 }
 
@@ -278,7 +279,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
                     source.fillet_loop_vertex(
                         0,
                         vertex_index,
-                        &hypercurve::CurveFillet2::new((Real::one() / Real::from(4_i8)).unwrap()),
+                        &hypercurve::CurveFillet2::new(r!(1 / 4)),
                         CurveCornerMode2::TrimOnly,
                     )
                 })
@@ -316,7 +317,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_exactly() {
 
 #[test]
 fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
-    let radius = (Real::one() / Real::from(4_i8)).unwrap();
+    let radius = r!(1 / 4);
     let count =
         |solutions: hypercurve::CurveCornerSolutions2<CurveRegion2>| solutions.solutions().len();
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
@@ -362,7 +363,7 @@ fn retained_rational_arc_and_analytic_parallel_fillet_extends_exactly() {
 
 #[test]
 fn retained_arc_fillet_preserves_past_center_tangent_orientation() {
-    let radius = (Real::from(5_i8) / Real::from(4_i8)).unwrap();
+    let radius = r!(5 / 4);
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for unit_end_weights in [false, true] {
             for reversed in [false, true] {
@@ -572,7 +573,7 @@ fn check_policy(policy: PredicatePolicy) {
 }
 
 fn radical_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
-    let half = (Real::one() / Real::from(2_u8)).unwrap();
+    let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(point(0, 0), Point2::new(half, Real::zero()), point(1, 1))
         .parallel_left(Real::one())
         .unwrap();
@@ -643,9 +644,7 @@ fn radical_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 
 
 fn self_crossing_cusp_split_parallel_region(policy: &PredicatePolicy) -> CurveRegion2 {
     let source = CubicBezier2::new(point(0, 0), point(0, 4), point(4, -4), point(4, 0));
-    let parallel = source
-        .parallel_left((Real::one() / Real::from(2_u8)).unwrap())
-        .unwrap();
+    let parallel = source.parallel_left(r!(1 / 2)).unwrap();
     let analysis = match crate::support::under_classified_result(policy, || {
         parallel.singularity_analysis(&CurveParameterRange2::unit())
     })
@@ -719,7 +718,7 @@ fn analytic_parallel_fragments_retain_exact_region_evidence_under_both_policies(
 
 #[test]
 fn analytic_parallel_chamfers_retain_normalized_cut_points() {
-    let setback = (Real::one() / Real::from(4_u8)).unwrap();
+    let setback = r!(1 / 4);
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for (corner, analytic_next) in [(point(4, 3), true), (point(-1, 0), false)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
@@ -850,8 +849,8 @@ fn analytic_parallel_chamfers_retain_normalized_cut_points() {
 
 #[test]
 fn algebraic_endpoint_analytic_parallel_chamfers_replay_selected_distance() {
-    let first_setback = (Real::one() / Real::from(4_u8)).unwrap();
-    let second_setback = (Real::one() / Real::from(16_u8)).unwrap();
+    let first_setback = r!(1 / 4);
+    let second_setback = r!(1 / 16);
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         for corner in [point(4, 3), point(-1, 0)] {
             let source = rational_endpoint_curved_parallel_cap(&policy);
@@ -984,7 +983,7 @@ fn radical_parallel_cusp_spans_connect_under_both_policies() {
 
 #[test]
 fn radical_parallel_cusp_offsets_exactly_under_both_policies() {
-    let distance = (Real::one() / Real::from(10_u8)).unwrap();
+    let distance = r!(1 / 10);
     let mut strict_signature = None;
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         let source = radical_cusp_split_parallel_region(&policy);

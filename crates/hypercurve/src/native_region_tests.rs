@@ -1265,11 +1265,7 @@ fn round_erosion_of_regions_narrower_than_its_diameter_is_empty() {
         assert_eq!(collapsed.certainty, CurveCertainty::Certified);
         assert!(collapsed.value.is_empty());
         let retained = strip
-            .offset_with_policy(
-                (Real::from(-1) / Real::from(2)).unwrap(),
-                &OffsetCornerStyle2::Round,
-                &policy,
-            )
+            .offset_with_policy(r!(-1 / 2), &OffsetCornerStyle2::Round, &policy)
             .unwrap()
             .into_value();
         assert!(!retained.is_empty());

@@ -378,14 +378,12 @@ impl RecursiveQuadraticField {
                 let sign = match policy.strict_predicate_pass(|| difference.sign(policy))? {
                     Classification::Decided(sign) => sign,
                     Classification::Uncertain(_) => {
-                        match policy.strict_predicate_pass(|| {
-                            difference.sign_with_projected_zero_fallback(policy)
-                        })? {
-                            Classification::Decided(sign) => sign,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        }
+                        crate::decided!(
+                            policy.strict_predicate_pass(|| {
+                                difference.sign_with_projected_zero_fallback(policy)
+                            })?,
+                            Ok
+                        )
                     }
                 };
                 if sign == RealSign::Zero {
@@ -1583,21 +1581,11 @@ impl RecursiveQuadraticValue {
         }
         retained_sign = Some(match retained_sign {
             Some(sign) => sign,
-            None => match retained.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            None => crate::decided!(retained.sign(policy)?, Ok),
         });
         radical_sign = Some(match radical_sign {
             Some(sign) => sign,
-            None => match radical.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            None => crate::decided!(radical.sign(policy)?, Ok),
         });
         let retained_sign = retained_sign.expect("the retained term was signed above");
         let radical_sign = radical_sign.expect("the radical term was signed above");
@@ -1716,27 +1704,20 @@ impl RecursiveQuadraticValue {
                 return Ok(Classification::Decided(sign));
             }
         }
-        let inner_sign = match Self::affine_positive_root_sign(
-            retained,
-            radical,
-            inner_radicand,
-            retained_sign,
-            radical_sign,
-            policy,
-        )? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let inner_sign = crate::decided!(
+            Self::affine_positive_root_sign(
+                retained,
+                radical,
+                inner_radicand,
+                retained_sign,
+                radical_sign,
+                policy,
+            )?,
+            Ok
+        );
         let constant_sign = match constant_sign {
             Some(sign) => sign,
-            None => match constant.sign(policy)? {
-                Classification::Decided(sign) => sign,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            },
+            None => crate::decided!(constant.sign(policy)?, Ok),
         };
         match (inner_sign, constant_sign) {
             (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
@@ -1981,18 +1962,8 @@ impl RecursiveQuadraticValue {
                 radical,
                 ..
             } => {
-                let retained_sign = match retained.sign(policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let radical_sign = match radical.sign(policy)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let retained_sign = crate::decided!(retained.sign(policy)?, Ok);
+                let radical_sign = crate::decided!(radical.sign(policy)?, Ok);
                 match (retained_sign, radical_sign) {
                     (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
                         return Ok(Classification::Decided(sign));
@@ -2113,18 +2084,8 @@ impl RecursiveQuadraticValue {
                 radical,
                 ..
             } => {
-                let retained_sign = match component_sign(retained)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                let radical_sign = match component_sign(radical)? {
-                    Classification::Decided(sign) => sign,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let retained_sign = crate::decided!(component_sign(retained)?, Ok);
+                let radical_sign = crate::decided!(component_sign(radical)?, Ok);
                 match (retained_sign, radical_sign) {
                     (RealSign::Zero, sign) | (sign, RealSign::Zero) => {
                         return Ok(Classification::Decided(sign));
@@ -2502,14 +2463,12 @@ pub fn recursive_embed_foreign_field<C: SelectedAlgebraContext>(
             let sign = match policy.strict_predicate_pass(|| difference.sign(policy))? {
                 Classification::Decided(sign) => sign,
                 Classification::Uncertain(_) => {
-                    match policy.strict_predicate_pass(|| {
-                        difference.sign_with_projected_zero_fallback(policy)
-                    })? {
-                        Classification::Decided(sign) => sign,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    }
+                    crate::decided!(
+                        policy.strict_predicate_pass(|| {
+                            difference.sign_with_projected_zero_fallback(policy)
+                        })?,
+                        Ok
+                    )
                 }
             };
             if sign == RealSign::Zero {

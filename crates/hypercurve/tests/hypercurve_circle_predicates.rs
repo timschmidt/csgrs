@@ -1,3 +1,4 @@
+#[macro_use]
 mod support;
 use hypercurve::{
     ArcArcIntersection, CircleCircleRelation, CircularArc2, LineArcIntersection,
@@ -41,7 +42,7 @@ fn supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases(
     {
         LineCircleRelation::Tangent { point, line_param } => {
             assert_eq!(point, p(0, 5));
-            assert_eq!(line_param, (Real::one() / Real::from(2_i8)).unwrap());
+            assert_eq!(line_param, r!(1 / 2));
         }
         other => panic!("expected tangent relation, got {other:?}"),
     }
@@ -59,9 +60,9 @@ fn supporting_line_circle_relation_classifies_disjoint_tangent_and_secant_cases(
             second_param,
         } => {
             assert_eq!(first_point, p(-5, 0));
-            assert_eq!(first_param, (Real::one() / Real::from(4_i8)).unwrap());
+            assert_eq!(first_param, r!(1 / 4));
             assert_eq!(second_point, p(5, 0));
-            assert_eq!(second_param, (Real::from(3_i8) / Real::from(4_i8)).unwrap());
+            assert_eq!(second_param, r!(3 / 4));
         }
         other => panic!("expected secant relation, got {other:?}"),
     }

@@ -245,18 +245,8 @@ impl SelectedScalar2 {
                 // Keep each endpoint under its native refinement authority.
                 let mut refinement_steps = 0_usize;
                 loop {
-                    let first = match self.refined(refinement_steps, policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
-                    let second = match other.refined(refinement_steps, policy)? {
-                        Classification::Decided(parameter) => parameter,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let first = decided!(self.refined(refinement_steps, policy)?, Ok);
+                    let second = decided!(other.refined(refinement_steps, policy)?, Ok);
                     let (_, first_upper) = first.isolating_bounds();
                     let (second_lower, _) = second.isolating_bounds();
                     if compare_reals(first_upper, second_lower, &CurveContext::STRICT)

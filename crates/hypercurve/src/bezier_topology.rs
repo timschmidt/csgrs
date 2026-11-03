@@ -538,10 +538,7 @@ fn relation_to_line_with_contacts(
     line: &LineSeg2,
     policy: &CurveContext,
 ) -> Classification<BezierLineContactRelation> {
-    let (decided_sides, side_count) = match control_sides_against_line(controls, line, policy) {
-        Classification::Decided(sides) => sides,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let (decided_sides, side_count) = decided!(control_sides_against_line(controls, line, policy));
     let decided_sides = &decided_sides[..side_count];
 
     if decided_sides.iter().all(|side| *side == LineSide::On) {
@@ -808,10 +805,12 @@ fn exact_low_degree_power_line_contact_relation(
     let c0 = coefficients[0].clone();
     let c1 = coefficients[1].clone();
     let c2 = coefficients.get(2).cloned().unwrap_or_else(Real::zero);
-    let parameters = match polynomial_roots_in_unit_interval(c0, c1.clone(), c2.clone(), policy) {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let parameters = decided!(polynomial_roots_in_unit_interval(
+        c0,
+        c1.clone(),
+        c2.clone(),
+        policy
+    ));
     if parameters.is_empty() {
         return Classification::Decided(BezierLineContactRelation::NoContact);
     }
@@ -852,10 +851,12 @@ fn exact_quadratic_line_contact_relation(
     let c0 = distances[0].clone();
     let c1 = &two * &(distances[1] - distances[0]);
     let c2 = distances[0] - &(&two * distances[1]) + distances[2];
-    let parameters = match polynomial_roots_in_unit_interval(c0, c1.clone(), c2.clone(), policy) {
-        Classification::Decided(parameters) => parameters,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let parameters = decided!(polynomial_roots_in_unit_interval(
+        c0,
+        c1.clone(),
+        c2.clone(),
+        policy
+    ));
     if parameters.is_empty() {
         return Classification::Decided(BezierLineContactRelation::NoContact);
     }
@@ -899,28 +900,22 @@ fn quadratic_parameters_for_point(
     // parameter sets follows the exactness model's EGC requirement to keep algebraic candidates
     // explicit until certified. The coordinate polynomial identities are the
     // standard Bernstein-to-power conversion described by the Bernstein and de Casteljau curve model.
-    let x_roots = match quadratic_axis_point_root_set(
+    let x_roots = decided!(quadratic_axis_point_root_set(
         [
             controls[0].x() - point.x(),
             controls[1].x() - point.x(),
             controls[2].x() - point.x(),
         ],
         policy,
-    ) {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let y_roots = match quadratic_axis_point_root_set(
+    ));
+    let y_roots = decided!(quadratic_axis_point_root_set(
         [
             controls[0].y() - point.y(),
             controls[1].y() - point.y(),
             controls[2].y() - point.y(),
         ],
         policy,
-    ) {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    ));
     quadratic_point_parameters_from_root_sets(controls, point, x_roots, y_roots, policy)
 }
 
@@ -1247,10 +1242,7 @@ mod tests {
                                 // exchanged. Its exact extremum is (a,0).
                                 let mut controls = [
                                     point(Real::zero(), square.clone()),
-                                    point(
-                                        (Real::one() / Real::from(2_i8)).unwrap(),
-                                        &square - &parameter,
-                                    ),
+                                    point(r!(1 / 2), &square - &parameter),
                                     point(
                                         Real::one(),
                                         Real::one() - Real::from(2_i8) * &parameter + &square,
@@ -1367,13 +1359,13 @@ mod tests {
 
     #[test]
     fn certified_quadratic_crossing_deflation_retains_sorted_opposite_crossings() {
-        let sixteenth = (Real::one() / Real::from(16_u8)).unwrap();
+        let sixteenth = r!(1 / 16);
         let distances = [
             Real::from(3_u8) * &sixteenth,
             -Real::from(5_u8) * &sixteenth,
             Real::from(3_u8) * sixteenth,
         ];
-        let known = (Real::from(3_u8) / Real::from(4_u8)).unwrap();
+        let known = r!(3 / 4);
         let relation = exact_quadratic_line_contact_relation_with_certified_crossing(
             distances,
             &known,
@@ -1385,7 +1377,7 @@ mod tests {
             panic!("the certified quadratic crossings must be decided");
         };
         assert_eq!(contacts.len(), 2);
-        let other = (Real::one() / Real::from(4_u8)).unwrap();
+        let other = r!(1 / 4);
         assert_eq!(contacts[0].parameter().scalar(), Some(&other));
         assert_eq!(
             contacts[0].crossing_direction(),

@@ -82,12 +82,10 @@ pub(crate) fn retained_native_fragment_segment(
             start_image,
             end_image,
         } => {
-            let source = match materialized_native_subcurve_segment(source_curve, policy)? {
-                Classification::Decided(source) => source,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let source = decided!(
+                materialized_native_subcurve_segment(source_curve, policy)?,
+                Ok
+            );
             // The source's circle and traversal certificate covers its unit
             // chart. Exterior continuations need separate traversal evidence.
             if matches!(source, Segment2::Arc(_)) {
@@ -149,14 +147,8 @@ pub(crate) fn retained_native_fragment_segment(
                     policy,
                 ))
             };
-            let start_point = match endpoint(start, start_image.as_ref())? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let end_point = match endpoint(end, end_image.as_ref())? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let start_point = decided!(endpoint(start, start_image.as_ref())?, Ok);
+            let end_point = decided!(endpoint(end, end_image.as_ref())?, Ok);
             let (start_point, end_point) = if *reversed {
                 (end_point, start_point)
             } else {
@@ -181,14 +173,8 @@ pub(crate) fn retained_native_fragment_segment(
             if let Some(line) = chord.exact_line() {
                 return Ok(Classification::Decided(Segment2::Line(line)));
             }
-            let start = match native_endpoint(chord.start(), policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            let end = match native_endpoint(chord.end(), policy)? {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let start = decided!(native_endpoint(chord.start(), policy)?, Ok);
+            let end = decided!(native_endpoint(chord.end(), policy)?, Ok);
             Ok(Classification::Decided(Segment2::Line(LineSeg2::try_new(
                 start, end,
             )?)))

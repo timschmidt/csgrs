@@ -2556,10 +2556,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact_with_policy(
-                &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurveContext::STRICT,
-            )
+            .split_at_exact_with_policy(&(r!(1 / 2)), &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("represented midpoint split is exact");
@@ -2706,7 +2703,7 @@ mod tests {
             exact_rational_polynomial_root(&[Real::one(), Real::one(), Real::one(), Real::one(),]),
             Some(Real::from(-1_i8))
         );
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let one_third = r!(1 / 3);
         let curve = RationalBezier2::try_new(
             vec![point(4, 0), point(6, 0), point(6, 2), point(4, 2)],
             vec![
@@ -2730,10 +2727,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact_with_policy(
-                &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurveContext::STRICT,
-            )
+            .split_at_exact_with_policy(&(r!(1 / 2)), &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("represented midpoint split is exact");
@@ -2759,7 +2753,7 @@ mod tests {
 
     #[test]
     fn cubic_weight_moments_with_three_real_roots_are_exactly_additive() {
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let one_third = r!(1 / 3);
         let curve = RationalBezier2::try_new(
             vec![point(4, 0), point(6, 0), point(6, 2), point(4, 2)],
             vec![
@@ -2783,10 +2777,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact_with_policy(
-                &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurveContext::STRICT,
-            )
+            .split_at_exact_with_policy(&(r!(1 / 2)), &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("represented midpoint split is exact");
@@ -2812,7 +2803,7 @@ mod tests {
 
     #[test]
     fn repeated_root_cubic_weight_moments_are_exactly_additive() {
-        let one_third = (Real::one() / Real::from(3_i8)).unwrap();
+        let one_third = r!(1 / 3);
         let curve = RationalBezier2::try_new(
             vec![point(4, 0), point(6, 0), point(6, 2), point(4, 2)],
             vec![
@@ -2911,8 +2902,8 @@ mod tests {
             ],
             vec![
                 Real::one(),
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(7_i8) / Real::from(3_i8)).unwrap(),
+                r!(3 / 2),
+                r!(7 / 3),
                 Real::from(4_i8),
                 Real::from(8_i8),
             ],
@@ -2935,7 +2926,7 @@ mod tests {
             vec![
                 Real::one(),
                 Real::one(),
-                (Real::from(4_i8) / Real::from(3_i8)).unwrap(),
+                r!(4 / 3),
                 Real::from(2_i8),
                 Real::from(4_i8),
             ],
@@ -2957,9 +2948,9 @@ mod tests {
             ],
             vec![
                 Real::from(2_i8),
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
-                (Real::from(3_i8) / Real::from(2_i8)).unwrap(),
+                r!(3 / 2),
+                r!(3 / 2),
+                r!(3 / 2),
                 Real::from(2_i8),
             ],
         )
@@ -2970,7 +2961,7 @@ mod tests {
 
     #[test]
     fn genuinely_cubic_rational_quadratic_weight_moments_are_exactly_additive() {
-        let two_thirds = (Real::from(2_i8) / Real::from(3_i8)).unwrap();
+        let two_thirds = r!(2 / 3);
         let curve = RationalBezier2::try_new(
             vec![point(4, 0), point(6, 0), point(6, 2), point(4, 2)],
             vec![Real::one(), two_thirds.clone(), two_thirds, Real::one()],
@@ -2989,10 +2980,7 @@ mod tests {
             Some(std::cmp::Ordering::Equal)
         );
         let Classification::Decided((left, right)) = curve
-            .split_at_exact_with_policy(
-                &((Real::one() / Real::from(2_i8)).unwrap()),
-                &CurveContext::STRICT,
-            )
+            .split_at_exact_with_policy(&(r!(1 / 2)), &CurveContext::STRICT)
             .unwrap()
         else {
             panic!("represented midpoint split is exact");
@@ -3066,7 +3054,7 @@ mod tests {
 
     #[test]
     fn rational_quadratic_quarter_circle_has_exact_green_first_moments() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let diagonal_weight = half.sqrt().unwrap();
         let quarter_circle = RationalQuadraticBezier2::try_new(
             point(1, 0),
@@ -3086,14 +3074,8 @@ mod tests {
             moments.signed_area(),
             &((Real::pi() / Real::from(4_i8)).unwrap()),
         );
-        assert_approximate_equality(
-            moments.x_moment(),
-            &((Real::one() / Real::from(3_i8)).unwrap()),
-        );
-        assert_approximate_equality(
-            moments.y_moment(),
-            &((Real::one() / Real::from(3_i8)).unwrap()),
-        );
+        assert_approximate_equality(moments.x_moment(), &(r!(1 / 3)));
+        assert_approximate_equality(moments.y_moment(), &(r!(1 / 3)));
 
         let general = RationalBezier2::try_new(
             quarter_circle
@@ -3144,7 +3126,7 @@ mod tests {
 
     #[test]
     fn rational_quadratic_linear_weight_denominator_keeps_geometric_line_moments() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let curve = RationalQuadraticBezier2::try_new(
             point(1, 2),
             point(3, 4),
@@ -3202,7 +3184,7 @@ mod tests {
 
     #[test]
     fn rational_quadratic_first_moments_are_exactly_additive_under_subdivision() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         for weights in [
             [Real::one(), Real::from(2_i8), Real::one()],
             [Real::one(), half.clone(), Real::one()],
@@ -3252,7 +3234,7 @@ mod tests {
 
     #[test]
     fn rational_quadratic_area_cache_reuses_equal_weight_integrals() {
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
         let first = RationalQuadraticBezier2::try_new(
             point(0, 0),
             point(1, 2),

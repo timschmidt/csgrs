@@ -172,14 +172,8 @@ mod tests {
 
     #[test]
     fn distance_squared_fuses_exact_deltas_and_preserves_symbolic_expression() {
-        let exact_start = Point2::new(
-            (Real::from(-7) / Real::from(3)).unwrap(),
-            (Real::from(5) / Real::from(2)).unwrap(),
-        );
-        let exact_end = Point2::new(
-            (Real::from(11) / Real::from(5)).unwrap(),
-            (Real::from(-13) / Real::from(7)).unwrap(),
-        );
+        let exact_start = Point2::new(r!(-7 / 3), r!(5 / 2));
+        let exact_end = Point2::new(r!(11 / 5), r!(-13 / 7));
         let (exact_dx, exact_dy) = exact_start.delta_from(&exact_end);
         assert_eq!(
             exact_start.distance_squared(&exact_end),

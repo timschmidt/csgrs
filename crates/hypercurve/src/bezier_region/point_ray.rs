@@ -22,22 +22,15 @@ fn prepare_point_ray_fragments(
         let chord = match fragment {
             BezierSplitFragment2::AlgebraicChord(chord) => chord.clone(),
             _ => {
-                let line = match retained_line_fragment_segment(fragment, policy)? {
-                    Classification::Decided(line) => line,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
-                match BezierAlgebraicChord2::try_new(
-                    line.start().clone().into(),
-                    line.end().clone().into(),
-                    policy,
-                )? {
-                    Classification::Decided(chord) => chord,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                }
+                let line = decided!(retained_line_fragment_segment(fragment, policy)?, Ok);
+                decided!(
+                    BezierAlgebraicChord2::try_new(
+                        line.start().clone().into(),
+                        line.end().clone().into(),
+                        policy,
+                    )?,
+                    Ok
+                )
             }
         };
         chord.validate_policy(policy)?;
@@ -84,14 +77,10 @@ fn prepared_point_ray_winding(
         for (fragment, incident) in fragments.iter().zip(incident) {
             let delta = match fragment {
                 AlgebraicRayRetainedFragment2::AlgebraicCusp(circle) => {
-                    let sides = match circle
-                        .endpoint_side_signs_for_point(point, &side_x, side_y, policy)?
-                    {
-                        Classification::Decided(sides) => sides,
-                        Classification::Uncertain(reason) => {
-                            return Ok(Classification::Uncertain(reason));
-                        }
-                    };
+                    let sides = decided!(
+                        circle.endpoint_side_signs_for_point(point, &side_x, side_y, policy)?,
+                        Ok
+                    );
                     if sides.contains(&RealSign::Zero) {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
                     }
@@ -123,14 +112,12 @@ fn prepared_point_ray_winding(
                 AlgebraicRayRetainedFragment2::AlgebraicChord(chord) => {
                     let mut sides = [Ordering::Equal; 2];
                     for (side, endpoint) in sides.iter_mut().zip([chord.start(), chord.end()]) {
-                        *side = match algebraic_chord_points_linear_order(
-                            endpoint, point, &side_x, side_y, policy,
-                        )? {
-                            Classification::Decided(order) => order,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        *side = decided!(
+                            algebraic_chord_points_linear_order(
+                                endpoint, point, &side_x, side_y, policy,
+                            )?,
+                            Ok
+                        );
                     }
                     if sides.contains(&Ordering::Equal) {
                         return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
@@ -138,12 +125,7 @@ fn prepared_point_ray_winding(
                     if incident || sides[0] == sides[1] {
                         Classification::Decided(0)
                     } else {
-                        let side = match chord.oriented_support_side(point, policy)? {
-                            Classification::Decided(side) => side,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        let side = decided!(chord.oriented_support_side(point, policy)?, Ok);
                         Classification::Decided(crate::contour::line_winding_decision(
                             sides[0] != Ordering::Greater,
                             sides[1] == Ordering::Greater,
@@ -169,10 +151,7 @@ pub(super) fn point_evidence_loop_winding(
     point: &CurvePoint2,
     policy: &CurveContext,
 ) -> CurveResult<Classification<RetainedRayWinding>> {
-    let fragments = match prepare_point_ray_fragments(boundary, policy)? {
-        Classification::Decided(fragments) => fragments,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let fragments = decided!(prepare_point_ray_fragments(boundary, policy)?, Ok);
     let mut reason = UncertaintyReason::Boundary;
     // At most two endpoint-collinear slopes per fragment; the same exact
     // nondegeneracy bound is used by native algebraic point-ray queries.
@@ -277,10 +256,7 @@ impl CurveRegion2 {
         }
         let mut windings = Vec::with_capacity(self.data.boundary_loops.len());
         for boundary in &self.data.boundary_loops {
-            let fragments = match prepare_point_ray_fragments(boundary, policy)? {
-                Classification::Decided(fragments) => fragments,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let fragments = decided!(prepare_point_ray_fragments(boundary, policy)?, Ok);
             match prepared_point_ray_winding(
                 &fragments,
                 point,

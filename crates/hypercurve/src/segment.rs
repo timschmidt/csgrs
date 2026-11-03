@@ -511,10 +511,7 @@ impl LineSeg2 {
         point: &Point2,
         policy: &CurveContext,
     ) -> Classification<bool> {
-        let side = match self.classify_point_with_policy(point, policy) {
-            Classification::Decided(side) => side,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let side = decided!(self.classify_point_with_policy(point, policy));
         self.contains_point_with_classified_side(point, side, policy)
     }
 
@@ -960,14 +957,14 @@ impl CircularArc2 {
                 ));
             }
         }
-        let chord = match crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
-            self.start().clone().into(),
-            self.end().clone().into(),
-            policy,
-        )? {
-            Classification::Decided(chord) => chord,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let chord = decided!(
+            crate::BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
+                self.start().clone().into(),
+                self.end().clone().into(),
+                policy,
+            )?,
+            Ok
+        );
         Ok(chord.oriented_support_side(point, policy)?.map(|side| {
             if side == LineSide::On {
                 ArcSweepPointLocation2::Endpoint
@@ -1228,12 +1225,7 @@ impl CircularArc2 {
             return Ok(Classification::Decided(point));
         }
 
-        let sweep_angle = match self.retained_directed_sweep_angle(policy)? {
-            Classification::Decided(angle) => angle,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let sweep_angle = decided!(self.retained_directed_sweep_angle(policy)?, Ok);
         let (radial, traversal_angle) =
             if let Some(lineage) = self.retained_facts.parameter_lineage.get() {
                 let root_width = lineage.root_range.end() - lineage.root_range.start();
@@ -1294,12 +1286,10 @@ impl CircularArc2 {
         fraction: &Real,
         policy: &CurveContext,
     ) -> CurveResult<Classification<(Self, Self)>> {
-        let middle = match self.point_at_sweep_fraction_with_policy(fraction, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let middle = decided!(
+            self.point_at_sweep_fraction_with_policy(fraction, policy)?,
+            Ok
+        );
         self.split_at_retained_sweep_point_with_policy(fraction, middle, policy)
     }
 
@@ -1364,28 +1354,19 @@ impl CircularArc2 {
         }
         let first_range = ParamRange::new(Real::zero(), fraction.clone());
         let second_range = ParamRange::new(fraction.clone(), Real::one());
-        let first = match self.fragment_between_sweep_range(
-            self.start().clone(),
-            point.clone(),
-            &first_range,
-            policy,
-        )? {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
-        let second = match self.fragment_between_sweep_range(
-            point,
-            self.end().clone(),
-            &second_range,
-            policy,
-        )? {
-            Classification::Decided(fragment) => fragment,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let first = decided!(
+            self.fragment_between_sweep_range(
+                self.start().clone(),
+                point.clone(),
+                &first_range,
+                policy,
+            )?,
+            Ok
+        );
+        let second = decided!(
+            self.fragment_between_sweep_range(point, self.end().clone(), &second_range, policy,)?,
+            Ok
+        );
         Ok(Classification::Decided((first, second)))
     }
 
@@ -1440,12 +1421,10 @@ impl CircularArc2 {
                 ));
             }
         }
-        let point = match self.point_at_sweep_fraction_with_policy(fraction, policy)? {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point = decided!(
+            self.point_at_sweep_fraction_with_policy(fraction, policy)?,
+            Ok
+        );
         self.parameter_at_incident_point(&point, policy)
     }
 
@@ -1768,12 +1747,7 @@ impl CircularArc2 {
             }
         }
 
-        let point_angle = match directed_radial_angle(self, point, policy)? {
-            Classification::Decided(angle) => angle,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let point_angle = decided!(directed_radial_angle(self, point, policy)?, Ok);
         let total_angle = match self.retained_directed_sweep_angle(policy)? {
             Classification::Decided(angle) => angle.clone(),
             Classification::Uncertain(reason) => {
@@ -2093,7 +2067,7 @@ mod policy_cache_tests {
     #[test]
     fn reversed_retained_line_first_offset_keeps_oriented_source() {
         let policy = CurveContext::STRICT;
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         for origin in [
             point(0, 0),
             Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
@@ -2167,8 +2141,8 @@ mod policy_cache_tests {
         let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
         let source =
             LineSeg2::try_new(center.clone(), center.translated(3.into(), 4.into())).unwrap();
-        let half = (Real::one() / Real::from(2)).unwrap();
-        let quarter = (Real::one() / Real::from(4)).unwrap();
+        let half = r!(1 / 2);
+        let quarter = r!(1 / 4);
         for retained_support in [false, true] {
             let offset = source.offset_left(half.clone()).unwrap();
             assert!(!offset.has_retained_support());
@@ -2323,7 +2297,7 @@ mod policy_cache_tests {
             false,
             None,
         );
-        let half = (Real::one() / Real::from(2_i8)).unwrap();
+        let half = r!(1 / 2);
 
         let Classification::Decided((first, _)) = arc
             .split_at_sweep_fraction_with_policy(&half, &CurveContext::APPROXIMATE_512)

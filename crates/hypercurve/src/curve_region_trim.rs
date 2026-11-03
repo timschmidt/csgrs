@@ -185,10 +185,7 @@ impl CurveRegionTrimFragment2 {
         &self,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CurveParameterRange2>> {
-        let start = match self.start_location().parameter_with_policy(policy)? {
-            Classification::Decided(parameter) => parameter,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let start = decided!(self.start_location().parameter_with_policy(policy)?, Ok);
         Ok(match self.end_location().parameter_with_policy(policy)? {
             Classification::Decided(end) => {
                 Classification::Decided(CurveParameterRange2::new_validated(start, end))

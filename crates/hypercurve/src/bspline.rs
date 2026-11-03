@@ -176,18 +176,13 @@ impl PolynomialBSplineCurve2 {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy)? {
-            Classification::Decided(knots) => knots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let break_knots = decided!(
+            distinct_bezier_break_knots(&refined.knots, self.degree, policy)?,
+            Ok
+        );
         for knot in break_knots {
             loop {
-                let multiplicity = match knot_multiplicity(&refined.knots, &knot, policy) {
-                    Classification::Decided(multiplicity) => multiplicity,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let multiplicity = decided!(knot_multiplicity(&refined.knots, &knot, policy), Ok);
                 if multiplicity >= self.degree {
                     break;
                 }
@@ -335,10 +330,11 @@ impl RationalBSplineCurve2 {
             ]);
         }
         let first = &self.homogeneous_controls[0];
-        let start = match project_homogeneous(&first.weight, || [&first.x, &first.y], policy) {
-            Classification::Decided(point) => point,
-            Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-        };
+        let start = decided!(project_homogeneous(
+            &first.weight,
+            || [&first.x, &first.y],
+            policy
+        ));
         let last = self
             .homogeneous_controls
             .last()
@@ -456,12 +452,7 @@ impl RationalBSplineCurve2 {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let multiplicity = match knot_multiplicity(&coarse_knots, &knot, policy) {
-            Classification::Decided(multiplicity) => multiplicity,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let multiplicity = decided!(knot_multiplicity(&coarse_knots, &knot, policy), Ok);
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(None));
         }
@@ -487,16 +478,16 @@ impl RationalBSplineCurve2 {
         }
         coarse_controls[blend_end + 1..].clone_from_slice(&fine_controls[blend_end + 2..]);
 
-        let candidate = match Self::from_homogeneous_controls(
-            self.degree,
-            coarse_controls,
-            coarse_knots,
-            self.periodicity.clone(),
-            policy,
-        )? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let candidate = decided!(
+            Self::from_homogeneous_controls(
+                self.degree,
+                coarse_controls,
+                coarse_knots,
+                self.periodicity.clone(),
+                policy,
+            )?,
+            Ok
+        );
         let replayed = match candidate.insert_knots(vec![knot], policy)? {
             Classification::Decided((curve, 1)) => curve,
             Classification::Decided(_) => return Ok(Classification::Decided(None)),
@@ -528,18 +519,13 @@ impl RationalBSplineCurve2 {
             Classification::Decided(()) => {}
             Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
         }
-        let break_knots = match distinct_bezier_break_knots(&refined.knots, self.degree, policy)? {
-            Classification::Decided(knots) => knots,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let break_knots = decided!(
+            distinct_bezier_break_knots(&refined.knots, self.degree, policy)?,
+            Ok
+        );
         for knot in break_knots {
             loop {
-                let multiplicity = match knot_multiplicity(&refined.knots, &knot, policy) {
-                    Classification::Decided(multiplicity) => multiplicity,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let multiplicity = decided!(knot_multiplicity(&refined.knots, &knot, policy), Ok);
                 if multiplicity >= self.degree {
                     break;
                 }
@@ -713,12 +699,7 @@ impl BSplineWorkingCurve {
                 return Ok(Classification::Uncertain(reason));
             }
         };
-        let multiplicity = match knot_multiplicity(&self.knots, &knot, policy) {
-            Classification::Decided(multiplicity) => multiplicity,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let multiplicity = decided!(knot_multiplicity(&self.knots, &knot, policy), Ok);
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(()));
         }
@@ -761,12 +742,7 @@ impl HomogeneousBSplineWorkingCurve {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-        let multiplicity = match knot_multiplicity(&self.knots, &knot, policy) {
-            Classification::Decided(multiplicity) => multiplicity,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let multiplicity = decided!(knot_multiplicity(&self.knots, &knot, policy), Ok);
         if multiplicity >= self.degree {
             return Ok(Classification::Decided(()));
         }
@@ -967,14 +943,8 @@ pub(crate) fn knot_multiplicity(
     knot: &Real,
     policy: &CurveContext,
 ) -> Classification<usize> {
-    let lower = match knot_partition_point(knots, knot, false, policy) {
-        Classification::Decided(lower) => lower,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let upper = match knot_partition_point(knots, knot, true, policy) {
-        Classification::Decided(upper) => upper,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let lower = decided!(knot_partition_point(knots, knot, false, policy));
+    let upper = decided!(knot_partition_point(knots, knot, true, policy));
     Classification::Decided(upper - lower)
 }
 
@@ -1007,10 +977,7 @@ fn find_insertion_span(
         Some(Ordering::Less | Ordering::Greater) => {}
         None => return Classification::Uncertain(UncertaintyReason::Ordering),
     }
-    let insertion = match knot_partition_point(knots, knot, true, policy) {
-        Classification::Decided(insertion) => insertion,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let insertion = decided!(knot_partition_point(knots, knot, true, policy));
     let Some(span) = insertion.checked_sub(1) else {
         return Classification::Decided(None);
     };
@@ -1143,13 +1110,13 @@ fn extract_refined_rational_spans(
             }
         }
         let start = knot_index - refined.degree;
-        let curve = match RationalBezier2::from_homogeneous_controls_with_policy(
-            refined.controls[start..=knot_index].to_vec(),
-            policy,
-        )? {
-            Classification::Decided(curve) => curve,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let curve = decided!(
+            RationalBezier2::from_homogeneous_controls_with_policy(
+                refined.controls[start..=knot_index].to_vec(),
+                policy,
+            )?,
+            Ok
+        );
         spans.push(RationalBezierSpan2 {
             curve,
             knot_start: refined.knots[knot_index].clone(),
@@ -1337,11 +1304,8 @@ mod tests {
             )
             .unwrap(),
         );
-        let (inserted, inserted_count) = decided(
-            rational
-                .insert_knots(vec![(Real::one() / Real::from(2)).unwrap()], &policy)
-                .unwrap(),
-        );
+        let (inserted, inserted_count) =
+            decided(rational.insert_knots(vec![r!(1 / 2)], &policy).unwrap());
         assert_eq!(inserted_count, 1);
         assert_eq!(inserted.periodicity(), &periodicity);
     }

@@ -1,5 +1,9 @@
 #![allow(dead_code)]
 
+#[macro_use]
+#[path = "../../src/test_macros.rs"]
+mod test_macros;
+
 #[path = "scalars.rs"]
 mod scalars;
 #[allow(unused_imports)]

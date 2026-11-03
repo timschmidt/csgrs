@@ -5397,45 +5397,38 @@ impl BezierAlgebraicCuspSemicircle2 {
         }
     }
 
-    pub(in crate::bezier_offset) fn retained_offset_chord_intersections(
+    /// The contact walk shared by the retained-offset and selected-radial
+    /// chord kernels. Each kernel supplies its own nested expressions and
+    /// their exact sign; this walk keeps one order of sign evaluations for
+    /// both: the selected half-plane, then the diameter side at a cusp end,
+    /// then the two chord ends when clipping. A negative discriminant has no
+    /// contacts.
+    #[allow(clippy::too_many_arguments)]
+    fn nested_chord_contacts<E>(
         &self,
-        chord: &BezierAlgebraicChord2,
+        discriminant_sign: RealSign,
         clip_to_finite_chord: bool,
-        policy: &CurveContext,
-    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
-        let system = decided!(self.retained_offset_chord_system(chord, policy)?, Ok);
-        let discriminant_sign = decided!(
-            retained_offset_chord_speed_expression_sign(
-                &system.retained,
-                &system.retained.contact_discriminant,
-                policy,
-            )?,
-            Ok
-        );
+        selected_half_plane: &E,
+        diameter: &E,
+        point_minus_start: &E,
+        point_minus_end: &E,
+        endpoint_error: &'static str,
+        nested_sign: impl Fn(&E, i8) -> CurveResult<Classification<RealSign>>,
+    ) -> CurveResult<Classification<Vec<BezierAlgebraicCuspSemicircleChordContact2>>> {
         let branches: &[i8] = match discriminant_sign {
             RealSign::Negative => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
-                ));
+                return Ok(Classification::Decided(Vec::new()));
             }
             RealSign::Zero => &[0],
             RealSign::Positive => &[-1, 1],
         };
-        let nested_sign = |expression, branch| {
-            retained_offset_chord_nested_expression_sign(
-                &system.retained,
-                expression,
-                branch,
-                policy,
-            )
-        };
         let mut contacts = Vec::with_capacity(branches.len());
         for &branch in branches {
-            let selected = decided!(nested_sign(&system.selected_half_plane, branch)?, Ok);
+            let selected = decided!(nested_sign(selected_half_plane, branch)?, Ok);
             let cusp_location = match selected {
                 RealSign::Negative => continue,
                 RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                RealSign::Zero => match nested_sign(&system.retained.diameter_side, branch)? {
+                RealSign::Zero => match nested_sign(diameter, branch)? {
                     Classification::Decided(RealSign::Positive) => {
                         BezierAlgebraicCuspSemicircleContactLocation2::Start
                     }
@@ -5443,10 +5436,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                         BezierAlgebraicCuspSemicircleContactLocation2::End
                     }
                     Classification::Decided(RealSign::Zero) => {
-                        return Err(CurveError::Topology(
-                            "nonzero selected semicircle had an indeterminate retained-offset chord endpoint"
-                                .into(),
-                        ));
+                        return Err(CurveError::Topology(endpoint_error.into()));
                     }
                     Classification::Uncertain(reason) => {
                         return Ok(Classification::Uncertain(reason));
@@ -5454,8 +5444,8 @@ impl BezierAlgebraicCuspSemicircle2 {
                 },
             };
             let chord_location = if clip_to_finite_chord {
-                let start_sign = decided!(nested_sign(&system.point_minus_start, branch)?, Ok);
-                let end_sign = decided!(nested_sign(&system.point_minus_end, branch)?, Ok);
+                let start_sign = decided!(nested_sign(point_minus_start, branch)?, Ok);
+                let end_sign = decided!(nested_sign(point_minus_end, branch)?, Ok);
                 if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
                     continue;
                 }
@@ -5493,6 +5483,44 @@ impl BezierAlgebraicCuspSemicircle2 {
                 tangent_cross_sign,
             });
         }
+        Ok(Classification::Decided(contacts))
+    }
+
+    pub(in crate::bezier_offset) fn retained_offset_chord_intersections(
+        &self,
+        chord: &BezierAlgebraicChord2,
+        clip_to_finite_chord: bool,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<BezierAlgebraicCuspSemicircleChordIntersections2>> {
+        let system = decided!(self.retained_offset_chord_system(chord, policy)?, Ok);
+        let discriminant_sign = decided!(
+            retained_offset_chord_speed_expression_sign(
+                &system.retained,
+                &system.retained.contact_discriminant,
+                policy,
+            )?,
+            Ok
+        );
+        let contacts = decided!(
+            self.nested_chord_contacts(
+                discriminant_sign,
+                clip_to_finite_chord,
+                &system.selected_half_plane,
+                &system.retained.diameter_side,
+                &system.point_minus_start,
+                &system.point_minus_end,
+                "nonzero selected semicircle had an indeterminate retained-offset chord endpoint",
+                |expression, branch| {
+                    retained_offset_chord_nested_expression_sign(
+                        &system.retained,
+                        expression,
+                        branch,
+                        policy,
+                    )
+                },
+            )?,
+            Ok
+        );
         if contacts.is_empty() {
             return Ok(Classification::Decided(
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
@@ -5533,87 +5561,26 @@ impl BezierAlgebraicCuspSemicircle2 {
             )?,
             Ok
         );
-        let branches: &[i8] = match discriminant_sign {
-            RealSign::Negative => {
-                return Ok(Classification::Decided(
-                    BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,
-                ));
-            }
-            RealSign::Zero => &[0],
-            RealSign::Positive => &[-1, 1],
-        };
-        let nested_sign = |expression, branch| {
-            selected_radial_chord_nested_expression_sign(
-                &system.retained,
-                expression,
-                branch,
-                policy,
-            )
-        };
-        let mut contacts = Vec::with_capacity(branches.len());
-        for &branch in branches {
-            let selected = decided!(nested_sign(&system.selected_half_plane, branch)?, Ok);
-            let cusp_location = match selected {
-                RealSign::Negative => continue,
-                RealSign::Positive => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                RealSign::Zero => match nested_sign(&system.retained.diameter, branch)? {
-                    Classification::Decided(RealSign::Positive) => {
-                        BezierAlgebraicCuspSemicircleContactLocation2::Start
-                    }
-                    Classification::Decided(RealSign::Negative) => {
-                        BezierAlgebraicCuspSemicircleContactLocation2::End
-                    }
-                    Classification::Decided(RealSign::Zero) => {
-                        return Err(CurveError::Topology(
-                            "nonzero pair-radial semicircle had an indeterminate chord endpoint"
-                                .into(),
-                        ));
-                    }
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
+        let contacts = decided!(
+            self.nested_chord_contacts(
+                discriminant_sign,
+                clip_to_finite_chord,
+                &system.selected_half_plane,
+                &system.retained.diameter,
+                &system.point_minus_start,
+                &system.point_minus_end,
+                "nonzero pair-radial semicircle had an indeterminate chord endpoint",
+                |expression, branch| {
+                    selected_radial_chord_nested_expression_sign(
+                        &system.retained,
+                        expression,
+                        branch,
+                        policy,
+                    )
                 },
-            };
-            let chord_location = if clip_to_finite_chord {
-                let start_sign = decided!(nested_sign(&system.point_minus_start, branch)?, Ok);
-                let end_sign = decided!(nested_sign(&system.point_minus_end, branch)?, Ok);
-                if start_sign == RealSign::Negative || end_sign == RealSign::Positive {
-                    continue;
-                }
-                match (start_sign, end_sign) {
-                    (RealSign::Zero, _) => BezierAlgebraicCuspSemicircleContactLocation2::Start,
-                    (_, RealSign::Zero) => BezierAlgebraicCuspSemicircleContactLocation2::End,
-                    _ => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
-                }
-            } else {
-                BezierAlgebraicCuspSemicircleContactLocation2::Interior
-            };
-            let tangent_cross_sign = match branch {
-                0 => RealSign::Zero,
-                -1 => {
-                    if self.is_clockwise() {
-                        RealSign::Negative
-                    } else {
-                        RealSign::Positive
-                    }
-                }
-                1 => {
-                    if self.is_clockwise() {
-                        RealSign::Positive
-                    } else {
-                        RealSign::Negative
-                    }
-                }
-                _ => unreachable!("circle/chord support has at most two branches"),
-            };
-            contacts.push(BezierAlgebraicCuspSemicircleChordContact2 {
-                branch,
-                projective_parameter: None,
-                cusp_location,
-                chord_location,
-                tangent_cross_sign,
-            });
-        }
+            )?,
+            Ok
+        );
         if contacts.is_empty() {
             return Ok(Classification::Decided(
                 BezierAlgebraicCuspSemicircleChordIntersections2::NoContacts,

@@ -129,10 +129,7 @@ impl PolynomialPoint2 {
         let Some((numerator, denominator)) = self.pullback(polynomial, &one) else {
             return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
         };
-        let sign = match fiber.predicate_sign(&denominator, policy)? {
-            Classification::Decided(sign) => sign,
-            Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-        };
+        let sign = decided!(fiber.predicate_sign(&denominator, policy)?, Ok);
         if sign == hyperreal::RealSign::Zero {
             return Err(CurveError::ZeroRationalPointDenominator);
         }

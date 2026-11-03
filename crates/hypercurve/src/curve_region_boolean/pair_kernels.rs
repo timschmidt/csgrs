@@ -621,21 +621,18 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 )
             })
             .collect::<Vec<_>>();
-        let incidence = match parallel
-            .circle_incidence_with_point_evidence(
-                arc.center(),
-                arc.radius_squared_ref(),
-                range,
-                &certified_tangent_parameters,
-                &self.data.policy,
-            )
-            .map_err(|cause| self.invalid(0, cause))?
-        {
-            Classification::Decided(incidence) => incidence,
-            Classification::Uncertain(reason) => {
-                return Ok(Classification::Uncertain(reason));
-            }
-        };
+        let incidence = decided!(
+            parallel
+                .circle_incidence_with_point_evidence(
+                    arc.center(),
+                    arc.radius_squared_ref(),
+                    range,
+                    &certified_tangent_parameters,
+                    &self.data.policy,
+                )
+                .map_err(|cause| self.invalid(0, cause))?,
+            Ok
+        );
         let mut parameters = Vec::with_capacity(incidence.len());
         for incidence in incidence {
             let parameter = &incidence.parameter;
@@ -785,15 +782,12 @@ impl<'a> CurveRegionBooleanContext<'a> {
             let Some(exact) = parameter.scalar() else {
                 return Ok(Classification::Decided(None));
             };
-            let point = match parallel
-                .point_at_with_policy(exact, &self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?
-            {
-                Classification::Decided(point) => point,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let point = decided!(
+                parallel
+                    .point_at_with_policy(exact, &self.data.policy)
+                    .map_err(|cause| self.invalid(0, cause))?,
+                Ok
+            );
             match arc.contains_point_with_policy(&point, &self.data.policy) {
                 Classification::Decided(true) => retained_parameters.push(parameter),
                 Classification::Decided(false) => {}
@@ -850,27 +844,20 @@ impl<'a> CurveRegionBooleanContext<'a> {
                     return Ok(Classification::Uncertain(reason));
                 }
             };
-            let parallel_derivative = match parallel
-                .derivative_at_with_policy(parallel_parameter_exact, &self.data.policy)
-                .map_err(|cause| self.invalid(0, cause))?
-            {
-                Classification::Decided(derivative) => derivative,
-                Classification::Uncertain(reason) => {
-                    return Ok(Classification::Uncertain(reason));
-                }
-            };
+            let parallel_derivative = decided!(
+                parallel
+                    .derivative_at_with_policy(parallel_parameter_exact, &self.data.policy)
+                    .map_err(|cause| self.invalid(0, cause))?,
+                Ok
+            );
             for other_parameter in other_parameters {
                 let Some(other_parameter_exact) = other_parameter.scalar() else {
                     return Ok(Classification::Decided(None));
                 };
-                let other_derivative = match rational
-                    .derivative_at_classified(other_parameter_exact, &self.data.policy)
-                {
-                    Classification::Decided(derivative) => derivative,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let other_derivative = decided!(
+                    rational.derivative_at_classified(other_parameter_exact, &self.data.policy),
+                    Ok
+                );
                 let cross = parallel_derivative.dx() * other_derivative.dy()
                     - parallel_derivative.dy() * other_derivative.dx();
                 // This is an optional transverse hint. An unresolved exact
@@ -1895,16 +1882,11 @@ impl<'a> CurveRegionBooleanContext<'a> {
                 }
                 let endpoint_side = |parameter: &CurveParameter2| {
                     self.data.policy.strict_predicate_pass(|| {
-                        let point = match parallel.point_evidence_on_regular_range(
+                        let point = decided!(parallel.point_evidence_on_regular_range(
                             parameter,
                             &retained_range,
                             &self.data.policy,
-                        )? {
-                            Classification::Decided(point) => point,
-                            Classification::Uncertain(reason) => {
-                                return Ok(Classification::Uncertain(reason));
-                            }
-                        };
+                        )?, Ok);
                         #[cfg(test)]
                         let debug_kind = |point: &CurvePoint2| {
                             match point {
@@ -2372,18 +2354,11 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
         let mut overlaps = Vec::with_capacity(intersections.overlaps().len());
         for overlap in intersections.overlaps() {
             let chord_endpoint = |parameter: &BezierParameter2| {
-                let point = match exact_contact_point_evidence(
-                    &rational_line,
-                    parameter,
-                    &self.data.policy,
-                )
-                .map_err(|cause| self.invalid(chord_index, cause))?
-                {
-                    Classification::Decided(point) => point,
-                    Classification::Uncertain(reason) => {
-                        return Ok(Classification::Uncertain(reason));
-                    }
-                };
+                let point = decided!(
+                    exact_contact_point_evidence(&rational_line, parameter, &self.data.policy,)
+                        .map_err(|cause| self.invalid(chord_index, cause))?,
+                    Ok
+                );
                 chord_parameter(point)
             };
             let chord_start = match chord_endpoint(overlap.second_range().start())? {

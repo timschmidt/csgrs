@@ -7,7 +7,7 @@ fn point(x: i32, y: i32) -> Point2 {
 }
 
 fn half_sqrt_two() -> Real {
-    (Real::one() / Real::from(2)).unwrap().sqrt().unwrap()
+    r!(1 / 2).sqrt().unwrap()
 }
 
 /// The quarter of the unit circle from (1, 0) to (0, 1).

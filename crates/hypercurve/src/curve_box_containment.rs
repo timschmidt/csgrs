@@ -567,14 +567,10 @@ fn span_axis_extrema(
         }
         BezierSubcurve2::Rational(curve) => {
             let unit = crate::CurveParameterRange2::unit();
-            let parameters = match curve.axis_extremum_parameters_classified(
-                axis,
-                range.unwrap_or(&unit),
-                policy,
-            )? {
-                Classification::Decided(parameters) => parameters,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let parameters = decided!(
+                curve.axis_extremum_parameters_classified(axis, range.unwrap_or(&unit), policy,)?,
+                Ok
+            );
             if parameters.is_empty() {
                 return Ok(Classification::Decided(Vec::new()));
             }
@@ -613,10 +609,7 @@ fn span_axis_extrema(
             return Ok(Classification::Decided(points));
         }
     };
-    let roots = match roots {
-        Classification::Decided(roots) => roots,
-        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-    };
+    let roots = decided!(roots, Ok);
     let mut points = Vec::with_capacity(roots.len());
     for root in roots {
         match extremum_in_range(&crate::BezierParameter2::Exact(root.clone()), range, policy)? {

@@ -2598,7 +2598,7 @@ mod tests {
     fn exact_normal_positive() -> Real {
         let root_two = Real::from(2).sqrt().unwrap();
         let root_two_over_pi = (root_two.clone() / Real::pi()).unwrap();
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let shared_offset = root_two.clone() * Real::from(3) + half;
         let contact = (((root_two.clone() * Real::from(4) - shared_offset.clone()) * Real::pi())
             * root_two_over_pi.clone()
@@ -2616,7 +2616,7 @@ mod tests {
         let theta = (Real::pi() / Real::from(24)).unwrap();
         let run = Real::from(2) * (theta.clone() - theta.clone().sin());
         let rise = Real::from(2) * (Real::one() - theta.cos());
-        let scale = (Real::from(5) / Real::from(4)).unwrap();
+        let scale = r!(5 / 4);
         let center = Point2::new((Real::pi() / Real::from(4)).unwrap(), Real::zero());
         let first = LineSeg2::try_new(
             center.translated(&scale * &run, -(&scale * &rise)),
@@ -2673,7 +2673,7 @@ mod tests {
     #[test]
     fn line_intersection_reuses_a_certified_nonzero_determinant() {
         let extent = exact_normal_positive();
-        let half = (Real::one() / Real::from(2)).unwrap();
+        let half = r!(1 / 2);
         let crossing_x = &extent * &half;
         let horizontal = LineSeg2::try_new(
             Point2::new(Real::zero(), Real::zero()),

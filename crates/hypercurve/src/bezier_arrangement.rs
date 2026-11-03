@@ -214,12 +214,7 @@ impl BezierArrangementGraph2 {
             endpoints.push(endpoints_for_fragment);
         }
 
-        let (outgoing, predecessors) = match retained_tangent_adjacency(&endpoints, policy) {
-            Classification::Decided(adjacency) => adjacency,
-            Classification::Uncertain(reason) => {
-                return Classification::Uncertain(reason);
-            }
-        };
+        let (outgoing, predecessors) = decided!(retained_tangent_adjacency(&endpoints, policy));
         if defer_tangent_order_evidence
             && outgoing.iter().enumerate().any(|(index, candidates)| {
                 candidates.len() > 1
@@ -1760,19 +1755,14 @@ fn follow_retained_tangent_ordered_chain(
         used[current] = true;
         indices.push(current);
 
-        let next = match choose_retained_tangent_successor(
+        let next = decided!(choose_retained_tangent_successor(
             current,
             &outgoing[current],
             endpoints,
             certified_successors.get(current).copied().flatten(),
             filled_left_faces,
             policy,
-        ) {
-            Classification::Decided(next) => next,
-            Classification::Uncertain(reason) => {
-                return Classification::Uncertain(reason);
-            }
-        };
+        ));
         let Some(next) = next else {
             let closed = match retained_endpoints_equal(
                 endpoints[current].end_topology_vertex,
@@ -2073,19 +2063,9 @@ fn compare_retained_same_tangent_second_order(
             let first_tangent = retained_tangent_as_algebraic(&first_tangent);
             let second_tangent = retained_tangent_as_algebraic(&second_tangent);
             let first_second_derivative =
-                match retained_algebraic_higher_derivative(first, 2, policy) {
-                    Classification::Decided(derivative) => derivative,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
+                decided!(retained_algebraic_higher_derivative(first, 2, policy));
             let second_second_derivative =
-                match retained_algebraic_higher_derivative(second, 2, policy) {
-                    Classification::Decided(derivative) => derivative,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
+                decided!(retained_algebraic_higher_derivative(second, 2, policy));
             match (
                 first_second_derivative
                     .as_ref()
@@ -2152,14 +2132,8 @@ fn compare_retained_algebraic_same_tangent_third_order(
     zero_curvature: bool,
     policy: &CurveContext,
 ) -> Classification<TurnOrdering> {
-    let first_third_derivative = match retained_algebraic_higher_derivative(first, 3, policy) {
-        Classification::Decided(derivative) => derivative,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
-    let second_third_derivative = match retained_algebraic_higher_derivative(second, 3, policy) {
-        Classification::Decided(derivative) => derivative,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    let first_third_derivative = decided!(retained_algebraic_higher_derivative(first, 3, policy));
+    let second_third_derivative = decided!(retained_algebraic_higher_derivative(second, 3, policy));
     match (
         first_third_derivative
             .as_ref()
@@ -2718,24 +2692,15 @@ impl BezierSubcurve2 {
                 )
             }
             Self::RationalQuadratic(curve) => {
-                let start = match rational_quadratic_endpoint_derivative_jet(
+                let start = decided!(rational_quadratic_endpoint_derivative_jet(
                     curve,
                     false,
                     include_higher_derivatives,
                     policy,
-                ) {
-                    Classification::Decided(derivatives) => derivatives,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
-                let end =
-                    match rational_quadratic_endpoint_derivative_jet(curve, true, false, policy) {
-                        Classification::Decided(derivatives) => derivatives,
-                        Classification::Uncertain(reason) => {
-                            return Classification::Uncertain(reason);
-                        }
-                    };
+                ));
+                let end = decided!(rational_quadratic_endpoint_derivative_jet(
+                    curve, true, false, policy
+                ));
                 (
                     start.first,
                     end.first,
@@ -2746,22 +2711,12 @@ impl BezierSubcurve2 {
                 )
             }
             Self::Rational(curve) => {
-                let start = match curve.endpoint_derivatives(
+                let start = decided!(curve.endpoint_derivatives(
                     false,
                     if include_higher_derivatives { 3 } else { 1 },
                     policy,
-                ) {
-                    Classification::Decided(derivatives) => derivatives,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
-                let end = match curve.endpoint_derivatives(true, 1, policy) {
-                    Classification::Decided(derivatives) => derivatives,
-                    Classification::Uncertain(reason) => {
-                        return Classification::Uncertain(reason);
-                    }
-                };
+                ));
+                let end = decided!(curve.endpoint_derivatives(true, 1, policy));
                 let vector = |derivative: &(Real, Real)| TangentVector {
                     dx: derivative.0.clone(),
                     dy: derivative.1.clone(),

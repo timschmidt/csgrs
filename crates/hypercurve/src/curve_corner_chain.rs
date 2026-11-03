@@ -4117,7 +4117,7 @@ mod tests {
                     .is_none()
             }));
             assert_endpoints(&chamfered, &start, &end, &policy);
-            let quarter = (Real::one() / Real::from(4_u8)).unwrap();
+            let quarter = r!(1 / 4);
             let repeated = resolve_certified_operation(&policy, |attempt| {
                 CurveCornerChain2::new(&chamfered, false).chamfer_vertex_by_setbacks(
                     1,

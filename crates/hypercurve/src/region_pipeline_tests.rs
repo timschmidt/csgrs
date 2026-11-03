@@ -399,8 +399,8 @@ fn conic_region_boundary_materializes_with_exact_area() {
     assert_eq!(region.len(), 1);
     assert_eq!(region.boundary_loops()[0].len(), 4);
     let sqrt_three = Real::from(3_i8).sqrt().unwrap();
-    let expected = ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap()
-        - (Real::from(8_i8) / Real::from(3_i8)).unwrap();
+    let expected =
+        ((Real::from(32_i8) * sqrt_three * Real::pi()) / Real::from(27_i8)).unwrap() - r!(8 / 3);
     let area = decided(region.signed_area_with_policy(&policy()).unwrap())
         .expect("same-sign conic region area is supported");
     assert_real_close(&area, &expected, 1.0e-12);

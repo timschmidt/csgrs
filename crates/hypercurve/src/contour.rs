@@ -613,16 +613,13 @@ pub(crate) fn classify_contour_point_with_cached_aabbs(
         Classification::Uncertain(reason) => return Classification::Uncertain(reason),
     }
 
-    let winding = match contour_winding_number_unchecked_with_cached_aabb(
+    let winding = decided!(contour_winding_number_unchecked_with_cached_aabb(
         contour,
         point,
         contour_box,
         segment_boxes,
         policy,
-    ) {
-        Classification::Decided(winding) => winding,
-        Classification::Uncertain(reason) => return Classification::Uncertain(reason),
-    };
+    ));
 
     let inside = match contour.fill_rule {
         FillRule::NonZero => winding != 0,

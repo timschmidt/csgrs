@@ -57,22 +57,22 @@ impl CurvePointRationalForm2 {
     fn combine(&self, other: &Self, operation: Operation) -> ExactCurveResult<Self> {
         let (source, numerator, denominator) = resolve(CurveOperation2::Construction, |policy| {
             use crate::bezier_offset::{PointFormSource2, common_point_form_sources};
-            let [first, second] = match common_point_form_sources(
-                PointFormSource2::new(
-                    self.source.clone(),
-                    self.numerator.clone(),
-                    self.denominator.clone(),
-                ),
-                PointFormSource2::new(
-                    other.source.clone(),
-                    other.numerator.clone(),
-                    other.denominator.clone(),
-                ),
-                policy,
-            )? {
-                Classification::Decided(forms) => forms,
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
+            let [first, second] = decided!(
+                common_point_form_sources(
+                    PointFormSource2::new(
+                        self.source.clone(),
+                        self.numerator.clone(),
+                        self.denominator.clone(),
+                    ),
+                    PointFormSource2::new(
+                        other.source.clone(),
+                        other.numerator.clone(),
+                        other.denominator.clone(),
+                    ),
+                    policy,
+                )?,
+                Ok
+            );
             // Keeping one already shared denominator prevents finite sums
             // (including dot products) from multiplying its degree at every
             // addition. This is structural equality, not a guessed identity.
