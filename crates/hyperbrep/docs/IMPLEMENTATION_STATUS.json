@@ -4808,6 +4808,29 @@
       "validation": "New witness slab_cuts_along_polynomial_graph_trims_measure_exactly: the ramp (volume exactly 28/3) cut by the slab z <= 1 along the parabola y = -x^2 has exact rational volume 112/15 (independently derived with SymPy) by plain equality, exact probe classification, and the same volume after byte-identical cold replay. Mutations removing graph pieces, the cap Green sum, or the parameter direction fail the witness; flipping the tensor graph term's sign is equivalent here (every other boundary term of that face vanishes and the volume takes an absolute value). On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 810 passes and debug tests 802 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim.",
       "limits": "Curved trims that are neither lines, circle arcs, their affine images, nor polynomial graphs (general implicit curves) remain typed; tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "higher-degree-rational-quadratic-factors-2026-11-03",
+      "work_packages": [
+        "WP04",
+        "WP06",
+        "WP21"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P15",
+        "P17"
+      ],
+      "change": "Exact root candidates for certified scalar points now reach polynomials of degree five and more: after rational deflation, a remaining polynomial above degree four is split by rational quadratic factors found with a bounded Kronecker search (signed divisors of the integer-scaled values at 0, 1 and -1, interpolated and confirmed by exact division); the quadratic contributes radical roots and the quotient recurses down to the existing cubic and quartic forms. Candidates remain proposals that certify nothing until proved equal.",
+      "source": [
+        "../src/geometry/tensor_image.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#curves",
+      "validation": "New unit witness quintic_roots_split_rational_quadratic_factors: x^5 - 3x^3 - x^2 + 2x + 2 = (x^2 - 2)(x^3 - x - 1), which has no rational root, yields exactly +-sqrt(2) (exact equality) and the Cardano root of the cubic quotient (exact zero tests are not structurally decided there, so every candidate's residual is checked below 10^-30); exactly three candidates. Disabling the quadratic-factor search fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 811 passes and debug tests 803 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the search is bounded to scaled values of magnitude at most 10^6 and coefficient scales at most 10^9.",
+      "limits": "Polynomials of degree five and more without rational quadratic factors (or beyond the search bound) still propose no candidates; there is no general algebraic-number value. No BREP-level witness exercises a degree-five endpoint yet. General implicit trims, tensor face area, analytic-side faces and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

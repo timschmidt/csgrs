@@ -586,11 +586,110 @@ pub(super) fn exact_root_candidates(mut polynomial: Vec<Real>) -> GeometryResult
         };
         polynomial = quotient;
     }
-    // A family whose exact sign decisions are undecided proposes nothing.
-    candidates.extend(low_degree_roots(polynomial.clone()).unwrap_or_default());
-    candidates.extend(cubic_roots(polynomial.clone()).unwrap_or_default());
-    candidates.extend(quartic_roots(polynomial).unwrap_or_default());
+    candidates.extend(radical_root_candidates(polynomial));
     Ok(candidates)
+}
+
+/// Radical roots of a polynomial without rational roots: directly up to
+/// degree four, and above that after splitting off rational quadratic
+/// factors found by a bounded Kronecker search and confirmed by exact
+/// division. A family whose exact sign decisions are undecided proposes
+/// nothing.
+fn radical_root_candidates(polynomial: Vec<Real>) -> Vec<Real> {
+    let degree = polynomial
+        .iter()
+        .rposition(|value| !value.definitely_zero())
+        .unwrap_or(0);
+    if degree <= 4 {
+        let mut candidates = low_degree_roots(polynomial.clone()).unwrap_or_default();
+        candidates.extend(cubic_roots(polynomial.clone()).unwrap_or_default());
+        candidates.extend(quartic_roots(polynomial).unwrap_or_default());
+        return candidates;
+    }
+    let Some((quadratic, quotient)) = rational_quadratic_factor(&polynomial[..=degree]) else {
+        return Vec::new();
+    };
+    let mut candidates = low_degree_roots(quadratic).unwrap_or_default();
+    candidates.extend(radical_root_candidates(quotient));
+    candidates
+}
+
+/// A rational quadratic factor `g` of `polynomial` and the exact quotient.
+/// Any such factor of the integer-scaled polynomial `F` satisfies
+/// `g(k) | F(k)` for `k` in {0, 1, -1}; candidates interpolated from signed
+/// divisor triples are kept only when they divide exactly. Values above
+/// 10^6 are not searched.
+fn rational_quadratic_factor(polynomial: &[Real]) -> Option<(Vec<Real>, Vec<Real>)> {
+    use hypersolve::curve_resultant::divide_univariate_polynomial_exact;
+    let parse = |text: String| text.parse::<i128>().ok();
+    let mut scale: i128 = 1;
+    let mut rationals = Vec::with_capacity(polynomial.len());
+    for value in polynomial {
+        let rational = value.exact_rational_normal_form()?;
+        let denominator = parse(rational.denominator().to_string())?;
+        let (mut a, mut b) = (scale, denominator);
+        while b != 0 {
+            (a, b) = (b, a % b);
+        }
+        scale = scale.checked_mul(denominator / a)?;
+        if scale > 1_000_000_000 {
+            return None;
+        }
+        rationals.push(rational);
+    }
+    let mut integers = Vec::with_capacity(rationals.len());
+    for rational in &rationals {
+        let numerator = parse(rational.numerator().to_string())?;
+        let denominator = parse(rational.denominator().to_string())?;
+        let signed = if Real::new(rational.clone()) < Real::zero() {
+            -numerator
+        } else {
+            numerator
+        };
+        integers.push(signed.checked_mul(scale / denominator)?);
+    }
+    let evaluate = |x: i128| {
+        integers
+            .iter()
+            .rev()
+            .try_fold(0_i128, |sum, value| sum.checked_mul(x)?.checked_add(*value))
+    };
+    let values = [evaluate(0)?, evaluate(1)?, evaluate(-1)?];
+    if values
+        .iter()
+        .any(|value| *value == 0 || value.abs() > 1_000_000)
+    {
+        return None;
+    }
+    let divisors = |value: i128| {
+        let value = value.abs();
+        (1..=value)
+            .filter(|divisor| value % divisor == 0)
+            .flat_map(|divisor| [divisor, -divisor])
+            .collect::<Vec<_>>()
+    };
+    let (zero, one, minus) = (
+        divisors(values[0]),
+        divisors(values[1]),
+        divisors(values[2]),
+    );
+    let half = |value: i128| (Real::from(value) / Real::from(2)).ok();
+    for &c in &zero {
+        for &at_one in &one {
+            for &at_minus in &minus {
+                let a = half(at_one + at_minus)? - Real::from(c);
+                if a.definitely_zero() {
+                    continue;
+                }
+                let b = half(at_one - at_minus)?;
+                let quadratic = vec![Real::from(c), b, a];
+                if let Some(quotient) = divide_univariate_polynomial_exact(polynomial, &quadratic) {
+                    return Some((quadratic, quotient));
+                }
+            }
+        }
+    }
+    None
 }
 
 /// The first candidate proved exactly equal by `compare`. Candidates are
@@ -987,6 +1086,46 @@ impl TensorCurve3 {
 #[cfg(test)]
 mod quartic_tests {
     use super::*;
+
+    /// (x^2 - 2)(x^3 - x - 1) = x^5 - 3x^3 - x^2 + 2x + 2 has no rational
+    /// root; its rational quadratic factor yields exactly +-sqrt(2), and the
+    /// cubic quotient its real (Cardano) root, each a root of the quintic.
+    #[test]
+    fn quintic_roots_split_rational_quadratic_factors() {
+        let polynomial = vec![
+            2.into(),
+            2.into(),
+            (-1).into(),
+            (-3).into(),
+            0.into(),
+            1.into(),
+        ];
+        let candidates = exact_root_candidates(polynomial.clone()).unwrap();
+        let root_two = Real::from(2).sqrt().unwrap();
+        for expected in [root_two.clone(), -root_two] {
+            assert!(candidates.iter().any(|root| {
+                compare_reals(root, &expected, crate::STRICT_PREDICATES).value()
+                    == Some(Ordering::Equal)
+            }));
+        }
+        let evaluate = |x: &Real| {
+            polynomial
+                .iter()
+                .rev()
+                .fold(Real::zero(), |sum, value| sum * x + value)
+        };
+        // The Cardano root's exact zero test is not structurally decided;
+        // a 10^-30 residual bound is (candidates are proposals only).
+        assert_eq!(candidates.len(), 3);
+        let scale = (0..30).fold(Real::one(), |value, _| value * Real::from(10));
+        let tolerance = (Real::one() / scale).unwrap();
+        for root in &candidates {
+            assert_eq!(
+                compare_reals(&evaluate(root).abs(), &tolerance, crate::STRICT_PREDICATES).value(),
+                Some(Ordering::Less)
+            );
+        }
+    }
 
     /// (x - 1)^4 - 5(x - 1)^2 + 4 = ((x-1)^2 - 1)((x-1)^2 - 4): a shifted
     /// biquadratic with roots -1, 0, 2, 3, each verified exactly.
