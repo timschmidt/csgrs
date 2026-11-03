@@ -81,25 +81,19 @@ impl ArenaModel {
                 }
                 ordered.insert(insertion, trace);
             }
+            // A trace whose domain ends are selected rather than authored
+            // scalars stays whole (`None`); only an interior contact would
+            // need a scalar split parameter on it.
             let mut split_parameters = ordered
                 .iter()
                 .map(|trace| {
-                    Ok(vec![
-                        trace
-                            .intersection
-                            .curve()
-                            .domain()
-                            .represented_start()?
-                            .clone(),
-                        trace
-                            .intersection
-                            .curve()
-                            .domain()
-                            .represented_end()?
-                            .clone(),
-                    ])
+                    let domain = trace.intersection.curve().domain();
+                    match (domain.represented_start(), domain.represented_end()) {
+                        (Ok(start), Ok(end)) => Some(vec![start.clone(), end.clone()]),
+                        _ => None,
+                    }
                 })
-                .collect::<Result<Vec<_>, GeometryError>>()?;
+                .collect::<Vec<_>>();
             let materialized = ordered
                 .iter()
                 .map(|trace| trace.intersection.pcurve(operand).materialize())
@@ -138,10 +132,23 @@ impl ArenaModel {
                         {
                             return Err(GeometryError::UnsupportedIntersection.into());
                         }
+                        let second_spatial =
+                            materialized[second_index].spatial_parameter_at(&second_parameter)?;
+                        let Some(parameters) = split_parameters[second_index].as_mut() else {
+                            // A whole selected-end trace admits contacts only
+                            // at its own ends.
+                            let domain = ordered[second_index].intersection.curve().domain();
+                            if second_spatial.compare(domain.start())? != std::cmp::Ordering::Equal
+                                && second_spatial.compare(domain.end())?
+                                    != std::cmp::Ordering::Equal
+                            {
+                                return Err(GeometryError::UnrepresentableParameter.into());
+                            }
+                            continue;
+                        };
                         insert_exact_split_parameter(
-                            &mut split_parameters[second_index],
-                            materialized[second_index]
-                                .spatial_parameter_at(&second_parameter)?
+                            parameters,
+                            second_spatial
                                 .try_real()
                                 .cloned()
                                 .ok_or(GeometryError::UnrepresentableParameter)?,
@@ -152,7 +159,7 @@ impl ArenaModel {
             if ordered.len() >= 2
                 && split_parameters
                     .iter()
-                    .all(|parameters| parameters.len() == 2)
+                    .all(|parameters| parameters.as_ref().is_none_or(|p| p.len() == 2))
             {
                 let bridges = ordered
                     .iter()
@@ -165,14 +172,45 @@ impl ArenaModel {
                     return Ok((model, partition));
                 }
             }
+            // Uncrossed traces that chain end to end into closed loops are
+            // split after the open arrangement, each into the unique
+            // descendant whose material admits it as a loop.
+            let uncrossed = (0..ordered.len())
+                .filter(|index| {
+                    split_parameters[*index]
+                        .as_ref()
+                        .is_none_or(|parameters| parameters.len() == 2)
+                })
+                .collect::<Vec<_>>();
+            let chains = closed_trace_chains(&ordered, &uncrossed)?;
+            let deferred = chains.iter().flatten().copied().collect::<Vec<_>>();
+            let loops = chains
+                .iter()
+                .map(|chain| {
+                    chain
+                        .iter()
+                        .map(|index| ordered[*index].clone())
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let (ordered, split_parameters): (Vec<_>, Vec<_>) = ordered
+                .into_iter()
+                .zip(split_parameters)
+                .enumerate()
+                .filter(|(index, _)| !deferred.contains(index))
+                .map(|(_, pair)| pair)
+                .unzip();
             let mut staged = self.clone();
             let mut faces = vec![face_id];
             let mut traces = Vec::with_capacity(ordered.len());
             for (trace, parameters) in ordered.into_iter().zip(split_parameters) {
-                let segments = parameters
-                    .windows(2)
-                    .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
-                    .collect::<Result<Vec<_>, _>>()?;
+                let segments = match parameters {
+                    Some(parameters) => parameters
+                        .windows(2)
+                        .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
+                        .collect::<Result<Vec<_>, _>>()?,
+                    None => vec![trace.intersection.clone()],
+                };
                 let mut splits = Vec::with_capacity(segments.len());
                 let mut snapshots = Vec::with_capacity(segments.len());
                 let whole_closed_trace = segments.len() == 1
@@ -320,6 +358,51 @@ impl ArenaModel {
                     boundary: None,
                     snapshots,
                 });
+            }
+            for chain in loops {
+                let pieces = chain
+                    .iter()
+                    .map(|trace| trace.intersection.clone())
+                    .collect::<Vec<_>>();
+                let mut accepted = Vec::new();
+                for candidate in faces.iter().copied() {
+                    match staged.split_face_by_surface_curve_loop(candidate, &pieces, operand) {
+                        Ok(result) => accepted.push(result),
+                        Err(TopologyEditError::ClosedFaceSplitNotInMaterial { .. }) => {}
+                        Err(error) => return Err(error),
+                    }
+                }
+                let [(next, split)] = accepted.as_slice() else {
+                    return Err(if accepted.is_empty() {
+                        TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    } else {
+                        TopologyEditError::FaceSplitTraceAmbiguous {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    });
+                };
+                for (loop_index, trace) in chain.iter().enumerate() {
+                    traces.push(ArenaFaceTracePartition {
+                        source_index: trace.source_index,
+                        segments: vec![trace.intersection.curve().clone()],
+                        splits: vec![ArenaSurfaceCurveFaceSplit::LoopMember(
+                            ArenaLoopMemberCurveSplit {
+                                loop_index,
+                                face: split.clone(),
+                            },
+                        )],
+                        boundary: None,
+                        snapshots: vec![(staged.clone(), next.clone())],
+                    });
+                }
+                faces.push(split.second_face);
+                staged = next.clone();
             }
             traces.extend(boundary_traces);
             Ok((
@@ -1042,4 +1125,69 @@ impl ArenaModel {
             },
         )))
     }
+}
+
+/// Closed chains among `candidates`, each joining every piece's end to the
+/// next piece's start or end exactly; pieces on no closed chain are left out.
+fn closed_trace_chains(
+    traces: &[OrderedSurfaceCurveTrace],
+    candidates: &[usize],
+) -> Result<Vec<Vec<usize>>, TopologyEditError> {
+    let ends = traces
+        .iter()
+        .map(|trace| {
+            Ok((
+                trace.intersection.curve().start()?,
+                trace.intersection.curve().end()?,
+            ))
+        })
+        .collect::<Result<Vec<_>, GeometryError>>()?;
+    let equal = |a: &Point3, b: &Point3| -> Result<bool, TopologyEditError> {
+        Ok(exact_point_order(a, b)? == std::cmp::Ordering::Equal)
+    };
+    let mut used = vec![false; traces.len()];
+    let mut chains = Vec::new();
+    for first in candidates.iter().copied() {
+        if used[first] {
+            continue;
+        }
+        let mut chain = vec![first];
+        let mut taken = vec![first];
+        let mut tail = ends[first].1.clone();
+        let mut closed = false;
+        loop {
+            if chain.len() >= 2 && equal(&tail, &ends[first].0)? {
+                closed = true;
+                break;
+            }
+            let mut next = None;
+            for index in candidates.iter().copied() {
+                if used[index] || taken.contains(&index) {
+                    continue;
+                }
+                let (start, end) = &ends[index];
+                if equal(start, &tail)? {
+                    next = Some((index, end.clone()));
+                    break;
+                }
+                if equal(end, &tail)? {
+                    next = Some((index, start.clone()));
+                    break;
+                }
+            }
+            let Some((index, new_tail)) = next else {
+                break;
+            };
+            chain.push(index);
+            taken.push(index);
+            tail = new_tail;
+        }
+        if closed {
+            for index in &chain {
+                used[*index] = true;
+            }
+            chains.push(chain);
+        }
+    }
+    Ok(chains)
 }

@@ -4448,6 +4448,32 @@
       "validation": "New witness slab_cuts_through_tensor_tops_leave_capped_graph_solids: intersecting the bump solid (top z = x^2 + y^2 over the unit square) with the slab z <= 5/4 gives one solid of ten faces (base, four walls, one central tensor face, four corner caps); fourteen exact probes classify under, on and over the tensor top and a corner cap, at the rational seam point (11/13, 19/26) where both tops have height 5/4, and on walls and base; cold replay is byte-identical and reclassifies identically; a translated copy classifies the mapped probes identically; volume returns UnsupportedMeasurement. Mutations: ignoring caps in classification, refusing capped shells, always consulting the tensor, and removing fragment certification each fail the witness; inverting the up-facing check also lets the previously typed union in booleans_split_tensor_graph_solids_exactly through, so that guard has a negative witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 800 passes and debug tests 792 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the six tensor-graph tests complete in about 0.7 s in release.",
       "limits": "Capped volume needs curved-trim integrals (with transcendental terms for circular trims) and is typed. Caps must be parallel to the base and hole-free. Seam points with radical coordinates against polynomial-branch cap boundaries are typed by Hypercurve. Unions of tensor-graph solids remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "partition-closed-trace-chains-2026-11-02",
+      "work_packages": [
+        "WP07",
+        "WP08",
+        "WP12"
+      ],
+      "properties": [
+        "P1",
+        "P14",
+        "P15",
+        "P17",
+        "P20"
+      ],
+      "change": "split_face_by_surface_curves (behind FaceRef::split_by_surface_curves and the Boolean face partition) decomposes uncrossed traces into closed chains joined end to end exactly, runs the existing open-trace arrangement on the remaining traces, and then splits each closed chain as one loop into the unique current descendant whose material admits it, recording each piece as a LoopMember split; no admitting descendant and several admitting descendants stay typed. Traces whose domain ends are selected rather than authored scalars stay whole and accept contacts only at their own ends; an interior contact on such a trace is a typed UnrepresentableParameter.",
+      "source": [
+        "../src/topology/edit/partition.rs",
+        "../src/topology/edit/results.rs",
+        "../src/topology/mod.rs",
+        "../tests/tensor_face_splits.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "validation": "New witness surface_curve_partitions_split_closed_trace_chains_as_loops: the two plane-side branches of x^2 + y^2 = 1/2 (selected ends, touching at both ends) split the cuboid cap through split_by_surface_curves into a ring with one hole and a disk (seven faces) that replays cold; before the change this call failed. Mutations: disabling chain deferral, requiring authored scalar trace ends, and rejecting end contacts on whole selected traces each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 801 passes and debug tests 793 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.11 s in release.",
+      "limits": "Unions of tensor-graph solids with blocks below the top still fail: stitching cannot yet prove two operands' copies of one planar-image section edge equal (structurally distinct sources), and capped results with holed caps are not admitted. Two exploratory shared-face changes (straight-edge overlaps in line trimming, curved coincident boundary edges) were reverted for lack of a passing witness. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

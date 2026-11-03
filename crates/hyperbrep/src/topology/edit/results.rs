@@ -93,6 +93,17 @@ pub enum ArenaSurfaceCurveFaceSplit {
     Bridge(ArenaBoundaryBridgeCurveSplit),
     /// A closed trace wholly inside the source face's material region.
     Closed(ArenaClosedSurfaceCurveFaceSplit),
+    /// One piece of a closed chain of traces inside the source face.
+    LoopMember(ArenaLoopMemberCurveSplit),
+}
+
+/// One piece of a closed chain of traces split as a single loop.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaLoopMemberCurveSplit {
+    /// Position of this piece in the oriented loop.
+    pub loop_index: usize,
+    /// The complete loop split shared by every piece.
+    pub face: ArenaSurfaceCurveLoopFaceSplit,
 }
 
 impl ArenaSurfaceCurveFaceSplit {
@@ -100,7 +111,7 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn open(&self) -> Option<&ArenaCurveFaceSplit> {
         match self {
             Self::Open(split) => Some(split),
-            Self::Bridge(_) | Self::Closed(_) => None,
+            Self::Bridge(_) | Self::Closed(_) | Self::LoopMember(_) => None,
         }
     }
 
@@ -108,14 +119,14 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn bridge(&self) -> Option<&ArenaBoundaryBridgeCurveSplit> {
         match self {
             Self::Bridge(split) => Some(split),
-            Self::Open(_) | Self::Closed(_) => None,
+            Self::Open(_) | Self::Closed(_) | Self::LoopMember(_) => None,
         }
     }
 
     /// Returns the outer/inner-wire result when this trace is closed.
     pub const fn closed(&self) -> Option<&ArenaClosedSurfaceCurveFaceSplit> {
         match self {
-            Self::Open(_) | Self::Bridge(_) => None,
+            Self::Open(_) | Self::Bridge(_) | Self::LoopMember(_) => None,
             Self::Closed(split) => Some(split),
         }
     }
@@ -126,6 +137,7 @@ impl ArenaSurfaceCurveFaceSplit {
             Self::Open(split) => split.face.first_face,
             Self::Bridge(split) => split.face.first_face,
             Self::Closed(split) => split.first_face,
+            Self::LoopMember(split) => split.face.first_face,
         }
     }
 
@@ -135,6 +147,7 @@ impl ArenaSurfaceCurveFaceSplit {
             Self::Open(split) => split.face.second_face,
             Self::Bridge(split) => split.face.second_face,
             Self::Closed(split) => split.second_face,
+            Self::LoopMember(split) => split.face.second_face,
         }
     }
 }

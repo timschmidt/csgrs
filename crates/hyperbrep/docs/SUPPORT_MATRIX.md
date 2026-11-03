@@ -586,6 +586,13 @@ analytic/spline pair matrix.
 
 ## Booleans
 
+General multi-trace face partitions (`FaceRef::split_by_surface_curves`, also
+used by Booleans) set aside uncrossed traces that chain end to end into closed
+loops, arrange the remaining traces, and split each loop into the unique
+descendant whose material admits it (ambiguity and absence stay typed); traces
+whose ends are selected rather than authored scalars stay whole and admit
+contacts only at those ends.
+
 Several plane-section traces over one plane frame with structurally distinct
 mapped sources keep caller order in face partitions (overlaps still fail
 explicitly), and selected planar-image ends are certified in the branch's own

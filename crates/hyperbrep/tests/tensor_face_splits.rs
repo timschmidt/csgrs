@@ -777,3 +777,47 @@ fn plane_side_section_loops_split_planar_faces() {
     assert_eq!(split.second_face().inner().len(), 0);
     assert_eq!(reload(split.model()).faces().count(), 7);
 }
+
+/// The general multi-trace partition recognizes uncrossed traces that chain
+/// into a closed loop inside the face: the two plane-side branches of the
+/// circle x² + y² = 1/2 split the cap through `split_by_surface_curves`
+/// into a ring and a disk, exactly as the dedicated loop split does.
+#[test]
+fn surface_curve_partitions_split_closed_trace_chains_as_loops() {
+    let (_, patch) = paraboloid_face();
+    let model = builder::cuboid(
+        Point3::new((-2).into(), (-2).into(), (-1).into()),
+        Point3::new(2.into(), 2.into(), q(1, 2)),
+    )
+    .unwrap()
+    .model()
+    .clone();
+    let face = model
+        .faces()
+        .find(|face| matches!(face.surface().geometry().plane_origin(), Some(o) if o.z == q(1, 2)))
+        .unwrap();
+    let pieces = match face.surface().geometry().intersect_surface(&patch).unwrap() {
+        SurfaceSurfaceIntersection::Curves(curves) => curves,
+        other => panic!("two loop branches required, found {other:?}"),
+    };
+    assert_eq!(pieces.len(), 2);
+    let partition = face
+        .split_by_surface_curves(&pieces, SurfaceIntersectionOperand::First)
+        .unwrap();
+    assert_eq!(partition.model().faces().count(), 7);
+    let caps = partition
+        .model()
+        .faces()
+        .filter(
+            |face| matches!(face.surface().geometry().plane_origin(), Some(o) if o.z == q(1, 2)),
+        )
+        .collect::<Vec<_>>();
+    assert_eq!(caps.len(), 2);
+    let mut holes = caps
+        .iter()
+        .map(|face| face.inner().len())
+        .collect::<Vec<_>>();
+    holes.sort_unstable();
+    assert_eq!(holes, vec![0, 1]);
+    assert_eq!(reload(partition.model()).faces().count(), 7);
+}

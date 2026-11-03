@@ -71,6 +71,7 @@ struct OrderedFaceSplitTrace {
     upper: Point3,
 }
 
+#[derive(Clone)]
 struct OrderedSurfaceCurveTrace {
     source_index: usize,
     intersection: SurfaceIntersectionCurve,
