@@ -5,7 +5,6 @@
 //! sign; otherwise the exact/refinement path must decide or report uncertainty.
 
 use crate::context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
-use crate::earcut::map_hyperlimit_sign;
 #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 use crate::error::{Error, Result};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -462,5 +461,14 @@ mod tests {
 
         assert_eq!(immediate_trace.operation_count("hyperlimit", "orient2d"), 4);
         assert_eq!(retained_trace.operation_count("hyperlimit", "orient2d"), 3);
+    }
+}
+
+#[cfg(any(feature = "earcut", feature = "cdt"))]
+pub(crate) fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> crate::types::Sign {
+    match sign {
+        hyperlimit::Sign::Negative => crate::types::Sign::Negative,
+        hyperlimit::Sign::Zero => crate::types::Sign::Zero,
+        hyperlimit::Sign::Positive => crate::types::Sign::Positive,
     }
 }

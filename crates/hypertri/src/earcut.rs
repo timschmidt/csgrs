@@ -11,6 +11,7 @@ use crate::context::{TriangulationContext, TriangulationOutcome};
 use crate::error::{Error, Result};
 use crate::polygon::{PolygonRings, RingRange, open_ring_indices, rings_from_hole_indices};
 use crate::predicate_evaluator::PredicateEvaluator;
+use crate::predicate_evaluator::map_hyperlimit_sign;
 use crate::predicates;
 use crate::types::Sign;
 use crate::types::{ExactPoint, Point2, TriangleIndices};
@@ -1619,14 +1620,6 @@ fn same_point(
     right: usize,
 ) -> Result<bool> {
     points_equal(evaluator, &vertices[left], &vertices[right])
-}
-
-pub(crate) fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
-    match sign {
-        hyperlimit::Sign::Negative => Sign::Negative,
-        hyperlimit::Sign::Zero => Sign::Zero,
-        hyperlimit::Sign::Positive => Sign::Positive,
-    }
 }
 
 #[cfg(test)]
