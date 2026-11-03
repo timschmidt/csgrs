@@ -3926,3 +3926,17 @@ The test should not depend on host load. Options: warm until retention stops
 shrinking before measuring, compare retention across consecutive warm attempts
 instead of against a fixed fraction of the peak, or run the stalled
 computation for a fixed amount of work rather than a fixed wall time.
+
+## Offsetting a glyph with holes takes over a minute (2026-11-03)
+
+SynapsCAD's `geb_letter_solids_are_closed` builds `offset(0.5) text("B")` and
+extrudes it, and it now exceeds its one-minute deadline. At the csgrs level,
+`truetype_text("B", Liberation Sans, 10)` followed by
+`CurveRegion2::offset(1/2, Round)` takes 73.5 s on `main` (`e83de9ee8c`) and
+75.4 s with the simplification packages. Extruding to 18,592 triangles adds
+about 5 s. The two revisions agree, so the cost predates this program. "B"
+has two holes, and since the "Dilation of regions with holes" migration such
+regions are dilated through exact boundary bands rather than the boundary
+walk. The likely cost is the band arrangement over the glyph's many Bezier
+spans. Profile it and treat it as M2 cost work. It is also a completed-workload
+envelope regression for text offsets.
