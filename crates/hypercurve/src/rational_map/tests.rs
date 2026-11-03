@@ -179,7 +179,7 @@ fn whole_maps_restrict_reverse_transform_and_replay_without_chart_loss() {
 
 #[test]
 fn injectivity_requires_a_whole_rectangle_certificate() {
-    let domain = Aabb2::new_unchecked(Point2::from_values(0, 0), Point2::from_values(1, 1));
+    let domain = Aabb2::new_unchecked(pt!(0, 0), pt!(1, 1));
     shear().certify_injective_on(&domain).unwrap();
     let reflection = RationalMap2::new(
         [

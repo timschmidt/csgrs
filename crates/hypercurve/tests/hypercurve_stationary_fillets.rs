@@ -605,12 +605,7 @@ mod retained_domains {
     fn q(n: i64, d: i64) -> Real {
         (Real::from(n) / Real::from(d)).unwrap()
     }
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("fixture classification {reason:?}"),
-        }
-    }
+    use crate::support::decided;
     fn check_case(policy: PredicatePolicy, nonzero: bool, reversed: bool, mode: CurveCornerMode2) {
         let source = CubicBezier2::new(
             Point2::from_values(0, 0),

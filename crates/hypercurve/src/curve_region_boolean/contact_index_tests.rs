@@ -90,7 +90,7 @@ fn contact_index_matches_independent_box_overlap_at_float_extremes() {
         expected.push(unboxed);
         assert_eq!(shared.candidates(Some(query)), Some(expected));
     }
-    let above = CurvePoint2::from(Point2::from_values(0, 1));
+    let above = CurvePoint2::from(pt!(0, 1));
     assert_eq!(shared.candidates(Some(&above)), Some(vec![unboxed]));
     assert_eq!(values.len(), 70);
     assert_eq!(boxes.len(), 2486);
@@ -104,10 +104,7 @@ fn selected_point(
     let interval = BezierParameterInterval::try_new(lower, Real::one()).unwrap();
     let parameter = BezierAlgebraicParameter2::try_isolate(polynomial.clone(), interval).unwrap();
     let line = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::new(scale.clone(), Real::zero()),
-        ],
+        vec![pt!(0, 0), Point2::new(scale.clone(), Real::zero())],
         vec![Real::one(); 2],
     )
     .unwrap();

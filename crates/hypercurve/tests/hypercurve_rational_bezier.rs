@@ -25,12 +25,7 @@ fn unresolved_positive() -> Real {
     (Real::pi() + tiny) - Real::pi()
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::support::decided;
 
 /// Local parameters locating `point`, or `None` when the whole curve maps to it.
 /// `None` entries are selected algebraic parameters without a scalar payload.

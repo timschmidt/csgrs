@@ -18,12 +18,7 @@ fn certified<T>(outcome: impl support::IntoCertified<T>) -> T {
     outcome.into_certified()
 }
 
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("{reason:?}"),
-    }
-}
+use crate::support::decided;
 
 #[test]
 fn finite_bezier_charts_preserve_bounds_boundary_and_winding() {

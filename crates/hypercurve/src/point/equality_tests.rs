@@ -98,7 +98,7 @@ fn unresolved_equality_remains_inconclusive_with_warm_enclosures() {
     let cosine = Real::e().cos();
     let unresolved_zero = &sine * &sine + &cosine * &cosine - Real::one();
     assert_eq!(unresolved_zero.zero_status(), ZeroKnowledge::Unknown);
-    let left = Point2::from_values(0, 0);
+    let left = pt!(0, 0);
     let right = Point2::new(unresolved_zero, Real::zero());
     for precision in [-8, -128, -16, -96] {
         assert_ne!(left, right);

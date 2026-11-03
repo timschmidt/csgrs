@@ -12,3 +12,12 @@ macro_rules! r {
         ::hyperreal::Real::from($value)
     };
 }
+
+/// An exact test point: `pt!(x, y)` is `Point2::from_values(x, y)`, with
+/// `Point2` resolved where the macro is used. It changes no value.
+#[allow(unused_macros)]
+macro_rules! pt {
+    ($x:expr, $y:expr $(,)?) => {
+        Point2::from_values($x, $y)
+    };
+}

@@ -6103,12 +6103,7 @@ mod stationary_retained_point_constraint_regression {
         (Real::from(n) / Real::from(d)).unwrap()
     }
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("fixture must be certified: {reason:?}"),
-        }
-    }
+    use crate::test_support::decided;
 
     fn retained_point(point: &Point2, policy: &CurveContext) -> CurvePoint2 {
         // Q(s) = point + (2s² - 1) * (1, 2), selected at 2s² - 1 = 0.
@@ -6260,12 +6255,7 @@ mod stationary_recursive_point_constraint_regression {
         (Real::from(n) / Real::from(d)).unwrap()
     }
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("fixture must be certified: {reason:?}"),
-        }
-    }
+    use crate::test_support::decided;
 
     fn retained_point(point: &Point2, policy: &CurveContext) -> CurvePoint2 {
         // A chord with direction (3,4) has left unit normal (-4/5,3/5).

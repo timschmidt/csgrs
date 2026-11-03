@@ -2,7 +2,7 @@ use super::*;
 use crate::{CurveCertainty, PredicatePolicy, WorkBudget, evaluate_under, evaluate_with_budget};
 
 fn p(x: i32, y: i32) -> Point2 {
-    Point2::from_values(x, y)
+    pt!(x, y)
 }
 
 fn q(n: i64, d: i64) -> Real {

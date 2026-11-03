@@ -587,12 +587,7 @@ mod tests {
         BezierParameterPolynomial, Curve2, CurveCertainty, Point2, QuadraticBezier2, Real,
     };
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("expected exact evidence: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     #[test]
     fn finite_parallel_derivatives_preserve_affine_charts_and_gauges() {
@@ -652,9 +647,8 @@ mod tests {
                         });
                         for (t, dx, dy) in &expected {
                             let parameter = Real::from(if reversed { 1 - t } else { *t });
-                            let derivative =
-                                decided(support.derivative_at(&parameter, &policy).unwrap());
-                            let point = decided(support.point_at(&parameter, &policy).unwrap());
+                            let derivative = decided_ok(support.derivative_at(&parameter, &policy));
+                            let point = decided_ok(support.point_at(&parameter, &policy));
                             let source_point = if *t == 0 {
                                 Point2::from_values(-1, 0)
                             } else {
@@ -687,7 +681,7 @@ mod tests {
                                 );
                             }
                             let chart_derivative =
-                                decided(chart.derivative_at(&q(t + 2, 4), &policy).unwrap());
+                                decided_ok(chart.derivative_at(&q(t + 2, 4), &policy));
                             for (actual, expected) in
                                 [(chart_derivative.dx(), dx), (chart_derivative.dy(), dy)]
                             {
@@ -732,7 +726,7 @@ mod tests {
                     parallel
                 };
                 for parameter in &parameters {
-                    let point = decided(parallel.point_at_with_policy(parameter, &policy).unwrap());
+                    let point = decided_ok(parallel.point_at_with_policy(parameter, &policy));
                     assert_eq!(
                         CurvePoint2::from(point).same_point(&expected, &policy),
                         Classification::Decided(true),
@@ -811,7 +805,7 @@ mod tests {
                     assert_eq!(derivative.zero_status(), hyperreal::ZeroKnowledge::Zero);
                 }
                 let other = CurveSupport2::Parallel(source.parallel_left(-Real::one()).unwrap());
-                let derivative = decided(other.derivative_at(parameter, &policy).unwrap());
+                let derivative = decided_ok(other.derivative_at(parameter, &policy));
                 assert_eq!(
                     crate::classify::is_zero(&(derivative.dx() - Real::from(2)), &policy),
                     Some(true)
@@ -865,8 +859,7 @@ mod tests {
                         parallel.source_tangent_at(&Real::from(t), &policy).unwrap(),
                         Classification::Decided((-Real::one(), -Real::one()))
                     );
-                    let derivative =
-                        decided(support.derivative_at(&Real::from(t), &policy).unwrap());
+                    let derivative = decided_ok(support.derivative_at(&Real::from(t), &policy));
                     assert_eq!(derivative.dx(), &q(-1, 9));
                     assert_eq!(derivative.dy(), &q(-1, 9));
                 }
@@ -914,7 +907,7 @@ mod tests {
                     ),
                     reversed,
                 );
-                let point = decided(fragment.representative_point(&policy).unwrap());
+                let point = decided_ok(fragment.representative_point(&policy));
                 assert_eq!(point.y(), &Real::one());
                 assert_eq!(
                     crate::classify::compare_reals(point.x(), &Real::from(2), &policy),
@@ -940,7 +933,7 @@ mod tests {
             )));
             assert!(cubic.has_certified_injective_image(&CurveParameterRange2::unit(), &policy));
             for t in [-2, -1, 0, 1, 2] {
-                let derivative = decided(cubic.derivative_at(&Real::from(t), &policy).unwrap());
+                let derivative = decided_ok(cubic.derivative_at(&Real::from(t), &policy));
                 assert_eq!(derivative.dx(), &Real::from(2 * t));
                 assert_eq!(derivative.dy(), &Real::from(3 * t * t - 1));
             }
@@ -1031,7 +1024,7 @@ mod tests {
                     };
                     let bounds = decided(support.certified_outer_bounds(&range, 0, &policy));
                     for n in 4..=12 {
-                        let point = decided(support.point_at(&q(n, 4), &policy).unwrap());
+                        let point = decided_ok(support.point_at(&q(n, 4), &policy));
                         assert_eq!(
                             bounds.contains_point_with_policy(&point, &policy),
                             Classification::Decided(true)
@@ -1067,7 +1060,7 @@ mod tests {
                     );
                     let bounds = decided(support.certified_outer_bounds(&range, 0, &policy));
                     for parameter in [&start, &end] {
-                        let point = decided(support.point_at(parameter, &policy).unwrap());
+                        let point = decided_ok(support.point_at(parameter, &policy));
                         assert_eq!(
                             bounds.contains_point_with_policy(&point, &policy),
                             Classification::Decided(true)

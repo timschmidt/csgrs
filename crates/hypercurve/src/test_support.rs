@@ -19,3 +19,22 @@ pub(crate) fn terminally_unresolved_zero() -> Real {
         - Real::e().sin() * Real::one().cos()
         - Real::e().cos() * Real::one().sin()
 }
+
+/// The decided value of a test classification. Uncertainty fails the test at
+/// the caller, naming its reason.
+#[track_caller]
+pub(crate) fn decided<T>(classification: crate::Classification<T>) -> T {
+    match classification {
+        crate::Classification::Decided(value) => value,
+        crate::Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
+    }
+}
+
+/// [`decided`] of a successful result; an error fails the test at the caller.
+#[track_caller]
+pub(crate) fn decided_ok<T, E: std::fmt::Debug>(result: Result<crate::Classification<T>, E>) -> T {
+    match result {
+        Ok(classification) => decided(classification),
+        Err(error) => panic!("unexpected error: {error:?}"),
+    }
+}

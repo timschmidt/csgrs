@@ -8,16 +8,16 @@ fn q(n: i32, d: i32) -> Real {
 fn cone_arc_excludes_other_points_on_its_circle() {
     let angle = q(1, 2) * (q(3, 4).atan().unwrap() - q(1, 2) * Real::pi());
     let arc = crate::CircularArc2::try_from_center(
-        Point2::from_values(-4, 3),
+        pt!(-4, 3),
         Point2::new(
             Real::from(5) * angle.clone().sin(),
             Real::from(5) * angle.cos(),
         ),
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         true,
     )
     .unwrap();
-    let query = Point2::from_values(5, 0);
+    let query = pt!(5, 0);
     for span in arc.rational_bezier_decomposition().unwrap().spans() {
         let curve = RationalBezier2::from(span.curve().clone());
         assert!(!curve.contains_point(&query).unwrap());
@@ -384,10 +384,7 @@ fn similarity_transports_circle_tangent_relations_and_invalidates_affine_metric(
 
 #[test]
 fn circle_incidence_preserves_subranges_reversal_elevation_and_certainty() {
-    for center in [
-        Point2::from_values(0, 0),
-        Point2::new(Real::pi(), Real::e()),
-    ] {
+    for center in [pt!(0, 0), Point2::new(Real::pi(), Real::e())] {
         for weight in [1, -3] {
             for degree in [2, 5] {
                 for (sn, en) in [(0, 4), (1, 3)] {
@@ -462,7 +459,7 @@ fn circle_incidence_preserves_subranges_reversal_elevation_and_certainty() {
 
 #[test]
 fn circle_incidence_keeps_near_points_extrapolation_constants_and_poles() {
-    let center = Point2::from_values(0, 0);
+    let center = pt!(0, 0);
     let source = circle_source(&center, 1);
     let unit = CurveParameterRange2::unit();
     let delta = q(1, 1_000_000) * q(1, 1_000_000);
@@ -500,7 +497,7 @@ fn circle_incidence_keeps_near_points_extrapolation_constants_and_poles() {
         );
     }
     let pole = RationalBezier2::try_new(
-        vec![Point2::from_values(1, 0); 3],
+        vec![pt!(1, 0); 3],
         vec![Real::one(), -Real::one(), Real::one()],
     )
     .unwrap()
@@ -508,7 +505,7 @@ fn circle_incidence_keeps_near_points_extrapolation_constants_and_poles() {
         source.retained_implicit_quadratic_conic().unwrap().clone(),
         source.retained_circular_conic().cloned(),
     );
-    for point in [Point2::from_values(1, 0), Point2::from_values(2, 0)] {
+    for point in [pt!(1, 0), pt!(2, 0)] {
         assert_eq!(
             pole.point_incidence_on_range(&point, &unit, &CurveContext::STRICT)
                 .unwrap(),
@@ -519,16 +516,16 @@ fn circle_incidence_keeps_near_points_extrapolation_constants_and_poles() {
 
 #[test]
 fn circular_support_alone_does_not_erase_repeated_visits() {
-    let source = circle_source(&Point2::from_values(0, 0), 1);
+    let source = circle_source(&pt!(0, 0), 1);
     // Compose the independent circle oracle with s=4*t*(1-t). Its
     // homogeneous power coordinates are (1-s^2, 2*s, 1+s^2).
     let retracing = RationalBezier2::try_new(
         vec![
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 2),
+            pt!(1, 0),
+            pt!(1, 2),
             Point2::new(q(-5, 11), q(8, 11)),
-            Point2::from_values(1, 2),
-            Point2::from_values(1, 0),
+            pt!(1, 2),
+            pt!(1, 0),
         ],
         vec![Real::one(), Real::one(), q(11, 3), Real::one(), Real::one()],
     )

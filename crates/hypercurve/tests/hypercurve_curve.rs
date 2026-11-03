@@ -3962,16 +3962,11 @@ candidates.pop().unwrap()
 
 #[test]
 fn derivatives_at_selected_parameters_stay_exact() {
+    use crate::support::decided;
     use hypercurve::{
         Axis2, BezierAlgebraicParameter2, BezierParameter2, BezierParameterInterval,
-        BezierParameterPolynomial, Classification, CurveParameter2, RealSign,
+        BezierParameterPolynomial, CurveParameter2, RealSign,
     };
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("{reason:?}"),
-        }
-    }
     let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
         // The positive root of scale*t^2 - constant in [lower, upper].

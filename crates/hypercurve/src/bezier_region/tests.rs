@@ -455,12 +455,7 @@ fn terminally_unresolved_zero() -> Real {
 
 #[test]
 fn algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation() {
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("exact ray query: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         policy.strict_predicate_pass(|| {
@@ -495,7 +490,7 @@ fn algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation() {
                     .point_at_algebraic_parameter(&selected_end, &policy)
                     .unwrap(),
             );
-            let boundary = decided(boundary.predicate_evaluator(&policy).unwrap());
+            let boundary = decided_ok(boundary.predicate_evaluator(&policy));
             for end in [
                 BezierParameter2::Exact(q(16, 5)),
                 BezierParameter2::Algebraic(selected_end.clone()),
@@ -513,7 +508,7 @@ fn algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation() {
                         .restrict_certified(range.clone(), None, reversed, &policy)
                         .unwrap();
                     let fragment =
-                        decided(retained_fragment_algebraic_ray_curve(&source, &policy).unwrap());
+                        decided_ok(retained_fragment_algebraic_ray_curve(&source, &policy));
                     assert_eq!(
                         algebraic_point_on_rational_fragment(&fragment, &boundary, &policy)
                             .unwrap(),
@@ -536,7 +531,7 @@ fn algebraic_ray_queries_keep_exterior_roots_and_denominator_orientation() {
                             vec![Real::one()],
                             "exact constant query in a selected field",
                         );
-                        let predicate = decided(point.predicate_evaluator(&policy).unwrap());
+                        let predicate = decided_ok(point.predicate_evaluator(&policy));
                         assert_eq!(
                             algebraic_point_rational_curve_ray_winding(
                                 &fragment,
@@ -8022,10 +8017,10 @@ fn selected_radial_cap(
 }
 
 fn recursive_selected_radial_nonlinear_cutter(policy: &CurveContext) -> CurveRegion2 {
-    let start = Point2::from_values(-1, -1);
-    let end = Point2::from_values(2, -1);
-    let bottom_right = Point2::from_values(2, -2);
-    let bottom_left = Point2::from_values(-1, -2);
+    let start = pt!(-1, -1);
+    let end = pt!(2, -1);
+    let bottom_right = pt!(2, -2);
+    let bottom_left = pt!(-1, -2);
     let fragment = |curve| BezierSplitFragment2::Materialized {
         start: BezierParameter2::Exact(Real::zero()),
         end: BezierParameter2::Exact(Real::one()),

@@ -1204,12 +1204,7 @@ mod tests {
         (-2..=6).map(Real::from).collect()
     }
 
-    fn decided<T>(classification: Classification<T>) -> T {
-        match classification {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     #[test]
     fn binary_knot_search_matches_complete_scan_on_large_repeated_vectors() {
@@ -1305,7 +1300,7 @@ mod tests {
             .unwrap(),
         );
         let (inserted, inserted_count) =
-            decided(rational.insert_knots(vec![r!(1 / 2)], &policy).unwrap());
+            decided_ok(rational.insert_knots(vec![r!(1 / 2)], &policy));
         assert_eq!(inserted_count, 1);
         assert_eq!(inserted.periodicity(), &periodicity);
     }

@@ -118,12 +118,7 @@ fn signed_algebraic_gauges_preserve_orientation_order_and_equality() {
     }
 }
 
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("exact gauge fixture: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 #[test]
 fn reversed_support_intersections_keep_positive_recursive_weights() {
@@ -197,8 +192,7 @@ fn reversed_support_intersections_keep_positive_recursive_weights() {
                     );
                     for _ in 0..2 {
                         let point =
-                            decided(intersection.recursive_projective_point(&policy).unwrap())
-                                .unwrap();
+                            decided_ok(intersection.recursive_projective_point(&policy)).unwrap();
                         assert_eq!(
                             point.denominator.sign_with_nonzero_certificate().unwrap(),
                             Classification::Decided(RealSign::Positive),

@@ -6,12 +6,7 @@ use hypercurve::{
     Classification, CurveCertainty, CurvePoint2, Point2, PredicatePolicy, RationalBezier2, Real,
 };
 
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("expected a certified decision: {reason:?}"),
-    }
-}
+use crate::support::decided;
 
 fn certified<T: std::fmt::Debug>(outcome: crate::support::Outcome<Classification<T>>) -> T {
     assert_eq!(outcome.certainty, CurveCertainty::Certified);
@@ -165,12 +160,7 @@ mod generated_derivatives {
         ExactCurveError, Point2, PredicatePolicy, QuadraticBezier2, Real, UncertaintyReason,
     };
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
-        }
-    }
+    use crate::support::decided;
 
     fn q(numerator: i32, denominator: i32) -> Real {
         (Real::from(numerator) / Real::from(denominator)).unwrap()

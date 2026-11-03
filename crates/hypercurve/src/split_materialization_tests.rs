@@ -23,12 +23,7 @@ fn has_retained_beziers(split: &BezierSplitMaterialization2) -> bool {
         .any(|fragment| matches!(fragment, BezierSplitFragment2::RetainedBezier { .. }))
 }
 
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("expected exact value: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 fn r(value: i32) -> Real {
     value.into()
@@ -145,11 +140,11 @@ fn assert_endpoint_image(image: &Option<BezierAlgebraicEndpointImage2>) {
         .as_ref()
         .expect("algebraic boundary retains endpoint evidence");
     assert!(image.is_exact());
-    let point = decided(image.point().unwrap());
+    let point = decided_ok(image.point());
     assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
     assert!(point.x().and_then(|x| x.representation()).is_some());
     assert!(point.y().and_then(|y| y.representation()).is_some());
-    assert_transformed_tangent(decided(image.tangent().unwrap()));
+    assert_transformed_tangent(decided_ok(image.tangent()));
     if let Some(second) = image.second_derivative() {
         assert_transformed_tangent(second);
     }

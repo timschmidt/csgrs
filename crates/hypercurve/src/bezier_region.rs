@@ -7140,12 +7140,7 @@ mod retained_point_classification_tests {
         (Real::from(n) / Real::from(d)).unwrap()
     }
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("fixture predicate: {reason:?}"),
-        }
-    }
+    use crate::test_support::decided;
 
     fn displaced_point(point: &Point2, policy: &CurveContext) -> CurvePoint2 {
         // Direction (3,4) gives the exact left unit normal (-4/5,3/5).

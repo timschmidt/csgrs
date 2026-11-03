@@ -1,8 +1,8 @@
 //! Exact Bezier extraction of polynomial and rational B-splines.
 
 use crate::{
-    Classification, Curve2, CurveContext, CurveError, CurveGeometry2, CurvePath2, CurveRegion2,
-    ExactCurveError, NurbsCurve2, Point2, PolynomialSplineCurve2, Real, UncertaintyReason,
+    Curve2, CurveContext, CurveError, CurveGeometry2, CurvePath2, CurveRegion2, ExactCurveError,
+    NurbsCurve2, Point2, PolynomialSplineCurve2, Real, UncertaintyReason,
 };
 
 fn r(value: i32) -> Real {
@@ -21,12 +21,7 @@ fn policy() -> CurveContext {
     CurveContext::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::test_support::decided;
 
 fn assert_point_eq(left: &Point2, right: &Point2) {
     assert!(left.x().partial_cmp(right.x()) == Some(std::cmp::Ordering::Equal));

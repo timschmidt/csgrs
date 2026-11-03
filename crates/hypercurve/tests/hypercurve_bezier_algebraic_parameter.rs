@@ -20,12 +20,7 @@ fn policy() -> PredicatePolicy {
     PredicatePolicy::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::support::decided;
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
     match crate::support::under_classified_result(&policy(), || {

@@ -58,12 +58,7 @@ fn allocations() -> (u64, u64) {
 fn q(n: i64, d: i64) -> Real {
     (Real::from(n) / Real::from(d)).unwrap()
 }
-fn decided<T>(value: Classification<T>) -> T {
-    match value {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("K06 fixture must decide: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 /// `sqrt(1/2)` center, radius 2, cardinal frame: the existing exact-oblique
 /// chord fixture (`algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly`).
@@ -556,7 +551,7 @@ fn k06_selected_field_route_versus_cusp_chord_kernel() {
         ("ellipse-cusp", ellipse_cusp),
     ] {
         let circle = fixture(&CurveContext::STRICT);
-        let center = decided(circle.center_point_evidence(&CurveContext::STRICT).unwrap());
+        let center = decided_ok(circle.center_point_evidence(&CurveContext::STRICT));
         let arc = [q(0, 1), q(1, 2), q(1, 1)].map(|t| {
             approximate(&decided(
                 circle.point_evidence_at(&t, &CurveContext::STRICT).unwrap(),
@@ -732,7 +727,7 @@ fn k06_center_field_imports() {
     ] {
         let policy = CurveContext::STRICT;
         let circle = fixture(&policy);
-        let center = decided(circle.center_point_evidence(&policy).unwrap());
+        let center = decided_ok(circle.center_point_evidence(&policy));
         let ((first, second), import, _) = measured(|| {
             (
                 coordinate(&center, true).unwrap(),

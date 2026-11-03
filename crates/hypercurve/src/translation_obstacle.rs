@@ -455,12 +455,7 @@ mod tests {
         contour_from_points(&points).unwrap()
     }
 
-    fn decided<T>(classification: Classification<T>) -> T {
-        match classification {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-        }
-    }
+    use crate::test_support::decided;
 
     #[test]
     fn rectangle_translation_obstacle_is_exact_expanded_rectangle() {

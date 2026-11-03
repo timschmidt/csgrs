@@ -19,15 +19,10 @@ fn policy() -> CurveContext {
 }
 
 fn p(x: i32, y: i32) -> Point2 {
-    Point2::from_values(x, y)
+    pt!(x, y)
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
     decided(
@@ -37,7 +32,11 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
+    decided_ok(BezierParameterInterval::try_new_with_policy(
+        start,
+        end,
+        &policy(),
+    ))
 }
 
 fn isolate(
@@ -403,17 +402,17 @@ proptest! {
         y2 in -8_i32..=8,
     ) {
         let curve = QuadraticBezier2::new(
-            Point2::from_values(x0, y0),
-            Point2::from_values(x1, y1),
-            Point2::from_values(x2, y2),
+            pt!(x0, y0),
+            pt!(x1, y1),
+            pt!(x2, y2),
         );
         let parameter = isolate(
             polynomial(vec![r(-1), r(2)]),
             interval(q(2, 5), q(3, 5)),
         );
 
-        let point = decided(curve.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
-        let tangent = decided(curve.tangent_at_algebraic_parameter(&parameter, &policy()).unwrap());
+        let point = decided_ok(curve.point_at_algebraic_parameter(&parameter, &policy()));
+        let tangent = decided_ok(curve.tangent_at_algebraic_parameter(&parameter, &policy()));
         let exact_point = curve.point_at(q(1, 2));
 
         prop_assert_eq!(point.status(), BezierAlgebraicImageStatus::Transformed);
@@ -439,9 +438,9 @@ proptest! {
         w1 in 1_i32..=8,
     ) {
         let conic = RationalQuadraticBezier2::try_new(
-            Point2::from_values(x0, y0),
-            Point2::from_values(x1, y1),
-            Point2::from_values(x2, y2),
+            pt!(x0, y0),
+            pt!(x1, y1),
+            pt!(x2, y2),
             r(1),
             r(w1),
             r(1),
@@ -451,7 +450,7 @@ proptest! {
             interval(q(2, 5), q(3, 5)),
         );
 
-        let point = decided(conic.point_at_algebraic_parameter(&parameter, &policy()).unwrap());
+        let point = decided_ok(conic.point_at_algebraic_parameter(&parameter, &policy()));
         let tangent = decided(conic.derivatives_at_algebraic_parameter(&parameter, 1, &policy()).unwrap().map(|mut images| images.remove(0)));
         let exact_point = match conic.point_at_with_policy(q(1, 2), &policy()) {
             Classification::Decided(point) => point,
@@ -482,7 +481,7 @@ fn polynomial_point_images_retain_nonrational_source_roots() {
             interval(q(3, 4), r(1)),
         );
         let curve = QuadraticBezier2::new(p(0, 0), p(0, 1), Point2::new(Real::pi(), r(2)));
-        let image = decided(curve.point_at_algebraic_parameter(&root, &policy).unwrap());
+        let image = decided_ok(curve.point_at_algebraic_parameter(&root, &policy));
         let point = CurvePoint2::from(image);
         for (axis, coordinate, expected) in [
             (Axis2::X, Real::pi() * Real::pi() * q(1, 4), Ordering::Equal),
@@ -656,12 +655,7 @@ mod finite_parameter_interval_contract {
     };
     use std::cmp::Ordering;
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     fn square_root(sign: i32, policy: &CurveContext) -> BezierAlgebraicParameter2 {
         let (lower, upper) = if sign < 0 { (-2, -1) } else { (1, 2) };
@@ -688,11 +682,8 @@ mod finite_parameter_interval_contract {
 
     #[test]
     fn exterior_root_images_preserve_equations_and_native_curve_domains() {
-        let source = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::new(r!(1 / 2), Real::zero()),
-            Point2::from_values(1, 1),
-        );
+        let source =
+            QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1));
         let native = Curve2::from(source.clone());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for sign in [-1, 1] {
@@ -708,7 +699,7 @@ mod finite_parameter_interval_contract {
                 ));
                 // The unrestricted polynomial image of P(t)=(t,t²) is
                 // (±sqrt(2),2); the authored segment still owns [0,1].
-                let image = decided(source.point_at_algebraic_parameter(&root, &policy).unwrap());
+                let image = decided_ok(source.point_at_algebraic_parameter(&root, &policy));
                 assert_eq!(image.status(), BezierAlgebraicImageStatus::Transformed);
                 assert_eq!(
                     image.x().unwrap().compare_to_real(&value, &policy),
@@ -735,11 +726,7 @@ mod finite_parameter_interval_contract {
         // the unit span. At either exterior root, the y numerator is 2,
         // so these are actual affine poles rather than removable factors.
         let source = RationalBezier2::try_new(
-            vec![
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 0),
-                Point2::from_values(1, 1),
-            ],
+            vec![pt!(0, 0), pt!(1, 0), pt!(1, 1)],
             vec![Real::from(2), Real::from(2), Real::one()],
         )
         .unwrap();

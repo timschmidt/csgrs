@@ -44,12 +44,7 @@ fn symbolic_rectangle_path(width: Real) -> CurvePath2 {
     .unwrap()
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::support::decided;
 
 #[test]
 fn curve_parameter_comparison_reports_terminal_certainty() {

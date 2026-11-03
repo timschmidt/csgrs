@@ -23,12 +23,7 @@ fn policy() -> CurveContext {
     CurveContext::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 fn assert_topology_error<T>(result: Result<T, CurveError>) {
     assert!(matches!(result, Err(CurveError::Topology(_))));
@@ -58,8 +53,11 @@ fn algebraic_midpoint_parameter() -> BezierAlgebraicParameter2 {
         BezierParameterPolynomial::try_new_power_basis_with_policy(vec![r(-1), r(2)], &policy())
             .unwrap(),
     );
-    let interval =
-        decided(BezierParameterInterval::try_new_with_policy(q(2, 5), q(3, 5), &policy()).unwrap());
+    let interval = decided_ok(BezierParameterInterval::try_new_with_policy(
+        q(2, 5),
+        q(3, 5),
+        &policy(),
+    ));
     decided(
         BezierAlgebraicParameter2::try_isolate_with_policy(polynomial, interval, &policy())
             .unwrap(),
@@ -105,21 +103,33 @@ fn algebraic_endpoint_image(
     curve: &QuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    decided(BezierAlgebraicEndpointImage2::quadratic(curve, parameter, &policy()).unwrap())
+    decided_ok(BezierAlgebraicEndpointImage2::quadratic(
+        curve,
+        parameter,
+        &policy(),
+    ))
 }
 
 fn algebraic_cubic_endpoint_image(
     curve: &CubicBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    decided(BezierAlgebraicEndpointImage2::cubic(curve, parameter, &policy()).unwrap())
+    decided_ok(BezierAlgebraicEndpointImage2::cubic(
+        curve,
+        parameter,
+        &policy(),
+    ))
 }
 
 fn algebraic_rational_endpoint_image(
     curve: &RationalQuadraticBezier2,
     parameter: &BezierAlgebraicParameter2,
 ) -> BezierAlgebraicEndpointImage2 {
-    decided(BezierAlgebraicEndpointImage2::rational_quadratic(curve, parameter, &policy()).unwrap())
+    decided_ok(BezierAlgebraicEndpointImage2::rational_quadratic(
+        curve,
+        parameter,
+        &policy(),
+    ))
 }
 
 #[test]
@@ -675,7 +685,7 @@ proptest! {
             .into_iter()
             .enumerate()
             .map(|(source, curve)| {
-                let split = decided(curve.split_at_parameters(&[], &policy()).unwrap());
+                let split = decided_ok(curve.split_at_parameters(&[], &policy()));
                 crate::BezierArrangementFragment2::new(source, 0, split.fragments()[0].clone())
             })
             .collect();
@@ -705,9 +715,9 @@ fn native_quadratic_ordering_agrees_with_rational_carriers() {
             ]
         } else {
             [
-                Point2::from_values(0, 0),
+                pt!(0, 0),
                 Point2::new(q(1, 2), Real::zero()),
-                Point2::from_values(if second { 2 } else { 1 }, 1),
+                pt!(if second { 2 } else { 1 }, 1),
             ]
         };
         if family == 0 {
@@ -738,9 +748,9 @@ fn native_quadratic_ordering_agrees_with_rational_carriers() {
         materialized(
             0,
             BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(-1, 0),
+                pt!(-1, 0),
                 Point2::new(q(-1, 2), Real::zero()),
-                Point2::from_values(0, 0),
+                pt!(0, 0),
             )),
         )
     }
@@ -834,7 +844,7 @@ fn mixed_native_and_selected_endpoints_share_tangent_ordering() {
             ]
         } else {
             [
-                Point2::from_values(0, 0),
+                pt!(0, 0),
                 Point2::new(q(1, 2), Real::zero()),
                 Point2::new(Real::from(if second_x { 2 } else { 1 }), scale),
             ]
@@ -867,9 +877,9 @@ fn mixed_native_and_selected_endpoints_share_tangent_ordering() {
         materialized(
             0,
             BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(-1, 0),
+                pt!(-1, 0),
                 Point2::new(q(-1, 2), Real::zero()),
-                Point2::from_values(0, 0),
+                pt!(0, 0),
             )),
         )
     }
@@ -1012,10 +1022,10 @@ fn retained_source_tangents_order_without_coordinate_projection() {
         let image = decided(
             BezierAlgebraicEndpointImage2::from_source_curve(&source, &parameter, &policy).unwrap(),
         );
-        let point = decided(image.point().unwrap());
+        let point = decided_ok(image.point());
         let represented_point = point.x().and_then(|c| c.representation()).is_some()
             && point.y().and_then(|c| c.representation()).is_some();
-        let tangent = decided(image.tangent().unwrap());
+        let tangent = decided_ok(image.tangent());
         let retained = tangent.retained_parameter().is_some();
         let represented_vector = BezierAlgebraicTangentVector2::from_image(tangent)
             .represented_coordinates()
@@ -1051,18 +1061,10 @@ fn retained_source_tangents_order_without_coordinate_projection() {
                     } else {
                         Real::from(4) - Real::pi()
                     };
-                    line(
-                        index,
-                        Point2::from_values(0, 0),
-                        Point2::new(end.clone(), end),
-                    )
+                    line(index, pt!(0, 0), Point2::new(end.clone(), end))
                 };
                 let graph = BezierArrangementGraph2::from_certified_fragments(vec![
-                    line(
-                        0,
-                        Point2::from_values(if reversed { 1 } else { -1 }, 0),
-                        Point2::from_values(0, 0),
-                    ),
+                    line(0, pt!(if reversed { 1 } else { -1 }, 0), pt!(0, 0)),
                     if swapped { diagonal(1) } else { candidate(1) },
                     if swapped { candidate(2) } else { diagonal(2) },
                 ]);
@@ -1094,7 +1096,11 @@ fn retained_source_curvature_orders_without_scalar_projection() {
                     )
                     .unwrap(),
                 ),
-                decided(BezierParameterInterval::try_new_with_policy(r(0), r(1), &policy).unwrap()),
+                decided_ok(BezierParameterInterval::try_new_with_policy(
+                    r(0),
+                    r(1),
+                    &policy,
+                )),
                 &policy,
             )
             .unwrap(),
@@ -1159,10 +1165,10 @@ fn retained_source_curvature_orders_without_scalar_projection() {
                         )
                         .unwrap(),
                     );
-                    let point = decided(image.point().unwrap());
+                    let point = decided_ok(image.point());
                     assert!(point.x().and_then(|c| c.representation()).is_some());
                     assert!(point.y().and_then(|c| c.representation()).is_some());
-                    let tangent = decided(image.tangent().unwrap());
+                    let tangent = decided_ok(image.tangent());
                     assert!(tangent.retained_parameter().is_some());
                     assert!(
                         BezierAlgebraicTangentVector2::from_image(tangent)

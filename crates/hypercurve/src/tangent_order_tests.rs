@@ -5,8 +5,8 @@ use crate::bezier_tangent_order::{
     compare_algebraic_tangent_turn_from_base,
 };
 use crate::{
-    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, Classification,
-    CurveContext, Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
+    BezierAlgebraicParameter2, BezierParameterInterval, BezierParameterPolynomial, CurveContext,
+    Point2, QuadraticBezier2, RationalQuadraticBezier2, Real,
 };
 
 fn r(value: i32) -> Real {
@@ -29,12 +29,7 @@ fn policy() -> CurveContext {
     CurveContext::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
     decided(
@@ -44,7 +39,11 @@ fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
 }
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
+    decided_ok(BezierParameterInterval::try_new_with_policy(
+        start,
+        end,
+        &policy(),
+    ))
 }
 
 fn sqrt_half_parameter() -> BezierAlgebraicParameter2 {

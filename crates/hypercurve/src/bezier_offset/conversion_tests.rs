@@ -2,11 +2,7 @@
 fn contact_fallback_never_replaces_a_certified_pole() {
     use crate::tests::decided;
     let curve = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(2, 0),
-        ],
+        vec![pt!(0, 0), pt!(1, 1), pt!(2, 0)],
         vec![Real::one(), -Real::one(), Real::one()],
     )
     .unwrap();
@@ -259,14 +255,12 @@ fn independent_oblique_chords_support_constrained_fillet_families() {
 #[test]
 fn retained_incident_domains_admit_exterior_affine_endpoints() {
     let half = r!(1 / 2);
-    let parallel = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-        vec![-Real::one(), Real::one()],
-    )
-    .unwrap()
-    .parallel_left(Real::one())
-    .unwrap();
-    let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap();
+    let parallel =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![-Real::one(), Real::one()])
+            .unwrap()
+            .parallel_left(Real::one())
+            .unwrap();
+    let line = LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let (selected, _, alpha) = selected_fiber_quartile_parameters(&policy);
         let point = dense_chord_normal_point(
@@ -647,14 +641,14 @@ fn domain_component_normal_constraints_follow_swapped_operands() {
         .unwrap()
     });
     let second = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(q(1, 4), Real::zero()),
         Point2::new(q(1, 2), Real::zero()),
     )
     .parallel_left(Real::one())
     .unwrap();
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(q(3, 16), Real::zero()),
         Point2::new(q(3, 8), q(9, 64)),
     )
@@ -727,7 +721,7 @@ fn domain_component_normal_constraints_follow_swapped_operands() {
 fn original_parallel_normal_constraints_clip_finite_and_incident_components() {
     let q = |n: i64, d: i64| (Real::from(n) / Real::from(d)).unwrap();
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(q(3, 16), Real::zero()),
         Point2::new(q(3, 8), q(9, 64)),
     )
@@ -739,13 +733,9 @@ fn original_parallel_normal_constraints_clip_finite_and_incident_components() {
     let radical_zero =
         &sum * &sum - (Real::from(5_i8) + Real::from(2_i8) * Real::from(6_i8).sqrt().unwrap());
     for distance in [Real::zero(), radical_zero] {
-        let stationary_identity = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        )
-        .parallel_left(distance)
-        .unwrap();
+        let stationary_identity = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0))
+            .parallel_left(distance)
+            .unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             assert_eq!(
                 real_sign(stationary_identity.distance(), &policy),
@@ -947,11 +937,7 @@ fn formula_roots_compare_in_their_existing_native_coefficient_field() {
 fn chord_parallel_monotonicity_rejects_opposed_endpoint_signs() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
     // P(t)=(t,t²), D=(1,1): cross(D,P'(t))=2t-1.
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1));
     let mut parallels = vec![source.parallel_left(Real::zero()).unwrap()];
     for gauge in [1, -3] {
         parallels.push(
@@ -966,8 +952,8 @@ fn chord_parallel_monotonicity_rejects_opposed_endpoint_signs() {
     }
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            CurvePoint2::from(Point2::from_values(1, 1)),
+            CurvePoint2::from(pt!(0, 0)),
+            CurvePoint2::from(pt!(1, 1)),
             &policy,
         )
         .unwrap() else {
@@ -1014,7 +1000,7 @@ fn chord_parallel_monotonicity_covers_the_retained_parameter_range() {
     // (t-3/2)(t-5/2) is positive on [0,1] and at both ends of
     // [1,3], but has two interior roots in that extended range.
     let source = CubicBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(q(1, 3), q(5, 4)),
         Point2::new(q(2, 3), q(11, 6)),
         Point2::new(Real::one(), q(25, 12)),
@@ -1033,8 +1019,8 @@ fn chord_parallel_monotonicity_covers_the_retained_parameter_range() {
     }
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            CurvePoint2::from(Point2::from_values(1, 0)),
+            CurvePoint2::from(pt!(0, 0)),
+            CurvePoint2::from(pt!(1, 0)),
             &policy,
         )
         .unwrap() else {
@@ -1108,9 +1094,9 @@ fn chord_pair_bounds_refine_native_fibers_before_global_projection() {
             distinct_root_count: 1,
         });
         let parallel = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(Real::zero(), half.clone()),
-            Point2::from_values(2, 1),
+            pt!(2, 1),
         )
         .parallel_left(Real::zero())
         .unwrap();
@@ -1177,9 +1163,9 @@ fn conic_owned_endpoint_reuses_local_evidence_on_finite_ranges() {
         for gauge in [1, -3] {
             let source = RationalBezier2::try_new(
                 vec![
-                    Point2::from_values(0, 0),
+                    pt!(0, 0),
                     Point2::new(Real::zero(), half.clone()),
-                    Point2::from_values(2, 1),
+                    pt!(2, 1),
                 ],
                 vec![Real::from(gauge); 3],
             )
@@ -1256,11 +1242,7 @@ fn conic_owned_endpoint_preserves_a_second_interior_contact() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [1, -3] {
             let source = RationalBezier2::try_new(
-                vec![
-                    Point2::from_values(0, 0),
-                    Point2::new(Real::zero(), q(1, 2)),
-                    Point2::from_values(2, 1),
-                ],
+                vec![pt!(0, 0), Point2::new(Real::zero(), q(1, 2)), pt!(2, 1)],
                 vec![Real::from(gauge); 3],
             )
             .unwrap();
@@ -1344,7 +1326,7 @@ fn conic_owned_endpoint_degree_guard_preserves_cubic_crossings() {
             };
             let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
                 source.end().clone().into(),
-                Point2::from_values(100, 0).into(),
+                pt!(100, 0).into(),
                 &policy,
             )
             .unwrap() else {
@@ -1432,7 +1414,7 @@ fn conic_owned_endpoint_still_requires_a_pole_free_range() {
         };
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
             Point2::new(q(8, 5), Real::zero()).into(),
-            Point2::from_values(100, 0).into(),
+            pt!(100, 0).into(),
             &policy,
         )
         .unwrap() else {
@@ -1485,9 +1467,9 @@ fn chord_rational_contact_ownership_preserves_selected_fiber_parameters() {
         for gauge in [1, -3] {
             let curve = RationalBezier2::try_new(
                 vec![
-                    Point2::from_values(0, 1),
+                    pt!(0, 1),
                     Point2::new(half.clone(), Real::from(-1_i8)),
-                    Point2::from_values(1, 1),
+                    pt!(1, 1),
                 ],
                 vec![Real::from(gauge); 3],
             )
@@ -1543,9 +1525,9 @@ fn vector_tangent_predicates_replay_general_parameter_authorities() {
 
     let half = r!(1 / 2);
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // alpha^65=1/2 and 4 beta^2=alpha select 0<beta<1/2.
@@ -1648,12 +1630,7 @@ fn vector_tangent_predicates_replay_general_parameter_authorities() {
 fn regularized_vector_tangent_owns_selected_stationary_endpoints() {
     use RealSign::{Negative, Positive, Zero};
 
-    let source = CubicBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(0, 0),
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-    );
+    let source = CubicBezier2::new(pt!(0, 0), pt!(0, 0), pt!(0, 0), pt!(1, 0));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let half = r!(1 / 2);
         let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half, &policy);
@@ -1700,9 +1677,9 @@ fn regularized_vector_tangent_owns_selected_stationary_endpoints() {
 fn bounded_point_import_preserves_a_cached_local_field() {
     let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 0),
+        pt!(1, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -1773,9 +1750,9 @@ fn bounded_point_import_reuses_certified_native_fiber_parameters() {
     let half = r!(1 / 2);
     let expected_parameter = half.clone().sqrt().unwrap();
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(2, 1),
+        pt!(2, 1),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let seed = high_degree_quadratic_selected_fiber_parameter_for_test(half.clone(), &policy);
@@ -1873,9 +1850,9 @@ fn selected_fiber_points_reuse_projective_roots_without_global_promotion() {
     let half = r!(1 / 2);
     let sqrt_two = Real::from(2_i8).sqrt().unwrap();
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(2, 1),
+        pt!(2, 1),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -2360,9 +2337,9 @@ fn exterior_chord_contact_deflation_preserves_other_contacts() {
     let half = r!(1 / 2);
     let source =
         RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(half.clone(), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         )))
         .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -2381,8 +2358,7 @@ fn exterior_chord_contact_deflation_preserves_other_contacts() {
                 }
             };
             let Classification::Decided(chord) =
-                BezierAlgebraicChord2::try_new(point, Point2::from_values(2, 4).into(), &policy)
-                    .unwrap()
+                BezierAlgebraicChord2::try_new(point, pt!(2, 4).into(), &policy).unwrap()
             else {
                 panic!("the parabola secant has distinct exact endpoints");
             };
@@ -2506,8 +2482,8 @@ fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let anchor = match BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, -1)),
-            CurvePoint2::from(Point2::from_values(1, -1)),
+            CurvePoint2::from(pt!(0, -1)),
+            CurvePoint2::from(pt!(1, -1)),
             &policy,
         )
         .unwrap()
@@ -2516,7 +2492,7 @@ fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
             _ => panic!("the horizontal anchor is exact"),
         };
         let circle = match BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
-            CurvePoint2::from(Point2::from_values(0, 0)),
+            CurvePoint2::from(pt!(0, 0)),
             anchor,
             Real::one(),
             true,
@@ -2529,14 +2505,14 @@ fn certified_circle_chord_endpoint_factor_preserves_roots_and_field() {
         };
         let authority = BezierRecursiveCircleFrame2 {
             field: field.clone(),
-            center: projective(&Point2::from_values(0, 0)),
-            support_center: projective(&Point2::from_values(0, -1)),
+            center: projective(&pt!(0, 0)),
+            support_center: projective(&pt!(0, -1)),
             normal_denominator: Real::one(),
         };
         for tangent in [false, true] {
             for reversed in [false, true] {
                 let (mut start, mut end) = if tangent {
-                    (Point2::from_values(1, 0), Point2::from_values(1, 1))
+                    (pt!(1, 0), pt!(1, 1))
                 } else {
                     // x=3/5 meets the unit circle at y=+/-4/5.
                     (
@@ -2659,7 +2635,7 @@ fn recursive_projective_bounds_reuse_positive_denominator_certificate() {
     let Classification::Decided(bounds) = bounds else {
         panic!("the retained nonzero proof must permit native coordinate bounds");
     };
-    let expected = Point2::from_values(3, -1);
+    let expected = pt!(3, -1);
     let max_width = Real::from(2_i8).powi_i64(-60).unwrap();
     for (lower, value, upper) in [
         (bounds.min().x(), expected.x(), bounds.max().x()),
@@ -3509,9 +3485,8 @@ fn coefficient_precision_uses_certified_dyadic_bounds_for_signed_surds() {
 
 #[test]
 fn selected_zero_distance_source_axis_order_stays_in_its_correlated_field() {
-    let source = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    );
+    let source =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let selected = degree_nine_selected_fiber_parameter_for_test(r!(1 / 2), 1, &policy);
         let ordinary =
@@ -3651,14 +3626,14 @@ fn recursive_circle_contact_tangent_sign_follows_root_branch() {
 fn retained_chord_rejects_collinear_winding_rays_outside_its_finite_extent() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-2, 0)),
-            CurvePoint2::from(Point2::from_values(-1, 0)),
+            CurvePoint2::from(pt!(-2, 0)),
+            CurvePoint2::from(pt!(-1, 0)),
             &policy,
         )
         .unwrap() else {
             panic!("an exact nonzero chord must construct");
         };
-        let origin = Point2::from_values(0, 0);
+        let origin = pt!(0, 0);
         for direction_x in [-Real::one(), Real::one()] {
             assert_eq!(
                 chord
@@ -3679,13 +3654,7 @@ fn retained_chord_rejects_collinear_winding_rays_outside_its_finite_extent() {
 #[test]
 fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let arc = CircularArc2::try_from_center(
-            Point2::from_values(2, 0),
-            Point2::from_values(0, 2),
-            Point2::from_values(0, 0),
-            false,
-        )
-        .unwrap();
+        let arc = CircularArc2::try_from_center(pt!(2, 0), pt!(0, 2), pt!(0, 0), false).unwrap();
         let Classification::Decided(decomposition) =
             arc.rational_bezier_decomposition_raw(&policy).unwrap()
         else {
@@ -3696,16 +3665,15 @@ fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
         };
         let source = RationalBezier2::from(span.curve().clone());
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            CurvePoint2::from(Point2::from_values(0, 2)),
+            CurvePoint2::from(pt!(0, 0)),
+            CurvePoint2::from(pt!(0, 2)),
             &policy,
         )
         .unwrap() else {
             panic!("an exact radial chord must construct");
         };
         let support_witness =
-            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1))
-                .expect("valid short support witness");
+            LineSeg2::try_new(pt!(0, 0), pt!(0, 1)).expect("valid short support witness");
         let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
             witness_contacts,
         )) = chord
@@ -3719,7 +3687,7 @@ fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
         assert!(matches!(
             witness_contacts[0].point(),
             CurvePoint2(CurvePointData2::Exact(point))
-                if point == &Point2::from_values(0, 2)
+                if point == &pt!(0, 2)
         ));
         let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(contacts)) =
             chord
@@ -3743,7 +3711,7 @@ fn exact_radial_chord_replays_a_retained_circle_endpoint_contact() {
         assert!(matches!(
             contact.point(),
             CurvePoint2(CurvePointData2::Exact(point))
-                if point == &Point2::from_values(0, 2)
+                if point == &pt!(0, 2)
         ));
 
         let excluded = CurveParameter2::from(BezierParameter2::Exact(Real::one()));
@@ -3771,10 +3739,10 @@ fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
     let quarter = r!(1 / 4);
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(1, -1),
+            pt!(1, -1),
             Point2::new(-third.clone(), Real::one()),
             Point2::new(-third, -Real::one()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         ],
         vec![
             Real::from(8_i8),
@@ -3790,7 +3758,7 @@ fn nonuniform_rational_cusp_parallel_intersects_round_join_quarter() {
         BezierParameter2::Exact(two_thirds.clone()),
         BezierParameter2::Exact(Real::one()),
     );
-    let center = Point2::from_values(0, 0);
+    let center = pt!(0, 0);
     let arc = CircularArc2::try_from_center(
         Point2::new(-quarter.clone(), Real::zero()),
         Point2::new(Real::zero(), quarter.clone()),
@@ -3894,10 +3862,10 @@ fn finite_domain_admits_one_sided_source_cusp_contacts() {
     let third = r!(1 / 3);
     let half = r!(1 / 2);
     let source = CubicBezier2::new(
-        Point2::from_values(1, -1),
+        pt!(1, -1),
         Point2::new(-third.clone(), Real::one()),
         Point2::new(-third, -Real::one()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     let parallel = source.parallel_left(-r!(1 / 4)).unwrap();
     let before = CurveParameterRange2::from_bezier_range(BezierParameterRange2::new_validated(
@@ -4065,10 +4033,10 @@ fn odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal() {
     let third = r!(1 / 3);
     let half = r!(1 / 2);
     let source = CubicBezier2::new(
-        Point2::from_values(1, -1),
+        pt!(1, -1),
         Point2::new(-third.clone(), Real::one()),
         Point2::new(-third, -Real::one()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     let parallel = source.parallel_left(-r!(1 / 4)).unwrap();
     let before = BezierParameterRange2::new_validated(
@@ -4123,11 +4091,7 @@ fn odd_source_cusp_branches_do_not_saturate_a_false_source_diagonal() {
 fn rational_parallel_endpoint_uses_transverse_tangent_before_exterior_germs() {
     let policy = CurveContext::STRICT;
     let source = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(2, 3),
-            Point2::from_values(4, 0),
-        ],
+        vec![pt!(0, 0), pt!(2, 3), pt!(4, 0)],
         vec![Real::one(), Real::from(2_i8), Real::one()],
     )
     .unwrap();
@@ -4317,9 +4281,9 @@ fn selected_fiber_rational_quarter(
 ) -> (BezierAlgebraicCuspSemicircle2, RationalBezier2) {
     let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(if exact_center { 1 } else { 2 }, 0),
+        pt!(if exact_center { 1 } else { 2 }, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -5211,8 +5175,8 @@ fn strict_tangent_chord_query_point() -> BezierAlgebraicCuspChordPoint2 {
     let policy = CurveContext::STRICT;
     let circle = dense_chord_normal_unit_semicircle(&policy);
     let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-        CurvePoint2::from(Point2::from_values(1, -2)),
-        CurvePoint2::from(Point2::from_values(1, 2)),
+        CurvePoint2::from(pt!(1, -2)),
+        CurvePoint2::from(pt!(1, 2)),
         &policy,
     )
     .unwrap() else {
@@ -5387,12 +5351,10 @@ fn retained_chord_coordinate_and_linear_queries_observe_requested_policy() {
     assert_chord_query_terminal_replay(|policy| {
         point.linear_order_to_real(&Real::one(), &Real::from(2_i8), &value, policy)
     });
-    let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-        Point2::from_values(0, 0).into(),
-        Point2::from_values(2, 0).into(),
-        &CurveContext::STRICT,
-    )
-    .unwrap() else {
+    let Classification::Decided(chord) =
+        BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(2, 0).into(), &CurveContext::STRICT)
+            .unwrap()
+    else {
         panic!("the represented horizontal chord must be certified");
     };
     let query = CurvePoint2::from(Point2::new(Real::one(), opaque_zero));
@@ -5646,8 +5608,8 @@ fn retained_chord_fallback_affine_queries_match_certified_bounds() {
     }
     let circle = dense_chord_normal_unit_semicircle(&policy);
     let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-        CurvePoint2::from(Point2::from_values(1, -2)),
-        CurvePoint2::from(Point2::from_values(1, 2)),
+        CurvePoint2::from(pt!(1, -2)),
+        CurvePoint2::from(pt!(1, 2)),
         &policy,
     )
     .unwrap() else {
@@ -6347,10 +6309,10 @@ fn native_pruning_certificates_require_the_consumed_parameter_range() {
     // The nodal cubic has an increasing x on [0,1], but visits (0,0)
     // twice on [-2,2]. A native source certificate cannot cover that range.
     let parallel = CubicBezier2::new(
-        Point2::from_values(-1, 0),
+        pt!(-1, 0),
         Point2::new((-1).into(), q(-1, 3)),
         Point2::new(q(-2, 3), q(-2, 3)),
-        Point2::from_values(0, 0),
+        pt!(0, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -6377,11 +6339,11 @@ fn native_pruning_certificates_require_the_consumed_parameter_range() {
         let second = parallel
             .point_at_with_policy(&Real::one(), &policy)
             .unwrap();
-        assert_eq!(first, Classification::Decided(Point2::from_values(0, 0)));
+        assert_eq!(first, Classification::Decided(pt!(0, 0)));
         assert_eq!(second, first);
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-4, 0)),
-            CurvePoint2::from(Point2::from_values(4, 0)),
+            CurvePoint2::from(pt!(-4, 0)),
+            CurvePoint2::from(pt!(4, 0)),
             &policy,
         )
         .unwrap() else {
@@ -6415,13 +6377,9 @@ fn native_pruning_certificates_require_the_consumed_parameter_range() {
 #[test]
 fn finite_parallel_regularity_clips_against_selected_endpoint_authorities() {
     let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 4),
-        Point2::new(q(1, 2), 2.into()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 4), Point2::new(q(1, 2), 2.into()), pt!(1, 1));
     let pole = RationalBezier2::try_new(
-        vec![Point2::new(0.into(), q(-1, 2)), Point2::from_values(-1, -1)],
+        vec![Point2::new(0.into(), q(-1, 2)), pt!(-1, -1)],
         vec![(-2).into(), (-1).into()],
     )
     .unwrap()
@@ -6491,8 +6449,8 @@ fn finite_parallel_regularity_clips_against_selected_endpoint_authorities() {
 #[test]
 fn algebraic_chord_is_one_word_and_reverses_without_rounding() {
     let policy = CurveContext::STRICT;
-    let start = CurvePoint2::from(Point2::from_values(0, 0));
-    let end = CurvePoint2::from(Point2::from_values(2, 1));
+    let start = CurvePoint2::from(pt!(0, 0));
+    let end = CurvePoint2::from(pt!(2, 1));
     let Classification::Decided(chord) =
         BezierAlgebraicChord2::try_new(start.clone(), end.clone(), &policy).unwrap()
     else {
@@ -6531,17 +6489,14 @@ fn algebraic_chord_is_one_word_and_reverses_without_rounding() {
 fn split_chord_linear_tangents_reuse_the_oriented_support() {
     let half = r!(1 / 2);
     let three_quarters = r!(3 / 4);
-    let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 3)).unwrap();
+    let line = LineSeg2::try_new(pt!(0, 0), pt!(2, 3)).unwrap();
     let parallel = QuadraticBezier2::from_line_segment(line)
         .parallel_left(Real::zero())
         .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(mut base) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(2, 3).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(mut base) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(2, 3).into(), &policy).unwrap()
+        else {
             panic!("the oblique support must construct")
         };
         // Remove the optional normalized-direction shortcut so this
@@ -6613,7 +6568,7 @@ fn nested_procedural_chord_reversals_match_exact_side_and_winding() {
             chord
         };
         for (dx, dy, length) in [(4, 0, 4), (0, 4, 4), (3, 4, 5), (-3, 4, 5)] {
-            let base = exact_chord(Point2::from_values(0, 0), Point2::from_values(dx, dy));
+            let base = exact_chord(pt!(0, 0), pt!(dx, dy));
             let normal_x = (-Real::from(dy) / Real::from(length)).unwrap();
             let normal_y = (Real::from(dx) / Real::from(length)).unwrap();
             let start = Point2::new(normal_x.clone(), normal_y.clone());
@@ -6691,8 +6646,8 @@ fn coordinate_refinement_requires_valid_terminal_bounds() {
     let escaped = preview.evaluate(|| {
         let policy = &crate::policy::principal_context();
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            CurvePoint2::from(Point2::from_values(4, 0)),
+            CurvePoint2::from(pt!(0, 0)),
+            CurvePoint2::from(pt!(4, 0)),
             policy,
         )
         .unwrap() else {
@@ -6704,7 +6659,7 @@ fn coordinate_refinement_requires_valid_terminal_bounds() {
             .start()
             .clone()
     });
-    let query = CurvePoint2::from(Point2::from_values(0, 1));
+    let query = CurvePoint2::from(pt!(0, 1));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for axis in [Axis2::X, Axis2::Y] {
             let outcome = crate::policy::resolve_certified_value(&policy, |policy| {
@@ -6721,8 +6676,8 @@ fn retained_parallel_preserves_reversed_finite_chord_domains() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (dx, dy, length) in [(4, 0, 4), (0, 4, 4), (3, 4, 5), (-3, 4, 5)] {
             let Classification::Decided(base) = BezierAlgebraicChord2::try_new(
-                CurvePoint2::from(Point2::from_values(0, 0)),
-                CurvePoint2::from(Point2::from_values(dx, dy)),
+                CurvePoint2::from(pt!(0, 0)),
+                CurvePoint2::from(pt!(dx, dy)),
                 &policy,
             )
             .unwrap() else {
@@ -6802,10 +6757,10 @@ fn independent_represented_unit_tangents_keep_exact_forward_and_reverse_relation
             };
             chord
         };
-        let first = chord(Point2::from_values(0, 0), Point2::from_values(3, 4));
-        let forward = chord(Point2::from_values(10, 0), Point2::from_values(13, 4));
-        let reverse = chord(Point2::from_values(13, 4), Point2::from_values(10, 0));
-        let reconstructed_reverse = chord(Point2::from_values(3, 4), Point2::from_values(0, 0));
+        let first = chord(pt!(0, 0), pt!(3, 4));
+        let forward = chord(pt!(10, 0), pt!(13, 4));
+        let reverse = chord(pt!(13, 4), pt!(10, 0));
+        let reconstructed_reverse = chord(pt!(3, 4), pt!(0, 0));
 
         assert!(first.shared_tangent_orientation(&forward).is_none());
         assert!(first.shared_tangent_orientation(&reverse).is_none());
@@ -6855,14 +6810,14 @@ fn chord_pair_orders_support_intersections_beyond_a_finite_witness() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let owner = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
+            pt!(0, 0).into(),
+            pt!(1, 0).into(),
             BezierAlgebraicChordAxisDirection2::PositiveX,
             &policy,
         );
         let opposite = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-            Point2::from_values(2, 1).into(),
-            Point2::from_values(2, 2).into(),
+            pt!(2, 1).into(),
+            pt!(2, 2).into(),
             BezierAlgebraicChordAxisDirection2::PositiveY,
             &policy,
         );
@@ -6875,7 +6830,7 @@ fn chord_pair_orders_support_intersections_beyond_a_finite_witness() {
             &policy,
         );
         let before = Point2::new(r!(3 / 2), Real::zero());
-        let after = Point2::from_values(3, 0);
+        let after = pt!(3, 0);
         for (carrier, before_order, after_order) in [
             (
                 owner.clone(),
@@ -6910,15 +6865,15 @@ fn provenance_support_represents_a_chord_between_correlated_cuts() {
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let owner = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(4, 0).into(),
+            pt!(0, 0).into(),
+            pt!(4, 0).into(),
             BezierAlgebraicChordAxisDirection2::PositiveX,
             &policy,
         );
         let cut = |x| {
             let transverse = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-                Point2::from_values(x, -1).into(),
-                Point2::from_values(x, 1).into(),
+                pt!(x, -1).into(),
+                pt!(x, 1).into(),
                 BezierAlgebraicChordAxisDirection2::PositiveY,
                 &policy,
             );
@@ -6941,7 +6896,7 @@ fn provenance_support_represents_a_chord_between_correlated_cuts() {
         };
         assert_eq!(
             retained.representative_point(&policy).unwrap(),
-            Classification::Decided(Point2::from_values(2, 0).into()),
+            Classification::Decided(pt!(2, 0).into()),
         );
     }
 }
@@ -7109,7 +7064,7 @@ fn conservative_chord_envelopes_preserve_requested_refinement() {
 
 #[test]
 fn algebraic_chord_rejects_a_certified_zero_length() {
-    let point = CurvePoint2::from(Point2::from_values(3, -4));
+    let point = CurvePoint2::from(pt!(3, -4));
     assert_eq!(
         BezierAlgebraicChord2::try_new(point.clone(), point, &CurveContext::STRICT).unwrap_err(),
         CurveError::ZeroLengthLine
@@ -7132,15 +7087,11 @@ fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let first_curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let second_curve = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(0, 1)).unwrap()),
         ))
         .unwrap();
         let start = CurvePoint2::from(crate::tests::decided(
@@ -7167,9 +7118,7 @@ fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
             Classification::Decided(_)
         ));
         assert_eq!(
-            chord
-                .contains_point(&Point2::from_values(0, 0).into(), &policy)
-                .unwrap(),
+            chord.contains_point(&pt!(0, 0).into(), &policy).unwrap(),
             Classification::Decided(false)
         );
         // The same finite-segment predicate consumes either selected
@@ -7214,24 +7163,14 @@ fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
         );
         assert_eq!(
             chord
-                .forward_ray_winding_delta(
-                    &Point2::from_values(0, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(0, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Decided(1)
         );
         assert_eq!(
             chord
                 .reversed()
-                .forward_ray_winding_delta(
-                    &Point2::from_values(0, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(0, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Decided(-1)
         );
@@ -7242,12 +7181,10 @@ fn algebraic_chord_retains_independent_endpoint_fields_under_both_policies() {
 fn represented_circle_incidence_replays_retained_similarity_points() {
     let half = r!(1 / 2);
     let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-        QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1)).unwrap(),
-        ),
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 1)).unwrap()),
     ))
     .unwrap();
-    let center = Point2::from_values(3, -2);
+    let center = pt!(3, -2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for direction in [-1_i8, 1] {
             let BezierParameter2::Algebraic(parameter) =
@@ -7276,12 +7213,10 @@ fn represented_circle_incidence_replays_retained_similarity_points() {
             // view or Cartesian projection, including under reflection.
             for endpoint_view in [false, true] {
                 let query = if endpoint_view {
-                    let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-                        point.clone(),
-                        Point2::from_values(5, 0).into(),
-                        &policy,
-                    )
-                    .unwrap() else {
+                    let Classification::Decided(chord) =
+                        BezierAlgebraicChord2::try_new(point.clone(), pt!(5, 0).into(), &policy)
+                            .unwrap()
+                    else {
                         panic!("the endpoint carrier must be a nonzero chord");
                     };
                     CurvePoint2::from_endpoint(
@@ -7319,7 +7254,7 @@ fn represented_circle_incidence_replays_retained_similarity_points() {
 
 #[test]
 fn represented_circle_retained_point_incidence_observes_requested_policy() {
-    let center = Point2::from_values(2, -3);
+    let center = pt!(2, -3);
     let transform = Similarity2::try_from_real_affine(
         Real::one(),
         Real::zero(),
@@ -7330,7 +7265,7 @@ fn represented_circle_retained_point_incidence_observes_requested_policy() {
     )
     .unwrap();
     let point = CurvePoint2::from(BezierSimilarityPoint2::new(
-        Point2::from_values(1, 0).into(),
+        pt!(1, 0).into(),
         transform,
         &CurveContext::STRICT,
     ));
@@ -7383,9 +7318,7 @@ fn correlated_algebraic_point_oblique_projection_is_exact() {
         unreachable!("sqrt(1/2) must remain algebraic");
     };
     let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-        QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 1)).unwrap(),
-        ),
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 1)).unwrap()),
     ))
     .unwrap();
 
@@ -7400,7 +7333,7 @@ fn correlated_algebraic_point_oblique_projection_is_exact() {
         let compare = || {
             algebraic_chord_point_linear_order_to_exact(
                 &point,
-                &Point2::from_values(0, 0),
+                &pt!(0, 0),
                 &Real::one(),
                 &-Real::one(),
                 &policy,
@@ -7509,9 +7442,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let start = CurvePoint2::from(crate::tests::decided(
@@ -7577,9 +7508,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
         ));
 
         let disjoint = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-1, 2), Point2::from_values(1, 2)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-1, 2), pt!(1, 2)).unwrap()),
         ))
         .unwrap();
         assert!(matches!(
@@ -7710,11 +7639,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
 
         let collinear_disjoint = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(
-                    Point2::from_values(0, 0),
-                    Point2::new(half.clone(), Real::zero()),
-                )
-                .unwrap(),
+                LineSeg2::try_new(pt!(0, 0), Point2::new(half.clone(), Real::zero())).unwrap(),
             ),
         ))
         .unwrap();
@@ -7730,11 +7655,7 @@ fn independent_field_algebraic_chord_intersects_rational_curve_under_both_polici
         let radical_third = third.clone().sqrt().unwrap();
         let collinear_touch = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(
-                    Point2::from_values(0, 0),
-                    Point2::new(radical_third, Real::zero()),
-                )
-                .unwrap(),
+                LineSeg2::try_new(pt!(0, 0), Point2::new(radical_third, Real::zero())).unwrap(),
             ),
         ))
         .unwrap();
@@ -7800,7 +7721,7 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
         else {
             unreachable!("sqrt(1/2) must remain algebraic");
         };
-        let root_support = line(Point2::from_values(0, 0), Point2::from_values(1, 0));
+        let root_support = line(pt!(0, 0), pt!(1, 0));
         let start = CurvePoint2::from(crate::tests::decided(
             root_support
                 .point_at_algebraic_parameter(&start_parameter, &policy)
@@ -7854,8 +7775,8 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
             vec![Real::one(), Real::one(), Real::one()],
         )
         .unwrap();
-        let coincident = line(Point2::from_values(2, 0), Point2::from_values(3, 0));
-        let opposite_sheet = line(Point2::from_values(2, -2), Point2::from_values(3, -2));
+        let coincident = line(pt!(2, 0), pt!(3, 0));
+        let opposite_sheet = line(pt!(2, -2), pt!(3, -2));
         let expected_point =
             CurvePoint2::from(Point2::new(&translation_x + &two_thirds, Real::zero()));
 
@@ -8061,11 +7982,7 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
         );
 
         let retraced = RationalBezier2::try_new(
-            vec![
-                Point2::from_values(2, 0),
-                Point2::from_values(4, 0),
-                Point2::from_values(2, 0),
-            ],
+            vec![pt!(2, 0), pt!(4, 0), pt!(2, 0)],
             vec![Real::one(), Real::one(), Real::one()],
         )
         .unwrap();
@@ -8099,13 +8016,13 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
             end: BezierParameter2::Exact(Real::one()),
             curve: BezierSubcurve2::Rational(line(start, end)),
         };
-        let right_top = CurvePoint2::from(Point2::from_values(3, 0));
+        let right_top = CurvePoint2::from(pt!(3, 0));
         let Classification::Decided(right_closure) =
             BezierAlgebraicChord2::try_new(offset.end().clone(), right_top, &policy).unwrap()
         else {
             panic!("the retained-offset right closure must construct");
         };
-        let left_top = CurvePoint2::from(Point2::from_values(2, 0));
+        let left_top = CurvePoint2::from(pt!(2, 0));
         let Classification::Decided(left_closure) =
             BezierAlgebraicChord2::try_new(left_top, offset.start().clone(), &policy).unwrap()
         else {
@@ -8117,9 +8034,9 @@ fn retained_offset_chord_rational_intersections_select_the_physical_support() {
                     vec![
                         BezierSplitFragment2::AlgebraicChord(offset.clone()),
                         BezierSplitFragment2::AlgebraicChord(right_closure),
-                        materialized_line(Point2::from_values(3, 0), Point2::from_values(3, -1)),
-                        materialized_line(Point2::from_values(3, -1), Point2::from_values(2, -1)),
-                        materialized_line(Point2::from_values(2, -1), Point2::from_values(2, 0)),
+                        materialized_line(pt!(3, 0), pt!(3, -1)),
+                        materialized_line(pt!(3, -1), pt!(2, -1)),
+                        materialized_line(pt!(2, -1), pt!(2, 0)),
                         BezierSplitFragment2::AlgebraicChord(left_closure),
                     ],
                     &policy,
@@ -8201,9 +8118,7 @@ fn independent_field_chord_retains_both_noninjective_endpoint_preimages() {
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let selected_endpoint = CurvePoint2::from(crate::tests::decided(
@@ -8213,19 +8128,16 @@ fn independent_field_chord_retains_both_noninjective_endpoint_preimages() {
         ));
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
             selected_endpoint,
-            CurvePoint2::from(Point2::from_values(0, -1)),
+            CurvePoint2::from(pt!(0, -1)),
             &policy,
         )
         .unwrap() else {
             panic!("mixed algebraic/exact chord endpoints must be distinct");
         };
-        let retraced =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(2, 0),
-                Point2::from_values(0, 0),
-            )))
-            .unwrap();
+        let retraced = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::new(pt!(0, 0), pt!(2, 0), pt!(0, 0)),
+        ))
+        .unwrap();
 
         let result = chord
             .rational_intersections(&retraced, &CurveParameterRange2::unit(), None, &policy)
@@ -8328,15 +8240,11 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
         |numerator: i8, denominator: i8| (Real::from(numerator) / Real::from(denominator)).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let upper = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(1, 1)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 1), pt!(1, 1)).unwrap()),
         ))
         .unwrap();
         let parameter = |square: Real| {
@@ -8492,11 +8400,8 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
         // incident on the same two nonparallel support lines, so support
         // uniqueness now proves equality without a Cartesian compositum or
         // terminal approximate equality.
-        let diagonal = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
-            vec![Real::one(); 2],
-        )
-        .unwrap();
+        let diagonal =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 1)], vec![Real::one(); 2]).unwrap();
         let diagonal_crossing = RationalBezier2::try_new(
             vec![
                 Point2::new(fraction(-3, 8), fraction(13, 8)),
@@ -8541,8 +8446,8 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
         assert_eq!(equality.certainty, crate::CurveCertainty::Certified);
 
         let Classification::Decided(disjoint) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            CurvePoint2::from(Point2::from_values(0, 1)),
+            CurvePoint2::from(pt!(0, 0)),
+            CurvePoint2::from(pt!(0, 1)),
             &policy,
         )
         .unwrap() else {
@@ -8561,7 +8466,7 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
 
         let Classification::Decided(partial) = BezierAlgebraicChord2::try_new(
             image(&horizontal, &two_fifths_parameter),
-            CurvePoint2::from(Point2::from_values(0, 0)),
+            CurvePoint2::from(pt!(0, 0)),
             &policy,
         )
         .unwrap() else {
@@ -8603,12 +8508,10 @@ fn algebraic_chord_pair_handles_endpoint_disjoint_and_collinear_fast_paths() {
             }
         }
 
-        let Classification::Decided(touching) = BezierAlgebraicChord2::try_new(
-            first_end,
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(touching) =
+            BezierAlgebraicChord2::try_new(first_end, CurvePoint2::from(pt!(0, 0)), &policy)
+                .unwrap()
+        else {
             panic!("touching collinear chord must remain exact");
         };
         let touch_result = first.chord_intersections(&touching, &policy).unwrap();
@@ -8626,11 +8529,7 @@ fn chord_pair_axis_order_reuses_analytic_support_coordinates() {
     let half = r!(1 / 2);
     let parameter = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
     let source = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::new(half, Real::zero()),
-            Point2::from_values(1, 1),
-        ],
+        vec![pt!(0, 0), Point2::new(half, Real::zero()), pt!(1, 1)],
         vec![Real::one(); 3],
     )
     .unwrap();
@@ -8724,9 +8623,9 @@ fn mixed_chord_pair_axis_order_keeps_oblique_supports_in_the_retained_field() {
     let tiny = Real::from(2_i8).powi_i64(-600).unwrap();
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(half.clone(), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         ],
         vec![Real::one(); 3],
     )
@@ -8881,8 +8780,8 @@ fn cardinal_algebraic_parallel_projects_source_coordinates_exactly() {
                 Classification::Decided(std::cmp::Ordering::Equal)
             );
             let Classification::Decided(horizontal) = BezierAlgebraicChord2::try_new(
-                CurvePoint2::from(Point2::from_values(-1, 0)),
-                CurvePoint2::from(Point2::from_values(1, 0)),
+                CurvePoint2::from(pt!(-1, 0)),
+                CurvePoint2::from(pt!(1, 0)),
                 policy,
             )
             .unwrap() else {
@@ -8954,20 +8853,12 @@ fn retained_offset_chord_pair_intersects_the_physical_supports() {
         chord
     };
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let horizontal = chord(
-            Point2::from_values(0, 0),
-            Point2::from_values(4, 0),
-            &policy,
-        )
-        .parallel_left_retained(Real::one(), &policy)
-        .unwrap();
-        let vertical = chord(
-            Point2::from_values(2, -2),
-            Point2::from_values(2, 2),
-            &policy,
-        )
-        .parallel_left_retained(Real::one(), &policy)
-        .unwrap();
+        let horizontal = chord(pt!(0, 0), pt!(4, 0), &policy)
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
+        let vertical = chord(pt!(2, -2), pt!(2, 2), &policy)
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
         assert!(matches!(
             (
                 horizontal.start(),
@@ -9031,24 +8922,20 @@ fn retained_offset_chord_pair_intersects_the_physical_supports() {
             assert_eq!(
                 contact
                     .point()
-                    .same_point(&CurvePoint2::from(Point2::from_values(1, 1,)), &policy,),
+                    .same_point(&CurvePoint2::from(pt!(1, 1,)), &policy,),
                 Classification::Decided(true)
             );
             assert_eq!(
                 contact
                     .point()
-                    .same_point(&CurvePoint2::from(Point2::from_values(1, 1,)), &policy,),
+                    .same_point(&CurvePoint2::from(pt!(1, 1,)), &policy,),
                 Classification::Decided(true)
             );
         }
 
-        let overlapping = chord(
-            Point2::from_values(2, 0),
-            Point2::from_values(6, 0),
-            &policy,
-        )
-        .parallel_left_retained(Real::one(), &policy)
-        .unwrap();
+        let overlapping = chord(pt!(2, 0), pt!(6, 0), &policy)
+            .parallel_left_retained(Real::one(), &policy)
+            .unwrap();
         for (other, orientation) in [
             (overlapping.clone(), CurveOverlapOrientation2::Same),
             (overlapping.reversed(), CurveOverlapOrientation2::Reversed),
@@ -9076,11 +8963,8 @@ fn retained_offset_chord_pair_intersects_the_physical_supports() {
             };
             parameter
         };
-        let horizontal_source = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-            vec![Real::one(); 2],
-        )
-        .unwrap();
+        let horizontal_source =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![Real::one(); 2]).unwrap();
         let vertical_source = RationalBezier2::try_new(
             vec![
                 Point2::new(fraction(5, 8), Real::from(-1_i8)),
@@ -9174,9 +9058,7 @@ fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let first = CurvePoint2::from(crate::tests::decided(
@@ -9194,13 +9076,10 @@ fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
         else {
             panic!("independent horizontal chord endpoints must be distinct");
         };
-        let retraced =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(2, 0),
-                Point2::from_values(0, 0),
-            )))
-            .unwrap();
+        let retraced = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::new(pt!(0, 0), pt!(2, 0), pt!(0, 0)),
+        ))
+        .unwrap();
         let result = chord
             .rational_intersections(&retraced, &CurveParameterRange2::unit(), None, &policy)
             .unwrap();
@@ -9239,12 +9118,9 @@ fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
             );
         }
 
-        let Classification::Decided(mixed_chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            first,
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(mixed_chord) =
+            BezierAlgebraicChord2::try_new(CurvePoint2::from(pt!(0, 0)), first, &policy).unwrap()
+        else {
             panic!("mixed exact/algebraic chord must remain exact");
         };
         let radical_half = half.clone().sqrt().unwrap();
@@ -9299,7 +9175,7 @@ fn noninjective_collinear_chord_overlap_partitions_every_monotone_branch() {
                 cubic_point(-5, 27),
                 cubic_point(11, 27),
                 cubic_point(-7, 9),
-                Point2::from_values(1, 0),
+                pt!(1, 0),
             )))
             .unwrap();
         let combined_result = mixed_chord
@@ -9378,15 +9254,11 @@ fn independent_field_chord_retains_a_third_contact_in_its_recursive_field() {
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let x_axis = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let y_axis = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(0, 1)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(0, 1)).unwrap()),
         ))
         .unwrap();
         let start = CurvePoint2::from(crate::tests::decided(
@@ -9409,9 +9281,7 @@ fn independent_field_chord_retains_a_third_contact_in_its_recursive_field() {
         // replay must discard that foreign candidate without materializing
         // an unrelated primitive-element scalar for the retained root.
         let diagonal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-1, -1), Point2::from_values(1, 1)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-1, -1), pt!(1, 1)).unwrap()),
         ))
         .unwrap();
 
@@ -9466,24 +9336,19 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
             unreachable!("sqrt(1/2) must remain algebraic");
         };
 
-        let single_contact_source =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(0, 1),
-                Point2::from_values(1, 2),
-            )))
-            .unwrap();
+        let single_contact_source = RationalBezier2::try_from_subcurve(
+            &BezierSubcurve2::Quadratic(QuadraticBezier2::new(pt!(0, 0), pt!(0, 1), pt!(1, 2))),
+        )
+        .unwrap();
         let single_contact = CurvePoint2::from(crate::tests::decided(
             single_contact_source
                 .point_at_algebraic_parameter(&parameter, &policy)
                 .unwrap(),
         ));
-        let Classification::Decided(single_contact_chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-1, 0)),
-            single_contact,
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(single_contact_chord) =
+            BezierAlgebraicChord2::try_new(CurvePoint2::from(pt!(-1, 0)), single_contact, &policy)
+                .unwrap()
+        else {
             panic!("the one-field chord must certify distinct endpoints");
         };
         let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
@@ -9495,8 +9360,7 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
             panic!("the source-related chord pair must complete");
         };
         assert!(single_contacts.is_empty());
-        let x_axis =
-            LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(3, 0)).unwrap();
+        let x_axis = LineSeg2::try_new(pt!(-1, 0), pt!(3, 0)).unwrap();
         assert_eq!(
             single_contact_chord
                 .has_non_collinear_support_with_exact_line(&x_axis, &policy)
@@ -9504,20 +9368,17 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
             Classification::Decided(true)
         );
 
-        let collinear_source =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 0),
-                Point2::from_values(2, 0),
-            )))
-            .unwrap();
+        let collinear_source = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 0)),
+        ))
+        .unwrap();
         let collinear_contact = CurvePoint2::from(crate::tests::decided(
             collinear_source
                 .point_at_algebraic_parameter(&parameter, &policy)
                 .unwrap(),
         ));
         let Classification::Decided(collinear_chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-1, 0)),
+            CurvePoint2::from(pt!(-1, 0)),
             collinear_contact,
             &policy,
         )
@@ -9538,13 +9399,13 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
         let third = r!(1 / 3);
         let repeated_contact_source =
             RationalBezier2::try_from_subcurve(&BezierSubcurve2::Cubic(CubicBezier2::new(
-                Point2::from_values(1, 0),
+                pt!(1, 0),
                 Point2::new(Real::one() + &third, third.clone()),
                 Point2::new(
                     Real::one() + Real::from(2_i8) * &third,
                     Real::from(2_i8) * &third,
                 ),
-                Point2::from_values(2, 0),
+                pt!(2, 0),
             )))
             .unwrap();
         let repeated_contact = CurvePoint2::from(crate::tests::decided(
@@ -9552,12 +9413,10 @@ fn algebraic_chord_source_incidence_deflates_only_the_retained_contact() {
                 .point_at_algebraic_parameter(&parameter, &policy)
                 .unwrap(),
         ));
-        let Classification::Decided(repeated_contact_chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, 0)),
-            repeated_contact,
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(repeated_contact_chord) =
+            BezierAlgebraicChord2::try_new(CurvePoint2::from(pt!(0, 0)), repeated_contact, &policy)
+                .unwrap()
+        else {
             panic!("the secant chord must certify distinct endpoints");
         };
         let Classification::Decided(BezierAlgebraicChordRationalIntersections2::Contacts(
@@ -9956,7 +9815,7 @@ fn algebraic_cusp_semicircle_point_incidence_selects_exactly_one_half() {
 fn algebraic_cusp_semicircle_certifies_exact_circle_support_relations() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
-        let center = Point2::from_values(0, 0);
+        let center = pt!(0, 0);
         assert_eq!(
             semicircle
                 .has_same_supporting_circle(&center, &Real::one(), &policy)
@@ -9971,21 +9830,17 @@ fn algebraic_cusp_semicircle_certifies_exact_circle_support_relations() {
         );
         assert_eq!(
             semicircle
-                .has_same_supporting_circle(&Point2::from_values(1, 0), &Real::one(), &policy,)
+                .has_same_supporting_circle(&pt!(1, 0), &Real::one(), &policy,)
                 .unwrap(),
             Classification::Decided(false),
         );
         assert_eq!(
             semicircle
-                .is_disjoint_from_supporting_circle(
-                    &Point2::from_values(3, 0),
-                    &Real::one(),
-                    &policy,
-                )
+                .is_disjoint_from_supporting_circle(&pt!(3, 0), &Real::one(), &policy,)
                 .unwrap(),
             Classification::Decided(true),
         );
-        for other_center in [Point2::from_values(0, 0), Point2::from_values(2, 0)] {
+        for other_center in [pt!(0, 0), pt!(2, 0)] {
             assert_eq!(
                 semicircle
                     .is_disjoint_from_supporting_circle(&other_center, &Real::one(), &policy,)
@@ -10001,11 +9856,7 @@ fn rational_incidence_derivative_is_the_exact_tangent_cross_sign_authority() {
     let policy = CurveContext::STRICT;
     let circle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
     let target = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(-2, -1),
-            Point2::from_values(0, 2),
-            Point2::from_values(3, -1),
-        ],
+        vec![pt!(-2, -1), pt!(0, 2), pt!(3, -1)],
         vec![Real::one(), Real::from(2_i8), Real::from(3_i8)],
     )
     .unwrap();
@@ -10195,11 +10046,7 @@ fn direct_algebraic_circle_similarities_retain_center_and_cardinal_evidence() {
 
 #[test]
 fn chord_normal_and_parallel_contacts_share_native_point_identity() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(r!(1 / 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let radius = r!(1 / 4);
         let native =
@@ -10217,12 +10064,9 @@ fn chord_normal_and_parallel_contacts_share_native_point_identity() {
             parameter.clone(),
             &policy,
         ));
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal anchor is regular");
         };
         let Classification::Decided(Some(circle)) =
@@ -10323,12 +10167,9 @@ fn selected_chord_normal_contact_accepts_complementary_radial_sign() {
         else {
             panic!("the represented selected circle must construct");
         };
-        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 1).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 1).into(), &policy).unwrap()
+        else {
             panic!("the exact oblique chord must construct");
         };
         let point = chord
@@ -10813,8 +10654,8 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
         // Keep the same selected circle, but make the contact support's
         // y coordinate directly available as an exact scalar.
         let exact_horizontal = BezierAlgebraicChord2::from_certified_axis_aligned_endpoints(
-            CurvePoint2::from(Point2::from_values(-3, 1)),
-            CurvePoint2::from(Point2::from_values(3, 1)),
+            CurvePoint2::from(pt!(-3, 1)),
+            CurvePoint2::from(pt!(3, 1)),
             BezierAlgebraicChordAxisDirection2::PositiveX,
             &policy,
         );
@@ -10877,9 +10718,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
         )
         .unwrap();
         let crossing = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, -1), Point2::from_values(0, 2)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, -1), pt!(0, 2)).unwrap()),
         ))
         .unwrap();
         for (carrier, tangent_cross_sign) in [
@@ -10925,9 +10764,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
         }
 
         let spanning = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-5, 1), Point2::from_values(5, 1)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-5, 1), pt!(5, 1)).unwrap()),
         ))
         .unwrap();
         for (carrier, orientation) in [
@@ -10975,13 +10812,10 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
             );
         }
 
-        let retraced =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(-5, 1),
-                Point2::from_values(15, 1),
-                Point2::from_values(-5, 1),
-            )))
-            .unwrap();
+        let retraced = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::new(pt!(-5, 1), pt!(15, 1), pt!(-5, 1)),
+        ))
+        .unwrap();
         let retraced_result = retained
             .rational_intersections(&retraced, &CurveParameterRange2::unit(), None, &policy)
             .unwrap();
@@ -11068,7 +10902,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
             };
             match algebraic_chord_point_coordinate_order(
                 &point,
-                &CurvePoint2::from(Point2::from_values(0, 0)),
+                &CurvePoint2::from(pt!(0, 0)),
                 Axis2::X,
                 &policy,
             )
@@ -11122,18 +10956,14 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
             }
             assert_eq!(
                 carrier
-                    .certifiably_disjoint_from_circle_bounds(
-                        &Point2::from_values(-10, 0),
-                        &Real::one(),
-                        &policy,
-                    )
+                    .certifiably_disjoint_from_circle_bounds(&pt!(-10, 0), &Real::one(), &policy,)
                     .unwrap(),
                 Classification::Decided(true),
             );
             assert_eq!(
                 carrier
                     .certifiably_disjoint_from_circle_bounds(
-                        &Point2::from_values(0, 0),
+                        &pt!(0, 0),
                         &Real::from(4_i8),
                         &policy,
                     )
@@ -11159,9 +10989,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
             )));
         }
         let touching = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(0, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-1, 0), pt!(0, 0)).unwrap()),
         ))
         .unwrap();
         for (carrier, at_start) in [
@@ -11206,7 +11034,7 @@ fn algebraic_cusp_semicircle_intersects_finite_axis_chords_exactly() {
             assert_eq!(
                 contact
                     .point()
-                    .same_point(&CurvePoint2::from(Point2::from_values(0, 0),), &policy,),
+                    .same_point(&CurvePoint2::from(pt!(0, 0),), &policy,),
                 Classification::Decided(true),
             );
         }
@@ -11358,8 +11186,8 @@ fn algebraic_cusp_semicircle_intersects_exact_oblique_chords_exactly() {
             panic!("the selected circle must construct");
         };
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-3, -3)),
-            CurvePoint2::from(Point2::from_values(3, 3)),
+            CurvePoint2::from(pt!(-3, -3)),
+            CurvePoint2::from(pt!(3, 3)),
             &policy,
         )
         .unwrap() else {
@@ -11477,12 +11305,12 @@ fn algebraic_cusp_semicircle_intersects_independent_field_oblique_chords_exactly
             .unwrap()
         };
         let start = CurvePoint2::from(crate::tests::decided(
-            endpoint_curve(Point2::from_values(-3, -3), Point2::from_values(-2, -3))
+            endpoint_curve(pt!(-3, -3), pt!(-2, -3))
                 .point_at_algebraic_parameter(&start_parameter, &policy)
                 .unwrap(),
         ));
         let end = CurvePoint2::from(crate::tests::decided(
-            endpoint_curve(Point2::from_values(3, 3), Point2::from_values(3, 4))
+            endpoint_curve(pt!(3, 3), pt!(3, 4))
                 .point_at_algebraic_parameter(&end_parameter, &policy)
                 .unwrap(),
         ));
@@ -11843,11 +11671,9 @@ fn independent_cusp_chord_contacts_order_on_the_shared_axis() {
 
 #[test]
 fn algebraic_cusp_semicircle_rational_contacts_distinguish_both_endpoints() {
-    let diameter = RationalBezier2::try_new(
-        vec![Point2::from_values(-2, 0), Point2::from_values(2, 0)],
-        vec![Real::one(), Real::one()],
-    )
-    .unwrap();
+    let diameter =
+        RationalBezier2::try_new(vec![pt!(-2, 0), pt!(2, 0)], vec![Real::one(), Real::one()])
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let semicircle = synthetic_reducible_cusp_semicircle((3, 4), ((2, 3), (4, 5)), &policy);
         for (carrier, expected) in [
@@ -12121,13 +11947,9 @@ fn selected_circle_domains_reject_consumed_poles_and_undefined_normals() {
     .unwrap();
     let mut rejected = 0;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let center = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-            Point2::from_values(2, 1),
-        )
-        .parallel_left(Real::one())
-        .unwrap();
+        let center = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1))
+            .parallel_left(Real::one())
+            .unwrap();
         let Classification::Decided(Some(normal_circle)) =
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 center.clone(),
@@ -12415,9 +12237,9 @@ fn pair_radial_incident_circle_retains_its_component() {
         let circle = independent_pair_radial_unit_circle(&policy);
         let source = RationalBezier2::from(
             RationalQuadraticBezier2::try_new(
-                Point2::from_values(2, 0),
-                Point2::from_values(2, 2),
-                Point2::from_values(0, 2),
+                pt!(2, 0),
+                pt!(2, 2),
+                pt!(0, 2),
                 Real::one(),
                 Real::one(),
                 Real::from(2_i8),
@@ -13475,8 +13297,8 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
                     end: BezierParameter2::Exact(Real::one()),
                     curve: BezierSubcurve2::Rational(rational_quarter.clone()),
                 },
-                line_fragment(rational_end.clone(), Point2::from_values(0, 0)),
-                line_fragment(Point2::from_values(0, 0), rational_start.clone()),
+                line_fragment(rational_end.clone(), pt!(0, 0)),
+                line_fragment(pt!(0, 0), rational_start.clone()),
             ],
             &policy,
         )
@@ -14554,7 +14376,7 @@ fn algebraic_cusp_semicircle_replays_a_selected_circle_component() {
                     );
                     if first_parameter.is_algebraic_chord() {
                         assert!(
-                            [Point2::from_values(0, 0), Point2::from_values(1, 0)]
+                            [pt!(0, 0), pt!(1, 0)]
                                 .into_iter()
                                 .any(|expected| first_point.same_point(&expected.into(), &policy)
                                     == Classification::Decided(true))
@@ -14794,9 +14616,9 @@ fn transverse_chamfer_cut_inverts_by_radial_incidence() {
     .unwrap();
     let rational_quarter = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(0, 1),
+            pt!(1, 0),
+            pt!(1, 1),
+            pt!(0, 1),
             Real::one(),
             Real::one(),
             Real::from(2_i8),
@@ -15042,11 +14864,7 @@ fn selected_fiber_tangent_correspondence_retains_local_image() {
 #[test]
 fn mixed_circle_overlap_maps_replay_reversed_complementary_cuts() {
     let left_quarter = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(-1, 0),
-            Point2::from_values(-1, 1),
-            Point2::from_values(0, 1),
-        ],
+        vec![pt!(-1, 0), pt!(-1, 1), pt!(0, 1)],
         vec![Real::one(), Real::one(), Real::from(2)],
     )
     .unwrap();
@@ -15383,11 +15201,10 @@ fn mapped_point_inversion_maps_every_structural_overlap_carrier_directly() {
 
 #[test]
 fn mapped_point_inversion_maps_zero_image_parameter_components_directly() {
-    let point = Point2::from_values(0, 0);
+    let point = pt!(0, 0);
     let constant_source = QuadraticBezier2::new(point.clone(), point.clone(), point.clone());
-    let line_source = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(1, 0)).unwrap(),
-    );
+    let line_source =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-1, 0), pt!(1, 0)).unwrap());
     let constant_parallel = BezierParallel2::from_source(
         BezierParallelSource2::Quadratic(constant_source),
         Real::zero(),
@@ -15397,11 +15214,9 @@ fn mapped_point_inversion_maps_zero_image_parameter_components_directly() {
     let constant_rational =
         RationalBezier2::try_new(vec![point.clone(), point], vec![Real::one(), Real::one()])
             .unwrap();
-    let line_rational = RationalBezier2::try_new(
-        vec![Point2::from_values(-1, 0), Point2::from_values(1, 0)],
-        vec![Real::one(), Real::one()],
-    )
-    .unwrap();
+    let line_rational =
+        RationalBezier2::try_new(vec![pt!(-1, 0), pt!(1, 0)], vec![Real::one(), Real::one()])
+            .unwrap();
     let one_third = r!(1 / 3);
     let half = r!(1 / 2);
 
@@ -15520,9 +15335,9 @@ fn transverse_mapped_cut_inverts_by_point_on_all_overlap_carriers() {
     .unwrap();
     let rational_quarter = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(0, 1),
+            pt!(1, 0),
+            pt!(1, 1),
+            pt!(0, 1),
             Real::one(),
             Real::one(),
             Real::from(2_i8),
@@ -15970,13 +15785,10 @@ fn selected_fiber_analytic_transverse_cut_inverts_by_point() {
     // Its unit left parallel is therefore (-3/10,3/5), the interior
     // t=1/2 point of the selected rational quarter, and the two carrier
     // tangents are transverse there.
-    let cutter = QuadraticBezier2::new(
-        Point2::from_values(-1, -1),
-        Point2::new(r!(-2 / 5), r!(-9 / 10)),
-        Point2::from_values(3, 2),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let cutter =
+        QuadraticBezier2::new(pt!(-1, -1), Point2::new(r!(-2 / 5), r!(-9 / 10)), pt!(3, 2))
+            .parallel_left(Real::one())
+            .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
@@ -17180,14 +16992,8 @@ fn algebraic_cusp_semicircle_reoffsets_two_analytic_parallel_mapped_cuts() {
                 // The unit-circle cap includes its top point. Dilation
                 // makes that point interior while y=2 stays outside.
                 for (point, expected) in [
-                    (
-                        Point2::from_values(0, 1),
-                        crate::RegionPointLocation::Inside,
-                    ),
-                    (
-                        Point2::from_values(0, 2),
-                        crate::RegionPointLocation::Outside,
-                    ),
+                    (pt!(0, 1), crate::RegionPointLocation::Inside),
+                    (pt!(0, 2), crate::RegionPointLocation::Outside),
                 ] {
                     assert_eq!(
                         offset
@@ -21435,9 +21241,9 @@ fn selected_circle_bounds_cover_exterior_parallel_centers() {
     let half = r!(1 / 2);
     let radius = r!(1 / 4);
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for sign in [-1_i8, 1] {
@@ -22929,12 +22735,7 @@ fn simple_general_algebraic_cusp_loop_regularizes_without_materializing_its_fiel
                 ))
         );
 
-        let corners = [
-            Point2::from_values(-10, -10),
-            Point2::from_values(10, -10),
-            Point2::from_values(10, 10),
-            Point2::from_values(-10, 10),
-        ];
+        let corners = [pt!(-10, -10), pt!(10, -10), pt!(10, 10), pt!(-10, 10)];
         let square = CurvePath2::try_new(
             (0..corners.len())
                 .map(|index| {
@@ -23012,8 +22813,7 @@ fn algebraic_cusp_disk_classifies_an_independent_selected_root_directly() {
         let query_line = |start: i8, end: i8| {
             RationalBezier2::try_from_subcurve(&crate::BezierSubcurve2::Quadratic(
                 QuadraticBezier2::from_line_segment(
-                    LineSeg2::try_new(Point2::from_values(start, 0), Point2::from_values(end, 0))
-                        .unwrap(),
+                    LineSeg2::try_new(pt!(start, 0), pt!(end, 0)).unwrap(),
                 ),
             ))
             .unwrap()
@@ -23199,8 +22999,7 @@ fn distinct_mapped_algebraic_cusp_endpoint_fields_classify_directly() {
         let query_line = |start: i8, end: i8| {
             RationalBezier2::try_from_subcurve(&crate::BezierSubcurve2::Quadratic(
                 QuadraticBezier2::from_line_segment(
-                    LineSeg2::try_new(Point2::from_values(start, 0), Point2::from_values(end, 0))
-                        .unwrap(),
+                    LineSeg2::try_new(pt!(start, 0), pt!(end, 0)).unwrap(),
                 ),
             ))
             .unwrap()
@@ -24067,9 +23866,9 @@ fn retained_polynomial_base_roots_select_the_nonnegative_sheet_on_any_axis() {
 fn analytic_point_equality_replays_algebraic_source_and_normal_sheet() {
     let fraction = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(fraction(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     let distance = fraction(1, 8);
     let speed = Real::from(3_i8).sqrt().unwrap();
@@ -24829,9 +24628,9 @@ fn recursive_chord_parallel_retains_owned_roots_across_exterior_ranges() {
     let half = r!(1 / 2);
     let quarter = r!(1 / 4);
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
@@ -24920,13 +24719,9 @@ fn recursive_chord_parallel_retains_owned_roots_across_exterior_ranges() {
 #[test]
 fn translated_parallel_endpoint_does_not_certify_source_incidence() {
     let half = r!(1 / 2);
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(half, Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(0, 0), Point2::new(half, Real::zero()), pt!(1, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = BezierAnalyticParallelPoint2::new(
             parallel.clone(),
@@ -24935,12 +24730,10 @@ fn translated_parallel_endpoint_does_not_certify_source_incidence() {
         )
         .translated(&Real::zero(), &Real::one(), &policy)
         .unwrap();
-        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(start),
-            Point2::from_values(2, 1).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(CurvePoint2::from(start), pt!(2, 1).into(), &policy)
+                .unwrap()
+        else {
             panic!("the translated horizontal chord must construct")
         };
         for chord in [chord.clone(), chord.reversed()] {
@@ -24983,13 +24776,9 @@ fn recursive_chord_parallel_local_roots_reject_conjugates_and_clip_exactly() {
     let quarter = r!(1 / 4);
     let three_quarters = Real::one() - &quarter;
     // With t=4u-2, this is P=(t,t^2/2) on the authored u interval.
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(-2, 2),
-        Point2::from_values(0, -2),
-        Point2::from_values(2, 2),
-    )
-    .parallel_left(quarter.clone())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(-2, 2), pt!(0, -2), pt!(2, 2))
+        .parallel_left(quarter.clone())
+        .unwrap();
     let range = CurveParameterRange2::unit();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (start_x, end_x, expected_count) in [
@@ -26581,8 +26370,8 @@ fn recursive_chord_kernel_retains_all_cubic_crossings_with_opposite_endpoint_sid
     .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(-1, 0)),
-            CurvePoint2::from(Point2::from_values(2, 0)),
+            CurvePoint2::from(pt!(-1, 0)),
+            CurvePoint2::from(pt!(2, 0)),
             &policy,
         )
         .unwrap() else {
@@ -26889,9 +26678,9 @@ fn rank_independent_chord_normal_circle_publishes_rational_overlap() {
         for (circle, reversed) in [(circle.clone(), false), (circle.reversed(), true)] {
             for weight_sign in [1_i8, -1_i8] {
                 let quarter = RationalBezier2::from(rational_unit_circle_quarter(
-                    Point2::from_values(0, 1),
-                    Point2::from_values(1, 1),
-                    Point2::from_values(1, 0),
+                    pt!(0, 1),
+                    pt!(1, 1),
+                    pt!(1, 0),
                     weight_sign,
                 ));
                 let Classification::Decided(frame) =
@@ -26990,9 +26779,9 @@ fn rank_independent_chord_normal_circle_partitions_rational_overlap() {
         );
         for weight_sign in [1_i8, -1_i8] {
             let quarter = RationalBezier2::from(rational_unit_circle_quarter(
-                Point2::from_values(-1, 0),
-                Point2::from_values(-1, 1),
-                Point2::from_values(0, 1),
+                pt!(-1, 0),
+                pt!(-1, 1),
+                pt!(0, 1),
                 weight_sign,
             ));
 
@@ -27060,14 +26849,14 @@ fn rank_independent_chord_normal_circle_partitions_folded_rational_overlap() {
     // angular reversal without reducing the carrier to a conic.
     let folded_quarter = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 1),
-            Point2::from_values(-2, 1),
+            pt!(0, 1),
+            pt!(-2, 1),
             Point2::new(
                 (Real::from(-8_i8) / &eleven).unwrap(),
                 (Real::from(-5_i8) / &eleven).unwrap(),
             ),
-            Point2::from_values(-2, 1),
-            Point2::from_values(0, 1),
+            pt!(-2, 1),
+            pt!(0, 1),
         ],
         vec![
             Real::one(),
@@ -27189,21 +26978,11 @@ fn assert_rank_independent_chord_normal_circle_overlap_completes_public_booleans
     let circle_region = dense_chord_normal_full_circle_region(circle, &policy);
     let (quarter, expected_overlap_count) = match quarter_index {
         0 => (
-            rational_unit_circle_quarter(
-                Point2::from_values(0, 1),
-                Point2::from_values(1, 1),
-                Point2::from_values(1, 0),
-                1,
-            ),
+            rational_unit_circle_quarter(pt!(0, 1), pt!(1, 1), pt!(1, 0), 1),
             1_usize,
         ),
         1 => (
-            rational_unit_circle_quarter(
-                Point2::from_values(-1, 0),
-                Point2::from_values(-1, 1),
-                Point2::from_values(0, 1),
-                1,
-            ),
+            rational_unit_circle_quarter(pt!(-1, 0), pt!(-1, 1), pt!(0, 1), 1),
             2_usize,
         ),
         _ => unreachable!("the certification matrix has exactly two quarter carriers"),
@@ -27328,10 +27107,7 @@ fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
             derived,
             CurvePoint2(CurvePointData2::AlgebraicCuspChordDerived(_))
         ));
-        for (point, expected) in [
-            (tangent, Point2::from_values(1, 0)),
-            (derived, quarter.end().clone()),
-        ] {
+        for (point, expected) in [(tangent, pt!(1, 0)), (derived, quarter.end().clone())] {
             assert!(point.coordinates().is_none());
             let same =
                 point.coincides_with_with_policy(&CurvePoint2::from(expected.clone()), &policy);
@@ -27379,9 +27155,9 @@ fn recursive_incidence_accepts_cusp_contact_and_derived_points() {
 fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
     let half = r!(1 / 2);
     let parallel = RationalQuadraticBezier2::try_unit_end_weights(
-        Point2::from_values(2, 0),
-        Point2::from_values(2, 1),
-        Point2::from_values(1, 1),
+        pt!(2, 0),
+        pt!(2, 1),
+        pt!(1, 1),
         Real::from(2).sqrt().unwrap() * &half,
     )
     .unwrap()
@@ -27405,8 +27181,7 @@ fn algebraic_image_incidence_retains_a_collapsed_parallel_domain() {
             ),
         );
         assert!(point.coordinates().is_none());
-        let same = point
-            .coincides_with_with_policy(&CurvePoint2::from(Point2::from_values(1, 0)), &policy);
+        let same = point.coincides_with_with_policy(&CurvePoint2::from(pt!(1, 0)), &policy);
         assert_eq!(same.certainty, crate::CurveCertainty::Certified);
         assert_eq!(same.value, Classification::Decided(true));
         for (distance, expected) in [(1, 1), (-1, 0)] {
@@ -27466,13 +27241,9 @@ fn displaced_algebraic_point_incidence_reuses_its_retained_field() {
     // remains algebraic and the cold point has no Cartesian view.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = algebraic_parameter(vec![Real::from(-2), Real::from(2), Real::one()]);
-        let source = QuadraticBezier2::new(
-            Point2::from_values(0, 2),
-            Point2::from_values(-1, 2),
-            Point2::from_values(-3, 2),
-        )
-        .parallel_left(Real::one())
-        .unwrap();
+        let source = QuadraticBezier2::new(pt!(0, 2), pt!(-1, 2), pt!(-3, 2))
+            .parallel_left(Real::one())
+            .unwrap();
         let point = BezierAnalyticParallelPoint2::new_with_region_parameter_and_tangent_distance(
             source,
             &parameter.into(),
@@ -27485,12 +27256,10 @@ fn displaced_algebraic_point_incidence_reuses_its_retained_field() {
             Classification::Decided(None)
         ));
         let point = CurvePoint2::from(point);
-        let query = QuadraticBezier2::from_line_segment(LineSeg2::new_unchecked(
-            Point2::from_values(-3, 0),
-            Point2::from_values(0, 0),
-        ))
-        .parallel_left(Real::one())
-        .unwrap();
+        let query =
+            QuadraticBezier2::from_line_segment(LineSeg2::new_unchecked(pt!(-3, 0), pt!(0, 0)))
+                .parallel_left(Real::one())
+                .unwrap();
         for distance in [1, -1] {
             let query = query.with_distance(Real::from(distance));
             for regular_domain in [false, true] {
@@ -27530,9 +27299,9 @@ fn recursive_incidence_preserves_selected_point_fields() {
     let fifth = r!(1 / 5);
     let half = r!(1 / 2);
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 0),
+        pt!(1, 0),
     )
     .parallel_left(-Real::one())
     .unwrap();
@@ -27665,13 +27434,9 @@ fn recursive_incidence_preserves_selected_point_fields() {
 #[test]
 fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
     let quarter = r!(1 / 4);
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(1, 0),
-        Point2::from_values(-1, 0),
-        Point2::from_values(1, 0),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(1, 0), pt!(-1, 0), pt!(1, 0))
+        .parallel_left(Real::one())
+        .unwrap();
     let center = Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap());
     let circle = RationalQuadraticBezier2::try_unit_end_weights(
         center.translated(Real::one(), Real::zero()),
@@ -27708,14 +27473,14 @@ fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
                 Classification::Decided(true)
             );
         }
-        let point = recursive_test_point(&Point2::from_values(0, 1), &policy);
+        let point = recursive_test_point(&pt!(0, 1), &policy);
         assert!(matches!(
             parallel
                 .contains_point_evidence(&point, &CurveParameterRange2::unit(), None, &policy)
                 .unwrap(),
             Classification::Uncertain(UncertaintyReason::Boundary)
         ));
-        let point = recursive_test_point(&Point2::from_values(0, 0), &policy);
+        let point = recursive_test_point(&pt!(0, 0), &policy);
         assert_eq!(
             parallel
                 .with_distance(Real::zero())
@@ -27755,13 +27520,11 @@ fn recursive_incidence_keeps_stationary_and_collapsed_semantics() {
 #[test]
 fn recursive_incidence_preserves_exterior_domains_and_pole_barriers() {
     let quarter = r!(1 / 4);
-    let parallel = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-        vec![-Real::one(), Real::one()],
-    )
-    .unwrap()
-    .parallel_left(Real::one())
-    .unwrap();
+    let parallel =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![-Real::one(), Real::one()])
+            .unwrap()
+            .parallel_left(Real::one())
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let point = recursive_test_point(
             &Point2::new(Real::from(3) * &quarter, -Real::one()),
@@ -27815,13 +27578,11 @@ fn recursive_incidence_preserves_exterior_domains_and_pole_barriers() {
 #[test]
 fn retained_point_membership_preserves_domains_and_regular_barriers() {
     let half = r!(1 / 2);
-    let parallel = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-        vec![-Real::one(), Real::one()],
-    )
-    .unwrap()
-    .parallel_left(Real::one())
-    .unwrap();
+    let parallel =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![-Real::one(), Real::one()])
+            .unwrap()
+            .parallel_left(Real::one())
+            .unwrap();
     // Q(s)=(s/(2s-1),-1) on the component s>1/2. The query
     // owns alpha²=1/2 and s=1+alpha, independently of the target chart.
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -27914,13 +27675,9 @@ fn retained_point_membership_preserves_domains_and_regular_barriers() {
 #[test]
 fn retained_point_incidence_visits_all_preimages_and_can_stop_at_one() {
     let half = r!(1 / 2);
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(4, 0),
-        Point2::from_values(2, 0),
-        Point2::from_values(1, 0),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(4, 0), pt!(2, 0), pt!(1, 0))
+        .parallel_left(Real::zero())
+        .unwrap();
     // P(s)=((s-2)^2,0), C=(sqrt(1/2),0). Both contacts are
     // selected quartic roots. The negative point has the same squared
     // projection candidates, but none satisfy its unsquared incidence.
@@ -28023,11 +27780,7 @@ fn retained_point_incidence_visits_all_preimages_and_can_stop_at_one() {
 
 #[test]
 fn point_incidence_checks_regular_frames_at_each_isolated_contact() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(1, 0),
-        Point2::from_values(-1, 0),
-        Point2::from_values(1, 0),
-    );
+    let source = QuadraticBezier2::new(pt!(1, 0), pt!(-1, 0), pt!(1, 0));
     let parallel = source.parallel_left(Real::one()).unwrap();
     let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -28055,22 +27808,14 @@ fn point_incidence_checks_regular_frames_at_each_isolated_contact() {
         // limit reaches (0,1). Absence requires one-sided frame evidence.
         assert!(matches!(
             parallel
-                .point_incidence(
-                    &Point2::from_values(0, 1),
-                    &CurveParameterRange2::unit(),
-                    &policy,
-                )
+                .point_incidence(&pt!(0, 1), &CurveParameterRange2::unit(), &policy,)
                 .unwrap(),
             Classification::Uncertain(UncertaintyReason::Boundary)
         ));
         // Zero displacement is the original curve value and needs no normal.
         let Classification::Decided(BezierParallelIncidence2::Parameters(stationary)) = parallel
             .with_distance(Real::zero())
-            .point_incidence(
-                &Point2::from_values(0, 0),
-                &CurveParameterRange2::unit(),
-                &policy,
-            )
+            .point_incidence(&pt!(0, 0), &CurveParameterRange2::unit(), &policy)
             .unwrap()
         else {
             panic!("the stationary source value still exists");
@@ -28140,9 +27885,9 @@ fn point_incidence_visits_a_collapsed_circle_as_a_complete_domain() {
 fn correlated_point_incidence_retains_exterior_contact_parameters() {
     let parallel = RationalBezier2::try_new(
         vec![
-            Point2::from_values(2, 4),
+            pt!(2, 4),
             Point2::new(r!(1 / 2), Real::from(-2)),
-            Point2::from_values(-1, 1),
+            pt!(-1, 1),
         ],
         vec![Real::one(), -Real::one(), Real::one()],
     )
@@ -28206,13 +27951,9 @@ fn zero_distance_retained_point_membership_keeps_stationary_sources() {
     let half = r!(1 / 2);
     // P(s)=((s-2)²,0) is finite through its stationary point. Squaring
     // against its zero speed would spuriously admit the negative query.
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(4, 0),
-        Point2::from_values(2, 0),
-        Point2::from_values(1, 0),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(4, 0), pt!(2, 0), pt!(1, 0))
+        .parallel_left(Real::zero())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let BezierParameter2::Algebraic(alpha) =
             algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()])
@@ -28259,11 +28000,9 @@ fn analytic_parallel_classifies_correlated_chord_pair_points() {
         ));
 
         let parallel_line = |y: i8| {
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-2, y), Point2::from_values(2, y)).unwrap(),
-            )
-            .parallel_left(Real::zero())
-            .unwrap()
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-2, y), pt!(2, y)).unwrap())
+                .parallel_left(Real::zero())
+                .unwrap()
         };
         for shift in [Real::zero(), Real::from(2)] {
             for y in [0, 1] {
@@ -28325,9 +28064,9 @@ fn correlated_point_membership_replays_exterior_rational_domains() {
     // attained only at s=2, including as an owned finite endpoint.
     let parallel = RationalBezier2::try_new(
         vec![
-            Point2::from_values(2, 4),
+            pt!(2, 4),
             Point2::new(r!(1 / 2), Real::from(-2)),
-            Point2::from_values(-1, 1),
+            pt!(-1, 1),
         ],
         vec![Real::one(), -Real::one(), Real::one()],
     )
@@ -28381,7 +28120,7 @@ fn correlated_point_membership_replays_exterior_rational_domains() {
 #[test]
 fn dense_chord_normal_tangency_retains_a_finite_endpoint() {
     let half = r!(1 / 2);
-    let expected = CurvePoint2::from(Point2::from_values(1, 0));
+    let expected = CurvePoint2::from(pt!(1, 0));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // The independently selected endpoint fields define y=-1 and x=1.
         // Their unit left offsets meet at the origin, so the clockwise
@@ -28488,11 +28227,9 @@ fn dense_chord_normal_independent_anchor_uses_rank_independent_fallback() {
             panic!("the independent frame must be represented: {represented_frame:?}");
         };
 
-        let secant = RationalBezier2::try_new(
-            vec![Point2::from_values(-2, 0), Point2::from_values(2, 0)],
-            vec![Real::one(), Real::one()],
-        )
-        .unwrap();
+        let secant =
+            RationalBezier2::try_new(vec![pt!(-2, 0), pt!(2, 0)], vec![Real::one(), Real::one()])
+                .unwrap();
         for recursive in [false, true] {
             let result = if recursive {
                 let Classification::Decided(system) = circle
@@ -28753,8 +28490,8 @@ fn dense_chord_normal_independent_anchor_uses_rank_independent_fallback() {
         );
 
         let Classification::Decided(exact_target) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(0, -2)),
-            CurvePoint2::from(Point2::from_values(0, 2)),
+            CurvePoint2::from(pt!(0, -2)),
+            CurvePoint2::from(pt!(0, 2)),
             &policy,
         )
         .unwrap() else {
@@ -28774,9 +28511,9 @@ fn dense_chord_normal_circle_extends_over_an_independent_analytic_speed() {
         // the exact unit-circle point (2,-1)/sqrt(5), strictly beyond the
         // authored [0,1] range.
         let source = QuadraticBezier2::new(
-            Point2::from_values(-2, 0),
+            pt!(-2, 0),
             Point2::new(r!(-3 / 2), Real::from(-1_i8)),
-            Point2::from_values(-1, -1),
+            pt!(-1, -1),
         );
         let parallel = source.parallel_left(Real::from(-1_i8)).unwrap();
         assert!(matches!(
@@ -28869,9 +28606,9 @@ fn dense_chord_normal_incident_circle_retains_its_component() {
         let circle = dense_chord_normal_unit_semicircle(&policy);
         let source = RationalBezier2::from(
             RationalQuadraticBezier2::try_new(
-                Point2::from_values(2, 0),
-                Point2::from_values(2, 2),
-                Point2::from_values(0, 2),
+                pt!(2, 0),
+                pt!(2, 2),
+                pt!(0, 2),
                 Real::one(),
                 Real::one(),
                 Real::from(2_i8),
@@ -29011,9 +28748,9 @@ fn dense_chord_normal_retains_rational_contacts_and_circle_components() {
     .unwrap();
     let quarter_circle = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(0, 1),
+            pt!(1, 0),
+            pt!(1, 1),
+            pt!(0, 1),
             Real::one(),
             Real::one(),
             Real::from(2_i8),
@@ -30803,10 +30540,7 @@ fn recursively_pair_radial_rational_center_half(
 fn recursively_pair_radial_center_retains_exact_point() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let recursive = recursively_pair_radial_rational_center_half(&policy);
-        assert_eq!(
-            recursive.exact_center(&policy).unwrap(),
-            Some(Point2::from_values(0, -1)),
-        );
+        assert_eq!(recursive.exact_center(&policy).unwrap(), Some(pt!(0, -1)),);
     }
 }
 
@@ -30818,8 +30552,8 @@ pub(crate) fn recursively_line_contact_radial_half(
 ) -> BezierAlgebraicCuspSemicircle2 {
     let support = recursively_pair_radial_half(policy);
     let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-        CurvePoint2::from(Point2::from_values(-2, -1)),
-        CurvePoint2::from(Point2::from_values(2, -1)),
+        CurvePoint2::from(pt!(-2, -1)),
+        CurvePoint2::from(pt!(2, -1)),
         policy,
     )
     .unwrap() else {
@@ -30860,8 +30594,8 @@ pub(crate) fn recursively_line_contact_radial_half(
 fn recursive_exact_line_contact_chord(policy: &CurveContext) -> BezierAlgebraicChord2 {
     let support = recursively_pair_radial_half(policy);
     let Classification::Decided(line) = BezierAlgebraicChord2::try_new(
-        CurvePoint2::from(Point2::from_values(-2, -1)),
-        CurvePoint2::from(Point2::from_values(2, -1)),
+        CurvePoint2::from(pt!(-2, -1)),
+        CurvePoint2::from(pt!(2, -1)),
         policy,
     )
     .unwrap() else {
@@ -30905,7 +30639,7 @@ fn recursive_radial_closure_chords_sign_a_shared_exact_vertex() {
         let Classification::Decided(end) = circle.end_point_evidence(&policy).unwrap() else {
             panic!("the recursive radial end must remain exact evidence");
         };
-        let remote = CurvePoint2::from(Point2::from_values(0_i8, 4_i8));
+        let remote = CurvePoint2::from(pt!(0_i8, 4_i8));
         let Classification::Decided(first) =
             BezierAlgebraicChord2::try_new(start, remote.clone(), &policy).unwrap()
         else {
@@ -30931,11 +30665,7 @@ fn recursive_radial_closure_chords_sign_a_shared_exact_vertex() {
 fn recursive_rational_contact_orients_a_retained_radial_endpoint() {
     let half = r!(1 / 2);
     let nine_tenths = r!(9 / 10);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, -1),
-        Point2::new(half, -nine_tenths),
-        Point2::from_values(2, -1),
-    );
+    let source = QuadraticBezier2::new(pt!(-1, -1), Point2::new(half, -nine_tenths), pt!(2, -1));
     let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source))
         .expect("the polynomial quadratic has an exact rational carrier");
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -30951,7 +30681,7 @@ fn recursive_rational_contact_orients_a_retained_radial_endpoint() {
         else {
             panic!("the recursive diameter must construct");
         };
-        let remote = CurvePoint2::from(Point2::from_values(0_i8, 4_i8));
+        let remote = CurvePoint2::from(pt!(0_i8, 4_i8));
         let Classification::Decided(closure) =
             BezierAlgebraicChord2::try_new(diameter.end().clone(), remote.clone(), &policy)
                 .unwrap()
@@ -31401,11 +31131,7 @@ fn recursively_pair_radial_cap_offsets_exactly() {
 fn recursively_pair_radial_circle_intersects_a_rational_quadratic_without_representation() {
     let half = r!(1 / 2);
     let nine_tenths = r!(9 / 10);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, -1),
-        Point2::new(half, -nine_tenths),
-        Point2::from_values(2, -1),
-    );
+    let source = QuadraticBezier2::new(pt!(-1, -1), Point2::new(half, -nine_tenths), pt!(2, -1));
     let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source))
         .expect("the polynomial quadratic has an exact rational carrier");
 
@@ -31496,11 +31222,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
     debug_stage("construct");
     let half = r!(1 / 2);
     let nine_tenths = r!(9 / 10);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, -1),
-        Point2::new(half, -nine_tenths),
-        Point2::from_values(2, -1),
-    );
+    let source = QuadraticBezier2::new(pt!(-1, -1), Point2::new(half, -nine_tenths), pt!(2, -1));
     let target = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source))
         .expect("the polynomial quadratic has an exact rational carrier");
     let recursive = recursively_line_contact_radial_half(&policy);
@@ -31605,7 +31327,7 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
         };
         BezierSplitFragment2::AlgebraicChord(chord)
     };
-    let chord_remote = CurvePoint2::from(Point2::from_values(0_i8, 4_i8));
+    let chord_remote = CurvePoint2::from(pt!(0_i8, 4_i8));
     debug_stage("regions-start");
     let chord_region = CurveRegion2::try_new_with_loop_topology(
         vec![
@@ -31642,8 +31364,8 @@ fn assert_recursive_selected_radial_diameter_chord_intersects_a_rational_quadrat
                         end: BezierParameter2::Exact(Real::one()),
                         curve: BezierSubcurve2::Rational(target.clone()),
                     },
-                    line(Point2::from_values(2_i8, -1_i8), rational_remote.clone()),
-                    line(rational_remote, Point2::from_values(-1_i8, -1_i8)),
+                    line(pt!(2_i8, -1_i8), rational_remote.clone()),
+                    line(rational_remote, pt!(-1_i8, -1_i8)),
                 ],
                 &policy,
             )
@@ -31769,17 +31491,14 @@ fn recursive_projective_chord_partitions_collinear_rational_images() {
         let chord = recursive_exact_line_contact_chord(&policy);
         let injective = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
             QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(-2, -1), Point2::from_values(2, -1)).unwrap(),
+                LineSeg2::try_new(pt!(-2, -1), pt!(2, -1)).unwrap(),
             ),
         ))
         .expect("the injective line has an exact rational carrier");
-        let retracing =
-            RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(-2, -1),
-                Point2::from_values(6, -1),
-                Point2::from_values(-2, -1),
-            )))
-            .expect("the retracing line has an exact rational carrier");
+        let retracing = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
+            QuadraticBezier2::new(pt!(-2, -1), pt!(6, -1), pt!(-2, -1)),
+        ))
+        .expect("the retracing line has an exact rational carrier");
 
         for (source_kind, source, expected_minimum_overlaps) in [
             ("injective", &injective, 1_usize),
@@ -32035,7 +31754,7 @@ fn recursive_projective_oblique_chord_handles_even_contact_multiplicity() {
         );
 
         let collinear = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(Point2::from_values(-2, -1), Point2::from_values(2, -1)).unwrap(),
+            LineSeg2::try_new(pt!(-2, -1), pt!(2, -1)).unwrap(),
         );
         let collinear = QuadraticBezier2::new(
             transform.transform_point(collinear.start()),
@@ -32299,11 +32018,9 @@ fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
     let field = RecursiveQuadraticField::base(vec![], one.clone(), one).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // Positive unit control weights, but W(3)=1-3/2 is negative.
-        let source = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-            vec![Real::one(), half.clone()],
-        )
-        .unwrap();
+        let source =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![Real::one(), half.clone()])
+                .unwrap();
         let parallel = source.parallel_left(quarter.clone()).unwrap();
         let Classification::Decided(parameter) = BezierRecursiveProjectiveParameter2::new(
             RecursiveQuadraticProjectiveScalar {
@@ -32369,11 +32086,7 @@ fn exterior_rational_analytic_points_use_the_selected_denominator_sign() {
 #[test]
 fn analytic_point_clones_reuse_the_certified_recursive_field() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let source = QuadraticBezier2::new(
-            Point2::from_values(-1, 0),
-            Point2::from_values(0, 1),
-            Point2::from_values(1, 0),
-        );
+        let source = QuadraticBezier2::new(pt!(-1, 0), pt!(0, 1), pt!(1, 0));
         let point = BezierAnalyticParallelPoint2::new_with_tangent_distance(
             source.parallel_left(r!(1 / 3)).unwrap(),
             BezierParameter2::Exact(r!(1 / 2)),
@@ -32499,12 +32212,7 @@ fn recursive_selected_radial_line_image_preserves_target_orientation() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let circle = recursively_pair_radial_rational_center_half(&policy);
         let target = |reversed| {
-            let mut controls = vec![
-                Point2::from_values(-1, -1),
-                Point2::from_values(0, -1),
-                Point2::from_values(1, -1),
-                Point2::from_values(2, -1),
-            ];
+            let mut controls = vec![pt!(-1, -1), pt!(0, -1), pt!(1, -1), pt!(2, -1)];
             if reversed {
                 controls.reverse();
             }
@@ -32556,11 +32264,7 @@ fn recursively_pair_radial_circle_intersects_a_genuine_analytic_parallel() {
     let half = r!(1 / 2);
     let nine_tenths = r!(9 / 10);
     let distance = r!(1 / 20);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, -1),
-        Point2::new(half, -nine_tenths),
-        Point2::from_values(2, -1),
-    );
+    let source = QuadraticBezier2::new(pt!(-1, -1), Point2::new(half, -nine_tenths), pt!(2, -1));
     let parallel = source.parallel_left(distance).unwrap();
     let range = BezierParameterRange2::from_exact(Real::zero(), Real::one());
 
@@ -34524,8 +34228,8 @@ fn pair_radial_circle_intersects_independent_field_chord_exactly() {
 fn selected_frame_import_preserves_every_independent_point() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for denominators in [[2, 3], [3, 2]] {
-            let origin = CurvePoint2::from(Point2::from_values(0, 0));
-            let anchor = CurvePoint2::from(Point2::from_values(1, 0));
+            let origin = CurvePoint2::from(pt!(0, 0));
+            let anchor = CurvePoint2::from(pt!(1, 0));
             let Classification::Decided(Some(authority)) =
                 BezierRecursiveCircleFrame2::from_point_evidence(
                     &origin,
@@ -34893,7 +34597,7 @@ fn pair_radial_circle_retains_an_algebraic_rational_tangency() {
         assert_eq!(
             contact
                 .point
-                .same_point(&CurvePoint2::from(Point2::from_values(1, 0)), &policy,),
+                .same_point(&CurvePoint2::from(pt!(1, 0)), &policy,),
             Classification::Decided(true),
         );
         let circle_parameter = parameter_map.contact_parameter(contact);
@@ -34996,9 +34700,9 @@ fn pair_radial_circle_retains_rational_circle_components() {
     // overlap ends at angle 45 degrees, u=sqrt(2)-1.
     let quarter_circle = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(0, 1),
+            pt!(1, 0),
+            pt!(1, 1),
+            pt!(0, 1),
             Real::one(),
             Real::one(),
             Real::from(2_i8),
@@ -35010,14 +34714,14 @@ fn pair_radial_circle_retains_rational_circle_components() {
     let eleven = Real::from(11_i8);
     let folded_quarter = RationalBezier2::try_new(
         vec![
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 2),
+            pt!(1, 0),
+            pt!(1, 2),
             Point2::new(
                 (Real::from(-5_i8) / &eleven).unwrap(),
                 (Real::from(8_i8) / &eleven).unwrap(),
             ),
-            Point2::from_values(1, 2),
-            Point2::from_values(1, 0),
+            pt!(1, 2),
+            pt!(1, 0),
         ],
         vec![
             Real::one(),
@@ -36019,14 +35723,14 @@ fn algebraic_cusp_circle_degenerate_projection_is_filtered_at_the_selected_root(
         let eleven = Real::from(11_i8);
         let folded_quarter = RationalBezier2::try_new(
             vec![
-                Point2::from_values(1, 0),
-                Point2::from_values(1, 2),
+                pt!(1, 0),
+                pt!(1, 2),
                 Point2::new(
                     (Real::from(-5_i8) / &eleven).unwrap(),
                     (Real::from(8_i8) / &eleven).unwrap(),
                 ),
-                Point2::from_values(1, 2),
-                Point2::from_values(1, 0),
+                pt!(1, 2),
+                pt!(1, 0),
             ],
             vec![
                 Real::one(),
@@ -36291,25 +35995,25 @@ fn homogeneous_representation_retains_exterior_ph_branch() {
 fn exact_parallel_distances_reuse_the_certified_source_speed() {
     let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let line = LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 1)).unwrap();
+        let line = LineSeg2::try_new(pt!(0, 0), pt!(2, 1)).unwrap();
         let sources = [
             BezierParallelSource2::Quadratic(QuadraticBezier2::from_line_segment(line)),
             BezierParallelSource2::Quadratic(QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 0),
-                Point2::from_values(2, 0),
+                pt!(0, 0),
+                pt!(1, 0),
+                pt!(2, 0),
             )),
             BezierParallelSource2::Cubic(CubicBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 0),
-                Point2::from_values(2, 1),
-                Point2::from_values(2, 3),
+                pt!(0, 0),
+                pt!(1, 0),
+                pt!(2, 1),
+                pt!(2, 3),
             )),
             BezierParallelSource2::Rational(RationalBezier2::from(
                 RationalQuadraticBezier2::try_new(
-                    Point2::from_values(1, 0),
-                    Point2::from_values(1, 1),
-                    Point2::from_values(0, 1),
+                    pt!(1, 0),
+                    pt!(1, 1),
+                    pt!(0, 1),
                     Real::one(),
                     Real::one(),
                     Real::from(2_i8),
@@ -36373,11 +36077,7 @@ fn exact_parallel_distances_reuse_the_certified_source_speed() {
 fn certified_circle_tangent_remains_nontransverse_after_residual_deflation() {
     for distance in [0_i8, 1] {
         let source = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(
-                Point2::from_values(0, 1 - distance),
-                Point2::from_values(1, 1 - distance),
-            )
-            .unwrap(),
+            LineSeg2::try_new(pt!(0, 1 - distance), pt!(1, 1 - distance)).unwrap(),
         );
         let parallel = source.parallel_left(Real::from(distance)).unwrap();
         let zero = Real::zero();
@@ -36409,11 +36109,7 @@ fn certified_circle_tangent_remains_nontransverse_after_residual_deflation() {
 fn circle_incidence_retains_oriented_transverse_signs() {
     for distance in [-1_i8, 0, 1] {
         let source = QuadraticBezier2::from_line_segment(
-            LineSeg2::try_new(
-                Point2::from_values(-2, -distance),
-                Point2::from_values(2, -distance),
-            )
-            .unwrap(),
+            LineSeg2::try_new(pt!(-2, -distance), pt!(2, -distance)).unwrap(),
         );
         let parallel = source.parallel_left(Real::from(distance)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -36438,17 +36134,13 @@ fn circle_incidence_retains_oriented_transverse_signs() {
 
 #[test]
 fn source_circle_incidence_does_not_require_source_regularity() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(1, 0),
-        Point2::from_values(-1, 0),
-        Point2::from_values(1, 0),
-    );
+    let source = QuadraticBezier2::new(pt!(1, 0), pt!(-1, 0), pt!(1, 0));
     let parallel = source.parallel_left(Real::zero()).unwrap();
     let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameters) = parallel
             .source_circle_incidence(
-                &Point2::from_values(1, 0),
+                &pt!(1, 0),
                 &Real::one(),
                 &CurveParameterRange2::unit(),
                 &policy,
@@ -36506,13 +36198,10 @@ fn selected_third_axis_incident_domain_stops_before_the_regular_barrier() {
 
 #[test]
 fn procedural_endpoint_chord_replays_complete_parallel_contacts() {
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(r!(1 / 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel =
+        QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1))
+            .parallel_left(Real::zero())
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let start = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
             parallel.clone(),
@@ -36521,7 +36210,7 @@ fn procedural_endpoint_chord_replays_complete_parallel_contacts() {
         ));
         let chord = match BezierAlgebraicChord2::try_new_from_certified_distinct_endpoints(
             start,
-            CurvePoint2::from(Point2::from_values(1, 0)),
+            CurvePoint2::from(pt!(1, 0)),
             &policy,
         )
         .unwrap()
@@ -36549,13 +36238,10 @@ fn procedural_endpoint_chord_replays_complete_parallel_contacts() {
 
 #[test]
 fn recursive_projective_chord_replays_nonzero_analytic_parallel() {
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(r!(1 / 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(r!(1 / 4))
-    .unwrap();
+    let parallel =
+        QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1))
+            .parallel_left(r!(1 / 4))
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let chord = dense_chord_normal_chord(
             2,
@@ -36620,22 +36306,19 @@ fn recursive_projective_chord_rejects_constant_conjugate_norm_component() {
     // sequential global resultant is identically zero. On the authored
     // lower/upper tuple the chord is nondegenerate and the selected norm
     // is a nonzero constant: the parallel line y=x+1 has no contact.
-    let parallel = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 1), Point2::from_values(1, 2)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 1), pt!(1, 2)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameters =
             algebraic_parameters(vec![Real::one(), Real::from(-8_i8), Real::from(8_i8)]);
         let [start, end] = parameters.as_slice() else {
             panic!("the diagonal endpoints must have two selected roots");
         };
-        let diagonal = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
-            vec![Real::one(), Real::one()],
-        )
-        .unwrap();
+        let diagonal =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 1)], vec![Real::one(), Real::one()])
+                .unwrap();
         let endpoint = |parameter: &BezierParameter2| {
             crate::tests::decided(
                 exact_contact_point_evidence(&diagonal, parameter, &policy).unwrap(),
@@ -36687,11 +36370,9 @@ fn recursive_projective_chord_retains_positive_degree_selected_conjugate_fiber()
         let [start, end] = parameters.as_slice() else {
             panic!("the diagonal endpoints must have two selected roots");
         };
-        let diagonal = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
-            vec![Real::one(), Real::one()],
-        )
-        .unwrap();
+        let diagonal =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 1)], vec![Real::one(), Real::one()])
+                .unwrap();
         let endpoint = |parameter: &BezierParameter2| {
             crate::tests::decided(
                 exact_contact_point_evidence(&diagonal, parameter, &policy).unwrap(),
@@ -36948,12 +36629,9 @@ fn recursive_chord_parallel_zero_norm_midpoint_is_not_a_component() {
     let quarter = q(1, 4);
     let half = q(1, 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(0, 3).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(0, 3).into(), &policy).unwrap()
+        else {
             panic!("the vertical finite chord must construct")
         };
         for chord in [chord.clone(), chord.reversed()] {
@@ -37006,9 +36684,7 @@ fn recursive_chord_parallel_zero_norm_midpoint_is_not_a_component() {
                     Classification::Decided(std::cmp::Ordering::Equal)
                 );
                 assert_eq!(
-                    contact
-                        .point()
-                        .same_point(&Point2::from_values(0, 2).into(), &policy),
+                    contact.point().same_point(&pt!(0, 2).into(), &policy),
                     Classification::Decided(true)
                 );
                 assert_eq!(contact.tangent_dot_sign(), RealSign::Zero);
@@ -37037,11 +36713,10 @@ fn recursive_projective_chord_replays_identically_zero_norm_sheet() {
             panic!("the exact horizontal chord must construct: {reason:?}")
         }
     };
-    let parallel = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(-1, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let parallel =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(-1, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::one())
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         // Squaring cannot distinguish y=1 from y=-1. Exact authored-sheet
         // replay rejects the opposite normal without manufacturing roots.
@@ -37085,13 +36760,9 @@ fn regular_rational_parallel_components_select_exterior_speed_sheets() {
     let quarter = r!(1 / 4);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for cached in [false, true] {
-            let source = QuadraticBezier2::new(
-                Point2::from_values(4, 0),
-                Point2::from_values(2, 0),
-                Point2::from_values(1, 0),
-            )
-            .parallel_left(quarter.clone())
-            .unwrap();
+            let source = QuadraticBezier2::new(pt!(4, 0), pt!(2, 0), pt!(1, 0))
+                .parallel_left(quarter.clone())
+                .unwrap();
             for reversed in [false, true] {
                 let parallel = if reversed {
                     source.reversed()
@@ -37349,9 +37020,9 @@ fn regular_ph_branch_pairs_retain_exact_cusp_incidence() {
     let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
+            pt!(0, 0),
+            pt!(0, 0),
+            pt!(0, 0),
             Point2::new(q(1, 30), Real::zero()),
             Point2::new(q(2, 15), q(1, 10)),
             Point2::new(q(2, 15), q(1, 2)),
@@ -37601,11 +37272,7 @@ fn regularized_nonconstant_ph_quotient_materializes_exact_component() {
 
 #[test]
 fn regularized_retracing_line_chord_publishes_exact_component() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, 1),
-        Point2::from_values(1, -1),
-        Point2::from_values(-1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(-1, 1), pt!(1, -1), pt!(-1, 1));
     let parallel = source.parallel_left(Real::one()).unwrap();
     let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -37719,11 +37386,11 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
     let shoulder = -((&opaque + Real::one()) * quarter);
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(shoulder.clone(), shoulder.clone()),
             Point2::new(-third.clone(), -third),
             Point2::new(shoulder.clone(), shoulder),
-            Point2::from_values(0, 0),
+            pt!(0, 0),
         ],
         vec![Real::one(); 5],
     )
@@ -37980,13 +37647,9 @@ fn opaque_retracing_line_uses_constant_direction_rank_component() {
 
 #[test]
 fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(1, -1),
-        Point2::from_values(2, 0),
-        Point2::from_values(4, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(1, -1), pt!(2, 0), pt!(4, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let half = r!(1 / 2);
         let third = r!(1 / 3);
@@ -38001,9 +37664,7 @@ fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
             unreachable!("sqrt(1/3) must remain algebraic");
         };
         let horizontal = RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(
-            QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-            ),
+            QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap()),
         ))
         .unwrap();
         let start = CurvePoint2::from(crate::tests::decided(
@@ -38059,20 +37720,15 @@ fn chord_parallel_extension_keeps_target_and_chord_domains_independent() {
 fn incident_source_circle_stops_at_the_first_projective_pole() {
     let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let increasing = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-            vec![Real::one(), half.clone()],
-        )
-        .unwrap()
-        .parallel_left(Real::zero())
-        .unwrap();
+        let increasing =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![Real::one(), half.clone()])
+                .unwrap()
+                .parallel_left(Real::zero())
+                .unwrap();
         let one_third = r!(1 / 3);
         let three_halves = r!(3 / 2);
         let decreasing = RationalBezier2::try_new(
-            vec![
-                Point2::from_values(0, 0),
-                Point2::new(one_third, Real::zero()),
-            ],
+            vec![pt!(0, 0), Point2::new(one_third, Real::zero())],
             vec![Real::one(), three_halves],
         )
         .unwrap()
@@ -38081,14 +37737,14 @@ fn incident_source_circle_stops_at_the_first_projective_pole() {
         for (parallel, center, anchor, direction, expected) in [
             (
                 increasing,
-                Point2::from_values(1, 0),
+                pt!(1, 0),
                 Real::one(),
                 BezierParameterRayDirection2::Increasing,
                 r!(8 / 5),
             ),
             (
                 decreasing,
-                Point2::from_values(0, 0),
+                pt!(0, 0),
                 Real::zero(),
                 BezierParameterRayDirection2::Decreasing,
                 (-Real::from(3_i8) / Real::from(2_i8)).unwrap(),
@@ -38120,9 +37776,9 @@ fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
     let quarter = r!(1 / 4);
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(half.clone(), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         ],
         vec![Real::one(), half, quarter],
     )
@@ -38132,7 +37788,7 @@ fn incident_rational_parabola_circle_retains_the_pre_pole_contact() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(parameters) = parallel
             .source_circle_incidence_on_incident_ray(
-                &Point2::from_values(1, 1),
+                &pt!(1, 1),
                 &Real::from(68_i8),
                 &Real::one(),
                 BezierParameterRayDirection2::Increasing,
@@ -38155,13 +37811,9 @@ fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
     let radius = r!(13 / 5);
     let height = r!(61 / 25);
     let expected = r!(6 / 5);
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(half, Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(radius)
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(0, 0), Point2::new(half, Real::zero()), pt!(1, 1))
+        .parallel_left(radius)
+        .unwrap();
     let line = LineSeg2::try_new(
         Point2::new(Real::from(-4_i8), height.clone()),
         Point2::new(Real::from(4_i8), height),
@@ -38194,9 +37846,9 @@ fn incident_parabola_parallel_line_retains_the_regular_exterior_contact() {
         let direction_x = r!(5 / 13);
         let direction_y = r!(12 / 13);
         let algebraic_parallel = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(half.clone(), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         )
         .parallel_left(half.clone())
         .unwrap();
@@ -38476,13 +38128,9 @@ fn parallel_circle_intersections_retain_exceptional_inverse_fibers() {
     let quarter = r!(1 / 4);
     let half = &quarter + &quarter;
     let three_quarters = &half + &quarter;
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(-1, 1),
-        Point2::from_values(0, -1),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(quarter.clone())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(-1, 1), pt!(0, -1), pt!(1, 1))
+        .parallel_left(quarter.clone())
+        .unwrap();
     let arc = CircularArc2::try_from_center(
         Point2::new(three_quarters.clone(), -&quarter),
         Point2::new(Real::zero(), half.clone()),
@@ -38552,9 +38200,9 @@ fn incident_parabola_parallel_circle_retains_exact_and_algebraic_contacts() {
     let half = r!(1 / 2);
     let expected = r!(6 / 5);
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     )
     .parallel_left(half)
     .unwrap();
@@ -38596,11 +38244,7 @@ fn algebraic_parallel_incident_domain_bridges_and_stops_at_speed_barrier() {
     let half = r!(1 / 2);
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let endpoint = algebraic_parameter(vec![-half.clone(), Real::zero(), Real::one()]);
-        let stationary_source = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        );
+        let stationary_source = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0));
         let parallel = stationary_source.parallel_left(Real::one()).unwrap();
         let domain = match parallel
             .incident_domain_from_parameter(
@@ -38749,23 +38393,16 @@ fn regular_parallel_orientation_reuse_rejects_ranges_crossing_cusps() {
     // P(t)=(t,t²), d=1, and y=1 have contacts t=0 and
     // beta=sqrt((7-sqrt(17))/8). Their derivative scales have opposite
     // signs because a parallel cusp lies strictly between them.
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1));
     let parallel = source.parallel_left(Real::one()).unwrap();
     let beta = ((Real::from(7_i8) - Real::from(17_i8).sqrt().unwrap()) / Real::from(8_i8))
         .unwrap()
         .sqrt()
         .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(-1, 1).into(),
-            Point2::from_values(1, 1).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(pt!(-1, 1).into(), pt!(1, 1).into(), &policy).unwrap()
+        else {
             panic!("the horizontal chord has distinct exact endpoints");
         };
         for (range, sign, expected) in [
@@ -38850,20 +38487,14 @@ fn regular_parallel_orientation_reuse_rejects_ranges_crossing_cusps() {
                 }
             }
         }
-        let singular = QuadraticBezier2::new(
-            Point2::from_values(1, 0),
-            Point2::from_values(-1, 0),
-            Point2::from_values(1, 0),
-        )
-        .parallel_left(Real::one())
-        .unwrap();
-        let pole = RationalBezier2::try_new(
-            vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
-            vec![Real::one(), -Real::one()],
-        )
-        .unwrap()
-        .parallel_left(Real::one())
-        .unwrap();
+        let singular = QuadraticBezier2::new(pt!(1, 0), pt!(-1, 0), pt!(1, 0))
+            .parallel_left(Real::one())
+            .unwrap();
+        let pole =
+            RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 1)], vec![Real::one(), -Real::one()])
+                .unwrap()
+                .parallel_left(Real::one())
+                .unwrap();
         for parallel in [singular, pole] {
             assert!(
                 parallel
@@ -39042,7 +38673,7 @@ fn closed_parallel_secants_retain_endpoints_and_both_seam_parameters() {
     let source = RationalBezier2::try_new(
         [(0, 0), (3, 0), (0, 3), (-3, 0), (0, 0)]
             .into_iter()
-            .map(|(x, y)| Point2::from_values(x, y))
+            .map(|(x, y)| pt!(x, y))
             .collect(),
         vec![Real::one(); 5],
     )
@@ -39217,13 +38848,7 @@ fn closed_parallel_turn_certificate_retains_only_the_seam() {
             for reversed in [false, true] {
                 let mut controls = [(0, 0), (3, 0), (0, 3), (-3, 0), (0, 0)]
                     .into_iter()
-                    .map(|(x, y)| {
-                        if rotated {
-                            Point2::from_values(-y, x)
-                        } else {
-                            Point2::from_values(x, y)
-                        }
-                    })
+                    .map(|(x, y)| if rotated { pt!(-y, x) } else { pt!(x, y) })
                     .collect::<Vec<_>>();
                 if reversed {
                     controls.reverse();
@@ -39579,11 +39204,7 @@ fn parallel_contact_domains_keep_independent_extensions_and_components() {
             .unwrap()
     };
     let half = r!(1 / 2);
-    let first = line_parallel(
-        Point2::from_values(0, -1),
-        Point2::from_values(1, -1),
-        Real::one(),
-    );
+    let first = line_parallel(pt!(0, -1), pt!(1, -1), Real::one());
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let first_domain = incident_domain(
             &first,
@@ -39666,11 +39287,7 @@ fn parallel_contact_domains_keep_independent_extensions_and_components() {
         // Disjoint source lines have coincident selected parallels with
         // t=u+2. Either single extension admits an interval of centers;
         // the two finite spans admit none.
-        let second = line_parallel(
-            Point2::from_values(2, 1),
-            Point2::from_values(3, 1),
-            -Real::one(),
-        );
+        let second = line_parallel(pt!(2, 1), pt!(3, 1), -Real::one());
         let second_domain = incident_domain(
             &second,
             Real::zero(),
@@ -39714,7 +39331,7 @@ fn ordered_self_contact_domains_retain_axis_roles_after_restriction() {
     let ratio = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
     let source = RationalBezier2::try_new(
         [(9, 0), (-7, 3), (-7, -10), (9, 9)]
-            .map(|(x, y)| Point2::from_values(x, y))
+            .map(|(x, y)| pt!(x, y))
             .to_vec(),
         vec![Real::one(); 4],
     )
@@ -39908,17 +39525,13 @@ fn ordered_self_contact_domains_retain_axis_roles_after_restriction() {
 
 #[test]
 fn incident_source_component_with_unequal_distances_retains_its_residual_system() {
-    let first = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(r!(1 / 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(r!(1 / 2))
-    .unwrap();
+    let first = QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1))
+        .parallel_left(r!(1 / 2))
+        .unwrap();
     let second = QuadraticBezier2::new(
-        Point2::from_values(1, 1),
+        pt!(1, 1),
         Point2::new(r!(3 / 2), Real::from(2_i8)),
-        Point2::from_values(2, 4),
+        pt!(2, 4),
     )
     .parallel_left(Real::one())
     .unwrap();
@@ -40056,14 +39669,14 @@ fn finite_parallel_pair_components_obey_exact_domain_boundaries() {
     let half = r!(1 / 2);
     let quarter = &half * &half;
     let first_source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     let second_source = QuadraticBezier2::new(
-        Point2::from_values(-2, 4),
+        pt!(-2, 4),
         Point2::new(-Real::from(3) * &half, Real::from(2)),
-        Point2::from_values(-1, 1),
+        pt!(-1, 1),
     );
     let selected = CurveParameter2::from(algebraic_parameter(vec![
         -half.clone(),
@@ -40204,14 +39817,14 @@ fn zero_distance_parallel_pairs_keep_exterior_contacts() {
     let second_range =
         CurveParameterRange2::new_validated(Real::from(2).into(), Real::from(4).into());
     let first_source = QuadraticBezier2::new(
-        Point2::from_values(-2, 0),
+        pt!(-2, 0),
         Point2::new(-r!(3 / 2), Real::zero()),
-        Point2::from_values(-1, 0),
+        pt!(-1, 0),
     );
     let second_source = QuadraticBezier2::new(
-        Point2::from_values(0, -3),
+        pt!(0, -3),
         Point2::new(Real::zero(), -r!(5 / 2)),
-        Point2::from_values(0, -2),
+        pt!(0, -2),
     );
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for first_distance in [Real::zero(), quarter.clone()] {
@@ -40256,13 +39869,9 @@ fn zero_distance_parallel_pairs_keep_exterior_contacts() {
         }
         // A zero-distance source needs no unit normal. Its stationary
         // contact at u=3 is still an exact member of the source image.
-        let stationary = QuadraticBezier2::new(
-            Point2::from_values(0, 9),
-            Point2::from_values(0, 6),
-            Point2::from_values(0, 4),
-        )
-        .parallel_left(Real::zero())
-        .unwrap();
+        let stationary = QuadraticBezier2::new(pt!(0, 9), pt!(0, 6), pt!(0, 4))
+            .parallel_left(Real::zero())
+            .unwrap();
         let first = first_source.parallel_left(Real::zero()).unwrap();
         let Classification::Decided(result) = first
             .parallel_intersections_in_domain(
@@ -40297,9 +39906,9 @@ fn mixed_zero_parallel_pairs_replay_both_exterior_domain_roles() {
     // At x=+/-3/8 the parabola tangent has speed 5/4. Its quarter
     // parallel meets y=109/320 at x=+/-9/40, both on the selected side.
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(-2, 4),
+        pt!(-2, 4),
         Point2::new(fraction(-3, 2), Real::from(2)),
-        Point2::from_values(-1, 1),
+        pt!(-1, 1),
     )
     .parallel_left(fraction(1, 4))
     .unwrap();
@@ -40406,7 +40015,7 @@ fn ordered_zero_parallel_domains_retain_exterior_loop_contacts() {
         for gauge in [1, -1] {
             let source = RationalBezier2::try_new(
                 [(9, 0), (-7, 3), (-7, -10), (9, 9)]
-                    .map(|(x, y)| Point2::from_values(x, y))
+                    .map(|(x, y)| pt!(x, y))
                     .to_vec(),
                 [gauge, -gauge, gauge, -gauge].map(Real::from).to_vec(),
             )
@@ -40492,9 +40101,9 @@ fn ordered_zero_parallel_domains_select_folded_components_and_exclude_poles() {
     .unwrap();
     let punctured = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(fraction(2, 3), Real::zero()),
-            Point2::from_values(1, 0),
+            pt!(1, 0),
         ],
         vec![Real::from(-2), fraction(-3, 2), -Real::one()],
     )
@@ -40604,13 +40213,13 @@ fn finite_analytic_self_components_retain_original_parameter_filters() {
     // normal sheet. It is not a PH source or a rational offset.
     let source = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(q(-1, 6), Real::zero()),
             Point2::new(q(-1, 3), q(1, 15)),
             Point2::new(q(-9, 20), q(1, 5)),
             Point2::new(q(-7, 15), q(4, 15)),
             Point2::new(q(-1, 3), Real::zero()),
-            Point2::from_values(0, 0),
+            pt!(0, 0),
         ],
         vec![Real::one(); 7],
     )
@@ -40718,14 +40327,9 @@ fn ordered_ph_parallel_domains_retain_same_sheet_exterior_contacts() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for cached in [false, true] {
             for reversed in [false, true] {
-                let source = CubicBezier2::new(
-                    Point2::from_values(0, 0),
-                    Point2::from_values(1, 0),
-                    Point2::from_values(2, 1),
-                    Point2::from_values(2, 3),
-                )
-                .parallel_left(fraction(-5, 2))
-                .unwrap();
+                let source = CubicBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1), pt!(2, 3))
+                    .parallel_left(fraction(-5, 2))
+                    .unwrap();
                 let parallel = if reversed { source.reversed() } else { source };
                 if cached {
                     assert!(matches!(
@@ -40834,7 +40438,7 @@ fn ordered_ph_parallel_domains_reject_a_cached_opposite_normal_contact() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parallel = RationalBezier2::try_new(
             vec![
-                Point2::from_values(0, 0),
+                pt!(0, 0),
                 Point2::new(fraction(-29, 48), Real::zero()),
                 Point2::new(fraction(-9, 8), fraction(-29, 72)),
                 Point2::new(fraction(-49, 36), fraction(-25, 24)),
@@ -40891,13 +40495,9 @@ fn ordered_ph_parallel_domains_do_not_reuse_the_wrong_speed_sheet() {
             // P(t)=((t-2)^2,0) has unit-chart speed 4-2t. Its left
             // offset is y=-1/4 for t<2 and y=1/4 for t>2. The cached
             // rational image of the first branch is not the second one.
-            let parallel = QuadraticBezier2::new(
-                Point2::from_values(4, 0),
-                Point2::from_values(2, 0),
-                Point2::from_values(1, 0),
-            )
-            .parallel_left(quarter.clone())
-            .unwrap();
+            let parallel = QuadraticBezier2::new(pt!(4, 0), pt!(2, 0), pt!(1, 0))
+                .parallel_left(quarter.clone())
+                .unwrap();
             if cached {
                 assert!(matches!(
                     parallel
@@ -41014,7 +40614,7 @@ fn nonzero_parallel_pairs_replay_exterior_weight_signs() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for gauge in [1, -1] {
             let source = RationalBezier2::try_new(
-                vec![Point2::from_values(0, 0), Point2::from_values(-1, 0)],
+                vec![pt!(0, 0), pt!(-1, 0)],
                 vec![Real::from(gauge), Real::from(-gauge)],
             )
             .unwrap()
@@ -41147,9 +40747,9 @@ fn nonzero_parallel_domains_exclude_undefined_normals_and_poles() {
     .unwrap();
     let punctured = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(fraction(2, 3), Real::zero()),
-            Point2::from_values(1, 0),
+            pt!(1, 0),
         ],
         vec![Real::from(-2), fraction(-3, 2), -Real::one()],
     )
@@ -41247,13 +40847,11 @@ fn nonzero_parallel_domains_exclude_undefined_normals_and_poles() {
 #[test]
 fn nonzero_parallel_domains_partition_poles_on_components() {
     let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
-    let source = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(-1, 0)],
-        vec![Real::one(), -Real::one()],
-    )
-    .unwrap()
-    .parallel_left(fraction(1, 4))
-    .unwrap();
+    let source =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(-1, 0)], vec![Real::one(), -Real::one()])
+            .unwrap()
+            .parallel_left(fraction(1, 4))
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for (bounds, positive, touching) in [
             (
@@ -41340,20 +40938,18 @@ fn nonzero_parallel_domains_partition_poles_on_components() {
 fn zero_parallel_domains_exclude_projective_poles() {
     let fraction = |a, b| (Real::from(a) / Real::from(b)).unwrap();
     // x=t/(1-2t) is finite on [2,3], beyond the original chart's pole.
-    let exterior = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(-1, 0)],
-        vec![Real::one(), -Real::one()],
-    )
-    .unwrap()
-    .parallel_left(Real::zero())
-    .unwrap();
+    let exterior =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(-1, 0)], vec![Real::one(), -Real::one()])
+            .unwrap()
+            .parallel_left(Real::zero())
+            .unwrap();
     // x=t(t-2)/(t-2) retains an excluded base point at t=2. Coordinate
     // equations alone also vanish there against every point of a cutter.
     let punctured = RationalBezier2::try_new(
         vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(fraction(2, 3), Real::zero()),
-            Point2::from_values(1, 0),
+            pt!(1, 0),
         ],
         vec![Real::from(-2), fraction(-3, 2), -Real::one()],
     )
@@ -41422,20 +41018,12 @@ fn zero_parallel_domains_exclude_projective_poles() {
 
 #[test]
 fn parallel_pair_tangent_replay_selects_norm_magnitude_and_direction() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     let first = source.parallel_left(Real::from(3_i8)).unwrap();
     let translated = |height| {
-        QuadraticBezier2::new(
-            Point2::from_values(0, height),
-            Point2::from_values(1, height),
-            Point2::from_values(2, height + 1),
-        )
-        .parallel_left(Real::one())
-        .unwrap()
+        QuadraticBezier2::new(pt!(0, height), pt!(1, height), pt!(2, height + 1))
+            .parallel_left(Real::one())
+            .unwrap()
     };
     let selected = translated(2);
     let wrong_norm_magnitude = translated(4);
@@ -41460,11 +41048,7 @@ fn parallel_pair_tangent_replay_selects_norm_magnitude_and_direction() {
 #[test]
 fn analytic_tangent_unit_direction_cancels_shared_point_fields() {
     let parameter = algebraic_parameter(vec![Real::from(-1), Real::zero(), Real::from(2)]);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 2),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 2));
     let speed = Real::from(3).sqrt().unwrap();
     let expected = [
         (Real::one() / &speed).unwrap(),
@@ -41531,11 +41115,7 @@ fn analytic_tangent_unit_direction_cancels_shared_point_fields() {
 
 #[test]
 fn analytic_parallel_point_retains_tangent_displacement_in_one_frame() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 0),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 0));
     let parallel = source.parallel_left(Real::from(3_i8)).unwrap();
     let parameter =
         BezierParameter2::Exact((Real::one() / Real::from(2_i8)).expect("one half is represented"));
@@ -41550,7 +41130,7 @@ fn analytic_parallel_point_retains_tangent_displacement_in_one_frame() {
     else {
         panic!("a represented orthonormal-frame point must have exact bounds");
     };
-    let expected = Point2::from_values(5, 3);
+    let expected = pt!(5, 3);
     assert_eq!(bounds.min(), &expected);
     assert_eq!(bounds.max(), &expected);
 }
@@ -41710,11 +41290,7 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
     let fifth = r!(1 / 5);
     let weight = r!(1 / 2).sqrt().unwrap();
     let source = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(-1, 0),
-            Point2::from_values(-1, 1),
-            Point2::from_values(0, 1),
-        ],
+        vec![pt!(-1, 0), pt!(-1, 1), pt!(0, 1)],
         vec![Real::one(), weight, Real::one()],
     )
     .unwrap();
@@ -41789,23 +41365,20 @@ fn irrational_circle_source_points_reuse_coordinate_and_branch_evidence() {
 #[test]
 fn recursive_parallel_interval_filter_preserves_exact_zeros() {
     let source = QuadraticBezier2::new(
-        Point2::from_values(-2, 0),
+        pt!(-2, 0),
         Point2::new(r!(-3 / 2), -Real::one()),
-        Point2::from_values(-1, -1),
+        pt!(-1, -1),
     );
     let parallel = source.parallel_left(-Real::one()).unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal anchor is regular");
         };
         let Classification::Decided(Some(circle)) =
             BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
-                Point2::from_values(0, 0).into(),
+                pt!(0, 0).into(),
                 anchor,
                 Real::one(),
                 true,
@@ -41841,11 +41414,7 @@ fn recursive_parallel_interval_filter_preserves_exact_zeros() {
 #[test]
 fn chord_normal_parallel_contacts_reuse_the_retained_center_field() {
     let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1));
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter = algebraic_parameter(vec![-Real::one(), Real::zero(), Real::from(2_i8)]);
         let center = CurvePoint2::from(BezierAnalyticParallelPoint2::new(
@@ -41853,12 +41422,9 @@ fn chord_normal_parallel_contacts_reuse_the_retained_center_field() {
             parameter.clone(),
             &policy,
         ));
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal anchor is regular");
         };
         let Classification::Decided(Some(circle)) =
@@ -41991,13 +41557,9 @@ fn chord_normal_parallel_contacts_reuse_the_retained_center_field() {
 #[test]
 fn analytic_predicate_image_keeps_its_native_field_after_scalar_cache_warms() {
     let parameter = algebraic_parameter(vec![Real::from(-1_i8), Real::zero(), Real::from(2_i8)]);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(r!(1 / 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(1, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let point = BezierAnalyticParallelPoint2::new(source.clone(), parameter.clone(), &policy);
         for warm in [false, true] {
@@ -42024,28 +41586,20 @@ fn retained_circle_crossing_proofs_keep_circle_and_parallel_orientation() {
     let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
     let root = q(1, 2).sqrt().unwrap();
     let parameter = algebraic_parameter(vec![-q(1, 2), Real::zero(), Real::one()]);
-    let axis = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
-    let target = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let axis =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
+    let target = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1))
+        .parallel_left(Real::one())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let center = BezierAnalyticParallelPoint2::new(axis.clone(), parameter.clone(), &policy)
             .translated(&(Real::one() - &root), &Real::one(), &policy)
             .unwrap();
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the frame is regular");
         };
         for reversed in [false, true] {
@@ -42114,13 +41668,13 @@ fn unseeded_circle_tangency_reuses_multiplicity_only_on_regular_branches() {
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for distance in [-1_i8, 1] {
             let source = QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
+                LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap(),
             )
             .parallel_left(Real::from(distance))
             .unwrap();
             let Classification::Decided(contacts) = source
                 .circle_incidence(
-                    &Point2::from_values(0, 2 * distance),
+                    &pt!(0, 2 * distance),
                     &Real::one(),
                     &CurveParameterRange2::unit(),
                     &[],
@@ -42136,9 +41690,9 @@ fn unseeded_circle_tangency_reuses_multiplicity_only_on_regular_branches() {
         }
         let half = r!(1 / 2);
         let source = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(half.clone(), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         )
         .parallel_left(half.clone())
         .unwrap();
@@ -42186,20 +41740,13 @@ fn retained_circle_centers_reuse_correlated_exact_scalar_views() {
     // visits the rational point (0,5/4) at both parameters.
     let parameters = algebraic_parameters(coefficients);
     assert_eq!(parameters.len(), 2);
-    let source = QuadraticBezier2::new(
-        Point2::from_values(-1, 1),
-        Point2::from_values(0, -1),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let source = QuadraticBezier2::new(pt!(-1, 1), pt!(0, -1), pt!(1, 1))
+        .parallel_left(Real::one())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("a horizontal frame is regular");
         };
         for parameter in &parameters {
@@ -42260,11 +41807,7 @@ fn retained_circle_centers_reuse_correlated_exact_scalar_views() {
 #[test]
 fn retained_parallel_normal_contacts_preserve_native_roots_and_sheets() {
     let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1));
     // P(a)=(a,a²), (1+4a²)^3=4. The left offset at distance one
     // has a cusp at this degree-six parameter. Its source is regular.
     let parameter = algebraic_parameter(vec![
@@ -42290,12 +41833,9 @@ fn retained_parallel_normal_contacts_preserve_native_roots_and_sheets() {
             parameter.clone(),
             &policy,
         ));
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal frame is regular");
         };
         for direction in [1_i8, -1_i8] {
@@ -42361,20 +41901,13 @@ fn retained_parallel_normal_contacts_preserve_native_roots_and_sheets() {
 #[test]
 fn retained_normal_contact_requires_its_undisplaced_regular_source() {
     let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::one())
-    .unwrap();
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1))
+        .parallel_left(Real::one())
+        .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
-        let Classification::Decided(anchor) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(1, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(anchor) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(1, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal frame is regular");
         };
         let parameter = BezierParameter2::Exact(Real::zero());
@@ -42457,13 +41990,9 @@ fn retained_normal_contact_requires_its_undisplaced_regular_source() {
                 .unwrap()
                 .is_none()
         );
-        let stationary = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        )
-        .parallel_left(Real::zero())
-        .unwrap();
+        let stationary = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0))
+            .parallel_left(Real::zero())
+            .unwrap();
         let singular_center =
             BezierAnalyticParallelPoint2::new(stationary.clone(), parameter.clone(), &policy);
         assert!(
@@ -42500,12 +42029,8 @@ fn chord_normal_recursive_frame_retains_center_and_oriented_unit_normal() {
             .anchor
             .clone();
         let mut cases = vec![
-            (axis, Point2::from_values(0, 0), (Real::zero(), Real::one())),
-            (
-                independent,
-                Point2::from_values(0, 0),
-                oblique_normal.clone(),
-            ),
+            (axis, pt!(0, 0), (Real::zero(), Real::one())),
+            (independent, pt!(0, 0), oblique_normal.clone()),
         ];
         let BezierParameter2::Algebraic(parameter) =
             algebraic_parameter(vec![-q(1, 17), Real::zero(), Real::one()])
@@ -42623,11 +42148,7 @@ fn chord_normal_recursive_frame_retains_center_and_oriented_unit_normal() {
 fn parallel_normal_recursive_frame_preserves_source_parameter_and_positive_speed() {
     let half = r!(1 / 2);
     let alpha = half.clone().sqrt().unwrap();
-    let polynomial = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let polynomial = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     // R(t)=(2t,t^2)/(1+t), authored in both homogeneous gauges.
     let controls = [
         crate::HomogeneousControl2::new(Real::zero(), Real::zero(), Real::one()),
@@ -42748,11 +42269,7 @@ fn selected_parallel_normal_circle_accepts_a_center_locus_cusp() {
     let q = |n: i8, d: i8| (Real::from(n) / Real::from(d)).unwrap();
     // P(t)=(t,t^2) has a regular source normal at t=0, while its
     // left parallel at distance 1/2 has zero derivative there.
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(q(1, 2), Real::zero()),
-        Point2::from_values(1, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1));
     let center_support = source.parallel_left(q(1, 2)).unwrap();
     let parameter = CurveParameter2::from(BezierParameter2::Exact(Real::zero()));
     assert_eq!(
@@ -42857,13 +42374,9 @@ fn selected_parallel_normal_circle_accepts_a_center_locus_cusp() {
         }
         // An undefined source normal remains excluded. Zero center-locus
         // speed and zero source speed are different geometric premises.
-        let stationary_source = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 1),
-        )
-        .parallel_left(q(1, 2))
-        .unwrap();
+        let stationary_source = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 1))
+            .parallel_left(q(1, 2))
+            .unwrap();
         assert!(matches!(
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
                 stationary_source,
@@ -42880,11 +42393,7 @@ fn selected_parallel_normal_circle_accepts_a_center_locus_cusp() {
 
 #[test]
 fn selected_parallel_normal_circle_retains_every_represented_point_exactly() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     let center_support = source.parallel_left(Real::one()).unwrap();
     let half = r!(1 / 2);
     let center_parameter = BezierParameter2::Exact(half.clone());
@@ -43000,19 +42509,15 @@ fn selected_parallel_normal_circle_retains_every_represented_point_exactly() {
 
 #[test]
 fn selected_parallel_normal_radial_tangent_excludes_the_complementary_half() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 0),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 0));
     let center_support = source.parallel_left(Real::zero()).unwrap();
     let center_parameter =
         BezierParameter2::Exact((Real::one() / Real::from(2_i8)).expect("one half is represented"));
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(source_chord) = BezierAlgebraicChord2::try_new(
-            CurvePoint2::from(Point2::from_values(1, 0)),
-            CurvePoint2::from(Point2::from_values(4, 4)),
+            CurvePoint2::from(pt!(1, 0)),
+            CurvePoint2::from(pt!(4, 4)),
             &policy,
         )
         .unwrap() else {
@@ -43063,11 +42568,7 @@ fn selected_parallel_normal_radial_tangent_excludes_the_complementary_half() {
 
 #[test]
 fn selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 0),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 0));
     let center_support = source.parallel_left(Real::zero()).unwrap();
     let half = r!(1 / 2);
     let center_parameter = BezierParameter2::Exact(half);
@@ -43160,11 +42661,7 @@ fn selected_parallel_normal_tangent_replay_accepts_an_exact_center_parameter() {
 
 #[test]
 fn selected_parallel_normal_circle_pair_decides_every_concentric_case() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     let center_support = source.parallel_left(Real::one()).unwrap();
     let half = r!(1 / 2);
 
@@ -43617,9 +43114,9 @@ fn finite_circle_tangent_inverse_replays_independent_cuts() {
     let half = r!(1 / 2);
     let quarter = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 1),
-            Point2::from_values(0, 1),
+            pt!(1, 0),
+            pt!(1, 1),
+            pt!(0, 1),
             Real::one(),
             Real::one(),
             Real::from(2),
@@ -44216,20 +43713,11 @@ fn mapped_point_inverse_retains_compact_sources_and_all_finite_preimages() {
     let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     let beta = q(1, 2).sqrt().unwrap().sqrt().unwrap();
     let root = beta.clone().sqrt().unwrap();
-    let line = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-        vec![Real::from(-1); 2],
-    )
-    .unwrap();
-    let fold = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        ],
-        vec![Real::one(); 3],
-    )
-    .unwrap();
+    let line =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![Real::from(-1); 2]).unwrap();
+    let fold =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(0, 0), pt!(1, 0)], vec![Real::one(); 3])
+            .unwrap();
     let mut count = 0;
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let selected =
@@ -44339,9 +43827,7 @@ fn mapped_point_inverse_retains_compact_sources_and_all_finite_preimages() {
             );
             count += 1;
         }
-        let constant =
-            RationalBezier2::try_new(vec![Point2::from_values(0, 0); 2], vec![Real::one(); 2])
-                .unwrap();
+        let constant = RationalBezier2::try_new(vec![pt!(0, 0); 2], vec![Real::one(); 2]).unwrap();
         let source = BezierAlgebraicCuspSemicircleMappedPointSource2::Rational {
             curve: constant.clone(),
             parameter,
@@ -44376,11 +43862,7 @@ fn mapped_compact_point_inverse_preserves_analytic_normal_sheet() {
     let beta = alpha.clone().sqrt().unwrap();
     let norm = (Real::one() + Real::from(4) * &alpha).sqrt().unwrap();
     let parabola = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::new(q(1, 2), Real::zero()),
-            Point2::from_values(1, 1),
-        ],
+        vec![pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1)],
         vec![Real::one(); 3],
     )
     .unwrap();
@@ -44432,19 +43914,13 @@ fn mapped_compact_point_inverse_preserves_analytic_normal_sheet() {
 fn mapped_point_inverse_uses_local_ph_sheets_and_analytic_components() {
     let q = |n: i32, d: i32| (Real::from(n) / Real::from(d)).unwrap();
     let beta = q(1, 2).sqrt().unwrap().sqrt().unwrap();
-    let pole = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 0)],
-        vec![-Real::one(), Real::one()],
-    )
-    .unwrap()
-    .parallel_left(Real::one())
-    .unwrap();
+    let pole =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0)], vec![-Real::one(), Real::one()])
+            .unwrap()
+            .parallel_left(Real::one())
+            .unwrap();
     let parabola = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::new(q(1, 2), Real::zero()),
-            Point2::from_values(1, 1),
-        ],
+        vec![pt!(0, 0), Point2::new(q(1, 2), Real::zero()), pt!(1, 1)],
         vec![Real::one(); 3],
     )
     .unwrap();
@@ -44731,9 +44207,9 @@ fn finite_circle_component_inverse_charts(
 
 fn finite_chart_unit_quarter() -> RationalBezier2 {
     RationalQuadraticBezier2::try_new(
-        Point2::from_values(1, 0),
-        Point2::from_values(1, 1),
-        Point2::from_values(0, 1),
+        pt!(1, 0),
+        pt!(1, 1),
+        pt!(0, 1),
         Real::one(),
         Real::one(),
         Real::from(2),
@@ -44802,11 +44278,9 @@ fn denominator_sign_excludes_a_pole_outside_selected_bounds() {
     else {
         panic!("the center is irrational")
     };
-    let curve = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(1, 1)],
-        vec![Real::from(3), Real::one()],
-    )
-    .unwrap();
+    let curve =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 1)], vec![Real::from(3), Real::one()])
+            .unwrap();
     assert_eq!(
         curve.denominator_sign(&CurveParameterRange2::unit()),
         Classification::Decided(RealSign::Positive)
@@ -46295,11 +45769,10 @@ fn represented_scalar_images_and_quotients_refine_past_the_old_limit() {
 #[test]
 fn resource_blocked_selected_analytic_point_materializes_at_cold_boundary() {
     let half = r!(1 / 2);
-    let parallel = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let parameter =
@@ -46783,11 +46256,7 @@ fn selected_fiber_distinct_field_equality_uses_only_the_512_bit_terminal() {
 
 #[test]
 fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel() {
-    let source_curve = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 0),
-    );
+    let source_curve = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 0));
     let rational =
         RationalBezier2::try_from_subcurve(&BezierSubcurve2::Quadratic(source_curve.clone()))
             .unwrap();
@@ -46821,10 +46290,10 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
             crate::CurveParameter2::from(BezierParameter2::Exact(Real::one())),
         ];
         let points = [
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(&first_value * Real::from(2_i8), Real::zero()),
             Point2::new(&second_value * Real::from(2_i8), Real::zero()),
-            Point2::from_values(2, 0),
+            pt!(2, 0),
         ];
 
         for (source, parallel) in sources.iter().cloned() {
@@ -46846,9 +46315,9 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
                 })
                 .collect::<Vec<_>>();
             split_fragments.extend([
-                line_fragment(Point2::from_values(2, 0), Point2::from_values(2, 2)),
-                line_fragment(Point2::from_values(2, 2), Point2::from_values(0, 2)),
-                line_fragment(Point2::from_values(0, 2), Point2::from_values(0, 0)),
+                line_fragment(pt!(2, 0), pt!(2, 2)),
+                line_fragment(pt!(2, 2), pt!(0, 2)),
+                line_fragment(pt!(0, 2), pt!(0, 0)),
             ]);
             split_fragments.rotate_left(1);
             let split_region = CurveRegion2::try_new_with_loop_topology(
@@ -46874,9 +46343,9 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
                     CurveRegionBoundaryLoop2::new(
                         vec![
                             unsplit,
-                            line_fragment(Point2::from_values(2, 0), Point2::from_values(2, 2)),
-                            line_fragment(Point2::from_values(2, 2), Point2::from_values(0, 2)),
-                            line_fragment(Point2::from_values(0, 2), Point2::from_values(0, 0)),
+                            line_fragment(pt!(2, 0), pt!(2, 2)),
+                            line_fragment(pt!(2, 2), pt!(0, 2)),
+                            line_fragment(pt!(0, 2), pt!(0, 0)),
                         ],
                         &policy,
                     )
@@ -46897,13 +46366,7 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
                 .expect("the equivalent unsplit retained carrier must offset");
             assert_eq!(split_offset.certainty, CurveCertainty::Certified);
             assert_eq!(split_offset.certainty, unsplit_offset.certainty);
-            for point in [
-                Point2::from_values(1, 1),
-                Point2::from_values(3, 1),
-                Point2::from_values(-1, 1),
-                Point2::from_values(1, 3),
-                Point2::from_values(1, -1),
-            ] {
+            for point in [pt!(1, 1), pt!(3, 1), pt!(-1, 1), pt!(1, 3), pt!(1, -1)] {
                 assert_eq!(
                     split_offset
                         .value
@@ -46931,11 +46394,7 @@ fn selected_fiber_offset_coalesces_boolean_only_cuts_through_one_parallel_kernel
 
 #[test]
 fn selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate_request() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     let center_support = source.parallel_left(Real::one()).unwrap();
     let half = r!(1 / 2);
     let Classification::Decided(Some(circle)) =
@@ -46967,11 +46426,10 @@ fn selected_parallel_normal_circle_retains_strict_replay_after_exact_approximate
 
 #[test]
 fn selected_parallel_normal_circle_uses_direct_exact_winding() {
-    let support = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let support =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let half = r!(1 / 2);
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -46989,65 +46447,39 @@ fn selected_parallel_normal_circle_uses_direct_exact_winding() {
         };
         let fragment = BezierAlgebraicCuspSemicircleFragment2::full(circle, &policy);
         assert_eq!(
-            fragment
-                .contains_point(&Point2::from_values(0, 0).into(), &policy)
-                .unwrap(),
+            fragment.contains_point(&pt!(0, 0).into(), &policy).unwrap(),
             Classification::Decided(true),
         );
         assert_eq!(
-            fragment
-                .contains_point(&Point2::from_values(2, 0).into(), &policy)
-                .unwrap(),
+            fragment.contains_point(&pt!(2, 0).into(), &policy).unwrap(),
+            Classification::Decided(false),
+        );
+        assert_eq!(
+            fragment.contains_point(&pt!(1, 0).into(), &policy).unwrap(),
             Classification::Decided(false),
         );
         assert_eq!(
             fragment
-                .contains_point(&Point2::from_values(1, 0).into(), &policy)
-                .unwrap(),
-            Classification::Decided(false),
-        );
-        assert_eq!(
-            fragment
-                .forward_ray_winding_delta(
-                    &Point2::from_values(-2, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(-2, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Decided(-1),
         );
         assert_eq!(
             fragment
-                .forward_ray_winding_delta(
-                    &Point2::from_values(2, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(2, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Decided(0),
         );
         assert_eq!(
             fragment
-                .forward_ray_winding_delta(
-                    &Point2::from_values(0, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(0, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Uncertain(UncertaintyReason::Boundary),
         );
         assert_eq!(
             fragment
                 .reversed()
-                .forward_ray_winding_delta(
-                    &Point2::from_values(-2, 0),
-                    &Real::one(),
-                    &Real::zero(),
-                    &policy,
-                )
+                .forward_ray_winding_delta(&pt!(-2, 0), &Real::one(), &Real::zero(), &policy,)
                 .unwrap(),
             Classification::Decided(1),
         );
@@ -47056,16 +46488,14 @@ fn selected_parallel_normal_circle_uses_direct_exact_winding() {
 
 #[test]
 fn selected_parallel_contact_map_orders_the_exact_angular_parameter() {
-    let anchor = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
-    let contact = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, -1), Point2::from_values(0, 1)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let anchor =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
+    let contact =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, -1), pt!(0, 1)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let half = r!(1 / 2);
     let quarter = r!(1 / 4);
     let three_quarters = &half + &quarter;
@@ -47127,8 +46557,8 @@ fn selected_parallel_contact_map_orders_the_exact_angular_parameter() {
             else {
                 panic!("the represented line-frame contact must have exact bounds");
             };
-            assert_eq!(bounds.min(), &Point2::from_values(0, 0));
-            assert_eq!(bounds.max(), &Point2::from_values(0, 0));
+            assert_eq!(bounds.min(), &pt!(0, 0));
+            assert_eq!(bounds.max(), &pt!(0, 0));
         }
         let Classification::Decided(bracket) = parameter.parameter_bracket(8, &policy).unwrap()
         else {
@@ -47146,9 +46576,9 @@ fn local_parallel_endpoint_clipping_reuses_a_coefficient_root() {
     let half = q(1, 2);
     let polynomial = vec![-half.clone(), Real::zero(), Real::one()];
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     )
     .parallel_left(q(1, 4))
     .unwrap();
@@ -47630,11 +47060,10 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
     )
     .parallel_left(Real::zero())
     .unwrap();
-    let anchor = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let anchor =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let one = DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::one()]).unwrap();
     let field = RecursiveQuadraticField::base(
         vec![AlgebraicRootRepresentation::from_exact_value(&Real::zero())],
@@ -47743,13 +47172,10 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
             panic!("the local normal-frame center must be an exact point")
         };
         assert_eq!(
-            center.same_point(&Point2::from_values(0, 0).into(), &policy),
+            center.same_point(&pt!(0, 0).into(), &policy),
             Classification::Decided(true)
         );
-        for (parameter, expected) in [
-            (Real::zero(), Point2::from_values(-1, 0)),
-            (Real::one(), Point2::from_values(1, 0)),
-        ] {
+        for (parameter, expected) in [(Real::zero(), pt!(-1, 0)), (Real::one(), pt!(1, 0))] {
             let Classification::Decided(point) =
                 local_frame.point_evidence_at(&parameter, &policy).unwrap()
             else {
@@ -47760,12 +47186,9 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
                 Classification::Decided(true)
             );
         }
-        let Classification::Decided(chord) = BezierAlgebraicChord2::try_new(
-            Point2::from_values(0, 0).into(),
-            Point2::from_values(2, 0).into(),
-            &policy,
-        )
-        .unwrap() else {
+        let Classification::Decided(chord) =
+            BezierAlgebraicChord2::try_new(pt!(0, 0).into(), pt!(2, 0).into(), &policy).unwrap()
+        else {
             panic!("the horizontal anchor must construct")
         };
         let circles = [
@@ -47778,7 +47201,7 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
             )
             .unwrap(),
             BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
-                Point2::from_values(1, 0).into(),
+                pt!(1, 0).into(),
                 chord,
                 Real::one(),
                 false,
@@ -47840,7 +47263,7 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
                 panic!("the local contact must publish its analytic point")
             };
             assert_eq!(
-                point.same_point(&Point2::from_values(0, 0).into(), &policy),
+                point.same_point(&pt!(0, 0).into(), &policy),
                 Classification::Decided(true)
             );
             assert_eq!(
@@ -47859,11 +47282,7 @@ fn retained_parallel_contact_keeps_local_root_through_angular_and_point_queries(
 
 #[test]
 fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1));
     let center_support = source.parallel_left(Real::one()).unwrap();
     let half = r!(1 / 2);
     let quarter = r!(1 / 4);
@@ -47956,16 +47375,13 @@ fn selected_parallel_normal_circle_intersects_rational_curves_exactly() {
 fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact() {
     let half = r!(1 / 2);
     let root_three_half = (Real::from(3_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
-    let support = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
-    let cutter = RationalBezier2::try_new(
-        vec![Point2::from_values(0, -1), Point2::from_values(0, 1)],
-        vec![Real::one(), Real::one()],
-    )
-    .unwrap();
+    let support =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
+    let cutter =
+        RationalBezier2::try_new(vec![pt!(0, -1), pt!(0, 1)], vec![Real::one(), Real::one()])
+            .unwrap();
     for (policy, consume_terminal) in [
         (CurveContext::STRICT, false),
         (CurveContext::APPROXIMATE_512, false),
@@ -48102,25 +47518,19 @@ fn selected_parallel_normal_circle_keeps_contacts_when_center_refines_to_exact()
 
 #[test]
 fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fiber() {
-    let support = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let support =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let cutter = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(-1, 0),
-            Point2::from_values(1, 0),
-            Point2::from_values(3, 0),
-        ],
+        vec![pt!(-1, 0), pt!(1, 0), pt!(3, 0)],
         vec![Real::one(), Real::one(), Real::one()],
     )
     .unwrap();
-    let independent_parallel = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let independent_parallel =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let half = r!(1 / 2);
     let quarter = r!(1 / 4);
 
@@ -48224,7 +47634,7 @@ fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fibe
             panic!("the selected-fiber rational point must refine exactly");
         };
         assert_eq!(
-            bounds.contains_point_with_policy(&Point2::from_values(0, 0), &policy),
+            bounds.contains_point_with_policy(&pt!(0, 0), &policy),
             Classification::Decided(false),
         );
 
@@ -48259,11 +47669,10 @@ fn selected_parallel_normal_circle_retains_general_rational_contacts_in_one_fibe
 #[test]
 fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
     let half = r!(1 / 2);
-    let support = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let support =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let line = LineSeg2::try_new(
         Point2::new(Real::from(-2_i8), half.clone()),
         Point2::new(Real::from(4_i8), half.clone()),
@@ -48377,13 +47786,9 @@ fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
         // `4 + 4t^2`, so this exercises homogeneous polynomial replay in
         // the retained field rather than a constant-line shortcut or a
         // global scalar projection.
-        let incident_parallel = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-            Point2::from_values(2, 1),
-        )
-        .parallel_left(Real::zero())
-        .unwrap();
+        let incident_parallel = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1))
+            .parallel_left(Real::zero())
+            .unwrap();
         assert_eq!(
             parameter
                 .polynomial_sign(&[Real::from(4_i8), Real::zero(), Real::from(4_i8)], &policy,)
@@ -48585,8 +47990,8 @@ fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
                 &policy,
             ),
         );
-        let end_point = CurvePoint2::from(Point2::from_values(2, 0));
-        let apex = CurvePoint2::from(Point2::from_values(2, 1));
+        let end_point = CurvePoint2::from(pt!(2, 0));
+        let apex = CurvePoint2::from(pt!(2, 1));
         let selected = BezierSplitFragment2::SelectedFiber(
             crate::bezier_split::BezierSelectedFiberFragment2::new(
                 crate::bezier_split::BezierSelectedFiberSource2::AnalyticParallel(support.clone()),
@@ -48602,7 +48007,7 @@ fn selected_center_line_contact_stays_in_recursive_quadratic_solver() {
             start: BezierParameter2::Exact(Real::zero()),
             end: BezierParameter2::Exact(Real::one()),
             curve: BezierSubcurve2::Quadratic(QuadraticBezier2::from_line_segment(
-                LineSeg2::try_new(Point2::from_values(2, 0), Point2::from_values(2, 1)).unwrap(),
+                LineSeg2::try_new(pt!(2, 0), pt!(2, 1)).unwrap(),
             )),
         };
         let Classification::Decided(closing) =
@@ -48693,8 +48098,7 @@ fn weighted_selected_center_tangent_line_stays_recursive() {
     let center_distance = ratio(1, 3);
     let radius = ratio(2, 3);
     let support = source.parallel_left(center_distance).unwrap();
-    let tangent_line =
-        LineSeg2::try_new(Point2::from_values(-1, 1), Point2::from_values(1, 1)).unwrap();
+    let tangent_line = LineSeg2::try_new(pt!(-1, 1), pt!(1, 1)).unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         let Classification::Decided(polynomial) =
@@ -48725,7 +48129,7 @@ fn weighted_selected_center_tangent_line_stays_recursive() {
                     .unwrap()
             )
             .exact_point(&CurveContext::STRICT),
-            Some(Point2::from_values(0, 0)),
+            Some(pt!(0, 0)),
         );
         let Classification::Decided(Some(circle)) =
             BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
@@ -48802,7 +48206,7 @@ fn weighted_selected_center_tangent_line_stays_recursive() {
         assert_eq!(
             contact
                 .point
-                .same_point(&CurvePoint2::from(Point2::from_values(0, 1),), &policy,),
+                .same_point(&CurvePoint2::from(pt!(0, 1),), &policy,),
             Classification::Decided(true),
         );
     }
@@ -48818,26 +48222,18 @@ fn recursive_projective_center_projects_complete_nonlinear_fixed_distance() {
     let coordinate =
         DenseTensorPolynomial::from_axis_polynomial(1, 0, &[Real::zero(), Real::one()])
             .expect("the shallow recursive base must retain its coordinate");
-    let curved_source_parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-        Point2::from_values(2, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let curved_source_parallel = QuadraticBezier2::new(pt!(0, 0), pt!(1, 0), pt!(2, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
     let setback = r!(1 / 16);
     let setback_squared = &setback * &setback;
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for parallel in [
             curved_source_parallel.clone(),
-            QuadraticBezier2::new(
-                Point2::from_values(0, 0),
-                Point2::new(r!(1 / 2), Real::zero()),
-                Point2::from_values(2, 0),
-            )
-            .parallel_left(r!(1 / 4))
-            .unwrap(),
+            QuadraticBezier2::new(pt!(0, 0), Point2::new(r!(1 / 2), Real::zero()), pt!(2, 0))
+                .parallel_left(r!(1 / 4))
+                .unwrap(),
         ] {
             let field = RecursiveQuadraticField::base(
                 vec![center_source.clone()],
@@ -49038,9 +48434,9 @@ fn selected_parallel_normal_circle_retains_general_rational_overlaps_in_one_fibe
     // quarter circle must be proven in the selected fiber rather than by
     // the rational-frame circle fast path.
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -49318,16 +48714,14 @@ fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
     let half = r!(1 / 2);
     let quarter = r!(1 / 4);
     let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     );
     let parallel = source.parallel_left(quarter).unwrap();
-    let query_curve = RationalBezier2::try_new(
-        vec![Point2::from_values(0, 0), Point2::from_values(0, 1)],
-        vec![Real::one(), Real::one()],
-    )
-    .unwrap();
+    let query_curve =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(0, 1)], vec![Real::one(), Real::one()])
+            .unwrap();
 
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         assert!(matches!(
@@ -49426,9 +48820,9 @@ fn genuine_parallel_algebraic_ray_replays_the_unsquared_branch() {
 fn selected_parallel_normal_circle_reuses_rationalized_analytic_parallel_components() {
     let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -49945,9 +49339,9 @@ fn selected_parallel_normal_incident_circle_selects_the_positive_speed_component
     // x(u)=u+u^2 and alpha^2+alpha=1/2 retain a genuinely
     // algebraic selected center at (1/2, 0).
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -50037,9 +49431,9 @@ fn selected_source_range_retains_incident_endpoint_and_contacts_locally() {
     // P(u)=(u,0). The unit circle centered at u=1/4+2s meets
     // [2s,2s+2] once, at u=5/4+2s, including exterior source ranges.
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(1, 0),
+        pt!(1, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -50442,11 +49836,10 @@ fn selected_fiber_positive_dimensional_projection_reports_authored_continuum() {
     let half = r!(1 / 2);
     let zero = BivariatePolynomial::new(vec![vec![Real::zero()]]);
     let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
-    let target = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let target =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     let system = BezierParallelFixedDistanceSystem2 {
         incidence: zero.clone(),
         center_speed_squared: one.clone(),
@@ -50541,13 +49934,9 @@ fn algebraic_center_fixed_distance_projects_complete_high_degree_fiber() {
 fn fixed_distance_retains_selected_candidates_in_both_range_orientations() {
     let half = r!(1 / 2);
     let quarter = &half * &half;
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::new(Real::zero(), half),
-        Point2::from_values(1, 1),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(0, 0), Point2::new(Real::zero(), half), pt!(1, 1))
+        .parallel_left(Real::zero())
+        .unwrap();
     // P(t)=(t^2,t), with alpha^11=1/4096. The quarter-unit
     // setback has two contacts inside [1/4,3/4]. Degree eleven keeps
     // their selected fibers local, so reversing the search interval
@@ -50623,9 +50012,9 @@ fn algebraic_center_fixed_distance_covers_adjacent_and_incident_ray() {
     // fixed-distance circle centered at P(alpha) with r^2=2 contains
     // P(-alpha), strictly beyond the decreasing endpoint ray.
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -50673,13 +50062,9 @@ fn algebraic_center_fixed_distance_stops_before_speed_barrier() {
     // P(t)=(t^2,0) has its first decreasing speed barrier at t=0.
     // The unit-distance mate t=-sqrt(3/2) is therefore on a different
     // regular component and must not leak into endpoint extension.
-    let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 0),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let parallel = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0))
+        .parallel_left(Real::zero())
+        .unwrap();
     let center = algebraic_parameter(vec![-half, Real::zero(), Real::one()]);
     let range = CurveParameterRange2::new_validated(center.clone().into(), Real::one().into());
 
@@ -50704,9 +50089,9 @@ fn selected_fiber_center_retains_nonlinear_fixed_distance_incident_cut() {
     let half = r!(1 / 2);
     let setback = Real::from(2_i8).sqrt().unwrap();
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(1, 1),
+        pt!(1, 1),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -50770,9 +50155,9 @@ fn high_degree_quadratic_selected_center_stays_local_on_nonlinear_carrier() {
     let half = r!(1 / 2);
     let setback = r!(1 / 10);
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(2, 1),
+        pt!(2, 1),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -51046,9 +50431,9 @@ fn selected_fiber_center_replays_nonlinear_two_normal_fixed_distance() {
     let half = r!(1 / 2);
     let setback = (Real::from(17_i8).sqrt().unwrap() / Real::from(2_i8)).unwrap();
     let parallel = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::zero(), half.clone()),
-        Point2::from_values(2, 1),
+        pt!(2, 1),
     )
     .parallel_left(r!(3 / 4))
     .unwrap();
@@ -51104,9 +50489,9 @@ fn selected_fiber_fixed_distance_descends_from_conjugate_circle_component() {
     // radius-two, chord-two mate on one finite chart.
     let source = RationalBezier2::from(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, -1),
-            Point2::from_values(0, -1),
+            pt!(1, 0),
+            pt!(1, -1),
+            pt!(0, -1),
             Real::one(),
             Real::from(-1_i8),
             Real::from(2_i8),
@@ -51205,17 +50590,16 @@ fn selected_fiber_fixed_distance_descends_from_conjugate_circle_component() {
 #[test]
 fn selected_parallel_normal_circle_intersects_genuinely_analytic_parallel_in_one_fiber() {
     let half = r!(1 / 2);
-    let exact_support = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(1, 0)).unwrap(),
-    )
-    .parallel_left(Real::zero())
-    .unwrap();
+    let exact_support =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(1, 0)).unwrap())
+            .parallel_left(Real::zero())
+            .unwrap();
     // x(u)=u+u^2 and alpha^2+alpha=1/2 retain a genuinely
     // algebraic center parameter while placing the circle at (1/2, 0).
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -51674,9 +51058,9 @@ fn algebraic_selected_fiber_incident_chart_preserves_affine_authority() {
 fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
     let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -51786,8 +51170,8 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
                 LineSeg2::try_new(start, end).unwrap(),
             )),
         };
-        let upper_right = Point2::from_values(4, 3);
-        let lower_right = Point2::from_values(4, -3);
+        let upper_right = pt!(4, 3);
+        let lower_right = pt!(4, -3);
         let target_boundary = CurveRegionBoundaryLoop2::new(
             vec![
                 BezierSplitFragment2::AnalyticParallel(target_fragment),
@@ -51848,9 +51232,9 @@ fn selected_fiber_genuinely_analytic_contacts_complete_region_booleans() {
 fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
     let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -52011,9 +51395,9 @@ fn selected_fiber_rational_circle_overlaps_complete_region_booleans() {
 fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
     let half = r!(1 / 2);
     let support = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(half.clone(), Real::zero()),
-        Point2::from_values(2, 0),
+        pt!(2, 0),
     )
     .parallel_left(Real::zero())
     .unwrap();
@@ -52185,11 +51569,7 @@ fn selected_fiber_analytic_circle_overlaps_complete_region_booleans() {
 
 #[test]
 fn exact_parallel_similarity_transports_points_derivatives_and_structure() {
-    let source = QuadraticBezier2::new(
-        Point2::from_values(0, 0),
-        Point2::from_values(1, 2),
-        Point2::from_values(3, 1),
-    );
+    let source = QuadraticBezier2::new(pt!(0, 0), pt!(1, 2), pt!(3, 1));
     let distance = r!(1 / 2);
     let parallel = source.parallel_left(distance).unwrap();
     let transform = Similarity2::try_from_real_affine(
@@ -52252,9 +51632,8 @@ fn exact_parallel_similarity_transports_points_derivatives_and_structure() {
 
 #[test]
 fn exact_parallel_reflection_negates_scaled_left_distance() {
-    let source = QuadraticBezier2::from_line_segment(
-        LineSeg2::try_new(Point2::from_values(0, 0), Point2::from_values(2, 0)).unwrap(),
-    );
+    let source =
+        QuadraticBezier2::from_line_segment(LineSeg2::try_new(pt!(0, 0), pt!(2, 0)).unwrap());
     let parallel = source.parallel_left(Real::from(2_i8)).unwrap();
     let reflection = Similarity2::try_from_real_affine(
         Real::from(-3_i8),
@@ -58885,15 +58264,15 @@ fn qualified_chord_displacement_retains_direction_dependency() {
     let outcome = crate::evaluate_under(crate::PredicatePolicy::APPROXIMATE_512, || {
         let mut chord = decided(
             BezierAlgebraicChord2::try_new(
-                Point2::from_values(0, 0).into(),
-                Point2::from_values(1, 0).into(),
+                pt!(0, 0).into(),
+                pt!(1, 0).into(),
                 &CurveContext::STRICT,
             )
             .unwrap(),
         );
         assert!(chord.certified_unit_tangent().is_some());
         Arc::make_mut(&mut chord.data).policy = CurveContext::APPROXIMATE_512;
-        let origin = CurvePoint2::from(Point2::from_values(2, 2));
+        let origin = CurvePoint2::from(pt!(2, 2));
         for normal in [false, true] {
             let point = if normal {
                 chord.normal_displaced_point_evidence(
@@ -58947,11 +58326,9 @@ fn qualified_chord_displacement_retains_direction_dependency() {
 fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
     use crate::tests::decided;
     let policy = CurveContext::STRICT;
-    let origin = CurvePoint2::from(Point2::from_values(0, 0));
-    let anchor = decided(
-        BezierAlgebraicChord2::try_new(origin.clone(), Point2::from_values(1, 0).into(), &policy)
-            .unwrap(),
-    );
+    let origin = CurvePoint2::from(pt!(0, 0));
+    let anchor =
+        decided(BezierAlgebraicChord2::try_new(origin.clone(), pt!(1, 0).into(), &policy).unwrap());
     let circle = decided(
         BezierAlgebraicCuspSemicircle2::from_retained_center_and_chord_normal(
             origin.clone(),
@@ -58963,7 +58340,7 @@ fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
         .unwrap(),
     )
     .unwrap();
-    let endpoint = CurvePoint2::from(Point2::from_values(1, 0));
+    let endpoint = CurvePoint2::from(pt!(1, 0));
     assert_eq!(
         circle
             .retained_point_incidence_sign(&endpoint, &policy)
@@ -59009,7 +58386,7 @@ fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
         };
         for (actual, (x, y)) in [&ray.start, &ray.end].into_iter().zip(endpoints) {
             assert_eq!(
-                actual.same_point(&Point2::from_values(x, y).into(), &policy),
+                actual.same_point(&pt!(x, y).into(), &policy),
                 Classification::Decided(true)
             );
         }
@@ -59017,7 +58394,7 @@ fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
         for (point, expected) in [
             (Point2::new(root.clone(), root.clone()), true),
             (Point2::new(-root.clone(), -root), false),
-            (Point2::from_values(0, 1), false),
+            (pt!(0, 1), false),
         ] {
             assert_eq!(
                 ray.contains_point_for_point(&point.into(), &policy)
@@ -59027,7 +58404,7 @@ fn mapped_circle_cut_ray_retains_concentric_offsets_and_reversal() {
         }
         assert_eq!(
             ray.forward_ray_winding_delta_for_point(
-                &Point2::from_values(-3, 1).into(),
+                &pt!(-3, 1).into(),
                 &Real::one(),
                 &Real::zero(),
                 false,

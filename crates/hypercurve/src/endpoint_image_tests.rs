@@ -9,15 +9,14 @@ fn policy() -> CurveContext {
     CurveContext::STRICT
 }
 
-fn decided<T>(classification: Classification<T>) -> T {
-    match classification {
-        Classification::Decided(value) => value,
-        Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-    }
-}
+use crate::test_support::{decided, decided_ok};
 
 fn interval(start: Real, end: Real) -> BezierParameterInterval {
-    decided(BezierParameterInterval::try_new_with_policy(start, end, &policy()).unwrap())
+    decided_ok(BezierParameterInterval::try_new_with_policy(
+        start,
+        end,
+        &policy(),
+    ))
 }
 
 fn isolate(
@@ -31,7 +30,7 @@ fn isolate(
 }
 
 fn p(x: i32, y: i32) -> Point2 {
-    Point2::from_values(x, y)
+    pt!(x, y)
 }
 
 fn polynomial(coefficients: Vec<Real>) -> BezierParameterPolynomial {
@@ -136,7 +135,7 @@ fn polynomial_point_images_share_exact_replay_across_coefficient_domains() {
                 BezierAlgebraicEndpointImage2::quadratic(&quadratic, &root, &policy).unwrap(),
             );
             let cubic_endpoint =
-                decided(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy).unwrap());
+                decided_ok(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy));
             for (image, endpoint, expected) in [
                 (
                     decided(
@@ -148,12 +147,12 @@ fn polynomial_point_images_share_exact_replay_across_coefficient_domains() {
                     Point2::new(&coefficient * q(1, 2), sqrt_two.clone()),
                 ),
                 (
-                    decided(cubic.point_at_algebraic_parameter(&root, &policy).unwrap()),
+                    decided_ok(cubic.point_at_algebraic_parameter(&root, &policy)),
                     &cubic_endpoint,
                     Point2::new(&coefficient * &sqrt_two * q(1, 4), &sqrt_two * q(3, 2)),
                 ),
             ] {
-                for point in [image, decided(endpoint.point().unwrap()).clone()] {
+                for point in [image, decided_ok(endpoint.point()).clone()] {
                     let outcome = CurvePoint2::from(point)
                         .coincides_with_with_policy(&CurvePoint2::from(expected.clone()), &policy);
                     assert_eq!(outcome.certainty, CurveCertainty::Certified);
@@ -185,7 +184,7 @@ fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
                 BezierAlgebraicEndpointImage2::quadratic(&quadratic, &root, &policy).unwrap(),
             );
             let cubic_endpoint =
-                decided(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy).unwrap());
+                decided_ok(BezierAlgebraicEndpointImage2::cubic(&cubic, &root, &policy));
             assert!(quadratic_endpoint.is_exact());
             assert!(cubic_endpoint.is_exact());
             assert!(quadratic_endpoint.third_derivative().is_none());
@@ -196,7 +195,7 @@ fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
                             .tangent_at_algebraic_parameter(&root, &policy)
                             .unwrap(),
                     ),
-                    decided(quadratic_endpoint.tangent().unwrap()),
+                    decided_ok(quadratic_endpoint.tangent()),
                     &coefficient * &sqrt_two,
                     r(2),
                 ),
@@ -216,7 +215,7 @@ fn polynomial_endpoint_derivatives_replay_exact_values_in_the_shared_carrier() {
                             .tangent_at_algebraic_parameter(&root, &policy)
                             .unwrap(),
                     ),
-                    decided(cubic_endpoint.tangent().unwrap()),
+                    decided_ok(cubic_endpoint.tangent()),
                     &coefficient * q(3, 2),
                     r(3),
                 ),
@@ -303,7 +302,7 @@ fn rational_derivative_images_require_finite_affine_domain() {
             conic.derivatives_at_algebraic_parameter(&pole, 0, &policy),
             general.derivatives_at_algebraic_parameter(&pole, 0, &policy),
         ] {
-            assert!(decided(images.unwrap()).is_empty());
+            assert!(decided_ok(images).is_empty());
         }
         for (value, expected) in [
             (q(1, 4), [(-8, -16), (-64, -192), (-768, -3072)]),
@@ -324,7 +323,7 @@ fn rational_derivative_images_require_finite_affine_domain() {
                     conic.derivatives_at_algebraic_parameter(&parameter, 3, &policy),
                     general.derivatives_at_algebraic_parameter(&parameter, 3, &policy),
                 ] {
-                    let images = decided(images.unwrap());
+                    let images = decided_ok(images);
                     assert_eq!(images.len(), 3);
                     for (order, image) in images.iter().enumerate() {
                         check(image, order + 1);
@@ -338,7 +337,7 @@ fn rational_derivative_images_require_finite_affine_domain() {
                         .derivatives_at_algebraic_parameter(&parameter, 1, &policy)
                         .map(|c| c.map(|mut images| images.remove(0))),
                 ] {
-                    check(&decided(image.unwrap()), 1);
+                    check(&decided_ok(image), 1);
                 }
                 check(
                     &decided(
@@ -353,8 +352,8 @@ fn rational_derivative_images_require_finite_affine_domain() {
                     BezierAlgebraicEndpointImage2::rational_quadratic(&conic, &parameter, &policy),
                     BezierAlgebraicEndpointImage2::rational(&general, &parameter, &policy),
                 ] {
-                    let endpoint = decided(endpoint.unwrap());
-                    check(decided(endpoint.tangent().unwrap()), 1);
+                    let endpoint = decided_ok(endpoint);
+                    check(decided_ok(endpoint.tangent()), 1);
                     check(endpoint.second_derivative().unwrap(), 2);
                     check(endpoint.third_derivative().unwrap(), 3);
                     assert!(endpoint.is_exact());

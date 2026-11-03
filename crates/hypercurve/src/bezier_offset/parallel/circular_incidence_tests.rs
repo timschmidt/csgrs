@@ -30,13 +30,7 @@ fn circular_source(center: &Point2, weight: i32) -> RationalBezier2 {
 #[test]
 fn circular_component_does_not_fill_a_stationary_normal_parameter() {
     let policy = CurveContext::STRICT;
-    let arc = crate::CircularArc2::try_from_center(
-        Point2::from_values(1, 0),
-        Point2::from_values(0, 1),
-        Point2::from_values(0, 0),
-        false,
-    )
-    .unwrap();
+    let arc = crate::CircularArc2::try_from_center(pt!(1, 0), pt!(0, 1), pt!(0, 0), false).unwrap();
     let (implicit, circle) = crate::arc_bezier::circular_conic_provenance(&arc);
     // C(s)=((1-s²)/(1+s²),2s/(1+s²)), s=4t³-6t²+3t.
     // This chart is injective, but ds/dt=3(2t-1)² vanishes at t=1/2.
@@ -82,7 +76,7 @@ fn circular_native_components_preserve_normal_side_and_contacts() {
     let policy = CurveContext::STRICT;
     let epsilon = (Real::one() / Real::from(1_000_000_000_000_i64)).unwrap();
     for center in [
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
     ] {
         let source = circular_source(&center, 1);
@@ -137,7 +131,7 @@ fn circular_native_components_preserve_normal_side_and_contacts() {
         let first = source.parallel_left(q(1, 4)).unwrap();
         for gap in [Real::zero(), epsilon.clone()] {
             let other_center = center.translated(q(3, 2) + &gap, Real::zero());
-            let other = circular_source(&Point2::from_values(0, 0), 1)
+            let other = circular_source(&pt!(0, 0), 1)
                 .transformed_affine([
                     &-Real::one(),
                     &Real::zero(),
@@ -173,7 +167,7 @@ fn circular_native_components_preserve_normal_side_and_contacts() {
 fn circular_parallel_incidence_keeps_points_order_and_normal_sheet() {
     let policy = CurveContext::STRICT;
     for center in [
-        Point2::from_values(0, 0),
+        pt!(0, 0),
         Point2::new(Real::from(2).sqrt().unwrap(), Real::from(3).sqrt().unwrap()),
     ] {
         for degree in [2, 5] {
@@ -306,19 +300,14 @@ fn circular_parallel_incidence_keeps_points_order_and_normal_sheet() {
 
 #[test]
 fn circular_parallel_recognition_defers_extensions_collapse_and_overlap() {
-    let center = Point2::from_values(0, 0);
+    let center = pt!(0, 0);
     let source = circular_source(&center, 1);
     let parallel = source.parallel_left(q(1, 2)).unwrap();
     let policy = CurveContext::STRICT;
     let extension = CurveParameterRange2::new_validated(Real::from(-1).into(), Real::one().into());
     assert!(
         parallel
-            .retained_circular_source_incidence(
-                &Point2::from_values(1, 0),
-                &q(1, 4),
-                &extension,
-                &policy
-            )
+            .retained_circular_source_incidence(&pt!(1, 0), &q(1, 4), &extension, &policy)
             .unwrap()
             .is_none()
     );
@@ -337,7 +326,7 @@ fn circular_parallel_recognition_defers_extensions_collapse_and_overlap() {
         parallel
             .with_distance(Real::one())
             .retained_circular_source_incidence(
-                &Point2::from_values(1, 0),
+                &pt!(1, 0),
                 &Real::one(),
                 &CurveParameterRange2::unit(),
                 &policy
@@ -369,7 +358,7 @@ fn circular_parallel_internal_tangency_retains_the_original_parameter() {
     let parallel = source.parallel_left(q(1, 16)).unwrap();
     let Classification::Decided(contacts) = parallel
         .circle_incidence_with_point_evidence(
-            &Point2::from_values(0, 0),
+            &pt!(0, 0),
             &q(81, 256),
             &CurveParameterRange2::unit(),
             &[],
@@ -389,7 +378,7 @@ fn circular_parallel_internal_tangency_retains_the_original_parameter() {
     assert!(matches!(
         parallel
             .circle_incidence_with_point_evidence(
-                &Point2::from_values(0, 0),
+                &pt!(0, 0),
                 &q(81, 256),
                 &CurveParameterRange2::unit(),
                 &[(q(6, 7), 0)],
@@ -402,7 +391,7 @@ fn circular_parallel_internal_tangency_retains_the_original_parameter() {
 
 #[test]
 fn circular_parallel_incidence_certifies_the_selected_trim_boundary() {
-    let parallel = circular_source(&Point2::from_values(0, 0), 1)
+    let parallel = circular_source(&pt!(0, 0), 1)
         .parallel_left(q(1, 2))
         .unwrap();
     let parameter = BezierParameter2::Algebraic(
@@ -462,7 +451,7 @@ fn circular_parallel_incidence_certifies_the_selected_trim_boundary() {
 #[test]
 fn circular_parallel_incidence_retries_after_exhausted_trim_comparison() {
     let policy = CurveContext::STRICT;
-    let parallel = circular_source(&Point2::from_values(0, 0), 1)
+    let parallel = circular_source(&pt!(0, 0), 1)
         .parallel_left(q(1, 2))
         .unwrap();
     let parameter = BezierParameter2::Algebraic(

@@ -6670,12 +6670,7 @@ mod tests {
 
     #[test]
     fn finite_line_roots_preserve_tangency_crossing_and_denominator_sign() {
-        fn decided<T>(value: Classification<T>) -> T {
-            match value {
-                Classification::Decided(value) => value,
-                Classification::Uncertain(reason) => panic!("{reason:?}"),
-            }
-        }
+        use crate::test_support::decided;
         let ratio = |n, d| (Real::from(n) / Real::from(d)).unwrap();
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for sign in [-1, 1] {

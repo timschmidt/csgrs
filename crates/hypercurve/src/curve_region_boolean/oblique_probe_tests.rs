@@ -74,8 +74,8 @@ fn cubic_path(y: [i32; 2]) -> CurvePath2 {
     );
     CurvePath2::try_new(vec![
         source.curves()[0].clone(),
-        line(Point2::from_values(1, 3), Point2::from_values(1, -3)),
-        line(Point2::from_values(1, -3), Point2::from_values(-1, -3)),
+        line(pt!(1, 3), pt!(1, -3)),
+        line(pt!(1, -3), pt!(-1, -3)),
     ])
     .unwrap()
 }

@@ -124,3 +124,26 @@ pub(crate) fn under_outcome_classification<T>(
     under_outcome_classified(policy, evaluate)
         .unwrap_or_else(|error| panic!("exact predicate rejected its input: {error:?}"))
 }
+
+/// The decided value of a test classification. Uncertainty fails the test at
+/// the caller, naming its reason.
+#[track_caller]
+pub(crate) fn decided<T>(classification: hypercurve::Classification<T>) -> T {
+    match classification {
+        hypercurve::Classification::Decided(value) => value,
+        hypercurve::Classification::Uncertain(reason) => {
+            panic!("unexpected uncertainty: {reason:?}")
+        }
+    }
+}
+
+/// [`decided`] of a successful result; an error fails the test at the caller.
+#[track_caller]
+pub(crate) fn decided_ok<T, E: std::fmt::Debug>(
+    result: Result<hypercurve::Classification<T>, E>,
+) -> T {
+    match result {
+        Ok(classification) => decided(classification),
+        Err(error) => panic!("unexpected error: {error:?}"),
+    }
+}

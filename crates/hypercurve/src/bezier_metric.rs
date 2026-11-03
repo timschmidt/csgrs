@@ -734,12 +734,7 @@ mod tests {
         QuadraticBezier2::new(point(0, 0), point(1, 0), point(2, 0))
     }
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("unexpected uncertainty: {reason:?}"),
-        }
-    }
+    use crate::test_support::decided;
 
     #[test]
     fn inverse_length_zero_target_returns_zero_parameter_certificate() {

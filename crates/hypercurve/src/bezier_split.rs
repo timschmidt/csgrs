@@ -2827,12 +2827,7 @@ mod finite_conic_split_regression {
         (Real::from(n) / Real::from(d)).unwrap()
     }
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("conic operation undecided: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     #[test]
     fn finite_conic_split_retains_zero_intermediate_homogeneous_weight() {
@@ -2852,7 +2847,7 @@ mod finite_conic_split_regression {
                 )
                 .unwrap();
                 let (native_left, native_right) =
-                    decided(conic.split_at_exact_native(q(2, 3), &policy).unwrap());
+                    decided_ok(conic.split_at_exact_native(q(2, 3), &policy));
                 assert!(
                     matches!(&native_left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
                 );
@@ -2968,7 +2963,7 @@ mod finite_conic_split_regression {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // D(t)=1-4t/5+4t²/5 > 0 everywhere. The exterior cut creates
             // a zero middle weight without a pole or a change of support.
-            let (left, right) = decided(conic.split_at_exact_native(q(5, 2), &policy).unwrap());
+            let (left, right) = decided_ok(conic.split_at_exact_native(q(5, 2), &policy));
             assert!(
                 matches!(&left, BezierSubcurve2::Rational(curve) if curve.affine_control_points().is_none())
             );
@@ -3017,7 +3012,7 @@ mod finite_conic_split_regression {
                 conic.split_at_exact_with_policy(2.into(), &policy).unwrap(),
                 Classification::Uncertain(UncertaintyReason::Boundary)
             ));
-            let (left, _) = decided(conic.split_at_exact_native(3.into(), &policy).unwrap());
+            let (left, _) = decided_ok(conic.split_at_exact_native(3.into(), &policy));
             let rational = RationalBezier2::try_from_subcurve(&left).unwrap();
             assert!(matches!(
                 rational.denominator_sign(&crate::CurveParameterRange2::unit()),

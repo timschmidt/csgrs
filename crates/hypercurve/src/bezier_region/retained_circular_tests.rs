@@ -261,9 +261,9 @@ fn retained_semicircle_and_major_arc_keep_their_sweep() {
     let half = rational(1, 2);
     let major = BezierSubcurve2::RationalQuadratic(
         RationalQuadraticBezier2::try_new(
-            Point2::from_values(1, 0),
-            Point2::from_values(1, -1),
-            Point2::from_values(0, -1),
+            pt!(1, 0),
+            pt!(1, -1),
+            pt!(0, -1),
             Real::one(),
             -half.clone().sqrt().unwrap(),
             Real::one(),
@@ -273,14 +273,14 @@ fn retained_semicircle_and_major_arc_keep_their_sweep() {
     for (source, start, end, expected) in [
         (
             semicircle_source(2),
-            Point2::from_values(1, 0),
-            Point2::from_values(-1, 0),
+            pt!(1, 0),
+            pt!(-1, 0),
             &half * Real::pi(),
         ),
         (
             major,
-            Point2::from_values(1, 0),
-            Point2::from_values(0, -1),
+            pt!(1, 0),
+            pt!(0, -1),
             rational(3, 4) * Real::pi() + half,
         ),
     ] {
@@ -328,11 +328,7 @@ fn native_fragment_view_rejects_unproved_exterior_traversal_and_general_curves()
         BezierParameter2::Exact(Real::zero()),
     );
     let general = fragment(
-        BezierSubcurve2::Quadratic(QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 2),
-            Point2::from_values(2, 0),
-        )),
+        BezierSubcurve2::Quadratic(QuadraticBezier2::new(pt!(0, 0), pt!(1, 2), pt!(2, 0))),
         BezierParameter2::Exact(Real::zero()),
         BezierParameter2::Exact(Real::one()),
     );

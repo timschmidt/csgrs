@@ -18,15 +18,8 @@ mod chord_overlap_transport_tests {
         Point2::new(x, Real::zero()).into()
     }
     fn source() -> RationalBezier2 {
-        RationalBezier2::try_new(
-            vec![
-                Point2::from_values(0, 0),
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 0),
-            ],
-            vec![Real::one(); 3],
-        )
-        .unwrap()
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(0, 0), pt!(1, 0)], vec![Real::one(); 3])
+            .unwrap()
     }
     fn overlap(reversed: bool, policy: &CurveContext) -> BezierAlgebraicChordRationalOverlap2 {
         let chord = exact(
@@ -206,12 +199,7 @@ mod parallel_normal_source_angle_tests {
     use super::*;
     use std::cmp::Ordering;
 
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("exact fixture: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
 
     #[test]
     fn selected_chord_parallel_normal_angles_use_source_direction() {
@@ -220,9 +208,9 @@ mod parallel_normal_source_angle_tests {
         // parallel has the opposite tangent there: Q'(0)=(-1,0). Both
         // normal frames still use the source's upward unit normal.
         let source = BezierParallelSource2::Quadratic(QuadraticBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(q(1, 2), Real::zero()),
-            Point2::from_values(1, 1),
+            pt!(1, 1),
         ));
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             for distance in [0, 1] {
@@ -253,7 +241,7 @@ mod parallel_normal_source_angle_tests {
                         } else {
                             decided(
                                 BezierAlgebraicChord2::try_new(
-                                    Point2::from_values(0, 0).into(),
+                                    pt!(0, 0).into(),
                                     Point2::new(tangent.0.clone(), tangent.1.clone()).into(),
                                     &policy,
                                 )
@@ -307,8 +295,7 @@ mod parallel_normal_source_angle_tests {
                                 contact.same_point(&expected, &policy),
                                 Classification::Decided(true)
                             );
-                            let evaluated =
-                                decided(circle.point_evidence_at(&q(1, 4), &policy).unwrap());
+                            let evaluated = decided_ok(circle.point_evidence_at(&q(1, 4), &policy));
                             assert_eq!(
                                 evaluated.same_point(&expected, &policy),
                                 Classification::Decided(true)
@@ -338,14 +325,9 @@ mod regular_parallel_contact_tests {
         (Real::from(n) / Real::from(d)).unwrap()
     }
     fn p(x: i64, y: i64) -> Point2 {
-        Point2::from_values(x, y)
+        pt!(x, y)
     }
-    fn decided<T>(value: Classification<T>) -> T {
-        match value {
-            Classification::Decided(value) => value,
-            Classification::Uncertain(reason) => panic!("regular-cell query blocked: {reason:?}"),
-        }
-    }
+    use crate::test_support::{decided, decided_ok};
     #[test]
     fn primitive_source_frames_share_factorization_across_distances_and_branches() {
         // C(t)=(t²,t³), t=2u-1. Its one-sided normals at u=1/2
@@ -481,7 +463,7 @@ mod regular_parallel_contact_tests {
                                 .singularity_analysis_with_policy(&range, &policy)
                                 .unwrap(),
                         );
-                        let cells = decided(analysis.regular_subranges(&policy).unwrap());
+                        let cells = decided_ok(analysis.regular_subranges(&policy));
                         assert_eq!(cells.len(), expected.len() - 1);
                         // The outer endpoints retain their exact parameter
                         // authorities, even when the query traversed them backwards.
@@ -491,7 +473,7 @@ mod regular_parallel_contact_tests {
                             for (actual, expected) in
                                 [cell.start(), cell.end()].into_iter().zip(endpoints)
                             {
-                                assert!(decided(actual.same_value(expected, &policy).unwrap()));
+                                assert!(decided_ok(actual.same_value(expected, &policy)));
                             }
                         }
                     }
@@ -548,7 +530,7 @@ mod regular_parallel_contact_tests {
                             assert_eq!(result.components.len(), 1);
                             let component = &result.components[0];
                             assert!(matches!(
-                                decided(component.constrain([None, None], &policy).unwrap()),
+                                decided_ok(component.constrain([None, None], &policy)),
                                 NeedsConstraint
                             ));
                             for (value, included) in [
@@ -561,7 +543,7 @@ mod regular_parallel_contact_tests {
                                     let constraints =
                                         [0, 1].map(|index| (index == axis).then_some(&parameter));
                                     let selection =
-                                        decided(component.constrain(constraints, &policy).unwrap());
+                                        decided_ok(component.constrain(constraints, &policy));
                                     if !included {
                                         assert!(matches!(selection, Empty));
                                         continue;
@@ -868,7 +850,7 @@ mod regular_parallel_contact_tests {
                 };
                 let value = Real::from(if stationary_chart { 2 } else { 4 });
                 let parameter: CurveParameter2 = value.clone().into();
-                let center: CurvePoint2 = Point2::from_values(-4, 17).into();
+                let center: CurvePoint2 = pt!(-4, 17).into();
                 // Q(4)=B(2)=(4,16) for Q(t)=(t,t²), B(u)=Q(u²).
                 // Its normal times sqrt(65) is (-8,1).
                 // The second source is R90(B)+(13,21), so both parallels
@@ -915,11 +897,11 @@ mod regular_parallel_contact_tests {
     fn general_regular_pair_replays_unequal_contact_scale_changes() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             let points = vec![
-                Point2::from_values(0, 0),
-                Point2::from_values(0, 0),
+                pt!(0, 0),
+                pt!(0, 0),
                 Point2::new(q(1, 6), Real::zero()),
                 Point2::new(q(1, 2), Real::zero()),
-                Point2::from_values(1, 1),
+                pt!(1, 1),
             ];
             let other = points
                 .iter()
@@ -1306,8 +1288,8 @@ mod regular_parallel_contact_tests {
                             } else {
                                 (overlap.first_range(), overlap.second_range())
                             };
-                            let first = decided(first.ordered_endpoints(&policy).unwrap());
-                            let second = decided(second.ordered_endpoints(&policy).unwrap());
+                            let first = decided_ok(first.ordered_endpoints(&policy));
+                            let second = decided_ok(second.ordered_endpoints(&policy));
                             for ((u, v), x) in first.into_iter().zip(second).zip([q(1, 4), q(3, 4)])
                             {
                                 assert_eq!(
@@ -1959,20 +1941,12 @@ mod finite_domain_ownership_tests {
         use CurveParameterComponentSelection2::{Empty, NeedsConstraint, Selected};
         // Offsets of (u²,0) and ((1-v)²,0) agree at (u²,-1) on
         // the selected sides of their stationary ends, with v=1-u.
-        let first = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        )
-        .parallel_left(-Real::one())
-        .unwrap();
-        let second = QuadraticBezier2::new(
-            Point2::from_values(1, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-        )
-        .parallel_left(Real::one())
-        .unwrap();
+        let first = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0))
+            .parallel_left(-Real::one())
+            .unwrap();
+        let second = QuadraticBezier2::new(pt!(1, 0), pt!(0, 0), pt!(0, 0))
+            .parallel_left(Real::one())
+            .unwrap();
         let first_range = CurveParameterRange2::new_validated(Real::zero().into(), q(1, 2).into());
         let second_range = CurveParameterRange2::new_validated(q(1, 2).into(), Real::one().into());
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
@@ -2047,7 +2021,7 @@ mod retained_structural_pair_domain_regression {
 
     #[test]
     fn retained_structural_correspondence_preserves_off_diagonal_contact_domains() {
-        let point = |x, y| Point2::from_values(x, y);
+        let point = |x, y| pt!(x, y);
         let source = CubicBezier2::new(point(0, 0), point(1, 4), point(3, -4), point(4, 0));
         let half = r!(1 / 2);
         let parallel = source.parallel_left(half.clone()).unwrap();
@@ -2138,7 +2112,7 @@ mod incident_offset_cusp_side_regression {
 
     fn cusp_parallel() -> BezierParallel2 {
         CubicBezier2::new(
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(q(1, 3), Real::zero()),
             Point2::new(q(2, 3), q(1, 3)),
             Point2::new(q(2, 3), Real::one()),
@@ -2255,19 +2229,11 @@ mod incident_offset_cusp_side_regression {
 
     #[test]
     fn incident_cusp_side_does_not_create_undefined_or_collapsed_tangents() {
-        let stationary = QuadraticBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-        )
-        .parallel_left(Real::one())
-        .unwrap();
+        let stationary = QuadraticBezier2::new(pt!(0, 0), pt!(0, 0), pt!(1, 0))
+            .parallel_left(Real::one())
+            .unwrap();
         let pole = RationalBezier2::try_new(
-            vec![
-                Point2::from_values(0, 0),
-                Point2::from_values(1, 1),
-                Point2::from_values(2, 0),
-            ],
+            vec![pt!(0, 0), pt!(1, 1), pt!(2, 0)],
             vec![4.into(), 2.into(), 1.into()],
         )
         .unwrap()
@@ -2276,11 +2242,7 @@ mod incident_offset_cusp_side_regression {
         // P(t)=((1-t²)/(1+t²),2t/(1+t²)); its unit left parallel
         // is the circle center for every parameter, not a tangent branch.
         let collapsed = RationalBezier2::try_new(
-            vec![
-                Point2::from_values(1, 0),
-                Point2::from_values(1, 1),
-                Point2::from_values(0, 1),
-            ],
+            vec![pt!(1, 0), pt!(1, 1), pt!(0, 1)],
             vec![1.into(), 1.into(), 2.into()],
         )
         .unwrap()
@@ -2319,12 +2281,7 @@ mod structural_overlap_trace_regression {
 
     fn reparameterized_offset(policy: CurveContext, reversed: bool) {
         let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
-        let source = CubicBezier2::new(
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 4),
-            Point2::from_values(3, -4),
-            Point2::from_values(4, 0),
-        );
+        let source = CubicBezier2::new(pt!(0, 0), pt!(1, 4), pt!(3, -4), pt!(4, 0));
         let half = q(1, 2);
         let reference = source.parallel_left(half.clone()).unwrap();
         let Classification::Decided(reference_contacts) = reference
@@ -2342,13 +2299,13 @@ mod structural_overlap_trace_regression {
         // It preserves the source trace, selected left normal, and all offset
         // crossings without introducing stationary source points or poles.
         let controls = vec![
-            Point2::from_values(0, 0),
+            pt!(0, 0),
             Point2::new(q(1, 4), Real::one()),
             Point2::new(q(13, 20), q(9, 5)),
             Point2::new(q(101, 80), q(33, 20)),
             Point2::new(q(43, 20), q(-1, 5)),
             Point2::new(q(13, 4), Real::from(-3)),
-            Point2::from_values(4, 0),
+            pt!(4, 0),
         ];
         let reparameterized = RationalBezier2::try_new(controls, vec![Real::one(); 7]).unwrap();
         let parallel = reparameterized.parallel_left(half.clone()).unwrap();
@@ -2461,7 +2418,7 @@ mod structural_overlap_trace_regression {
 #[test]
 fn collinear_chords_on_distinct_parameter_axes_compare_traversal_exactly() {
     let policy = CurveContext::STRICT;
-    let point = |x: i32, y: i32| CurvePoint2::from(Point2::from_values(x, y));
+    let point = |x: i32, y: i32| CurvePoint2::from(pt!(x, y));
     // Along y = -3x/2, traversed toward +y (and -x).
     let owner = BezierAlgebraicChord2::from_certified_monotone_axis_endpoints(
         point(0, 0),
@@ -2525,11 +2482,7 @@ mod cancelled_chord_displacement_tests {
     fn cancelled_chord_displacements_are_their_source_endpoints() {
         for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
             // The unit normal of (1, 2) needs sqrt(5).
-            let base = chord(
-                Point2::from_values(0, 0).into(),
-                Point2::from_values(1, 2).into(),
-                &policy,
-            );
+            let base = chord(pt!(0, 0).into(), pt!(1, 2).into(), &policy);
             let dilated = base.parallel_left_retained(q(1, 16), &policy).unwrap();
             let closed = dilated.parallel_left_retained(q(-1, 16), &policy).unwrap();
             let shifted = dilated.parallel_left_retained(q(-1, 32), &policy).unwrap();

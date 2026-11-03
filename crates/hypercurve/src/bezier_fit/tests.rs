@@ -9,13 +9,7 @@ fn unit_circle() -> (
     std::sync::Arc<[Real; 6]>,
     std::sync::Arc<crate::rational_bezier::RationalQuadraticCircle2>,
 ) {
-    let arc = CircularArc2::try_from_center(
-        Point2::from_values(1, 0),
-        Point2::from_values(0, 1),
-        Point2::from_values(0, 0),
-        false,
-    )
-    .unwrap();
+    let arc = CircularArc2::try_from_center(pt!(1, 0), pt!(0, 1), pt!(0, 0), false).unwrap();
     crate::arc_bezier::circular_conic_provenance(&arc)
 }
 
@@ -23,9 +17,9 @@ fn native_circle(gauge: i32) -> RationalQuadraticBezier2 {
     let (implicit, circle) = unit_circle();
     // C(t)=((1-t²)/(1+t²),2t/(1+t²)), independently a unit circle.
     RationalQuadraticBezier2::try_new(
-        Point2::from_values(1, 0),
-        Point2::from_values(1, 1),
-        Point2::from_values(0, 1),
+        pt!(1, 0),
+        pt!(1, 1),
+        pt!(0, 1),
         Real::from(gauge),
         Real::from(gauge),
         Real::from(2 * gauge),
@@ -169,25 +163,19 @@ fn retraced_images_do_not_acquire_a_segment_fit() {
     // s=4t(1-t) traverses the same circular arc twice.
     let retraced = RationalBezier2::try_new(
         vec![
-            Point2::from_values(1, 0),
-            Point2::from_values(1, 2),
+            pt!(1, 0),
+            pt!(1, 2),
             Point2::new(q(-5, 11), q(8, 11)),
-            Point2::from_values(1, 2),
-            Point2::from_values(1, 0),
+            pt!(1, 2),
+            pt!(1, 0),
         ],
         vec![Real::one(), Real::one(), q(11, 3), Real::one(), Real::one()],
     )
     .unwrap()
     .with_implicit_quadratic_conic(implicit, Some(circle));
-    let line = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-            Point2::from_values(0, 0),
-        ],
-        vec![Real::one(); 3],
-    )
-    .unwrap();
+    let line =
+        RationalBezier2::try_new(vec![pt!(0, 0), pt!(1, 0), pt!(0, 0)], vec![Real::one(); 3])
+            .unwrap();
     for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
         for curve in [&retraced, &line] {
             assert!(matches!(
@@ -222,8 +210,8 @@ fn mixed_weights_and_singular_circle_charts_keep_typed_declines() {
     let (implicit, circle) = unit_circle();
     // s=3t/(1-2t): W=1-4t+13t²>0, yet Bernstein weights have mixed signs.
     let native = RationalQuadraticBezier2::try_new(
-        Point2::from_values(1, 0),
-        Point2::from_values(1, -3),
+        pt!(1, 0),
+        pt!(1, -3),
         Point2::new(q(-4, 5), q(-3, 5)),
         Real::one(),
         -Real::one(),
@@ -274,11 +262,7 @@ fn similarity_and_ordinary_line_controls_preserve_continuation() {
     let transformed = source.transform_similarity(&transform);
     drop(source);
     let line = RationalBezier2::try_new(
-        vec![
-            Point2::from_values(0, 0),
-            Point2::from_values(1, 0),
-            Point2::from_values(2, 0),
-        ],
+        vec![pt!(0, 0), pt!(1, 0), pt!(2, 0)],
         vec![Real::one(), Real::from(2), Real::one()],
     )
     .unwrap();
@@ -304,8 +288,8 @@ fn similarity_and_ordinary_line_controls_preserve_continuation() {
             panic!("ordinary exact line image")
         };
         let offset = fitted.offset_left_exact(Real::one()).unwrap();
-        assert_eq!(offset.line().start(), &Point2::from_values(0, 1));
-        assert_eq!(offset.line().end(), &Point2::from_values(2, 1));
+        assert_eq!(offset.line().start(), &pt!(0, 1));
+        assert_eq!(offset.line().end(), &pt!(2, 1));
     }
 }
 
@@ -316,7 +300,7 @@ fn native_arc_producers_preserve_nonconstant_tiny_circle_images() {
             let arc = CircularArc2::try_from_center(
                 Point2::new(radius.clone(), Real::zero()),
                 Point2::new(Real::zero(), radius),
-                Point2::from_values(0, 0),
+                pt!(0, 0),
                 false,
             )
             .unwrap();
@@ -353,8 +337,8 @@ fn unresolved_collapsed_circle_keeps_policy_qualification() {
     // The angle-addition identity makes this exactly the point (1,0), but
     // its endpoint equality is deliberately beyond bounded normalization.
     let native = RationalQuadraticBezier2::try_new(
-        Point2::from_values(1, 0),
-        Point2::from_values(1, 0),
+        pt!(1, 0),
+        pt!(1, 0),
         Point2::new(Real::one() + zero, Real::zero()),
         Real::one(),
         Real::one(),
