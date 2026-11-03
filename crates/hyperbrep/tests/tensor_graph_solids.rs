@@ -1258,3 +1258,45 @@ fn shared_wall_differences_leave_holed_ring_graph_solids() {
         assert_eq!(&cold_solid.classify_point(point).unwrap(), expected);
     }
 }
+
+/// A Boolean result reused as the next operand: the holed ring left by the
+/// z <= 1/2 shared-wall difference, cut by the slab z <= 5/4, keeps its holed
+/// base, gains four corner caps, and its tensor still dips below the base
+/// inside the hole. The profile-only certificate admits it with caps, and the
+/// volume is the integral of min(x² + y², 5/4) - 1/2 outside the disk,
+/// slab cut volume - 6 + pi/8.
+#[test]
+fn capped_rings_chain_profile_certified_tensor_graphs() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let block = builder::cuboid(pi(-1, -1, -1), Point3::new(1.into(), 1.into(), q(1, 2))).unwrap();
+    let ring = boolean::difference(&body, &block).unwrap();
+    let slab = builder::cuboid(pi(-2, -2, -2), Point3::new(2.into(), 2.into(), q(5, 4))).unwrap();
+    let capped = boolean::intersection(&ring, &slab).unwrap();
+    assert_eq!((capped.len(), capped.model().faces().count()), (1, 10));
+    let solid = capped.bodies().next().unwrap();
+    assert_within(
+        &solid.volume().unwrap(),
+        &(slab_cut_volume() - Real::from(6) + (Real::pi() / Real::from(8)).unwrap()),
+    );
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    for (point, expected) in [
+        (p(n(9, 10), 0.into(), n(7, 10)), SolidPointLocation::Inside),
+        (p(n(9, 10), n(9, 10), n(6, 5)), SolidPointLocation::Inside),
+        (p(n(9, 10), n(9, 10), n(5, 4)), SolidPointLocation::Boundary),
+        (
+            p(n(9, 10), n(9, 10), n(13, 10)),
+            SolidPointLocation::Outside,
+        ),
+        (p(n(9, 10), 0.into(), n(2, 5)), SolidPointLocation::Outside),
+        (p(0.into(), 0.into(), n(3, 5)), SolidPointLocation::Outside),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    let json = capped.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+}

@@ -129,8 +129,10 @@ impl ArenaModelBuilder {
                 .map(|wire| self.build_wire_curve_path(*wire))
                 .collect::<Result<Vec<_>, _>>()?;
             if !top_surface.certify_tensor_graph(&origin, &u, &v, &direction)?
-                && !(caps.is_empty()
-                    && top_above_base_on_profile(
+                // The profile-only certificate fixes the tensor's sign over the
+                // whole base profile, so caps (each certified above the base)
+                // do not affect it.
+                && !(top_above_base_on_profile(
                         &base_surface,
                         &top_surface,
                         (&origin, &u, &v, &direction),

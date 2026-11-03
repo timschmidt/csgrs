@@ -4758,6 +4758,31 @@
       "validation": "New witness shared_wall_differences_leave_holed_ring_graph_solids: one six-face ring over the base z = 1/2 with a circular base hole; volume within 10^-30 of 2/3 + pi/8 (= 20/3 - (6 - pi/8)); probes inside, on base and top, above, below, over the hole and on the seam classify exactly before and after byte-identical cold replay. Mutations ignoring base holes in classification, refusing holed bases, dropping hole curves from the section-boundary check, or ignoring holes when locating the interior point each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 808 passes and debug tests 800 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the thirteen tensor-graph tests complete in about 1.4 s in release.",
       "limits": "Capped shells still need whole-patch positivity. Non-circular, non-elliptical curved trims, tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "profile-certified-capped-graphs-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "The profile-only positivity certificate for tensor-graph tops now also applies to capped shells: it fixes the tensor's sign over the whole base profile, and caps are certified above the base separately, so a capped shell whose tensor dips below the base outside the profile (for example inside a base hole) is admitted.",
+      "source": [
+        "../src/topology/validation/tensor_graph.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness capped_rings_chain_profile_certified_tensor_graphs reuses the z <= 1/2 shared-wall ring difference as an operand and cuts it by the slab z <= 5/4: one ten-face solid with a holed base and four corner caps whose tensor dips below the base inside the hole; its volume is within 10^-30 of slab cut volume - 6 + pi/8 (the integral of min(x^2 + y^2, 5/4) - 1/2 outside the disk), probes classify exactly, and it replays cold byte-identically. Restoring the uncapped-only restriction fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 809 passes and debug tests 801 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the fourteen tensor-graph tests complete in about 1.5 s in release.",
+      "limits": "Non-circular, non-elliptical curved trims, tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
