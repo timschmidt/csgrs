@@ -40,6 +40,7 @@ mod selected_pcurves;
 mod spline;
 mod surface_point;
 mod tensor_graph;
+pub(crate) use tensor_graph::{GraphTrim, circular_arc_of};
 mod tensor_image;
 pub(crate) use tensor_image::certified_scalar_point;
 mod torus_atlas;

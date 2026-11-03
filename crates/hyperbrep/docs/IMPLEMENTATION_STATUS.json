@@ -4645,6 +4645,31 @@
       "validation": "New witness shared_wall_blocks_cut_closed_sections_into_holed_caps with the block [-1,1]^2 x [-1,1/2]: the intersection (seven faces: a tensor disk and a cap with a circular hole, min(x^2 + y^2, 1/2)) and the union (eleven faces: a disk cap inside a holed tensor face, max(x^2 + y^2, 1/2)) classify nine exact probes each, including the rational seam point (1/2, 1/2), before and after byte-identical cold replay; both volumes are typed. Mutations ignoring cap holes in classification, refusing holed caps, or removing the not-proved-equal stitching arm each fail the witness; an exact parameterization-equality proof for such planar-image edges was dropped because the witness does not need it. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 805 passes and debug tests 797 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the ten tensor-graph tests complete in about 1.2 s in release.",
       "limits": "Holed-cap and curved-trim volumes stay typed. The difference with this block (a ring whose thickness vanishes on the section circle) is not admitted by any certified solid class. No work package or pre-push gate closes."
+    },
+    {
+      "id": "circular-trim-graph-volumes-2026-11-03",
+      "work_packages": [
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Capped tensor-graph volume measures circular trims exactly. A curve that is a polynomial branch of a circle A(x^2 + y^2) + Dx + Ey + F = 0 under a similarity view, with certified scalar endpoints, yields a native CircularArc2 view used only for measurement (center and radius from the defining polynomial through the view; direction from the start/middle/end turn). Cap areas use it in exact contours (holes subtracted), and the tensor faces' Green integral along such UV arcs expands H(a + r cos t, b + r sin t)(-r sin t) into cosine/sine monomials integrated exactly by the standard reductions from the directed sweep and endpoint cosines and sines.",
+      "source": [
+        "../src/geometry/tensor_graph.rs",
+        "../src/geometry.rs",
+        "../src/topology/measure.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "Volumes are checked within 10^-30 by exact comparison against independent closed forms: the slab cut and the shared-wall z <= 5/4 intersection equal 91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5) (derived with SymPy and confirmed by a 30-digit numerical integral), the z <= 5/4 intersection and union sum to 47/3, and the z <= 1/2 union and holed-cap intersection equal 20/3 + pi/8 and 6 - pi/8. Two witnesses that asserted these volumes as typed UnsupportedMeasurement now assert the exact values. Mutations removing the arc view, the arc Green integral, the arc direction, the hole subtraction or the sweep sign each fail witnesses. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 805 passes and debug tests 797 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the ten tensor-graph tests complete in about 1.1 s in release.",
+      "limits": "Non-circular curved trims, unequal-weight tops and caps whose boundaries are not lines or circle branches remain typed. Curved-face (tensor) area is still unsupported. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

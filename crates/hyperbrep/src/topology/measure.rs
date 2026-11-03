@@ -688,10 +688,16 @@ impl ArenaModel {
                         for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
                             let edge_use = self.edge_use(*use_id).expect("validated edge use");
                             let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
-                            segments.push(
-                                straight_pcurve_segment(pcurve.curve())?
-                                    .ok_or(GeometryError::UnsupportedMeasurement)?,
-                            );
+                            // Straight trims integrate polynomially; circular
+                            // trims (native views of circle branches) integrate
+                            // trigonometrically from their exact sweep.
+                            segments.push(match straight_pcurve_segment(pcurve.curve())? {
+                                Some((start, end)) => crate::geometry::GraphTrim::Line(start, end),
+                                None => crate::geometry::GraphTrim::Arc(
+                                    crate::geometry::circular_arc_of(pcurve.curve())?
+                                        .ok_or(GeometryError::UnsupportedMeasurement)?,
+                                ),
+                            });
                         }
                         loops.push(segments);
                     }
@@ -708,22 +714,41 @@ impl ArenaModel {
                 let a_form = graph.v.cross(&graph.direction);
                 let b_form = graph.direction.cross(&graph.u);
                 let path_area = |path: &CurvePath2| -> Result<Real, QueryError> {
-                    Ok(crate::error::classified(
-                        path.boundary_loop()
-                            .map_err(GeometryError::from)?
-                            .signed_area(),
-                    )
-                    .map_err(GeometryError::from)
-                    .and_then(resolve_planar_classification)?
-                    .ok_or(GeometryError::UnsupportedMeasurement)?
-                    .abs())
+                    if let Ok(contour) = path.boundary_loop()
+                        && let Some(area) = crate::error::classified(contour.signed_area())
+                            .map_err(GeometryError::from)
+                            .and_then(resolve_planar_classification)?
+                    {
+                        return Ok(area.abs());
+                    }
+                    // Circle-branch boundaries measure through their exact
+                    // native arc views; the boundary curves stay authoritative.
+                    let mut segments = Vec::with_capacity(path.curves().len());
+                    for curve in path.curves() {
+                        segments.push(match curve.geometry() {
+                            Some(hypercurve::CurveGeometry2::Line(line)) => {
+                                hypercurve::Segment2::Line(line.clone())
+                            }
+                            _ => hypercurve::Segment2::Arc(
+                                crate::geometry::circular_arc_of(curve)?
+                                    .ok_or(GeometryError::UnsupportedMeasurement)?,
+                            ),
+                        });
+                    }
+                    let contour = hypercurve::Contour2::try_new(segments)
+                        .map_err(|_| GeometryError::UnsupportedMeasurement)?;
+                    Ok(contour
+                        .signed_area()
+                        .map_err(|_| GeometryError::UnsupportedMeasurement)?
+                        .ok_or(GeometryError::UnsupportedMeasurement)?
+                        .abs())
                 };
                 for cap in &graph.caps {
-                    // Holed caps have no measured straight-trim witness yet.
-                    if !cap.holes.is_empty() {
-                        return Err(GeometryError::UnsupportedMeasurement.into());
+                    // The cap region's area is its outer area minus its holes.
+                    let mut area = path_area(&cap.boundary)?;
+                    for hole in &cap.holes {
+                        area -= path_area(hole)?;
                     }
-                    let area = path_area(&cap.boundary)?;
                     let map = |form: &Vector3, axis: &Vector3| {
                         (axis.dot(form) / &determinant).map_err(GeometryError::Numeric)
                     };

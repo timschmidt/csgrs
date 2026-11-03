@@ -19,6 +19,30 @@ fn uv(u: i64, v: i64) -> Uv {
 fn line2(a: Uv, b: Uv) -> Pcurve {
     Pcurve::new(Curve2::from(LineSeg2::try_new(a, b).unwrap()))
 }
+/// `|value - expected| < 10^-30`, decided exactly (no rounding).
+fn assert_within(value: &Real, expected: &Real) {
+    let scale = (0..30).fold(Real::one(), |value, _| value * Real::from(10));
+    let tolerance = (Real::one() / scale).unwrap();
+    let difference = (value.clone() - expected.clone()).abs();
+    assert_eq!(
+        difference.partial_cmp(&tolerance),
+        Some(std::cmp::Ordering::Less),
+        "{:?} vs {:?}",
+        value.to_f64_lossy(),
+        expected.to_f64_lossy()
+    );
+}
+
+/// `91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5)`: the integral of
+/// `min(x² + y², 5/4) + 1` over [-1,1]², derived in closed form.
+fn slab_cut_volume() -> Real {
+    let angle = (Real::from(2) * Real::from(5).sqrt().unwrap() / Real::from(5))
+        .unwrap()
+        .asin()
+        .unwrap();
+    q(91, 12) + q(25, 32) * Real::pi() - q(25, 8) * angle
+}
+
 fn quad2(p: [(i64, i64); 3]) -> Pcurve {
     Pcurve::new(Curve2::from(
         RationalBezier2::try_new(
@@ -472,8 +496,8 @@ fn horizontal_bump_sections_partition_unit_caps() {
 /// x² + y² <= 5/4 and replaces the four corners by planar caps at 5/4. The
 /// result is a capped tensor-graph solid: points under, on and over both
 /// tops classify exactly, including on the curved seam where both tops
-/// meet; it replays cold and transforms, and its volume stays a typed
-/// unsupported measurement until curved-trim integrals exist.
+/// meet; it replays cold and transforms, and its volume matches the closed
+/// form 91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5).
 #[test]
 fn slab_cuts_through_tensor_tops_leave_capped_graph_solids() {
     let body = BodySet::from_solid(bump().solids().next().unwrap());
@@ -542,10 +566,9 @@ fn slab_cuts_through_tensor_tops_leave_capped_graph_solids() {
     for (point, expected) in &cases {
         assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
     }
-    assert!(matches!(
-        solid.volume(),
-        Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
-    ));
+    // The corner caps and the tensor centre are trimmed by circular arcs;
+    // their exact areas and Green integrals give the closed form.
+    assert_within(&solid.volume().unwrap(), &slab_cut_volume());
     let json = model.to_json().unwrap();
     let cold = RawModel::from_json(&json, &ArchiveLimits::default())
         .unwrap()
@@ -943,6 +966,12 @@ fn shared_wall_blocks_cut_tensor_tops_into_capped_solids() {
             SolidPointLocation::Outside,
         ),
     ];
+    // min and max of x² + y² and 5/4 sum to x² + y² + 5/4, so the volumes
+    // sum to 8/3 + 5 + 8 = 47/3; the intersection is the slab-cut closed form.
+    let common_volume = common.bodies().next().unwrap().volume().unwrap();
+    let union_volume = union.bodies().next().unwrap().volume().unwrap();
+    assert_within(&common_volume, &slab_cut_volume());
+    assert_within(&(common_volume + union_volume), &q(47, 3));
     for (result, cases) in [(&common, &common_cases), (&union, &union_cases)] {
         let solid = result.bodies().next().unwrap();
         for (point, expected) in cases {
@@ -1031,15 +1060,23 @@ fn shared_wall_blocks_cut_closed_sections_into_holed_caps() {
             SolidPointLocation::Outside,
         ),
     ];
+    // The disk x² + y² <= 1/2 lies inside the square: the union adds
+    // integral over the disk of (1/2 - x² - y²) = pi/4 - pi/8 to 20/3, and
+    // the intersection is 38/3 minus that.
+    let eighth_pi = (Real::pi() / Real::from(8)).unwrap();
+    assert_within(
+        &union.bodies().next().unwrap().volume().unwrap(),
+        &(q(20, 3) + eighth_pi.clone()),
+    );
+    assert_within(
+        &common.bodies().next().unwrap().volume().unwrap(),
+        &(Real::from(6) - eighth_pi),
+    );
     for (result, cases) in [(&common, &common_cases), (&union, &union_cases)] {
         let solid = result.bodies().next().unwrap();
         for (point, expected) in cases {
             assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
         }
-        assert!(matches!(
-            solid.volume(),
-            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
-        ));
         let json = result.model().to_json().unwrap();
         let cold = RawModel::from_json(&json, &ArchiveLimits::default())
             .unwrap()

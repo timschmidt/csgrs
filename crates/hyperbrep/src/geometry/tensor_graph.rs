@@ -254,6 +254,197 @@ fn univariate_product(a: &[Real], b: &[Real]) -> Vec<Real> {
 }
 
 /// `integral_0^1 H(u0 + s du, v0 + s dv) ds` for a bivariate polynomial `H`.
+/// One oriented boundary piece of a tensor-graph top in its UV chart.
+pub(crate) enum GraphTrim {
+    Line(CurvePoint2, CurvePoint2),
+    Arc(hypercurve::CircularArc2),
+}
+
+/// `integral H(u, v) du` along a circular arc `u = a + r cos t`,
+/// `v = b + r sin t`, from the exact directed sweep and the exact endpoint
+/// cosines and sines; `None` when the sweep is not certified.
+fn arc_u_integral(
+    h: &BivariatePolynomial,
+    arc: &hypercurve::CircularArc2,
+) -> GeometryResult<Option<Real>> {
+    use std::collections::BTreeMap;
+    let Ok(sweep) = arc.directed_sweep_angle() else {
+        return Ok(None);
+    };
+    let sweep = if arc.is_clockwise() {
+        -sweep.clone()
+    } else {
+        sweep.clone()
+    };
+    let radius = arc
+        .radius_squared()
+        .sqrt()
+        .map_err(|_| GeometryError::UnsupportedMeasurement)?;
+    let (a, b) = (arc.center().x().clone(), arc.center().y().clone());
+    let unit = |value: Real| (value / &radius).map_err(GeometryError::Numeric);
+    let c0 = unit(arc.start().x() - &a)?;
+    let s0 = unit(arc.start().y() - &b)?;
+    let c1 = unit(arc.end().x() - &a)?;
+    let s1 = unit(arc.end().y() - &b)?;
+    // H(a + r c, b + r s) * (-r s) as a polynomial in (c, s).
+    let binomial = |n: usize, k: usize| -> Real {
+        let mut value = Real::one();
+        for i in 0..k {
+            value = (value * Real::from((n - i) as i64) / Real::from((i + 1) as i64))
+                .expect("nonzero factorial denominator");
+        }
+        value
+    };
+    let power =
+        |base: &Real, exponent: usize| (0..exponent).fold(Real::one(), |value, _| value * base);
+    let mut terms = BTreeMap::<(usize, usize), Real>::new();
+    for (i, row) in h.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            for k in 0..=i {
+                for l in 0..=j {
+                    let value = coefficient.clone()
+                        * binomial(i, k)
+                        * power(&a, i - k)
+                        * power(&radius, k)
+                        * binomial(j, l)
+                        * power(&b, j - l)
+                        * power(&radius, l);
+                    let entry = terms.entry((k, l + 1)).or_insert_with(Real::zero);
+                    *entry = entry.clone() - value * &radius;
+                }
+            }
+        }
+    }
+    // I(p, q) = integral c^p s^q dt over the arc, by the standard reductions.
+    let mut memo = BTreeMap::<(usize, usize), Real>::new();
+    fn integral(
+        p: usize,
+        q: usize,
+        ends: &[Real; 4],
+        sweep: &Real,
+        memo: &mut BTreeMap<(usize, usize), Real>,
+    ) -> GeometryResult<Real> {
+        if let Some(value) = memo.get(&(p, q)) {
+            return Ok(value.clone());
+        }
+        let [c0, s0, c1, s1] = ends;
+        let power =
+            |base: &Real, exponent: usize| (0..exponent).fold(Real::one(), |value, _| value * base);
+        let delta = |p: usize, q: usize| power(c1, p) * power(s1, q) - power(c0, p) * power(s0, q);
+        let n = Real::from((p + q) as i64);
+        let value = match (p, q) {
+            (0, 0) => sweep.clone(),
+            (1, 0) => s1 - s0,
+            (0, 1) => c0 - c1,
+            _ if p >= 2 => ((delta(p - 1, q + 1)
+                + Real::from((p - 1) as i64) * integral(p - 2, q, ends, sweep, memo)?)
+                / n)
+                .map_err(GeometryError::Numeric)?,
+            _ if q >= 2 => ((Real::from((q - 1) as i64) * integral(p, q - 2, ends, sweep, memo)?
+                - delta(p + 1, q - 1))
+                / n)
+                .map_err(GeometryError::Numeric)?,
+            // (1, 1): integral c s dt = s^2 / 2.
+            _ => ((s1 * s1 - s0 * s0) / Real::from(2)).map_err(GeometryError::Numeric)?,
+        };
+        memo.insert((p, q), value.clone());
+        Ok(value)
+    }
+    let ends = [c0, s0, c1, s1];
+    let mut total = Real::zero();
+    for ((p, q), coefficient) in terms {
+        total += coefficient * integral(p, q, &ends, &sweep, &mut memo)?;
+    }
+    Ok(Some(total))
+}
+
+/// A native circular arc with the exact image and direction of a curve that
+/// is a polynomial branch of a circle (`A(x² + y²) + Dx + Ey + F = 0`) under
+/// a similarity view, with certified scalar endpoints; `None` otherwise. Used
+/// for measurement only: the curve remains authoritative.
+pub(crate) fn circular_arc_of(curve: &Curve2) -> GeometryResult<Option<hypercurve::CircularArc2>> {
+    let original = curve
+        .source_restriction()
+        .map_or(curve, |(original, _, _)| original);
+    let Some(branch) = original.polynomial_branch() else {
+        return Ok(None);
+    };
+    let Some(view) = branch.similarity_view() else {
+        return Ok(None);
+    };
+    let equation = branch.topology().geometric_equation();
+    let coefficient = |i: usize, j: usize| {
+        equation
+            .coefficients
+            .get(i)
+            .and_then(|row| row.get(j))
+            .cloned()
+            .unwrap_or_else(Real::zero)
+    };
+    for (i, row) in equation.coefficients.iter().enumerate() {
+        for (j, value) in row.iter().enumerate() {
+            if i + j > 2 && !value.definitely_zero() {
+                return Ok(None);
+            }
+        }
+    }
+    let quadratic = coefficient(2, 0);
+    if quadratic.definitely_zero()
+        || !(&quadratic - &coefficient(0, 2)).definitely_zero()
+        || !coefficient(1, 1).definitely_zero()
+    {
+        return Ok(None);
+    }
+    let two_a = &quadratic * Real::from(2);
+    let center_x = (-coefficient(1, 0) / &two_a).map_err(GeometryError::Numeric)?;
+    let center_y = (-coefficient(0, 1) / &two_a).map_err(GeometryError::Numeric)?;
+    let center = match &view {
+        None => CurvePoint2::new(center_x, center_y),
+        Some(transform) => {
+            let (a, b, d, e, x, y) = transform.affine_components();
+            CurvePoint2::new(
+                a * &center_x + b * &center_y + x,
+                d * &center_x + e * &center_y + y,
+            )
+        }
+    };
+    let certify = |point: hypercurve::CurvePoint2| -> GeometryResult<Option<CurvePoint2>> {
+        Ok(match point.coordinates() {
+            Some(point) => Some(point.clone()),
+            None => super::certified_branch_point(&point, branch)?,
+        })
+    };
+    let domain = curve.parameter_domain();
+    let (Some(lower), Some(upper)) = (domain.start().scalar(), domain.end().scalar()) else {
+        return Ok(None);
+    };
+    let middle = ((lower + upper) / Real::from(2)).map_err(GeometryError::Numeric)?;
+    let (Some(start), Some(mid), Some(end)) = (
+        certify(curve.start())?,
+        certify(
+            curve
+                .point_at(&middle.into())
+                .map_err(GeometryError::from)?,
+        )?,
+        certify(curve.end())?,
+    ) else {
+        return Ok(None);
+    };
+    // The arc through start, middle and end turns like that triangle.
+    let turn =
+        (mid.x() - start.x()) * (end.y() - mid.y()) - (mid.y() - start.y()) * (end.x() - mid.x());
+    let clockwise = match decided_order(compare_reals(
+        &turn,
+        &Real::zero(),
+        crate::STRICT_PREDICATES,
+    ))? {
+        Ordering::Greater => false,
+        Ordering::Less => true,
+        Ordering::Equal => return Ok(None),
+    };
+    Ok(hypercurve::CircularArc2::try_from_center(start, end, center, clockwise).ok())
+}
+
 fn line_integral(
     h: &BivariatePolynomial,
     start: &CurvePoint2,
@@ -302,7 +493,7 @@ impl Surface {
     pub(crate) fn tensor_graph_volume(
         &self,
         frame: (&Point3, &Vector3, &Vector3, &Vector3),
-        loops: &[Vec<(CurvePoint2, CurvePoint2)>],
+        loops: &[Vec<GraphTrim>],
     ) -> GeometryResult<Option<Real>> {
         use hypersolve::CurveResultantParameter;
         use hypersolve::bivariate_arithmetic::{
@@ -354,9 +545,19 @@ impl Surface {
         );
         let mut signed = Real::zero();
         for boundary in loops {
-            for (start, end) in boundary {
-                let du = end.x() - start.x();
-                signed -= du * line_integral(&antiderivative, start, end)?;
+            for segment in boundary {
+                match segment {
+                    GraphTrim::Line(start, end) => {
+                        let du = end.x() - start.x();
+                        signed -= du * line_integral(&antiderivative, start, end)?;
+                    }
+                    GraphTrim::Arc(arc) => {
+                        let Some(value) = arc_u_integral(&antiderivative, arc)? else {
+                            return Ok(None);
+                        };
+                        signed -= value;
+                    }
+                }
             }
         }
         // The integral is over frame coordinates (a, b, c); physical volume
