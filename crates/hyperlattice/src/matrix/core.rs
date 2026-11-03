@@ -21,6 +21,15 @@ use crate::{
     ZeroOneMinusOneStatus,
 };
 
+/// Records a matrix dispatch path under the `hyperlattice_matrix` layer.
+/// It forwards the same triple as `trace_dispatch!`, so trace counts are
+/// unchanged; it only keeps each call on one line.
+macro_rules! trace_matrix {
+    ($operation:expr, $path:expr) => {
+        crate::trace_dispatch!("hyperlattice_matrix", $operation, $path)
+    };
+}
+
 fn identity_array<const N: usize>() -> [[Real; N]; N] {
     from_fn(|row| {
         from_fn(|col| {
@@ -1427,38 +1436,22 @@ where
 
 #[inline]
 fn matrix_power3(base: [[Real; 3]; 3], exponent: u32) -> [[Real; 3]; 3] {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix-power3-fixed-mul");
+    trace_matrix!("helper", "matrix-power3-fixed-mul");
     // The hot small positive powers can square the existing base by reference,
     // then consume only the fresh square. This keeps exact matrix powers on
     // object-level reuse instead of cloning the base into hot multiply lanes.
     if exponent == 2 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "matrix-power3-borrowed-square"
-        );
+        trace_matrix!("helper", "matrix-power3-borrowed-square");
         if matrix3_has_dense_multiply_certificate(&base) {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "matrix-power3-dense-certified-square"
-            );
+            trace_matrix!("helper", "matrix-power3-dense-certified-square");
             return multiply_arrays3_dense_ref(&base, &base);
         }
         return multiply_arrays3_ref(&base, &base);
     }
     if exponent == 3 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "matrix-power3-borrowed-cube"
-        );
+        trace_matrix!("helper", "matrix-power3-borrowed-cube");
         if matrix3_has_dense_multiply_certificate(&base) {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "matrix-power3-dense-certified-cube"
-            );
+            trace_matrix!("helper", "matrix-power3-dense-certified-cube");
             let square = multiply_arrays3_dense_ref(&base, &base);
             return multiply_arrays3_rhs_ref_with_exact_dense_certificate(square, &base);
         }
@@ -1470,38 +1463,22 @@ fn matrix_power3(base: [[Real; 3]; 3], exponent: u32) -> [[Real; 3]; 3] {
 
 #[inline]
 fn matrix_power4(base: [[Real; 4]; 4], exponent: u32) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix-power4-fixed-mul");
+    trace_matrix!("helper", "matrix-power4-fixed-mul");
     // Same borrowed square/cube schedule as 3x3; the mat4 powi benchmark is
     // particularly sensitive to avoiding owned base duplication before the
     // fixed multiply kernel has a chance to reuse structural facts.
     if exponent == 2 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "matrix-power4-borrowed-square"
-        );
+        trace_matrix!("helper", "matrix-power4-borrowed-square");
         if matrix4_has_dense_multiply_certificate(&base) {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "matrix-power4-dense-certified-square"
-            );
+            trace_matrix!("helper", "matrix-power4-dense-certified-square");
             return multiply_arrays4_dense_ref(&base, &base);
         }
         return multiply_arrays4_ref(&base, &base);
     }
     if exponent == 3 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "matrix-power4-borrowed-cube"
-        );
+        trace_matrix!("helper", "matrix-power4-borrowed-cube");
         if matrix4_has_dense_multiply_certificate(&base) {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "matrix-power4-dense-certified-cube"
-            );
+            trace_matrix!("helper", "matrix-power4-dense-certified-cube");
             let square = multiply_arrays4_dense_ref(&base, &base);
             return multiply_arrays4_rhs_ref_with_dense_certificate(square, &base);
         }
@@ -1768,19 +1745,11 @@ fn prefer_shared_adjugate_right_division<const N: usize>(
         return false;
     }
     if N == 4 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-exact-right-skip-left-kind"
-        );
+        trace_matrix!("helper", "right-divide4-exact-right-skip-left-kind");
         return true;
     }
     if N == 3 && right_kind == ExactRationalKind::ExactRational {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-exact-right-skip-left-kind"
-        );
+        trace_matrix!("helper", "right-divide3-exact-right-skip-left-kind");
         return true;
     }
     let left_kind = matrix_exact_rational_kind(left);
@@ -1799,11 +1768,7 @@ fn prefer_shared_adjugate_right_division_ref3(
         return false;
     }
     if right_kind == ExactRationalKind::ExactRational {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-exact-right-skip-left-kind"
-        );
+        trace_matrix!("helper", "right-divide3-ref-exact-right-skip-left-kind");
         return true;
     }
     let left_kind = matrix3_exact_rational_kind(left);
@@ -1936,11 +1901,7 @@ fn multiply_arrays4_ref_with_dense_certificate(
 ) -> [[Real; 4]; 4] {
     if matrix4_has_dense_multiply_certificate(left) && matrix4_has_dense_multiply_certificate(right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-dense-certified-ref"
-        );
+        trace_matrix!("helper", "multiply4-dense-certified-ref");
         return multiply_arrays4_dense_ref(left, right);
     }
     multiply_arrays4_ref(left, right)
@@ -1954,11 +1915,7 @@ fn multiply_arrays4_rhs_ref_with_dense_certificate(
     if matrix4_has_dense_multiply_certificate(&left)
         && matrix4_has_dense_multiply_certificate(right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-dense-certified-owned-ref"
-        );
+        trace_matrix!("helper", "multiply4-dense-certified-owned-ref");
         return multiply_arrays4_dense_ref(&left, right);
     }
     multiply_arrays4_rhs_ref(left, right)
@@ -2008,19 +1965,11 @@ fn invert_matrix4_affine(
     // `Matrix4Facts`; do not re-probe them here. The helper is only entered
     // after the caller proves affine form.
     if linear_is_diagonal && !is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-affine-linear-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix4-affine-linear-diagonal");
         return invert_matrix4_affine_linear_diagonal(matrix);
     }
     if is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-affine-translation"
-        );
+        trace_matrix!("helper", "invert-matrix4-affine-translation");
         return Ok([
             [
                 matrix[0][0].clone(),
@@ -2121,19 +2070,11 @@ fn invert_matrix4_affine_checked(
     is_affine_translation: bool,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if linear_is_diagonal && !is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-affine-linear-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-affine-linear-diagonal");
         return invert_matrix4_affine_linear_diagonal_checked(matrix);
     }
     if is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-affine-translation"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-affine-translation");
         return Ok([
             [
                 matrix[0][0].clone(),
@@ -2237,19 +2178,14 @@ fn invert_matrix4_affine_checked_with_abort(
     is_affine_translation: bool,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if linear_is_diagonal && !is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix4-checked-with-abort-affine-linear-diagonal"
         );
         return invert_matrix4_affine_linear_diagonal_checked(matrix);
     }
     if is_affine_translation {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-affine-translation"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-affine-translation");
         return Ok([
             [
                 matrix[0][0].clone(),
@@ -2619,22 +2555,14 @@ fn affine_translation_column_update(row: &[Real; 4], inverse_translation: &[Real
 
 #[inline]
 fn affine_translation_column_subtract_update(row: &[Real; 4], translation: [&Real; 3]) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "affine-translation-column-subtract"
-    );
+    trace_matrix!("helper", "affine-translation-column-subtract");
     let shifted = affine_translation_dot3([&row[0], &row[1], &row[2]], translation);
     row[3].clone() - shifted
 }
 
 #[inline]
 fn affine_translation_dot3(coefficients: [&Real; 3], values: [&Real; 3]) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "affine-translation-dot3-active-exact"
-    );
+    trace_matrix!("helper", "affine-translation-dot3-active-exact");
     Real::active_linear_combination3(coefficients, values)
 }
 
@@ -2782,11 +2710,7 @@ fn multiply_arrays3_affine_linear_with_exact_dense_certificate(
     if matrix3_has_dense_multiply_certificate(&left)
         && matrix3_has_dense_multiply_certificate(&right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-affine-linear-dense-certified-exact"
-        );
+        trace_matrix!("helper", "multiply3-affine-linear-dense-certified-exact");
         return multiply_arrays3_dense_ref(&left, &right);
     }
     multiply_arrays3(left, right)
@@ -2846,11 +2770,7 @@ fn divide_matrix4_by_affine_checked_assuming_affine_translation(
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     // Structural fact is already established by caller to avoid duplicate checks in
     // this checked hot path.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-checked-by-affine-translation"
-    );
+    trace_matrix!("helper", "right-divide4-checked-by-affine-translation");
     divide_matrix4_by_affine_translation(left, right)
 }
 
@@ -2886,8 +2806,7 @@ fn divide_matrix4_affine_by_affine_checked_assuming_affine_translation(
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     // Right divisor is known translation-only affine; skip repeated structural checks.
     // This follows standard affine composition algebra for translation-only linear maps.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "right-divide4-checked-affine-by-affine-translation"
     );
@@ -3007,8 +2926,7 @@ fn divide_matrix4_by_affine_checked_with_abort_assuming_affine_translation(
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     // Abort signal is unused because translation-only affine divisors are
     // guaranteed nonsingular (determinant = 1), so early abort is never needed.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "right-divide4-checked-abort-by-affine-translation"
     );
@@ -3054,8 +2972,7 @@ fn divide_matrix4_affine_by_affine_checked_with_abort_assuming_affine_translatio
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     // Same structural optimization as above; no abort checks are needed when the
     // right affine divisor is guaranteed to be translation-only.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "right-divide4-checked-abort-affine-by-affine-translation"
     );
@@ -3165,11 +3082,7 @@ fn divide_matrix4_by_affine_ref_translation(
     // Using the prevalidated structural fact avoids rebuilding the full
     // translation column for the non-affine path and keeps this helper on the
     // same arithmetic schedule as the owned version.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-ref-by-affine-translation"
-    );
+    trace_matrix!("helper", "right-divide4-ref-by-affine-translation");
     let inverse_translation = [
         Real::zero() - &right[0][3],
         Real::zero() - &right[1][3],
@@ -3341,11 +3254,7 @@ fn invert_matrix3_by_diagonal(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3];
     // multiply-add schedule; this avoids the division-heavy elimination and
     // cofactor work while preserving exact division semantics.
     if matrix[0][0] == matrix[1][1] && matrix[0][0] == matrix[2][2] {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-diagonal-uniform-scale"
-        );
+        trace_matrix!("helper", "invert-matrix3-diagonal-uniform-scale");
         let inv = matrix[0][0].clone().inverse()?;
         return Ok([
             [inv.clone(), Real::zero(), Real::zero()],
@@ -3457,11 +3366,7 @@ fn invert_matrix3_affine(
     // second probe of the same off-diagonal entries after affine dispatch.
     // Reuse the retained object facts.
     if linear_is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-affine-linear-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix3-affine-linear-diagonal");
         return invert_matrix3_affine_linear_diagonal(matrix);
     }
 
@@ -3724,11 +3629,7 @@ fn invert_matrix3_affine_checked(
     linear_is_diagonal: bool,
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
     if linear_is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-affine-linear-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-affine-linear-diagonal");
         return invert_matrix3_affine_linear_diagonal_checked(matrix);
     }
 
@@ -3763,8 +3664,7 @@ fn invert_matrix3_affine_checked_with_abort(
     linear_is_diagonal: bool,
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
     if linear_is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix3-checked-with-abort-affine-linear-diagonal"
         );
@@ -3801,11 +3701,7 @@ fn invert_matrix4_by_diagonal(matrix: &[[Real; 4]; 4]) -> BlasResult<[[Real; 4];
     // entries when structural zeros certify no couplings.
     if matrix[0][0] == matrix[1][1] && matrix[0][0] == matrix[2][2] && matrix[0][0] == matrix[3][3]
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-diagonal-uniform-scale"
-        );
+        trace_matrix!("helper", "invert-matrix4-diagonal-uniform-scale");
         let inv = matrix[0][0].clone().inverse()?;
         return Ok([
             [inv.clone(), Real::zero(), Real::zero(), Real::zero()],
@@ -4120,11 +4016,7 @@ fn divide_matrix3_by_upper_triangular(
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide3-upper-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide3-upper-triangular-fused-exact");
     let one = Real::one();
     for row in &mut left {
         let x0 = row[0].clone().mul_cached(&inv_a00);
@@ -4164,11 +4056,7 @@ fn divide_matrix3_by_affine_upper_triangular(
     // and multiply-by-one in the hot translation lane.
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide3-affine-upper-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide3-affine-upper-triangular-fused-exact");
     let one = Real::one();
     Ok([
         divide_matrix3_affine_upper_row(&left[0], right, &inv_a00, &inv_a11, &one),
@@ -4184,8 +4072,7 @@ fn divide_matrix3_affine_by_affine_upper_triangular(
 ) -> BlasResult<[[Real; 3]; 3]> {
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "divide3-affine-left-affine-upper-triangular-fused-exact"
     );
@@ -4239,11 +4126,7 @@ fn divide_matrix3_by_lower_triangular(
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide3-lower-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide3-lower-triangular-fused-exact");
     let one = Real::one();
     for row in &mut left {
         let x2 = row[2].clone().mul_cached(&inv_a22);
@@ -4292,11 +4175,7 @@ fn affine_translation_column_update_from_inverse2(
 
 #[inline]
 fn affine_translation_column_subtract_update2(row: &[Real; 3], translation: [&Real; 2]) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "affine-translation-column-subtract2"
-    );
+    trace_matrix!("helper", "affine-translation-column-subtract2");
     let shifted = mul_add(&row[0], translation[0], &row[1], translation[1]);
     row[2].clone() - shifted
 }
@@ -5010,11 +4889,7 @@ fn divide_matrix4_by_upper_triangular(
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
     let inv_a33 = right[3][3].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide4-upper-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide4-upper-triangular-fused-exact");
     // Exact Real kernels can keep each row solve as short signed product sums:
     // b_j - x_0 u_0j - ... . This follows the fraction-delay guidance
     // used by fraction-free/common-factor exact matrix methods while avoiding
@@ -5082,11 +4957,7 @@ fn divide_matrix4_by_affine_upper_triangular(
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide4-affine-upper-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide4-affine-upper-triangular-fused-exact");
     let one = Real::one();
     Ok([
         divide_matrix4_affine_upper_row(&left[0], right, &inv_a00, &inv_a11, &inv_a22, &one),
@@ -5104,8 +4975,7 @@ fn divide_matrix4_affine_by_affine_upper_triangular(
     let inv_a00 = right[0][0].clone().inverse()?;
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "divide4-affine-left-affine-upper-triangular-fused-exact"
     );
@@ -5166,11 +5036,7 @@ fn divide_matrix4_by_lower_triangular(
     let inv_a11 = right[1][1].clone().inverse()?;
     let inv_a22 = right[2][2].clone().inverse()?;
     let inv_a33 = right[3][3].clone().inverse()?;
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "divide4-lower-triangular-fused-exact"
-    );
+    trace_matrix!("helper", "divide4-lower-triangular-fused-exact");
     let one = Real::one();
     for row in &mut left {
         let x3 = row[3].clone().mul_cached(&inv_a33);
@@ -5211,65 +5077,44 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
     let right_facts = matrix3_facts(&right);
 
     if right_facts.is_identity {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-identity");
+        trace_matrix!("helper", "right-divide3-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-diagonal");
+        trace_matrix!("helper", "right-divide3-diagonal");
         return divide_matrix3_by_diagonal(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-affine-left-affine-translation"
-            );
+            trace_matrix!("helper", "right-divide3-affine-left-affine-translation");
             return divide_matrix3_affine_by_affine_translation(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide3-affine-by-translation");
         return divide_matrix3_by_affine_translation(left, &right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-affine-upper-triangular");
         return divide_matrix3_by_affine_upper_triangular(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-upper-triangular");
         // Exact triangular dispatch is cheaper than generic cofactor/Gauss-Jordan
         // for structurally triangular divisors. This is the same structural-first
         // principle used by triangular solve kernels in direct methods.
         return divide_matrix3_by_upper_triangular(left, &right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-lower-triangular");
         return divide_matrix3_by_lower_triangular(left, &right);
     }
     if right_facts.is_affine {
@@ -5282,52 +5127,32 @@ fn right_divide_matrix3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> BlasResu
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-affine");
+        trace_matrix!("helper", "right-divide3-affine");
         // Reuse the known structural fact for both left- and right-signed
         // branches to avoid rescanning the same affine predicate.
         if left_is_affine {
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "right-divide3-affine-left-affine-linear-diagonal"
-                );
+                trace_matrix!("helper", "right-divide3-affine-left-affine-linear-diagonal");
                 return divide_matrix3_affine_by_affine_linear_diagonal(left, &right);
             }
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide3-affine-left-affine");
             return divide_matrix3_affine_by_affine(left, &right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide3-affine-linear-diagonal");
             return divide_matrix3_by_affine_linear_diagonal(left, &right);
         }
         return divide_matrix3_by_affine(left, &right);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide3-gauss-jordan");
         return Ok(transpose_array3(solve_left_system3(
             transpose_array3(right),
             transpose_array3(left),
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide3-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide3-shared-adjugate");
     // Shared-scale prototype: compute `left * adj(right)` and distribute
     // `1/det(right)` only after the matrix product. Exact Real kernels pay heavily
     // for each pivot inverse in Gauss-Jordan division, so this branch compares
@@ -5349,70 +5174,41 @@ fn right_divide_matrix3_ref(
     let right_facts = matrix3_facts(right);
 
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-identity"
-        );
+        trace_matrix!("helper", "right-divide3-ref-identity");
         return Ok(left.clone());
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-diagonal"
-        );
+        trace_matrix!("helper", "right-divide3-ref-diagonal");
         return divide_matrix3_by_diagonal(left.clone(), right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-ref-affine-left-affine-translation"
-            );
+            trace_matrix!("helper", "right-divide3-ref-affine-left-affine-translation");
             return divide_matrix3_affine_by_affine_ref_translation(left, right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide3-ref-affine-by-translation");
         return divide_matrix3_by_affine_ref_translation(left, right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix3_facts(left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-ref-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular(left.clone(), right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-ref-affine-upper-triangular");
         return divide_matrix3_by_affine_upper_triangular(left.clone(), right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-ref-upper-triangular");
         return divide_matrix3_by_upper_triangular(left.clone(), right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-ref-lower-triangular");
         return divide_matrix3_by_lower_triangular(left.clone(), right);
     }
     if right_facts.is_affine {
@@ -5421,41 +5217,28 @@ fn right_divide_matrix3_ref(
         let left_facts = matrix3_facts(left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide3-ref-affine");
+        trace_matrix!("helper", "right-divide3-ref-affine");
         // Same affine-flag reuse as owned division, preserving borrowed
         // dispatch shapes while avoiding duplicate `matrix3_is_affine` scans.
         if left_is_affine {
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide3-ref-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_ref_linear_diagonal(left, right);
             }
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-ref-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide3-ref-affine-left-affine");
             return divide_matrix3_affine_by_affine_ref_no_translation(left, right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-ref-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide3-ref-affine-linear-diagonal");
             return divide_matrix3_by_affine_ref_linear_diagonal(left, right);
         }
         return divide_matrix3_by_affine_ref_no_translation(left, right);
     }
     if !prefer_shared_adjugate_right_division_ref3(left, right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-ref-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide3-ref-gauss-jordan");
         // Borrowed right-division is implemented as a left solve on transposes.
         // Clone directly into transposed working storage instead of cloning both
         // matrices and dispatching through the owned `/` implementation.
@@ -5465,11 +5248,7 @@ fn right_divide_matrix3_ref(
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide3-ref-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide3-ref-shared-adjugate");
     // Borrowed division keeps the left matrix borrowed through the product and
     // materializes only the divisor adjugate. This is the same shared-scale
     // experiment as the owned path, but avoids cloning both inputs before
@@ -5489,70 +5268,44 @@ fn right_divide_matrix3_checked(
     let right_facts = matrix3_facts(&right);
 
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-identity"
-        );
+        trace_matrix!("helper", "right-divide3-checked-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-diagonal"
-        );
+        trace_matrix!("helper", "right-divide3-checked-diagonal");
         return divide_matrix3_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-checked-affine-left-affine-translation"
             );
             return divide_matrix3_affine_by_affine_translation(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide3-checked-affine-by-translation");
         return divide_matrix3_by_affine_translation(left, &right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-checked-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular_checked(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-checked-affine-upper-triangular");
         return divide_matrix3_by_affine_upper_triangular_checked(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-checked-upper-triangular");
         return divide_matrix3_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-checked-lower-triangular");
         return divide_matrix3_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
@@ -5563,57 +5316,36 @@ fn right_divide_matrix3_checked(
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-affine"
-        );
+        trace_matrix!("helper", "right-divide3-checked-affine");
         // Keep branch classification shared across checked and checked-abort paths;
         // this is the cheapest way to reduce redundant structural queries on
         // large affine-matrix workloads.
         if left_is_affine {
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide3-checked-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal_checked(left, &right);
             }
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-checked-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide3-checked-affine-left-affine");
             return divide_matrix3_affine_by_affine_checked(left, &right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-checked-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide3-checked-affine-linear-diagonal");
             return divide_matrix3_by_affine_linear_diagonal_checked(left, &right);
         }
         return divide_matrix3_by_affine_checked(left, &right);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide3-checked-gauss-jordan");
         return Ok(transpose_array3(solve_left_system3_checked(
             transpose_array3(right),
             transpose_array3(left),
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide3-checked-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide3-checked-shared-adjugate");
     let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
     require_known_nonzero(&det)?;
     let inv_det = det.inverse()?;
@@ -5631,33 +5363,23 @@ fn right_divide_matrix3_checked_with_abort(
     let right_facts = matrix3_facts(&right);
 
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-identity"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-diagonal"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-diagonal");
         return divide_matrix3_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-checked-abort-affine-left-affine-translation"
             );
             return divide_matrix3_affine_by_affine_translation(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide3-checked-abort-affine-by-translation"
         );
@@ -5666,15 +5388,13 @@ fn right_divide_matrix3_checked_with_abort(
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix3_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-checked-abort-affine-left-affine-upper-triangular"
             );
             return divide_matrix3_affine_by_affine_upper_triangular_checked(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide3-checked-abort-affine-upper-triangular"
         );
@@ -5682,19 +5402,11 @@ fn right_divide_matrix3_checked_with_abort(
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-upper-triangular");
         return divide_matrix3_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-lower-triangular");
         return divide_matrix3_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
@@ -5703,32 +5415,22 @@ fn right_divide_matrix3_checked_with_abort(
         let left_facts = matrix3_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-affine"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-affine");
         // Cache the left structural fact once, because this branch remains hot in
         // iterative symbolic constraint pipelines.
         if left_is_affine {
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide3-checked-abort-affine-left-affine-linear-diagonal"
                 );
                 return divide_matrix3_affine_by_affine_linear_diagonal_checked(left, &right);
             }
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide3-checked-abort-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide3-checked-abort-affine-left-affine");
             return divide_matrix3_affine_by_affine_checked_with_abort(left, &right, signal);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide3-checked-abort-affine-linear-diagonal"
             );
@@ -5737,11 +5439,7 @@ fn right_divide_matrix3_checked_with_abort(
         return divide_matrix3_by_affine_checked_with_abort(left, &right, signal);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide3-checked-abort-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide3-checked-abort-gauss-jordan");
         return Ok(transpose_array3(solve_left_system3_checked_with_abort(
             transpose_array3(right),
             transpose_array3(left),
@@ -5749,11 +5447,7 @@ fn right_divide_matrix3_checked_with_abort(
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide3-checked-abort-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide3-checked-abort-shared-adjugate");
     let (adjugate, det) = matrix3_adjugate_and_determinant(&right);
     let det = with_abort(det, signal);
     require_known_nonzero(&det)?;
@@ -5766,54 +5460,37 @@ fn right_divide_matrix3_checked_with_abort(
 
 fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     if can_use_dense_exact_shared_adjugate4(&right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-dense-exact-shared-adjugate"
-        );
+        trace_matrix!("helper", "right-divide4-dense-exact-shared-adjugate");
         return right_divide_matrix4_dense_exact_shared(&left, &right);
     }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-identity");
+        trace_matrix!("helper", "right-divide4-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-diagonal");
+        trace_matrix!("helper", "right-divide4-diagonal");
         return divide_matrix4_by_diagonal(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-affine-left-affine-translation"
-            );
+            trace_matrix!("helper", "right-divide4-affine-left-affine-translation");
             return divide_matrix4_affine_by_affine_translation(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide4-affine-by-translation");
         return divide_matrix4_by_affine_translation(left, &right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-affine-upper-triangular");
         return divide_matrix4_by_affine_upper_triangular(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
@@ -5823,21 +5500,13 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
         // adjugate-based cofactor routes. This is the exact same dispatch
         // policy used in triangular dense linear algebra kernels
         // (Golub & Van Loan, *Matrix Computations*, 4th ed., §4.2).
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-upper-triangular");
         return divide_matrix4_by_upper_triangular(left, &right);
     }
     if right_facts.is_lower_triangular {
         // The lower-triangular branch is symmetric to the upper case and keeps
         // one-pass recurrence structure with cached diagonal reciprocals.
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-lower-triangular");
         return divide_matrix4_by_lower_triangular(left, &right);
     }
     if right_facts.is_affine {
@@ -5848,36 +5517,23 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-affine");
+        trace_matrix!("helper", "right-divide4-affine");
         // Reusing both affine flags cuts duplicate structural scans in mixed
         // geometric workloads. This follows the standard dispatcher pattern:
         // preserve expensive checks for once and reuse them across nearby
         // specializations (Golub & Van Loan, *Matrix Computations*).
         if left_is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide4-affine-left-affine");
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "right-divide4-affine-left-affine-linear-diagonal"
-                );
+                trace_matrix!("helper", "right-divide4-affine-left-affine-linear-diagonal");
                 return divide_matrix4_affine_by_affine_linear_diagonal(left, &right);
             }
             return divide_matrix4_affine_by_affine_no_translation(left, &right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide4-affine-linear-diagonal");
             if right_facts.affine_linear_diagonal_is_definitely_nonzero {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-affine-linear-diagonal-known-nonzero"
                 );
@@ -5888,22 +5544,14 @@ fn right_divide_matrix4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> BlasResu
         return divide_matrix4_by_affine_no_translation(left, &right);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide4-gauss-jordan");
         return Ok(transpose_array4(solve_left_system4(
             transpose_array4(right),
             transpose_array4(left),
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide4-shared-adjugate");
     let (s, c) = matrix4_factors(&right);
     let det = determinant4_from_factors(&s, &c);
     let inv_det = det.inverse()?;
@@ -5979,79 +5627,46 @@ fn right_divide_matrix4_ref(
     right: &[[Real; 4]; 4],
 ) -> BlasResult<[[Real; 4]; 4]> {
     if can_use_dense_exact_shared_adjugate4(right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-dense-exact-shared-adjugate"
-        );
+        trace_matrix!("helper", "right-divide4-ref-dense-exact-shared-adjugate");
         return right_divide_matrix4_dense_exact_shared(left, right);
     }
     let right_facts = matrix4_facts(right);
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-identity"
-        );
+        trace_matrix!("helper", "right-divide4-ref-identity");
         return Ok(left.clone());
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-diagonal"
-        );
+        trace_matrix!("helper", "right-divide4-ref-diagonal");
         return divide_matrix4_by_diagonal(left.clone(), right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-ref-affine-left-affine-translation"
-            );
+            trace_matrix!("helper", "right-divide4-ref-affine-left-affine-translation");
             return divide_matrix4_affine_by_affine_ref_translation(left, right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide4-ref-affine-by-translation");
         return divide_matrix4_by_affine_ref_assumed_affine_translation(left, right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix4_facts(left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-ref-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular(left.clone(), right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-ref-affine-upper-triangular");
         return divide_matrix4_by_affine_upper_triangular(left.clone(), right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-ref-upper-triangular");
         return divide_matrix4_by_upper_triangular(left.clone(), right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-ref-lower-triangular");
         return divide_matrix4_by_lower_triangular(left.clone(), right);
     }
     if right_facts.is_affine {
@@ -6062,16 +5677,11 @@ fn right_divide_matrix4_ref(
         let left_facts = matrix4_facts(left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "right-divide4-ref-affine");
+        trace_matrix!("helper", "right-divide4-ref-affine");
         if left_is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-ref-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide4-ref-affine-left-affine");
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-ref-affine-left-affine-linear-diagonal"
                 );
@@ -6080,21 +5690,13 @@ fn right_divide_matrix4_ref(
             return divide_matrix4_affine_by_affine_ref_no_translation(left, right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-ref-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide4-ref-affine-linear-diagonal");
             return divide_matrix4_by_affine_linear_diagonal_ref(left, right);
         }
         return divide_matrix4_by_affine_ref_no_translation(left, right);
     }
     if !prefer_shared_adjugate_right_division(left, right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-ref-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide4-ref-gauss-jordan");
         // Same borrowed right-division shortcut as 3x3, with unrolled 4x4
         // transposes. The adjugate route is kept only for dyadic inputs.
         return Ok(transpose_array4(solve_left_system4(
@@ -6103,11 +5705,7 @@ fn right_divide_matrix4_ref(
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-ref-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide4-ref-shared-adjugate");
     // The 4x4 cofactor route does substantially more scalar multiplication
     // than Gauss-Jordan, but it carries one shared determinant inverse. This
     // branch is intentionally isolated so trace rows can decide whether exact
@@ -6127,8 +5725,7 @@ fn right_divide_matrix4_checked(
     right: [[Real; 4]; 4],
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if can_use_dense_exact_shared_adjugate4(&right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide4-checked-dense-exact-shared-adjugate"
         );
@@ -6136,26 +5733,17 @@ fn right_divide_matrix4_checked(
     }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-identity"
-        );
+        trace_matrix!("helper", "right-divide4-checked-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-diagonal"
-        );
+        trace_matrix!("helper", "right-divide4-checked-diagonal");
         return divide_matrix4_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-checked-affine-left-affine-translation"
             );
@@ -6163,45 +5751,28 @@ fn right_divide_matrix4_checked(
                 left, &right,
             );
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-affine-by-translation"
-        );
+        trace_matrix!("helper", "right-divide4-checked-affine-by-translation");
         return divide_matrix4_by_affine_checked_assumed_affine_translation(left, &right);
     }
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-checked-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular_checked(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-affine-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-checked-affine-upper-triangular");
         return divide_matrix4_by_affine_upper_triangular_checked(left, &right);
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-checked-upper-triangular");
         return divide_matrix4_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-checked-lower-triangular");
         return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
@@ -6211,26 +5782,16 @@ fn right_divide_matrix4_checked(
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-affine"
-        );
+        trace_matrix!("helper", "right-divide4-checked-affine");
         if left_is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-checked-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide4-checked-affine-left-affine");
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-checked-affine-left-affine-linear-diagonal"
                 );
                 if right_facts.affine_linear_diagonal_is_definitely_nonzero {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
+                    trace_matrix!(
                         "helper",
                         "right-divide4-checked-affine-left-affine-linear-diagonal-known-nonzero"
                     );
@@ -6241,14 +5802,9 @@ fn right_divide_matrix4_checked(
             return divide_matrix4_affine_by_affine_checked(left, &right);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-checked-affine-linear-diagonal"
-            );
+            trace_matrix!("helper", "right-divide4-checked-affine-linear-diagonal");
             if right_facts.affine_linear_diagonal_is_definitely_nonzero {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-checked-affine-linear-diagonal-known-nonzero"
                 );
@@ -6259,22 +5815,14 @@ fn right_divide_matrix4_checked(
         return divide_matrix4_by_affine_checked(left, &right);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide4-checked-gauss-jordan");
         return Ok(transpose_array4(solve_left_system4_checked(
             transpose_array4(right),
             transpose_array4(left),
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-checked-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide4-checked-shared-adjugate");
     let (s, c) = matrix4_factors(&right);
     let det = determinant4_from_factors(&s, &c);
     require_known_nonzero(&det)?;
@@ -6292,8 +5840,7 @@ fn right_divide_matrix4_checked_with_abort(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if can_use_dense_exact_shared_adjugate4(&right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide4-checked-abort-dense-exact-shared-adjugate"
         );
@@ -6301,26 +5848,17 @@ fn right_divide_matrix4_checked_with_abort(
     }
     let right_facts = matrix4_facts(&right);
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-identity"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-identity");
         return Ok(left);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-diagonal"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-diagonal");
         return divide_matrix4_by_diagonal_checked(left, &right);
     }
     if right_facts.is_affine_translation {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-checked-abort-affine-left-affine-translation"
             );
@@ -6328,8 +5866,7 @@ fn right_divide_matrix4_checked_with_abort(
                 left, &right, signal,
             );
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide4-checked-abort-affine-by-translation"
         );
@@ -6340,15 +5877,13 @@ fn right_divide_matrix4_checked_with_abort(
     if right_facts.is_affine && right_facts.is_upper_triangular && !right_facts.linear_is_diagonal {
         let left_facts = matrix4_facts(&left);
         if left_facts.is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-checked-abort-affine-left-affine-upper-triangular"
             );
             return divide_matrix4_affine_by_affine_upper_triangular_checked(left, &right);
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "right-divide4-checked-abort-affine-upper-triangular"
         );
@@ -6356,19 +5891,11 @@ fn right_divide_matrix4_checked_with_abort(
     }
     if right_facts.is_upper_triangular && !(right_facts.is_affine && right_facts.linear_is_diagonal)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-upper-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-upper-triangular");
         return divide_matrix4_by_upper_triangular_checked(left, &right);
     }
     if right_facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-lower-triangular"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-lower-triangular");
         return divide_matrix4_by_lower_triangular_checked(left, &right);
     }
     if right_facts.is_affine {
@@ -6378,26 +5905,16 @@ fn right_divide_matrix4_checked_with_abort(
         let left_facts = matrix4_facts(&left);
         let left_is_affine = left_facts.is_affine;
         let right_linear_is_diagonal = right_facts.linear_is_diagonal;
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-affine"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-affine");
         if left_is_affine {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "right-divide4-checked-abort-affine-left-affine"
-            );
+            trace_matrix!("helper", "right-divide4-checked-abort-affine-left-affine");
             if right_linear_is_diagonal {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-checked-abort-affine-left-affine-linear-diagonal"
                 );
                 if right_facts.affine_linear_diagonal_is_definitely_nonzero {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
+                    trace_matrix!(
                         "helper",
                         "right-divide4-checked-abort-affine-left-affine-linear-diagonal-known-nonzero"
                     );
@@ -6408,14 +5925,12 @@ fn right_divide_matrix4_checked_with_abort(
             return divide_matrix4_affine_by_affine_checked_with_abort(left, &right, signal);
         }
         if right_linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "right-divide4-checked-abort-affine-linear-diagonal"
             );
             if right_facts.affine_linear_diagonal_is_definitely_nonzero {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
+                trace_matrix!(
                     "helper",
                     "right-divide4-checked-abort-affine-linear-diagonal-known-nonzero"
                 );
@@ -6426,11 +5941,7 @@ fn right_divide_matrix4_checked_with_abort(
         return divide_matrix4_by_affine_checked_with_abort(left, &right, signal);
     }
     if !prefer_shared_adjugate_right_division(&left, &right) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "right-divide4-checked-abort-gauss-jordan"
-        );
+        trace_matrix!("helper", "right-divide4-checked-abort-gauss-jordan");
         return Ok(transpose_array4(solve_left_system4_checked_with_abort(
             transpose_array4(right),
             transpose_array4(left),
@@ -6438,11 +5949,7 @@ fn right_divide_matrix4_checked_with_abort(
         )?));
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "right-divide4-checked-abort-shared-adjugate"
-    );
+    trace_matrix!("helper", "right-divide4-checked-abort-shared-adjugate");
     let (s, c) = matrix4_factors(&right);
     let det = determinant4_from_factors(&s, &c);
     let det = with_abort(det, signal);
@@ -6512,7 +6019,7 @@ fn multiply_arrays3_borrowed(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [
         && right_nonzero[2][2];
 
     if left_all_nonzero && right_all_nonzero {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-borrowed-dense");
+        trace_matrix!("helper", "multiply3-borrowed-dense");
 
         let cell = |row: usize, col: usize| {
             Real::dot3(
@@ -6528,7 +6035,7 @@ fn multiply_arrays3_borrowed(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [
         ];
     }
 
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-borrowed-sparse");
+    trace_matrix!("helper", "multiply3-borrowed-sparse");
 
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
@@ -6575,7 +6082,7 @@ fn multiply_arrays3_borrowed(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [
 
 #[inline]
 fn multiply_arrays3_dense_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real; 3]; 3] {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply3-dense-ref");
+    trace_matrix!("helper", "multiply3-dense-ref");
     let cell = |row: usize, col: usize| {
         Real::dot3(
             [&left[row][0], &left[row][1], &left[row][2]],
@@ -6598,11 +6105,7 @@ fn multiply_arrays3_with_exact_dense_certificate(
     if matrix3_has_dense_multiply_certificate(&left)
         && matrix3_has_dense_multiply_certificate(&right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-owned-dense-certified-exact"
-        );
+        trace_matrix!("helper", "multiply3-owned-owned-dense-certified-exact");
         return multiply_arrays3_dense_ref(&left, &right);
     }
     multiply_arrays3(left, right)
@@ -6616,11 +6119,7 @@ fn multiply_arrays3_rhs_ref_with_exact_dense_certificate(
     if matrix3_has_dense_multiply_certificate(&left)
         && matrix3_has_dense_multiply_certificate(right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-ref-dense-certified-exact"
-        );
+        trace_matrix!("helper", "multiply3-owned-ref-dense-certified-exact");
         return multiply_arrays3_dense_ref(&left, right);
     }
     multiply_arrays3_rhs_ref(left, right)
@@ -6633,11 +6132,7 @@ fn multiply_arrays3_ref_with_exact_dense_certificate(
 ) -> [[Real; 3]; 3] {
     if matrix3_has_dense_multiply_certificate(left) && matrix3_has_dense_multiply_certificate(right)
     {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-ref-ref-dense-certified-exact"
-        );
+        trace_matrix!("helper", "multiply3-ref-ref-dense-certified-exact");
         return multiply_arrays3_dense_ref(left, right);
     }
     multiply_arrays3_ref(left, right)
@@ -6732,7 +6227,7 @@ fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [
         && right_nonzero[3][3];
 
     if left_all_nonzero && right_all_nonzero {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-borrowed-dense");
+        trace_matrix!("helper", "multiply4-borrowed-dense");
         let cell = |row: usize, col: usize| {
             let l0 = &left[row][0];
             let l1 = &left[row][1];
@@ -6756,7 +6251,7 @@ fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [
         ];
     }
 
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-borrowed-sparse");
+    trace_matrix!("helper", "multiply4-borrowed-sparse");
 
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
@@ -6856,7 +6351,7 @@ fn multiply_arrays4_borrowed(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [
 
 #[inline]
 fn multiply_arrays4_dense_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "multiply4-dense-ref");
+    trace_matrix!("helper", "multiply4-dense-ref");
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
         let l1 = &left[row][1];
@@ -6885,11 +6380,7 @@ fn multiply_arrays4_dense_known_rational_ref(
     left: &[[Real; 4]; 4],
     right: &[[Real; 4]; 4],
 ) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply4-dense-known-rational-ref"
-    );
+    trace_matrix!("helper", "multiply4-dense-known-rational-ref");
     let cell = |row: usize, col: usize| {
         let l0 = &left[row][0];
         let l1 = &left[row][1];
@@ -6939,43 +6430,23 @@ fn multiply_arrays3(left: [[Real; 3]; 3], right: [[Real; 3]; 3]) -> [[Real; 3]; 
     let left_facts = matrix_identity_diagonal_facts(&left);
     let right_facts = matrix_identity_diagonal_facts(&right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-owned-identity-left"
-        );
+        trace_matrix!("helper", "multiply3-owned-owned-identity-left");
         return right;
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-owned-identity-right"
-        );
+        trace_matrix!("helper", "multiply3-owned-owned-identity-right");
         return left;
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-owned-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply3-owned-owned-diagonal-left");
         return multiply_matrix3_by_left_diagonal(&left, &right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-owned-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply3-owned-owned-diagonal-right");
         return multiply_matrix3_by_right_diagonal(&left, &right);
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply3-owned-owned-specialized"
-    );
+    trace_matrix!("helper", "multiply3-owned-owned-specialized");
     multiply_arrays3_borrowed(&left, &right)
 }
 
@@ -6984,43 +6455,23 @@ fn multiply_arrays4(left: [[Real; 4]; 4], right: [[Real; 4]; 4]) -> [[Real; 4]; 
     let left_facts = matrix_identity_diagonal_facts(&left);
     let right_facts = matrix_identity_diagonal_facts(&right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-owned-identity-left"
-        );
+        trace_matrix!("helper", "multiply4-owned-owned-identity-left");
         return right;
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-owned-identity-right"
-        );
+        trace_matrix!("helper", "multiply4-owned-owned-identity-right");
         return left;
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-owned-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply4-owned-owned-diagonal-left");
         return multiply_matrix4_by_left_diagonal(&left, &right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-owned-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply4-owned-owned-diagonal-right");
         return multiply_matrix4_by_right_diagonal(&left, &right);
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply4-owned-owned-specialized"
-    );
+    trace_matrix!("helper", "multiply4-owned-owned-specialized");
     multiply_arrays4_borrowed(&left, &right)
 }
 
@@ -7029,43 +6480,23 @@ fn multiply_arrays3_rhs_ref(left: [[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[R
     let left_facts = matrix_identity_diagonal_facts(&left);
     let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-ref-identity-left"
-        );
+        trace_matrix!("helper", "multiply3-owned-ref-identity-left");
         return right.clone();
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-ref-identity-right"
-        );
+        trace_matrix!("helper", "multiply3-owned-ref-identity-right");
         return left;
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-ref-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply3-owned-ref-diagonal-left");
         return multiply_matrix3_by_left_diagonal(&left, right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-owned-ref-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply3-owned-ref-diagonal-right");
         return multiply_matrix3_by_right_diagonal(&left, right);
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply3-owned-ref-specialized"
-    );
+    trace_matrix!("helper", "multiply3-owned-ref-specialized");
     multiply_arrays3_borrowed(&left, right)
 }
 
@@ -7074,43 +6505,23 @@ fn multiply_arrays4_rhs_ref(left: [[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[R
     let left_facts = matrix_identity_diagonal_facts(&left);
     let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-ref-identity-left"
-        );
+        trace_matrix!("helper", "multiply4-owned-ref-identity-left");
         return right.clone();
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-ref-identity-right"
-        );
+        trace_matrix!("helper", "multiply4-owned-ref-identity-right");
         return left;
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-ref-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply4-owned-ref-diagonal-left");
         return multiply_matrix4_by_left_diagonal(&left, right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-owned-ref-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply4-owned-ref-diagonal-right");
         return multiply_matrix4_by_right_diagonal(&left, right);
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply4-owned-ref-specialized"
-    );
+    trace_matrix!("helper", "multiply4-owned-ref-specialized");
     multiply_arrays4_borrowed(&left, right)
 }
 
@@ -7120,44 +6531,24 @@ fn multiply_arrays3_ref(left: &[[Real; 3]; 3], right: &[[Real; 3]; 3]) -> [[Real
     // a fourth lane?" branch and intermediate tiny arrays. A row-dot prototype
     // was traced and rejected because it regressed exact-rational powi despite
     // fewer reduction events; keep the proven per-cell dot schedule here.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply3-ref-ref-specialized"
-    );
+    trace_matrix!("helper", "multiply3-ref-ref-specialized");
 
     let left_facts = matrix_identity_diagonal_facts(left);
     let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-ref-ref-identity-left"
-        );
+        trace_matrix!("helper", "multiply3-ref-ref-identity-left");
         return right.clone();
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-ref-ref-identity-right"
-        );
+        trace_matrix!("helper", "multiply3-ref-ref-identity-right");
         return left.clone();
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-ref-ref-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply3-ref-ref-diagonal-left");
         return multiply_matrix3_by_left_diagonal(left, right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply3-ref-ref-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply3-ref-ref-diagonal-right");
         return multiply_matrix3_by_right_diagonal(left, right);
     }
 
@@ -7170,44 +6561,24 @@ fn multiply_arrays4_ref(left: &[[Real; 4]; 4], right: &[[Real; 4]; 4]) -> [[Real
     // duplicated from the generic path because the branchless version wins in
     // borrowed mat4 multiply benchmarks while keeping per-cell exact-rational
     // denominator schedules.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "multiply4-ref-ref-specialized"
-    );
+    trace_matrix!("helper", "multiply4-ref-ref-specialized");
 
     let left_facts = matrix_identity_diagonal_facts(left);
     let right_facts = matrix_identity_diagonal_facts(right);
     if left_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-ref-ref-identity-left"
-        );
+        trace_matrix!("helper", "multiply4-ref-ref-identity-left");
         return right.clone();
     }
     if right_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-ref-ref-identity-right"
-        );
+        trace_matrix!("helper", "multiply4-ref-ref-identity-right");
         return left.clone();
     }
     if left_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-ref-ref-diagonal-left"
-        );
+        trace_matrix!("helper", "multiply4-ref-ref-diagonal-left");
         return multiply_matrix4_by_left_diagonal(left, right);
     }
     if right_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "multiply4-ref-ref-diagonal-right"
-        );
+        trace_matrix!("helper", "multiply4-ref-ref-diagonal-right");
         return multiply_matrix4_by_right_diagonal(left, right);
     }
 
@@ -7221,20 +6592,12 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // `structural_facts` and internal batch-dispatch boundaries.
         let left_facts = matrix4_transform_dispatch_facts(left);
         if left_facts.is_identity {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-identity"
-            );
+            trace_matrix!("helper", "transform-vector4-identity");
             return right.clone();
         }
 
         if left_facts.is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-diagonal"
-            );
+            trace_matrix!("helper", "transform-vector4-diagonal");
             return from_fn(|row| right[row].clone().mul_cached(&left[row][row]));
         }
 
@@ -7245,17 +6608,9 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // boundary used by the generic homogeneous path.
         match right[3].zero_one_or_minus_one() {
             ZeroOneMinusOneStatus::Zero => {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "transform-vector-direction"
-                );
+                trace_matrix!("helper", "transform-vector-direction");
                 if left_facts.direction_linear_is_diagonal {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
-                        "helper",
-                        "transform-vector-direction-diagonal"
-                    );
+                    trace_matrix!("helper", "transform-vector-direction-diagonal");
                     return from_fn(|row| {
                         if row == 3 {
                             Real::zero()
@@ -7271,13 +6626,9 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
                 });
             }
             ZeroOneMinusOneStatus::One => {
-                crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector-point");
+                trace_matrix!("helper", "transform-vector-point");
                 if left_facts.is_affine && left_facts.linear_is_diagonal {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
-                        "helper",
-                        "transform-vector-point-affine-linear-diagonal"
-                    );
+                    trace_matrix!("helper", "transform-vector-point-affine-linear-diagonal");
                     return from_fn(|row| {
                         if row == 3 {
                             Real::one()
@@ -7324,7 +6675,7 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
             }
         });
         let vector_terms = [&right[0], &right[1], &right[2]];
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector-full");
+        trace_matrix!("helper", "transform-vector-full");
         from_fn(|row| {
             if translation_is_zero[row] {
                 let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7346,20 +6697,12 @@ fn transform_vector_rhs_ref<const N: usize>(left: &[[Real; N]; N], right: &[Real
         // Reference: Golub and Van Loan, *Matrix Computations* (4th ed.).
         let left_facts = matrix_identity_diagonal_facts(left);
         if left_facts.is_identity {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector3-identity"
-            );
+            trace_matrix!("helper", "transform-vector3-identity");
             return right.clone();
         }
 
         if left_facts.is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector3-diagonal"
-            );
+            trace_matrix!("helper", "transform-vector3-diagonal");
             return from_fn(|row| right[row].clone().mul_cached(&left[row][row]));
         }
 
@@ -7384,11 +6727,7 @@ fn transform_vector3_rhs_dense_ref(left: &[[Real; 3]; 3], right: &[Real; 3]) -> 
 
 #[inline]
 fn transform_vector3_rhs_dense_active_ref(left: &[[Real; 3]; 3], right: &[Real; 3]) -> [Real; 3] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector3-dense-active"
-    );
+    trace_matrix!("helper", "transform-vector3-dense-active");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7404,20 +6743,12 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts(
     matrix_facts: Matrix4Facts,
 ) -> [Real; 4] {
     if matrix_facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "transform-vector4-identity"
-        );
+        trace_matrix!("helper", "transform-vector4-identity");
         return right.clone();
     }
 
     if matrix_facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "transform-vector4-diagonal"
-        );
+        trace_matrix!("helper", "transform-vector4-diagonal");
         return from_fn(|row| right[row].clone().mul_cached(&left[row][row]));
     }
 
@@ -7426,7 +6757,7 @@ fn transform_vector4_rhs_ref_cached_with_matrix_facts(
     // their dedicated three-term kernels, so avoid repeating those impossible
     // classifications here.
     let vector_terms = [&right[0], &right[1], &right[2]];
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector4-full");
+    trace_matrix!("helper", "transform-vector4-full");
     from_fn(|row| {
         if translation_is_zero[row] {
             let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7492,11 +6823,7 @@ fn transform_vector4_rhs_direction_ref_cached(
     direction_is_diagonal: bool,
 ) -> [Real; 4] {
     if direction_is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "transform-vector4-direction-diagonal-facts"
-        );
+        trace_matrix!("helper", "transform-vector4-direction-diagonal-facts");
         return [
             right[0].clone().mul_cached(&left[0][0]),
             right[1].clone().mul_cached(&left[1][1]),
@@ -7508,11 +6835,7 @@ fn transform_vector4_rhs_direction_ref_cached(
     // `direction_is_diagonal` is an exact retained fact from the matrix scan.
     // If it is false, identity/diagonal direction cases are already ruled out,
     // so the remaining valid fast form is the three-term linear combination.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-batch-direction"
-    );
+    trace_matrix!("helper", "transform-vector4-batch-direction");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7527,8 +6850,7 @@ fn transform_vector4_direction_batch_assumed_ref(
 ) -> Vec<Vector4> {
     let mut transformed = Vec::with_capacity(rhs.len());
     if direction_is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "transform-vector4-direction-batch-diagonal-assumed"
         );
@@ -7543,11 +6865,7 @@ fn transform_vector4_direction_batch_assumed_ref(
         return transformed;
     }
 
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-direction-batch-linear-assumed"
-    );
+    trace_matrix!("helper", "transform-vector4-direction-batch-linear-assumed");
     for vector in rhs {
         // Directions have `w = 0`, so the translation column cannot contribute.
         // Keep the row computation as a three-term linear form to preserve
@@ -7574,11 +6892,7 @@ fn transform_vector4_rhs_point_affine_linear_diagonal_ref_cached(
     // building three-term linear combinations whose off-diagonal terms are known
     // structural zeros. The specialization follows the projective point/direction
     // split used in exact geometric computation.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-point-affine-linear-diagonal"
-    );
+    trace_matrix!("helper", "transform-vector4-point-affine-linear-diagonal");
     [
         right[0].clone().mul_cached(&left[0][0]) + &left[0][3],
         right[1].clone().mul_cached(&left[1][1]) + &left[1][3],
@@ -7614,8 +6928,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
     // structural zeros after its caller already inspected it. That keeps this
     // short path branch-flat for known all-zero/all-nonzero affine offsets.
     if all_translation_zero {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "transform-vector4-point-scaled-w-full-no-translation"
         );
@@ -7629,18 +6942,13 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
         // All rows have non-zero translation coefficients, so we can avoid
         // per-row branches on homogeneous offset activity and apply one
         // multiplied offset term per lane.
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "transform-vector4-point-scaled-w-full-nonzero"
-        );
+        trace_matrix!("helper", "transform-vector4-point-scaled-w-full-nonzero");
         let translation: [Real; 4] = if w_scale_is_one {
             from_fn(|row| left[row][3].clone())
         } else {
             from_fn(|row| left[row][3].clone().mul_cached(w_scale))
         };
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "transform-vector4-point-scaled-w-full-nonzero-active"
         );
@@ -7652,11 +6960,7 @@ fn transform_vector4_rhs_point_with_scaled_w_ref_cached(
 
     // General projected-point fast path: use the 3-term spatial form and apply
     // `w'`-scaled affine offsets only where necessary.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-point-scaled-w-partial"
-    );
+    trace_matrix!("helper", "transform-vector4-point-scaled-w-partial");
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
         let mapped = Real::linear_combination3(matrix_terms, vector_terms);
@@ -7684,11 +6988,7 @@ fn transform_vector4_rhs_point_ref_cached(
     // identity and diagonal transforms; rechecking them here made cached
     // point and mixed-batch paths pay a second full matrix probe.
     // the exact object-structure policy
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-batch-point"
-    );
+    trace_matrix!("helper", "transform-vector4-batch-point");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7708,11 +7008,7 @@ fn transform_vector4_rhs_point_all_nonzero_ref_cached(
 ) -> [Real; 4] {
     // Point transforms with guaranteed non-zero translation entries in every row
     // use a compact 3-term affine core and explicit offset for the same reason.
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-point-all-nonzero"
-    );
+    trace_matrix!("helper", "transform-vector4-point-all-nonzero");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7725,11 +7021,7 @@ fn transform_vector4_rhs_full_no_translation_ref_cached(
     left: &[[Real; 4]; 4],
     right: &[Real; 4],
 ) -> [Real; 4] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "transform-vector4-batch-full-no-translation"
-    );
+    trace_matrix!("helper", "transform-vector4-batch-full-no-translation");
     let vector_terms = [&right[0], &right[1], &right[2]];
     from_fn(|row| {
         let matrix_terms = [&left[row][0], &left[row][1], &left[row][2]];
@@ -7767,25 +7059,17 @@ impl<'a> BatchTransform3<'a> {
     fn transform_vector(&self, rhs: &Vector3) -> Vector3 {
         // The batch entry point returns before reaching this helper for
         // identity and diagonal matrices, so every call here is dense.
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "transform-vector3-dense");
+        trace_matrix!("helper", "transform-vector3-dense");
         Vector3(transform_vector3_rhs_dense_ref(&self.matrix.0, &rhs.0))
     }
 
     fn transform_vector_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
         if self.facts.is_identity {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector3-batch-identity"
-            );
+            trace_matrix!("method", "transform-vector3-batch-identity");
             return rhs.to_vec();
         }
         if self.facts.is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector3-batch-diagonal"
-            );
+            trace_matrix!("method", "transform-vector3-batch-diagonal");
             return rhs
                 .iter()
                 .map(|vector| {
@@ -7823,11 +7107,7 @@ impl<'a> BatchTransform4<'a> {
         // Identity matrices are handled by both public callers before this
         // retained-facts helper is entered.
         if self.facts.is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector4-diagonal"
-            );
+            trace_matrix!("method", "transform-vector4-diagonal");
             if matches!(vector_facts.homogeneous, Vector4HomogeneousKind::Direction) {
                 return Vector4([
                     rhs.0[0].clone().mul_cached(&self.matrix.0[0][0]),
@@ -7932,11 +7212,7 @@ impl<'a> BatchTransform4<'a> {
 
     fn transform_vector_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
         if self.facts.is_identity {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector4-batch-identity"
-            );
+            trace_matrix!("method", "transform-vector4-batch-identity");
             return rhs.to_vec();
         }
         if self.facts.is_diagonal {
@@ -7949,11 +7225,7 @@ impl<'a> BatchTransform4<'a> {
                             .skip(1)
                             .all(|vector| vector.0[3].definitely_zero())
                         {
-                            crate::trace_dispatch!(
-                                "hyperlattice_matrix",
-                                "helper",
-                                "transform-vector4-batch-diagonal-direction"
-                            );
+                            trace_matrix!("helper", "transform-vector4-batch-diagonal-direction");
                             // After the first vector classifies the batch candidate,
                             // the remaining direction scan only needs `w == 0`.
                             // This avoids asking whether every later direction is a
@@ -7977,11 +7249,7 @@ impl<'a> BatchTransform4<'a> {
                                 .skip(1)
                                 .all(|vector| vector.0[3].definitely_one()) =>
                     {
-                        crate::trace_dispatch!(
-                            "hyperlattice_matrix",
-                            "helper",
-                            "transform-vector4-batch-diagonal-point"
-                        );
+                        trace_matrix!("helper", "transform-vector4-batch-diagonal-point");
                         // After the first vector classifies the batch candidate,
                         // uniform affine point batches only need `w == 1` for the
                         // remaining vectors. This preserves the exact homogeneous
@@ -8034,11 +7302,7 @@ impl<'a> BatchTransform4<'a> {
         // Common batch shapes (all directions, all points, all unknown) avoid
         // per-vector classification and fact-vector allocation.
         if has_direction && !has_point && !has_unknown {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-batch-direction"
-            );
+            trace_matrix!("helper", "transform-vector4-batch-direction");
             if self.direction_is_diagonal {
                 for vector in rhs {
                     transformed.push(Vector4([
@@ -8061,11 +7325,7 @@ impl<'a> BatchTransform4<'a> {
         }
 
         if has_point && !has_direction && !has_unknown {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-batch-point"
-            );
+            trace_matrix!("helper", "transform-vector4-batch-point");
             if self.facts.is_affine && self.facts.linear_is_diagonal {
                 for vector in rhs {
                     transformed.push(Vector4(
@@ -8076,11 +7336,7 @@ impl<'a> BatchTransform4<'a> {
                     ));
                 }
             } else if self.all_translation_nonzero {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "transform-vector4-batch-point-all-nonzero"
-                );
+                trace_matrix!("helper", "transform-vector4-batch-point-all-nonzero");
                 for vector in rhs {
                     transformed.push(Vector4(transform_vector4_rhs_point_all_nonzero_ref_cached(
                         &self.matrix.0,
@@ -8088,11 +7344,7 @@ impl<'a> BatchTransform4<'a> {
                     )));
                 }
             } else if self.all_translation_zero {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "transform-vector4-batch-full-no-translation"
-                );
+                trace_matrix!("helper", "transform-vector4-batch-full-no-translation");
                 for vector in rhs {
                     transformed.push(Vector4(
                         transform_vector4_rhs_full_no_translation_ref_cached(
@@ -8116,11 +7368,7 @@ impl<'a> BatchTransform4<'a> {
         if has_unknown && !has_direction && !has_point {
             // All unknown homogeneous vectors can use the generic point/pointish
             // kernel directly without materializing fact structs.
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-batch-unknown"
-            );
+            trace_matrix!("helper", "transform-vector4-batch-unknown");
             for vector in rhs {
                 transformed.push(Vector4(transform_vector4_rhs_ref_cached_with_matrix_facts(
                     &self.matrix.0,
@@ -8140,11 +7388,7 @@ impl<'a> BatchTransform4<'a> {
         }
 
         if has_direction && has_point && !has_unknown {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector4-batch-mixed"
-            );
+            trace_matrix!("method", "transform-vector4-batch-mixed");
             for (vector, facts) in rhs.iter().zip(vector_facts.iter()) {
                 transformed.push(self.transform_vector_with_facts(vector, *facts));
             }
@@ -8154,11 +7398,7 @@ impl<'a> BatchTransform4<'a> {
         if has_unknown && (has_direction || has_point) {
             // Fallback: per-vector facts handles direction/unknown or
             // point/unknown mixtures safely.
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "method",
-                "transform-vector4-batch-mixed"
-            );
+            trace_matrix!("method", "transform-vector4-batch-mixed");
             for (vector, facts) in rhs.iter().zip(vector_facts.iter()) {
                 transformed.push(self.transform_vector_with_facts(vector, *facts));
             }
@@ -8178,17 +7418,9 @@ impl<'a> BatchTransform4<'a> {
     /// This skips the generic point/direction/unknown classification pass and
     /// keeps all lanes on the same retained point schedule.
     fn transform_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-vector4-point-batch-assumed"
-        );
+        trace_matrix!("method", "transform-vector4-point-batch-assumed");
         if self.facts.is_identity {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "transform-vector4-point-batch-identity-assumed"
-            );
+            trace_matrix!("helper", "transform-vector4-point-batch-identity-assumed");
             // Same retained-object reduction as directions: for identity
             // transforms the mathematically exact result is the input batch, so
             // cloning preserves all scalar structure and avoids unnecessary
@@ -8198,8 +7430,7 @@ impl<'a> BatchTransform4<'a> {
         }
         let mut transformed = Vec::with_capacity(rhs.len());
         if self.facts.is_affine && self.facts.linear_is_diagonal {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "transform-vector4-point-batch-affine-linear-diagonal-assumed"
             );
@@ -8224,8 +7455,7 @@ impl<'a> BatchTransform4<'a> {
         }
 
         if self.all_translation_nonzero {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "transform-vector4-point-batch-all-nonzero-assumed"
             );
@@ -8239,8 +7469,7 @@ impl<'a> BatchTransform4<'a> {
         }
 
         if self.all_translation_zero {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
+            trace_matrix!(
                 "helper",
                 "transform-vector4-point-batch-no-translation-assumed"
             );
@@ -8252,8 +7481,7 @@ impl<'a> BatchTransform4<'a> {
             return transformed;
         }
 
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "transform-vector4-point-batch-partial-translation-assumed"
         );
@@ -8355,7 +7583,7 @@ fn mul_sub(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
     let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
     if first_zero || second_zero {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-pruned");
+        trace_matrix!("helper", "mul-sub-pruned");
         if first_zero && second_zero {
             return Real::zero();
         }
@@ -8369,7 +7597,7 @@ fn mul_sub(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
 
 #[inline]
 fn mul_sub_dense_exact(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-dense-exact");
+    trace_matrix!("helper", "mul-sub-dense-exact");
     Real::active_signed_product_sum2([true, false], [[left_a, right_a], [left_b, right_b]])
 }
 
@@ -8380,11 +7608,7 @@ fn mul_sub_dense_exact_known_rational(
     left_b: &Real,
     right_b: &Real,
 ) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "mul-sub-dense-exact-known-rational"
-    );
+    trace_matrix!("helper", "mul-sub-dense-exact-known-rational");
     Real::active_signed_product_sum2_known_exact_rational(
         [true, false],
         [[left_a, right_a], [left_b, right_b]],
@@ -8398,11 +7622,7 @@ fn mul_sub_dense_exact_known_dyadic(
     left_b: &Real,
     right_b: &Real,
 ) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "mul-sub-dense-exact-known-dyadic"
-    );
+    trace_matrix!("helper", "mul-sub-dense-exact-known-dyadic");
     Real::active_signed_product_sum2_known_dyadic(
         [true, false],
         [[left_a, right_a], [left_b, right_b]],
@@ -8420,7 +7640,7 @@ fn mul_add(left_a: &Real, right_a: &Real, left_b: &Real, right_b: &Real) -> Real
     let second_zero = left_b.definitely_zero() || right_b.definitely_zero();
 
     if first_zero || second_zero {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-add-pruned");
+        trace_matrix!("helper", "mul-add-pruned");
         if first_zero && second_zero {
             return Real::zero();
         }
@@ -8452,7 +7672,7 @@ fn mul_add_sub(
     let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
 
     if nonzero_count <= 2 {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-add-sub-pruned");
+        trace_matrix!("helper", "mul-add-sub-pruned");
         return match nonzero_count {
             0 => Real::zero(),
             1 => {
@@ -8500,7 +7720,7 @@ fn mul_add_sub_dense_exact(
     left_c: &Real,
     right_c: &Real,
 ) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-add-sub-dense-exact");
+    trace_matrix!("helper", "mul-add-sub-dense-exact");
     Real::active_signed_product_sum2(
         [true, true, false],
         [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -8516,11 +7736,7 @@ fn mul_add_sub_dense_exact_known_rational(
     left_c: &Real,
     right_c: &Real,
 ) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "mul-add-sub-dense-exact-known-rational"
-    );
+    trace_matrix!("helper", "mul-add-sub-dense-exact-known-rational");
     Real::active_signed_product_sum2_known_exact_rational(
         [true, true, false],
         [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -8545,7 +7761,7 @@ fn mul_sub_add(
     let nonzero_count = (!first_zero) as u8 + (!second_zero) as u8 + (!third_zero) as u8;
 
     if nonzero_count <= 2 {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-add-pruned");
+        trace_matrix!("helper", "mul-sub-add-pruned");
         return match nonzero_count {
             0 => Real::zero(),
             1 => {
@@ -8593,7 +7809,7 @@ fn mul_sub_add_dense_exact(
     left_c: &Real,
     right_c: &Real,
 ) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "mul-sub-add-dense-exact");
+    trace_matrix!("helper", "mul-sub-add-dense-exact");
     Real::active_signed_product_sum2(
         [true, false, false],
         [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -8609,11 +7825,7 @@ fn mul_sub_add_dense_exact_known_rational(
     left_c: &Real,
     right_c: &Real,
 ) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "mul-sub-add-dense-exact-known-rational"
-    );
+    trace_matrix!("helper", "mul-sub-add-dense-exact-known-rational");
     Real::active_signed_product_sum2_known_exact_rational(
         [true, false, false],
         [[left_a, right_a], [left_b, right_b], [left_c, right_c]],
@@ -8622,7 +7834,7 @@ fn mul_sub_add_dense_exact_known_rational(
 
 #[inline]
 fn determinant3(m: &[[Real; 3]; 3]) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant3");
+    trace_matrix!("helper", "determinant3");
     // Keep determinant infallible and division-free. A fraction-free elimination prototype would
     // need pivot divisions and a fallback for singular or unknown-zero pivots,
     // which does not match the public determinant contract and adds exact
@@ -8640,11 +7852,7 @@ fn determinant3(m: &[[Real; 3]; 3]) -> Real {
 
 #[inline]
 fn matrix3_adjugate_and_determinant(matrix: &[[Real; 3]; 3]) -> ([[Real; 3]; 3], Real) {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix3-adjugate-and-determinant"
-    );
+    trace_matrix!("helper", "matrix3-adjugate-and-determinant");
     let m = &matrix;
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
@@ -8664,11 +7872,7 @@ fn matrix3_adjugate_and_determinant_dense_exact(
     matrix: &[[Real; 3]; 3],
     known_dyadic: bool,
 ) -> ([[Real; 3]; 3], Real) {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix3-adjugate-and-determinant-dense-exact"
-    );
+    trace_matrix!("helper", "matrix3-adjugate-and-determinant-dense-exact");
     let m = &matrix;
     let difference: fn(&Real, &Real, &Real, &Real) -> Real = if known_dyadic {
         mul_sub_dense_exact_known_dyadic
@@ -8695,7 +7899,7 @@ fn matrix3_adjugate_and_determinant_dense_exact(
 
 #[inline]
 fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix3-scaled-adjugate");
+    trace_matrix!("helper", "matrix3-scaled-adjugate");
     let m = &matrix;
     let c00 = mul_sub(&m[1][1], &m[2][2], &m[1][2], &m[2][1]);
     let c01 = mul_sub(&m[0][2], &m[2][1], &m[0][1], &m[2][2]);
@@ -8733,11 +7937,7 @@ fn matrix3_scaled_adjugate(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]
 
 #[inline(never)]
 fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix3-scaled-adjugate-dense-exact"
-    );
+    trace_matrix!("helper", "matrix3-scaled-adjugate-dense-exact");
     let exact_rational_is_dyadic = matrix.iter().flatten().try_fold(true, |all_dyadic, value| {
         Some(all_dyadic & value.exact_rational_ref()?.is_dyadic())
     });
@@ -8745,8 +7945,7 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
     // schedule; general rationals retain the scalar aggregate that avoids
     // wrapping every intermediate cofactor.
     if matches!(exact_rational_is_dyadic, Some(false)) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "matrix3-scaled-adjugate-dense-exact-rational-aggregate"
         );
@@ -8800,13 +7999,9 @@ fn matrix3_scaled_adjugate_dense_exact(matrix: &[[Real; 3]; 3]) -> BlasResult<[[
 
 #[inline]
 fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3");
+    trace_matrix!("helper", "invert-matrix3");
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix3-dense-cofactor");
         if let Some(inverse) = matrix3_dense_exact_rational_inverse(&matrix) {
             return inverse;
         }
@@ -8814,34 +8009,26 @@ fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
     }
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-identity");
+        trace_matrix!("helper", "invert-matrix3-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-diagonal");
+        trace_matrix!("helper", "invert-matrix3-diagonal");
         return invert_matrix3_by_diagonal(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
         // Triangular kernels beat general affine/cofactor methods when this fact
         // holds, because each row/column has one structural dependency chain.
         // This is a small, explicit specialization for exact-geometric workloads.
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-upper-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix3-upper-triangular");
         return invert_matrix3_upper_triangular(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-lower-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix3-lower-triangular");
         return invert_matrix3_lower_triangular(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-affine");
+        trace_matrix!("helper", "invert-matrix3-affine");
         return invert_matrix3_affine(&matrix, facts.linear_is_diagonal);
     }
     // Cofactor inversion is intentionally kept for 3x3 reciprocal/inverse.
@@ -8852,13 +8039,9 @@ fn invert_matrix3(matrix: [[Real; 3]; 3]) -> BlasResult<[[Real; 3]; 3]> {
 
 #[inline]
 fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix3-checked");
+    trace_matrix!("helper", "invert-matrix3-checked");
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-dense-cofactor");
         if let Some(inverse) = matrix3_dense_exact_rational_inverse(&matrix) {
             return inverse;
         }
@@ -8870,45 +8053,25 @@ fn invert_matrix3_checked(matrix: [[Real; 3]; 3]) -> CheckedBlasResult<[[Real; 3
     }
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-identity"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-diagonal");
         return invert_matrix3_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
         // Checked fast path preserves the same dispatch preference as ordinary
         // inverse but with an explicit nonzero guarantee on diagonal pivots.
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-upper-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-upper-triangular");
         return invert_matrix3_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-lower-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-lower-triangular");
         return invert_matrix3_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-affine"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-affine");
         return invert_matrix3_affine_checked(&matrix, facts.linear_is_diagonal);
     }
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
@@ -8922,17 +8085,9 @@ fn invert_matrix3_checked_with_abort(
     matrix: [[Real; 3]; 3],
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 3]; 3]> {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "invert-matrix3-checked-with-abort"
-    );
+    trace_matrix!("helper", "invert-matrix3-checked-with-abort");
     if matrix3_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-with-abort-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-with-abort-dense-cofactor");
         let known_dyadic = matrix.iter().flatten().all(Real::is_exact_dyadic_rational);
         let (adjugate, det) = matrix3_adjugate_and_determinant_dense_exact(&matrix, known_dyadic);
         let det = with_abort(det, signal);
@@ -8942,43 +8097,29 @@ fn invert_matrix3_checked_with_abort(
     }
     let facts = matrix3_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-with-abort-identity"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-with-abort-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-with-abort-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-with-abort-diagonal");
         return invert_matrix3_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix3-checked-with-abort-upper-triangular"
         );
         return invert_matrix3_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix3-checked-with-abort-lower-triangular"
         );
         return invert_matrix3_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-checked-with-abort-affine"
-        );
+        trace_matrix!("helper", "invert-matrix3-checked-with-abort-affine");
         return invert_matrix3_affine_checked_with_abort(&matrix, signal, facts.linear_is_diagonal);
     }
     let (adjugate, det) = matrix3_adjugate_and_determinant(&matrix);
@@ -8990,7 +8131,7 @@ fn invert_matrix3_checked_with_abort(
 
 #[inline]
 fn matrix4_factors(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "matrix4-factors");
+    trace_matrix!("helper", "matrix4-factors");
     // Keep the cofactor inverse helpers inline across crate boundaries. The
     // full suite exposed a mat4 reciprocal layout regression; after inlining
     // the fixed inverse/cofactor layers, 200-sample/8s targeted reruns improved
@@ -9017,11 +8158,7 @@ fn matrix4_factors(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
 
 #[inline(never)]
 fn matrix4_factors_dense_exact(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix4-factors-dense-exact"
-    );
+    trace_matrix!("helper", "matrix4-factors-dense-exact");
     let s = [
         mul_sub_dense_exact(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
         mul_sub_dense_exact(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
@@ -9043,11 +8180,7 @@ fn matrix4_factors_dense_exact(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
 
 #[inline(never)]
 fn matrix4_factors_dense_exact_known_rational(m: &[[Real; 4]; 4]) -> ([Real; 6], [Real; 6]) {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix4-factors-dense-exact-known-rational"
-    );
+    trace_matrix!("helper", "matrix4-factors-dense-exact-known-rational");
     let s = [
         mul_sub_dense_exact_known_rational(&m[0][0], &m[1][1], &m[1][0], &m[0][1]),
         mul_sub_dense_exact_known_rational(&m[0][0], &m[1][2], &m[1][0], &m[0][2]),
@@ -9068,7 +8201,7 @@ fn matrix4_factors_dense_exact_known_rational(m: &[[Real; 4]; 4]) -> ([Real; 6],
 }
 
 fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant4-from-factors");
+    trace_matrix!("helper", "determinant4-from-factors");
     // This is the fixed six-minor determinant polynomial
     //   s0*c5 - s1*c4 + s2*c3 + s3*c2 - s4*c1 + s5*c0.
     // Route it as one signed product sum so hyperreal exact rationals can
@@ -9088,11 +8221,7 @@ fn determinant4_from_factors(s: &[Real; 6], c: &[Real; 6]) -> Real {
 }
 
 fn determinant4_from_factors_known_rational(s: &[Real; 6], c: &[Real; 6]) -> Real {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "determinant4-from-factors-known-rational"
-    );
+    trace_matrix!("helper", "determinant4-from-factors-known-rational");
     Real::active_signed_product_sum2_known_exact_rational(
         [true, false, true, true, false, true],
         [
@@ -9108,7 +8237,7 @@ fn determinant4_from_factors_known_rational(s: &[Real; 6], c: &[Real; 6]) -> Rea
 
 #[inline]
 fn determinant4(m: &[[Real; 4]; 4]) -> Real {
-    crate::trace_dispatch!("hyperlattice_matrix", "helper", "determinant4");
+    trace_matrix!("helper", "determinant4");
     // The six-minor formula shares the same division-free rationale as 3x3.
     // It is also reused by the cofactor inverse path, so determinant and
     // inverse stay aligned with the trace counters used for regression checks.
@@ -9215,11 +8344,7 @@ fn matrix4_scaled_adjugate_from_factors_dense_exact(
     c: &[Real; 6],
     inv_det: &Real,
 ) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix4-scaled-adjugate-dense-exact"
-    );
+    trace_matrix!("helper", "matrix4-scaled-adjugate-dense-exact");
     [
         [
             scale_by_shared_factor(
@@ -9302,11 +8427,7 @@ fn matrix3_dense_exact_rational_inverse(
 ) -> Option<BlasResult<[[Real; 3]; 3]>> {
     let exact_kind = matrix3_exact_rational_kind(matrix);
     (exact_kind != ExactRationalKind::NonRational).then(|| {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix3-dense-exact-rational-aggregate"
-        );
+        trace_matrix!("helper", "invert-matrix3-dense-exact-rational-aggregate");
         let values = [
             [&matrix[0][0], &matrix[0][1], &matrix[0][2]],
             [&matrix[1][0], &matrix[1][1], &matrix[1][2]],
@@ -9326,11 +8447,7 @@ fn matrix4_dense_exact_rational_inverse(
 ) -> Option<BlasResult<[[Real; 4]; 4]>> {
     let exact_kind = matrix4_exact_rational_kind(matrix);
     (exact_kind != ExactRationalKind::NonRational).then(|| {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-dense-exact-rational-aggregate"
-        );
+        trace_matrix!("helper", "invert-matrix4-dense-exact-rational-aggregate");
         let values = [
             [&matrix[0][0], &matrix[0][1], &matrix[0][2], &matrix[0][3]],
             [&matrix[1][0], &matrix[1][1], &matrix[1][2], &matrix[1][3]],
@@ -9348,11 +8465,7 @@ fn matrix4_dense_exact_rational_inverse(
 #[inline]
 fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix4-dense-cofactor");
         if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
             return inverse;
         }
@@ -9365,31 +8478,23 @@ fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
     }
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-identity");
+        trace_matrix!("helper", "invert-matrix4-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-diagonal");
+        trace_matrix!("helper", "invert-matrix4-diagonal");
         return invert_matrix4_by_diagonal(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-upper-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix4-upper-triangular");
         return invert_matrix4_by_upper_triangular(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-lower-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix4-lower-triangular");
         return invert_matrix4_by_lower_triangular(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!("hyperlattice_matrix", "helper", "invert-matrix4-affine");
+        trace_matrix!("helper", "invert-matrix4-affine");
         return invert_matrix4_affine(
             &matrix,
             facts.linear_is_diagonal,
@@ -9411,11 +8516,7 @@ fn invert_matrix4(matrix: [[Real; 4]; 4]) -> BlasResult<[[Real; 4]; 4]> {
 #[inline]
 fn invert_matrix4_checked(matrix: [[Real; 4]; 4]) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-dense-cofactor");
         if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
             return inverse;
         }
@@ -9429,43 +8530,23 @@ fn invert_matrix4_checked(matrix: [[Real; 4]; 4]) -> CheckedBlasResult<[[Real; 4
     }
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-identity"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-diagonal");
         return invert_matrix4_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-upper-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-upper-triangular");
         return invert_matrix4_by_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-lower-triangular"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-lower-triangular");
         return invert_matrix4_by_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-affine"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-affine");
         return invert_matrix4_affine_checked(
             &matrix,
             facts.linear_is_diagonal,
@@ -9487,11 +8568,7 @@ fn invert_matrix4_checked_with_abort(
     signal: &AbortSignal,
 ) -> CheckedBlasResult<[[Real; 4]; 4]> {
     if matrix4_is_definitely_dense_for_inverse(&matrix) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-with-abort-dense-cofactor"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-with-abort-dense-cofactor");
         if let Some(inverse) = matrix4_dense_exact_rational_inverse(&matrix) {
             return inverse;
         }
@@ -9506,43 +8583,29 @@ fn invert_matrix4_checked_with_abort(
     }
     let facts = matrix4_facts(&matrix);
     if facts.is_identity {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-with-abort-identity"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-with-abort-identity");
         return Ok(matrix);
     }
     if facts.is_diagonal {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-with-abort-diagonal"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-with-abort-diagonal");
         return invert_matrix4_by_diagonal_checked(&matrix);
     }
     if facts.is_upper_triangular && !(facts.is_affine && facts.linear_is_diagonal) {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix4-checked-with-abort-upper-triangular"
         );
         return invert_matrix4_by_upper_triangular_checked(&matrix);
     }
     if facts.is_lower_triangular {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
+        trace_matrix!(
             "helper",
             "invert-matrix4-checked-with-abort-lower-triangular"
         );
         return invert_matrix4_by_lower_triangular_checked(&matrix);
     }
     if facts.is_affine {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "helper",
-            "invert-matrix4-checked-with-abort-affine"
-        );
+        trace_matrix!("helper", "invert-matrix4-checked-with-abort-affine");
         return invert_matrix4_affine_checked_with_abort(
             &matrix,
             signal,
@@ -9566,11 +8629,7 @@ fn matrix4_adjugate_from_factors(
     s: &[Real; 6],
     c: &[Real; 6],
 ) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
-        "helper",
-        "matrix4-unscaled-adjugate-from-factors"
-    );
+    trace_matrix!("helper", "matrix4-unscaled-adjugate-from-factors");
     // Shared-scale division needs the 4x4 adjugate without multiplying each
     // cofactor by `1/det`. This deliberately duplicates the scaled inverse
     // formula above: refactoring the hot inverse path through an unscaled
@@ -9611,8 +8670,7 @@ fn matrix4_adjugate_from_factors_dense_exact_known_rational(
     s: &[Real; 6],
     c: &[Real; 6],
 ) -> [[Real; 4]; 4] {
-    crate::trace_dispatch!(
-        "hyperlattice_matrix",
+    trace_matrix!(
         "helper",
         "matrix4-unscaled-adjugate-dense-exact-known-rational"
     );
@@ -9693,19 +8751,19 @@ macro_rules! impl_matrix {
         impl $name {
             /// Constructs a matrix from row-major entries.
             pub fn new(values: [[Real; $n]; $n]) -> Self {
-                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "new");
+                trace_matrix!("constructor", "new");
                 Self(values)
             }
 
             /// Returns the zero matrix.
             pub fn zero() -> Self {
-                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "zero");
+                trace_matrix!("constructor", "zero");
                 Self(from_fn(|_| from_fn(|_| Real::zero())))
             }
 
             /// Returns the identity matrix.
             pub fn identity() -> Self {
-                crate::trace_dispatch!("hyperlattice_matrix", "constructor", "identity");
+                trace_matrix!("constructor", "identity");
                 Self(from_fn(|row| {
                     from_fn(|col| {
                         if row == col {
@@ -9719,7 +8777,7 @@ macro_rules! impl_matrix {
 
             /// Returns the transpose.
             pub fn transpose(&self) -> Self {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "transpose");
+                trace_matrix!("method", "transpose");
                 Self(from_fn(|row| from_fn(|col| self.0[col][row].clone())))
             }
 
@@ -9727,7 +8785,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse`](Self::inverse).
             pub fn reciprocal(self) -> BlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "reciprocal");
+                trace_matrix!("method", "reciprocal");
                 self.inverse()
             }
 
@@ -9735,7 +8793,7 @@ macro_rules! impl_matrix {
             ///
             /// This is equivalent to [`inverse_checked`](Self::inverse_checked).
             pub fn reciprocal_checked(self) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "reciprocal-checked");
+                trace_matrix!("method", "reciprocal-checked");
                 self.inverse_checked()
             }
 
@@ -9743,9 +8801,9 @@ macro_rules! impl_matrix {
             ///
             /// Negative exponents invert the matrix first.
             pub fn powi(self, exponent: i32) -> BlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi");
+                trace_matrix!("method", "powi");
                 if exponent == -1 {
-                    crate::trace_dispatch!("hyperlattice_matrix", "powi", "negative-one-inverse");
+                    trace_matrix!("powi", "negative-one-inverse");
                     return self.inverse();
                 }
                 // Negative powers deliberately materialize A^-1 before
@@ -9765,13 +8823,9 @@ macro_rules! impl_matrix {
 
             /// Raises the matrix to an integer power using checked inversion.
             pub fn powi_checked(self, exponent: i32) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked");
+                trace_matrix!("method", "powi-checked");
                 if exponent == -1 {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
-                        "powi",
-                        "negative-one-inverse-checked"
-                    );
+                    trace_matrix!("powi", "negative-one-inverse-checked");
                     return self.inverse_checked();
                 }
                 let base = if exponent < 0 {
@@ -9788,13 +8842,9 @@ macro_rules! impl_matrix {
                 exponent: i32,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "powi-checked-with-abort");
+                trace_matrix!("method", "powi-checked-with-abort");
                 if exponent == -1 {
-                    crate::trace_dispatch!(
-                        "hyperlattice_matrix",
-                        "powi",
-                        "negative-one-inverse-checked-with-abort"
-                    );
+                    trace_matrix!("powi", "negative-one-inverse-checked-with-abort");
                     return self.inverse_checked_with_abort(signal);
                 }
                 let base = if exponent < 0 {
@@ -9807,7 +8857,7 @@ macro_rules! impl_matrix {
 
             /// Divides every entry by `rhs` after rejecting unknown-zero divisors.
             pub fn div_scalar_checked(self, rhs: Real) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "div-scalar-checked");
+                trace_matrix!("method", "div-scalar-checked");
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 Ok(Self(
@@ -9822,11 +8872,7 @@ macro_rules! impl_matrix {
                 rhs: Real,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "method",
-                    "div-scalar-checked-with-abort"
-                );
+                trace_matrix!("method", "div-scalar-checked-with-abort");
                 let rhs = with_abort(rhs, signal);
                 require_known_nonzero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
@@ -9838,7 +8884,7 @@ macro_rules! impl_matrix {
 
             /// Divides by another matrix using checked inversion of the divisor.
             pub fn div_matrix_checked(self, rhs: Self) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!("hyperlattice_matrix", "method", "div-matrix-checked");
+                trace_matrix!("method", "div-matrix-checked");
                 Ok(Self($div_checked_fn(self.0, rhs.0)?))
             }
 
@@ -9848,11 +8894,7 @@ macro_rules! impl_matrix {
                 rhs: Self,
                 signal: &AbortSignal,
             ) -> CheckedBlasResult<Self> {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "method",
-                    "div-matrix-checked-with-abort"
-                );
+                trace_matrix!("method", "div-matrix-checked-with-abort");
                 Ok(Self($div_checked_abort_fn(self.0, rhs.0, signal)?))
             }
         }
@@ -9899,7 +8941,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(mut self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-owned-owned");
+                trace_matrix!("op", "add-owned-owned");
                 for row in 0..$n {
                     for col in 0..$n {
                         self.0[row][col] += &rhs.0[row][col];
@@ -9913,7 +8955,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-owned-ref");
+                trace_matrix!("op", "add-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Real::add_cached))
             }
         }
@@ -9922,7 +8964,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn add(self, rhs: $name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-ref-owned");
+                trace_matrix!("op", "add-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs + rhs))
             }
         }
@@ -9931,7 +8973,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn add(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-ref-ref");
+                trace_matrix!("op", "add-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] + &rhs.0[row][col])
                 }))
@@ -9942,7 +8984,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-scalar-owned");
+                trace_matrix!("op", "add-scalar-owned");
                 let rhs = &rhs;
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
@@ -9952,7 +8994,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn add(self, rhs: &Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "add-scalar-ref");
+                trace_matrix!("op", "add-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
             }
         }
@@ -9961,7 +9003,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(mut self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-owned-owned");
+                trace_matrix!("op", "sub-owned-owned");
                 for row in 0..$n {
                     for col in 0..$n {
                         self.0[row][col] -= &rhs.0[row][col];
@@ -9975,7 +9017,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-owned-ref");
+                trace_matrix!("op", "sub-owned-ref");
                 Self(map_matrix_ref(self.0, &rhs.0, Real::sub_cached))
             }
         }
@@ -9984,7 +9026,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn sub(self, rhs: $name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-ref-owned");
+                trace_matrix!("op", "sub-ref-owned");
                 $name(map_matrix_left_ref(&self.0, rhs.0, |lhs, rhs| lhs - rhs))
             }
         }
@@ -9993,7 +9035,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn sub(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-ref-ref");
+                trace_matrix!("op", "sub-ref-ref");
                 $name(from_fn(|row| {
                     from_fn(|col| &self.0[row][col] - &rhs.0[row][col])
                 }))
@@ -10004,7 +9046,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-owned");
+                trace_matrix!("op", "sub-scalar-owned");
                 let rhs = -rhs;
                 let rhs = &rhs;
                 Self(self.0.map(|row| row.map(|value| value.add_cached(rhs))))
@@ -10015,7 +9057,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn sub(self, rhs: &Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "sub-scalar-ref");
+                trace_matrix!("op", "sub-scalar-ref");
                 let rhs = -rhs.clone();
                 Self(self.0.map(|row| row.map(|value| value.add_cached(&rhs))))
             }
@@ -10025,7 +9067,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn neg(self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-owned");
+                trace_matrix!("op", "neg-owned");
                 Self(<[[Real; $n]; $n] as MatrixNegOwned>::neg_owned(self.0))
             }
         }
@@ -10034,7 +9076,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn neg(self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "neg-ref");
+                trace_matrix!("op", "neg-ref");
                 $name(<[[Real; $n]; $n] as MatrixNegRefs>::neg_refs(&self.0))
             }
         }
@@ -10043,7 +9085,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(mut self, rhs: Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-scalar-owned");
+                trace_matrix!("op", "mul-scalar-owned");
                 for row in &mut self.0 {
                     for value in row {
                         *value *= &rhs;
@@ -10057,7 +9099,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-scalar-ref");
+                trace_matrix!("op", "mul-scalar-ref");
                 Self(self.0.map(|row| row.map(|value| value.mul_cached(rhs))))
             }
         }
@@ -10068,7 +9110,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(mut self, rhs: Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-owned");
+                trace_matrix!("op", "div-scalar-owned");
                 reject_definite_zero(&rhs)?;
                 let inv_rhs = rhs.inverse()?;
                 for row in &mut self.0 {
@@ -10085,7 +9127,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &Real) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-scalar-ref");
+                trace_matrix!("op", "div-scalar-ref");
                 reject_definite_zero(rhs)?;
                 let inv_rhs = rhs.inverse_ref()?;
                 if $n == 3 {
@@ -10103,7 +9145,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-owned-owned");
+                trace_matrix!("op", "mul-owned-owned");
                 Self($mul_owned_fn(self.0, rhs.0))
             }
         }
@@ -10112,7 +9154,7 @@ macro_rules! impl_matrix {
             type Output = Self;
 
             fn mul(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-owned-ref");
+                trace_matrix!("op", "mul-owned-ref");
                 Self($mul_rhs_ref_fn(self.0, &rhs.0))
             }
         }
@@ -10121,7 +9163,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn mul(self, rhs: $name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-ref-owned");
+                trace_matrix!("op", "mul-ref-owned");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
@@ -10130,7 +9172,7 @@ macro_rules! impl_matrix {
             type Output = $name;
 
             fn mul(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "mul-ref-ref");
+                trace_matrix!("op", "mul-ref-ref");
                 $name($mul_ref_fn(&self.0, &rhs.0))
             }
         }
@@ -10139,7 +9181,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: Self) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-owned-owned");
+                trace_matrix!("op", "div-owned-owned");
                 Ok(Self($div_fn(self.0, rhs.0)?))
             }
         }
@@ -10148,7 +9190,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn div(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-owned-ref");
+                trace_matrix!("op", "div-owned-ref");
                 self / rhs.clone()
             }
         }
@@ -10157,7 +9199,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name>;
 
             fn div(self, rhs: $name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-ref-owned");
+                trace_matrix!("op", "div-ref-owned");
                 self.clone() / rhs
             }
         }
@@ -10166,7 +9208,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<$name>;
 
             fn div(self, rhs: &$name) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "div-ref-ref");
+                trace_matrix!("op", "div-ref-ref");
                 Ok($name($div_ref_fn(&self.0, &rhs.0)?))
             }
         }
@@ -10175,7 +9217,7 @@ macro_rules! impl_matrix {
             type Output = $vector;
 
             fn mul(self, rhs: $vector) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-owned-owned");
+                trace_matrix!("op", "transform-vector-owned-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -10184,7 +9226,7 @@ macro_rules! impl_matrix {
             type Output = $vector;
 
             fn mul(self, rhs: &$vector) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-owned-ref");
+                trace_matrix!("op", "transform-vector-owned-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -10193,7 +9235,7 @@ macro_rules! impl_matrix {
             type Output = $vector;
 
             fn mul(self, rhs: $vector) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-ref-owned");
+                trace_matrix!("op", "transform-vector-ref-owned");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -10202,7 +9244,7 @@ macro_rules! impl_matrix {
             type Output = $vector;
 
             fn mul(self, rhs: &$vector) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "transform-vector-ref-ref");
+                trace_matrix!("op", "transform-vector-ref-ref");
                 $vector(transform_vector_rhs_ref(&self.0, &rhs.0))
             }
         }
@@ -10211,7 +9253,7 @@ macro_rules! impl_matrix {
             type Output = BlasResult<Self>;
 
             fn bitxor(self, rhs: i32) -> Self::Output {
-                crate::trace_dispatch!("hyperlattice_matrix", "op", "bitxor-powi");
+                trace_matrix!("op", "bitxor-powi");
                 self.powi(rhs)
             }
         }
@@ -10254,7 +9296,7 @@ impl Matrix3 {
     /// or predicate preparation code. Object structure stays visible long enough
     /// to choose the exact arithmetic package.
     pub fn exact_facts(&self) -> RealExactSetFacts {
-        crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix3-exact-facts");
+        trace_matrix!("query", "matrix3-exact-facts");
         matrix3_facts(&self.0).public.exact
     }
 
@@ -10267,13 +9309,13 @@ impl Matrix3 {
     /// geometric algorithms from retained object structure before scalar
     /// expansion.
     pub fn structural_facts(&self) -> Matrix3StructuralFacts {
-        crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix3-structural-facts");
+        trace_matrix!("query", "matrix3-structural-facts");
         matrix3_facts(&self.0).public
     }
 
     /// Constructs a 3x3 diagonal matrix from known diagonal entries.
     pub fn diagonal(diagonal: [Real; 3]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal3");
+        trace_matrix!("constructor", "diagonal3");
         let [d0, d1, d2] = diagonal;
         Self([
             [d0, Real::zero(), Real::zero()],
@@ -10292,7 +9334,7 @@ impl Matrix3 {
     /// object-package guidance for exact geometric computation the exact object-structure policy and the diagonal-system specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Real; 3]) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal3-inverse");
+        trace_matrix!("constructor", "diagonal3-inverse");
         let [d0, d1, d2] = diagonal;
         Ok(Self::diagonal([
             d0.inverse()?,
@@ -10312,7 +9354,7 @@ impl Matrix3 {
     /// diagonal linear-system specialization described by Golub and Van Loan,
     /// *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Real; 3]) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3");
+        trace_matrix!("method", "div-diagonal3");
         let [[a00, a01, a02], [a10, a11, a12], [a20, a21, a22]] = self.0;
         let [d0, d1, d2] = diagonal;
         let inv0 = d0.inverse()?;
@@ -10343,39 +9385,31 @@ impl Matrix3 {
     /// triangular substitution kernel directly. Use it only when the object
     /// layer already knows the matrix is upper triangular.
     pub fn upper_triangular_inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "upper-triangular3-inverse");
+        trace_matrix!("method", "upper-triangular3-inverse");
         Ok(Self(invert_matrix3_upper_triangular(&self.0)?))
     }
 
     /// Checked variant of [`Matrix3::upper_triangular_inverse`].
     pub fn upper_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "upper-triangular3-inverse-checked"
-        );
+        trace_matrix!("method", "upper-triangular3-inverse-checked");
         Ok(Self(invert_matrix3_upper_triangular_checked(&self.0)?))
     }
 
     /// Inverts a caller-certified lower-triangular 3x3 matrix.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "lower-triangular3-inverse");
+        trace_matrix!("method", "lower-triangular3-inverse");
         Ok(Self(invert_matrix3_lower_triangular(&self.0)?))
     }
 
     /// Checked variant of [`Matrix3::lower_triangular_inverse`].
     pub fn lower_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "lower-triangular3-inverse-checked"
-        );
+        trace_matrix!("method", "lower-triangular3-inverse-checked");
         Ok(Self(invert_matrix3_lower_triangular_checked(&self.0)?))
     }
 
     /// Right-divides by a caller-certified upper-triangular 3x3 matrix.
     pub fn div_upper_triangular(self, divisor: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-upper-triangular3");
+        trace_matrix!("method", "div-upper-triangular3");
         Ok(Self(divide_matrix3_by_upper_triangular(
             self.0, &divisor.0,
         )?))
@@ -10383,11 +9417,7 @@ impl Matrix3 {
 
     /// Checked variant of [`Matrix3::div_upper_triangular`].
     pub fn div_upper_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-upper-triangular3-checked"
-        );
+        trace_matrix!("method", "div-upper-triangular3-checked");
         Ok(Self(divide_matrix3_by_upper_triangular_checked(
             self.0, &divisor.0,
         )?))
@@ -10395,7 +9425,7 @@ impl Matrix3 {
 
     /// Right-divides by a caller-certified lower-triangular 3x3 matrix.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-lower-triangular3");
+        trace_matrix!("method", "div-lower-triangular3");
         Ok(Self(divide_matrix3_by_lower_triangular(
             self.0, &divisor.0,
         )?))
@@ -10403,11 +9433,7 @@ impl Matrix3 {
 
     /// Checked variant of [`Matrix3::div_lower_triangular`].
     pub fn div_lower_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-lower-triangular3-checked"
-        );
+        trace_matrix!("method", "div-lower-triangular3-checked");
         Ok(Self(divide_matrix3_by_lower_triangular_checked(
             self.0, &divisor.0,
         )?))
@@ -10423,14 +9449,10 @@ impl Matrix3 {
     ///
     /// This path is an opt-in structural fast path for a known diagonal divisor.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 3], rhs: &Vector3) -> BlasResult<Vector3> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal3-vector");
+        trace_matrix!("method", "div-diagonal3-vector");
         let [d0, d1, d2] = diagonal;
         let (inv0, inv1, inv2) = if d0 == d1 && d0 == d2 {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "div-diagonal3-vector-uniform-scale"
-            );
+            trace_matrix!("helper", "div-diagonal3-vector-uniform-scale");
             let inv = d0.inverse()?;
             (inv.clone(), inv.clone(), inv)
         } else {
@@ -10448,7 +9470,7 @@ impl Matrix3 {
 
     /// Constructs a scalar multiple of the 3x3 identity matrix.
     pub fn uniform_scale(scale: Real) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "uniform-scale3");
+        trace_matrix!("constructor", "uniform-scale3");
         Self([
             [scale.clone(), Real::zero(), Real::zero()],
             [Real::zero(), scale.clone(), Real::zero()],
@@ -10464,11 +9486,7 @@ impl Matrix3 {
     /// checks taxed every diagonal matrix. When a caller already knows `A = sI`,
     /// one scalar inverse and two clones are sufficient.
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "uniform-scale3-inverse"
-        );
+        trace_matrix!("constructor", "uniform-scale3-inverse");
         let inv = scale.inverse()?;
         Ok(Self::uniform_scale(inv))
     }
@@ -10477,17 +9495,13 @@ impl Matrix3 {
     ///
     /// Matrix facts are computed once per call and reused for every vector.
     pub fn transform_vec3_batch(&self, rhs: &[Vector3]) -> Vec<Vector3> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-vector-vec3-batch"
-        );
+        trace_matrix!("method", "transform-vector-vec3-batch");
         BatchTransform3::new(self).transform_vector_batch(rhs)
     }
 
     /// Transforms one vector immediately.
     pub fn transform_vec3(&self, rhs: &Vector3) -> Vector3 {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "transform-vector-vec3");
+        trace_matrix!("method", "transform-vector-vec3");
         self * rhs
     }
 
@@ -10496,29 +9510,25 @@ impl Matrix3 {
     /// The ordinary path rejects a definite-zero determinant and otherwise
     /// propagates scalar arithmetic errors from the selected Real kernel.
     pub fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-inverse");
+        trace_matrix!("method", "matrix3-inverse");
         Ok(Self(invert_matrix3(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-inverse-checked");
+        trace_matrix!("method", "matrix3-inverse-checked");
         Ok(Self(invert_matrix3_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "matrix3-inverse-checked-with-abort"
-        );
+        trace_matrix!("method", "matrix3-inverse-checked-with-abort");
         Ok(Self(invert_matrix3_checked_with_abort(self.0, signal)?))
     }
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Real {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix3-determinant");
+        trace_matrix!("method", "matrix3-determinant");
         determinant3(&self.0)
     }
 }
@@ -10620,7 +9630,7 @@ impl Matrix4 {
     /// re-querying every scalar entry, while `hyperreal` remains responsible
     /// for denominator storage and reduction.
     pub fn exact_facts(&self) -> RealExactSetFacts {
-        crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix4-exact-facts");
+        trace_matrix!("query", "matrix4-exact-facts");
         matrix4_facts(&self.0).public.exact
     }
 
@@ -10630,13 +9640,13 @@ impl Matrix4 {
     /// masks so transform stacks can dispatch to translation, diagonal, sparse,
     /// or generic schedules from one retained summary.
     pub fn structural_facts(&self) -> Matrix4StructuralFacts {
-        crate::trace_dispatch!("hyperlattice_matrix", "query", "matrix4-structural-facts");
+        trace_matrix!("query", "matrix4-structural-facts");
         matrix4_facts(&self.0).public
     }
 
     /// Constructs a 4x4 affine translation matrix from known x/y/z offsets.
     pub fn affine_translation(translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "affine-translation");
+        trace_matrix!("constructor", "affine-translation");
         let [tx, ty, tz] = translation;
         Self([
             [Real::one(), Real::zero(), Real::zero(), tx],
@@ -10829,11 +9839,7 @@ impl Matrix4 {
     /// certified returns the scalar layer's typed problem, such as
     /// [`Problem::UnknownZero`]; it is never treated as nonzero.
     pub fn rotation_between_unit_vectors(from: &Vector3, to: &Vector3) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "rotation-between-unit-vectors"
-        );
+        trace_matrix!("constructor", "rotation-between-unit-vectors");
         let dot = from.dot(to);
         if let Some(RealSign::Zero) = (dot.clone() - Real::one()).refine_sign_until(128) {
             return Ok(Self::identity());
@@ -10859,11 +9865,7 @@ impl Matrix4 {
             Err(Problem::UnknownZero | Problem::DivideByZero) => {}
             Err(problem) => return Err(problem),
         }
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "rotation-between-unit-vectors",
-            "algebraic-rodrigues"
-        );
+        trace_matrix!("rotation-between-unit-vectors", "algebraic-rodrigues");
         let scale = (Real::one() + dot.clone()).inverse()?;
         let [x, y, z] = cross.0;
         let scaled = |left: &Real, right: &Real| left * right * &scale;
@@ -10894,11 +9896,7 @@ impl Matrix4 {
     /// as a known-object API avoids the generic affine fact scan and does not
     /// enter determinant/cofactor arithmetic.
     pub fn affine_translation_inverse(translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "affine-translation-inverse"
-        );
+        trace_matrix!("constructor", "affine-translation-inverse");
         let [tx, ty, tz] = translation;
         Self::affine_translation([-tx, -ty, -tz])
     }
@@ -10910,7 +9908,7 @@ impl Matrix4 {
     /// object-level fast path used by generic affine dispatch without making
     /// callers rediscover translation structure numerically.
     pub fn div_affine_translation(self, translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-affine-translation4");
+        trace_matrix!("method", "div-affine-translation4");
         let [row0, row1, row2, row3] = self.0;
         let [tx, ty, tz] = translation;
         let terms = [&tx, &ty, &tz];
@@ -10936,7 +9934,7 @@ impl Matrix4 {
     /// orthonormal. This constructor does not validate that fact; it preserves
     /// it for known-object inverse and right-division paths.
     pub fn affine_orthonormal(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "affine-orthonormal");
+        trace_matrix!("constructor", "affine-orthonormal");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
         let [tx, ty, tz] = translation;
         Self([
@@ -10953,11 +9951,7 @@ impl Matrix4 {
     /// This bypasses generic affine inversion and avoids determinant/cofactor
     /// arithmetic for rigid transform stacks.
     pub fn affine_orthonormal_inverse(linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "affine-orthonormal-inverse"
-        );
+        trace_matrix!("constructor", "affine-orthonormal-inverse");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
         let [tx, ty, tz] = translation;
         let it0 = Real::zero() - affine_translation_dot3([&r00, &r10, &r20], [&tx, &ty, &tz]);
@@ -10973,7 +9967,7 @@ impl Matrix4 {
 
     /// Right-divides this matrix by a caller-certified affine orthonormal transform.
     pub fn div_affine_orthonormal(self, linear: [[Real; 3]; 3], translation: [Real; 3]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-affine-orthonormal4");
+        trace_matrix!("method", "div-affine-orthonormal4");
         let [[r00, r01, r02], [r10, r11, r12], [r20, r21, r22]] = linear;
         let [tx, ty, tz] = translation;
         let it0 = Real::zero() - affine_translation_dot3([&r00, &r10, &r20], [&tx, &ty, &tz]);
@@ -10997,7 +9991,7 @@ impl Matrix4 {
     /// does not validate uniqueness; callers use it when the construction
     /// provenance already proves signed-permutation structure.
     pub fn signed_permutation(rows: [SignedAxis4; 4]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "signed-permutation4");
+        trace_matrix!("constructor", "signed-permutation4");
         let [r0, r1, r2, r3] = rows;
         let mut matrix = [
             [Real::zero(), Real::zero(), Real::zero(), Real::zero()],
@@ -11014,11 +10008,7 @@ impl Matrix4 {
 
     /// Constructs the inverse of a caller-certified signed-permutation matrix.
     pub fn signed_permutation_inverse(rows: [SignedAxis4; 4]) -> Self {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "signed-permutation4-inverse"
-        );
+        trace_matrix!("constructor", "signed-permutation4-inverse");
         let [r0, r1, r2, r3] = rows;
         let mut matrix = [
             [Real::zero(), Real::zero(), Real::zero(), Real::zero()],
@@ -11035,7 +10025,7 @@ impl Matrix4 {
 
     /// Right-divides this matrix by a caller-certified signed-permutation matrix.
     pub fn div_signed_permutation(self, rows: [SignedAxis4; 4]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-signed-permutation4");
+        trace_matrix!("method", "div-signed-permutation4");
         let [r0, r1, r2, r3] = rows;
         Self(self.0.map(|row| {
             [
@@ -11049,11 +10039,7 @@ impl Matrix4 {
 
     /// Applies a caller-certified signed-permutation transform to a vector.
     pub fn transform_signed_permutation_vector(rows: [SignedAxis4; 4], rhs: &Vector4) -> Vector4 {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-signed-permutation4-vector"
-        );
+        trace_matrix!("method", "transform-signed-permutation4-vector");
         let [r0, r1, r2, r3] = rows;
         Vector4([
             signed_axis4_apply(rhs.0[r0.index()].clone(), r0),
@@ -11068,11 +10054,7 @@ impl Matrix4 {
         rows: [SignedAxis4; 4],
         rhs: &[Vector4],
     ) -> Vec<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-signed-permutation4-batch"
-        );
+        trace_matrix!("method", "transform-signed-permutation4-batch");
         let [r0, r1, r2, r3] = rows;
         rhs.iter()
             .map(|vector| {
@@ -11088,7 +10070,7 @@ impl Matrix4 {
 
     /// Constructs a 4x4 diagonal matrix from known diagonal entries.
     pub fn diagonal(diagonal: [Real; 4]) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal");
+        trace_matrix!("constructor", "diagonal");
         let [d0, d1, d2, d3] = diagonal;
         Self([
             [d0, Real::zero(), Real::zero(), Real::zero()],
@@ -11110,7 +10092,7 @@ impl Matrix4 {
     /// the exact object-structure policy and the diagonal solve
     /// treatment in Golub and Van Loan, *Matrix Computations*.
     pub fn diagonal_inverse(diagonal: [Real; 4]) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "diagonal-inverse");
+        trace_matrix!("constructor", "diagonal-inverse");
         let [d0, d1, d2, d3] = diagonal;
         Ok(Self::diagonal([
             d0.inverse()?,
@@ -11132,7 +10114,7 @@ impl Matrix4 {
     /// object-level exact geometric computation guidance the exact object-structure policy and the diagonal solve specialization in
     /// Golub and Van Loan, *Matrix Computations*.
     pub fn div_diagonal(self, diagonal: [Real; 4]) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal");
+        trace_matrix!("method", "div-diagonal");
         let [
             [a00, a01, a02, a03],
             [a10, a11, a12, a13],
@@ -11174,39 +10156,31 @@ impl Matrix4 {
 
     /// Inverts a caller-certified upper-triangular 4x4 matrix.
     pub fn upper_triangular_inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "upper-triangular4-inverse");
+        trace_matrix!("method", "upper-triangular4-inverse");
         Ok(Self(invert_matrix4_by_upper_triangular(&self.0)?))
     }
 
     /// Checked variant of [`Matrix4::upper_triangular_inverse`].
     pub fn upper_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "upper-triangular4-inverse-checked"
-        );
+        trace_matrix!("method", "upper-triangular4-inverse-checked");
         Ok(Self(invert_matrix4_by_upper_triangular_checked(&self.0)?))
     }
 
     /// Inverts a caller-certified lower-triangular 4x4 matrix.
     pub fn lower_triangular_inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "lower-triangular4-inverse");
+        trace_matrix!("method", "lower-triangular4-inverse");
         Ok(Self(invert_matrix4_by_lower_triangular(&self.0)?))
     }
 
     /// Checked variant of [`Matrix4::lower_triangular_inverse`].
     pub fn lower_triangular_inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "lower-triangular4-inverse-checked"
-        );
+        trace_matrix!("method", "lower-triangular4-inverse-checked");
         Ok(Self(invert_matrix4_by_lower_triangular_checked(&self.0)?))
     }
 
     /// Right-divides by a caller-certified upper-triangular 4x4 matrix.
     pub fn div_upper_triangular(self, divisor: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-upper-triangular4");
+        trace_matrix!("method", "div-upper-triangular4");
         Ok(Self(divide_matrix4_by_upper_triangular(
             self.0, &divisor.0,
         )?))
@@ -11214,11 +10188,7 @@ impl Matrix4 {
 
     /// Checked variant of [`Matrix4::div_upper_triangular`].
     pub fn div_upper_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-upper-triangular4-checked"
-        );
+        trace_matrix!("method", "div-upper-triangular4-checked");
         Ok(Self(divide_matrix4_by_upper_triangular_checked(
             self.0, &divisor.0,
         )?))
@@ -11226,7 +10196,7 @@ impl Matrix4 {
 
     /// Right-divides by a caller-certified lower-triangular 4x4 matrix.
     pub fn div_lower_triangular(self, divisor: Self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-lower-triangular4");
+        trace_matrix!("method", "div-lower-triangular4");
         Ok(Self(divide_matrix4_by_lower_triangular(
             self.0, &divisor.0,
         )?))
@@ -11234,11 +10204,7 @@ impl Matrix4 {
 
     /// Checked variant of [`Matrix4::div_lower_triangular`].
     pub fn div_lower_triangular_checked(self, divisor: Self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-lower-triangular4-checked"
-        );
+        trace_matrix!("method", "div-lower-triangular4-checked");
         Ok(Self(divide_matrix4_by_lower_triangular_checked(
             self.0, &divisor.0,
         )?))
@@ -11257,7 +10223,7 @@ impl Matrix4 {
     /// Retain object facts, defer expensive algebra, and reduce to a cheaper
     /// exact kernel when the divisor structure is known.
     pub fn div_diagonal_vector(&self, diagonal: [Real; 4], rhs: &Vector4) -> BlasResult<Vector4> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "div-diagonal4-vector");
+        trace_matrix!("method", "div-diagonal4-vector");
         let [d0, d1, d2, d3] = diagonal;
         let vector_facts = rhs.geometric_facts();
         if matches!(vector_facts.homogeneous, Vector4HomogeneousKind::Direction) {
@@ -11267,11 +10233,7 @@ impl Matrix4 {
             // This follows the geometric-object split between points and
             // directions in the exact object-structure policy.
             let (inv0, inv1, inv2) = if d0 == d1 && d0 == d2 {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "helper",
-                    "div-diagonal4-vector-direction-uniform-scale"
-                );
+                trace_matrix!("helper", "div-diagonal4-vector-direction-uniform-scale");
                 let inv = d0.inverse()?;
                 (inv.clone(), inv.clone(), inv)
             } else {
@@ -11292,11 +10254,7 @@ impl Matrix4 {
 
         let linear_uniform_scale = d0 == d1 && d0 == d2;
         let (inv0, inv1, inv2) = if linear_uniform_scale {
-            crate::trace_dispatch!(
-                "hyperlattice_matrix",
-                "helper",
-                "div-diagonal4-vector-linear-uniform-scale"
-            );
+            trace_matrix!("helper", "div-diagonal4-vector-linear-uniform-scale");
             let inv = d0.inverse()?;
             (inv.clone(), inv.clone(), inv)
         } else {
@@ -11400,11 +10358,7 @@ impl Matrix4 {
         diagonal: [Real; 4],
         rhs: &Vector4,
     ) -> BlasResult<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "div-diagonal4-vector-direction-only"
-        );
+        trace_matrix!("method", "div-diagonal4-vector-direction-only");
         let [d0, d1, d2, _d3] = diagonal;
         let inv0 = d0.inverse()?;
         let inv1 = d1.inverse()?;
@@ -11424,7 +10378,7 @@ impl Matrix4 {
 
     /// Constructs a scalar multiple of the 4x4 identity matrix.
     pub fn uniform_scale(scale: Real) -> Self {
-        crate::trace_dispatch!("hyperlattice_matrix", "constructor", "uniform-scale");
+        trace_matrix!("constructor", "uniform-scale");
         Self([
             [scale.clone(), Real::zero(), Real::zero(), Real::zero()],
             [Real::zero(), scale.clone(), Real::zero(), Real::zero()],
@@ -11443,11 +10397,7 @@ impl Matrix4 {
     /// hyperreal's exact/symbolic node cache. This is an explicit object-layer
     /// specialization of the diagonal solve.
     pub fn uniform_scale_inverse(scale: Real) -> BlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "constructor",
-            "uniform-scale-inverse"
-        );
+        trace_matrix!("constructor", "uniform-scale-inverse");
         let inv = scale.inverse()?;
         Ok(Self::uniform_scale(inv))
     }
@@ -11540,11 +10490,7 @@ impl Matrix4 {
     pub fn transform_vec4_direction(&self, rhs: &Vector4) -> Vector4 {
         match matrix4_direction_linear_kind(&self.0) {
             Matrix4DirectionLinearKind::Identity => {
-                crate::trace_dispatch!(
-                    "hyperlattice_matrix",
-                    "method",
-                    "transform-vector-vec4-direction-linear-identity"
-                );
+                trace_matrix!("method", "transform-vector-vec4-direction-linear-identity");
                 rhs.clone()
             }
             Matrix4DirectionLinearKind::Diagonal => Vector4(
@@ -11562,11 +10508,7 @@ impl Matrix4 {
     /// batch as directions. It avoids the generic batch classifier and keeps
     /// the translation column out of the arithmetic schedule.
     pub fn transform_vec4_direction_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-vector-vec4-direction-batch"
-        );
+        trace_matrix!("method", "transform-vector-vec4-direction-batch");
         // Direction batches do not need the full Matrix4 fact
         // scan. The only matrix fact required for the fastest direction kernel
         // is whether the 3x3 linear block is diagonal while the bottom spatial
@@ -11585,11 +10527,7 @@ impl Matrix4 {
     /// batch as points. It preserves the exact point invariant and avoids the
     /// generic point/direction/unknown classification pass.
     pub fn transform_vec4_point_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-vector-vec4-point-batch"
-        );
+        trace_matrix!("method", "transform-vector-vec4-point-batch");
         // Unlike direction batches, point batches did not benefit from a
         // thinner one-shot public route: the public affine-diagonal helper was
         // trace-clean but did not show a stable exact-Real kernel win. If that
@@ -11603,17 +10541,13 @@ impl Matrix4 {
     /// Per-row homogeneous-coordinate facts are computed once per call and
     /// reused for every vector in the batch.
     pub fn transform_vec4_batch(&self, rhs: &[Vector4]) -> Vec<Vector4> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "transform-vector-vec4-batch"
-        );
+        trace_matrix!("method", "transform-vector-vec4-batch");
         BatchTransform4::new(self).transform_vector_batch(rhs)
     }
 
     /// Transforms one homogeneous vector immediately.
     pub fn transform_vec4(&self, rhs: &Vector4) -> Vector4 {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "transform-vector-vec4");
+        trace_matrix!("method", "transform-vector-vec4");
         self * rhs
     }
 
@@ -11622,29 +10556,25 @@ impl Matrix4 {
     /// The ordinary path rejects a definite-zero determinant and propagates
     /// scalar arithmetic errors from the selected Real kernel.
     pub fn inverse(self) -> BlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-inverse");
+        trace_matrix!("method", "matrix4-inverse");
         Ok(Self(invert_matrix4(self.0)?))
     }
 
     /// Returns the matrix inverse after rejecting unknown-zero determinants.
     pub fn inverse_checked(self) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-inverse-checked");
+        trace_matrix!("method", "matrix4-inverse-checked");
         Ok(Self(invert_matrix4_checked(self.0)?))
     }
 
     /// Returns the checked matrix inverse after attaching an abort signal.
     pub fn inverse_checked_with_abort(self, signal: &AbortSignal) -> CheckedBlasResult<Self> {
-        crate::trace_dispatch!(
-            "hyperlattice_matrix",
-            "method",
-            "matrix4-inverse-checked-with-abort"
-        );
+        trace_matrix!("method", "matrix4-inverse-checked-with-abort");
         Ok(Self(invert_matrix4_checked_with_abort(self.0, signal)?))
     }
 
     /// Returns the determinant.
     pub fn determinant(&self) -> Real {
-        crate::trace_dispatch!("hyperlattice_matrix", "method", "matrix4-determinant");
+        trace_matrix!("method", "matrix4-determinant");
         determinant4(&self.0)
     }
 }
