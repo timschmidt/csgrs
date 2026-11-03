@@ -1,5 +1,6 @@
 //! Validated construction: solids capped by a rational Bézier tensor graph.
 
+use crate::SurfaceSurfaceIntersection;
 use crate::topology::*;
 
 impl ArenaModelBuilder {
@@ -119,7 +120,20 @@ impl ArenaModelBuilder {
                         .collect::<Result<Vec<_>, _>>()?,
                 });
             }
-            if !admissible || !top_surface.certify_tensor_graph(&origin, &u, &v, &direction)? {
+            if !admissible {
+                continue;
+            }
+            let base_surface = self.surface_ref(base.surface)?.clone();
+            let profile = self.build_wire_curve_path(outer)?;
+            if !top_surface.certify_tensor_graph(&origin, &u, &v, &direction)?
+                && !(caps.is_empty()
+                    && top_above_base_on_profile(
+                        &base_surface,
+                        &top_surface,
+                        (&origin, &u, &v, &direction),
+                        &profile,
+                    )?)
+            {
                 continue;
             }
             if (tensors.len() > 1 || !caps.is_empty())
@@ -127,7 +141,6 @@ impl ArenaModelBuilder {
             {
                 continue;
             }
-            let profile = self.build_wire_curve_path(outer)?;
             return Ok(Some(CertifiedTensorGraphShell {
                 origin,
                 u,
@@ -171,4 +184,174 @@ impl ArenaModelBuilder {
         }
         Ok(true)
     }
+}
+
+/// Whether a tensor with a certified injective base projection lies on or
+/// above the base plane over the whole base profile, without requiring it
+/// above the plane over the entire patch. Its height above the plane is zero
+/// exactly on the complete plane/tensor section; when every section curve
+/// lies along the profile boundary, the height keeps one sign inside the
+/// connected profile, which an interior point then fixes as positive.
+fn top_above_base_on_profile(
+    base: &Surface,
+    top: &Surface,
+    frame: (&Point3, &Vector3, &Vector3, &Vector3),
+    profile: &CurvePath2,
+) -> Result<bool, BuildError> {
+    let (origin, u, v, direction) = frame;
+    if !top.certify_tensor_projection(origin, u, v, direction)? {
+        return Ok(false);
+    }
+    let sections = match base.intersect_surface(top) {
+        Ok(SurfaceSurfaceIntersection::None) => Vec::new(),
+        Ok(SurfaceSurfaceIntersection::Curves(curves)) => curves,
+        Ok(_) | Err(_) => return Ok(false),
+    };
+    for section in &sections {
+        let trace = section
+            .pcurve(SurfaceIntersectionOperand::First)
+            .materialize()?
+            .curve()
+            .clone();
+        // Each connected section either runs along the profile boundary, or
+        // never meets it and has an outside point, so lies wholly outside.
+        let mut on_boundary = false;
+        let mut touches = false;
+        for boundary in profile.curves() {
+            let Ok(relation) = trace.intersect_curve(boundary) else {
+                return Ok(false);
+            };
+            if !relation.is_complete() {
+                return Ok(false);
+            }
+            if let [overlap] = relation.overlaps()
+                && relation.contacts().is_empty()
+                && overlap.includes_start()
+                && overlap.includes_end()
+                && covers_whole_domain(overlap.first_range(), &trace)?
+            {
+                on_boundary = true;
+                break;
+            }
+            touches |= !relation.overlaps().is_empty() || !relation.contacts().is_empty();
+        }
+        if on_boundary {
+            continue;
+        }
+        if touches {
+            return Ok(false);
+        }
+        // Any point of a section that never meets the boundary decides it.
+        let outside = |point: &hypercurve::CurvePoint2| {
+            matches!(
+                crate::error::classified(profile.classify_point(point)),
+                Ok(Classification::Decided(ContourPointLocation::Outside))
+            )
+        };
+        if !outside(&trace.start()) {
+            let domain = trace.parameter_domain();
+            let (Some(lower), Some(upper)) = (domain.start().scalar(), domain.end().scalar())
+            else {
+                return Ok(false);
+            };
+            let middle = ((lower + upper) / Real::from(2)).map_err(GeometryError::Numeric)?;
+            if !outside(
+                &trace
+                    .point_at(&middle.into())
+                    .map_err(GeometryError::from)?,
+            ) {
+                return Ok(false);
+            }
+        }
+    }
+    // One interior point of the profile fixes the sign.
+    // Selected vertices of polynomial boundary pieces are certified in their
+    // branch's source chart so the search box spans the whole profile.
+    let mut vertices = Vec::with_capacity(profile.curves().len());
+    for curve in profile.curves() {
+        let start = curve.start();
+        if let Some(point) = start.coordinates() {
+            vertices.push(point.clone());
+            continue;
+        }
+        let original = curve
+            .source_restriction()
+            .map_or(curve, |(original, _, _)| original);
+        if let Some(branch) = original.polynomial_branch()
+            && let Some(point) = crate::geometry::certified_branch_point(&start, branch)?
+        {
+            vertices.push(point);
+        }
+    }
+    if vertices.is_empty() {
+        return Ok(false);
+    }
+    let (mut min_x, mut max_x) = (vertices[0].x().clone(), vertices[0].x().clone());
+    let (mut min_y, mut max_y) = (vertices[0].y().clone(), vertices[0].y().clone());
+    let less = |a: &Real, b: &Real| -> Result<bool, BuildError> {
+        Ok(
+            decided_model_order(compare_reals(a, b, crate::STRICT_PREDICATES))?
+                == std::cmp::Ordering::Less,
+        )
+    };
+    for point in &vertices[1..] {
+        if less(point.x(), &min_x)? {
+            min_x = point.x().clone();
+        }
+        if less(&max_x, point.x())? {
+            max_x = point.x().clone();
+        }
+        if less(point.y(), &min_y)? {
+            min_y = point.y().clone();
+        }
+        if less(&max_y, point.y())? {
+            max_y = point.y().clone();
+        }
+    }
+    for denominator in [2_i64, 4, 8] {
+        for i in 1..denominator {
+            for j in 1..denominator {
+                let fraction = |k: i64| {
+                    (Real::from(k) / Real::from(denominator)).map_err(GeometryError::Numeric)
+                };
+                let a = &min_x + (&max_x - &min_x) * fraction(i)?;
+                let b = &min_y + (&max_y - &min_y) * fraction(j)?;
+                let inside = matches!(
+                    crate::error::classified(
+                        profile.classify_point(&CurvePoint2::new(a.clone(), b.clone()).into())
+                    ),
+                    Ok(Classification::Decided(ContourPointLocation::Inside))
+                );
+                if !inside {
+                    continue;
+                }
+                return Ok(matches!(
+                    top.tensor_graph_height_order(frame, &a, &b, &Real::zero())?,
+                    Some(std::cmp::Ordering::Less)
+                ));
+            }
+        }
+    }
+    Ok(false)
+}
+
+/// Whether an overlap range spans the curve's whole parameter domain, by
+/// exact comparison of (possibly selected) parameters.
+fn covers_whole_domain(
+    range: &hypercurve::CurveParameterRange2,
+    curve: &hypercurve::Curve2,
+) -> Result<bool, BuildError> {
+    let domain = curve.parameter_domain();
+    let parameter = |value: &hypercurve::CurveParameter2| crate::Parameter::from_curve(value);
+    let (start, end, lower, upper) = (
+        parameter(range.start())?,
+        parameter(range.end())?,
+        parameter(domain.start())?,
+        parameter(domain.end())?,
+    );
+    let equal = |a: &crate::Parameter, b: &crate::Parameter| -> Result<bool, BuildError> {
+        Ok(a.compare(b)? == std::cmp::Ordering::Equal)
+    };
+    Ok((equal(&start, &lower)? && equal(&end, &upper)?)
+        || (equal(&start, &upper)? && equal(&end, &lower)?))
 }

@@ -104,6 +104,23 @@ impl Surface {
         if !positive_on_unit_square(&height)? {
             return Ok(false);
         }
+        self.certify_tensor_projection(origin, u, v, d)
+    }
+
+    /// Whether the projection `(a, b)` of this positive-weight rational
+    /// Bézier tensor onto the frame's base plane is certified injective on
+    /// the unit square. `false` proves nothing.
+    pub(crate) fn certify_tensor_projection(
+        &self,
+        origin: &Point3,
+        u: &Vector3,
+        v: &Vector3,
+        d: &Vector3,
+    ) -> GeometryResult<bool> {
+        let SurfaceGeometry::RationalBezier(patch) = &self.data.geometry else {
+            return Ok(false);
+        };
+        let pullbacks = frame_pullbacks(patch, origin, u, v, d)?;
         // (a, b) = (A, B) / (det W); the positive weight is the denominator.
         let inverse = (Real::one() / &pullbacks.determinant).map_err(GeometryError::Numeric)?;
         let map = RationalMap2::new(

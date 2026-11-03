@@ -1150,3 +1150,55 @@ fn stretched_slab_cuts_measure_elliptical_caps_exactly() {
         .unwrap();
     assert_eq!(cold.to_json().unwrap(), json);
 }
+
+/// Removing the shared-wall block [-1,1]² × [-1,5/4] from the bump leaves
+/// four corner solids over the planar base z = 5/4, each bounded by a
+/// corner arc where the tensor meets that base. The tensor dips below the
+/// base elsewhere on its patch, but it is certified above the base over each
+/// corner's own profile: every plane/tensor section lies on that profile's
+/// boundary or wholly outside it, and an interior point fixes the sign. Each
+/// corner has volume (20/3 - slab cut volume) / 4.
+#[test]
+fn shared_wall_differences_leave_corner_graph_solids() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let block = builder::cuboid(pi(-1, -1, -1), Point3::new(1.into(), 1.into(), q(5, 4))).unwrap();
+    let corners = boolean::difference(&body, &block).unwrap();
+    assert_eq!(corners.len(), 4);
+    let each = ((q(20, 3) - slab_cut_volume()) / Real::from(4)).unwrap();
+    for solid in corners.bodies() {
+        assert_within(&solid.volume().unwrap(), &each);
+    }
+    let locate = |model: &Model, point: &Point3| {
+        let inside = model
+            .solids()
+            .filter(|solid| solid.classify_point(point).unwrap() == SolidPointLocation::Inside)
+            .count();
+        let boundary = model
+            .solids()
+            .filter(|solid| solid.classify_point(point).unwrap() == SolidPointLocation::Boundary)
+            .count();
+        (inside, boundary)
+    };
+    let n = |n: i64, d: i64| q(n, d);
+    for (point, expected) in [
+        (Point3::new(n(9, 10), n(9, 10), n(3, 2)), (1, 0)),
+        (Point3::new(n(-9, 10), n(9, 10), n(3, 2)), (1, 0)),
+        (Point3::new(n(9, 10), n(9, 10), n(5, 4)), (0, 1)),
+        (Point3::new(n(9, 10), n(9, 10), n(81, 50)), (0, 1)),
+        (Point3::new(n(9, 10), n(9, 10), n(6, 5)), (0, 0)),
+        (Point3::new(n(9, 10), n(9, 10), n(17, 10)), (0, 0)),
+        (Point3::new(0.into(), 0.into(), 1.into()), (0, 0)),
+    ] {
+        assert_eq!(locate(corners.model(), &point), expected, "{point:?}");
+    }
+    let json = corners.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+    assert_eq!(
+        locate(&cold, &Point3::new(n(9, 10), n(9, 10), n(3, 2))),
+        (1, 0)
+    );
+}

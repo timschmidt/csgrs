@@ -4704,6 +4704,32 @@
       "validation": "New witness stretched_slab_cuts_measure_elliptical_caps_exactly: the bump stretched by 2 along x (top x^2/4 + y^2) cut by the slab z <= 5/4 gives one ten-face solid whose volume is within 10^-30 of exactly twice the unstretched closed form 91/12 + 25 pi/32 - (25/8) asin(2 sqrt(5)/5), stretched probes classify exactly, and it replays cold byte-identically. Mutations restricting point certification to similarities, removing the shared affine pair chart, affine point location, the source-chart elliptical cap measurement, or affine injectivity each fail the witness; a general-affine composed-equation fallback and an affine self-contact exemption were dropped because no witness needed them. On Rust stable: cargo fmt --check and strict Clippy for hypercurve, hyperbrep and hyperbrep-io pass; hypercurve 3053 passes (34 ignored), capability guards and matrix pass; hyperbrep release 806 and debug 798 passes, hyperbrep-io 127; downstream hypercircuit 105, hyperpack 154 and root csgrs all-feature 694 passes, 0 failures.",
       "cost_evidence": "No performance claim.",
       "limits": "Curved trims that are neither lines nor affine images of circle arcs, unequal-weight tops, and tensor face area remain typed. No work package or pre-push gate closes."
+    },
+    {
+      "id": "profile-positive-tensor-graphs-corner-differences-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Tensor-graph admission gains a profile-only positivity certificate for uncapped shells: with the base projection certified injective (certify_tensor_projection, split out of certify_tensor_graph), the top need not lie above the base over its whole patch. Its height above the base is zero exactly on the complete plane/tensor section; when every section curve either runs along the base profile's boundary (one closed overlap spanning its whole domain, compared exactly even for selected parameters) or never meets that boundary and has an outside point, the height keeps one sign inside the connected profile, and an interior profile point (found on a grid over a box that includes selected boundary vertices certified in their branch's source chart) fixes it positive.",
+      "source": [
+        "../src/topology/validation/tensor_graph.rs",
+        "../src/geometry/tensor_graph.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness shared_wall_differences_leave_corner_graph_solids: removing the shared-wall block [-1,1]^2 x [-1,5/4] from the bump leaves four corner solids, each within 10^-30 of (20/3 - slab cut volume)/4 (the bump's volume above z = 5/4 split by symmetry); probes inside, on the base and top, below the base, above the top and at the centre classify exactly across the four solids, and the result replays cold byte-identically. Mutations removing the profile-only path, rejecting outside sections, skipping selected-vertex certification, inverting the interior sign, or comparing domain coverage by scalars only each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 807 passes and debug tests 799 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the twelve tensor-graph tests complete in about 1.3 s in release.",
+      "limits": "Capped shells still need whole-patch positivity. The z <= 1/2 shared-wall difference (a ring whose thickness vanishes on a closed section inside the base) is still not admitted. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
