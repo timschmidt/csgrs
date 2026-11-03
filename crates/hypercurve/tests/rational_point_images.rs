@@ -464,6 +464,47 @@ fn nested_identity_image_bounds_and_comparisons_use_linear_sign_dispatch() {
     }
 }
 
+/// A direct point enclosure walks every image ancestor too. Each guard must be
+/// proved once in one validation scope: a fresh scope per ancestor re-proves
+/// every remaining guard and is quadratic in the image depth.
+#[test]
+#[cfg(feature = "dispatch-trace")]
+fn nested_identity_image_point_bounds_use_linear_sign_dispatch() {
+    let (source, _) = source_and_independent_circle_point();
+    let identity = RationalMap2::new(
+        [polynomial(&[&[0], &[1]]), polynomial(&[&[0, 1]])],
+        polynomial(&[&[1]]),
+    );
+    let source_bounds = source.bounds().unwrap();
+    let mut point = source.clone();
+    let mut counts = Vec::new();
+    for depth in 0..=16 {
+        if depth != 0 {
+            point = point.rational_image(&identity).unwrap();
+        }
+        if [0, 4, 8, 16].contains(&depth) {
+            hyperreal::dispatch_trace::reset();
+            let bounds = hyperreal::dispatch_trace::with_recording(|| point.bounds()).unwrap();
+            let count = hyperreal::dispatch_trace::take_trace().path_count(
+                "hypercurve",
+                "point-polynomial-sign",
+                "dispatch",
+            );
+            // Identity images enclose the source point by its own box.
+            assert_eq!(bounds, source_bounds, "depth {depth}");
+            assert!(point.coincides_with(&source).unwrap(), "depth {depth}");
+            counts.push((depth, count));
+        }
+    }
+    eprintln!("nested identity point bounds sign dispatches: {counts:?}");
+    for (depth, count) in counts {
+        assert!(
+            count <= 4 * (depth + 1),
+            "depth {depth} point bounds used {count} sign dispatches"
+        );
+    }
+}
+
 /// Cross-source arithmetic pulls each operand back to a common field. The
 /// pullback must check every image guard in one sign scope: a fresh scope per
 /// ancestor re-proves each remaining guard and is quadratic in the image depth.

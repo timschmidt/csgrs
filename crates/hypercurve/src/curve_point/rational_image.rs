@@ -77,16 +77,33 @@ impl RationalPointImage2 {
     }
 
     pub(crate) fn bounds(&self, steps: usize, policy: &CurveContext) -> Classification<Aabb2> {
+        // This guard's sign is proved in one scope that also proves, once
+        // each, the guard of every image ancestor it is evaluated through.
         match self.validate(policy) {
             Ok(Classification::Decided(())) => {}
             Ok(Classification::Uncertain(reason)) => return Classification::Uncertain(reason),
             Err(_) => return Classification::Uncertain(UncertaintyReason::Predicate),
         }
-        let source = match crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
-            &self.source,
-            steps,
-            policy,
-        ) {
+        self.validated_bounds(steps, policy)
+    }
+
+    /// Encloses an image whose guard, and every direct image ancestor's guard,
+    /// was proved by the caller's validation scope. Ancestor policies are
+    /// still checked; revalidating each ancestor in a fresh scope would
+    /// re-prove every remaining guard and is quadratic in the image depth.
+    fn validated_bounds(&self, steps: usize, policy: &CurveContext) -> Classification<Aabb2> {
+        let source = match &self.source.0 {
+            CurvePointData2::RationalImage(source) => match source.validate_policy(policy) {
+                Classification::Decided(()) => source.validated_bounds(steps, policy),
+                Classification::Uncertain(reason) => Classification::Uncertain(reason),
+            },
+            _ => crate::bezier_offset::algebraic_chord_endpoint_local_bounds_refined(
+                &self.source,
+                steps,
+                policy,
+            ),
+        };
+        let source = match source {
             Classification::Decided(source) => source,
             Classification::Uncertain(reason) => return Classification::Uncertain(reason),
         };

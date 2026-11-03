@@ -3848,3 +3848,39 @@ Pre-push campaign on `57515fe506`, recorded in
 `main` was fast-forwarded to `57515fe506` with the owner's authorization despite that failure.
 Open: `jacobi_epsilon` has little headroom. Even under the same load, the timeout seed alone took
 10.4 s with ASan. It needs a quiet-host rerun, or a cost reduction in the epsilon evaluation path.
+
+## Review: direct point bounds through nested images (2026-11-02)
+
+An outside review traced from the source a path that the arithmetic and
+rational-form fixes did not cover. Direct `CurvePoint2::bounds()` reaches
+`RationalPointImage2::bounds`. That method validated its guard, then enclosed
+its source through the general dispatcher, which validated the next image
+again in a fresh `PointSignScope`. Each validation re-proved every remaining
+ancestor guard, so the traversal was quadratic in the image depth.
+
+The new test `nested_identity_image_point_bounds_use_linear_sign_dispatch`
+calls `point.bounds()` on `n` nested identity images. It checks that each box
+equals the source point's box and that the image coincides with the source.
+On `e83de9ee8c` it took 0, 10, 36 and 136 successful sign dispatches at depths
+0, 4, 8 and 16 (`n(n+1)/2`), and failed its linear limit at depth 16.
+
+The top image's validation already proves the guard of every direct image
+ancestor, once each, in its one sign scope. The enclosure now descends through
+direct image ancestors without revalidating them. It still checks each
+ancestor's retained policy and evaluates each map's bounds. The counts are now
+0, 4, 8 and 16.
+
+Not covered: a chain that alternates rational images with other point kinds,
+such as similarity images, still reaches each image through the general
+dispatcher. Each such image opens its own validation scope. No test measures
+that case yet.
+
+Verification on this change, Rust 1.99.1, `--locked`:
+- all 11 tests in `tests/rational_point_images.rs` pass with `dispatch-trace`;
+- strict Clippy (`-D warnings`, all targets) passes for Hypercurve with all,
+  default, no default and `dispatch-trace` features;
+- release `--all-features` tests: Hypercurve 3,088 passed (35 existing
+  ignored), HyperBRep 687, Hypercircuit 354, HyperDRC 1,670, with no failures;
+- formatting passes.
+
+The complete pre-push matrix has not yet been run on this change.
