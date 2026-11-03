@@ -4730,6 +4730,34 @@
       "validation": "New witness shared_wall_differences_leave_corner_graph_solids: removing the shared-wall block [-1,1]^2 x [-1,5/4] from the bump leaves four corner solids, each within 10^-30 of (20/3 - slab cut volume)/4 (the bump's volume above z = 5/4 split by symmetry); probes inside, on the base and top, below the base, above the top and at the centre classify exactly across the four solids, and the result replays cold byte-identically. Mutations removing the profile-only path, rejecting outside sections, skipping selected-vertex certification, inverting the interior sign, or comparing domain coverage by scalars only each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 807 passes and debug tests 799 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the twelve tensor-graph tests complete in about 1.3 s in release.",
       "limits": "Capped shells still need whole-patch positivity. The z <= 1/2 shared-wall difference (a ring whose thickness vanishes on a closed section inside the base) is still not admitted. No work package or pre-push gate closes."
+    },
+    {
+      "id": "holed-base-tensor-graphs-ring-differences-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Tensor-graph admission accepts a planar base with holes: the certificate keeps the base region's hole boundaries, classification treats points over a hole as outside the base region (on a hole boundary as on it), transforms carry them, and the profile-only positivity certificate counts hole boundaries as profile boundary and seeks its interior point outside every hole. Removing the shared-wall block [-1,1]^2 x [-1,1/2] from the bump now leaves an exact ring solid.",
+      "source": [
+        "../src/topology/validation/tensor_graph.rs",
+        "../src/topology/query.rs",
+        "../src/topology/mod.rs",
+        "../src/topology/transform.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness shared_wall_differences_leave_holed_ring_graph_solids: one six-face ring over the base z = 1/2 with a circular base hole; volume within 10^-30 of 2/3 + pi/8 (= 20/3 - (6 - pi/8)); probes inside, on base and top, above, below, over the hole and on the seam classify exactly before and after byte-identical cold replay. Mutations ignoring base holes in classification, refusing holed bases, dropping hole curves from the section-boundary check, or ignoring holes when locating the interior point each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 808 passes and debug tests 800 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the thirteen tensor-graph tests complete in about 1.4 s in release.",
+      "limits": "Capped shells still need whole-patch positivity. Non-circular, non-elliptical curved trims, tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

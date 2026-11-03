@@ -235,18 +235,29 @@ impl ArenaModel {
         let a = coordinate(graph.v.cross(&graph.direction))?;
         let b = coordinate(graph.direction.cross(&graph.u))?;
         let c = coordinate(graph.u.cross(&graph.v))?;
-        let base = match crate::error::classified(
-            graph
-                .profile
-                .classify_point(&CurvePoint2::new(a.clone(), b.clone()).into()),
-        )
-        .map_err(GeometryError::from)?
-        {
-            Classification::Decided(location) => location,
-            Classification::Uncertain(reason) => {
-                return Err(GeometryError::PlanarClassificationUnresolved(reason).into());
+        let base_point: hypercurve::CurvePoint2 = CurvePoint2::new(a.clone(), b.clone()).into();
+        let classify_base = |path: &CurvePath2| -> Result<ContourPointLocation, QueryError> {
+            match crate::error::classified(path.classify_point(&base_point))
+                .map_err(GeometryError::from)?
+            {
+                Classification::Decided(location) => Ok(location),
+                Classification::Uncertain(reason) => {
+                    Err(GeometryError::PlanarClassificationUnresolved(reason).into())
+                }
             }
         };
+        // The base region is the profile minus its holes.
+        let mut base = classify_base(&graph.profile)?;
+        for hole in &graph.profile_holes {
+            if base == ContourPointLocation::Outside {
+                break;
+            }
+            match classify_base(hole)? {
+                ContourPointLocation::Inside => base = ContourPointLocation::Outside,
+                ContourPointLocation::Boundary => base = ContourPointLocation::Boundary,
+                ContourPointLocation::Outside => {}
+            }
+        }
         if base == ContourPointLocation::Outside {
             return Ok(SolidPointLocation::Outside);
         }

@@ -507,6 +507,8 @@ struct CertifiedTensorGraphShell {
     v: Vector3,
     direction: Vector3,
     profile: CurvePath2,
+    /// Holes of the base region, in the base frame.
+    profile_holes: Vec<CurvePath2>,
     top: Surface,
     /// Up-facing planar caps parallel to the base at one height `c`; each
     /// keeps its plane frame and its exact outer boundary in that frame.

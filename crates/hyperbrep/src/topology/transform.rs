@@ -477,6 +477,7 @@ impl ArenaModel {
                                 v: transform.transform_direction3(&certificate.v),
                                 direction: transform.transform_direction3(&certificate.direction),
                                 profile: certificate.profile.clone(),
+                                profile_holes: certificate.profile_holes.clone(),
                                 top: certificate.top.transformed(&metric, reverses_orientation)?,
                                 // Affine maps carry each cap frame; frame
                                 // coordinates, heights and boundaries are kept.

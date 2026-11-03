@@ -1202,3 +1202,59 @@ fn shared_wall_differences_leave_corner_graph_solids() {
         (1, 0)
     );
 }
+
+/// Removing the shared-wall block [-1,1]² × [-1,1/2] from the bump leaves a
+/// ring over the base z = 1/2 whose base face has a circular hole, bounded
+/// by the closed section where the tensor meets that base. The base region
+/// keeps its hole, the tensor is certified above the base over that holed
+/// profile, and the volume is 20/3 - (6 - pi/8) = 2/3 + pi/8.
+#[test]
+fn shared_wall_differences_leave_holed_ring_graph_solids() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let block = builder::cuboid(pi(-1, -1, -1), Point3::new(1.into(), 1.into(), q(1, 2))).unwrap();
+    let ring = boolean::difference(&body, &block).unwrap();
+    assert_eq!((ring.len(), ring.model().faces().count()), (1, 6));
+    let solid = ring.bodies().next().unwrap();
+    assert_within(
+        &solid.volume().unwrap(),
+        &(q(2, 3) + (Real::pi() / Real::from(8)).unwrap()),
+    );
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    let half = n(1, 2);
+    let cases = vec![
+        (p(n(9, 10), 0.into(), n(7, 10)), SolidPointLocation::Inside),
+        (
+            p(n(9, 10), 0.into(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(n(9, 10), 0.into(), n(81, 100)),
+            SolidPointLocation::Boundary,
+        ),
+        (p(n(9, 10), 0.into(), n(9, 10)), SolidPointLocation::Outside),
+        (p(n(9, 10), 0.into(), n(2, 5)), SolidPointLocation::Outside),
+        (
+            p(0.into(), 0.into(), half.clone()),
+            SolidPointLocation::Outside,
+        ),
+        (p(0.into(), 0.into(), n(3, 5)), SolidPointLocation::Outside),
+        (
+            p(half.clone(), half.clone(), half.clone()),
+            SolidPointLocation::Boundary,
+        ),
+    ];
+    for (point, expected) in &cases {
+        assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
+    }
+    let json = ring.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+    let cold_solid = cold.solids().next().unwrap();
+    for (point, expected) in &cases {
+        assert_eq!(&cold_solid.classify_point(point).unwrap(), expected);
+    }
+}

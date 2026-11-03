@@ -51,9 +51,7 @@ impl ArenaModelBuilder {
             let Some(outer) = base.outer() else {
                 continue;
             };
-            if !base.inner().is_empty() {
-                continue;
-            }
+
             let SurfaceExactData::Plane { origin, u, v } =
                 self.surface_ref(base.surface)?.exact_data()
             else {
@@ -125,6 +123,11 @@ impl ArenaModelBuilder {
             }
             let base_surface = self.surface_ref(base.surface)?.clone();
             let profile = self.build_wire_curve_path(outer)?;
+            let profile_holes = base
+                .inner()
+                .iter()
+                .map(|wire| self.build_wire_curve_path(*wire))
+                .collect::<Result<Vec<_>, _>>()?;
             if !top_surface.certify_tensor_graph(&origin, &u, &v, &direction)?
                 && !(caps.is_empty()
                     && top_above_base_on_profile(
@@ -132,6 +135,7 @@ impl ArenaModelBuilder {
                         &top_surface,
                         (&origin, &u, &v, &direction),
                         &profile,
+                        &profile_holes,
                     )?)
             {
                 continue;
@@ -147,6 +151,7 @@ impl ArenaModelBuilder {
                 v,
                 direction,
                 profile,
+                profile_holes,
                 top: top_surface,
                 caps,
             }));
@@ -197,8 +202,13 @@ fn top_above_base_on_profile(
     top: &Surface,
     frame: (&Point3, &Vector3, &Vector3, &Vector3),
     profile: &CurvePath2,
+    holes: &[CurvePath2],
 ) -> Result<bool, BuildError> {
     let (origin, u, v, direction) = frame;
+    let boundary_curves = std::iter::once(profile)
+        .chain(holes)
+        .flat_map(|path| path.curves().iter())
+        .collect::<Vec<_>>();
     if !top.certify_tensor_projection(origin, u, v, direction)? {
         return Ok(false);
     }
@@ -217,7 +227,7 @@ fn top_above_base_on_profile(
         // never meets it and has an outside point, so lies wholly outside.
         let mut on_boundary = false;
         let mut touches = false;
-        for boundary in profile.curves() {
+        for boundary in boundary_curves.iter().copied() {
             let Ok(relation) = trace.intersect_curve(boundary) else {
                 return Ok(false);
             };
@@ -243,10 +253,7 @@ fn top_above_base_on_profile(
         }
         // Any point of a section that never meets the boundary decides it.
         let outside = |point: &hypercurve::CurvePoint2| {
-            matches!(
-                crate::error::classified(profile.classify_point(point)),
-                Ok(Classification::Decided(ContourPointLocation::Outside))
-            )
+            region_location(profile, holes, point) == Some(ContourPointLocation::Outside)
         };
         if !outside(&trace.start()) {
             let domain = trace.parameter_domain();
@@ -316,12 +323,11 @@ fn top_above_base_on_profile(
                 };
                 let a = &min_x + (&max_x - &min_x) * fraction(i)?;
                 let b = &min_y + (&max_y - &min_y) * fraction(j)?;
-                let inside = matches!(
-                    crate::error::classified(
-                        profile.classify_point(&CurvePoint2::new(a.clone(), b.clone()).into())
-                    ),
-                    Ok(Classification::Decided(ContourPointLocation::Inside))
-                );
+                let inside = region_location(
+                    profile,
+                    holes,
+                    &CurvePoint2::new(a.clone(), b.clone()).into(),
+                ) == Some(ContourPointLocation::Inside);
                 if !inside {
                     continue;
                 }
@@ -354,4 +360,28 @@ fn covers_whole_domain(
     };
     Ok((equal(&start, &lower)? && equal(&end, &upper)?)
         || (equal(&start, &upper)? && equal(&end, &lower)?))
+}
+
+/// The decided location of a point in the profile region minus its holes.
+fn region_location(
+    profile: &CurvePath2,
+    holes: &[CurvePath2],
+    point: &hypercurve::CurvePoint2,
+) -> Option<ContourPointLocation> {
+    let classify = |path: &CurvePath2| match crate::error::classified(path.classify_point(point)) {
+        Ok(Classification::Decided(location)) => Some(location),
+        _ => None,
+    };
+    let mut location = classify(profile)?;
+    for hole in holes {
+        if location == ContourPointLocation::Outside {
+            break;
+        }
+        match classify(hole)? {
+            ContourPointLocation::Inside => location = ContourPointLocation::Outside,
+            ContourPointLocation::Boundary => location = ContourPointLocation::Boundary,
+            ContourPointLocation::Outside => {}
+        }
+    }
+    Some(location)
 }
