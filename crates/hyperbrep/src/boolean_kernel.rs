@@ -905,10 +905,19 @@ fn unique_surface_traces(
     curves: Vec<SurfaceIntersectionCurve>,
     operand: SurfaceIntersectionOperand,
 ) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
+    // Among proved repeats keep the authored native form (line, circle,
+    // rational Bézier) over a generated image, so it stitches to the
+    // operand edge it repeats.
+    let rank = |curve: &SurfaceIntersectionCurve| match curve.curve().kind() {
+        Curve3Kind::Line => 0,
+        Curve3Kind::CircleArc => 1,
+        Curve3Kind::RationalBezier => 2,
+        _ => 3,
+    };
     let mut kept: Vec<(SurfaceIntersectionCurve, Curve2)> = Vec::with_capacity(curves.len());
     'candidates: for curve in curves {
         let image = curve.pcurve(operand).materialize()?.curve().clone();
-        for (existing, existing_image) in &kept {
+        for (existing, existing_image) in kept.iter_mut() {
             if matches!(
                 crate::topology::compare_curve3_exact_data(
                     &curve.curve().exact_data(),
@@ -929,6 +938,10 @@ fn unique_surface_traces(
                 && covers_whole_domain(overlap.first_range(), &image)?
                 && covers_whole_domain(overlap.second_range(), existing_image)?
             {
+                if rank(&curve) < rank(existing) {
+                    *existing = curve;
+                    *existing_image = image;
+                }
                 continue 'candidates;
             }
         }

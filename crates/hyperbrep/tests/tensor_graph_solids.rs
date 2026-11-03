@@ -826,7 +826,8 @@ fn blocks_piercing_tensor_tops_union_and_pocket_exactly() {
 /// contains it. The common walls are coincident faces whose curved Bézier
 /// edges both operands trace, and the walls cut the tensor top exactly
 /// along its own boundary: the intersection is the bump again (six faces,
-/// volume 20/3, same classification) and the difference is empty.
+/// volume 20/3, same classification), the difference is empty and the union
+/// is the block (volume 16).
 #[test]
 fn shared_wall_blocks_containing_tensor_graph_solids_intersect_exactly() {
     let body = BodySet::from_solid(bump().solids().next().unwrap());
@@ -846,4 +847,26 @@ fn shared_wall_blocks_containing_tensor_graph_solids_intersect_exactly() {
         .unwrap();
     assert_eq!(cold.to_json().unwrap(), json);
     assert!(boolean::difference(&body, &block).unwrap().is_empty());
+    // The union is the block: each shared wall keeps its two coplanar
+    // pieces, stitched along the bump's own Bézier edge.
+    let union = boolean::union(&body, &block).unwrap();
+    assert_eq!(union.len(), 1);
+    let solid = union.bodies().next().unwrap();
+    assert_eq!(solid.volume().unwrap(), Real::from(16));
+    for (point, expected) in [
+        (pi(0, 0, 2), SolidPointLocation::Inside),
+        (pi(0, 0, 3), SolidPointLocation::Boundary),
+        (pi(1, 0, 2), SolidPointLocation::Boundary),
+        (pi(1, 0, 0), SolidPointLocation::Boundary),
+        (pi(0, 0, 4), SolidPointLocation::Outside),
+        (pi(2, 0, 0), SolidPointLocation::Outside),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    let json = union.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
 }

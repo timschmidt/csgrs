@@ -4565,6 +4565,30 @@
       "validation": "New witness shared_wall_blocks_containing_tensor_graph_solids_intersect_exactly: the block [-1,1]^2 x [-1,3] shares the bump's base and four walls; the intersection is the bump again (six faces, exact volume 20/3, every expected probe location, byte-identical cold replay) and the difference is empty. Each of the five changes is required: disabling straight-edge overlap cuts, curved coincident edge tracing, polynomial boundary eligibility, polynomial boundary recognition or trace de-duplication fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 803 passes and debug tests 795 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.08 s in release.",
       "limits": "The union with the shared-wall block stops at a non-manifold stitched edge; blocks sharing walls but ending at or below the top (z <= 5/4, z <= 1/2) stop at an unresolved planar classification and at planar-image edge equality respectively. No work package or pre-push gate closes."
+    },
+    {
+      "id": "shared-wall-union-native-trace-preference-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "When the Boolean kernel drops a surface trace proved to repeat another on the same face, it now keeps the authored native form (line, then circular arc, then rational B\u00e9zier) over a generated image such as a tensor-section curve, so the kept trace stitches to the operand edge it repeats. The union of the bump solid with a block sharing its base and walls now assembles a closed shell.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "Witness shared_wall_blocks_containing_tensor_graph_solids_intersect_exactly now also checks the union with the block [-1,1]^2 x [-1,3]: one solid of exact volume 16 (the block), with exact interior, top, wall and outside probes and byte-identical cold replay. Before the change two walls kept tensor-section traces that could not stitch to the bump's B\u00e9zier edges (NonManifoldSolidEdge); disabling the preference fails the witness again. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 803 passes and debug tests 795 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.11 s in release.",
+      "limits": "Shared-wall blocks ending at or below the tensor top (z <= 5/4, z <= 1/2) still stop at an unresolved planar classification and at planar-image edge equality. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
