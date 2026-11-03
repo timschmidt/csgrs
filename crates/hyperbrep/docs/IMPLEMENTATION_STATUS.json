@@ -4474,6 +4474,34 @@
       "validation": "New witness surface_curve_partitions_split_closed_trace_chains_as_loops: the two plane-side branches of x^2 + y^2 = 1/2 (selected ends, touching at both ends) split the cuboid cap through split_by_surface_curves into a ring with one hole and a disk (seven faces) that replays cold; before the change this call failed. Mutations: disabling chain deferral, requiring authored scalar trace ends, and rejecting end contacts on whole selected traces each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 801 passes and debug tests 793 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the witness completes in about 0.11 s in release.",
       "limits": "Unions of tensor-graph solids with blocks below the top still fail: stitching cannot yet prove two operands' copies of one planar-image section edge equal (structurally distinct sources), and capped results with holed caps are not admitted. Two exploratory shared-face changes (straight-edge overlaps in line trimming, curved coincident boundary edges) were reverted for lack of a passing witness. No work package or pre-push gate closes."
+    },
+    {
+      "id": "capped-graph-unions-pockets-volume-2026-11-02",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P20"
+      ],
+      "change": "Capped tensor-graph solids now measure exactly when every trim is straight: the tensor faces' Green boundary integral (holes included) plus, for each cap, |det(u, v, d)| times its height times its exact cap-frame area carried to base coordinates by the exact frame Jacobian. Point classification decides, inside the profile, a point on exactly one cap's boundary lying between that cap and the graph as Boundary (it lies on the joining wall parallel to the base normal); every other disagreement stays typed. Unions and differences of the bump solid with a block piercing its top are thereby exact capped graph solids.",
+      "source": [
+        "../src/topology/measure.rs",
+        "../src/topology/query.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness blocks_piercing_tensor_tops_union_and_pocket_exactly with the block [-1/2,1/2]^2 x [-1/2,1]: union (11 faces), difference (11 faces, a pocket) and intersection (6 faces) have exact volumes 15/2, 6 and 2/3, matching the independent values 20/3 + 3/2 - 2/3, 20/3 - 2/3 and the integral of x^2 + y^2 + 1/2 over the block; probes on step walls, caps, pocket floor and the tensor top classify exactly before and after byte-identical cold replay; a scaled rotation of determinant 8 maps the union to volume 60 and classifies mapped probes identically; the same block authored at half size and scaled by 2 (cap frame differing from the base frame, Jacobian 4) gives the same union volume. Mutations dropping the cap term, replacing the Jacobian by 1, or removing the step-wall decision each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 802 passes and debug tests 794 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the seven tensor-graph tests complete in about 0.33 s in release.",
+      "limits": "Caps with curved boundaries (slab cuts) still have no exact area and stay typed. A block stretched non-uniformly fails in Hypercurve region trimming because its wall section pcurves carry non-similarity maps. Unions sharing walls with the tensor solid remain typed. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

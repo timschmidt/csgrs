@@ -586,3 +586,152 @@ fn slab_cuts_through_tensor_tops_leave_capped_graph_solids() {
         assert_eq!(&mapped_solid.classify_point(&image).unwrap(), expected);
     }
 }
+
+/// A block [-1/2, 1/2]² × [-1/2, 1] pierces the bump top (height
+/// x² + y² <= 1/2 over the block). The union gains a planar cap at z = 1 and
+/// step walls; the difference gains a pocket floor at z = -1/2. Both are
+/// capped tensor-graph solids with straight trims, so their volumes are
+/// exact: the block's intersection with the bump is
+/// integral (x² + y² + 1/2) = 1/6 + 1/2 = 2/3, the union is
+/// 20/3 + 3/2 - 2/3 = 15/2 and the difference is 20/3 - 2/3 = 6.
+#[test]
+fn blocks_piercing_tensor_tops_union_and_pocket_exactly() {
+    let body = BodySet::from_solid(bump().solids().next().unwrap());
+    let block = builder::cuboid(
+        Point3::new(q(-1, 2), q(-1, 2), q(-1, 2)),
+        Point3::new(q(1, 2), q(1, 2), 1.into()),
+    )
+    .unwrap();
+    let union = boolean::union(&body, &block).unwrap();
+    let difference = boolean::difference(&body, &block).unwrap();
+    let common = boolean::intersection(&body, &block).unwrap();
+    assert_eq!(
+        (
+            union.model().faces().count(),
+            difference.model().faces().count(),
+            common.model().faces().count()
+        ),
+        (11, 11, 6)
+    );
+    assert_eq!(union.bodies().next().unwrap().volume().unwrap(), q(15, 2));
+    assert_eq!(
+        difference.bodies().next().unwrap().volume().unwrap(),
+        Real::from(6)
+    );
+    assert_eq!(common.bodies().next().unwrap().volume().unwrap(), q(2, 3));
+    // The same block authored at half size and scaled by 2 about the origin:
+    // its cap's plane frame is no longer the base frame, so the cap's area is
+    // carried by a Jacobian of 4 and the union volume is unchanged.
+    let stretch = Matrix4::from_row_major([
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        2.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let narrow = builder::cuboid(
+        Point3::new(q(-1, 4), q(-1, 4), q(-1, 4)),
+        Point3::new(q(1, 4), q(1, 4), q(1, 2)),
+    )
+    .unwrap()
+    .model()
+    .transformed(&stretch)
+    .unwrap();
+    let stretched = BodySet::from_solid(narrow.solids().next().unwrap());
+    let stretched_union = boolean::union(&body, &stretched).unwrap();
+    assert_eq!(
+        stretched_union.bodies().next().unwrap().volume().unwrap(),
+        q(15, 2)
+    );
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    let union_cases = vec![
+        (p(0.into(), 0.into(), n(9, 10)), SolidPointLocation::Inside),
+        (
+            p(0.into(), 0.into(), 1.into()),
+            SolidPointLocation::Boundary,
+        ),
+        (
+            p(0.into(), 0.into(), n(11, 10)),
+            SolidPointLocation::Outside,
+        ),
+        (p(n(1, 2), 0.into(), n(4, 5)), SolidPointLocation::Boundary),
+        (p(n(3, 5), 0.into(), n(3, 10)), SolidPointLocation::Inside),
+        (p(n(3, 5), 0.into(), n(9, 25)), SolidPointLocation::Boundary),
+        (p(n(3, 5), 0.into(), n(2, 5)), SolidPointLocation::Outside),
+        (
+            p(0.into(), 0.into(), (-1).into()),
+            SolidPointLocation::Boundary,
+        ),
+    ];
+    let difference_cases = vec![
+        (p(0.into(), 0.into(), 0.into()), SolidPointLocation::Outside),
+        (
+            p(0.into(), 0.into(), n(-1, 2)),
+            SolidPointLocation::Boundary,
+        ),
+        (p(0.into(), 0.into(), n(-3, 4)), SolidPointLocation::Inside),
+        (p(n(1, 2), 0.into(), n(-1, 4)), SolidPointLocation::Boundary),
+        (p(n(3, 4), 0.into(), n(1, 2)), SolidPointLocation::Inside),
+        (p(n(3, 4), 0.into(), n(9, 16)), SolidPointLocation::Boundary),
+    ];
+    for (result, cases) in [(&union, &union_cases), (&difference, &difference_cases)] {
+        let solid = result.bodies().next().unwrap();
+        for (point, expected) in cases {
+            assert_eq!(&solid.classify_point(point).unwrap(), expected, "{point:?}");
+        }
+        let json = result.model().to_json().unwrap();
+        let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(cold.to_json().unwrap(), json);
+        let cold_solid = cold.solids().next().unwrap();
+        for (point, expected) in cases {
+            assert_eq!(&cold_solid.classify_point(point).unwrap(), expected);
+        }
+        assert_eq!(cold_solid.volume().unwrap(), solid.volume().unwrap());
+    }
+    // A scaled rotation about z with a translation; the linear part has
+    // determinant (36/25 + 64/25) * 2 = 8, which scales the cap terms too.
+    let transform = Matrix4::from_row_major([
+        q(6, 5),
+        q(-8, 5),
+        0.into(),
+        1.into(),
+        q(8, 5),
+        q(6, 5),
+        0.into(),
+        2.into(),
+        0.into(),
+        0.into(),
+        2.into(),
+        3.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+        1.into(),
+    ]);
+    let mapped = union.model().transformed(&transform).unwrap();
+    let mapped_solid = mapped.solids().next().unwrap();
+    assert_eq!(mapped_solid.volume().unwrap(), Real::from(60));
+    for (point, expected) in &union_cases {
+        let image = Point3::new(
+            q(6, 5) * &point.x - q(8, 5) * &point.y + Real::one(),
+            q(8, 5) * &point.x + q(6, 5) * &point.y + Real::from(2),
+            Real::from(2) * &point.z + Real::from(3),
+        );
+        assert_eq!(&mapped_solid.classify_point(&image).unwrap(), expected);
+    }
+}

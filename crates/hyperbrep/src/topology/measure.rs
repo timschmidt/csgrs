@@ -670,10 +670,6 @@ impl ArenaModel {
                 return Ok(Real::from(2) * Real::pi() * first_moment);
             }
             if let Some(graph) = &self.data.certified_tensor_graphs[id.index()] {
-                // Capped graphs need curved-trim integrals over cap regions.
-                if !graph.caps.is_empty() {
-                    return Err(GeometryError::UnsupportedMeasurement.into());
-                }
                 // The top face's oriented UV boundary segments.
                 let solid = self.solid(id).expect("validated solid ID");
                 let mut loops = Vec::new();
@@ -701,10 +697,34 @@ impl ArenaModel {
                     }
                 }
                 let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
-                return graph
+                let mut volume = graph
                     .top
                     .tensor_graph_volume(frame, &loops)?
-                    .ok_or(GeometryError::UnsupportedMeasurement.into());
+                    .ok_or(GeometryError::UnsupportedMeasurement)?;
+                // Each cap adds |det(u, v, d)| * height * its region's area in
+                // base coordinates: the exact cap-frame area times |det M|,
+                // where M carries cap-frame coordinates to base coordinates.
+                let determinant = graph.u.dot(&graph.v.cross(&graph.direction));
+                let a_form = graph.v.cross(&graph.direction);
+                let b_form = graph.direction.cross(&graph.u);
+                for cap in &graph.caps {
+                    let area = crate::error::classified(
+                        cap.boundary
+                            .boundary_loop()
+                            .map_err(GeometryError::from)?
+                            .signed_area(),
+                    )
+                    .map_err(GeometryError::from)
+                    .and_then(resolve_planar_classification)?
+                    .ok_or(GeometryError::UnsupportedMeasurement)?;
+                    let map = |form: &Vector3, axis: &Vector3| {
+                        (axis.dot(form) / &determinant).map_err(GeometryError::Numeric)
+                    };
+                    let jacobian = map(&a_form, &cap.u)? * map(&b_form, &cap.v)?
+                        - map(&a_form, &cap.v)? * map(&b_form, &cap.u)?;
+                    volume += determinant.clone().abs() * &cap.height * (area * jacobian).abs();
+                }
+                return Ok(volume);
             }
             if let Some(loft) = &self.data.certified_lofts[id.index()] {
                 let jacobian = loft.u.dot(&loft.v.cross(&loft.height_axis)).abs();

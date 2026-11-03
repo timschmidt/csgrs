@@ -264,6 +264,7 @@ impl ArenaModel {
         // comparison that agrees with all of them is decided.
         let mut orders = Vec::new();
         let mut strictly_capped = false;
+        let mut tensor_candidate = false;
         for cap in &graph.caps {
             let projected = graph.origin.clone()
                 + graph.u.clone() * &a
@@ -297,7 +298,10 @@ impl ArenaModel {
         }
         if !strictly_capped {
             match graph.top.tensor_graph_height_order(frame, &a, &b, &c)? {
-                Some(order) => orders.push(order),
+                Some(order) => {
+                    tensor_candidate = true;
+                    orders.push(order);
+                }
                 // The certified graph projects onto the whole base region.
                 None if orders.is_empty() => {
                     return Err(GeometryError::UnsupportedIntersection.into());
@@ -307,6 +311,13 @@ impl ArenaModel {
         }
         let height = orders[0];
         if orders.iter().any(|order| *order != height) {
+            // Inside the profile, a point on exactly one cap's boundary has
+            // the tensor on the other side, joined to the cap by a wall
+            // parallel to `direction`: between the two tops it lies on that
+            // wall. Every other disagreement stays undecided.
+            if base == ContourPointLocation::Inside && orders.len() == 2 && tensor_candidate {
+                return Ok(SolidPointLocation::Boundary);
+            }
             return Err(GeometryError::UnsupportedIntersection.into());
         }
         Ok(match (height, base) {
