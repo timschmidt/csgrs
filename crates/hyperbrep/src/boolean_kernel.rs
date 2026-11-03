@@ -887,12 +887,78 @@ fn partition_graph_faces(
             curves = periodic::axial_support_traces(&staged, face, curves, operand)?;
             curves = periodic::disjoint_iso_traces(curves, operand)?;
         }
+        // Several face pairs can trace the same curve on this face (for
+        // example a curved edge shared by coincident walls): keep one.
+        curves = unique_surface_traces(curves, operand)?;
         let (next, partition) = staged.split_face_by_surface_curves(face, &curves, operand)?;
         staged = next;
         partitions.push(partition);
     }
     partitions.sort_by_key(|partition| partition.source_face);
     Ok((staged, partitions))
+}
+
+/// Drops traces proved to repeat an earlier trace on the same face: equal
+/// exact spatial data, or face-parameter curves whose complete relation is a
+/// single closed overlap spanning both whole parameter domains.
+fn unique_surface_traces(
+    curves: Vec<SurfaceIntersectionCurve>,
+    operand: SurfaceIntersectionOperand,
+) -> Result<Vec<SurfaceIntersectionCurve>, BooleanError> {
+    let mut kept: Vec<(SurfaceIntersectionCurve, Curve2)> = Vec::with_capacity(curves.len());
+    'candidates: for curve in curves {
+        let image = curve.pcurve(operand).materialize()?.curve().clone();
+        for (existing, existing_image) in &kept {
+            if matches!(
+                crate::topology::compare_curve3_exact_data(
+                    &curve.curve().exact_data(),
+                    &existing.curve().exact_data(),
+                ),
+                Ok(Ordering::Equal)
+            ) {
+                continue 'candidates;
+            }
+            let relation = image
+                .intersect_curve(existing_image)
+                .map_err(GeometryError::from)?;
+            if relation.is_complete()
+                && relation.contacts().is_empty()
+                && let [overlap] = relation.overlaps()
+                && overlap.includes_start()
+                && overlap.includes_end()
+                && covers_whole_domain(overlap.first_range(), &image)?
+                && covers_whole_domain(overlap.second_range(), existing_image)?
+            {
+                continue 'candidates;
+            }
+        }
+        kept.push((curve, image));
+    }
+    Ok(kept.into_iter().map(|(curve, _)| curve).collect())
+}
+
+/// Whether an overlap range spans the curve's whole scalar parameter domain;
+/// unrepresentable endpoints prove nothing.
+fn covers_whole_domain(
+    range: &hypercurve::CurveParameterRange2,
+    curve: &Curve2,
+) -> Result<bool, GeometryError> {
+    let domain = curve.parameter_domain();
+    let (Some(start), Some(end), Some(lower), Some(upper)) = (
+        range.start().scalar(),
+        range.end().scalar(),
+        domain.start().scalar(),
+        domain.end().scalar(),
+    ) else {
+        return Ok(false);
+    };
+    let equal = |a: &Real, b: &Real| -> Result<bool, GeometryError> {
+        Ok(exact_order(a, b)? == Ordering::Equal)
+    };
+    Ok(
+        (equal(start, lower)? && equal(end, upper)?)
+            || (equal(start, upper)? && equal(end, lower)?),
+    )
 }
 
 fn retain_planar_surface_trace_boundary_contacts(
@@ -5315,7 +5381,10 @@ fn coplanar_boundary_split_traces(
             let source_curve = source_model
                 .curve(edge.curve())
                 .expect("validated coincident source curve");
-            if source_curve.kind() == crate::Curve3Kind::CircleArc {
+            // Curved boundary edges (circular, spline or generated) are
+            // retained on the coincident planes and kept where they lie in
+            // the target face.
+            if source_curve.kind() != crate::Curve3Kind::Line {
                 let curve = source_curve.subcurve(
                     edge.domain()
                         .start()
@@ -5760,6 +5829,24 @@ fn trim_segment_to_planar_face(
             let line = Curve2::from(source.clone());
             for path in model.face_curve_paths(face)? {
                 for curve in path.curves() {
+                    // A straight boundary edge cuts like a native contour
+                    // line, including at the ends of an overlap.
+                    if let Some(CurveGeometry2::Line(segment)) = curve.geometry() {
+                        match source.intersect_line(segment)? {
+                            LineLineIntersection::None => {}
+                            LineLineIntersection::Point { a_param, .. } => {
+                                insert_sorted_parameter(&mut cuts, a_param)?;
+                            }
+                            LineLineIntersection::Overlap { a_range, .. } => {
+                                insert_sorted_parameter(&mut cuts, a_range.start().clone())?;
+                                insert_sorted_parameter(&mut cuts, a_range.end().clone())?;
+                            }
+                            LineLineIntersection::Uncertain { reason } => {
+                                return Ok(Classification::Uncertain(reason));
+                            }
+                        }
+                        continue;
+                    }
                     let crossing = line.intersect_curve(curve)?;
                     // An overlap with a curved boundary edge is not mapped.
                     if !crossing.blockers().is_empty()

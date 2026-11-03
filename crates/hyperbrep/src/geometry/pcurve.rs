@@ -11,6 +11,7 @@ impl SurfaceIntersectionPcurve {
                 }
                 SurfaceIntersectionPcurveMapping::RetainedCurve { curve } => {
                     matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_)))
+                        || curve.polynomial_branch().is_some()
                 }
                 _ => false,
             }

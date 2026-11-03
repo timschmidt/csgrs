@@ -4537,6 +4537,34 @@
       "validation": "Hypercurve witness affine_rational_images_trim_inside_regions: the parabola branch y = x^2 under the stretch (2u, v) and the reflecting stretch (-2u, v) keeps its retained map, trims inside [-1,1]^2 to the source abscissas [-1/2, 1/2], and meets the vertical line through the image of x = 1/4 with opposite nonzero tangent signs. The contract test boundary_rational_similarity_views_retain_original_guards_and_contacts previously asserted a typed Unsupported for the nonuniform map (2x, 3y); it now asserts one transverse contact at the independently derived point (0, -6) with the original map retained, and still asserts the typed Unsupported for its nonlinear map; the capability record boundary_guarded_similarity is updated to match and the capability matrix qualifies. hyperbrep witness blocks_piercing_tensor_tops_union_and_pocket_exactly adds a block stretched by 2 along x and a mirrored one: unions, differences and intersections keep the exact volumes 15/2, 6 and 2/3 and the union probes classify identically. Mutations removing the subdivision acceptance, the line-section affine view, the chord-support affine view, or the reflection sign flip each fail a witness; an affine generalization of selected chord sections was removed because no witness needed it. On Rust stable: cargo fmt --check, strict Clippy for hypercurve (all targets, all features) and for hyperbrep and hyperbrep-io pass; hypercurve release all-feature tests report 3053 passes, 34 ignored, 0 failures; capability guard tests and the capability matrix pass; hyperbrep release 802 and debug 794 passes, hyperbrep-io 127; downstream hypercircuit 105, hyperpack 154, hypergraphics 34 and root csgrs all-feature 694 passes, 0 failures.",
       "cost_evidence": "No performance claim.",
       "limits": "General nonlinear rational images, and affine views with non-rational coefficients, remain typed. Other similarity-only Hypercurve paths (pair shared charts, selected chord and circle sections, point location) are unchanged. No work package or pre-push gate closes."
+    },
+    {
+      "id": "shared-wall-tensor-graph-booleans-2026-11-03",
+      "work_packages": [
+        "WP12",
+        "WP13",
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P2",
+        "P14",
+        "P15",
+        "P17",
+        "P20"
+      ],
+      "change": "Booleans between a tensor-graph solid and a block sharing its base and walls now resolve. In the Boolean kernel, segment trimming against planar faces whose boundary needs the curve-by-curve fallback cuts a straight boundary edge like a native contour line, including at both ends of an overlap; coincident planar faces trace each other's curved (not only circular) boundary edges into the opposite face; and the surface traces collected for one face drop a trace proved to repeat an earlier one (equal exact spatial data, or face-parameter curves whose complete relation is one closed overlap spanning both whole scalar domains). In topology, a polynomial-branch trace lying along straight face-boundary edges is recognized as a boundary trace, with its overlap ranges and coverage measured in the branch's own abscissa domain. The public face-partition contract still rejects duplicate and overlapping caller traces.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../src/geometry/pcurve.rs",
+        "../src/topology/edit/boundary.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness shared_wall_blocks_containing_tensor_graph_solids_intersect_exactly: the block [-1,1]^2 x [-1,3] shares the bump's base and four walls; the intersection is the bump again (six faces, exact volume 20/3, every expected probe location, byte-identical cold replay) and the difference is empty. Each of the five changes is required: disabling straight-edge overlap cuts, curved coincident edge tracing, polynomial boundary eligibility, polynomial boundary recognition or trace de-duplication fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 803 passes and debug tests 795 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim; the witness completes in about 0.08 s in release.",
+      "limits": "The union with the shared-wall block stops at a non-manifold stitched edge; blocks sharing walls but ending at or below the top (z <= 5/4, z <= 1/2) stop at an unresolved planar classification and at planar-image edge equality respectively. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
