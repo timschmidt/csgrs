@@ -30,6 +30,7 @@ use crate::bezier::{BezierParameter, CubicBezier, QuadraticBezier, RationalQuadr
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_mixed_bezier_cell_graph,
 };
+use crate::mixed_bezier_arrangement::compare_line_parameters;
 use crate::mixed_bezier_arrangement::{
     LineQuadraticBezierArrangementError, LineQuadraticBezierArrangementEvent,
     MixedLineArrangementBreakpoint, MixedLineArrangementFragment, QuadraticBezierRealFragment,
@@ -682,19 +683,6 @@ fn sort_and_dedup_line_breakpoints(
         *points = deduped;
     }
     Ok(())
-}
-
-fn compare_line_parameters(
-    left: &MixedLineArrangementBreakpoint,
-    right: &MixedLineArrangementBreakpoint,
-    policy: PredicatePolicy,
-) -> Option<Ordering> {
-    compare_reals(
-        &(left.parameter_numerator.clone() * right.parameter_denominator.clone()),
-        &(right.parameter_numerator.clone() * left.parameter_denominator.clone()),
-        policy,
-    )
-    .value()
 }
 
 fn build_line_fragments(

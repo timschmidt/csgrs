@@ -14,9 +14,10 @@
 
 use std::cmp::Ordering;
 
-use hyperlimit::{Point2, PredicatePolicy, compare_reals, point2_equal};
+use hyperlimit::{Point2, PredicatePolicy, compare_reals};
 use hyperreal::Real;
 
+use crate::cam::points_equal;
 use crate::cam::{
     PocketOffsetRing, PocketRingError, RectangularPocket, RectangularScheduleStop,
     rectangular_pocket_rings,
@@ -283,10 +284,6 @@ fn same_axis(
 ) -> Result<bool, PocketLinkGraphError> {
     Ok(compare(&start.x, &end.x, policy)? == Ordering::Equal
         || compare(&start.y, &end.y, policy)? == Ordering::Equal)
-}
-
-fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
-    point2_equal(first, second, policy).value() == Some(true)
 }
 
 fn compare(

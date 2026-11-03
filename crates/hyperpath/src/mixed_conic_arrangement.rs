@@ -1133,7 +1133,7 @@ fn certified_conic_point_interval_bounds(
     Some((x_lower, x_upper, y_lower, y_upper))
 }
 
-fn certified_min_max(
+pub(crate) fn certified_min_max(
     left_lower: &Real,
     left_upper: &Real,
     right_lower: &Real,
@@ -1243,7 +1243,7 @@ fn solve_conic_quadratic_roots(
     }
 }
 
-fn real_in_closed_interval(
+pub(crate) fn real_in_closed_interval(
     value: &Real,
     lower: &Real,
     upper: &Real,

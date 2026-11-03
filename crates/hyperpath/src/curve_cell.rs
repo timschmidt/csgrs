@@ -20,6 +20,7 @@ use hypersolve::{
 use crate::arc::{
     ArcDirection, ExplicitArcPointClassification, ExplicitArcSweepClass, ExplicitCircularArc,
 };
+use crate::arrangement::direction_upper_half;
 use crate::arrangement::{ExplicitArcArrangementFragment, LineArrangementFragment};
 use crate::bezier_arrangement::{
     CubicBezierArrangementFragment, HomogeneousPoint2, QuadraticBezierArrangementFragment,
@@ -1151,17 +1152,6 @@ fn vector_is_zero(vector: &Point2, policy: PredicatePolicy) -> Option<bool> {
         compare_reals(&vector.x, &Real::zero(), policy).value()? == Ordering::Equal
             && compare_reals(&vector.y, &Real::zero(), policy).value()? == Ordering::Equal,
     )
-}
-
-fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
-    match compare_reals(dy, &Real::zero(), policy).value()? {
-        Ordering::Greater => Some(true),
-        Ordering::Less => Some(false),
-        Ordering::Equal => match compare_reals(dx, &Real::zero(), policy).value()? {
-            Ordering::Less => Some(false),
-            Ordering::Equal | Ordering::Greater => Some(true),
-        },
-    }
 }
 
 fn assign_curve_half_edge_successors(

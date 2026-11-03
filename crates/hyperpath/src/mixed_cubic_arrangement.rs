@@ -21,6 +21,7 @@ use hypersolve::{
 };
 
 use crate::bezier::CubicBezier;
+use crate::bezier_arrangement::solve_quadratic_roots;
 use crate::bezier_arrangement::{
     LineCubicAlgebraicPointDomain, LineCubicAlgebraicRootDomain,
     LineCubicBezierAlgebraicInverseRoot, LineCubicBezierAlgebraicPointImage,
@@ -32,6 +33,8 @@ use crate::bezier_arrangement::{
 use crate::curve_cell::{
     CurveArrangementCellError, CurveArrangementCellGraph, build_line_cubic_cell_graph,
 };
+use crate::mixed_conic_arrangement::certified_min_max;
+use crate::mixed_conic_arrangement::real_in_closed_interval;
 use crate::segment::{Axis, LinePathSegment};
 
 /// Errors that prevent a trusted line/cubic-Bezier split schedule.
@@ -2104,24 +2107,6 @@ fn certified_point_interval_bounds(
     Some((x_lower, x_upper, y_lower, y_upper))
 }
 
-fn certified_min_max(
-    left_lower: &Real,
-    left_upper: &Real,
-    right_lower: &Real,
-    right_upper: &Real,
-    policy: PredicatePolicy,
-) -> Option<(Real, Real)> {
-    let lower = match compare_reals(left_lower, right_lower, policy).value()? {
-        Ordering::Less | Ordering::Equal => left_lower.clone(),
-        Ordering::Greater => right_lower.clone(),
-    };
-    let upper = match compare_reals(left_upper, right_upper, policy).value()? {
-        Ordering::Less | Ordering::Equal => right_upper.clone(),
-        Ordering::Greater => left_upper.clone(),
-    };
-    Some((lower, upper))
-}
-
 #[derive(Clone, Copy)]
 enum CubicCoordinate {
     X,
@@ -2177,35 +2162,6 @@ fn solve_linear_roots(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<R
         Ordering::Equal => Some(Vec::new()),
         Ordering::Less | Ordering::Greater => Some(vec![(-c / b).ok()?]),
     }
-}
-
-fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
-    match compare_reals(&discriminant, &Real::zero(), policy).value()? {
-        Ordering::Less => Some(Vec::new()),
-        Ordering::Equal => Some(vec![((-b) / (Real::from(2) * a)).ok()?]),
-        Ordering::Greater => {
-            let root = discriminant.sqrt().ok()?;
-            let denominator = Real::from(2) * a;
-            let first = ((-b.clone() - root.clone()) / denominator.clone()).ok()?;
-            let second = ((-b + root) / denominator).ok()?;
-            Some(vec![first, second])
-        }
-    }
-}
-
-fn real_in_closed_interval(
-    value: &Real,
-    lower: &Real,
-    upper: &Real,
-    policy: PredicatePolicy,
-) -> Option<bool> {
-    let lower_cmp = compare_reals(value, lower, policy).value()?;
-    let upper_cmp = compare_reals(value, upper, policy).value()?;
-    Some(
-        matches!(lower_cmp, Ordering::Equal | Ordering::Greater)
-            && matches!(upper_cmp, Ordering::Equal | Ordering::Less),
-    )
 }
 
 fn compare_algebraic_cubic_parameters(

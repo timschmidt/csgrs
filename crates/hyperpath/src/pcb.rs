@@ -2404,14 +2404,22 @@ fn rounded_rect_inner_bounds(pad: &PcbRoundedRectPad) -> Option<(Real, Real, Rea
     ))
 }
 
-fn real_min<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
+pub(crate) fn real_min<'a>(
+    left: &'a Real,
+    right: &'a Real,
+    policy: PredicatePolicy,
+) -> Option<&'a Real> {
     match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(left),
         Ordering::Greater => Some(right),
     }
 }
 
-fn real_max<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
+pub(crate) fn real_max<'a>(
+    left: &'a Real,
+    right: &'a Real,
+    policy: PredicatePolicy,
+) -> Option<&'a Real> {
     match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(right),
         Ordering::Greater => Some(left),

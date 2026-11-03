@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 
 use hyperreal::{Real, RealSign};
 
+use crate::heuristic2d::nonnegative;
 use crate::{FeasibilityStatus, ItemId, PackError, PackResult, model::unique_item_map};
 
 /// Exact two-dimensional rectangle size.
@@ -423,17 +424,10 @@ fn disjoint(
     )
 }
 
-fn require_positive(value: &Real) -> PackResult<()> {
+pub(crate) fn require_positive(value: &Real) -> PackResult<()> {
     match crate::predicate::sign(value) {
         Some(RealSign::Positive) => Ok(()),
         Some(RealSign::Negative | RealSign::Zero) | None => Err(PackError::NonPositiveDimension),
-    }
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
     }
 }
 

@@ -20,8 +20,10 @@
 
 use std::cmp::Ordering;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::em::require_nonnegative;
+use crate::em::require_positive;
 use crate::{PhysicsError, PhysicsResult};
 
 /// Exposure policy for a photochemical process.
@@ -328,20 +330,6 @@ impl VatPhotopolymerWorkingCurve {
             expression: "C_d = D_p ln(E / E_c)".into(),
             policy: PhotochemicalPolicy::WorkingCurveReplay,
         })
-    }
-}
-
-fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match crate::strict_real_sign(value) {
-        Some(RealSign::Positive) => Ok(()),
-        Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
-    }
-}
-
-fn require_nonnegative(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match crate::strict_real_sign(value) {
-        Some(RealSign::Positive | RealSign::Zero) => Ok(()),
-        Some(RealSign::Negative) | None => Err(error),
     }
 }
 

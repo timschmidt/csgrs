@@ -13,6 +13,8 @@ use hyperlimit::{
 };
 use hyperreal::{Real, RealExactSetFacts};
 
+use crate::pcb::real_max;
+use crate::pcb::real_min;
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
@@ -265,18 +267,4 @@ fn obround_outer_bounds(
         real_min(&pad.spine().start().y, &pad.spine().end().y, policy)?.clone() - radius.clone();
     let max_y = real_max(&pad.spine().start().y, &pad.spine().end().y, policy)?.clone() + radius;
     Some((min_x, max_x, min_y, max_y))
-}
-
-fn real_min<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals(left, right, policy).value()? {
-        Ordering::Less | Ordering::Equal => Some(left),
-        Ordering::Greater => Some(right),
-    }
-}
-
-fn real_max<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
-    match compare_reals(left, right, policy).value()? {
-        Ordering::Less | Ordering::Equal => Some(right),
-        Ordering::Greater => Some(left),
-    }
 }

@@ -6,6 +6,7 @@
 //! output triangulation, and every unprotected interior edge can be checked with
 //! the same empty-circle predicate used by Delaunay insertion.
 
+use crate::cdt_insert::signs_strictly_differ;
 use crate::error::{Error, Result};
 use crate::predicate_evaluator::PredicateEvaluator;
 use crate::predicates;
@@ -528,13 +529,6 @@ impl EdgeKey {
 fn normalized_triangle(mut triangle: Triangle) -> Triangle {
     triangle.sort();
     triangle
-}
-
-fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
-    matches!(
-        (first, second),
-        (Sign::Negative, Sign::Positive) | (Sign::Positive, Sign::Negative)
-    )
 }
 
 #[cfg(test)]

@@ -32,6 +32,11 @@ use super::feed::{
     FeedPathElement,
 };
 use super::jerk_schedule::{PlannedMonotonicJerkTransition, plan_monotonic_jerk_transition};
+use crate::routing::feed::element_length;
+use crate::routing::feed::require_nonnegative_feed;
+use crate::routing::feed::require_positive_acceleration;
+use crate::routing::feed::require_positive_feed;
+use crate::routing::feed::require_positive_jerk;
 
 /// Exact local lookahead speed proposal for a retained route.
 ///
@@ -795,22 +800,6 @@ fn certify_node_limit_candidate(
     certify_problem(problem)
 }
 
-fn element_length(
-    element: &FeedPathElement,
-    _policy: PredicatePolicy,
-) -> Result<Real, RouteCertificationError> {
-    match element {
-        FeedPathElement::Line(segment) => segment
-            .euclidean_length()
-            .map_err(|_| RouteCertificationError::UnsupportedRouteGeometry),
-        FeedPathElement::ExplicitArc(arc) => arc
-            .certified_sweep_length()
-            .ok_or(RouteCertificationError::UnsupportedRouteGeometry),
-        FeedPathElement::CubicPh(curve) => Ok(curve.exact_length()),
-        FeedPathElement::QuinticPh(curve) => Ok(curve.exact_length()),
-    }
-}
-
 fn feed_cap_constraint(
     name: impl Into<String>,
     max_feed_rate: Real,
@@ -830,53 +819,6 @@ fn certify_problem(problem: Problem) -> CandidateCertificationReport {
     let analysis = problem.analyze();
     let context = context_from_problem(&problem);
     certify_candidate(&analysis, &context)
-}
-
-fn require_nonnegative_feed(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Result<(), RouteCertificationError> {
-    match classify_real_sign(value, policy).value() {
-        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        Some(Sign::Zero | Sign::Positive) => Ok(()),
-        None => Err(RouteCertificationError::PredicateUnresolved),
-    }
-}
-
-fn require_positive_feed(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Result<(), RouteCertificationError> {
-    match classify_real_sign(value, policy).value() {
-        Some(Sign::Negative) => Err(RouteCertificationError::NegativeFeedRate),
-        Some(Sign::Zero) => Err(RouteCertificationError::ZeroFeedRate),
-        Some(Sign::Positive) => Ok(()),
-        None => Err(RouteCertificationError::PredicateUnresolved),
-    }
-}
-
-fn require_positive_acceleration(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Result<(), RouteCertificationError> {
-    match classify_real_sign(value, policy).value() {
-        Some(Sign::Negative) => Err(RouteCertificationError::NegativeAcceleration),
-        Some(Sign::Zero) => Err(RouteCertificationError::ZeroAcceleration),
-        Some(Sign::Positive) => Ok(()),
-        None => Err(RouteCertificationError::PredicateUnresolved),
-    }
-}
-
-fn require_positive_jerk(
-    value: &Real,
-    policy: PredicatePolicy,
-) -> Result<(), RouteCertificationError> {
-    match classify_real_sign(value, policy).value() {
-        Some(Sign::Negative) => Err(RouteCertificationError::NegativeJerk),
-        Some(Sign::Zero) => Err(RouteCertificationError::ZeroJerk),
-        Some(Sign::Positive) => Ok(()),
-        None => Err(RouteCertificationError::PredicateUnresolved),
-    }
 }
 
 fn require_nonnegative_corner_radius(

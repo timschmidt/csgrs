@@ -2056,7 +2056,7 @@ impl EdgeKey {
     }
 }
 
-fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
+pub(crate) fn signs_strictly_differ(first: Sign, second: Sign) -> bool {
     matches!(
         (first, second),
         (Sign::Negative, Sign::Positive) | (Sign::Positive, Sign::Negative)

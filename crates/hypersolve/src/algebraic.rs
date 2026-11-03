@@ -3290,7 +3290,10 @@ fn constant_value(expression: &Expr) -> Option<Real> {
     expression.eval_real(&HashMap::new()).ok()
 }
 
-fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
+pub(crate) fn trim_polynomial(
+    mut polynomial: Vec<Real>,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
     while polynomial.len() > 1 {
         let trailing = polynomial.last()?;
         match compare_reals(trailing, &Real::zero(), policy).value()? {

@@ -5,6 +5,7 @@
 //! sign; otherwise the exact/refinement path must decide or report uncertainty.
 
 use crate::context::{TriangulationCertainty, TriangulationContext, TriangulationOutcome};
+use crate::earcut::map_hyperlimit_sign;
 #[cfg(any(feature = "earcut", feature = "cdt", feature = "nd"))]
 use crate::error::{Error, Result};
 #[cfg(any(feature = "earcut", feature = "cdt"))]
@@ -226,15 +227,6 @@ fn classify_point_triangle_with_orientation(
         0 => Ok(TriangleLocation::Inside),
         1 => Ok(TriangleLocation::OnEdge),
         _ => Ok(TriangleLocation::OnVertex),
-    }
-}
-
-#[cfg(any(feature = "earcut", feature = "cdt"))]
-fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
-    match sign {
-        hyperlimit::Sign::Negative => Sign::Negative,
-        hyperlimit::Sign::Zero => Sign::Zero,
-        hyperlimit::Sign::Positive => Sign::Positive,
     }
 }
 

@@ -8,9 +8,9 @@ use crate::predicate::{
     Certainty, DeterminantScheduleHint, Escalation, ExactPredicateKernel, PredicateOutcome,
     RefinementNeed, Sign,
 };
+use crate::predicates::exact::sign_from_ordering;
 use crate::real::{add_ref, mul_ref, sub_ref};
 use crate::resolve::{map_outcome, resolve_real_sign, signed_term_filter};
-use core::cmp::Ordering;
 use hyperreal::{
     AffineDet2ExactWordFilter, AffineDet2ExactWordQuery, AffineDet2Filter, Incircle2Filter,
     Insphere3Filter, Rational, RationalLinearForm4Filter, RationalLinearForm4Query, Real,
@@ -1275,15 +1275,6 @@ fn exact_rational_sphere_polynomial_sign(
     ))
 }
 
-#[inline]
-fn sign_from_ordering(ordering: Ordering) -> Sign {
-    match ordering {
-        Ordering::Less => Sign::Negative,
-        Ordering::Equal => Sign::Zero,
-        Ordering::Greater => Sign::Positive,
-    }
-}
-
 fn add(left: &Real, right: &Real) -> Real {
     add_ref(left, right)
 }
@@ -1521,6 +1512,7 @@ mod tests {
     use super::*;
     use crate::predicate::{Certainty, Escalation};
     use crate::predicates::exact;
+    use core::cmp::Ordering;
     use hyperreal::Rational;
     use proptest::prelude::*;
 

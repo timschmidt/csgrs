@@ -1930,7 +1930,12 @@ fn solve_linear_root(b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Re
     }
 }
 
-fn solve_quadratic_roots(a: Real, b: Real, c: Real, policy: PredicatePolicy) -> Option<Vec<Real>> {
+pub(crate) fn solve_quadratic_roots(
+    a: Real,
+    b: Real,
+    c: Real,
+    policy: PredicatePolicy,
+) -> Option<Vec<Real>> {
     let discriminant = b.clone() * b.clone() - Real::from(4) * a.clone() * c;
     match compare_reals(&discriminant, &Real::zero(), policy).value()? {
         Ordering::Less => Some(Vec::new()),

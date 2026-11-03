@@ -793,7 +793,7 @@ fn min_real(
     }
 }
 
-fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
+pub(crate) fn points_equal(first: &Point2, second: &Point2, policy: PredicatePolicy) -> bool {
     point2_equal(first, second, policy).value() == Some(true)
 }
 

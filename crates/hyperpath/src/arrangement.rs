@@ -1487,7 +1487,7 @@ fn compare_half_edge_angle(
     }
 }
 
-fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
+pub(crate) fn direction_upper_half(dx: &Real, dy: &Real, policy: PredicatePolicy) -> Option<bool> {
     match compare_reals(dy, &Real::zero(), policy).value()? {
         Ordering::Greater => Some(true),
         Ordering::Less => Some(false),

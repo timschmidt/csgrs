@@ -6,8 +6,9 @@
 //! deterministic randomized order proposals; the seed affects only proposal
 //! order, never feasibility certification.
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::heuristic2d::nonnegative;
 use crate::{
     Bin3, BinId, BinInstance3, Item3, ItemId, MultiBinPlacement3, MultiBinVerification3,
     PackResult, PackingVerification3, Placement3, verify_multi_bin_packing_3d, verify_packing_3d,
@@ -1022,11 +1023,4 @@ fn exact_eq(left: &Real, right: &Real) -> bool {
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
     Some(!crate::predicate::compare(left, right)?.is_gt())
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
-    }
 }

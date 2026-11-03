@@ -1621,7 +1621,7 @@ fn same_point(
     points_equal(evaluator, &vertices[left], &vertices[right])
 }
 
-fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
+pub(crate) fn map_hyperlimit_sign(sign: hyperlimit::Sign) -> Sign {
     match sign {
         hyperlimit::Sign::Negative => Sign::Negative,
         hyperlimit::Sign::Zero => Sign::Zero,

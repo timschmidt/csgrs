@@ -226,7 +226,7 @@ fn sign_from_rational(value: &Rational) -> Sign {
     }
 }
 
-fn sign_from_ordering(ordering: Ordering) -> Sign {
+pub(crate) fn sign_from_ordering(ordering: Ordering) -> Sign {
     match ordering {
         Ordering::Less => Sign::Negative,
         Ordering::Equal => Sign::Zero,

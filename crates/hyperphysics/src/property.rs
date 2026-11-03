@@ -15,8 +15,9 @@
 use std::cmp::Ordering;
 
 use hyperlattice::Vector3;
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::em::require_positive;
 use crate::{PhysicsError, PhysicsResult};
 
 /// Source/provenance reference for property data.
@@ -380,12 +381,5 @@ impl MaterialPropertyGraph {
             sources: young.sources.into_iter().chain(poisson.sources).collect(),
             assumption: "isotropic linear elasticity: G = E / (2(1 + nu))".into(),
         }))
-    }
-}
-
-fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match crate::strict_real_sign(value) {
-        Some(RealSign::Positive) => Ok(()),
-        Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
 }

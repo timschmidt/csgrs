@@ -14,6 +14,7 @@ use std::collections::BTreeMap;
 
 use hyperreal::{Real, RealSign};
 
+use crate::clearance::negative;
 use crate::{Item3, ItemId, PackError, PackResult, Placement3, model::unique_item_map};
 
 /// Support policy applied to 3D cuboid placements.
@@ -658,11 +659,4 @@ fn exact_eq_zero(value: &Real) -> Option<bool> {
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
     Some(!crate::predicate::compare(left, right)?.is_gt())
-}
-
-fn negative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(true),
-        RealSign::Zero | RealSign::Positive => Some(false),
-    }
 }

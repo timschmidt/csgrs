@@ -22,6 +22,7 @@ use crate::RealInterval;
 use crate::algebraic::sort_reals_exact;
 use hyperreal::{Rational, Real};
 
+use crate::algebraic::trim_polynomial;
 use crate::algebraic::{
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     algebraic_root_interval_endpoints_are_roots, canonical_linear_value_representation,
@@ -1043,22 +1044,6 @@ fn polynomial_accumulate(target: &mut Vec<Real>, term: &[Real]) {
     for (index, coefficient) in term.iter().enumerate() {
         target[index] = target[index].clone() + coefficient.clone();
     }
-}
-
-fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    while polynomial.len() > 1 {
-        let trailing = polynomial.last()?;
-        match compare_reals(trailing, &Real::zero(), policy).value()? {
-            Ordering::Equal => {
-                polynomial.pop();
-            }
-            Ordering::Less | Ordering::Greater => break,
-        }
-    }
-    if polynomial.is_empty() {
-        polynomial.push(Real::zero());
-    }
-    Some(polynomial)
 }
 
 fn mobius_report(

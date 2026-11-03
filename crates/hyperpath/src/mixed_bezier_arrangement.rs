@@ -445,7 +445,7 @@ fn certify_line_orders(
     Ok(())
 }
 
-fn compare_line_parameters(
+pub(crate) fn compare_line_parameters(
     left: &MixedLineArrangementBreakpoint,
     right: &MixedLineArrangementBreakpoint,
     policy: PredicatePolicy,

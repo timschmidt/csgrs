@@ -10,8 +10,9 @@
 //! name before their corresponding exact kernels and contact solvers exist.
 
 use hyperlattice::Vector3;
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::em::require_positive;
 use crate::{PhysicsError, PhysicsResult};
 
 /// Solver or co-simulation policy used to generate a step proposal.
@@ -235,13 +236,6 @@ impl SystemDiagnostics3 {
             kinetic_energy: kinetic_energy.map_err(|_| PhysicsError::UnknownDiagnostic)?,
             status: DiagnosticStatus::Exact,
         })
-    }
-}
-
-fn require_positive(value: &Real, error: PhysicsError) -> PhysicsResult<()> {
-    match crate::strict_real_sign(value) {
-        Some(RealSign::Positive) => Ok(()),
-        Some(RealSign::Negative | RealSign::Zero) | None => Err(error),
     }
 }
 

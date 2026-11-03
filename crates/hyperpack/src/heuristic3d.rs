@@ -6,8 +6,10 @@
 //! containment and no-overlap acceptance are exact. Free-box state is
 //! intentionally conservative and is not an optimality proof.
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::heuristic2d::nonnegative;
+use crate::heuristic2d::positive;
 use crate::{
     AxisBox3, Bin3, FeasibilityStatus, Item3, ItemId, PackResult, PackingVerification3, Placement3,
     verify_packing_3d,
@@ -774,18 +776,4 @@ fn lt(left: &Real, right: &Real) -> Option<bool> {
 
 fn exact_eq(left: &Real, right: &Real) -> bool {
     crate::predicate::equal(left, right)
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
-    }
-}
-
-fn positive(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Positive => Some(true),
-        RealSign::Negative | RealSign::Zero => Some(false),
-    }
 }

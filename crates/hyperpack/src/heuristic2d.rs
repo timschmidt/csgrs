@@ -1291,7 +1291,7 @@ fn max_exact(left: &Real, right: &Real, trace: &mut SheetHeuristicTrace2) -> Rea
     }
 }
 
-fn nonnegative(value: &Real) -> Option<bool> {
+pub(crate) fn nonnegative(value: &Real) -> Option<bool> {
     match crate::predicate::sign(value)? {
         RealSign::Negative => Some(false),
         RealSign::Zero | RealSign::Positive => Some(true),
@@ -1314,7 +1314,7 @@ fn rects_disjoint(
     )
 }
 
-fn positive(value: &Real) -> Option<bool> {
+pub(crate) fn positive(value: &Real) -> Option<bool> {
     match crate::predicate::sign(value)? {
         RealSign::Positive => Some(true),
         RealSign::Negative | RealSign::Zero => Some(false),

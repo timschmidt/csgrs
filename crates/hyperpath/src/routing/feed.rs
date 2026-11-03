@@ -485,7 +485,7 @@ fn route_path_length(
     })
 }
 
-fn element_length(
+pub(crate) fn element_length(
     element: &FeedPathElement,
     _policy: PredicatePolicy,
 ) -> Result<Real, RouteCertificationError> {
@@ -564,7 +564,7 @@ fn corner_centripetal_limit_constraint(
     }
 }
 
-fn require_nonnegative_feed(
+pub(crate) fn require_nonnegative_feed(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RouteCertificationError> {
@@ -575,7 +575,7 @@ fn require_nonnegative_feed(
     }
 }
 
-fn require_positive_feed(
+pub(crate) fn require_positive_feed(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RouteCertificationError> {
@@ -587,7 +587,7 @@ fn require_positive_feed(
     }
 }
 
-fn require_positive_acceleration(
+pub(crate) fn require_positive_acceleration(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RouteCertificationError> {
@@ -599,7 +599,7 @@ fn require_positive_acceleration(
     }
 }
 
-fn require_positive_jerk(
+pub(crate) fn require_positive_jerk(
     value: &Real,
     policy: PredicatePolicy,
 ) -> Result<(), RouteCertificationError> {

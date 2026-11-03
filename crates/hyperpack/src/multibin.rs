@@ -8,8 +8,9 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::clearance::negative;
 use crate::{
     Bin3, FeasibilityStatus, Item3, ItemId, PackError, PackResult, PackingVerification3,
     Placement3, model::unique_item_map, verify_packing_3d,
@@ -247,11 +248,4 @@ pub fn verify_multi_bin_packing_3d(
         duplicates,
         facts,
     })
-}
-
-fn negative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(true),
-        RealSign::Zero | RealSign::Positive => Some(false),
-    }
 }

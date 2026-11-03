@@ -319,7 +319,7 @@ fn leq(left: &Real, right: &Real) -> Option<bool> {
     Some(!crate::predicate::compare(left, right)?.is_gt())
 }
 
-fn negative(value: &Real) -> Option<bool> {
+pub(crate) fn negative(value: &Real) -> Option<bool> {
     match crate::predicate::sign(value)? {
         RealSign::Negative => Some(true),
         RealSign::Zero | RealSign::Positive => Some(false),

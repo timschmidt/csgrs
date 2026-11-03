@@ -15,6 +15,7 @@ use hyperreal::{Rational as HyperRational, Real};
 use num::bigint::Sign;
 use num::{BigInt, One, Zero};
 
+use crate::algebraic::trim_polynomial;
 use crate::analysis::ProblemAnalysis;
 use crate::certification::{
     CandidateCertificationConfig, CandidateCertificationReport, certify_candidate_with_config,
@@ -3038,22 +3039,6 @@ fn exact_root_refinement_report(
         refinement_steps,
         None,
     )
-}
-
-fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option<Vec<Real>> {
-    while polynomial.len() > 1 {
-        let trailing = polynomial.last()?;
-        match compare_reals(trailing, &Real::zero(), policy).value()? {
-            Ordering::Equal => {
-                polynomial.pop();
-            }
-            Ordering::Less | Ordering::Greater => break,
-        }
-    }
-    if polynomial.is_empty() {
-        polynomial.push(Real::zero());
-    }
-    Some(polynomial)
 }
 
 #[inline]

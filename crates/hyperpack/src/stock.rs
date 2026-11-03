@@ -7,8 +7,10 @@
 
 use std::collections::BTreeMap;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::heuristic2d::nonnegative;
+use crate::sheet::require_positive;
 use crate::{FeasibilityStatus, ItemId, PackError, PackResult, model::unique_item_map};
 
 /// Exact one-dimensional stock/bin length.
@@ -238,20 +240,6 @@ fn disjoint(
             &left.start,
         ),
     )
-}
-
-fn require_positive(value: &Real) -> PackResult<()> {
-    match crate::predicate::sign(value) {
-        Some(RealSign::Positive) => Ok(()),
-        Some(RealSign::Negative | RealSign::Zero) | None => Err(PackError::NonPositiveDimension),
-    }
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
-    }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {

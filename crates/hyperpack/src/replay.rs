@@ -9,8 +9,9 @@
 
 use std::collections::BTreeMap;
 
-use hyperreal::{Real, RealSign};
+use hyperreal::Real;
 
+use crate::heuristic2d::nonnegative;
 use crate::{Bin3, Item3, ItemId, PackError, PackResult, Placement3, model::unique_item_map};
 
 /// Replay status for a proposed packing.
@@ -241,13 +242,6 @@ fn disjoint(
         leq(&(left.z.clone() + left_item.size.z.clone()), &right.z),
         leq(&(right.z.clone() + right_item.size.z.clone()), &left.z),
     )
-}
-
-fn nonnegative(value: &Real) -> Option<bool> {
-    match crate::predicate::sign(value)? {
-        RealSign::Negative => Some(false),
-        RealSign::Zero | RealSign::Positive => Some(true),
-    }
 }
 
 fn leq(left: &Real, right: &Real) -> Option<bool> {
