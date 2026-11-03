@@ -693,10 +693,15 @@ impl ArenaModel {
                             // trigonometrically from their exact sweep.
                             segments.push(match straight_pcurve_segment(pcurve.curve())? {
                                 Some((start, end)) => crate::geometry::GraphTrim::Line(start, end),
-                                None => crate::geometry::GraphTrim::Arc(
-                                    crate::geometry::circular_arc_of(pcurve.curve())?
-                                        .ok_or(GeometryError::UnsupportedMeasurement)?,
-                                ),
+                                None => match crate::geometry::circular_arc_of(pcurve.curve())? {
+                                    Some(arc) => crate::geometry::GraphTrim::Arc(arc),
+                                    // Polynomial-graph trims integrate exactly
+                                    // in their source graph parameter.
+                                    None => crate::geometry::GraphTrim::Graph(
+                                        crate::geometry::polynomial_graph_piece(pcurve.curve())?
+                                            .ok_or(GeometryError::UnsupportedMeasurement)?,
+                                    ),
+                                },
                             });
                         }
                         loops.push(segments);
@@ -745,6 +750,36 @@ impl ArenaModel {
                         && let Some(area) = contour_area(segments)
                     {
                         return Ok(area);
+                    }
+                    // Lines and polynomial-graph pieces: an exact Green sum
+                    // of x dy, the graph pieces in their source parameter.
+                    let mut doubled = Some(Real::zero());
+                    let x_form = hypersolve::BivariatePolynomial::new(vec![
+                        vec![Real::zero()],
+                        vec![Real::one()],
+                    ]);
+                    for curve in path.curves() {
+                        let Some(sum) = doubled.as_mut() else {
+                            break;
+                        };
+                        match curve.geometry() {
+                            Some(hypercurve::CurveGeometry2::Line(line)) => {
+                                let (start, end) = (line.start(), line.end());
+                                *sum = sum.clone() + (start.x() + end.x()) * (end.y() - start.y());
+                            }
+                            _ => match crate::geometry::polynomial_graph_piece(curve)? {
+                                Some(piece) => {
+                                    *sum = sum.clone()
+                                        + piece.integral(&x_form, false) * Real::from(2);
+                                }
+                                None => doubled = None,
+                            },
+                        }
+                    }
+                    if let Some(doubled) = doubled {
+                        return Ok((doubled / Real::from(2))
+                            .map_err(GeometryError::Numeric)?
+                            .abs());
                     }
                     // Otherwise every curved piece may be an affine image of a
                     // circle arc in one shared source chart: measure there, with

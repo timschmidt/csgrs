@@ -275,6 +275,61 @@ fn univariate_product(a: &[Real], b: &[Real]) -> Vec<Real> {
 pub(crate) enum GraphTrim {
     Line(CurvePoint2, CurvePoint2),
     Arc(hypercurve::CircularArc2),
+    Graph(GraphPiece),
+}
+
+/// A polynomial-graph trim as image coordinates `(u(t), v(t))`, polynomials
+/// in the source graph parameter `t` (ascending coefficients), from `t0` to
+/// `t1` along the trim's direction.
+pub(crate) struct GraphPiece {
+    pub(crate) u: Vec<Real>,
+    pub(crate) v: Vec<Real>,
+    pub(crate) t0: Real,
+    pub(crate) t1: Real,
+}
+
+impl GraphPiece {
+    /// `integral_{t0}^{t1} f(u(t), v(t)) dw(t)` for a bivariate polynomial
+    /// `f`, with `w` either coordinate.
+    pub(crate) fn integral(&self, f: &BivariatePolynomial, along_u: bool) -> Real {
+        let power = |base: &[Real], exponent: usize| {
+            (0..exponent).fold(vec![Real::one()], |value, _| {
+                univariate_product(&value, base)
+            })
+        };
+        let mut composed = Vec::<Real>::new();
+        for (i, row) in f.coefficients.iter().enumerate() {
+            for (j, coefficient) in row.iter().enumerate() {
+                let term = univariate_product(&power(&self.u, i), &power(&self.v, j));
+                if composed.len() < term.len() {
+                    composed.resize(term.len(), Real::zero());
+                }
+                for (k, value) in term.into_iter().enumerate() {
+                    composed[k] = composed[k].clone() + value * coefficient;
+                }
+            }
+        }
+        let w = if along_u { &self.u } else { &self.v };
+        let derivative = w
+            .iter()
+            .enumerate()
+            .skip(1)
+            .map(|(k, value)| value.clone() * Real::from(k as i64))
+            .collect::<Vec<_>>();
+        let integrand = univariate_product(&composed, &derivative);
+        let evaluate = |t: &Real| {
+            integrand
+                .iter()
+                .enumerate()
+                .fold((Real::zero(), Real::one()), |(sum, power), (k, value)| {
+                    let term = (value.clone() * &power * t / Real::from((k + 1) as i64))
+                        .expect("positive denominator");
+                    (sum + term, power * t)
+                })
+                .0
+        };
+        evaluate(&self.t1) - evaluate(&self.t0)
+    }
 }
 
 /// `integral H(u, v) du` along a circular arc `u = a + r cos t`,
@@ -564,6 +619,119 @@ fn circle_center(equation: &BivariatePolynomial) -> GeometryResult<Option<(Real,
     )))
 }
 
+/// The image of a polynomial-graph branch `c y + G(x) = 0` (or
+/// `c x + G(y) = 0`) with constant `c`, carried through its exact affine
+/// view, as polynomial coordinates in the source graph parameter between the
+/// certified source parameters of the curve's ends; `None` otherwise.
+pub(crate) fn polynomial_graph_piece(curve: &Curve2) -> GeometryResult<Option<GraphPiece>> {
+    let original = curve
+        .source_restriction()
+        .map_or(curve, |(original, _, _)| original);
+    let Some(branch) = original.polynomial_branch() else {
+        return Ok(None);
+    };
+    let Some([a, b, d, e, x, y]) = branch.affine_view() else {
+        return Ok(None);
+    };
+    let equation = branch.topology().geometric_equation();
+    let coefficient = |i: usize, j: usize| {
+        equation
+            .coefficients
+            .get(i)
+            .and_then(|row| row.get(j))
+            .cloned()
+            .unwrap_or_else(Real::zero)
+    };
+    // y as a polynomial in x when F = c y + G(x); else x in y.
+    let graph_in = |first: bool| -> GeometryResult<Option<Vec<Real>>> {
+        let linear = if first {
+            coefficient(0, 1)
+        } else {
+            coefficient(1, 0)
+        };
+        if linear.definitely_zero() {
+            return Ok(None);
+        }
+        let mut graph = Vec::new();
+        for (i, row) in equation.coefficients.iter().enumerate() {
+            for (j, value) in row.iter().enumerate() {
+                let (along, across) = if first { (i, j) } else { (j, i) };
+                if value.definitely_zero() || (across == 1 && along == 0) {
+                    continue;
+                }
+                if across != 0 {
+                    return Ok(None);
+                }
+                if graph.len() <= along {
+                    graph.resize(along + 1, Real::zero());
+                }
+                graph[along] = (-value.clone() / &linear).map_err(GeometryError::Numeric)?;
+            }
+        }
+        Ok(Some(graph))
+    };
+    let (first_graph, graph) = match graph_in(true)? {
+        Some(graph) => (true, graph),
+        None => match graph_in(false)? {
+            Some(graph) => (false, graph),
+            None => return Ok(None),
+        },
+    };
+    let source_parameter = |point: hypercurve::CurvePoint2| -> GeometryResult<Option<Real>> {
+        let mut base = point;
+        while let Ok(
+            hypercurve::CurvePointDefinition2::RationalImage { source, .. }
+            | hypercurve::CurvePointDefinition2::Similarity { source, .. },
+        ) = base.definition()
+        {
+            base = source;
+        }
+        let point = match base.coordinates() {
+            Some(point) => Some(point.clone()),
+            None => super::certified_scalar_point(&base, equation)?,
+        };
+        Ok(point.map(|point| {
+            if first_graph {
+                point.x().clone()
+            } else {
+                point.y().clone()
+            }
+        }))
+    };
+    let (Some(t0), Some(t1)) = (
+        source_parameter(curve.start())?,
+        source_parameter(curve.end())?,
+    ) else {
+        return Ok(None);
+    };
+    // Source point (t, g(t)) or (g(t), t), then the affine view.
+    let identity = vec![Real::zero(), Real::one()];
+    let (sx, sy) = if first_graph {
+        (identity, graph)
+    } else {
+        (graph, identity)
+    };
+    let combine = |p: &Real, q: &Real, offset: &Real| {
+        let length = sx.len().max(sy.len()).max(1);
+        (0..length)
+            .map(|k| {
+                let term = |poly: &Vec<Real>, factor: &Real| {
+                    poly.get(k)
+                        .map_or_else(Real::zero, |value| value.clone() * factor)
+                };
+                let base = if k == 0 { offset.clone() } else { Real::zero() };
+                base + term(&sx, p) + term(&sy, q)
+            })
+            .collect::<Vec<_>>()
+    };
+    Ok(Some(GraphPiece {
+        u: combine(&a, &b, &x),
+        v: combine(&d, &e, &y),
+        t0,
+        t1,
+    }))
+}
+
 fn line_integral(
     h: &BivariatePolynomial,
     start: &CurvePoint2,
@@ -675,6 +843,9 @@ impl Surface {
                             return Ok(None);
                         };
                         signed -= value;
+                    }
+                    GraphTrim::Graph(piece) => {
+                        signed -= piece.integral(&antiderivative, true);
                     }
                 }
             }

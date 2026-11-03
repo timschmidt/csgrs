@@ -175,6 +175,161 @@ fn bump() -> Model {
     b.finish().unwrap()
 }
 
+/// A tensor-graph solid over [-1,1]² with base z = -1 and quadratic top
+/// controls `h[i][j]` at (x_j, y_i), x, y in {-1, 0, 1}; the same topology as
+/// the bump, with walls following the top's boundary Bézier rows.
+fn graph_fixture(h: [[i64; 3]; 3]) -> Model {
+    let xs = [-1, 0, 1];
+    let controls: Vec<Vec<Point3>> = (0..3)
+        .map(|i| (0..3).map(|j| pi(xs[j], xs[i], h[i][j])).collect())
+        .collect();
+    let top = Surface::rational_bezier(controls.clone(), vec![vec![Real::one(); 3]; 3]).unwrap();
+    let mut b = ModelBuilder::new();
+    let [va, vb, vc, vd] = [pi(-1, -1, -1), pi(1, -1, -1), pi(1, 1, -1), pi(-1, 1, -1)]
+        .map(|p| b.vertex(p.into()).unwrap());
+    let corner = [
+        pi(-1, -1, h[0][0]),
+        pi(1, -1, h[0][2]),
+        pi(1, 1, h[2][2]),
+        pi(-1, 1, h[2][0]),
+    ];
+    let [ta, tb, tc, td] = corner.clone().map(|p| b.vertex(p.into()).unwrap());
+    let edge = |b: &mut ModelBuilder, s, e, c: Curve3| {
+        let id = b.curve(c.clone()).unwrap();
+        b.edge(s, e, &id, c.domain().clone()).unwrap()
+    };
+    let line = |p: Point3, q: Point3| Curve3::line(p, q).unwrap();
+    let e_ab = edge(&mut b, &va, &vb, line(pi(-1, -1, -1), pi(1, -1, -1)));
+    let e_bc = edge(&mut b, &vb, &vc, line(pi(1, -1, -1), pi(1, 1, -1)));
+    let e_cd = edge(&mut b, &vc, &vd, line(pi(1, 1, -1), pi(-1, 1, -1)));
+    let e_da = edge(&mut b, &vd, &va, line(pi(-1, 1, -1), pi(-1, -1, -1)));
+    let v_a = edge(&mut b, &va, &ta, line(pi(-1, -1, -1), corner[0].clone()));
+    let v_b = edge(&mut b, &vb, &tb, line(pi(1, -1, -1), corner[1].clone()));
+    let v_c = edge(&mut b, &vc, &tc, line(pi(1, 1, -1), corner[2].clone()));
+    let v_d = edge(&mut b, &vd, &td, line(pi(-1, 1, -1), corner[3].clone()));
+    let bez = |pts: Vec<Point3>| Curve3::rational_bezier(pts, vec![Real::one(); 3]).unwrap();
+    let col = |j: usize| {
+        controls
+            .iter()
+            .map(|row| row[j].clone())
+            .collect::<Vec<_>>()
+    };
+    let t_row0 = edge(&mut b, &ta, &tb, bez(controls[0].clone()));
+    let t_col2 = edge(&mut b, &tb, &tc, bez(col(2)));
+    let t_row2 = edge(&mut b, &td, &tc, bez(controls[2].clone()));
+    let t_col0 = edge(&mut b, &ta, &td, bez(col(0)));
+    let id = ParameterCorrespondence::identity();
+    let rev = || ParameterCorrespondence::affine(-Real::one(), Real::one()).unwrap();
+    let face = |b: &mut ModelBuilder,
+                surface: Surface,
+                uses: Vec<(&EdgeKey, Direction, Pcurve, ParameterCorrespondence)>| {
+        let s = b.surface(surface).unwrap();
+        let uses = uses
+            .into_iter()
+            .map(|(e, d, p, c)| {
+                let p = b.pcurve(p).unwrap();
+                b.edge_use(e, d, &p, c).unwrap()
+            })
+            .collect::<Vec<_>>();
+        let w = b.wire(&uses).unwrap();
+        b.face(&s, Orientation::Forward, &w, &[]).unwrap()
+    };
+    use Direction::{Forward as F, Reversed as R};
+    let plane = |o: Point3, u: Vector3, v: Vector3| Surface::plane(o, u, v).unwrap();
+    let up = |u: i64, z: i64| uv(u, z);
+    let f_top = face(
+        &mut b,
+        top,
+        vec![
+            (&t_row0, F, line2(uv(0, 0), uv(1, 0)), id.clone()),
+            (&t_col2, F, line2(uv(1, 0), uv(1, 1)), id.clone()),
+            (&t_row2, R, line2(uv(1, 1), uv(0, 1)), rev()),
+            (&t_col0, R, line2(uv(0, 1), uv(0, 0)), rev()),
+        ],
+    );
+    let f_bottom = face(
+        &mut b,
+        plane(pi(0, 0, -1), Vector3::y(), Vector3::x()),
+        vec![
+            (&e_da, R, line2(uv(-1, -1), uv(1, -1)), rev()),
+            (&e_cd, R, line2(uv(1, -1), uv(1, 1)), rev()),
+            (&e_bc, R, line2(uv(1, 1), uv(-1, 1)), rev()),
+            (&e_ab, R, line2(uv(-1, 1), uv(-1, -1)), rev()),
+        ],
+    );
+    let f_ym = face(
+        &mut b,
+        plane(pi(0, -1, 0), Vector3::x(), Vector3::z()),
+        vec![
+            (&e_ab, F, line2(uv(-1, -1), uv(1, -1)), id.clone()),
+            (&v_b, F, line2(uv(1, -1), up(1, h[0][2])), id.clone()),
+            (
+                &t_row0,
+                R,
+                quad2([(1, h[0][2]), (0, h[0][1]), (-1, h[0][0])]),
+                rev(),
+            ),
+            (&v_a, R, line2(up(-1, h[0][0]), uv(-1, -1)), rev()),
+        ],
+    );
+    let f_xp = face(
+        &mut b,
+        plane(pi(1, 0, 0), Vector3::y(), Vector3::z()),
+        vec![
+            (&e_bc, F, line2(uv(-1, -1), uv(1, -1)), id.clone()),
+            (&v_c, F, line2(uv(1, -1), up(1, h[2][2])), id.clone()),
+            (
+                &t_col2,
+                R,
+                quad2([(1, h[2][2]), (0, h[1][2]), (-1, h[0][2])]),
+                rev(),
+            ),
+            (&v_b, R, line2(up(-1, h[0][2]), uv(-1, -1)), rev()),
+        ],
+    );
+    let f_yp = face(
+        &mut b,
+        plane(pi(0, 1, 0), -Vector3::x(), Vector3::z()),
+        vec![
+            (&e_cd, F, line2(uv(-1, -1), uv(1, -1)), id.clone()),
+            (&v_d, F, line2(uv(1, -1), up(1, h[2][0])), id.clone()),
+            (
+                &t_row2,
+                F,
+                quad2([(1, h[2][0]), (0, h[2][1]), (-1, h[2][2])]),
+                id.clone(),
+            ),
+            (&v_c, R, line2(up(-1, h[2][2]), uv(-1, -1)), rev()),
+        ],
+    );
+    let f_xm = face(
+        &mut b,
+        plane(pi(-1, 0, 0), -Vector3::y(), Vector3::z()),
+        vec![
+            (&e_da, F, line2(uv(-1, -1), uv(1, -1)), id.clone()),
+            (&v_a, F, line2(uv(1, -1), up(1, h[0][0])), id.clone()),
+            (
+                &t_col0,
+                F,
+                quad2([(1, h[0][0]), (0, h[1][0]), (-1, h[2][0])]),
+                id.clone(),
+            ),
+            (&v_d, R, line2(up(-1, h[2][0]), uv(-1, -1)), rev()),
+        ],
+    );
+    let shell = b.shell(&[f_top, f_bottom, f_ym, f_xp, f_yp, f_xm]).unwrap();
+    b.solid(&shell, &[]).unwrap();
+    b.finish().unwrap()
+}
+
+/// The ramp: top z = x² + y + 1 (controls a_j + b_i with a = [1, -1, 1] and
+/// b = [0, 1, 2]) over [-1,1]², above z = -1; its volume is 28/3.
+fn ramp() -> Model {
+    let a = [1, -1, 1];
+    let b = [0, 1, 2];
+    graph_fixture([0, 1, 2].map(|i| [0, 1, 2].map(|j| a[j] + b[i])))
+}
+
 /// Expected locations follow from z = x^2 + y^2 over [-1, 1]^2 above z = -1.
 fn expected_locations() -> Vec<(Point3, SolidPointLocation)> {
     vec![
@@ -1299,4 +1454,38 @@ fn capped_rings_chain_profile_certified_tensor_graphs() {
         .validate()
         .unwrap();
     assert_eq!(cold.to_json().unwrap(), json);
+}
+
+/// The slab z <= 1 cuts the ramp z = x² + y + 1 along the parabola
+/// y = -x², a polynomial graph rather than a conic: the tensor keeps the
+/// part below it and a planar cap covers the part above. Polynomial-graph
+/// trims integrate exactly, giving the rational volume 112/15.
+#[test]
+fn slab_cuts_along_polynomial_graph_trims_measure_exactly() {
+    let body = BodySet::from_solid(ramp().solids().next().unwrap());
+    assert_eq!(body.bodies().next().unwrap().volume().unwrap(), q(28, 3));
+    let slab = builder::cuboid(pi(-2, -2, -2), Point3::new(2.into(), 2.into(), 1.into())).unwrap();
+    let cut = boolean::intersection(&body, &slab).unwrap();
+    assert_eq!(cut.len(), 1);
+    let solid = cut.bodies().next().unwrap();
+    assert_eq!(solid.volume().unwrap(), q(112, 15));
+    let p = |x: Real, y: Real, z: Real| Point3::new(x, y, z);
+    let n = |n: i64, d: i64| q(n, d);
+    for (point, expected) in [
+        (p(0.into(), n(-1, 2), n(1, 4)), SolidPointLocation::Inside),
+        (p(0.into(), n(-1, 2), n(1, 2)), SolidPointLocation::Boundary),
+        (p(0.into(), n(-1, 2), n(3, 4)), SolidPointLocation::Outside),
+        (p(0.into(), n(1, 2), n(9, 10)), SolidPointLocation::Inside),
+        (p(0.into(), n(1, 2), 1.into()), SolidPointLocation::Boundary),
+        (p(0.into(), n(1, 2), n(11, 10)), SolidPointLocation::Outside),
+    ] {
+        assert_eq!(solid.classify_point(&point).unwrap(), expected, "{point:?}");
+    }
+    let json = cut.model().to_json().unwrap();
+    let cold = RawModel::from_json(&json, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    assert_eq!(cold.to_json().unwrap(), json);
+    assert_eq!(cold.solids().next().unwrap().volume().unwrap(), q(112, 15));
 }

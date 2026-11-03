@@ -4783,6 +4783,31 @@
       "validation": "New witness capped_rings_chain_profile_certified_tensor_graphs reuses the z <= 1/2 shared-wall ring difference as an operand and cuts it by the slab z <= 5/4: one ten-face solid with a holed base and four corner caps whose tensor dips below the base inside the hole; its volume is within 10^-30 of slab cut volume - 6 + pi/8 (the integral of min(x^2 + y^2, 5/4) - 1/2 outside the disk), probes classify exactly, and it replays cold byte-identically. Restoring the uncapped-only restriction fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 809 passes and debug tests 801 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the fourteen tensor-graph tests complete in about 1.5 s in release.",
       "limits": "Non-circular, non-elliptical curved trims, tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "polynomial-graph-trim-volumes-2026-11-03",
+      "work_packages": [
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Capped tensor-graph volume measures polynomial-graph trims exactly. A curve that is a polynomial branch c y + G(x) = 0 (or c x + G(y) = 0) with constant c, under an exact affine view, becomes a GraphPiece: its image coordinates are polynomials in the source graph parameter between the certified source parameters of its ends. The tensor Green integral integrates H(u(t), v(t)) u'(t) as a polynomial, and caps bounded by lines and such pieces use an exact Green sum of x dy. Tests gain a parameterized graph_fixture and the ramp solid z = x^2 + y + 1.",
+      "source": [
+        "../src/geometry/tensor_graph.rs",
+        "../src/geometry.rs",
+        "../src/topology/measure.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness slab_cuts_along_polynomial_graph_trims_measure_exactly: the ramp (volume exactly 28/3) cut by the slab z <= 1 along the parabola y = -x^2 has exact rational volume 112/15 (independently derived with SymPy) by plain equality, exact probe classification, and the same volume after byte-identical cold replay. Mutations removing graph pieces, the cap Green sum, or the parameter direction fail the witness; flipping the tensor graph term's sign is equivalent here (every other boundary term of that face vanishes and the volume takes an absolute value). On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 810 passes and debug tests 802 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "Curved trims that are neither lines, circle arcs, their affine images, nor polynomial graphs (general implicit curves) remain typed; tensor face area, analytic-side faces, higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [
