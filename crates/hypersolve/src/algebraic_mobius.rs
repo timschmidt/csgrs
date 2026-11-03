@@ -16,6 +16,10 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
+
+use crate::RealInterval;
+
+use crate::algebraic::sort_reals_exact;
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
@@ -853,12 +857,12 @@ fn linear_interval_image(
     scale: &Real,
     offset: &Real,
     policy: PredicatePolicy,
-) -> Option<AlgebraicValueInterval> {
+) -> Option<RealInterval> {
     let first = scale.clone() * interval.lower.clone() + offset.clone();
     let second = scale.clone() * interval.upper.clone() + offset.clone();
     let mut endpoints = [first, second];
     sort_reals_exact(&mut endpoints, policy)?;
-    Some(AlgebraicValueInterval {
+    Some(RealInterval {
         lower: endpoints[0].clone(),
         upper: endpoints[1].clone(),
     })
@@ -986,13 +990,7 @@ fn eval_mobius_policy_fallback(
     Some(numerator * denominator.inverse_ref_assuming_nonzero().ok()?)
 }
 
-#[derive(Clone, Debug)]
-struct AlgebraicValueInterval {
-    lower: Real,
-    upper: Real,
-}
-
-fn interval_contains_zero(value: &AlgebraicValueInterval, policy: PredicatePolicy) -> Option<bool> {
+fn interval_contains_zero(value: &RealInterval, policy: PredicatePolicy) -> Option<bool> {
     let lower = compare_reals(&value.lower, &Real::zero(), policy).value()?;
     let upper = compare_reals(&value.upper, &Real::zero(), policy).value()?;
     Some(lower != Ordering::Greater && upper != Ordering::Less)
@@ -1061,21 +1059,6 @@ fn trim_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> Option
         polynomial.push(Real::zero());
     }
     Some(polynomial)
-}
-
-fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
-            if ordering != Ordering::Less {
-                break;
-            }
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    Some(())
 }
 
 fn mobius_report(

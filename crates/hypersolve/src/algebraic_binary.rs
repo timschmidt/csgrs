@@ -18,6 +18,10 @@ use std::borrow::Cow;
 use std::cmp::Ordering;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
+
+use crate::RealInterval;
+
+use crate::algebraic::sort_reals_exact;
 use hyperreal::Real;
 
 use crate::algebraic::{
@@ -391,31 +395,31 @@ fn binary_image_interval(
     policy: PredicatePolicy,
 ) -> Option<IsolatedRootInterval> {
     let value = match operation {
-        AlgebraicRootArithmeticOp::Add => ValueInterval {
+        AlgebraicRootArithmeticOp::Add => RealInterval {
             lower: left.lower.clone() + right.lower.clone(),
             upper: left.upper.clone() + right.upper.clone(),
         },
-        AlgebraicRootArithmeticOp::Subtract => ValueInterval {
+        AlgebraicRootArithmeticOp::Subtract => RealInterval {
             lower: left.lower.clone() - right.upper.clone(),
             upper: left.upper.clone() - right.lower.clone(),
         },
         AlgebraicRootArithmeticOp::Multiply => interval_mul(
-            &ValueInterval {
+            &RealInterval {
                 lower: left.lower.clone(),
                 upper: left.upper.clone(),
             },
-            &ValueInterval {
+            &RealInterval {
                 lower: right.lower.clone(),
                 upper: right.upper.clone(),
             },
             policy,
         )?,
         AlgebraicRootArithmeticOp::Divide => interval_div(
-            &ValueInterval {
+            &RealInterval {
                 lower: left.lower.clone(),
                 upper: left.upper.clone(),
             },
-            &ValueInterval {
+            &RealInterval {
                 lower: right.lower.clone(),
                 upper: right.upper.clone(),
             },
@@ -532,10 +536,10 @@ fn multiply_by_signed_unit_linear_factor(
 }
 
 fn interval_mul(
-    left: &ValueInterval,
-    right: &ValueInterval,
+    left: &RealInterval,
+    right: &RealInterval,
     policy: PredicatePolicy,
-) -> Option<ValueInterval> {
+) -> Option<RealInterval> {
     let mut products = [
         left.lower.clone() * right.lower.clone(),
         left.lower.clone() * right.upper.clone(),
@@ -543,17 +547,17 @@ fn interval_mul(
         left.upper.clone() * right.upper.clone(),
     ];
     sort_reals_exact(&mut products, policy)?;
-    Some(ValueInterval {
+    Some(RealInterval {
         lower: products[0].clone(),
         upper: products[3].clone(),
     })
 }
 
 fn interval_div(
-    left: &ValueInterval,
-    right: &ValueInterval,
+    left: &RealInterval,
+    right: &RealInterval,
     policy: PredicatePolicy,
-) -> Option<ValueInterval> {
+) -> Option<RealInterval> {
     let lower_order = compare_reals(&right.lower, &Real::zero(), policy).value()?;
     let upper_order = compare_reals(&right.upper, &Real::zero(), policy).value()?;
     if lower_order != Ordering::Greater && upper_order != Ordering::Less {
@@ -567,7 +571,7 @@ fn interval_div(
     sort_reals_exact(&mut reciprocal, policy)?;
     interval_mul(
         left,
-        &ValueInterval {
+        &RealInterval {
             lower: reciprocal[0].clone(),
             upper: reciprocal[1].clone(),
         },
@@ -624,32 +628,11 @@ fn trim_exact_rational_polynomial(mut polynomial: Vec<Real>) -> Option<Vec<Real>
     (polynomial.len() > 1).then_some(polynomial)
 }
 
-fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
-            if ordering != Ordering::Less {
-                break;
-            }
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    Some(())
-}
-
 fn has_exact_coefficients(polynomial: &[Real]) -> bool {
     polynomial.len() > 1
         && polynomial
             .iter()
             .all(|coefficient| coefficient.exact_rational_ref().is_some())
-}
-
-#[derive(Clone, Debug)]
-struct ValueInterval {
-    lower: Real,
-    upper: Real,
 }
 
 fn binary_report(
@@ -1466,11 +1449,11 @@ mod tests {
         let half = fraction(1, 2);
         let numerator = denominator.clone() * &half;
         let quotient = interval_div(
-            &ValueInterval {
+            &RealInterval {
                 lower: numerator.clone(),
                 upper: numerator,
             },
-            &ValueInterval {
+            &RealInterval {
                 lower: denominator.clone(),
                 upper: denominator * Real::from(2),
             },
@@ -1488,11 +1471,11 @@ mod tests {
 
         assert!(
             interval_div(
-                &ValueInterval {
+                &RealInterval {
                     lower: Real::one(),
                     upper: Real::one(),
                 },
-                &ValueInterval {
+                &RealInterval {
                     lower: crate::test_support::terminal_zero(),
                     upper: Real::one(),
                 },

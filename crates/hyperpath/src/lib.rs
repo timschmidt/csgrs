@@ -23,6 +23,7 @@ pub mod pcb_obround_board;
 pub mod pcb_obround_pad;
 pub mod pcb_oriented;
 pub mod pcb_orthogonal_pad;
+mod pcb_shared;
 pub mod ph;
 pub mod ph_smoothing;
 pub mod routing;

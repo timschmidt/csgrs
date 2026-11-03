@@ -17,6 +17,7 @@ use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbCircularPad, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
 };
+use crate::pcb_shared::point_segment_distance_squared;
 use crate::segment::LinePathSegment;
 
 /// Cached facts for an exact obround PCB board outline.
@@ -181,60 +182,4 @@ fn classify_points_inside_eroded_obround_board<'a>(
         }
     }
     ClearanceStatus::CertifiedClear
-}
-
-fn point_segment_distance_squared(
-    point: &Point2,
-    segment: &LinePathSegment,
-    policy: PredicatePolicy,
-) -> Option<Real> {
-    let ab = Point2::new(
-        segment.end().x.clone() - segment.start().x.clone(),
-        segment.end().y.clone() - segment.start().y.clone(),
-    );
-    let ap = Point2::new(
-        point.x.clone() - segment.start().x.clone(),
-        point.y.clone() - segment.start().y.clone(),
-    );
-    let bp = Point2::new(
-        point.x.clone() - segment.end().x.clone(),
-        point.y.clone() - segment.end().y.clone(),
-    );
-    let length_squared = squared_norm(&ab);
-    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
-        Ordering::Equal => return Some(squared_norm(&ap)),
-        Ordering::Less => return None,
-        Ordering::Greater => {}
-    }
-    let projection = dot(&ap, &ab);
-    if !matches!(
-        compare_reals(&projection, &Real::zero(), policy).value()?,
-        Ordering::Greater
-    ) {
-        return Some(squared_norm(&ap));
-    }
-    if !matches!(
-        compare_reals(&projection, &length_squared, policy).value()?,
-        Ordering::Less
-    ) {
-        return Some(squared_norm(&bp));
-    }
-    let cross_value = cross(&ap, &ab);
-    let cross_squared = cross_value.clone() * cross_value;
-    (cross_squared / length_squared).ok()
-}
-
-fn squared_norm(vector: &Point2) -> Real {
-    Real::signed_product_sum(
-        [true, true],
-        [[&vector.x, &vector.x], [&vector.y, &vector.y]],
-    )
-}
-
-fn dot(first: &Point2, second: &Point2) -> Real {
-    Real::signed_product_sum([true, true], [[&first.x, &second.x], [&first.y, &second.y]])
-}
-
-fn cross(first: &Point2, second: &Point2) -> Real {
-    first.x.clone() * second.y.clone() - first.y.clone() * second.x.clone()
 }

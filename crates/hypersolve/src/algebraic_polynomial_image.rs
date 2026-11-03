@@ -21,6 +21,8 @@ use std::cmp::Ordering;
 use hyperlimit::PredicatePolicy;
 use hyperreal::{Rational, Real};
 
+use crate::RealInterval;
+
 use crate::algebraic::{
     AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
     validate_algebraic_root_representation,
@@ -464,7 +466,7 @@ fn polynomial_image_enclosure(
     }
     let image = evaluate_interval_polynomial(
         image_polynomial,
-        &ValueInterval {
+        &RealInterval {
             lower: interval.lower.clone(),
             upper: interval.upper.clone(),
         },
@@ -486,7 +488,7 @@ fn certify_polynomial_interval_sign(
     }
     let value_interval = evaluate_rational_interval_polynomial(
         polynomial,
-        &ValueInterval {
+        &RealInterval {
             lower: interval.lower.clone(),
             upper: interval.upper.clone(),
         },
@@ -527,18 +529,9 @@ fn evaluate_rational_polynomial(polynomial: &[Real], point: &Real) -> Option<Rea
     Some(Real::from(value))
 }
 
-#[derive(Clone, Debug)]
-struct ValueInterval {
-    lower: Real,
-    upper: Real,
-}
-
-fn evaluate_interval_polynomial(
-    polynomial: &[Real],
-    point: &ValueInterval,
-) -> Option<ValueInterval> {
+fn evaluate_interval_polynomial(polynomial: &[Real], point: &RealInterval) -> Option<RealInterval> {
     let value = evaluate_rational_interval_polynomial(polynomial, point)?;
-    Some(ValueInterval {
+    Some(RealInterval {
         lower: Real::from(value.lower),
         upper: Real::from(value.upper),
     })
@@ -546,7 +539,7 @@ fn evaluate_interval_polynomial(
 
 fn evaluate_rational_interval_polynomial(
     polynomial: &[Real],
-    point: &ValueInterval,
+    point: &RealInterval,
 ) -> Option<RationalValueInterval> {
     let point = RationalValueInterval {
         lower: point.lower.exact_rational_ref()?.clone(),
@@ -1126,7 +1119,7 @@ mod tests {
             let polynomial = coefficients.into_iter().map(real).collect::<Vec<_>>();
             let enclosure = evaluate_interval_polynomial(
                 &polynomial,
-                &ValueInterval {
+                &RealInterval {
                     lower: real(lower),
                     upper: real(upper),
                 },

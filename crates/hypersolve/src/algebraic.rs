@@ -3640,7 +3640,8 @@ fn interval_sign(
     }
 }
 
-fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
+/// Insertion-sorts exact reals under `policy`; `None` if an order is undecided.
+pub(crate) fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
     for index in 1..values.len() {
         let mut cursor = index;
         while cursor > 0 {

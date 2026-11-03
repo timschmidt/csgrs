@@ -8,7 +8,7 @@
 use std::cmp::Ordering;
 
 use hyperlimit::{
-    Point2, PredicatePolicy, SegmentIntersection, Sign, classify_real_sign,
+    PredicatePolicy, SegmentIntersection, Sign, classify_real_sign,
     classify_segment_intersection_with_facts, compare_reals,
 };
 use hyperreal::{Real, RealExactSetFacts};
@@ -16,6 +16,10 @@ use hyperreal::{Real, RealExactSetFacts};
 use crate::pcb::{
     ClearanceStatus, PadBoardClearanceReport, PcbBoardOutline, PcbTrace, TraceClearanceReport,
     TraceWidthClass,
+};
+use crate::pcb_shared::{
+    classify_margins, point_segment_distance_squared, unknown_pad_board_report,
+    unknown_trace_report, update_minimum_distance,
 };
 use crate::segment::LinePathSegment;
 
@@ -248,47 +252,6 @@ fn segment_segment_distance_squared(
     minimum
 }
 
-fn point_segment_distance_squared(
-    point: &Point2,
-    segment: &LinePathSegment,
-    policy: PredicatePolicy,
-) -> Option<Real> {
-    let ab = Point2::new(
-        segment.end().x.clone() - segment.start().x.clone(),
-        segment.end().y.clone() - segment.start().y.clone(),
-    );
-    let ap = Point2::new(
-        point.x.clone() - segment.start().x.clone(),
-        point.y.clone() - segment.start().y.clone(),
-    );
-    let bp = Point2::new(
-        point.x.clone() - segment.end().x.clone(),
-        point.y.clone() - segment.end().y.clone(),
-    );
-    let length_squared = squared_norm(&ab);
-    match compare_reals(&length_squared, &Real::zero(), policy).value()? {
-        Ordering::Equal => return Some(squared_norm(&ap)),
-        Ordering::Less => return None,
-        Ordering::Greater => {}
-    }
-    let projection = dot(&ap, &ab);
-    if !matches!(
-        compare_reals(&projection, &Real::zero(), policy).value()?,
-        Ordering::Greater
-    ) {
-        return Some(squared_norm(&ap));
-    }
-    if !matches!(
-        compare_reals(&projection, &length_squared, policy).value()?,
-        Ordering::Less
-    ) {
-        return Some(squared_norm(&bp));
-    }
-    let cross_value = cross(&ap, &ab);
-    let cross_squared = cross_value.clone() * cross_value;
-    (cross_squared / length_squared).ok()
-}
-
 fn obround_outer_bounds(
     pad: &PcbObroundPad,
     policy: PredicatePolicy,
@@ -304,57 +267,6 @@ fn obround_outer_bounds(
     Some((min_x, max_x, min_y, max_y))
 }
 
-fn classify_margins(
-    margins: &[Real; 4],
-    required: &Real,
-    policy: PredicatePolicy,
-) -> Option<(ClearanceStatus, Real)> {
-    let mut minimum_margin = margins[0].clone();
-    for margin in margins {
-        if matches!(
-            compare_reals(margin, &minimum_margin, policy).value(),
-            Some(Ordering::Less)
-        ) {
-            minimum_margin = margin.clone();
-        }
-        match compare_reals(margin, required, policy).value()? {
-            Ordering::Less => return Some((ClearanceStatus::ClearanceViolation, margin.clone())),
-            Ordering::Equal | Ordering::Greater => {}
-        }
-    }
-    Some((ClearanceStatus::CertifiedClear, minimum_margin))
-}
-
-fn update_minimum_distance(
-    minimum: &mut Option<Real>,
-    candidate: Real,
-    policy: PredicatePolicy,
-) -> Option<()> {
-    let replace = match minimum.as_ref() {
-        Some(current) => compare_reals(&candidate, current, policy).value()? == Ordering::Less,
-        None => true,
-    };
-    if replace {
-        *minimum = Some(candidate);
-    }
-    Some(())
-}
-
-fn unknown_trace_report() -> TraceClearanceReport {
-    TraceClearanceReport {
-        status: ClearanceStatus::Unknown,
-        centerline_intersection: None,
-        axis_gap: None,
-    }
-}
-
-fn unknown_pad_board_report() -> PadBoardClearanceReport {
-    PadBoardClearanceReport {
-        status: ClearanceStatus::Unknown,
-        copper_gap: None,
-    }
-}
-
 fn real_min<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Option<&'a Real> {
     match compare_reals(left, right, policy).value()? {
         Ordering::Less | Ordering::Equal => Some(left),
@@ -367,19 +279,4 @@ fn real_max<'a>(left: &'a Real, right: &'a Real, policy: PredicatePolicy) -> Opt
         Ordering::Less | Ordering::Equal => Some(right),
         Ordering::Greater => Some(left),
     }
-}
-
-fn squared_norm(vector: &Point2) -> Real {
-    Real::signed_product_sum(
-        [true, true],
-        [[&vector.x, &vector.x], [&vector.y, &vector.y]],
-    )
-}
-
-fn dot(first: &Point2, second: &Point2) -> Real {
-    Real::signed_product_sum([true, true], [[&first.x, &second.x], [&first.y, &second.y]])
-}
-
-fn cross(first: &Point2, second: &Point2) -> Real {
-    first.x.clone() * second.y.clone() - first.y.clone() * second.x.clone()
 }

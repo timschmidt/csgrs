@@ -25,6 +25,10 @@ use std::cmp::Ordering;
 use std::sync::OnceLock;
 
 use hyperlimit::{PredicatePolicy, compare_reals};
+
+use crate::RealInterval;
+
+use crate::algebraic::sort_reals_exact;
 use hyperreal::{Rational, Real};
 
 use crate::algebraic::{
@@ -1408,7 +1412,7 @@ fn rational_image_enclosure(
     if interval.exact_root.is_some() {
         return rational_image_interval(interval, numerator, denominator, policy);
     }
-    let source = ValueInterval {
+    let source = RealInterval {
         lower: interval.lower.clone(),
         upper: interval.upper.clone(),
     };
@@ -1428,7 +1432,7 @@ fn rational_image_enclosure(
         crate::policy_division::reciprocal_with_policy(&denominator_interval.upper, policy)?;
     let quotient = interval_mul(
         &numerator_interval,
-        &ValueInterval {
+        &RealInterval {
             lower: upper_reciprocal,
             upper: lower_reciprocal,
         },
@@ -1559,24 +1563,24 @@ fn derivative_coefficients(polynomial: &[Real]) -> Vec<Real> {
 
 fn evaluate_interval_polynomial(
     polynomial: &[Real],
-    point: &ValueInterval,
+    point: &RealInterval,
     policy: PredicatePolicy,
-) -> Option<ValueInterval> {
+) -> Option<RealInterval> {
     let mut coefficients = polynomial.iter().rev();
     let Some(leading) = coefficients.next() else {
-        return Some(ValueInterval {
+        return Some(RealInterval {
             lower: Real::zero(),
             upper: Real::zero(),
         });
     };
-    let mut value = ValueInterval {
+    let mut value = RealInterval {
         lower: leading.clone(),
         upper: leading.clone(),
     };
     for coefficient in coefficients {
         value = interval_add(
             interval_mul(&value, point, policy)?,
-            &ValueInterval {
+            &RealInterval {
                 lower: coefficient.clone(),
                 upper: coefficient.clone(),
             },
@@ -1585,18 +1589,18 @@ fn evaluate_interval_polynomial(
     Some(value)
 }
 
-fn interval_add(left: ValueInterval, right: &ValueInterval) -> ValueInterval {
-    ValueInterval {
+fn interval_add(left: RealInterval, right: &RealInterval) -> RealInterval {
+    RealInterval {
         lower: left.lower + right.lower.clone(),
         upper: left.upper + right.upper.clone(),
     }
 }
 
 fn interval_mul(
-    left: &ValueInterval,
-    right: &ValueInterval,
+    left: &RealInterval,
+    right: &RealInterval,
     policy: PredicatePolicy,
-) -> Option<ValueInterval> {
+) -> Option<RealInterval> {
     if let (Some(left_lower), Some(left_upper), Some(right_lower), Some(right_upper)) = (
         left.lower.exact_rational_ref(),
         left.upper.exact_rational_ref(),
@@ -1605,7 +1609,7 @@ fn interval_mul(
     ) {
         let (lower, upper) =
             rational_interval_product(left_lower, left_upper, right_lower, right_upper);
-        return Some(ValueInterval {
+        return Some(RealInterval {
             lower: Real::from(lower),
             upper: Real::from(upper),
         });
@@ -1617,13 +1621,13 @@ fn interval_mul(
         left.upper.clone() * right.upper.clone(),
     ];
     sort_reals_exact(&mut products, policy)?;
-    Some(ValueInterval {
+    Some(RealInterval {
         lower: products[0].clone(),
         upper: products[3].clone(),
     })
 }
 
-fn interval_strict_sign(interval: &ValueInterval, policy: PredicatePolicy) -> Option<Ordering> {
+fn interval_strict_sign(interval: &RealInterval, policy: PredicatePolicy) -> Option<Ordering> {
     let lower = compare_reals(&interval.lower, &Real::zero(), policy).value()?;
     let upper = compare_reals(&interval.upper, &Real::zero(), policy).value()?;
     if lower == Ordering::Greater {
@@ -1633,12 +1637,6 @@ fn interval_strict_sign(interval: &ValueInterval, policy: PredicatePolicy) -> Op
     } else {
         Some(Ordering::Equal)
     }
-}
-
-#[derive(Clone, Debug)]
-struct ValueInterval {
-    lower: Real,
-    upper: Real,
 }
 
 fn polynomial_scale(polynomial: &[Real], scale: &Real) -> Vec<Real> {
@@ -1693,21 +1691,6 @@ fn trim_real_polynomial(mut polynomial: Vec<Real>, policy: PredicatePolicy) -> O
         polynomial.push(Real::zero());
     }
     Some(polynomial)
-}
-
-fn sort_reals_exact(values: &mut [Real], policy: PredicatePolicy) -> Option<()> {
-    for index in 1..values.len() {
-        let mut cursor = index;
-        while cursor > 0 {
-            let ordering = compare_reals(&values[cursor], &values[cursor - 1], policy).value()?;
-            if ordering != Ordering::Less {
-                break;
-            }
-            values.swap(cursor, cursor - 1);
-            cursor -= 1;
-        }
-    }
-    Some(())
 }
 
 fn has_exact_rational_coefficients(polynomial: &[Real]) -> bool {
