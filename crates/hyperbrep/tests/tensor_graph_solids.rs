@@ -1489,3 +1489,60 @@ fn slab_cuts_along_polynomial_graph_trims_measure_exactly() {
     assert_eq!(cold.to_json().unwrap(), json);
     assert_eq!(cold.solids().next().unwrap().volume().unwrap(), q(112, 15));
 }
+
+/// Flat rational Bézier faces with curved (non-affine) parameterizations
+/// measure exactly: the Green integral of the plane Jacobian over the trims,
+/// carried by the plane frame's area element. A non-uniform square has area
+/// 4; the same patch tilted into z = x has area 4 sqrt(2); bulging the
+/// bottom edge's middle control to (1/2, -3/2) gives 13/3 (derived with
+/// SymPy; the Jacobian keeps one sign).
+#[test]
+fn flat_tensor_faces_with_curved_parameterizations_measure_exactly() {
+    let patch = |lift: &dyn Fn(Real, Real) -> Point3, bulge: bool| {
+        let xs = [Real::from(-1), q(1, 2), Real::one()];
+        let ys = [Real::from(-1), Real::zero(), Real::one()];
+        let controls = (0..3)
+            .map(|i| {
+                (0..3)
+                    .map(|j| {
+                        if bulge && i == 0 && j == 1 {
+                            lift(q(1, 2), q(-3, 2))
+                        } else {
+                            lift(xs[j].clone(), ys[i].clone())
+                        }
+                    })
+                    .collect()
+            })
+            .collect();
+        let sheet =
+            builder::rational_bezier_patch(controls, vec![vec![Real::one(); 3]; 3]).unwrap();
+        sheet.model().faces().next().unwrap().area().unwrap()
+    };
+    let flat = |x: Real, y: Real| Point3::new(x, y, Real::zero());
+    let tilted = |x: Real, y: Real| Point3::new(x.clone(), y, x);
+    assert_eq!(patch(&flat, false), Real::from(4));
+    assert_eq!(
+        patch(&tilted, false),
+        Real::from(4) * Real::from(2).sqrt().unwrap()
+    );
+    assert_eq!(patch(&flat, true), q(13, 3));
+    // A folded flat patch (x controls -1, 3, 1 turn back at t = 2/3): its
+    // Jacobian changes sign, so |integral J| is not its area and the
+    // measurement stays typed.
+    let controls = (0..3)
+        .map(|i| {
+            [-1, 3, 1]
+                .into_iter()
+                .map(|x| pi(x, i - 1, 0))
+                .collect::<Vec<_>>()
+        })
+        .collect::<Vec<_>>();
+    if let Ok(sheet) = builder::rational_bezier_patch(controls, vec![vec![Real::one(); 3]; 3]) {
+        assert!(matches!(
+            sheet.model().faces().next().unwrap().area(),
+            Err(QueryError::Geometry(GeometryError::UnsupportedMeasurement))
+        ));
+    } else {
+        panic!("the folded patch is a valid sheet to measure");
+    }
+}

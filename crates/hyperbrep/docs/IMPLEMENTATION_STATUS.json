@@ -4831,6 +4831,30 @@
       "validation": "New unit witness quintic_roots_split_rational_quadratic_factors: x^5 - 3x^3 - x^2 + 2x + 2 = (x^2 - 2)(x^3 - x - 1), which has no rational root, yields exactly +-sqrt(2) (exact equality) and the Cardano root of the cubic quotient (exact zero tests are not structurally decided there, so every candidate's residual is checked below 10^-30); exactly three candidates. Disabling the quadratic-factor search fails the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 811 passes and debug tests 803 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim; the search is bounded to scaled values of magnitude at most 10^6 and coefficient scales at most 10^9.",
       "limits": "Polynomials of degree five and more without rational quadratic factors (or beyond the search bound) still propose no candidates; there is no general algebraic-number value. No BREP-level witness exercises a degree-five endpoint yet. General implicit trims, tensor face area, analytic-side faces and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "flat-tensor-face-area-2026-11-03",
+      "work_packages": [
+        "WP14",
+        "WP17"
+      ],
+      "properties": [
+        "P1",
+        "P12",
+        "P14",
+        "P17",
+        "P20"
+      ],
+      "change": "Face area extends to flat rational B\u00e9zier faces whose parameterization is not affine. With equal weights and coplanar controls, the face's area integral of |J| (J the plane Jacobian in a frame built from the controls) equals |integral J| when J is certified strictly of one sign on the unit square (exact Bernstein/zero-set positivity of J or -J); that integral is computed by the shared Green boundary integral over the face's straight, circular or polynomial-graph UV trims and carried by the frame's area element. The per-face trim builder and the Green integral are shared with tensor-graph volume.",
+      "source": [
+        "../src/geometry/tensor_graph.rs",
+        "../src/topology/measure.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#builders",
+      "validation": "New witness flat_tensor_faces_with_curved_parameterizations_measure_exactly: a non-uniformly parameterized flat square has area exactly 4, the same patch tilted into z = x exactly 4 sqrt(2), and bulging the bottom edge's middle control to (1/2, -3/2) exactly 13/3 (SymPy, Jacobian of one sign); a folded flat patch (x controls -1, 3, 1) stays UnsupportedMeasurement. Mutations removing the flat-tensor path, the sign certificate, the frame area element or the frame scale each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 812 passes and debug tests 804 passes, hyperbrep-io 127 passes, 0 failures.",
+      "cost_evidence": "No performance claim.",
+      "limits": "Curved (non-flat) tensor face area generally has no elementary closed form and stays typed; unequal-weight flat patches and Jacobians of undecided sign stay typed. General implicit trims, analytic-side faces, remaining higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
     }
   ],
   "work_packages": [

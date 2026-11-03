@@ -816,6 +816,106 @@ impl Surface {
             ),
         );
         let integrand = bivariate_multiply(c, &jacobian);
+        let Some(signed) = green_boundary_integral(&integrand, loops)? else {
+            return Ok(None);
+        };
+        // The integral is over frame coordinates (a, b, c); physical volume
+        // carries the frame's |det(u, v, d)|.
+        let scale = &pullbacks.determinant * &first_weight;
+        let cube = (&scale * &scale * &scale).abs();
+        let parameter_volume = (signed.abs() / cube).map_err(GeometryError::Numeric)?;
+        Ok(Some(pullbacks.determinant.clone().abs() * parameter_volume))
+    }
+
+    /// The exact area of a flat tensor face: equal weights, coplanar
+    /// controls and a plane Jacobian certified of one sign on the whole patch,
+    /// so the area integral of |J| is |integral J| over the trims (Green's
+    /// theorem), carried by the plane frame's area element.
+    pub(crate) fn planar_tensor_area(
+        &self,
+        loops: &[Vec<GraphTrim>],
+    ) -> GeometryResult<Option<Real>> {
+        use hypersolve::CurveResultantParameter;
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_multiply, bivariate_parameter_derivative,
+        };
+        let SurfaceGeometry::RationalBezier(patch) = &self.data.geometry else {
+            return Ok(None);
+        };
+        let first_weight = patch.weights[0][0].clone();
+        let equal = |a: &Real, b: &Real| -> GeometryResult<bool> {
+            Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Equal)
+        };
+        for row in &patch.weights {
+            for weight in row {
+                if !equal(weight, &first_weight)? {
+                    return Ok(None);
+                }
+            }
+        }
+        let points = patch.control_points.iter().flatten().collect::<Vec<_>>();
+        let origin = points[0].clone();
+        let zero = Real::zero();
+        let Some(first) = points
+            .iter()
+            .map(|point| *point - &origin)
+            .find(|vector| !matches!(equal(&vector.norm_squared(), &zero), Ok(true)))
+        else {
+            return Ok(None);
+        };
+        let Some(normal) = points
+            .iter()
+            .map(|point| first.cross(&(*point - &origin)))
+            .find(|vector| !matches!(equal(&vector.norm_squared(), &zero), Ok(true)))
+        else {
+            return Ok(None);
+        };
+        for point in &points {
+            if !equal(&(*point - &origin).dot(&normal), &zero)? {
+                return Ok(None);
+            }
+        }
+        let u = first;
+        let v = normal.cross(&u);
+        let pullbacks = frame_pullbacks(patch, &origin, &u, &v, &normal)?;
+        let [a, b, _] = &pullbacks.coordinates;
+        let jacobian = bivariate_subtract(
+            &bivariate_multiply(
+                &bivariate_parameter_derivative(a, CurveResultantParameter::First),
+                &bivariate_parameter_derivative(b, CurveResultantParameter::Second),
+            ),
+            &bivariate_multiply(
+                &bivariate_parameter_derivative(a, CurveResultantParameter::Second),
+                &bivariate_parameter_derivative(b, CurveResultantParameter::First),
+            ),
+        );
+        // Surface area integrates |J|; a Jacobian of one certified sign on
+        // the whole patch makes that |integral J|.
+        let negated = bivariate_scale(jacobian.clone(), &-Real::one());
+        if !positive_on_unit_square(&jacobian)? && !positive_on_unit_square(&negated)? {
+            return Ok(None);
+        }
+        let Some(signed) = green_boundary_integral(&jacobian, loops)? else {
+            return Ok(None);
+        };
+        let scale = &pullbacks.determinant * &first_weight;
+        let parameter_area = (signed.abs() / (&scale * &scale)).map_err(GeometryError::Numeric)?;
+        let cell = u
+            .cross(&v)
+            .norm_squared()
+            .sqrt()
+            .map_err(GeometryError::Numeric)?;
+        Ok(Some(parameter_area * cell))
+    }
+}
+
+/// `integral integral integrand du dv` over the region bounded by the
+/// oriented trims, by Green's theorem with H(u, v) = integral_0^v integrand.
+fn green_boundary_integral(
+    integrand: &BivariatePolynomial,
+    loops: &[Vec<GraphTrim>],
+) -> GeometryResult<Option<Real>> {
+    {
         // H(u, v) = integral_0^v integrand(u, t) dt.
         let antiderivative = BivariatePolynomial::new(
             integrand
@@ -850,12 +950,7 @@ impl Surface {
                 }
             }
         }
-        // The integral is over frame coordinates (a, b, c); physical volume
-        // carries the frame's |det(u, v, d)|.
-        let scale = &pullbacks.determinant * &first_weight;
-        let cube = (&scale * &scale * &scale).abs();
-        let parameter_volume = (signed.abs() / cube).map_err(GeometryError::Numeric)?;
-        Ok(Some(pullbacks.determinant.clone().abs() * parameter_volume))
+        Ok(Some(signed))
     }
 }
 

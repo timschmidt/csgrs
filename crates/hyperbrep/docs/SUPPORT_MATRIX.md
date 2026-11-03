@@ -586,6 +586,13 @@ analytic/spline pair matrix.
 
 ## Booleans
 
+Flat rational Bézier faces (equal weights, coplanar controls) with curved
+parameterizations have exact face area when the plane Jacobian is certified
+of one strict sign on the whole patch: the Green integral of that Jacobian
+over the face's straight, circular or polynomial-graph trims, carried by the
+plane frame's area element; patches with Jacobians of undecided or changing
+sign stay typed.
+
 General multi-trace face partitions (`FaceRef::split_by_surface_curves`, also
 used by Booleans) set aside uncrossed traces that chain end to end into closed
 loops, arrange the remaining traces, and split each loop into the unique

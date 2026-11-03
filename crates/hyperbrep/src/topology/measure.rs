@@ -277,8 +277,15 @@ impl ArenaModel {
                 }
                 data @ (SurfaceExactData::RationalBezier { .. }
                 | SurfaceExactData::Nurbs { .. }) => {
-                    return affine_tensor_face_area(&data, &parameter_area)
+                    if let Some(area) = affine_tensor_face_area(&data, &parameter_area)
                         .map_err(build_error_geometry)?
+                    {
+                        return Ok(area);
+                    }
+                    // A flat tensor with a curved parameterization: the exact
+                    // Green integral of its plane Jacobian over the trims.
+                    return surface
+                        .planar_tensor_area(&self.face_graph_trims(face)?)?
                         .ok_or(GeometryError::UnsupportedMeasurement)
                         .map_err(QueryError::from);
                 }
@@ -683,29 +690,7 @@ impl ArenaModel {
                     {
                         continue;
                     }
-                    for wire in face.boundary_wires() {
-                        let mut segments = Vec::new();
-                        for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
-                            let edge_use = self.edge_use(*use_id).expect("validated edge use");
-                            let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
-                            // Straight trims integrate polynomially; circular
-                            // trims (native views of circle branches) integrate
-                            // trigonometrically from their exact sweep.
-                            segments.push(match straight_pcurve_segment(pcurve.curve())? {
-                                Some((start, end)) => crate::geometry::GraphTrim::Line(start, end),
-                                None => match crate::geometry::circular_arc_of(pcurve.curve())? {
-                                    Some(arc) => crate::geometry::GraphTrim::Arc(arc),
-                                    // Polynomial-graph trims integrate exactly
-                                    // in their source graph parameter.
-                                    None => crate::geometry::GraphTrim::Graph(
-                                        crate::geometry::polynomial_graph_piece(pcurve.curve())?
-                                            .ok_or(GeometryError::UnsupportedMeasurement)?,
-                                    ),
-                                },
-                            });
-                        }
-                        loops.push(segments);
-                    }
+                    loops.extend(self.face_graph_trims(face)?);
                 }
                 let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
                 let mut volume = graph
@@ -1078,6 +1063,37 @@ fn area_magnitude(signed: Real) -> Real {
 /// polynomial branch whose defining equation has total degree one (an exact
 /// line), with endpoints from their scalar views or certified from that
 /// equation. `None` for other curves.
+impl ArenaModel {
+    /// The oriented UV trims of a tensor face for exact Green integrals:
+    /// straight trims, circular trims (native views of circle branches) and
+    /// polynomial-graph trims; other trims are typed unsupported.
+    fn face_graph_trims(
+        &self,
+        face: &Face,
+    ) -> Result<Vec<Vec<crate::geometry::GraphTrim>>, GeometryError> {
+        let mut loops = Vec::new();
+        for wire in face.boundary_wires() {
+            let mut segments = Vec::new();
+            for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
+                let edge_use = self.edge_use(*use_id).expect("validated edge use");
+                let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
+                segments.push(match straight_pcurve_segment(pcurve.curve())? {
+                    Some((start, end)) => crate::geometry::GraphTrim::Line(start, end),
+                    None => match crate::geometry::circular_arc_of(pcurve.curve())? {
+                        Some(arc) => crate::geometry::GraphTrim::Arc(arc),
+                        None => crate::geometry::GraphTrim::Graph(
+                            crate::geometry::polynomial_graph_piece(pcurve.curve())?
+                                .ok_or(GeometryError::UnsupportedMeasurement)?,
+                        ),
+                    },
+                });
+            }
+            loops.push(segments);
+        }
+        Ok(loops)
+    }
+}
+
 fn straight_pcurve_segment(
     curve: &Curve2,
 ) -> Result<Option<(CurvePoint2, CurvePoint2)>, GeometryError> {
