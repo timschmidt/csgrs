@@ -512,6 +512,8 @@ The rational payload has isolated-incidence evidence/cache and two-term expressi
 
 **Dependencies/hotspots.** P04 authority contract and P02 chart semantics; `bezier_offset.rs` and `bezier_offset/cusp_semicircle/parameters.rs`. Recount references rather than relying on historical counts.
 
+**Related packages.** [K04 and K06](simplification-and-api-program.md#k04--shared-skeletons-inside-cusp_semicircle) of the simplification program fall under this package. K04 adds shared skeletons for the sign of `A + B√S`, for circle-line contact classification, and for angular ordering. K06 is a head-to-head benchmark of the selected polynomial field route against the per-case kernels; run it before scoping a consolidation. Preserve the order of sign calls.
+
 ### P06 — S5 comparison ladder, local embeddings, and close roots
 
 **Hypothesis:** one comparison authority can use retained facts and defining relations before global elimination or long blind refinement.

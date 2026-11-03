@@ -353,6 +353,95 @@ implementation completeness.
 - [Basu, *Algorithms in Real Algebraic Geometry: A Survey*](https://www.math.purdue.edu/~sbasu/raag_survey2011_final.pdf): semialgebraic closure and effective quantifier elimination.
 - [Yap, *Theory of Real Computation according to EGC*](https://cs.nyu.edu/exact/doc/realtheory.pdf): limits of unrestricted exact decisions over computable reals.
 
+## Simplification, refactoring, and public API
+
+The planned packages and their evidence live in
+[`docs/research/simplification-and-api-program.md`](docs/research/simplification-and-api-program.md).
+Source size is the lowest priority. A simplification is retained only when
+every higher priority is preserved with evidence.
+
+### Refactoring gates
+
+A refactor that is meant to preserve behavior must show all of the following
+on the same completed contract:
+
+- identical exact outputs, serialized geometry, checksums, and certainty
+  receipts under both `STRICT` and `APPROXIMATE_512`;
+- identical `dispatch-trace` counts on every path it touches. Add a count
+  assertion where none exists, and never loosen an existing one;
+- no regression in the owning crate's benchmarks, `successive_operations`,
+  monomorphized code size, or binary size.
+
+Keep the order of sign and predicate calls exactly as it is. That order
+decides which proofs are cached and reused (P4, P10). Reordering calls,
+evaluating a hook eagerly, or merging branches whose first predicates differ
+changes behavior, even when every test still passes.
+
+Do not restructure these, which are essential rather than redundant:
+- the cheapest-method dispatch order;
+- the separate algebraic field kinds, including the circle-frame variants;
+- the hyperreal computable/rational core;
+- hyperlimit's decision sequence;
+- hyperdrc's 2D spatial index.
+
+### Reuse before reinventing
+
+- Before writing a helper, search for an existing one in the owning layer:
+  - a `Classification` pass-through;
+  - interval structs (prefer `RealInterval`);
+  - determinant kernels;
+  - polynomial trimming, derivatives, exact sorting;
+  - root isolation (hypersolve);
+  - S-expression tokenizing.
+- Do not add another file-local copy.
+- Where two similar helpers differ in how they decide, keep both under distinct
+  names and do not merge them. One example is structural zero versus a
+  policy-decided zero.
+- A mechanical codemod may rewrite only arms that are exactly the pattern it
+  targets. Any arm that inspects, maps, or reacts to an uncertainty reason,
+  such as `BudgetExhausted`, stays hand-written.
+- New tests should use the shared test-support helpers once they exist, such as
+  a policy loop and exact literal macros. Migrating a test must not drop or
+  weaken any assertion.
+
+### Public modeling API conventions
+
+These conventions guide new and changed csgrs public surface. Existing names
+move only through deprecation for one release, recorded in
+[`docs/MIGRATIONS.md`](docs/MIGRATIONS.md).
+
+- **One name per operation.**
+  - Do not add `try_` twins of fallible functions.
+  - Do not add `_with_context` or `_with_diagnostics` variants. Optional outputs
+    go inside the returned outcome. Optional inputs go in an options struct with
+    a `Default`.
+- **Policy is chosen once and certainty is never discarded by default.**
+  - Prefer an API in which the policy is chosen visibly, once, and the weakest
+    certainty of a whole chain is kept and reported.
+  - Convenience paths must not silently drop per-step certainty (P8, P9, P19).
+  - Pass `GeometryContext` by value.
+- **Exact conversion at the edge.**
+  - Ordinary numbers may enter through an exact conversion trait.
+  - `f64` converts to its exact binary value, and NaN or infinity is a typed
+    validation error. Never round or demote a value.
+  - Document that `0.1_f64` is not 1/10, and offer an exact ratio or decimal
+    form.
+- **One public error type**, with kernel errors kept as its `source()` and
+  typed diagnostics preserved (P6, P30).
+- **Constructors are functions.** Operations that transform or combine geometry
+  are methods.
+- **Share Boolean work.** Multi-operation models should be able to evaluate as
+  one hypermesh `BooleanProgram`, so intersections are shared (P21). Do not add
+  APIs that force one arrangement per Boolean where a program would do.
+
+### Documentation layout
+
+- A README should say what the system is, show its architecture, explain how to
+  build it, and say what currently works.
+- Certification narratives, measurements, and change histories belong in
+  `docs/`, `PERFORMANCE.md`, `FUTURE_WORK.md`, `CHANGELOG.md`, or the evidence
+  archive. They do not belong in the README.
+
 ## Pre-Push Verification
 
 Before every `git push`, agents must:

@@ -466,3 +466,18 @@ root enclosure test builds its rounded case by subtraction and records why.
 The operation-local plane-class region view noted above (overlay each class's
 boundaries once, then triangulate the selected output) is the candidate fix;
 it was not attempted here.
+
+## Shared Boolean programs from the modeling layer (planned, 2026-11-03)
+
+The external review recorded in
+[`docs/research/simplification-and-api-program.md`](../../docs/research/simplification-and-api-program.md) proposes this work
+(U06, D02).
+
+csgrs evaluates one Boolean at a time, so a model with ten operations builds ten
+arrangements. SynapsCAD folds `union()` children pairwise. A lazy CSG tree in
+csgrs would compile a whole model into one `BooleanProgram`, so intersections
+are shared across operations (P21). SynapsCAD's Boolean subtrees would be the
+first consumer.
+
+No kernel change is expected. The measurement is `successive_operations` and
+the SynapsCAD compile benchmark, compared on the same completed contract.

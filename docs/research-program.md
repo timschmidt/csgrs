@@ -15,6 +15,13 @@ Four hosted configuration/upload/deployment actions were inspected and remain
 outside local execution. Registry publication, broad operation closure and the
 remaining research packages are still open.
 
+A separate simplification and modeling-API program was opened on 3 November
+2026 from an external review. It is planning only, with no package started.
+It is tracked in
+[`research/simplification-and-api-program.md`](research/simplification-and-api-program.md),
+which uses the K (kernel simplification), U (public modeling API) and D
+(downstream application) prefixes.
+
 This ledger records the evaluation of every project in the consolidated
 research handoff of 22 October 2026 (`docs/research/csgrs-remaining-research-projects.txt`
 in the working tree that received it, baseline `e2def0b69f`). Each project is

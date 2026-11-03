@@ -168,3 +168,18 @@ would be released iteratively. This moves a load per operand into `Node::new`.
 It also changes the cache encoding modelled in
 `verification/cache_encoding_model.rs`, so it needs Verus proof updates and
 construction-bench evidence beside the drop evidence.
+
+## Simplification program: hyperreal packages (planned, 2026-11-03)
+
+These come from the external review recorded in
+[`docs/research/simplification-and-api-program.md`](../../docs/research/simplification-and-api-program.md). They are planned
+only.
+
+- **K07, `simple`:** the 2.4k-line Lisp parser behind the `simple` feature is
+  enabled only by `crates/comparisons` and this crate's own examples. It could
+  move to `crates/comparisons`.
+- **K07, `cached-f32-approx`:** no manifest enables it, and it has 22 source
+  references. Remove it, or record why it is kept.
+
+Removing a feature from a published crate needs a `docs/MIGRATIONS.md`
+entry. The computable/rational core is out of scope for simplification.

@@ -3884,3 +3884,28 @@ Verification on this change, Rust 1.99.1, `--locked`:
 - formatting passes.
 
 The complete pre-push matrix has not yet been run on this change.
+
+## Simplification program: hypercurve packages (planned, 2026-11-03)
+
+An external review proposed source simplification. Its packages are in
+[`docs/research/simplification-and-api-program.md`](../../docs/research/simplification-and-api-program.md), where the claims
+were spot-checked. None has started. The hypercurve packages are:
+
+- **K01:** one shared pass-through operator for `Classification`, applied by a
+  codemod to exact pass-through arms only. It starts with `bezier_offset`,
+  which has about 2,079 such arms, and replaces the per-file `decided` helpers.
+- **K04:** shared skeletons in `cusp_semicircle/`. These cover the sign of
+  `A + B√S`, circle-line contact classification, and angular ordering. The
+  work falls under P05 of `hypercurve_rd_program.md`.
+- **K05:** remove the second Bernstein root isolator in `bezier_parameter.rs`
+  in favor of hypersolve's. The precondition is identical isolating intervals
+  and identical ownership.
+- **K06 (run first):** a head-to-head benchmark of the
+  `SelectedPolynomialField` route (`polynomial_curve_selected_circle.rs`)
+  against the per-case cusp kernels on the existing fixtures.
+- **K08:** test-support helpers, such as a policy loop, exact literal macros and
+  `decided_ok`, with no assertion dropped.
+
+Each refactor must keep exact outputs, checksums and certainty identical under
+both policies. It must also keep dispatch-trace counts identical and show no
+benchmark or binary-size regression. The order of sign calls must not change.

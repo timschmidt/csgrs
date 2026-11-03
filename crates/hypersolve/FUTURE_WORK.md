@@ -313,3 +313,21 @@ growth or memory. Arithmetic work, projected-system size and retained memory
 remain without limits. Evidence:
 `docs/evidence/2026-10-30-hypercurve-closure-coefficient-limits-and-ph-offsets`,
 SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.
+
+## Simplification program: hypersolve packages (planned, 2026-11-03)
+
+These come from the external review recorded in
+[`docs/research/simplification-and-api-program.md`](../../docs/research/simplification-and-api-program.md). They are planned
+only.
+
+- **K02:**
+  - share one `sort_reals_exact` (four copies) and one
+    `derivative_coefficients` across crates;
+  - replace the four private two-endpoint interval structs with
+    `RealInterval` where their invariants match;
+  - keep the structural and policy-decided polynomial trims as two separate
+    named functions.
+- **K05:** hypercurve's `bezier_parameter.rs` reimplements this crate's
+  `root_isolation` and `isolate_ordered_field_polynomial_roots`. Removing
+  that copy requires showing identical isolating intervals and root ownership
+  on the corpus.
