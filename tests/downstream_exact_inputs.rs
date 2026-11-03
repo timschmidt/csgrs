@@ -72,7 +72,7 @@ fn exact_and_decimal_literals_reach_native_bounds() {
     assert_eq!(six_volume(&decimal).exact_rational(), Some(rational(18, 400)));
 
     // `center = true` centres the exact bounds.
-    let centered = solid::try_center(&fractions).expect("center");
+    let centered = solid::center(&fractions).expect("center");
     assert_bounds(
         &centered,
         [

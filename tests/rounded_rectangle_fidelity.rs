@@ -158,7 +158,7 @@ fn pipeline() -> csgrs::TriangleMesh {
     )
     .unwrap();
     assert_eq!(source.certainty, GeometryCertainty::Certified);
-    let translated = curve::try_translated_with_context(
+    let translated = curve::translated_with_context(
         &source.value,
         10.into(),
         (-3).into(),
@@ -167,7 +167,7 @@ fn pipeline() -> csgrs::TriangleMesh {
     .unwrap();
     assert_eq!(translated.certainty, GeometryCertainty::Certified);
     let cutter =
-        curve::try_translated(&curve::square(1.into()).unwrap(), 11.into(), q(-5, 2)).unwrap();
+        curve::translated(&curve::square(1.into()).unwrap(), 11.into(), q(-5, 2)).unwrap();
     let cut = hypercurve::evaluate_under(hyperlimit::PredicatePolicy::STRICT, || {
         translated
             .value

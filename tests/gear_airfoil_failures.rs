@@ -243,7 +243,7 @@ fn independent_rack_area_membership_and_extrusion_compose() {
             assert_eq!(location.certainty, GeometryCertainty::Certified);
             assert_eq!(location.value, expected);
         }
-        let translated = curve::try_translated(&rack, r(5), r(-3)).unwrap();
+        let translated = curve::translated(&rack, r(5), r(-3)).unwrap();
         exact(&translated.filled_area().unwrap().unwrap(), &area);
         let union = translated
             .boolean_region(&curve::empty(), BooleanOp::Union)

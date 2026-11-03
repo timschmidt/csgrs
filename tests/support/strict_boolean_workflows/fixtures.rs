@@ -147,7 +147,7 @@ impl Frame {
         Ok(out.try_into().unwrap())
     }
     fn apply(&self, mesh: &TriangleMesh) -> Result<GeometryOutcome<TriangleMesh>, String> {
-        solid::try_transform_with_context(mesh, &self.matrix(), &GeometryContext::STRICT)
+        solid::transform_with_context(mesh, &self.matrix(), &GeometryContext::STRICT)
             .map_err(|e| format!("transform-error {:?}: {e}", e.kind()))
     }
 }

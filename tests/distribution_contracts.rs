@@ -288,7 +288,7 @@ fn touching_overlapping_signed_and_single_arc_layouts_have_the_expected_sets() {
     contains(&directed, q(1, 2), q(1, 2), q(1, 2), true);
     volume(&directed, r(2));
     let midpoint = solid::distribute_arc(&cube, 1, r(-3), r(0), r(180)).unwrap();
-    let bounds = solid::try_bounding_box(&midpoint).unwrap().unwrap();
+    let bounds = solid::bounding_box(&midpoint).unwrap().unwrap();
     assert_eq!(bounds.mins, Point3::new(r(-1), r(-3), r(0)));
     assert_eq!(bounds.maxs, Point3::new(r(0), r(-2), r(1)));
     volume(&midpoint, r(1));

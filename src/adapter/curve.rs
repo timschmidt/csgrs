@@ -134,7 +134,7 @@ where
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Option<Aabb3<A::Scalar>>> {
-        curve::try_bounding_box(&self.inner)?
+        curve::bounding_box(&self.inner)?
             .map(super::convert_bounds::<A>)
             .transpose()
     }
@@ -145,7 +145,7 @@ where
         matrix: &Matrix4,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        curve::try_transformed_with_context(&self.inner, matrix, context)
+        curve::transformed_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(AdapterError::from)
     }
@@ -205,7 +205,7 @@ where
         &self,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Option<Aabb3<A::Scalar>>>> {
-        curve::try_bounding_box_with_context(&self.inner, context)?
+        curve::bounding_box_with_context(&self.inner, context)?
             .try_map(|bounds| bounds.map(super::convert_bounds::<A>).transpose())
     }
 

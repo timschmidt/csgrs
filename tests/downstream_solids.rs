@@ -38,12 +38,12 @@ fn axis_angle(mesh: &TriangleMesh, axis: [i64; 3], degrees: &Real) -> TriangleMe
         degrees.to_radians(),
     )
     .expect("nonzero axis");
-    solid::try_transform(mesh, &matrix).expect("rotation")
+    solid::transform(mesh, &matrix).expect("rotation")
 }
 
 fn euler(mesh: &TriangleMesh, degrees: [Real; 3]) -> TriangleMesh {
     let [x, y, z] = degrees;
-    solid::try_rotate(mesh, x, y, z).expect("rotation")
+    solid::rotate(mesh, x, y, z).expect("rotation")
 }
 
 fn same_positions(left: &TriangleMesh, right: &TriangleMesh) -> bool {
@@ -382,7 +382,7 @@ fn near_coincident_rotated_cylinder_boolean_matrix_completes_exactly() {
             );
         }
     }
-    let centered = solid::try_center(&cylinder).expect("center");
+    let centered = solid::center(&cylinder).expect("center");
     for base in [&cylinder, &centered] {
         let rotated = euler(base, [r(0), literal("0.0001"), r(0)]);
         for operation in [
@@ -493,7 +493,7 @@ fn strict_boolean(
 /// two sample sets coincide, but the planter's hexagons differ by 30 degrees.
 fn scad_cylinder(bottom: Real, top: Real, height: Real, segments: usize) -> TriangleMesh {
     let frustum = solid::frustum(bottom, top, height, segments).expect("frustum");
-    solid::try_rotate(&frustum, r(0), r(0), r(90)).expect("quarter turn")
+    solid::rotate(&frustum, r(0), r(0), r(90)).expect("quarter turn")
 }
 
 /// `cylinder(r = tray_r, h = 6, $fn = 6)` minus its interior from z = 2,
@@ -511,7 +511,7 @@ fn planter_tray() -> TriangleMesh {
 /// `rotate([180, 0, 0]) cylinder(h = 5, r1 = 0, r2 = 66, $fn = 12)` lowered
 /// to z = -14.1: a cone from its apex at z = -14.1 down to z = -19.1.
 fn planter_chamfer() -> TriangleMesh {
-    solid::try_rotate(&scad_cylinder(r(0), r(66), r(5), 12), r(180), r(0), r(0))
+    solid::rotate(&scad_cylinder(r(0), r(66), r(5), 12), r(180), r(0), r(0))
         .expect("rotation")
         .translated(r(0), r(0), q(-141, 10))
         .expect("translation")
@@ -596,7 +596,7 @@ fn viral_planter_keeps_every_child() {
         hypermesh::BooleanOp::Intersection,
     );
     let scale = q(49, 55);
-    let cavity = solid::try_scale(&upper, scale.clone(), scale.clone(), scale)
+    let cavity = solid::scale(&upper, scale.clone(), scale.clone(), scale)
         .expect("scale")
         .translated(r(0), r(0), r(-11))
         .expect("translation");

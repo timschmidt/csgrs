@@ -310,7 +310,7 @@ fn holes_separated_below_binary64_stay_distinct_under_translation() {
 fn quarter_revolution_preserves_the_authored_meridian() {
     for reversed in [false, true] {
         let (region, _, vertices) = holed_profile(reversed);
-        let region = curve::try_translated(&region, sqrt2(), q(-1, 3)).expect("translation");
+        let region = curve::translated(&region, sqrt2(), q(-1, 3)).expect("translation");
         for context in &CONTEXTS {
             for angle in [int(90), int(-90)] {
                 let (mesh, volume) = exact_solid(
@@ -1191,14 +1191,14 @@ fn sampled_nonlinear_profiles_remain_qualified() {
             &GeometryContext::STRICT,
         ),
         curve::revolve(
-            &curve::try_translated(&curved, int(1), Real::zero()).expect("translation"),
+            &curve::translated(&curved, int(1), Real::zero()).expect("translation"),
             int(90),
             4,
             &GeometryContext::STRICT,
         ),
         // A full turn across the axis folds the sampled line profile.
         curve::revolve(
-            &curve::try_translated(&curved, int(-1), Real::zero()).expect("translation"),
+            &curve::translated(&curved, int(-1), Real::zero()).expect("translation"),
             int(360),
             8,
             &GeometryContext::STRICT,

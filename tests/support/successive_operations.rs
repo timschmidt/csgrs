@@ -444,7 +444,7 @@ pub fn tilted_polygon_drills(segments: usize, degrees: i64, steps: usize) -> Cha
         steps,
         initial: Box::new(|| solid::cuboid(r(68), r(8), r(4)).unwrap()),
         step: Box::new(move |k, body| {
-            let drill = solid::try_rotate(
+            let drill = solid::rotate(
                 &solid::cylinder(r(1), r(6), segments)?,
                 r(degrees),
                 r(0),
@@ -498,7 +498,7 @@ pub fn bar_extrusion(x: i64, y: i64) -> TriangleMesh {
 /// The same bar rotated 90 degrees about x, at `[x, x+4] x [-2, 14] x [z, z+4]`.
 pub fn rotated_bar(x: i64, z: i64) -> Result<TriangleMesh, ValidationError> {
     let bar = curve::try_extrude(&curve::square(r(4))?, r(16), &STRICT)?.value;
-    solid::try_rotate(&bar, r(90), r(0), r(0))?.translated(r(x), r(14), r(z))
+    solid::rotate(&bar, r(90), r(0), r(0))?.translated(r(x), r(14), r(z))
 }
 
 /// A cube rotated about z by an exact rational rotation `(c, s)` with
@@ -530,7 +530,7 @@ pub fn rational_rotation_cuts(steps: usize) -> Chain {
             solid::cuboid(r(length), r(10), r(4)).unwrap()
         }),
         step: Box::new(move |k, body| {
-            let tool = solid::try_transform(&solid::cuboid(r(3), r(3), r(6))?, &rotation)?
+            let tool = solid::transform(&solid::cuboid(r(3), r(3), r(6))?, &rotation)?
                 .translated(r(4 * k as i64) + q(1, 3), q(17, 2), r(-1))?;
             difference(body, &tool)
         }),
@@ -549,7 +549,7 @@ pub fn degree_rotation_cuts(degrees: i64, steps: usize) -> Chain {
         steps,
         initial: Box::new(|| solid::cuboid(r(40), r(10), r(4)).unwrap()),
         step: Box::new(move |k, body| {
-            let tool = solid::try_rotate(
+            let tool = solid::rotate(
                 &solid::cuboid(r(3), r(3), r(6))?,
                 r(0),
                 r(0),
@@ -723,7 +723,7 @@ pub fn extruded_profile_cuts(steps: usize) -> (Chain, Vec<BoxSet>) {
             let cell = hole(k as i64);
             let square =
                 curve::polygon(&[[r(0), r(0)], [r(1), r(0)], [r(1), r(1)], [r(0), r(1)]])?;
-            let square = curve::try_translated(
+            let square = curve::translated(
                 &square,
                 Real::new(cell.min[0].clone()),
                 Real::new(cell.min[1].clone()),
@@ -746,8 +746,7 @@ pub fn revolved_ring_cuts(steps: usize) -> Chain {
         steps,
         initial: Box::new(|| {
             let profile =
-                curve::try_translated(&curve::rectangle(r(1), r(2)).unwrap(), r(2), r(0))
-                    .unwrap();
+                curve::translated(&curve::rectangle(r(1), r(2)).unwrap(), r(2), r(0)).unwrap();
             curve::revolve(&profile, r(360), 16, &STRICT).unwrap().value
         }),
         step: Box::new(|k, body| {

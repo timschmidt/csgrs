@@ -139,6 +139,10 @@ pub enum ValidationError {
     /// A native geometry dependency rejected the requested construction.
     #[error("{0}")]
     Geometry(String),
+    /// An input number has no exact real value, such as a NaN, an infinity, a
+    /// zero denominator or malformed decimal text.
+    #[error("number has no exact real value: {0}")]
+    InvalidNumber(#[source] hyperreal::Problem),
 }
 
 /// Stable failure categories exposed by modeling operations and bindings.
@@ -360,6 +364,7 @@ impl ValidationError {
                 ValidationErrorKind::Unsupported
             },
             Self::UnboundedTransform { .. } => ValidationErrorKind::Unbounded,
+            Self::InvalidNumber(_) => ValidationErrorKind::InvalidInput,
             Self::PredicateUndecided { .. }
             | Self::Scalar(
                 hyperreal::Problem::UnknownZero | hyperreal::Problem::UnknownCertificate,

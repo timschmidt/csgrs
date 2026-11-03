@@ -47,7 +47,7 @@ fn parabola_region() -> CurveRegion2 {
 }
 
 fn upper_cutter() -> CurveRegion2 {
-    curve::try_translated(&curve::rectangle(r(6), r(3)).expect("rectangle"), r(-3), r(2))
+    curve::translated(&curve::rectangle(r(6), r(3)).expect("rectangle"), r(-3), r(2))
         .expect("translation")
 }
 
@@ -66,12 +66,12 @@ fn quadratic_bezier_region_keeps_algebraic_fragments_until_meshing() {
         "cut area",
     );
 
-    let scaled = curve::try_scaled(&cut, r(2), r(3)).expect("scale");
+    let scaled = curve::scaled(&cut, r(2), r(3)).expect("scale");
     assert!(scaled.has_algebraic_fragments());
     let expected_area = r(16) * sqrt(2);
     assert_strictly_equal(&filled_area(&scaled), &expected_area, "scaled area");
     // Covariance: scaling the operands first gives the same set.
-    let scale = |region: &CurveRegion2| curve::try_scaled(region, r(2), r(3)).expect("scale");
+    let scale = |region: &CurveRegion2| curve::scaled(region, r(2), r(3)).expect("scale");
     let covariant = scale(&parabola_region())
         .boolean_region(&scale(&upper_cutter()), RegionOp::Difference)
         .expect("strict region difference");
@@ -110,7 +110,7 @@ fn quadratic_bezier_region_keeps_algebraic_fragments_until_meshing() {
     // the line at algebraic parameters, and their envelope is the conservative
     // bound of a rational parameter interval around them, so it encloses
     // [-2 sqrt 2, 2 sqrt 2] without promising those values.
-    let bounds = curve::try_bounding_box(&scaled)
+    let bounds = curve::bounding_box(&scaled)
         .expect("strict bounds")
         .expect("nonempty region");
     assert_strictly_equal(&bounds.mins.y, &r(0), "minimum y");
@@ -169,7 +169,7 @@ fn base_area(mesh: &TriangleMesh) -> Real {
 
 #[test]
 fn round_offset_square_taper_keeps_its_exact_profile_measures() {
-    let square = curve::try_translated(&curve::square(r(50)).expect("square"), r(-25), r(-25))
+    let square = curve::translated(&curve::square(r(50)).expect("square"), r(-25), r(-25))
         .expect("translation");
     let rounded = square
         .offset(r(10), &OffsetCornerStyle2::Round)
@@ -181,7 +181,7 @@ fn round_offset_square_taper_keeps_its_exact_profile_measures() {
         &(r(4500) + r(100) * Real::pi()),
         "rounded square area",
     );
-    let bounds = curve::try_bounding_box(&rounded)
+    let bounds = curve::bounding_box(&rounded)
         .expect("strict bounds")
         .expect("nonempty region");
     for (actual, expected) in [
@@ -294,7 +294,7 @@ fn circle_wall_from_opposite_offsets_keeps_one_hole() {
     let is_ordering_blocker = |error: &csgrs::errors::ValidationError| {
         format!("{error:?}").contains("reason: Ordering")
     };
-    let error = curve::try_bounding_box(&inner).expect_err("bounds of the eroded polygon");
+    let error = curve::bounding_box(&inner).expect_err("bounds of the eroded polygon");
     assert!(is_ordering_blocker(&error), "{error:?}");
     let error = curve::contains_xy(&wall, r(15) - secant, r(0)).expect_err("inner vertex");
     assert!(is_ordering_blocker(&error), "{error:?}");
@@ -331,7 +331,7 @@ fn collapsed_negative_offsets_are_empty_not_the_input() {
         for style in &styles {
             let collapsed = unit.offset(distance.clone(), style).expect("offset");
             assert!(collapsed.is_empty(), "{style:?}: the collapse is not empty");
-            assert_eq!(curve::try_bounding_box(&collapsed).expect("bounds"), None);
+            assert_eq!(curve::bounding_box(&collapsed).expect("bounds"), None);
             // The empty result composes: extrusion is canonical empty and a
             // union with it keeps the other operand.
             let mesh = curve::try_extrude(&collapsed, r(1), &GeometryContext::STRICT)
@@ -357,7 +357,7 @@ fn collapsed_negative_offsets_are_empty_not_the_input() {
             &(r(4) * tiny.clone() * tiny.clone()),
             "sliver area",
         );
-        let bounds = curve::try_bounding_box(&sliver)
+        let bounds = curve::bounding_box(&sliver)
             .expect("bounds")
             .expect("nonempty");
         assert_strictly_equal(&bounds.mins.x, &(q(1, 2) - tiny.clone()), "sliver bound");
@@ -517,7 +517,7 @@ fn assert_twist_slices(mesh: &TriangleMesh, slices: i64) -> bool {
 }
 
 fn twisted_extrusion() -> TriangleMesh {
-    let hole = curve::try_translated(&curve::square(r(2)).expect("square"), r(1), r(1))
+    let hole = curve::translated(&curve::square(r(2)).expect("square"), r(1), r(1))
         .expect("translation");
     let profile = curve::square(r(4))
         .expect("square")

@@ -68,7 +68,7 @@ fn compound_union(binary64: bool) {
     let cube = solid::cube(r(1)).expect("unit cube");
     let mut rotated = cube.clone();
     for angle in angles {
-        rotated = solid::try_rotate(&rotated, r(0), r(0), angle).expect("finite z rotation");
+        rotated = solid::rotate(&rotated, r(0), r(0), angle).expect("finite z rotation");
     }
     // Do not classify intermediate coordinates or compare the two meshes
     // before the original Boolean: such queries can warm exact proof caches.
@@ -132,7 +132,7 @@ fn compound_rotation_families_on_each_axis_retain_exact_continuation() {
                     let mut degrees = [r(0), r(0), r(0)];
                     degrees[axis] = Real::try_from(angle).unwrap();
                     let [x, y, z] = degrees;
-                    rotated = solid::try_rotate(&rotated, x, y, z).unwrap();
+                    rotated = solid::rotate(&rotated, x, y, z).unwrap();
                 }
                 // Exact signed angles sum to zero on one axis. No intermediate
                 // coordinate/sign queries prewarm the original union.

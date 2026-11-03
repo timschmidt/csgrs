@@ -6,6 +6,22 @@ Changes since 0.20.1; versions 0.21 and 0.22 were not published. Caller-facing
 migrations, including changed serialized output, are listed in
 [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 
+- `Csg` is a modeling session. It selects the predicate policy once and reports
+  the weakest certainty of every operation in the chain, so the convenient path
+  no longer discards receipts. Its methods accept ordinary numbers through the
+  exact `IntoReal` conversion: integers and `Real` exactly, and `f32`/`f64` as
+  their exact binary value, with NaN or infinity as `Error::InvalidNumber`.
+  `ratio` and `decimal` give decimal intent exactly. `csgrs::Error` and
+  `csgrs::Result` are the single modeling error and result types. The
+  quickstart uses `Csg`.
+- `SolidExpr` is a lazy CSG expression (`|`, `&`, `-`, `^` and transforms)
+  evaluated as one Boolean program, so a multi-operation model builds one
+  surface arrangement instead of one per operation. `SolidExt` gains
+  `rotated`, `scaled`, `mirrored` and `centered`.
+- Transforms and queries have one name each. The duplicate `try_` aliases and
+  the `try_` prefix of their policy-taking variants were removed (see
+  MIGRATIONS).
+
 - SVG import/export consumes retained polynomial graph branches through
   Hypercurve. Polynomial reconstruction failures retain their native cause in
   `ValidationError::PolynomialTopology`, including distinct invalid-input,

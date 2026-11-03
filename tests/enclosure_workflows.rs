@@ -179,8 +179,8 @@ fn walls_and_repeated_window_cuts_have_exact_volumes() {
 
     // A mirror image across x = 0 keeps its volume, and its union with the
     // original fuses the two left walls into one wall of thickness two.
-    let mirrored = solid::try_mirror(&cut, &hypermesh::Plane::axis_aligned(0, Real::zero()))
-        .expect("mirror");
+    let mirrored =
+        solid::mirror(&cut, &hypermesh::Plane::axis_aligned(0, Real::zero())).expect("mirror");
     assert_certified_closed_manifold(&mirrored, "mirror");
     assert_six_volume(&mirrored, &r(1380), "mirror");
     let pair = certified(cut.try_union(&mirrored), "mirrored pair");
@@ -308,8 +308,8 @@ fn clearance_violations_and_split_offsets_keep_their_regularized_sets() {
     // offset collapses the corridor, so the cavity splits into two rooms.
     let rooms = [
         plan(6, 6),
-        curve::try_translated(&plan(6, 6), r(10), r(0)).expect("second room"),
-        curve::try_translated(&plan(4, 2), r(6), r(2)).expect("corridor"),
+        curve::translated(&plan(6, 6), r(10), r(0)).expect("second room"),
+        curve::translated(&plan(4, 2), r(6), r(2)).expect("corridor"),
     ];
     let outer = rooms[1..].iter().fold(rooms[0].clone(), |current, next| {
         current
@@ -352,7 +352,7 @@ fn bevelled_plan_corners_stay_exact_through_the_workflow() {
     // four unit corner chamfers, area 96 - 4 / 2 = 94. Its unit erosion moves
     // every edge inward by one: area A - P + 8 tan(pi/8) with perimeter
     // P = 32 + 4 sqrt(2) and tan(pi/8) = sqrt(2) - 1, which is 54 + 4 sqrt(2).
-    let core = curve::try_translated(&plan(10, 6), r(1), r(1)).expect("core");
+    let core = curve::translated(&plan(10, 6), r(1), r(1)).expect("core");
     let outer = core
         .offset(r(1), &OffsetCornerStyle2::Bevel)
         .expect("bevelled plan");
@@ -378,7 +378,7 @@ fn bevelled_plan_corners_stay_exact_through_the_workflow() {
 fn round_plan_corners_are_exact_in_the_plan_and_sampled_in_the_solid() {
     // Growing the 10 x 6 core by one with round joins adds quarter circles at
     // the corners: area 60 + 32 + pi. Eroding by one returns the core.
-    let core = curve::try_translated(&plan(10, 6), r(1), r(1)).expect("core");
+    let core = curve::translated(&plan(10, 6), r(1), r(1)).expect("core");
     let outer = core
         .offset(r(1), &OffsetCornerStyle2::Round)
         .expect("rounded plan");

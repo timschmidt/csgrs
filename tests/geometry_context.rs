@@ -28,14 +28,14 @@ fn uncertain_bounds() -> TriangleMesh {
 #[test]
 fn bounds_and_positioning_propagate_policy_and_certainty() {
     let mesh = uncertain_bounds();
-    assert!(solid::try_bounding_box(&mesh).is_err());
-    assert!(solid::try_center(&mesh).is_err());
-    assert!(solid::try_float(&mesh).is_err());
-    let bounds = solid::try_bounding_box_with_context(&mesh, &APPROXIMATE).unwrap();
+    assert!(solid::bounding_box(&mesh).is_err());
+    assert!(solid::center(&mesh).is_err());
+    assert!(solid::float(&mesh).is_err());
+    let bounds = solid::bounding_box_with_context(&mesh, &APPROXIMATE).unwrap();
     assert_eq!(bounds.certainty, GeometryCertainty::Approximate512Consumed);
     for positioned in [
-        solid::try_center_with_context(&mesh, &APPROXIMATE).unwrap(),
-        solid::try_float_with_context(&mesh, &APPROXIMATE).unwrap(),
+        solid::center_with_context(&mesh, &APPROXIMATE).unwrap(),
+        solid::float_with_context(&mesh, &APPROXIMATE).unwrap(),
     ] {
         assert_eq!(
             positioned.certainty,
@@ -43,7 +43,7 @@ fn bounds_and_positioning_propagate_policy_and_certainty() {
         );
         assert_eq!(positioned.value.positions.len(), 2);
     }
-    assert!(solid::try_bounding_box_with_context(&mesh, &STRICT).is_err());
+    assert!(solid::bounding_box_with_context(&mesh, &STRICT).is_err());
 
     let adapted = csgrs::adapter::RawTriangleMesh::from_native(mesh);
     assert!(adapted.bounding_box().is_err());
@@ -65,32 +65,26 @@ fn transformation_policy_does_not_allow_collapsed_geometry() {
     let mesh = solid::cube(Real::one()).expect("valid primitive fixture");
     let zero = unresolved_zero();
     assert!(
-        solid::try_scale_with_context(&mesh, zero.clone(), Real::one(), Real::one(), &STRICT)
+        solid::scale_with_context(&mesh, zero.clone(), Real::one(), Real::one(), &STRICT)
             .is_err()
     );
     assert!(matches!(
-        solid::try_scale_with_context(&mesh, zero, Real::one(), Real::one(), &APPROXIMATE),
+        solid::scale_with_context(&mesh, zero, Real::one(), Real::one(), &APPROXIMATE),
         Err(csgrs::errors::ValidationError::InvalidArguments)
     ));
     let mirror = hypermesh::Plane::axis_aligned(0, Real::zero());
     for context in [STRICT, APPROXIMATE] {
         for outcome in [
-            solid::try_transform_with_context(
+            solid::transform_with_context(
                 &mesh,
                 &Matrix4::affine_nonuniform_scale([-Real::one(), Real::one(), Real::one()]),
                 &context,
             )
             .unwrap(),
-            solid::try_scale_with_context(
-                &mesh,
-                -Real::one(),
-                Real::one(),
-                Real::one(),
-                &context,
-            )
-            .unwrap(),
-            solid::try_mirror_with_context(&mesh, &mirror, &context).unwrap(),
-            solid::try_rotate_with_context(
+            solid::scale_with_context(&mesh, -Real::one(), Real::one(), Real::one(), &context)
+                .unwrap(),
+            solid::mirror_with_context(&mesh, &mirror, &context).unwrap(),
+            solid::rotate_with_context(
                 &mesh,
                 Real::zero(),
                 Real::zero(),
@@ -461,7 +455,7 @@ fn composite_curve_constructors_preserve_nested_predicate_certainty() {
     assert_eq!(clipped.certainty, GeometryCertainty::Approximate512Consumed);
     assert!(!clipped.value.is_empty());
     let bounds =
-        csgrs::curve::try_bounding_box_with_context(&clipped.value, &APPROXIMATE).unwrap();
+        csgrs::curve::bounding_box_with_context(&clipped.value, &APPROXIMATE).unwrap();
     assert_eq!(
         bounds.value.as_ref().unwrap().mins.y.to_f64_lossy().unwrap(),
         0.0

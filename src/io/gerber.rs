@@ -1091,7 +1091,7 @@ fn flash_to_curve(
                 "polygon aperture diameter",
             )?;
             let rotation = polygon.rotation.unwrap_or(0.0);
-            let mut curve = curve::try_rotated_with_context(
+            let mut curve = curve::rotated_with_context(
                 &curve::regular_ngon_with_context(
                     polygon.vertices as usize,
                     required_real(diameter * 0.5, "polygon aperture radius")?,
@@ -1146,7 +1146,7 @@ fn flash_to_curve(
     };
 
     curve = apply_aperture_transform(curve, aperture_transform, decisions)?;
-    curve::try_translated_with_context(
+    curve::translated_with_context(
         &curve,
         required_real(center.x, "flash center x")?,
         required_real(center.y, "flash center y")?,
@@ -1193,7 +1193,7 @@ fn aperture_rect_curve(
         aperture_transform.scale_length(rect.y * unit_scale),
         "rectangular aperture height",
     )?;
-    let mut curve = curve::try_translated_with_context(
+    let mut curve = curve::translated_with_context(
         &if rounded {
             curve::rounded_rectangle_with_context(
                 required_real(width, "rectangular aperture width")?,
@@ -1718,7 +1718,7 @@ fn repeat_curves(
     for x in 0..step_repeat.repeat_x {
         for y in 0..step_repeat.repeat_y {
             curves.push(
-                curve::try_translated_with_context(
+                curve::translated_with_context(
                     &curve,
                     real(f64::from(x) * step_repeat.distance_x).ok_or(
                         IoError::UnrepresentableCoordinate {
@@ -1758,7 +1758,7 @@ fn apply_aperture_transform(
         Mirroring::Y => (1.0, -1.0),
         Mirroring::XY => (-1.0, -1.0),
     };
-    let scaled = curve::try_scaled_with_context(
+    let scaled = curve::scaled_with_context(
         &curve,
         required_real(sx, "aperture mirror x")?,
         required_real(sy, "aperture mirror y")?,
@@ -1769,7 +1769,7 @@ fn apply_aperture_transform(
         format: "Gerber",
         source: error,
     })?;
-    curve::try_rotated_with_context(
+    curve::rotated_with_context(
         &scaled,
         required_real(aperture_transform.rotation.rotation, "aperture rotation")?,
         &GeometryContext::new(decisions.predicate_policy()),

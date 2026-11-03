@@ -327,13 +327,13 @@ impl CurveRegionJs {
     }
 
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
-        curve::try_transformed(&self.inner, &matrix.inner)
+        curve::transformed(&self.inner, &matrix.inner)
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
     pub fn translate(&self, x: f64, y: f64) -> Result<Self, JsValue> {
-        curve::try_translated(
+        curve::translated(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
@@ -343,7 +343,7 @@ impl CurveRegionJs {
     }
 
     pub fn rotate(&self, degrees: f64) -> Result<Self, JsValue> {
-        curve::try_rotated(
+        curve::rotated(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(degrees, "degrees")?,
         )
@@ -352,7 +352,7 @@ impl CurveRegionJs {
     }
 
     pub fn scale(&self, x: f64, y: f64) -> Result<Self, JsValue> {
-        curve::try_scaled(
+        curve::scaled(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
@@ -382,7 +382,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        curve::try_transformed_with_context(&self.inner, &matrix.inner, &context)
+        curve::transformed_with_context(&self.inner, &matrix.inner, &context)
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }
@@ -395,7 +395,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        curve::try_translated_with_context(
+        curve::translated_with_context(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
@@ -412,7 +412,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        curve::try_rotated_with_context(
+        curve::rotated_with_context(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(degrees, "degrees")?,
             &context,
@@ -429,7 +429,7 @@ impl CurveRegionJs {
         approximate_512: bool,
     ) -> Result<CurveBooleanResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        curve::try_scaled_with_context(
+        curve::scaled_with_context(
             &self.inner,
             crate::wasm::mesh_js::geometry_scalar(x, "x")?,
             crate::wasm::mesh_js::geometry_scalar(y, "y")?,
@@ -485,7 +485,7 @@ impl CurveRegionJs {
         &self,
         approximate_512: bool,
     ) -> Result<GeometryBoundsResultJs, JsValue> {
-        curve::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
+        curve::bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
             .map(Into::into)
             .map_err(crate::wasm::mesh_js::geometry_error)
     }

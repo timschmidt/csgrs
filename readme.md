@@ -58,27 +58,26 @@ newer. Add the crate to a project with `cargo add csgrs`, or install Rust with
 cargo run --example basic
 ```
 
-It writes `drilled_cube.stl`. The program is included as `examples/basic.rs`:
+It writes `drilled_cube.stl`. The program is included as `examples/basic.rs`.
+`Csg` is a modeling session: it selects the predicate policy once and reports
+the weakest certainty of the whole chain. Its methods accept ordinary integers,
+`Real` values and exactly converted floats; use `csgrs::decimal("0.1")` or
+`csgrs::ratio(1, 10)` when you mean a decimal value, because `0.1_f64` is not
+1/10.
 
 <!-- quickstart:start -->
 ```rust
-use csgrs::{
-    GeometryContext, Real, curve,
-    io::stl::to_stl_binary,
-    solid::{self, SolidExt},
-};
+use csgrs::{Csg, GeometryCertainty, io::stl::to_stl_binary};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let body = solid::cube(Real::from(12))?;
-    let opening = curve::try_extrude(
-        &curve::square(Real::from(4))?,
-        Real::from(16),
-        &GeometryContext::STRICT,
-    )?
-    .into_value()
-    .translated(Real::from(4), Real::from(4), Real::from(-2))?;
+    // One session chooses the predicate policy and keeps the weakest
+    // certainty of every operation in the chain.
+    let m = Csg::strict();
+    let body = m.cube(12)?;
+    let opening = m.translate(&m.extrude(&m.square(4)?, 16)?, 4, 4, -2)?;
+    let part = m.difference(&body, &opening)?;
+    assert_eq!(m.certainty(), GeometryCertainty::Certified);
 
-    let part = body.try_difference(&opening)?;
     std::fs::write("drilled_cube.stl", to_stl_binary(&part, "drilled_cube")?)?;
     Ok(())
 }

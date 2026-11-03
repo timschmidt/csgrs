@@ -128,8 +128,7 @@ fn run(source: &str, translation: &str, cache: &str) {
     let shift = if lossy { q(10, 3) } else { Real::from(3) };
     let matrix = Matrix4::affine_translation([shift.clone(), 5.into(), 7.into()]);
     let transformed =
-        solid::try_transform_with_context(&hull.value, &matrix, &GeometryContext::STRICT)
-            .unwrap();
+        solid::transform_with_context(&hull.value, &matrix, &GeometryContext::STRICT).unwrap();
     assert_eq!(transformed.certainty, GeometryCertainty::Certified);
     assert_eq!(transformed.value.construction_evidence(), evidence);
     println!(
@@ -138,7 +137,7 @@ fn run(source: &str, translation: &str, cache: &str) {
         transformed.value.positions.len(),
         transformed.value.triangles.len()
     );
-    let right = solid::try_transform_with_context(
+    let right = solid::transform_with_context(
         &cube,
         &Matrix4::affine_translation([&shift + Real::one(), 5.into(), 7.into()]),
         &GeometryContext::STRICT,

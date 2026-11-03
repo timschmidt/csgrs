@@ -106,7 +106,7 @@ fn curve_boundary_is_distinct_from_empty_and_outside() {
 
 #[test]
 fn curve_uncertainty_survives_a_warm_approximate_boundary_query() {
-    let square = curve::try_translated(
+    let square = curve::translated(
         &curve::square(Real::one()).expect("valid planar fixture"),
         unresolved_zero(),
         Real::zero(),

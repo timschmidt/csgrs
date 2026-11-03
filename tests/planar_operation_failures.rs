@@ -133,7 +133,7 @@ fn perspective_is_not_silently_discarded() {
         [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1].map(Real::from),
     );
     for region in [curve::empty(), curve::square(1.into()).unwrap()] {
-        let error = curve::try_transformed(&region, &matrix)
+        let error = curve::transformed(&region, &matrix)
             .attempt()
             .expect_err("perspective became an affine identity");
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Unsupported);
@@ -146,7 +146,7 @@ fn out_of_plane_geometry_is_not_silently_projected() {
         let mut matrix = Matrix4::identity();
         matrix.0[row][column] = 1.into();
         for region in [curve::empty(), curve::square(1.into()).unwrap()] {
-            let error = curve::try_transformed(&region, &matrix)
+            let error = curve::transformed(&region, &matrix)
                 .attempt()
                 .expect_err("out-of-plane image became an XY projection");
             assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Unsupported);
@@ -159,7 +159,7 @@ fn zero_homogeneous_weight_is_not_finite_geometry() {
     let mut matrix = Matrix4::identity();
     matrix.0[3][3] = 0.into();
     for region in [curve::empty(), curve::square(1.into()).unwrap()] {
-        let error = curve::try_transformed(&region, &matrix)
+        let error = curve::transformed(&region, &matrix)
             .attempt()
             .expect_err("zero homogeneous weight became finite geometry");
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::Unbounded);
@@ -170,7 +170,7 @@ fn zero_homogeneous_weight_is_not_finite_geometry() {
 fn a_zero_homogeneous_coordinate_image_is_invalid_instead_of_unbounded() {
     let matrix = Matrix4::from_row_major(std::array::from_fn(|_| Real::zero()));
     for region in [curve::empty(), curve::square(1.into()).unwrap()] {
-        let error = curve::try_transformed(&region, &matrix).unwrap_err();
+        let error = curve::transformed(&region, &matrix).unwrap_err();
         assert_eq!(error.kind(), csgrs::errors::ValidationErrorKind::InvalidInput);
     }
 }
@@ -185,7 +185,7 @@ fn matrix_admission_uses_the_selected_policy_without_certainty_upgrade() {
         GeometryContext::APPROXIMATE_512,
         GeometryContext::STRICT,
     ] {
-        let result = curve::try_transformed_with_context(&square, &matrix, &context);
+        let result = curve::transformed_with_context(&square, &matrix, &context);
         if context == GeometryContext::STRICT {
             let error = result
                 .attempt()
@@ -357,7 +357,7 @@ fn changed_matrix_constraints_are_rechecked_and_recovery_succeeds() {
     matrix.0[2][3] = (Real::one() / Real::from(1_000_000_000_000_u64)).unwrap();
     for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
         assert_eq!(
-            curve::try_transformed_with_context(&square, &matrix, &context)
+            curve::transformed_with_context(&square, &matrix, &context)
                 .unwrap_err()
                 .kind(),
             csgrs::errors::ValidationErrorKind::Unsupported

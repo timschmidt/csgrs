@@ -113,7 +113,7 @@ fn accumulation_and_complete_subtraction_can_continue() {
     let self_removed = a.try_difference(&a).unwrap();
     assert_empty(&self_removed);
     let transformed =
-        solid::try_scale(&self_removed, Real::from(2), Real::one(), Real::one()).unwrap();
+        solid::scale(&self_removed, Real::from(2), Real::one(), Real::one()).unwrap();
     assert_box(&transformed.try_union(&b).unwrap(), [2, 0, 0], [4, 2, 2]);
 }
 

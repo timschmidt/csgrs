@@ -99,7 +99,7 @@ fn csgrs_empty_bounds_preserve_inherited_topology_receipt() {
         csgrs::GeometryContext::APPROXIMATE_512,
         csgrs::GeometryContext::STRICT,
     ] {
-        let result = csgrs::curve::try_bounding_box_with_context(&region, &context);
+        let result = csgrs::curve::bounding_box_with_context(&region, &context);
         if context == csgrs::GeometryContext::STRICT {
             assert_eq!(
                 result.unwrap_err().kind(),
@@ -135,8 +135,7 @@ fn csgrs_region_query_controls_preserve_exact_and_inherited_certainty() {
                 csgrs::curve::contains_xy(&region, 5.into(), 5.into()).unwrap(),
                 expected
             );
-            let bounds =
-                csgrs::curve::try_bounding_box_with_context(&region, &context).unwrap();
+            let bounds = csgrs::curve::bounding_box_with_context(&region, &context).unwrap();
             assert_eq!(bounds.value.is_none(), region.is_empty());
             assert_eq!(bounds.certainty, csgrs::GeometryCertainty::Certified);
         }
@@ -159,7 +158,7 @@ fn csgrs_region_query_controls_preserve_exact_and_inherited_certainty() {
     ] {
         let query =
             csgrs::curve::contains_xy_with_context(&region, 5.into(), 5.into(), &context);
-        let bounds = csgrs::curve::try_bounding_box_with_context(&region, &context);
+        let bounds = csgrs::curve::bounding_box_with_context(&region, &context);
         if context == csgrs::GeometryContext::STRICT {
             assert_eq!(
                 query.unwrap_err().kind(),

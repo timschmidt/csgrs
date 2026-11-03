@@ -77,8 +77,7 @@ fn boolean_failures<A: ScalarAdapter>() {
     // identity, which the scalar normal form now proves, so every operation
     // completes with the exact set.
     let rotated =
-        curve::try_rotated(&curve::try_rotated(&square, 13.into()).unwrap(), (-13).into())
-            .unwrap();
+        curve::rotated(&curve::rotated(&square, 13.into()).unwrap(), (-13).into()).unwrap();
     let r = ScalarCurve::<A>::from_native(rotated);
     let square_area = Some(Real::from(4));
     for operation in OPERATIONS {

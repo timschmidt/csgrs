@@ -30,7 +30,7 @@ fn uncertain_points() -> TriangleMesh {
 #[test]
 fn empty_bounds_are_absent_rather_than_a_point_at_the_origin() {
     let mesh = solid::empty();
-    assert!(solid::try_bounding_box(&mesh).unwrap().is_none());
+    assert!(solid::bounding_box(&mesh).unwrap().is_none());
     assert!(solid::bounding_box(&mesh).unwrap().is_none());
     let point = TriangleMesh::new(vec![Point3::origin()], Vec::new());
     let bounds = SolidExt::exact_bounds(&point).unwrap().unwrap();
@@ -55,7 +55,7 @@ fn bounds_reject_malformed_indices() {
         mesh.exact_bounds(&csgrs::GeometryContext::STRICT.mesh_context())
             .is_err()
     );
-    let error = solid::try_bounding_box(&mesh).unwrap_err();
+    let error = solid::bounding_box(&mesh).unwrap_err();
     assert_eq!(error.kind(), ValidationErrorKind::InvalidInput);
     assert!(matches!(
         error
@@ -114,9 +114,9 @@ fn placement_preserves_exact_box_geometry_and_empty_composition() {
 #[test]
 fn cached_position_bounds_do_not_validate_mutated_indices() {
     let mut mesh = solid::cube(Real::one()).unwrap();
-    solid::try_bounding_box(&mesh).unwrap();
+    solid::bounding_box(&mesh).unwrap();
     std::sync::Arc::make_mut(&mut mesh.triangles)[0].v0 = mesh.positions.len();
-    assert!(solid::try_bounding_box(&mesh).is_err());
+    assert!(solid::bounding_box(&mesh).is_err());
 }
 
 #[test]
@@ -133,7 +133,7 @@ fn undecided_bounds_retain_their_category_through_the_adapter() {
 #[test]
 fn empty_curve_bounds_are_absent() {
     let curve = hypercurve::CurveRegion2::empty();
-    assert!(csgrs::curve::try_bounding_box(&curve).unwrap().is_none());
+    assert!(csgrs::curve::bounding_box(&curve).unwrap().is_none());
     assert!(csgrs::curve::bounding_box(&curve).unwrap().is_none());
     let paths = csgrs::curve::hilbert_strings_with_context(
         &curve,

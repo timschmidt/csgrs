@@ -358,7 +358,7 @@ fn ellipsoid_uncached(
     if signs.contains(&RealSign::Zero) {
         return Ok(empty());
     }
-    try_scale(
+    scale(
         &sphere(Real::one(), segments, stacks)?,
         radius_x,
         radius_y,
@@ -1214,16 +1214,16 @@ pub fn boolean_with_context(
 }
 
 /// Applies a homogeneous transform and returns native geometry.
-pub fn try_transform(
+pub fn transform(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
 ) -> Result<TriangleMesh, ValidationError> {
-    try_transform_with_context(mesh, matrix, &GeometryContext::STRICT)
+    transform_with_context(mesh, matrix, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Applies a transform with the selected policy, preserving orientation and certainty.
-pub fn try_transform_with_context(
+pub fn transform_with_context(
     mesh: &TriangleMesh,
     matrix: &Matrix4,
     context: &GeometryContext,
@@ -1257,29 +1257,19 @@ fn try_transform_with_known_orientation(
     })
 }
 
-/// Applies a homogeneous transform, preserving typed failures.
-///
-/// Equivalent to [`try_transform`]; singular, undecided, and unbounded results fail.
-pub fn transform(
-    mesh: &TriangleMesh,
-    matrix: &Matrix4,
-) -> Result<TriangleMesh, ValidationError> {
-    try_transform(mesh, matrix)
-}
-
 /// Rotates native geometry by Euler angles in degrees, reporting uncertainty.
-pub fn try_rotate(
+pub fn rotate(
     mesh: &TriangleMesh,
     x: Real,
     y: Real,
     z: Real,
 ) -> Result<TriangleMesh, ValidationError> {
-    try_rotate_with_context(mesh, x, y, z, &GeometryContext::STRICT)
+    rotate_with_context(mesh, x, y, z, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Rotates with the selected policy and reports aggregate certainty.
-pub fn try_rotate_with_context(
+pub fn rotate_with_context(
     mesh: &TriangleMesh,
     x: Real,
     y: Real,
@@ -1296,29 +1286,19 @@ pub fn try_rotate_with_context(
     Ok(decisions.finish_mesh(rotated))
 }
 
-/// Rotates native geometry by Euler angles in degrees.
-pub fn rotate(
-    mesh: &TriangleMesh,
-    x: Real,
-    y: Real,
-    z: Real,
-) -> Result<TriangleMesh, ValidationError> {
-    try_rotate(mesh, x, y, z)
-}
-
 /// Scales native geometry independently along each axis, reporting degeneracy.
-pub fn try_scale(
+pub fn scale(
     mesh: &TriangleMesh,
     x: Real,
     y: Real,
     z: Real,
 ) -> Result<TriangleMesh, ValidationError> {
-    try_scale_with_context(mesh, x, y, z, &GeometryContext::STRICT)
+    scale_with_context(mesh, x, y, z, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Scales with the selected policy, rejecting collapsed axes and retaining certainty.
-pub fn try_scale_with_context(
+pub fn scale_with_context(
     mesh: &TriangleMesh,
     x: Real,
     y: Real,
@@ -1348,27 +1328,13 @@ pub fn try_scale_with_context(
     Ok(decisions.finish_mesh(scaled))
 }
 
-/// Scales native geometry independently along each axis.
-pub fn scale(
-    mesh: &TriangleMesh,
-    x: Real,
-    y: Real,
-    z: Real,
-) -> Result<TriangleMesh, ValidationError> {
-    try_scale(mesh, x, y, z)
-}
-
 /// Reflects native geometry across a plane, reporting an invalid plane.
-pub fn try_mirror(
-    mesh: &TriangleMesh,
-    plane: &Plane,
-) -> Result<TriangleMesh, ValidationError> {
-    try_mirror_with_context(mesh, plane, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
+pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> Result<TriangleMesh, ValidationError> {
+    mirror_with_context(mesh, plane, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Reflects across a plane with the selected policy and aggregate certainty.
-pub fn try_mirror_with_context(
+pub fn mirror_with_context(
     mesh: &TriangleMesh,
     plane: &Plane,
     context: &GeometryContext,
@@ -1378,11 +1344,6 @@ pub fn try_mirror_with_context(
     // A valid plane reflection always reverses orientation.
     let mirrored = try_transform_with_known_orientation(mesh, &matrix, true, &decisions)?;
     Ok(decisions.finish_mesh(mirrored))
-}
-
-/// Reflects native geometry across a plane.
-pub fn mirror(mesh: &TriangleMesh, plane: &Plane) -> Result<TriangleMesh, ValidationError> {
-    try_mirror(mesh, plane)
 }
 
 /// Uniformly subdivides every native triangle.
@@ -1756,13 +1717,12 @@ pub fn schwarz_d(
 }
 
 /// Exact bounds of native triangle positions.
-pub fn try_bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
-    try_bounding_box_with_context(mesh, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
+pub fn bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
+    bounding_box_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Returns bounds with the selected policy and aggregate certainty.
-pub fn try_bounding_box_with_context(
+pub fn bounding_box_with_context(
     mesh: &TriangleMesh,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<Option<Aabb>>, ValidationError> {
@@ -1771,24 +1731,18 @@ pub fn try_bounding_box_with_context(
     Ok(decisions.finish(bounds))
 }
 
-/// Exact position bounds, absent for canonical empty geometry; errors remain typed.
-pub fn bounding_box(mesh: &TriangleMesh) -> Result<Option<Aabb>, ValidationError> {
-    try_bounding_box(mesh)
-}
-
 /// Translates the center of the exact bounds to the origin.
-pub fn try_center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    try_center_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+pub fn center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    center_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Centers the selected-policy bounds, retaining certainty through the translation.
-pub fn try_center_with_context(
+pub fn center_with_context(
     mesh: &TriangleMesh,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let Some(bounds) =
-        decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
+    let Some(bounds) = decisions.consume_geometry(bounding_box_with_context(mesh, context)?)
     else {
         return Ok(decisions.finish_mesh(mesh.clone()));
     };
@@ -1805,24 +1759,18 @@ pub fn try_center_with_context(
     Ok(decisions.finish_mesh(centered))
 }
 
-/// Translates the center of the exact bounds to the origin.
-pub fn center(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    try_center(mesh)
-}
-
 /// Translates the minimum Z bound to zero.
-pub fn try_float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    try_float_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
+pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
+    float_with_context(mesh, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Moves the selected-policy minimum Z bound to zero and retains certainty.
-pub fn try_float_with_context(
+pub fn float_with_context(
     mesh: &TriangleMesh,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
-    let Some(bounds) =
-        decisions.consume_geometry(try_bounding_box_with_context(mesh, context)?)
+    let Some(bounds) = decisions.consume_geometry(bounding_box_with_context(mesh, context)?)
     else {
         return Ok(decisions.finish_mesh(mesh.clone()));
     };
@@ -1833,11 +1781,6 @@ pub fn try_float_with_context(
         &decisions,
     )?;
     Ok(decisions.finish_mesh(floated))
-}
-
-/// Translates the minimum Z bound to zero.
-pub fn float(mesh: &TriangleMesh) -> Result<TriangleMesh, ValidationError> {
-    try_float(mesh)
 }
 
 /// Concatenates native buffers in input order, preserving typed failures.
@@ -2681,6 +2624,14 @@ pub trait SolidExt: Sized {
     fn transformed(&self, matrix: &Matrix4) -> Result<Self, ValidationError>;
     /// Translate by an exact vector.
     fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    /// Rotate by exact angles in degrees about X, then Y, then Z. Same as [`rotate`].
+    fn rotated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    /// Scale by exact per-axis factors. Same as [`scale`].
+    fn scaled(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError>;
+    /// Mirror across a plane. Same as [`mirror`].
+    fn mirrored(&self, plane: &Plane) -> Result<Self, ValidationError>;
+    /// Translate so the exact bounding-box center is at the origin. Same as [`center`].
+    fn centered(&self) -> Result<Self, ValidationError>;
     /// Return exact bounds.
     fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError>;
     /// Visit native triangles without constructing a csgrs mesh facade.
@@ -2744,6 +2695,22 @@ impl SolidExt for TriangleMesh {
 
     fn translated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
         transform(self, &Matrix4::affine_translation([x, y, z]))
+    }
+
+    fn rotated(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
+        rotate(self, x, y, z)
+    }
+
+    fn scaled(&self, x: Real, y: Real, z: Real) -> Result<Self, ValidationError> {
+        scale(self, x, y, z)
+    }
+
+    fn mirrored(&self, plane: &Plane) -> Result<Self, ValidationError> {
+        mirror(self, plane)
+    }
+
+    fn centered(&self) -> Result<Self, ValidationError> {
+        center(self)
     }
 
     fn exact_bounds(&self) -> Result<Option<Aabb>, ValidationError> {
@@ -2984,7 +2951,7 @@ mod tests {
         assert!(signed_volume(&reflected_arrow) > 0.0);
 
         let cube = cube(Real::from(2_u8)).expect("valid primitive fixture");
-        assert!(try_scale(&cube, Real::zero(), Real::one(), Real::one()).is_err());
+        assert!(scale(&cube, Real::zero(), Real::one(), Real::one()).is_err());
         assert!(matches!(
             scale(&cube, Real::zero(), Real::one(), Real::one()),
             Err(ValidationError::InvalidArguments)

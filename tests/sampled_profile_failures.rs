@@ -401,7 +401,7 @@ fn approximate_shoulder_equality_stays_qualified_across_cache_hits() {
 fn profile_hole_extrusion_and_dyadic_interchange_keep_exact_volume() {
     let arrow = curve::arrow(2.into(), 1.into(), 1.into(), 1.into()).unwrap();
     let cutter =
-        curve::try_translated(&curve::square(q(1, 2)).unwrap(), q(1, 2), q(-1, 4)).unwrap();
+        curve::translated(&curve::square(q(1, 2)).unwrap(), q(1, 2), q(-1, 4)).unwrap();
     let cut = arrow
         .boolean_region(&cutter, hypercurve::BooleanOp::Difference)
         .unwrap();

@@ -35,7 +35,7 @@ fn translation(x: Real) -> Matrix4 {
 fn approximate_union() -> TriangleMesh {
     let cube = solid::cube(Real::one()).unwrap();
     let touching =
-        solid::try_transform(&cube, &translation(Real::one() + unresolved_zero())).unwrap();
+        solid::transform(&cube, &translation(Real::one() + unresolved_zero())).unwrap();
     let strict = solid::boolean_with_context(
         &cube,
         &touching,
@@ -74,7 +74,7 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
         ConstructionEvidence::DECLARED_COORDINATES,
     );
     let enclosing = solid::cube(Real::from(3)).unwrap();
-    let overlapping = solid::try_transform(&enclosing, &translation(half())).unwrap();
+    let overlapping = solid::transform(&enclosing, &translation(half())).unwrap();
     for other in [&enclosing, &overlapping] {
         for operation in [
             BooleanOp::Union,
@@ -129,7 +129,7 @@ fn strict_steps_after_an_approximate_mesh_are_local_proofs() {
     .unwrap();
     assert_eq!(fresh.certainty, GeometryCertainty::Certified);
 
-    let moved = solid::try_transform_with_context(
+    let moved = solid::transform_with_context(
         &union,
         &translation(Real::from(5)),
         &GeometryContext::STRICT,
@@ -196,7 +196,7 @@ mod curve_receipts {
         })
         .into_unverified()
         .unwrap();
-        let strict = curve::try_translated_with_context(
+        let strict = curve::translated_with_context(
             &region,
             3.into(),
             4.into(),
@@ -208,7 +208,7 @@ mod curve_receipts {
             ValidationError::ExactCurve(ExactCurveError::Blocked(_))
         ));
         assert_eq!(strict.kind(), ValidationErrorKind::Undecided);
-        let moved = curve::try_translated_with_context(
+        let moved = curve::translated_with_context(
             &region,
             3.into(),
             4.into(),
@@ -237,8 +237,7 @@ mod curve_receipts {
     fn approximate_region() -> (CurveRegion2, CurveRegion2) {
         let square = curve::square(Real::one()).unwrap();
         let touching =
-            curve::try_translated(&square, Real::one() + unresolved_zero(), Real::zero())
-                .unwrap();
+            curve::translated(&square, Real::one() + unresolved_zero(), Real::zero()).unwrap();
         assert!(matches!(
             square.boolean_region(&touching, RegionOp::Union),
             Err(ExactCurveError::Blocked(_))
@@ -287,12 +286,8 @@ mod curve_receipts {
         ] {
             let inside =
                 curve::contains_xy_with_context(&union, Real::one(), half(), &context);
-            let moved = curve::try_translated_with_context(
-                &union,
-                Real::from(5),
-                Real::zero(),
-                &context,
-            );
+            let moved =
+                curve::translated_with_context(&union, Real::from(5), Real::zero(), &context);
             let extruded = curve::try_extrude(&union, Real::one(), &context);
             if context == GeometryContext::STRICT {
                 assert_inherited_topology_blocker(inside.unwrap_err());
@@ -345,7 +340,7 @@ mod curve_receipts {
                 (inside.certainty, inside.value),
                 (GeometryCertainty::Certified, Some(true))
             );
-            let moved = curve::try_translated_with_context(
+            let moved = curve::translated_with_context(
                 &rebuilt,
                 Real::from(5),
                 Real::zero(),
@@ -359,7 +354,7 @@ mod curve_receipts {
     #[test]
     fn and_then_keeps_an_approximate_dependency_and_map_cannot_record_work() {
         let (union, rebuilt) = approximate_region();
-        let moved = curve::try_translated_with_context(
+        let moved = curve::translated_with_context(
             &union,
             Real::from(5),
             Real::zero(),
@@ -427,7 +422,7 @@ mod curve_receipts {
             }
         ));
 
-        let strict = curve::try_translated_with_context(
+        let strict = curve::translated_with_context(
             &rebuilt,
             Real::from(5),
             Real::zero(),

@@ -72,13 +72,17 @@ pub(crate) mod hyper_math;
 pub(crate) mod implicit;
 pub mod io;
 pub mod parts;
+pub mod session;
 pub mod solid;
+pub mod solid_expr;
 
 pub mod voxels;
 
 pub use context::{GeometryCertainty, GeometryContext, GeometryOutcome};
 pub use hypermesh::{ConstructionEvidence, TriangleMesh};
 pub use hyperreal::Real;
+pub use session::{Csg, Error, IntoReal, Result, decimal, ratio};
+pub use solid_expr::SolidExpr;
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;

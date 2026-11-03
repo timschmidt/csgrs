@@ -5,6 +5,59 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## One name per transform and query
+
+Eleven operations had two public names with identical signatures, where the
+plain name only called the `try_` name. The `try_` aliases are removed, along
+with the `try_` prefix of their policy-taking variants. They were never
+published: crates.io has 0.20.1, and 0.21 to 0.23 were not released. Only
+callers that build against the source tree need to rename.
+
+| Removed | Use |
+| --- | --- |
+| `solid::try_bounding_box`, `try_center`, `try_float`, `try_mirror`, `try_rotate`, `try_scale`, `try_transform` | `solid::bounding_box`, `center`, `float`, `mirror`, `rotate`, `scale`, `transform` |
+| `solid::try_*_with_context` for the same operations | `solid::*_with_context` (for example `transform_with_context`) |
+| `curve::try_bounding_box`, `try_rotated`, `try_scaled`, `try_transformed`, `try_translated` | `curve::bounding_box`, `rotated`, `scaled`, `transformed`, `translated` |
+| `curve::try_*_with_context` for the same operations | `curve::*_with_context` |
+
+Behavior and errors are unchanged: each kept name is the former `try_`
+function. `try_` names without a plain twin, such as `curve::try_extrude` and
+`SolidExt::try_union`, are not affected.
+
+## Modeling sessions and exact number conversion
+
+These additions are additive. Existing functions keep their signatures.
+
+- **`ValidationError::InvalidNumber`.** `ValidationError` has a new variant,
+  `InvalidNumber(hyperreal::Problem)`, classified as
+  `ValidationErrorKind::InvalidInput`. It is `#[non_exhaustive]`, so matches
+  already have a wildcard arm. It is returned only by the new conversions
+  (`IntoReal`, `ratio`, `decimal`) and by `Csg` methods given a NaN, an
+  infinity, a zero denominator or malformed decimal text.
+- **New aliases.** `csgrs::Error` (an alias of `ValidationError`) and
+  `csgrs::Result<T>` are now the single error and result types of the modeling
+  API. Kernel errors such as `HypermeshError` convert into it with `From`, and
+  remain its `source()`.
+- **`SolidExpr` and new `SolidExt` methods.** `SolidExpr` is a lazy CSG
+  expression evaluated as one Boolean program (`Csg::evaluate` or
+  `SolidExpr::evaluate_with_context`). Its result is the same regularized set
+  as step-by-step evaluation, but its triangulation can differ, because it
+  comes from one shared arrangement. `SolidExt` gains `rotated`, `scaled`,
+  `mirrored` and `centered`. A type that implements `SolidExt` outside CSGRS
+  must add them; within CSGRS only `TriangleMesh` implements it.
+- **The `Csg` session.** It chooses the predicate policy once and keeps the
+  weakest certainty of every operation it runs (P8, P9, P19). It is the
+  recommended entry point, and the quickstart now uses it. The free functions
+  and `SolidExt` remain available.
+
+  The previous quickstart called `.into_value()` on the extrusion and ran the
+  difference through the policy-free `SolidExt::try_difference`, so it kept no
+  receipts. Under `STRICT` that loses nothing, because a strict receipt is
+  always certified. The hazard is a chain that switches to `APPROXIMATE_512` in
+  the same style: it would silently drop the record of an approximate step. The
+  new quickstart writes byte-identical STL and reports the chain's certainty,
+  so it stays correct when the policy changes.
+
 ## Coefficient growth limits
 
 `WorkKind` has a new `CoefficientGrowth` variant; exhaustive matches on it must

@@ -188,6 +188,13 @@ impl GeometryDecisions {
         self.finish(self.qualify_mesh(mesh))
     }
 
+    /// Folds a nested operation's receipt into this operation and returns
+    /// its value.
+    pub(crate) fn record<T>(&self, outcome: GeometryOutcome<T>) -> T {
+        self.observe(outcome.certainty);
+        outcome.value
+    }
+
     pub(crate) fn observe(&self, certainty: GeometryCertainty) {
         if certainty == GeometryCertainty::Approximate512Consumed {
             self.certainty.set(certainty);

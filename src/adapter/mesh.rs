@@ -206,7 +206,7 @@ where
     }
 
     pub fn transform(&self, matrix: &Matrix4) -> AdapterResult<Self> {
-        solid::try_transform(&self.inner, matrix)
+        solid::transform(&self.inner, matrix)
             .map(Self::from_native)
             .map_err(AdapterError::from)
     }
@@ -220,7 +220,7 @@ where
     }
 
     pub fn scale(&self, sx: A::Scalar, sy: A::Scalar, sz: A::Scalar) -> AdapterResult<Self> {
-        solid::try_scale(
+        solid::scale(
             &self.inner,
             A::into_real(sx)?,
             A::into_real(sy)?,
@@ -236,7 +236,7 @@ where
         y_degrees: A::Scalar,
         z_degrees: A::Scalar,
     ) -> AdapterResult<Self> {
-        solid::try_rotate(
+        solid::rotate(
             &self.inner,
             A::into_real(x_degrees)?,
             A::into_real(y_degrees)?,
@@ -251,19 +251,19 @@ where
     }
 
     pub fn center(&self) -> AdapterResult<Self> {
-        solid::try_center(&self.inner)
+        solid::center(&self.inner)
             .map(Self::from_native)
             .map_err(AdapterError::from)
     }
 
     pub fn float(&self) -> AdapterResult<Self> {
-        solid::try_float(&self.inner)
+        solid::float(&self.inner)
             .map(Self::from_native)
             .map_err(AdapterError::from)
     }
 
     pub fn bounding_box(&self) -> AdapterResult<Option<Aabb3<A::Scalar>>> {
-        solid::try_bounding_box(&self.inner)?
+        solid::bounding_box(&self.inner)?
             .map(super::convert_bounds::<A>)
             .transpose()
     }
@@ -274,7 +274,7 @@ where
         matrix: &Matrix4,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_transform_with_context(&self.inner, matrix, context)
+        solid::transform_with_context(&self.inner, matrix, context)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(AdapterError::from)
     }
@@ -287,7 +287,7 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_transform_with_context(
+        solid::transform_with_context(
             &self.inner,
             &Matrix4::affine_translation([
                 A::into_real(x)?,
@@ -308,7 +308,7 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_scale_with_context(
+        solid::scale_with_context(
             &self.inner,
             A::into_real(x)?,
             A::into_real(y)?,
@@ -327,7 +327,7 @@ where
         z: A::Scalar,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_rotate_with_context(
+        solid::rotate_with_context(
             &self.inner,
             A::into_real(x)?,
             A::into_real(y)?,
@@ -343,7 +343,7 @@ where
         &self,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_center_with_context(&self.inner, context)
+        solid::center_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(AdapterError::from)
     }
@@ -353,7 +353,7 @@ where
         &self,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Self>> {
-        solid::try_float_with_context(&self.inner, context)
+        solid::float_with_context(&self.inner, context)
             .map(|outcome| outcome.map(Self::from_native))
             .map_err(AdapterError::from)
     }
@@ -363,7 +363,7 @@ where
         &self,
         context: &GeometryContext,
     ) -> AdapterResult<GeometryOutcome<Option<Aabb3<A::Scalar>>>> {
-        solid::try_bounding_box_with_context(&self.inner, context)?
+        solid::bounding_box_with_context(&self.inner, context)?
             .try_map(|bounds| bounds.map(super::convert_bounds::<A>).transpose())
     }
 

@@ -2175,7 +2175,7 @@ pub fn hilbert_paths_with_context(
         return Err(ValidationError::InvalidArguments);
     }
     let Some(bounds) =
-        decisions.consume_geometry(try_bounding_box_with_context(boundary, context)?)
+        decisions.consume_geometry(bounding_box_with_context(boundary, context)?)
     else {
         return Ok(decisions.finish(Vec::new()));
     };
@@ -2776,7 +2776,7 @@ pub fn revolve_from(
     }
     let radians = (-start_degrees * Real::pi() / Real::from(180_u16))?;
     swept.and_then(|mesh| {
-        solid::try_transform_with_context(&mesh, &Matrix4::rotation_y(radians), context)
+        solid::transform_with_context(&mesh, &Matrix4::rotation_y(radians), context)
     })
 }
 
@@ -3519,16 +3519,16 @@ pub fn hershey_strings_with_context(
 /// constant weight with a nonzero coordinate image returns an unbounded error;
 /// an all-zero homogeneous image is invalid. Hypercurve validates the planar
 /// map's nonsingularity and topology, including for empty inputs.
-pub fn try_transformed(
+pub fn transformed(
     input: &CurveRegion2,
     matrix: &Matrix4,
 ) -> Result<CurveRegion2, ValidationError> {
-    try_transformed_with_context(input, matrix, &GeometryContext::STRICT)
+    transformed_with_context(input, matrix, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Applies the same planar matrix contract with aggregate predicate certainty.
-pub fn try_transformed_with_context(
+pub fn transformed_with_context(
     input: &CurveRegion2,
     matrix: &Matrix4,
     context: &GeometryContext,
@@ -3589,26 +3589,18 @@ pub fn try_transformed_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Applies the same checked planar transform as [`try_transformed`].
-pub fn transformed(
-    input: &CurveRegion2,
-    matrix: &Matrix4,
-) -> Result<CurveRegion2, ValidationError> {
-    try_transformed(input, matrix)
-}
-
 /// Applies an exact planar translation to a filled native region.
-pub fn try_translated(
+pub fn translated(
     input: &CurveRegion2,
     x: Real,
     y: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    try_translated_with_context(input, x, y, &GeometryContext::STRICT)
+    translated_with_context(input, x, y, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Applies the curve transform with the selected policy and aggregate certainty.
-pub fn try_translated_with_context(
+pub fn translated_with_context(
     input: &CurveRegion2,
     x: Real,
     y: Real,
@@ -3628,26 +3620,17 @@ pub fn try_translated_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Translates a planar region, preserving native failures.
-pub fn translated(
-    input: &CurveRegion2,
-    x: Real,
-    y: Real,
-) -> Result<CurveRegion2, ValidationError> {
-    try_translated(input, x, y)
-}
-
 /// Rotates a filled native region counterclockwise about the origin in degrees.
-pub fn try_rotated(
+pub fn rotated(
     input: &CurveRegion2,
     z_degrees: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    try_rotated_with_context(input, z_degrees, &GeometryContext::STRICT)
+    rotated_with_context(input, z_degrees, &GeometryContext::STRICT)
         .map(GeometryOutcome::into_value)
 }
 
 /// Applies the curve transform with the selected policy and aggregate certainty.
-pub fn try_rotated_with_context(
+pub fn rotated_with_context(
     input: &CurveRegion2,
     z_degrees: Real,
     context: &GeometryContext,
@@ -3669,30 +3652,21 @@ pub fn try_rotated_with_context(
     Ok(decisions.finish(region))
 }
 
-/// Rotates a planar region, preserving native failures.
-pub fn rotated(
-    input: &CurveRegion2,
-    z_degrees: Real,
-) -> Result<CurveRegion2, ValidationError> {
-    try_rotated(input, z_degrees)
-}
-
 /// Scales a filled native region independently along the planar axes.
 ///
 /// A zero factor is a singular transform, not a zero-size feature: it returns
 /// a typed invalid-input error, for empty input too, rather than an empty
 /// region.
-pub fn try_scaled(
+pub fn scaled(
     input: &CurveRegion2,
     x: Real,
     y: Real,
 ) -> Result<CurveRegion2, ValidationError> {
-    try_scaled_with_context(input, x, y, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
+    scaled_with_context(input, x, y, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Applies the curve transform with the selected policy and aggregate certainty.
-pub fn try_scaled_with_context(
+pub fn scaled_with_context(
     input: &CurveRegion2,
     x: Real,
     y: Real,
@@ -3710,15 +3684,6 @@ pub fn try_scaled_with_context(
         )
     })?;
     Ok(decisions.finish(region))
-}
-
-/// Scales a planar region, preserving singular or undecided transform errors.
-pub fn scaled(
-    input: &CurveRegion2,
-    x: Real,
-    y: Real,
-) -> Result<CurveRegion2, ValidationError> {
-    try_scaled(input, x, y)
 }
 
 /// Classifies an exact XY point. Only a proved boundary returns `Ok(None)`;
@@ -3759,13 +3724,12 @@ pub fn contains_xy_with_context(
 /// bounds. A boundary fragment cut at an algebraic parameter contributes the
 /// certified envelope of its source curve over a rational parameter interval,
 /// which encloses the region but can be looser; see `CurveRegion2::bounds`.
-pub fn try_bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
-    try_bounding_box_with_context(input, &GeometryContext::STRICT)
-        .map(GeometryOutcome::into_value)
+pub fn bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
+    bounding_box_with_context(input, &GeometryContext::STRICT).map(GeometryOutcome::into_value)
 }
 
 /// Computes curve bounds with the selected policy and aggregate certainty.
-pub fn try_bounding_box_with_context(
+pub fn bounding_box_with_context(
     input: &CurveRegion2,
     context: &GeometryContext,
 ) -> Result<GeometryOutcome<Option<Aabb>>, ValidationError> {
@@ -3777,11 +3741,6 @@ pub fn try_bounding_box_with_context(
         )
     });
     Ok(decisions.finish(bounds))
-}
-
-/// Returns exact planar bounds, absent for empty regions; errors remain typed.
-pub fn bounding_box(input: &CurveRegion2) -> Result<Option<Aabb>, ValidationError> {
-    try_bounding_box(input)
 }
 
 /// Returns the same native solid translation helper used by the 3D grammar.
@@ -3811,7 +3770,7 @@ mod tests {
         let warm =
             square_with_context(Real::one(), &GeometryContext::APPROXIMATE_512).unwrap();
         assert_eq!(warm.certainty, crate::GeometryCertainty::Certified);
-        let scaled = try_scaled(&warm.value, Real::from(2), Real::one()).unwrap();
+        let scaled = scaled(&warm.value, Real::from(2), Real::one()).unwrap();
         assert_eq!(scaled.filled_area().unwrap(), Some(Real::from(2)));
         assert_eq!(unit.filled_area().unwrap(), Some(Real::one()));
         for width in 2..=66 {
@@ -4571,7 +4530,7 @@ mod tests {
                     .expect("valid sampled mechanical fixture"),
             ),
         ] {
-            let bounds = try_bounding_box(&rack)
+            let bounds = bounding_box(&rack)
                 .unwrap_or_else(|error| panic!("{name} bounds failed: {error}"))
                 .expect("nonempty rack bounds");
             assert!(

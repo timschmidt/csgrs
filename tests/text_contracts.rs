@@ -49,7 +49,7 @@ mod truetype {
         for text in ["", " \n\t\r", "B"] {
             let region = curve::truetype_text(text, &font, unit_size()).unwrap();
             assert!(region.is_empty());
-            let moved = curve::try_translated(&region, Real::pi(), r(2)).unwrap();
+            let moved = curve::translated(&region, Real::pi(), r(2)).unwrap();
             assert!(
                 moved
                     .boolean_region(&region, BooleanOp::Union)
@@ -128,7 +128,7 @@ mod truetype {
                     .flat_map(|p| p.curves())
                     .any(|c| c.family() == CurveFamily2::QuadraticBezier)
             );
-            let moved = curve::try_translated(&arch.value, r(200), r(-2)).unwrap();
+            let moved = curve::translated(&arch.value, r(200), r(-2)).unwrap();
             exact(&area(&moved), &q(10_000, 3));
             let accumulated = CurveRegion2::empty()
                 .boolean_region(&moved, BooleanOp::Union)
@@ -216,7 +216,7 @@ mod truetype {
                 .unwrap();
                 assert_eq!(result.certainty, GeometryCertainty::Certified);
                 assert_eq!(result.value.len(), boundary_loops);
-                let translated = curve::try_translated(&result.value, r(3), r(-2)).unwrap();
+                let translated = curve::translated(&result.value, r(3), r(-2)).unwrap();
                 let union = translated
                     .boolean_region(&CurveRegion2::empty(), BooleanOp::Union)
                     .unwrap();

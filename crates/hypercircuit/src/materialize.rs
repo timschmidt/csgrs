@@ -133,7 +133,7 @@ impl MaterializationDecisions {
         x: Real,
         y: Real,
     ) -> Result<CurveRegion2, GeometryMaterializationError> {
-        self.consume_geometry(curve::try_translated_with_context(
+        self.consume_geometry(curve::translated_with_context(
             input,
             x,
             y,
@@ -148,7 +148,7 @@ impl MaterializationDecisions {
         x: Real,
         y: Real,
     ) -> Result<CurveRegion2, GeometryMaterializationError> {
-        self.consume_geometry(curve::try_scaled_with_context(
+        self.consume_geometry(curve::scaled_with_context(
             input,
             x,
             y,
@@ -162,7 +162,7 @@ impl MaterializationDecisions {
         input: &CurveRegion2,
         z_degrees: Real,
     ) -> Result<CurveRegion2, GeometryMaterializationError> {
-        self.consume_geometry(curve::try_rotated_with_context(
+        self.consume_geometry(curve::rotated_with_context(
             input,
             z_degrees,
             &self.geometry_context(),

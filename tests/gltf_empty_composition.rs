@@ -248,7 +248,7 @@ fn empty_roundtrip_preserves_qualified_history_through_strict_identities() {
     // later local proofs cannot certify the original construction's intent.
     assert!(imported.construction_evidence().source_history_missing());
     assert_eq!(imported.construction_evidence().predicate_certainty(), None);
-    let transformed = solid::try_scale(&imported, 2.into(), 3.into(), 4.into()).unwrap();
+    let transformed = solid::scale(&imported, 2.into(), 3.into(), 4.into()).unwrap();
     for (left, right, operation, nonempty) in [
         (&cube, &transformed, BooleanOp::Union, true),
         (&transformed, &cube, BooleanOp::Union, true),

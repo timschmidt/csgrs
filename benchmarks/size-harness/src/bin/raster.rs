@@ -22,7 +22,7 @@ fn workload(side: u32) -> Result<bool, Box<dyn std::error::Error>> {
         }
     }
     let region = curve::from_image(black_box(&raster), 128)?;
-    Ok(curve::try_bounding_box(&region)?.is_some())
+    Ok(curve::bounding_box(&region)?.is_some())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {

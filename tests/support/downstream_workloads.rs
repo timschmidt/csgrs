@@ -79,7 +79,7 @@ pub fn assert_certified_closed_manifold(mesh: &TriangleMesh, label: &str) {
 }
 
 pub fn exact_bounds(mesh: &TriangleMesh) -> [[Real; 3]; 2] {
-    let bounds = solid::try_bounding_box(mesh)
+    let bounds = solid::bounding_box(mesh)
         .expect("strict bounds")
         .expect("nonempty mesh");
     [

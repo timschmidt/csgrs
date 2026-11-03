@@ -353,7 +353,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_transform_with_context(&self.inner, &matrix.inner, &context)
+        solid::transform_with_context(&self.inner, &matrix.inner, &context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -367,7 +367,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_transform_with_context(
+        solid::transform_with_context(
             &self.inner,
             &hyperlattice::Matrix4::affine_translation([
                 geometry_scalar(x, "x")?,
@@ -389,7 +389,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_rotate_with_context(
+        solid::rotate_with_context(
             &self.inner,
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
@@ -409,7 +409,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_scale_with_context(
+        solid::scale_with_context(
             &self.inner,
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
@@ -426,7 +426,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_center_with_context(&self.inner, &context)
+        solid::center_with_context(&self.inner, &context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -437,7 +437,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_float_with_context(&self.inner, &context)
+        solid::float_with_context(&self.inner, &context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -449,7 +449,7 @@ impl MeshJs {
         approximate_512: bool,
     ) -> Result<GeometryMeshResultJs, JsValue> {
         let context = geometry_context(approximate_512);
-        solid::try_mirror_with_context(&self.inner, &plane.inner, &context)
+        solid::mirror_with_context(&self.inner, &plane.inner, &context)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -543,13 +543,13 @@ impl MeshJs {
         &self,
         approximate_512: bool,
     ) -> Result<GeometryBoundsResultJs, JsValue> {
-        solid::try_bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
+        solid::bounding_box_with_context(&self.inner, &geometry_context(approximate_512))
             .map(Into::into)
             .map_err(geometry_error)
     }
 
     pub fn transform(&self, matrix: &Matrix4Js) -> Result<Self, JsValue> {
-        solid::try_transform(&self.inner, &matrix.inner)
+        solid::transform(&self.inner, &matrix.inner)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -567,7 +567,7 @@ impl MeshJs {
     }
 
     pub fn rotate(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
-        solid::try_rotate(
+        solid::rotate(
             &self.inner,
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
@@ -578,7 +578,7 @@ impl MeshJs {
     }
 
     pub fn scale(&self, x: f64, y: f64, z: f64) -> Result<Self, JsValue> {
-        solid::try_scale(
+        solid::scale(
             &self.inner,
             geometry_scalar(x, "x")?,
             geometry_scalar(y, "y")?,
@@ -589,14 +589,14 @@ impl MeshJs {
     }
 
     pub fn center(&self) -> Result<Self, JsValue> {
-        solid::try_center(&self.inner)
+        solid::center(&self.inner)
             .map(Into::into)
             .map_err(geometry_error)
     }
 
     #[wasm_bindgen(js_name = floatOnZ)]
     pub fn float_on_z(&self) -> Result<Self, JsValue> {
-        solid::try_float(&self.inner)
+        solid::float(&self.inner)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -606,7 +606,7 @@ impl MeshJs {
     }
 
     pub fn mirror(&self, plane: &PlaneJs) -> Result<Self, JsValue> {
-        solid::try_mirror(&self.inner, &plane.inner)
+        solid::mirror(&self.inner, &plane.inner)
             .map(Into::into)
             .map_err(geometry_error)
     }
@@ -635,8 +635,7 @@ impl MeshJs {
 
     #[wasm_bindgen(js_name = boundingBox)]
     pub fn bounding_box(&self) -> Result<JsValue, JsValue> {
-        let Some(bounds) = solid::try_bounding_box(&self.inner).map_err(geometry_error)?
-        else {
+        let Some(bounds) = solid::bounding_box(&self.inner).map_err(geometry_error)? else {
             return Ok(JsValue::UNDEFINED);
         };
         let object = Object::new();
