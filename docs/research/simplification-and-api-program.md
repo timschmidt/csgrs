@@ -339,6 +339,12 @@ they consume the stack's contracts.
   - Certification narratives move to `docs/`. The same applies, less strongly,
     to csgrs.
 
+## Outcomes
+
+| Package | Status | Outcome |
+| --- | --- | --- |
+| K02 (hyperdrc tokenizer) | accepted | Tokens are now typed (`Open`, `Close`, `Atom`) and `tokenize` returns `Result`. Two defects were reproduced on the old code by new tests: an unterminated quoted string was accepted, taking the rest of the input as its text, even after a trailing escape; and a quoted `"("` or `")"` was read as a list delimiter. Both tests failed before the change and pass after. HyperDRC release `--all-features`: 1,672 passed (1,670 before, plus the 2 new tests), with the board corpus unchanged. Sharing one tokenizer with hypercircuit and hyperpath remains under K02. |
+
 ## Suggested order
 
 1. Fix the hyperdrc tokenizer (K02, correctness) and run the K06 benchmark. The

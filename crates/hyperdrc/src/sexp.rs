@@ -72,8 +72,12 @@ impl Sexp {
 }
 
 /// Parse one complete S-expression document.
+///
+/// Unbalanced lists, trailing tokens and unterminated quoted strings are
+/// errors. A quoted string is always an atom, even when its text is a
+/// parenthesis.
 pub fn parse(input: &str) -> Result<Sexp> {
-    let tokens = tokenize(input);
+    let tokens = tokenize(input)?;
     let mut index = 0;
     let root = parse_one(&tokens, &mut index)?;
     if index != tokens.len() {
@@ -82,38 +86,49 @@ pub fn parse(input: &str) -> Result<Sexp> {
     Ok(root)
 }
 
-fn parse_one(tokens: &[String], index: &mut usize) -> Result<Sexp> {
+/// A lexical token. Quoted strings stay distinct from delimiters.
+#[derive(Debug, PartialEq)]
+enum Token {
+    Open,
+    Close,
+    Atom(String),
+}
+
+fn parse_one(tokens: &[Token], index: &mut usize) -> Result<Sexp> {
     let token = tokens
         .get(*index)
         .ok_or_else(|| anyhow!("unexpected end of S-expression"))?;
     *index += 1;
 
-    if token == "(" {
-        let mut items = Vec::new();
-        while tokens.get(*index).is_some_and(|token| token != ")") {
-            items.push(parse_one(tokens, index)?);
+    match token {
+        Token::Open => {
+            let mut items = Vec::new();
+            while tokens
+                .get(*index)
+                .is_some_and(|token| *token != Token::Close)
+            {
+                items.push(parse_one(tokens, index)?);
+            }
+            if tokens.get(*index).is_none() {
+                return Err(anyhow!("unterminated S-expression list"));
+            }
+            *index += 1;
+            Ok(Sexp::List(items))
         }
-        if tokens.get(*index).is_none() {
-            return Err(anyhow!("unterminated S-expression list"));
-        }
-        *index += 1;
-        return Ok(Sexp::List(items));
+        Token::Close => Err(anyhow!("unexpected ')' in S-expression")),
+        Token::Atom(atom) => Ok(Sexp::Atom(atom.clone())),
     }
-
-    if token == ")" {
-        return Err(anyhow!("unexpected ')' in S-expression"));
-    }
-    Ok(Sexp::Atom(token.clone()))
 }
 
-fn tokenize(input: &str) -> Vec<String> {
+fn tokenize(input: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut chars = input.chars().peekable();
 
     while let Some(ch) = chars.next() {
         match ch {
-            '(' | ')' => tokens.push(ch.to_string()),
-            '"' => tokens.push(read_string(&mut chars)),
+            '(' => tokens.push(Token::Open),
+            ')' => tokens.push(Token::Close),
+            '"' => tokens.push(Token::Atom(read_string(&mut chars)?)),
             ch if ch.is_whitespace() => {}
             _ => {
                 let mut atom = String::from(ch);
@@ -124,15 +139,17 @@ fn tokenize(input: &str) -> Vec<String> {
                     atom.push(*next);
                     chars.next();
                 }
-                tokens.push(atom);
+                tokens.push(Token::Atom(atom));
             }
         }
     }
 
-    tokens
+    Ok(tokens)
 }
 
-fn read_string(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
+/// Reads a quoted string after its opening quote. Reaching the end of input
+/// before the closing quote is an error, including after a trailing escape.
+fn read_string(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> Result<String> {
     let mut out = String::new();
     let mut escaped = false;
 
@@ -145,12 +162,12 @@ fn read_string(chars: &mut std::iter::Peekable<std::str::Chars<'_>>) -> String {
 
         match ch {
             '\\' => escaped = true,
-            '"' => break,
+            '"' => return Ok(out),
             _ => out.push(ch),
         }
     }
 
-    out
+    Err(anyhow!("unterminated quoted string in S-expression"))
 }
 
 #[cfg(test)]
@@ -177,6 +194,31 @@ mod tests {
         assert!(parse("(kicad_pcb (net 1 GND)").is_err());
         assert!(parse("(kicad_pcb))").is_err());
         assert!(parse(")").is_err());
+    }
+
+    #[test]
+    fn rejects_unterminated_quoted_strings() {
+        // Each of these used to parse, silently taking the rest of the input
+        // as the string's text.
+        assert!(parse(r#"(net 1 "GND)"#).is_err());
+        assert!(parse(r#""unterminated"#).is_err());
+        assert!(parse(r#"(text "ends in an escape\"#).is_err());
+        assert!(parse(r#"(a "b") (c "d"#).is_err());
+    }
+
+    #[test]
+    fn quoted_parentheses_are_atoms() {
+        // A quoted parenthesis used to be read as a list delimiter.
+        let parsed = parse(r#"(text "(" ")")"#).unwrap();
+        assert_eq!(
+            parsed,
+            Sexp::List(vec![
+                Sexp::Atom("text".to_string()),
+                Sexp::Atom("(".to_string()),
+                Sexp::Atom(")".to_string())
+            ])
+        );
+        assert!(parse(r#"(text ")""#).is_err());
     }
 
     #[test]

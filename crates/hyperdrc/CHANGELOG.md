@@ -11,6 +11,11 @@ fabrication, assembly, test, package, and policy checks, and reports findings
 for local review or CI. It is a preflight layer, not a fabricator-certified
 CAM engine: a passing report does not guarantee manufacturability.
 
+- The KiCad S-expression reader rejects an unterminated quoted string,
+  including one that ends in an escape. Previously it took the rest of the
+  file as the string's text. A quoted `"("` or `")"` is now an atom; before,
+  it was read as a list delimiter.
+
 - `run` executes the same discovery, parsing, policy, waiver, baseline, and
   reporting pipeline as the `hyperdrc` binary without exiting the process.
   `ReadinessRunner` runs an ordered check plan for native authoring systems
