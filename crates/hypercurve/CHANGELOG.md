@@ -2,6 +2,14 @@
 
 ## [0.4.0] - Unreleased
 
+- Admit rational vertical polynomial components in selected exchanged charts.
+  Preserve full equations, factor powers and exact selected points through
+  restrictions, similarities, line sections, named filled operations and
+  native SVG/BRep replay. `graph_branch` checks source-chart references;
+  `certifies_polynomial_identity` supplies a sufficient whole-image proof.
+  General mixed-chart incidence and algebraic coefficient/bound admission
+  remain open. See the [R06 qualification](PERFORMANCE.md#r06-native-vertical-charts-2026-11-04).
+
 - Replay retained Bezier ranges through exact SVG graph metadata. An arc cut
   at an algebraic parameter, as a chamfer on an ellipse leaves it, now writes
   graph definition tag 32 with its native source and exact boundaries; import

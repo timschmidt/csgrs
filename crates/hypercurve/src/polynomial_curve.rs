@@ -6,7 +6,9 @@ use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_offset::BezierSimilarityPoint2;
 use crate::polynomial_point::PolynomialPoint2;
 use hyperlimit::Certainty;
-use hypersolve::bivariate_topology::BivariateCurveTopology;
+use hypersolve::bivariate_topology::{
+    BivariateCurveDomain, BivariateCurveTopology, BivariateTopologyError, decompose_bivariate_curve,
+};
 use hypersolve::{
     AlgebraicFiberRootIsolationConfig, AlgebraicFiberRootIsolationStatus,
     AlgebraicRootRepresentation, CurveResultantParameter,
@@ -34,7 +36,11 @@ mod selected_chord;
 /// This is a curve collection, not a filled region. Every solver graph arc is
 /// retained as a native [`Curve2`]; event roots without an incident arc are
 /// retained separately. Singular contacts can join several branch endpoints.
-/// The solver's finite-fiber restrictions and resource limits still apply.
+/// Whole vertical components use an exchanged graph chart and an exact
+/// reflection. The original chart's branches precede exchanged components;
+/// their parameters and slab/root indices belong to their own source charts.
+/// Solver degree/refinement limits apply to both decompositions. Their counters
+/// do not bound total work, coefficient size, memory or cancellation latency.
 #[derive(Clone, Debug)]
 pub struct PolynomialCurveSet2 {
     source: Arc<PolynomialCurveSource2>,
@@ -46,6 +52,17 @@ pub struct PolynomialCurveSet2 {
 struct PolynomialCurveSource2 {
     topology: BivariateCurveTopology,
     fiber_config: AlgebraicFiberRootIsolationConfig,
+}
+
+impl PolynomialCurveSource2 {
+    // The original equation can vanish identically at a vertical event. The
+    // solver's exact residual retains all defining powers of the point fibers.
+    fn fiber_equation(&self) -> &hypersolve::BivariatePolynomial {
+        self.topology.vertical_content().map_or_else(
+            || self.topology.equation(),
+            |content| content.residual_equation(),
+        )
+    }
 }
 
 /// One selected graph branch, its source chart, and its composed image map.
@@ -215,6 +232,11 @@ fn parameter(root: &AlgebraicRootRepresentation) -> ExactCurveResult<BezierParam
 impl PolynomialCurveSet2 {
     /// Consumes a solver-certified complete graph, replaying its point selectors.
     ///
+    /// Vertical content is assembled from the original nonvertical graph and
+    /// selected components in the exchanged chart. Each chart retains the full
+    /// defining equation (up to the exact coordinate exchange), source domain,
+    /// selected fibers and factor powers. Replay reconstructs that authority.
+    ///
     /// `fiber_config` controls subsequent point evaluation. Its subdivision and
     /// refinement limits do not bound total work, coefficient size, heap bytes,
     /// or cancellation latency. Failure publishes no partial curve collection.
@@ -230,11 +252,67 @@ impl PolynomialCurveSet2 {
         topology: BivariateCurveTopology,
         fiber_config: AlgebraicFiberRootIsolationConfig,
     ) -> ExactCurveResult<Self> {
-        // Graph branches do not yet carry whole vertical intervals. Refuse
-        // before publication rather than silently omitting those components.
-        if !topology.vertical_components().is_empty() {
-            return Err(blocked(UncertaintyReason::Unsupported));
+        if topology.vertical_components().is_empty() {
+            return Self::import_graphs(topology, fiber_config);
         }
+        // F(x,y) = p(x) R(x,y). The ordinary chart covers R; the
+        // exchanged chart F(v,u) covers the missing p(v) components. Both
+        // charts retain their full defining equation and checked multiplicity
+        // evidence. The exact reflection transports points and traversal.
+        let exchanged =
+            hypersolve::bivariate_arithmetic::bivariate_swap_parameters(topology.equation());
+        let domain = BivariateCurveDomain {
+            first: topology.domain().second.clone(),
+            second: topology.domain().first.clone(),
+        };
+        let exchanged =
+            decompose_bivariate_curve(&exchanged, &domain, topology.config()).map_err(|error| {
+                blocked(match error {
+                    BivariateTopologyError::DegreeLimit
+                    | BivariateTopologyError::RefinementLimit
+                    | BivariateTopologyError::BudgetExhausted => UncertaintyReason::BudgetExhausted,
+                    BivariateTopologyError::UnsupportedCoefficient
+                    | BivariateTopologyError::VerticalComponent
+                    | BivariateTopologyError::RepeatedComponent
+                    | BivariateTopologyError::BoundaryComponent => UncertaintyReason::Unsupported,
+                    _ => UncertaintyReason::Predicate,
+                })
+            })?;
+        let component = hypersolve::BivariatePolynomial::new(vec![
+            topology
+                .vertical_content()
+                .expect("vertical components retain their content")
+                .factor()
+                .to_vec(),
+        ]);
+        let mut set = Self::import_graphs(topology, fiber_config)?;
+        let exchanged = Self::import_graphs(exchanged, fiber_config)?;
+        let reflection = Similarity2::try_from_real_affine(
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::zero(),
+        )
+        .map_err(invalid)?;
+        for curve in exchanged.curves {
+            let branch = curve
+                .polynomial_branch()
+                .expect("graph imports retain native branches");
+            if branch.selects_component(&component, &CurveContext::STRICT)? {
+                set.curves.push(curve.transform_similarity(&reflection)?);
+            }
+        }
+        Ok(set)
+    }
+
+    // Private partial chart import. Only import_topology publishes a complete
+    // collection: callers must assemble the vertical components before return.
+    fn import_graphs(
+        topology: BivariateCurveTopology,
+        fiber_config: AlgebraicFiberRootIsolationConfig,
+    ) -> ExactCurveResult<Self> {
         let source = Arc::new(PolynomialCurveSource2 {
             topology,
             fiber_config,
@@ -243,7 +321,7 @@ impl PolynomialCurveSet2 {
         for event in source.topology.events() {
             let base = parameter(event.parameter())?;
             let points = PolynomialPoint2::from_fiber(
-                source.topology.equation().clone(),
+                source.fiber_equation().clone(),
                 base.clone(),
                 event.roots(),
             )?;
@@ -253,6 +331,11 @@ impl PolynomialCurveSet2 {
             .iter()
             .map(|(_, points)| vec![false; points.len()])
             .collect();
+        // Residual event points on whole columns are incident to those columns,
+        // even when R alone has an isolated point there.
+        for component in source.topology.vertical_components() {
+            incident[component.event_index()].fill(true);
+        }
         let mut curves = Vec::new();
         for (slab, cell) in source.topology.slabs().iter().enumerate() {
             for (root, arc) in cell.arcs().iter().enumerate() {
@@ -297,7 +380,21 @@ impl PolynomialCurveSet2 {
     pub fn topology(&self) -> &BivariateCurveTopology {
         &self.source.topology
     }
-    /// Borrows all native branches in projection-slab and root order.
+    /// Borrows a branch in the source's original projection chart.
+    ///
+    /// Slab/root indices from a retained branch refer to its own source chart,
+    /// not to the complete collection, which can also contain exchanged charts.
+    pub fn graph_branch(&self, slab: usize, root: usize) -> Option<&Curve2> {
+        let cell = self.topology().slabs().get(slab)?;
+        cell.arcs().get(root)?;
+        let offset: usize = self.topology().slabs()[..slab]
+            .iter()
+            .map(|cell| cell.arcs().len())
+            .sum();
+        self.curves.get(offset + root)
+    }
+
+    /// Borrows original graph branches followed by exchanged-chart components.
     pub fn curves(&self) -> &[Curve2] {
         &self.curves
     }
@@ -312,6 +409,10 @@ impl PolynomialCurveSet2 {
 }
 
 impl PolynomialCurveBranch2 {
+    pub(crate) fn fiber_equation(&self) -> &hypersolve::BivariatePolynomial {
+        self.source.fiber_equation()
+    }
+
     /// Controls for subsequent selected-fiber evaluation, retained on replay.
     pub fn evaluation_config(&self) -> AlgebraicFiberRootIsolationConfig {
         self.source.fiber_config
@@ -397,7 +498,7 @@ impl PolynomialCurveBranch2 {
             // the domain, including removable factors retained by each map.
             if hypersolve::divide_bivariate_polynomial_exact(
                 &residual,
-                self.topology().geometric_equation(),
+                self.topology().graph_equation(),
             )
             .is_none()
             {
@@ -405,6 +506,46 @@ impl PolynomialCurveBranch2 {
             }
         }
         true
+    }
+
+    /// Sufficient exact proof that this branch's entire image satisfies an equation.
+    ///
+    /// Pulls the equation through the retained maps and similarity, then checks
+    /// divisibility by the graph support. Original denominator guards remain
+    /// authoritative. `false` means no certificate was obtained; it does not
+    /// prove nonincidence. This does not add a total-work or coefficient bound.
+    pub fn certifies_polynomial_identity(
+        &self,
+        equation: &hypersolve::BivariatePolynomial,
+    ) -> bool {
+        if self.transform.is_none() && self.maps.is_empty() {
+            return hypersolve::divide_bivariate_polynomial_exact(
+                equation,
+                self.topology().graph_equation(),
+            )
+            .is_some();
+        }
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_active_total_degree, bivariate_homogeneous_compose, bivariate_multiply,
+        };
+        let (Some((nx, wx)), Some((ny, wy)), Some(degree)) = (
+            self.coordinate_form(0),
+            self.coordinate_form(1),
+            bivariate_active_total_degree(equation),
+        ) else {
+            return false;
+        };
+        let Some(pulled) = bivariate_homogeneous_compose(
+            equation,
+            &bivariate_multiply(&nx, &wy),
+            &bivariate_multiply(&ny, &wx),
+            &bivariate_multiply(&wx, &wy),
+            degree,
+        ) else {
+            return false;
+        };
+        hypersolve::divide_bivariate_polynomial_exact(&pulled, self.topology().graph_equation())
+            .is_some()
     }
 
     fn coordinate_form(
@@ -624,7 +765,7 @@ impl PolynomialCurveBranch2 {
             let slope = (&dy / &dx).map_err(|cause| invalid(cause.into()))?;
             let offset = y0 - &slope * x0;
             let mut substituted = bivariate_substitute_second_equal_affine_first(
-                self.topology().geometric_equation(),
+                self.topology().graph_equation(),
                 &slope,
                 &offset,
             );
@@ -643,7 +784,7 @@ impl PolynomialCurveBranch2 {
                     vec![-slope.clone()],
                 ]);
                 let residual = hypersolve::divide_bivariate_polynomial_exact(
-                    self.topology().geometric_equation(),
+                    self.topology().graph_equation(),
                     &component,
                 )
                 .ok_or_else(|| blocked(UncertaintyReason::Predicate))?;
@@ -667,7 +808,7 @@ impl PolynomialCurveBranch2 {
             forms.get_or_init(|| {
                 let equation = residual_equation
                     .as_ref()
-                    .unwrap_or_else(|| self.topology().geometric_equation());
+                    .unwrap_or_else(|| self.topology().graph_equation());
                 let fy = derivative(equation, CurveResultantParameter::Second);
                 // Where F_y != 0, t x d has the sign of (dy F_y + dx F_x) F_y;
                 // for a vertical line, that of dy.
@@ -811,13 +952,7 @@ impl PolynomialCurveBranch2 {
         &self,
         policy: &CurveContext,
     ) -> ExactCurveResult<bool> {
-        for row in self
-            .topology()
-            .geometric_equation()
-            .coefficients
-            .iter()
-            .skip(1)
-        {
+        for row in self.topology().graph_equation().coefficients.iter().skip(1) {
             if !polynomial_is_zero(row, policy)? {
                 return Ok(false);
             }
@@ -848,7 +983,7 @@ impl PolynomialCurveBranch2 {
         let slab = &self.topology().slabs()[self.slab];
         let root = &slab.roots()[self.root];
         Ok(PolynomialPoint2::from_fiber(
-            self.topology().equation().clone(),
+            self.fiber_equation().clone(),
             BezierParameter2::Exact(slab.sample().clone()),
             std::slice::from_ref(root),
         )?
@@ -983,7 +1118,7 @@ impl PolynomialCurveBranch2 {
                 hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
             );
             let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
-                self.topology().equation(),
+                self.fiber_equation(),
                 &parameter,
                 &ordinate,
                 &self.topology().domain().second,
@@ -1032,10 +1167,9 @@ impl PolynomialCurveBranch2 {
             return self.query_fiber_point(value, policy);
         }
         let (base, equation, map) = if let Some(base) = value.as_bezier_parameter() {
-            (base.clone(), self.topology().equation().clone(), None)
+            (base.clone(), self.fiber_equation().clone(), None)
         } else {
-            let (base, equation, map) =
-                abscissa::pullback(self.topology().equation(), value, policy)?;
+            let (base, equation, map) = abscissa::pullback(self.fiber_equation(), value, policy)?;
             (base, equation, Some(map))
         };
         let root = match &base {
@@ -1138,7 +1272,7 @@ impl PolynomialCurveBranch2 {
                 }
             }
         }
-        let equation = self.topology().equation();
+        let equation = self.fiber_equation();
         let report = PolynomialPoint2::query_fiber_roots(
             equation,
             value,

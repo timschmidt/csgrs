@@ -189,8 +189,33 @@ impl Surface {
         let Some(branch) = pcurve.polynomial_branch() else {
             return Ok(false);
         };
-        if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
+        if !branch.rational_maps().is_empty() {
             return Ok(false);
+        }
+        if let Some(transform) = branch.image_transform() {
+            // New mapped admission is the native unit-square chart exchange.
+            // A polynomial identity alone does not prove that a general mapped
+            // UV curve stays in this bounded patch, even with valid endpoints.
+            let equals = |value: &Real, expected: i32| {
+                value.exact_rational_normal_form()
+                    == Real::from(expected).exact_rational_normal_form()
+            };
+            let (a, b, c, d, x, y) = transform.affine_components();
+            if ![a, b, c, d, x, y]
+                .into_iter()
+                .zip([0, 1, 1, 0, 0, 0])
+                .all(|(value, expected)| equals(value, expected))
+                || !branch
+                    .topology()
+                    .domain()
+                    .first
+                    .iter()
+                    .chain(&branch.topology().domain().second)
+                    .zip([0, 1, 0, 1])
+                    .all(|(value, expected)| equals(value, expected))
+            {
+                return Ok(false);
+            }
         }
         let plane = PlaneSurface {
             origin: image.origin.clone(),
@@ -198,12 +223,7 @@ impl Surface {
             v: image.v.clone(),
         };
         let (equation, map) = pullback(&plane, surface)?;
-        if hypersolve::divide_bivariate_polynomial_exact(
-            &equation,
-            branch.topology().geometric_equation(),
-        )
-        .is_none()
-        {
+        if !branch.certifies_polynomial_identity(&equation) {
             return Ok(false);
         }
         let source = pcurve.rational_image(&map)?;
@@ -232,5 +252,80 @@ impl SurfaceIntersectionCurve {
     /// retain the source polynomial and reconstruct its factor evidence on replay.
     pub const fn polynomial_contact_exponent(&self) -> Option<usize> {
         self.polynomial_contact_exponent
+    }
+}
+
+#[cfg(test)]
+mod chart_domain_tests {
+    use super::*;
+
+    #[test]
+    fn mapped_polynomial_section_cannot_skip_surface_domain() {
+        let surface = Surface::rational_bezier(
+            vec![
+                vec![
+                    Point3::new(0.into(), 0.into(), 0.into()),
+                    Point3::new(1.into(), 0.into(), 0.into()),
+                ],
+                vec![
+                    Point3::new(0.into(), 1.into(), 0.into()),
+                    Point3::new(1.into(), 1.into(), 0.into()),
+                ],
+            ],
+            vec![vec![Real::one(); 2]; 2],
+        )
+        .unwrap();
+        // v=4u(1-u) lies in the unit square. Translation keeps both endpoints
+        // inside but moves its interior above v=1. The planar polynomial
+        // identity alone cannot certify this bounded surface image.
+        let equation = BivariatePolynomial::new(vec![
+            vec![0.into(), 1.into()],
+            vec![(-4).into()],
+            vec![4.into()],
+        ]);
+        let topology = decompose_bivariate_curve(
+            &equation,
+            &BivariateCurveDomain {
+                first: [0.into(), 1.into()],
+                second: [0.into(), 2.into()],
+            },
+            Default::default(),
+        )
+        .unwrap();
+        let set = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+        assert_eq!(set.curves().len(), 1);
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let translation = hypercurve::Similarity2::try_from_real_affine(
+            1.into(),
+            0.into(),
+            0.into(),
+            1.into(),
+            0.into(),
+            half.clone(),
+        )
+        .unwrap();
+        let pcurve = set.curves()[0].transform_similarity(&translation).unwrap();
+        for endpoint in [pcurve.start(), pcurve.end()] {
+            surface.point_at(&endpoint).unwrap();
+        }
+        let middle = pcurve.point_at(&half.into()).unwrap();
+        assert!(matches!(
+            surface.point_at(&middle),
+            Err(GeometryError::SurfaceParameterOutsideDomain)
+        ));
+        let curve = Curve3::from_planar_image(PlanarCurve3 {
+            source: pcurve.clone(),
+            origin: Point3::origin(),
+            u: Vector3::x(),
+            v: Vector3::y(),
+            source_scale: Real::one(),
+            source_offset: Real::zero(),
+        })
+        .unwrap();
+        assert!(
+            !surface
+                .certifies_polynomial_section_image(&curve, &pcurve, &Real::one(), &Real::zero())
+                .unwrap()
+        );
     }
 }

@@ -850,7 +850,7 @@ pub fn empty_contained_boundary_and_solver_frontier() {
     }
     let equation = polynomial(vec![vec![q(-1, 2)], vec![1.into()]]);
     // Keep the original vertical-section input. R06 now certifies its whole
-    // interval at the solver; native graph-chart admission remains a typed gap.
+    // interval at the solver and retains its exchanged native chart downstream.
     let topology = decompose_bivariate_curve(
         &equation,
         &BivariateCurveDomain {
@@ -865,12 +865,31 @@ pub fn empty_contained_boundary_and_solver_frontier() {
     assert_eq!(topology.vertical_components().len(), 1);
     assert_eq!(topology.vertical_components()[0].defining_exponent(), 1);
     let surface = tensor([x(), y(), equation], one());
-    let error = plane().intersect_surface(&surface).unwrap_err();
-    assert!(
-        matches!(error, GeometryError::PlanarCurve(hypercurve::ExactCurveError::Blocked(blocker))
-        if blocker.operation() == hypercurve::CurveOperation2::Construction
-            && blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
-    );
+    let sections = branches(plane().intersect_surface(&surface).unwrap());
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].polynomial_contact_exponent(), Some(1));
+    check_correspondence(&sections[0], &plane(), &surface);
+    let model = model_and_replay(&sections, &surface, "vertical-section");
+    let cutting = Surface::plane(
+        Point3::new(0.into(), q(1, 2), 0.into()),
+        Vector3::x(),
+        Vector3::z(),
+    )
+    .unwrap();
+    for curve in model.curves() {
+        let CurveSurfaceIntersection::Points(contacts) =
+            cutting.intersect_curve(curve.geometry()).unwrap()
+        else {
+            panic!("one transverse recut after vertical replay")
+        };
+        assert_eq!(contacts.len(), 1);
+        assert!(
+            contacts[0]
+                .point
+                .coincides_with(&Point3::new(q(1, 2), q(1, 2), 0.into()).into())
+                .unwrap()
+        );
+    }
 }
 
 pub fn repeated_section_native_replay_is_cold() {
@@ -944,6 +963,90 @@ pub fn repeated_section_native_replay_is_cold() {
         .args([
             "--exact",
             "repeated_section_native_replay_is_cold",
+            "--nocapture",
+        ])
+        .env(INPUT, &path)
+        .output()
+        .unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert!(
+        result.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&result.stdout),
+        String::from_utf8_lossy(&result.stderr)
+    );
+}
+
+pub fn vertical_section_native_replay_is_cold() {
+    const INPUT: &str = "HYPERBREP_VERTICAL_REPLAY_INPUT";
+    fn consume(text: &str) {
+        let model = RawModel::from_json(text, &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(model.to_json().unwrap(), text);
+        assert_eq!(model.pcurves().count(), 2);
+        for pcurve in model.pcurves() {
+            assert_eq!(
+                pcurve
+                    .geometry()
+                    .curve()
+                    .polynomial_branch()
+                    .unwrap()
+                    .defining_exponent(),
+                2
+            );
+        }
+        revalidate_recorded_images(
+            &model,
+            &[(1.into(), 0.into()), (1.into(), 0.into())],
+            "cold-vertical-section",
+        );
+        let cutting = Surface::plane(
+            Point3::new(0.into(), q(1, 2), 0.into()),
+            Vector3::x(),
+            Vector3::z(),
+        )
+        .unwrap();
+        for curve in model.curves() {
+            let CurveSurfaceIntersection::Points(contacts) =
+                cutting.intersect_curve(curve.geometry()).unwrap()
+            else {
+                panic!("one vertical-section recut")
+            };
+            assert_eq!(contacts.len(), 1);
+            assert!(
+                contacts[0]
+                    .point
+                    .coincides_with(&Point3::new(q(1, 2), q(1, 2), 0.into()).into())
+                    .unwrap()
+            );
+        }
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        consume(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let surface = tensor(
+        [
+            x(),
+            y(),
+            polynomial(vec![vec![q(1, 4)], vec![(-1).into()], vec![1.into()]]),
+        ],
+        one(),
+    );
+    let sections = branches(plane().intersect_surface(&surface).unwrap());
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].polynomial_contact_exponent(), Some(2));
+    let model = model_and_replay(&sections, &surface, "vertical-section-cold-source");
+    let text = model.to_json().unwrap();
+    consume(&text);
+    let path = std::env::temp_dir().join(format!("hyperbrep-vertical-{}.json", std::process::id()));
+    std::fs::write(&path, text).unwrap();
+    let result = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "vertical_section_native_replay_is_cold",
             "--nocapture",
         ])
         .env(INPUT, &path)

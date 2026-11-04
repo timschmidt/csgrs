@@ -10,6 +10,182 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## R06 native vertical charts (2026-11-04)
+
+The original `x=0` topology on `[-1,1] × [-2,2]` is certified by
+Hypersolve at `ff9926b76e0da47f4a886dcef4db53f4621bfd9a`, but
+`PolynomialCurveSet2::from_topology` reports construction/Unsupported. The
+missing witness reproduces that exact failure before this change. Hypercurve
+owns chart admission, selected fibers, differential and incidence support
+(P15, P17–P20); BRep owns spatial/pcurve validation and native references.
+This increment extends rational-coefficient, rational-rectangle topology,
+including algebraic selected coordinates. It does not admit arbitrary
+algebraic coefficients or selected rectangle bounds.
+
+### Representation and proof
+
+For the solver's checked identity `F(x,y)=p(x)R(x,y)`, the original chart
+retains all nonvertical graphs of R. A second complete decomposition of
+`F(v,u)` in the exchanged rectangle supplies precisely the graphs selected
+by `p(v)=0`; exact reflection maps them back to the original plane. An open
+slab cannot change selected factor before its certified event boundary.
+Together these cover the complete zero set without replacing a selected
+curve with a fitted line or materializing its algebraic abscissa. Full
+equations (up to exact coordinate exchange), defining powers, rectangles,
+ordered fibers and chart maps remain authoritative and reconstruct on replay.
+Residual isolated points on a whole column are incident to that column,
+not isolated components of the union. Other isolated points remain retained.
+
+Point fibers use the unreduced residual R when vertical content is present;
+geometric graph queries use the solver's reduced `graph_equation()`. The
+full supporting equation is not a graph differential at a removed vertical
+factor. The original full equation remains available as provenance.
+
+`graph_branch(slab,root)` selects only a collection's original chart;
+`curves()` appends exchanged components after those branches. SVG and BRep
+replay use this distinction when checking references. Native record grammar
+is unchanged. `certifies_polynomial_identity` pulls an equation through the
+retained coordinate forms and checks exact divisibility by graph support.
+It is a sufficient whole-image certificate; false does not prove
+nonincidence. Unmapped branches reuse the prior direct divisibility path.
+BRep consumes the certificate and still validates spatial/pcurve parameter
+agreement. Its newly mapped path admits only the exact coordinate exchange
+of an original unit-square source rectangle. General UV maps still need a
+whole-domain certificate: endpoints inside the patch plus a polynomial
+identity are insufficient. The negative translated parabola witness has valid
+endpoints but an out-of-domain interior; it reproduced a draft-certificate
+failure and now obtains no image certificate. No independent geometry kernel
+or trusted serialized proof flag is added.
+
+### Demonstrated scope and limits
+
+The maintained witnesses include the original x, xy and x(x²+y²) inputs;
+x²y³; node, cusp, crossing and tangential parabola products; squared boundary
+columns; columns separated by 2^-80; and a repeated selected quintic column
+with `max_axis_degree=16`. Independent equations, component counts, defining
+powers, exact point forms and jets supplement the topology authority.
+Selected output is consumed by line incidence, splitting, reversal,
+similarities, filled square reconstruction and Boolean empty-set identities.
+Cold SVG replay checks the transported quintic relation and further
+restriction. The original BRep vertical section now completes whole-image
+validation, native replay, affine transport and recut; a squared vertical
+section also reconstructs its defining power in a fresh process.
+
+Configured degree, fiber and refinement limits apply to the exchanged
+construction as well. A zero-budget admission actually declines one
+promotion (used 0, limit 0, requested 1); a pre-cancelled attempt reports
+cancellation and a later retry succeeds. Failure publishes no partial set.
+These controls do not bound total coefficient arithmetic, expression size,
+heap, elapsed time or cancellation latency. The second complete projection
+can add avoidable events and retained work; this is not a minimal-cost atlas.
+
+A direct current-source probe of two half axes from xy in distinct retained
+charts still reports intersection/Unsupported. General mixed-chart
+polynomial incidence, singular differential germs, algebraic coefficient and
+bound admission, implicit offset/corner closure and complete trimmed solids
+remain open. Passing these named workflows does not complete R06/R07 or prove
+the universal algebraic closure target. The native square witness does not
+qualify every hole or disconnected vertical-boundary configuration.
+
+### Completed-workload cost observations
+
+A frozen archive of the committed base and the candidate use the same
+external source, warmups, allocator and nine legacy topology/point-query/
+reversal/native-SVG outcome recipes. Three alternating process pairs pinned
+to one allowed CPU supply 1,080 measured calls (20 per case per process).
+All six complete outcome/artifact row files have identical SHA-256
+`bd4f2c207f537b93711fc7aa64aa62025b9d59a4e472d6bbbbe03f986b490580`.
+The full implicit-circle SVG attempt already reports BudgetExhausted on the
+base; it is preserved as an exhausted outcome, not an exact-success control.
+That receipt alone does not prove a reached resource limit. Eight other SVG
+controls complete. Semantic identities and deterministic bytes are separate
+checks.
+
+Legacy allocation-call and requested-byte observations are unchanged in all
+nine rows. Median time ratios range from 0.7445 to 1.1903; the slower boundary
+row is 215.8 → 256.9 µs, and the cusp is 42.11 → 47.36 ms. Other validation
+jobs were active on this shared host. These observations establish neither a
+speedup nor statistical performance nonregression; the adverse observations
+are retained with the rest.
+
+Four newly successful native construction/query/incidence-location/split/
+reversal workflows have 20 samples each. Their medians are 279 µs (one
+column), 1.385 ms (crossing powers), 1.502 ms (node and column) and 25.038 ms
+(circle and algebraic columns). Requested allocation traffic is respectively
+150,730; 729,845; 1,209,800; and 10,147,724–10,151,084 bytes. Peak logical live
+bytes are 32,765; 68,030; 79,332; and 701,602–707,186. These are different
+completed contracts from the former unsupported admissions, so there is no
+successful baseline speedup comparison. They do not include native SVG or
+BRep completion. The circle/columns row retains post-drop deltas of
+0–5,584 bytes; legacy cusp/circle observations retain up to 384 bytes. No
+leak-free or universal ownership bound is claimed. BRep performance was not
+rebenchmarked in this increment.
+
+The follow-up retention probe performs 100 calls per case in three cycles of
+fresh source inputs. Both builds retain startup allocations of 166,128 bytes
+for the legacy circle and 303,192 for the cusp; the candidate additionally
+retains 263,192 for the new circle/columns workflow. The measured totals stop
+growing between calls 20 and 100, and later cycles return to their starting
+logical live-byte level after source/result drop. This is bounded warm-cache
+stability, not identification of every owner or a universal ownership bound.
+Measured topology/branch sizes stay 416/544 bytes. The main probe grows
+20,760,296 → 20,788,552 bytes (+28,256), including candidate-only workflow
+and certificate code; this does not isolate library code-size growth.
+
+### Validation and evidence
+
+The broad library/integration run reports 3,912 passing executions in 204
+batches and 37 existing ignored tests. It started before the final direct
+unmapped identity fast path and BRep bounded-domain guard; its compiled-source
+attribution is limited, so this is not a claim that the entire broad suite ran
+against the final bytes. The final affected checks are separate: BRep/IO
+reports 817 passes and no ignored tests; polynomial curve unit checks report
+75 passes and one existing ignored test; the two focused integration targets
+report ten passes (including native cold replay); minimal features report
+nine passes. The late independent whole-image rectangle assertions are rerun
+natively, in minimal features, WASM and the capability driver. Source hashes
+cover all fifteen changed/new Rust files. No subsequent production edits occur.
+The root adapter/receipt/profile checks pass all 41 tests, including all 576
+revolution matrix cells (the 30 profile tests finish in 686.60 seconds). CSGRS
+has no HyperBRep dependency, so the later BRep domain guard does not change
+that qualified dependency closure. Eleven owner/consumer doctests pass.
+Stable 1.98.1 and MSRV 1.95 warning-denied all-feature/all-target Clippy, strict
+rustdoc, both standalone fuzz manifest checks and final formatting pass.
+The seventeen capability-driver guards and all six reviewed witnesses pass;
+source inputs remain stable during each final witness run.
+
+The initial broad linker failure occurs at the measured full `/tmp` user
+quota; cost/WASM/Clippy attempts also record explicit quota errors. Removing
+finished owned caches, including 13 GiB of package release artifacts, allows
+unchanged-source retries. Storage failure is distinct from geometric resource
+exhaustion. The translated-parabola counterexample separately catches a real
+working-draft BRep over-admission before commit; the final unit-square exchange
+guard and the complete BRep/IO corpus pass afterward. The failure and correction
+remain in the evidence.
+
+Nine actual zero-import WASM exports execute the shared native curve and
+empty-set recipes in fresh Node 22.22.2 instances. Their final module is
+13,833,516 bytes; process maximum RSS is 99,256 KiB. Native SVG/BRep fresh-child
+replay is separate. One additional shared BRep recipe passes in a fresh
+zero-import WASM instance after the bounded-domain guard: the original
+vertical section completes image validation, in-memory native JSON replay,
+affine transport and recut. That module is 18,750,152 bytes and process peak
+RSS is 106,712 KiB. These are workspace-path probes, not package/binding gates. The existing SVG libFuzzer target, seeded with newly
+encodable vertical records, completes 28,107 AddressSanitizer runs in 61 seconds
+with reported peak RSS 476 MiB. LeakSanitizer is disabled; this is bounded
+coverage-guided evidence, not exhaustive/lexicase coverage or a leak guarantee.
+Nightly's recursive Send/Sync warning at unchanged `bezier_region.rs` static
+`EMPTY` reproduces on the committed base with that warning denied. It is not
+suppressed; stable/MSRV warning-denied checks are distinct.
+
+Raw phases, lockfiles, source snapshots, exact selectors/artifacts, all cost
+and retention samples, the old failure receipts and current mixed-chart
+blocker are retained in external record
+`docs/evidence/2026-11-04-research-r06-native`, indexed by the
+[evidence archive](../../docs/evidence-archive.md). This increment is a local
+commit, with no push, full workspace CI, installed package or production
+binding qualification.
+
 ## K06: selected polynomial field route versus cusp semicircle kernels (2026-11-03)
 
 **Verdict: rejected.** On the only partner family the two routes share,

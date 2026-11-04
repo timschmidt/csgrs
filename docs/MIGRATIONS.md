@@ -668,13 +668,20 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   vertical components. Repeated-factor evidence refers to the residual when
   vertical content is present; `vertical_content()` retains the exact original
   factor/quotient identity. The finite `rational_fiber()` query retains its
-  `VerticalComponent` error on a whole interval. Native curve/BRep consumers
-  still lack vertical charts and now report construction/Unsupported at curve
-  admission; the original BRep section failure is
-  `GeometryError::PlanarCurve(ExactCurveError::Blocked(...))` rather than the
-  earlier solver `PolynomialTopology(VerticalComponent)`. No native archive
-  grammar or supported finite-graph source changes. See the
-  [R06 qualification](../crates/hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04).
+  `VerticalComponent` error on a whole interval. Native admission now assembles
+  vertical components in exchanged source charts, with exact reflections.
+  `curves()` returns the original graph branches followed by exchanged-chart
+  components. Each branch's parameter, slab/root indices and topology belong
+  to its own chart. Use `graph_branch(slab, root)` to select a branch of a
+  collection's original chart; indexing the complete collection by a source
+  slab/root pair is insufficient. Native replay validates this distinction.
+  `certifies_polynomial_identity` supplies a sufficient whole-image proof
+  through retained maps, including these charts; false is not nonincidence.
+  BRep newly mapped admission is limited to the exact unit-square coordinate
+  exchange; general mapped UV domains require additional certification. The
+  original vertical BRep section now succeeds through native replay and recut. Archive/SVG record grammar is unchanged. General mixed-chart incidence
+  and implicit operation closure remain open. See the
+  [native R06 qualification](../crates/hypercurve/PERFORMANCE.md#r06-native-vertical-charts-2026-11-04).
 - **Stationary straight BRep sweeps.** `hyperbrep::builder::sweep_curve`, its
   region form and fixed-axis moving-frame inputs admit strictly increasing
   straight images with isolated stationary parameters. Their surfaces and

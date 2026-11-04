@@ -120,13 +120,7 @@ pub(super) fn read_definition(
     let slab = reader.read_len()?;
     let root = reader.read_len()?;
     let curve = source
-        .curves()
-        .iter()
-        .find(|curve| {
-            curve
-                .polynomial_branch()
-                .is_some_and(|branch| branch.slab_index() == slab && branch.root_index() == root)
-        })
+        .graph_branch(slab, root)
         .ok_or_else(|| malformed("exact polynomial branch has an invalid slab or root index"))?;
     let start_index = reader.read_len()?;
     let end_index = reader.read_len()?;

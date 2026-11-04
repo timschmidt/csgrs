@@ -410,11 +410,16 @@ prove an exact similarity reuse Hypercurve line sections while retaining their
 original guards, so the replayed section remains intersectable. The
 [implementation record](IMPLEMENTATION_STATUS.json) links the shared solver
 qualification. Repeated finite-fiber sources retain defining exponents.
-R06 additionally certifies whole vertical intervals at the solver, but native
-vertical curve charts still return construction/Unsupported before section
-publication. The original vertical tensor-section fixture tests both stages;
-see the [owner qualification](../../hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04).
-Native vertical charts and general trimmed arrangements remain open.
+R06 additionally admits rational vertical sections as selected exchanged native
+charts. The original vertical tensor-section fixture now completes both
+pcurves, whole-image validation, restriction/reversal, native save/reload,
+affine transport/revalidation and a further transverse plane cut. A squared
+vertical section also reconstructs its defining power in a fresh process.
+Hypercurve owns chart pullback and the sufficient polynomial identity proof;
+BRep retains its spatial/pcurve correspondence check. See the
+[owner qualification](../../hypercurve/PERFORMANCE.md#r06-native-vertical-charts-2026-11-04).
+General coefficient fields, complete mixed-chart intersections and trimmed
+arrangements remain open.
 
 `CurveSurfacePoint` exposes `Parameter`, `GeometricPoint3` and
 `CurveSurfaceContactKind::{Simple, Repeated, Boundary}`. The first two kinds

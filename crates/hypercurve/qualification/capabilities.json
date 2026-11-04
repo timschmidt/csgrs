@@ -16938,7 +16938,7 @@
     {
       "id": "vertical_topology_consumer_boundary",
       "target": "polynomial_empty_axis",
-      "test": "whole_vertical_topology_never_publishes_a_partial_curve_collection",
+      "test": "whole_vertical_topology_enters_a_complete_native_curve_collection",
       "owner": "Hypersolve component topology and Hypercurve curve-set admission",
       "properties": [
         "P15",
@@ -16958,7 +16958,7 @@
       "policies": [
         "STRICT"
       ],
-      "semantics": "Solver vertical intervals retain selected first coordinates and full closed second bounds; the native graph-branch importer currently refuses them before publishing a curve collection.",
+      "semantics": "Solver vertical intervals retain selected first coordinates and full closed second bounds. Native admission assembles original nonvertical graphs and selected exchanged-chart components with exact reflection, preserving full equations and factor powers.",
       "claims": [
         {
           "stage": "restriction_reconstruction",
@@ -16967,11 +16967,246 @@
         },
         {
           "stage": "representation",
-          "outcome": "unsupported",
-          "assertion": "PolynomialCurveSet2 returns a construction/Unsupported blocker for every whole-vertical input; no empty or incomplete curve set is published."
+          "outcome": "exact_success",
+          "assertion": "The original x, xy and x(x^2+y^2) inputs publish complete native collections with respectively 1, 4 and 2 branches and no spurious isolated point."
         }
       ],
-      "oracle": "Exact retained source, one whole vertical component, nonempty topology, identical replay and the typed downstream blocker; no claim of native vertical curve operation completion.",
+      "oracle": "Exact retained source, one whole vertical solver component, identical topology replay, independent native component counts and no spurious isolated point. Broader native operation claims have separate fixtures.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_selected_quintic",
+      "target": "polynomial_vertical_components",
+      "test": "selected_quintic_columns_keep_points_jets_and_sections_exact",
+      "owner": "Hypercurve polynomial chart admission and existing selected-branch consumers",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "domain": "The cube of x^5+5x+5 in [-2,2]^2, max_axis_degree=16 and otherwise default solver/evaluation controls.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact coordinate exchange retains the complete defining polynomial, source domains, selected fibers and defining powers. No fitted curve, materialized algebraic coordinate or trusted replay flag. This fixture is a bounded increment, not general algebraic operation closure.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Point queries satisfy the independently specified quintic relation and exact ordinate."
+        },
+        {
+          "stage": "differentials",
+          "outcome": "exact_success",
+          "assertion": "First and second jets equal (0,1) and (0,0)."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "A horizontal authored line has exactly one certified transverse contact; split output is consumed by another complete line section."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Split branches retain defining exponent three."
+        }
+      ],
+      "oracle": "Strict monotonicity proves one real column; defining relation, ordinate identities, exact jets and independent one-contact census.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_singular_and_boundary",
+      "target": "polynomial_vertical_components",
+      "test": "singular_contacts_boundary_columns_and_close_roots_keep_complete_native_sets",
+      "owner": "Hypercurve polynomial chart admission and existing selected-branch consumers",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "domain": "Column times node, cusp, crossing or tangential parabola in [-2,2]^2; squared columns on either rectangle boundary; two columns separated by 2^-80.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact coordinate exchange retains the complete defining polynomial, source domains, selected fibers and defining powers. No fitted curve, materialized algebraic coordinate or trusted replay flag. This fixture is a bounded increment, not general algebraic operation closure.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Independent component counts are 6,4,4,6 for the singular cases; boundary columns retain exponent two and close columns remain distinct."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Known column points remain incident on both sides of each singular event."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Every retained endpoint satisfies the original equation; whole-image divisibility certificates retain the defining relation."
+        }
+      ],
+      "oracle": "Independent product equations, graph-piece census, exact column coordinates and distinctness. Does not classify every singular tangent germ.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_region_reconstruction",
+      "target": "polynomial_vertical_components",
+      "test": "vertical_charts_reenter_region_arrangement_and_reconstruction",
+      "owner": "Hypercurve polynomial chart admission and existing selected-branch consumers",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "domain": "Square bounded by two native selected vertical sides and two authored horizontal lines.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact coordinate exchange retains the complete defining polynomial, source domains, selected fibers and defining powers. No fitted curve, materialized algebraic coordinate or trusted replay flag. This fixture is a bounded increment, not general algebraic operation closure.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The mixed exact boundary enters CurveRegion2."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Interior, boundary and exterior witnesses agree with the independently specified square."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Reconstruction under EvenOdd has empty symmetric difference; self-difference is empty and union from empty restores the region."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Vertical sides retain exact selected restrictions and reversed traversal."
+        }
+      ],
+      "oracle": "Independent square boundaries, closed path incidence, exact set identities and empty-operand composition; sampled membership is supplementary.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_cold_replay",
+      "target": "polynomial_vertical_components",
+      "test": "exchanged_charts_replay_cold_and_compose",
+      "owner": "Hypercurve polynomial chart admission and existing selected-branch consumers",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "domain": "The native square plus a reversed, restricted, reflected/scaled/translated repeated quintic column; native SVG source graph.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact coordinate exchange retains the complete defining polynomial, source domains, selected fibers and defining powers. No fitted curve, materialized algebraic coordinate or trusted replay flag. This fixture is a bounded increment, not general algebraic operation closure.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh-process replay reconstructs the selected source and factor power; re-encoding is deterministic."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "World points satisfy the transported quintic relation (y+1)^5+80(y+1)+160=0 and x=2t+3."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Replayed curves split with shared endpoint and exponent three; the replayed filled square re-enters classification and Boolean identities."
+        }
+      ],
+      "oracle": "Independent transformed polynomial identity, source multiplicity, exact point forms and region set identities; bytes checked separately.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_resource_retry",
+      "target": "polynomial_vertical_components",
+      "test": "admission_exhaustion_and_cancellation_do_not_poison_retry",
+      "owner": "Hypercurve polynomial chart admission and existing selected-branch consumers",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "domain": "A pre-certified x=0 topology, zero promotion/refinement budget, pre-cancelled token, and subsequent unrestricted retry.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "Line"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Exact coordinate exchange retains the complete defining polynomial, source domains, selected fibers and defining powers. No fitted curve, materialized algebraic coordinate or trusted replay flag. This fixture is a bounded increment, not general algebraic operation closure.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The new exchanged-chart decomposition declines exactly one promotion against limit zero, propagates cancellation and allows a later successful native admission."
+        }
+      ],
+      "oracle": "Actual BudgetExceeded receipts (kind, requested, used and limit) and successful larger-budget retry; no total-work, heap or cancellation-latency bound.",
       "timeout_seconds": 300
     }
   ]

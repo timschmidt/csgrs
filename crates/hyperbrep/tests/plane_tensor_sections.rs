@@ -36,3 +36,8 @@ fn empty_contained_boundary_and_solver_frontier() {
 fn repeated_section_native_replay_is_cold() {
     support::repeated_section_native_replay_is_cold();
 }
+
+#[test]
+fn vertical_section_native_replay_is_cold() {
+    support::vertical_section_native_replay_is_cold();
+}

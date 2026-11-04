@@ -107,3 +107,36 @@ fn unused_polynomial_sources_are_validated() {
         ))
     ));
 }
+
+#[test]
+fn exchanged_components_cannot_supply_invalid_original_graph_indices() {
+    // This source has a complete vertical interval but no ordinary graph arc.
+    // Its exchanged branch's (0,0) must not validate a source-chart reference.
+    let mut writer = GraphWriter::new(1_048_576, 256);
+    let source = writer.begin(POLYNOMIAL_SOURCE).unwrap();
+    writer
+        .polynomial(&hypersolve::BivariatePolynomial::new(vec![
+            vec![],
+            vec![Real::one()],
+        ]))
+        .unwrap();
+    for value in [-1, 1, -1, 1] {
+        writer.writer.write_real(&Real::from(value)).unwrap();
+    }
+    for limit in [8, 128, 128, 128, 64, 128, 64] {
+        writer.writer.write_len(limit).unwrap();
+    }
+    let start = writer.scalar_parameter(&Real::from(-1).into()).unwrap();
+    let end = writer.scalar_parameter(&Real::one().into()).unwrap();
+    writer.begin(POLYNOMIAL_BRANCH).unwrap();
+    for index in [source, 0, 0, start, end] {
+        writer.writer.write_u32(index).unwrap();
+    }
+    writer.writer.write_bool(false).unwrap();
+    writer.writer.write_len(0).unwrap();
+    writer.writer.write_bool(false).unwrap();
+    assert!(matches!(
+        read(&writer.writer.bytes, writer.count),
+        Err(SvgError::MalformedInput(_))
+    ));
+}

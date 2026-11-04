@@ -134,7 +134,7 @@ impl PolynomialCurveBranch2 {
             let base = parameter(event.parameter())?;
             if compare(&base.clone().into())?.is_eq() {
                 return PolynomialPoint2::from_fiber(
-                    self.topology().equation().clone(),
+                    self.fiber_equation().clone(),
                     base,
                     &event.roots()[root_index..=root_index],
                 )?
@@ -159,7 +159,7 @@ impl PolynomialCurveBranch2 {
         if max_order == 0 {
             return Ok(result);
         }
-        let d = GraphDifferential::new(self.topology().geometric_equation());
+        let d = GraphDifferential::new(self.topology().graph_equation());
         if point
             .rational_form(d.fy.clone(), one())?
             .compare_to_real(&Real::zero())?
@@ -203,7 +203,7 @@ impl PolynomialCurveBranch2 {
     pub fn tangent_direction_at(&self, value: &CurveParameter2) -> ExactCurveResult<CurveVector2> {
         let policy = crate::policy::principal_context();
         let point = self.differential_source_point(value, &policy)?;
-        let d = GraphDifferential::new(self.topology().geometric_equation());
+        let d = GraphDifferential::new(self.topology().graph_equation());
         let zero = Real::zero();
         let fy_order = point
             .rational_form(d.fy.clone(), one())?
@@ -219,7 +219,7 @@ impl PolynomialCurveBranch2 {
         let orientation = if fy_order.is_eq() {
             let slab = &self.topology().slabs()[self.slab];
             let sample = PolynomialPoint2::from_fiber(
-                self.topology().equation().clone(),
+                self.fiber_equation().clone(),
                 BezierParameter2::Exact(slab.sample().clone()),
                 &slab.roots()[self.root..=self.root],
             )?

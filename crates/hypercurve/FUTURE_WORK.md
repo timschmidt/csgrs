@@ -3941,22 +3941,24 @@ walk. The likely cost is the band arrangement over the glyph's many Bezier
 spans. Profile it and treat it as M2 cost work. It is also a completed-workload
 envelope regression for text offsets.
 
-## Vertical topology consumer boundary (R06, 2026-11-04)
+## Vertical native charts (R06, 2026-11-04)
 
-Hypersolve now retains complete rational vertical components, their defining
-powers and residual graph incidence. Its
-[qualification](../hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04)
-separates this solver success from native curve construction.
-`PolynomialCurveSet2::from_topology` currently reports
-construction/Unsupported for whole vertical intervals before publishing any
-curve set. The shared importer also protects native SVG and BRep source replay.
-The maintained `vertical_topology_consumer_boundary` capability witness tests
-the original equations, solver replay and this exact blocker.
+Whole rational vertical components now enter the existing selected graph carrier
+through an exchanged chart and exact reflection. Original nonvertical graphs
+use the solver's residual fiber equation and reduced graph support; neither
+vertical columns nor residual isolated points on those columns disappear.
+Full equations, selected fibers, source rectangles and defining powers remain
+available after restriction, reversal, similarities and native SVG/BRep replay.
+The [qualification](PERFORMANCE.md#r06-native-vertical-charts-2026-11-04)
+records the demonstrated workflows and their limits. The original
+`vertical_topology_consumer_boundary` witness is now a positive native census;
+separate fixtures cover selected quintics, singular/boundary columns, filled
+reconstruction, cold replay and actual resource-denial/retry receipts.
 
-The next R06/R07 work is a selected vertical chart in the existing curve
-carrier, retaining original source/factor identity through point queries,
-incidence, restriction, transforms, filled arrangements and native SVG/BRep
-replay. Keep the rational vertical topology corpus and all existing horizontal,
-repeated and selected-branch successes. General coefficient fields, selected
-rectangle bounds, offsets/corner operations and total resource contracts remain
-open. This owner increment does not complete native vertical curve geometry.
+R06/R07 remain in progress. General algebraic coefficient fields and selected
+rectangle bounds, complete incidence across distinct polynomial charts,
+singular differential germs, implicit offset/corner operations and total
+resource contracts remain open. The second complete decomposition can add
+avoidable projection events and work; this is not the minimum-cost chart atlas
+or a general closure claim. Keep native specializations and original hard
+cases while completing these consumers.

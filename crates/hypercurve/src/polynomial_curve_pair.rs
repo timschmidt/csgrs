@@ -288,8 +288,8 @@ pub(super) fn intersect(
     }
 
     let original = [
-        a.topology().geometric_equation().clone(),
-        b.topology().geometric_equation().clone(),
+        a.topology().graph_equation().clone(),
+        b.topology().graph_equation().clone(),
     ];
     // Distinct roots of one checked slab can meet only at its retained event
     // incidences. Do not rebuild the opposite branch at an algebraic trim that

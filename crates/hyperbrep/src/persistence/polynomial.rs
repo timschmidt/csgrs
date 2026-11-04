@@ -181,13 +181,12 @@ impl RawPolynomialBranch {
                 index: self.root,
             });
         }
-        // Native curves use projection-slab and root order. Both indices have
-        // been checked against the independently reconstructed complete graph.
-        let offset: usize = source.topology().slabs()[..self.slab]
-            .iter()
-            .map(|slab| slab.arcs().len())
-            .sum();
-        let curve = &source.curves()[offset + self.root];
+        let curve = source.graph_branch(self.slab, self.root).ok_or(
+            PersistenceError::InvalidReference {
+                kind: "polynomial branch",
+                index: self.root,
+            },
+        )?;
         let [start, end] = self.range;
         let mut curve = curve
             .subcurve(graph.curve_parameter(start)?, graph.curve_parameter(end)?)

@@ -3252,6 +3252,30 @@
       "validation": "Final production source passes the combined library/integration BRep and BRep IO corpus, the original vertical-section fixture with both solver-success and exact typed curve-blocker assertions, 41 root downstream tests and twelve owner/consumer doctests. Full Hypercurve coverage is completed across the initial native prefix and all 19 resumed targets after a recorded disk-quota interruption; the unchanged six-test chord replay target also passes separately. Stable/MSRV all-target Clippy, strict docs, standalone fuzz checks and focused native/WASM/ASan owner evidence pass. See the owner record for exact counts, source attribution and limits.",
       "cost_evidence": "Owner qualification records matched finite-graph topology/native SVG costs and separately measures newly successful solver components with blocked native admission. No vertical BRep operation or BRep performance improvement is claimed.",
       "limits": "Native selected vertical charts, complete pcurve/spatial transport, BRep replay and further section/solid operations remain open. Algebraic coefficient/bound and total-resource contracts remain open. All prior work-package statuses remain unchanged."
+    },
+    {
+      "id": "native-vertical-charts-2026-11-04",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P39"
+      ],
+      "change": "Consume Hypercurve exchanged selected graph charts for whole vertical plane/tensor sections. Hypercurve owns the whole-image polynomial pullback/divisibility certificate; BRep retains spatial/pcurve parameterization validation. Native references select original graph-chart indices explicitly. Record grammar is unchanged. Newly mapped BRep admission is limited to the exact unit-square source exchange; arbitrary UV maps retain their prior refusal pending whole-domain evidence.",
+      "source": "../tests/support/plane_tensor_sections.rs",
+      "evidence": "../../hypercurve/PERFORMANCE.md#r06-native-vertical-charts-2026-11-04",
+      "validation": "The original vertical section fixture now completes source relation checks, exact pcurves, image validation, native replay, general affine transport/revalidation and further plane contact. A squared vertical section also replays in a fresh process and retains defining exponent two. The single owner record reports final source qualification and storage failures separately. An independent translated-parabola witness has in-domain endpoints and out-of-domain interior; it reproduces the draft over-admission and now receives no whole-surface image certificate. Full BRep/IO and static checks rerun after this final guard.",
+      "cost_evidence": "Matched legacy native-curve workload allocation/outcome rows are unchanged; timing varies in both directions on a shared host. Newly completed native chart workloads are measured separately. BRep performance was not rebenchmarked.",
+      "limits": "General mixed-chart polynomial incidence remains intersection/Unsupported on the direct xy half-axis probe. Algebraic coefficient/bound admission, complete trimmed solids, implicit offset/corner closure and total-resource guarantees remain open. This increment does not complete R06/R07 or any broader work package."
     }
   ],
   "work_packages": [

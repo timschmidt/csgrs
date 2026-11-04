@@ -85,6 +85,22 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r06-native-2026-11-04` evidence branch ends at
+`7764d5b4fd4d81ae529924c0dd8cd7c9684c5efe`.
+`docs/evidence/2026-11-04-research-r06-native` contains 744 files and 8,142,828 bytes,
+with SHA-256 `55d061be612ef0d6bf2ad4504c330c3d1336ca821b22dcb96c6ffbc462f9cd9d`.
+It retains the original native blocker, exact chart/multiplicity/region/replay
+witnesses, caught draft UV-domain regression and final bounded-admission guard,
+all earlier quota failures, final source/command attribution, native checks,
+ten executed zero-import WASM recipes, the 28,107-run SVG ASan campaign,
+unchanged legacy rows and adverse timings, and allocation/retention samples.
+The complete broad run precedes the final fast path and BRep domain guard;
+final affected checks are identified separately. General mixed-chart incidence
+and resource limits remain open in the
+[qualification](../crates/hypercurve/PERFORMANCE.md#r06-native-vertical-charts-2026-11-04).
+The archive adds only this record to `2d27c29d62728f14cdbcdf7b08e366503becf7ea`;
+earlier evidence is unchanged. No push or publication is claimed.
+
 The local `research-r06-vertical-2026-11-04` evidence branch ends at
 `2d27c29d62728f14cdbcdf7b08e366503becf7ea`.
 `docs/evidence/2026-11-04-research-r06-vertical` contains 1,531 files and 3,544,599 bytes,
