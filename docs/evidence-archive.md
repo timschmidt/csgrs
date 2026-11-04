@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r06-vertical-2026-11-04` evidence branch ends at
+`2d27c29d62728f14cdbcdf7b08e366503becf7ea`.
+`docs/evidence/2026-11-04-research-r06-vertical` contains 1,531 files and 3,544,599 bytes,
+with SHA-256 `d33c5af16435fcee234738f742f2b61bdca8d46224944d8f0a545803eb48e459`.
+It retains the original vertical witness, exact factor/interval/incidence
+corpus, unchanged-source native prefix and all 19 resumed curve targets after
+a disk-quota interruption, eight WASM recipes, both ASan campaigns, exact legacy
+rows and all allocation/retention samples. The final ASan grammar includes
+selected quintic columns; native curve/BRep charts remain unsupported. Baseline
+SVG exhaustion, initial build failures, source/command attribution and resource
+limits remain in the [qualification](../crates/hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04).
+The archive adds only this record to `ec872218ace389ea5048e2505421c7a1490d8f5b`;
+earlier evidence is unchanged. No push or publication is claimed.
+
 The local `research-r21-2026-11-04` evidence branch ends at
 `ec872218ace389ea5048e2505421c7a1490d8f5b`.
 `docs/evidence/2026-11-04-research-r21` contains 199 files and 17,301,176 bytes,

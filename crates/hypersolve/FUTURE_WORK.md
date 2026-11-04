@@ -1,5 +1,23 @@
 # Future work
 
+## Vertical component topology (R06, 2026-11-04)
+
+Rational first-coordinate content now reconstructs the original polynomial
+with its residual equation. Whole closed vertical intervals retain selected
+coordinates, defining exponents and all residual event/half-branch incidence.
+`graph_equation()` separates the residual support from the full geometric
+support; event point roots and interval components are distinct. The
+[qualification](PERFORMANCE.md#r06-vertical-topology-components-2026-11-04)
+records exact reconstruction, singular/boundary and algebraic-coordinate cases,
+replay, native/WASM execution, costs and resource limits.
+
+Native selected vertical charts, planar operations, BRep lifting and exact
+interchange remain the next consumer work. `PolynomialCurveSet2` currently
+refuses whole intervals before publication. General algebraic coefficients
+and rectangle bounds, complete total-work/heap/cancellation accounting and
+broader R06/R07 closure remain open. Earlier finite-fiber records describe
+their historical domains; they are not current vertical-topology blockers.
+
 ## Strict polynomial sign laws (2026-11-04)
 
 `certify_univariate_polynomial_nonnegative` shares one exact Sturm chain and

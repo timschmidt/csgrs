@@ -380,7 +380,7 @@ fn boundary_components_preserve_budget_failure_and_retry() {
 }
 
 #[test]
-fn boundary_repetition_keeps_multiplicity_and_vertical_rejection() {
+fn boundary_repetition_and_vertical_intervals_keep_multiplicity() {
     let rectangle = rectangle(-1, 1, 0, 1);
     let equation = polynomial(&[&[0, 0, 1]]);
     let topology = decompose_bivariate_curve(&equation, &rectangle, Default::default()).unwrap();
@@ -399,16 +399,20 @@ fn boundary_repetition_keeps_multiplicity_and_vertical_rejection() {
         topology.repeated_factorization().unwrap().factors()[0].exponent(),
         2
     );
-    for (equation, error) in [
-        (
-            polynomial(&[&[], &[0, 1]]),
-            BivariateTopologyError::VerticalComponent,
-        ),
-        (polynomial(&[&[0]]), BivariateTopologyError::ZeroPolynomial),
-    ] {
-        assert_eq!(
-            decompose_bivariate_curve(&equation, &rectangle, Default::default()),
-            Err(error)
-        );
-    }
+    let equation = polynomial(&[&[], &[0, 1]]); // xy=0, original full witness.
+    let topology = decompose_bivariate_curve(&equation, &rectangle, Default::default()).unwrap();
+    assert_eq!(topology.equation(), &equation);
+    assert_eq!(topology.domain(), &rectangle);
+    assert_eq!(topology.vertical_components().len(), 1);
+    assert_eq!(topology.vertical_components()[0].defining_exponent(), 1);
+    assert!(topology.events().iter().all(|e| e.roots().len() == 1));
+    assert!(topology.slabs().iter().all(|s| s.arcs().len() == 1));
+    assert_eq!(
+        topology.rational_fiber(&Real::zero(), Default::default()),
+        Err(BivariateTopologyError::VerticalComponent)
+    );
+    assert_eq!(
+        decompose_bivariate_curve(&polynomial(&[&[0]]), &rectangle, Default::default()),
+        Err(BivariateTopologyError::ZeroPolynomial)
+    );
 }

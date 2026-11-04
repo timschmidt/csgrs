@@ -3229,6 +3229,29 @@
       "validation": "Unchanged final Rust source passes 2,537 all-feature release test/doctest executions across BRep (701, including one fresh-process child), IO (123), Hyperlimit (377) and Hypersolve (1,336); zero failed or ignored. Minimal-feature monotone/stationary suites pass 16 parent tests plus one child. Stable 1.98.1 and MSRV 1.95.0 all-target/all-feature warning-denied Clippy, warning-denied rustdoc, both standalone fuzz manifests, formatting and retention checks pass. All 12 zero-import WASM exports execute in Node 22.22.2, including eight shared BRep and four solver recipes; 20,799,312-byte module. Failed disk-quota build attempts and unchanged duplicate-example Cargo warnings remain recorded; no example execution or full CI is claimed.",
       "cost_evidence": "Final source: three alternating pinned-CPU process pairs, 960 measured legacy construction/measure/classification/native-encode/validate/re-encode calls, exact identical legacy JSON/receipt rows. Seven successful legacy median ratios 0.9702-1.0084; six allocation observations unchanged, cuboid chain +52 calls/+1,664 requested bytes. Typed backtracking rejection +4.2 us/+18 calls. Five newly successful workflows add 100 samples, 1.160-2.702 ms medians, with explicit requested/peak/retained bytes and zero post-drop deltas. Probe grows 71,688 bytes. Both earlier phases and adverse roughly 10.5% Sturm timing remain, with incomplete earlier source attribution stated. Shared-host observations do not prove a statistical speedup or universal nonregression; see the single qualification record and evidence digest.",
       "limits": "Uncharged Sturm chain/root-count/coefficient/sign-cell work completes under WorkBudget::ZERO. Separate constructor/inverse calls exhaust a requested root refinement; same-model retry preserves the selected nonscalar inverse. No total-work/heap/cancellation bound, general guided/lateral stationary sweep, curved-solid Boolean, offset/fillet, package/binding, coverage, directed sanitizer/lexicase or full-workspace/pre-push qualification is claimed. Backtracking, invalid weights, constant images and varying-frame stationary paths retain typed failure. All broader work-package statuses and the algebraic closure target remain open/in-progress."
+    },
+    {
+      "id": "vertical-topology-consumer-frontier-2026-11-04",
+      "work_packages": [
+        "WP05a",
+        "WP05b",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P6",
+        "P15",
+        "P18",
+        "P19",
+        "P35",
+        "P39"
+      ],
+      "change": "Keep the original vertical plane/tensor section source and strengthen its fixture with solver interval success. Native curve charts remain unavailable: require the exact construction/Unsupported planar-curve blocker instead of the earlier solver VerticalComponent. BRep production and native grammar are unchanged; shared curve import guards complete interval topology from partial publication.",
+      "source": "../tests/support/plane_tensor_sections.rs",
+      "evidence": "../../hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04",
+      "validation": "Final production source passes the combined library/integration BRep and BRep IO corpus, the original vertical-section fixture with both solver-success and exact typed curve-blocker assertions, 41 root downstream tests and twelve owner/consumer doctests. Full Hypercurve coverage is completed across the initial native prefix and all 19 resumed targets after a recorded disk-quota interruption; the unchanged six-test chord replay target also passes separately. Stable/MSRV all-target Clippy, strict docs, standalone fuzz checks and focused native/WASM/ASan owner evidence pass. See the owner record for exact counts, source attribution and limits.",
+      "cost_evidence": "Owner qualification records matched finite-graph topology/native SVG costs and separately measures newly successful solver components with blocked native admission. No vertical BRep operation or BRep performance improvement is claimed.",
+      "limits": "Native selected vertical charts, complete pcurve/spatial transport, BRep replay and further section/solid operations remain open. Algebraic coefficient/bound and total-resource contracts remain open. All prior work-package statuses remain unchanged."
     }
   ],
   "work_packages": [

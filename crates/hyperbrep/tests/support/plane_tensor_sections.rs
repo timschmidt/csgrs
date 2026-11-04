@@ -706,7 +706,7 @@ pub fn disconnected_mixed_and_near_coincident_sections() {
 }
 
 pub fn empty_contained_boundary_and_solver_frontier() {
-    use hypersolve::bivariate_topology::BivariateTopologyError;
+    use hypersolve::bivariate_topology::{BivariateCurveDomain, decompose_bivariate_curve};
     for value in [-1, 1] {
         let surface = tensor([x(), y(), polynomial(vec![vec![value.into()]])], one());
         assert!(matches!(
@@ -849,13 +849,28 @@ pub fn empty_contained_boundary_and_solver_frontier() {
         }
     }
     let equation = polynomial(vec![vec![q(-1, 2)], vec![1.into()]]);
+    // Keep the original vertical-section input. R06 now certifies its whole
+    // interval at the solver; native graph-chart admission remains a typed gap.
+    let topology = decompose_bivariate_curve(
+        &equation,
+        &BivariateCurveDomain {
+            first: [Real::zero(), Real::one()],
+            second: [Real::zero(), Real::one()],
+        },
+        Default::default(),
+    )
+    .unwrap();
+    assert!(!topology.is_empty());
+    assert_eq!(topology.equation(), &equation);
+    assert_eq!(topology.vertical_components().len(), 1);
+    assert_eq!(topology.vertical_components()[0].defining_exponent(), 1);
     let surface = tensor([x(), y(), equation], one());
-    assert!(matches!(
-        plane().intersect_surface(&surface),
-        Err(GeometryError::PolynomialTopology(
-            BivariateTopologyError::VerticalComponent
-        ))
-    ));
+    let error = plane().intersect_surface(&surface).unwrap_err();
+    assert!(
+        matches!(error, GeometryError::PlanarCurve(hypercurve::ExactCurveError::Blocked(blocker))
+        if blocker.operation() == hypercurve::CurveOperation2::Construction
+            && blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
+    );
 }
 
 pub fn repeated_section_native_replay_is_cold() {

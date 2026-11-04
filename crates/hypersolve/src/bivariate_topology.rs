@@ -12,8 +12,8 @@
 //! intersection multiplicity classifier. The exact defining polynomial is
 //! retained for those consumers. Repeated factors retain a checked exact
 //! factorization while topology uses their reduced support. Horizontal boundary
-//! components remain in the closed fibers; vertical components have an explicit
-//! blocker.
+//! components remain in the closed fibers. Vertical components retain their
+//! complete closed intervals separately from the residual point fibers.
 //! Degree and refinement controls, and the shared work budget, do not bound
 //! every scalar operation, coefficient bit size, allocation or elapsed time.
 
@@ -46,6 +46,8 @@ use crate::work_budget::{self, WorkKind};
 
 mod multiplicity;
 pub use multiplicity::{BivariateMultiplicityFactor, BivariateRepeatedFactorization};
+mod vertical;
+pub use vertical::{BivariateVerticalComponent, BivariateVerticalContent};
 
 const STRICT: PredicatePolicy = PredicatePolicy::STRICT;
 const FIRST: CurveResultantParameter = CurveResultantParameter::First;
@@ -94,7 +96,8 @@ pub enum BivariateTopologyError {
     UnsupportedCoefficient,
     /// The zero set is the whole rectangle, not a curve.
     ZeroPolynomial,
-    /// A complete vertical fiber vanishes; component extraction is required.
+    /// A finite point-fiber query meets a whole vertical interval. Consult the
+    /// topology's vertical components instead of treating this as no roots.
     VerticalComponent,
     /// Legacy blocker for a repeated generic fiber. The checked decomposition
     /// now reduces repeated factors and retains their exact defining exponents.
@@ -112,7 +115,7 @@ pub enum BivariateTopologyError {
     Undecided,
 }
 
-/// One complete fiber, with its exact selected first parameter.
+/// Nonvertical point fiber, with its exact selected first parameter.
 #[derive(Clone, Debug, PartialEq)]
 pub struct BivariateCurveFiber {
     parameter: AlgebraicRootRepresentation,
@@ -126,7 +129,11 @@ impl BivariateCurveFiber {
         &self.parameter
     }
 
-    /// All distinct second-parameter roots in the closed domain, in order.
+    /// Ordered roots of the nonvertical part in the closed second domain.
+    ///
+    /// At a vertical event these are attachment/singular points on the whole
+    /// interval, not the entire fiber. Consult
+    /// [`BivariateCurveTopology::vertical_components`] for those intervals.
     pub fn roots(&self) -> &[IsolatedRootInterval] {
         &self.roots
     }
@@ -240,7 +247,8 @@ impl BivariateConnectionStrip {
 /// Source-bound complete graph of the zero set inside a rational rectangle.
 ///
 /// Only the checked decomposition constructor creates this value. An event
-/// root with no incident arc is an isolated contact and remains in the graph.
+/// root with no incident arc is an isolated contact unless it lies on a
+/// retained vertical component. Both kinds remain in the graph.
 /// Root order selects branches without replacing their defining relation by
 /// polyline geometry. Persist the equation and domain and replay construction;
 /// the private connectivity fields are not untrusted proof flags.
@@ -248,6 +256,7 @@ impl BivariateConnectionStrip {
 pub struct BivariateCurveTopology {
     equation: BivariatePolynomial,
     repeated: Option<BivariateRepeatedFactorization>,
+    vertical: Option<Box<BivariateVerticalContent>>,
     domain: BivariateCurveDomain,
     config: BivariateTopologyConfig,
     projection: Vec<Real>,
@@ -276,17 +285,43 @@ impl BivariateCurveTopology {
     /// and [`Self::repeated_factorization`]. Otherwise the original is reused;
     /// this does not assert that every factor outside the domain is square-free.
     pub fn geometric_equation(&self) -> &BivariatePolynomial {
-        self.repeated
-            .as_ref()
-            .map_or(&self.equation, |f| f.support())
+        if let Some(vertical) = &self.vertical {
+            return vertical.geometric_equation();
+        }
+        self.graph_equation()
+    }
+
+    /// Reduced equation for the nonvertical graph arcs and point fibers.
+    /// Vertical intervals are additional components, never missing point roots.
+    pub fn graph_equation(&self) -> &BivariatePolynomial {
+        self.repeated.as_ref().map_or_else(
+            || {
+                self.vertical
+                    .as_ref()
+                    .map_or(&self.equation, |v| v.residual_equation())
+            },
+            |f| f.support(),
+        )
     }
 
     /// Checked multiplicity evidence when repeated generic fibers were reduced.
     ///
-    /// `None` means the original equation already admitted finite-fiber topology
+    /// With vertical content this factors its residual equation; the exact
+    /// original reconstruction also includes [`Self::vertical_content`].
+    /// `None` means the graph equation already admitted finite-fiber topology
     /// without this reduction; it is not a claim of global square-freeness.
     pub fn repeated_factorization(&self) -> Option<&BivariateRepeatedFactorization> {
         self.repeated.as_ref()
+    }
+
+    /// Checked first-coordinate content and exact residual reconstruction.
+    pub fn vertical_content(&self) -> Option<&BivariateVerticalContent> {
+        self.vertical.as_deref()
+    }
+
+    /// Complete closed vertical components, ordered by their event parameters.
+    pub fn vertical_components(&self) -> &[BivariateVerticalComponent] {
+        self.vertical.as_ref().map_or(&[], |v| v.components())
     }
 
     /// Complete queried domain.
@@ -299,7 +334,9 @@ impl BivariateCurveTopology {
         &self.projection
     }
 
-    /// Ordered complete event fibers, including both vertical domain bounds.
+    /// Ordered event parameters and nonvertical point fibers, including bounds.
+    /// Retained vertical components name their event by index and cover the
+    /// whole closed second interval in addition to these points.
     pub fn events(&self) -> &[BivariateCurveFiber] {
         &self.events
     }
@@ -311,7 +348,8 @@ impl BivariateCurveTopology {
 
     /// Whether the whole queried zero set has no points or branches.
     pub fn is_empty(&self) -> bool {
-        self.events.iter().all(|event| event.roots.is_empty())
+        self.vertical_components().is_empty()
+            && self.events.iter().all(|event| event.roots.is_empty())
             && self.slabs.iter().all(|slab| slab.arcs.is_empty())
     }
 
@@ -321,6 +359,8 @@ impl BivariateCurveTopology {
     /// An event slice includes all distinct contacts, including isolated ones.
     /// The returned intervals remain selected roots of this source fiber;
     /// their midpoints must not be used as authoritative coordinates.
+    /// At a vertical component this finite query returns `VerticalComponent`;
+    /// its whole interval is retained in [`Self::vertical_components`].
     pub fn rational_fiber(
         &self,
         parameter: &Real,
@@ -358,7 +398,8 @@ impl BivariateCurveTopology {
     }
 }
 
-/// Decomposes every zero in the rectangle under the finite-fiber contract.
+/// Decomposes the rational zero set into finite-fiber graphs and whole vertical
+/// intervals in the closed rectangle, retaining their defining multiplicities.
 ///
 /// All predicates and fiber computations are strict. Failure publishes no
 /// partial graph. In particular, a zero resultant is not interpreted as an
@@ -381,6 +422,39 @@ fn decompose(
     domain: &BivariateCurveDomain,
     config: BivariateTopologyConfig,
 ) -> Result<BivariateCurveTopology, BivariateTopologyError> {
+    match decompose_finite(equation, domain, config, None) {
+        Err(BivariateTopologyError::VerticalComponent) => {
+            vertical::decompose(equation, domain, config)
+        }
+        result => result,
+    }
+}
+
+fn rational(value: &Real) -> Result<Real, BivariateTopologyError> {
+    value
+        .exact_rational_normal_form()
+        .map(Real::new)
+        .ok_or(BivariateTopologyError::UnsupportedCoefficient)
+}
+
+fn rational_equation(
+    equation: &BivariatePolynomial,
+) -> Result<BivariatePolynomial, BivariateTopologyError> {
+    Ok(BivariatePolynomial::new(
+        equation
+            .coefficients
+            .iter()
+            .map(|row| row.iter().map(rational).collect())
+            .collect::<Result<_, _>>()?,
+    ))
+}
+
+fn decompose_finite(
+    equation: &BivariatePolynomial,
+    domain: &BivariateCurveDomain,
+    config: BivariateTopologyConfig,
+    extra_projection: Option<&[Real]>,
+) -> Result<BivariateCurveTopology, BivariateTopologyError> {
     work_budget::consume(WorkKind::AlgebraicPromotion, 1)
         .map_err(|_| BivariateTopologyError::BudgetExhausted)?;
     if equation.coefficients.len().saturating_sub(1) > config.max_axis_degree
@@ -391,19 +465,7 @@ fn decompose(
     {
         return Err(BivariateTopologyError::DegreeLimit);
     }
-    let rational = |value: &Real| {
-        value
-            .exact_rational_normal_form()
-            .map(Real::new)
-            .ok_or(BivariateTopologyError::UnsupportedCoefficient)
-    };
-    let equation = BivariatePolynomial::new(
-        equation
-            .coefficients
-            .iter()
-            .map(|row| row.iter().map(rational).collect())
-            .collect::<Result<_, _>>()?,
-    );
+    let equation = rational_equation(equation)?;
     let domain = BivariateCurveDomain {
         first: [rational(&domain.first[0])?, rational(&domain.first[1])?],
         second: [rational(&domain.second[0])?, rational(&domain.second[1])?],
@@ -429,6 +491,9 @@ fn decompose(
         &[-domain.first[0].clone(), Real::one()],
         &[-domain.first[1].clone(), Real::one()],
     );
+    if let Some(factor) = extra_projection {
+        add_projection(&mut projection, factor, config)?;
+    }
     // First-coordinate-only equations also need the closed projection census.
     // A live root yields an identically zero fiber below; no roots means empty.
     if degree > 1 {
@@ -454,7 +519,8 @@ fn decompose(
         }
         if is_zero(&resultant.resultant_coefficients) {
             let repeated = multiplicity::factor(&equation, config)?;
-            let mut topology = decompose(repeated.support(), &domain, config)?;
+            let mut topology =
+                decompose_finite(repeated.support(), &domain, config, extra_projection)?;
             if topology.repeated.is_some() {
                 return Err(BivariateTopologyError::Undecided);
             }
@@ -579,6 +645,7 @@ fn decompose(
     Ok(BivariateCurveTopology {
         equation,
         repeated: None,
+        vertical: None,
         domain,
         config,
         projection,

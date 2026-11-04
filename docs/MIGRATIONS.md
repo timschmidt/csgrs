@@ -660,6 +660,21 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   now fail with `CapacityOverflow` before allocation; this is not a total
   work or memory budget. See the [R20 record](research/regularized-revolution-2026-11-04.md)
   for measured completion and unresolved sanitizer stress limits.
+- **Vertical polynomial topology.** Hypersolve decomposes rational vertical
+  factors into whole closed intervals with selected event coordinates, defining
+  exponents and residual graph contacts. Event `roots()` describes the
+  nonvertical part; read `vertical_components()` as well. `graph_equation()`
+  provides reduced residual support, while `geometric_equation()` includes
+  vertical components. Repeated-factor evidence refers to the residual when
+  vertical content is present; `vertical_content()` retains the exact original
+  factor/quotient identity. The finite `rational_fiber()` query retains its
+  `VerticalComponent` error on a whole interval. Native curve/BRep consumers
+  still lack vertical charts and now report construction/Unsupported at curve
+  admission; the original BRep section failure is
+  `GeometryError::PlanarCurve(ExactCurveError::Blocked(...))` rather than the
+  earlier solver `PolynomialTopology(VerticalComponent)`. No native archive
+  grammar or supported finite-graph source changes. See the
+  [R06 qualification](../crates/hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04).
 - **Stationary straight BRep sweeps.** `hyperbrep::builder::sweep_curve`, its
   region form and fixed-axis moving-frame inputs admit strictly increasing
   straight images with isolated stationary parameters. Their surfaces and

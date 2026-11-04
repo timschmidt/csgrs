@@ -16934,6 +16934,45 @@
       ],
       "oracle": "Exact symmetric differences against the unreplayed region and the containment identity for dilations.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "vertical_topology_consumer_boundary",
+      "target": "polynomial_empty_axis",
+      "test": "whole_vertical_topology_never_publishes_a_partial_curve_collection",
+      "owner": "Hypersolve component topology and Hypercurve curve-set admission",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P35",
+        "P39"
+      ],
+      "domain": "Original rational equations x, xy and x(x^2+y^2) in the closed rectangle [-2,2]^2. Whole vertical components and their residual graph data are separate.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Solver vertical intervals retain selected first coordinates and full closed second bounds; the native graph-branch importer currently refuses them before publishing a curve collection.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Hypersolve reconstructs identical component selectors and graph incidence from the original equation, domain and configuration; this is in-memory topology replay, not native curve interchange."
+        },
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "PolynomialCurveSet2 returns a construction/Unsupported blocker for every whole-vertical input; no empty or incomplete curve set is published."
+        }
+      ],
+      "oracle": "Exact retained source, one whole vertical component, nonempty topology, identical replay and the typed downstream blocker; no claim of native vertical curve operation completion.",
+      "timeout_seconds": 300
     }
   ]
 }

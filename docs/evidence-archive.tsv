@@ -412,6 +412,7 @@ docs/evidence/2026-11-04-export-equality	8	13718	eaf1fceaf66a0231d46df4ee91e5ee1
 docs/evidence/2026-11-04-expression-node-errors	30	322219	326f3d6b42f7dfa528b0e26a8fbfda1e71dab909ca94ba7bc7cd620c8e5ea7a4
 docs/evidence/2026-11-04-native-source-boundaries	75	273076	0617a293285b952868bf5037a3fa85d7ed2159df176152f5f4fb55ac189e40a2
 docs/evidence/2026-11-04-research-consolidation	48	992163	9ecf03b87cbf15e1174e0b5fff363c66a3eca8bc5f6ffb884647dbb164957a5a
+docs/evidence/2026-11-04-research-r06-vertical	1531	3544599	d33c5af16435fcee234738f742f2b61bdca8d46224944d8f0a545803eb48e459
 docs/evidence/2026-11-04-research-r20	683	1185353	fea7b534f13b88a6affc94b4c4a41864fd4b88000709785da962701dbe8ead13
 docs/evidence/2026-11-04-research-r21	199	17301176	926a91787d265a83691bb618c7654ba58806f2b490eb3f1a6dc45da77b254a01
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912

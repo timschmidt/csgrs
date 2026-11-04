@@ -409,8 +409,12 @@ already admitted rational source restriction. Rational map definitions that
 prove an exact similarity reuse Hypercurve line sections while retaining their
 original guards, so the replayed section remains intersectable. The
 [implementation record](IMPLEMENTATION_STATUS.json) links the shared solver
-qualification; vertical/repeated components and general trimmed arrangements
-remain open.
+qualification. Repeated finite-fiber sources retain defining exponents.
+R06 additionally certifies whole vertical intervals at the solver, but native
+vertical curve charts still return construction/Unsupported before section
+publication. The original vertical tensor-section fixture tests both stages;
+see the [owner qualification](../../hypersolve/PERFORMANCE.md#r06-vertical-topology-components-2026-11-04).
+Native vertical charts and general trimmed arrangements remain open.
 
 `CurveSurfacePoint` exposes `Parameter`, `GeometricPoint3` and
 `CurveSurfaceContactKind::{Simple, Repeated, Boundary}`. The first two kinds

@@ -481,3 +481,10 @@ path = "fuzz_targets/curve_substitution.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "bivariate_vertical_components"
+path = "fuzz_targets/bivariate_vertical_components.rs"
+test = false
+doc = false
+bench = false

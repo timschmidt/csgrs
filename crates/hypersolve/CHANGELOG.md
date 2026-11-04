@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Decompose rational vertical polynomial content into selected closed interval
+  components with defining exponents and residual graph attachments. Preserve
+  exact content/quotient reconstruction. Event point roots describe the
+  nonvertical part; consult `vertical_components()` for whole intervals.
+  `graph_equation()` distinguishes residual support from the full geometry.
+
 - Add `certify_univariate_polynomial_nonnegative` with an explicit policy
   restricted to certified stages. Shared Sturm counts and inward Taylor signs
   cover repeated and endpoint roots; unresolved decisions remain `None`.

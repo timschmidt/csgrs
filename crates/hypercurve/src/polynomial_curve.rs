@@ -230,6 +230,11 @@ impl PolynomialCurveSet2 {
         topology: BivariateCurveTopology,
         fiber_config: AlgebraicFiberRootIsolationConfig,
     ) -> ExactCurveResult<Self> {
+        // Graph branches do not yet carry whole vertical intervals. Refuse
+        // before publication rather than silently omitting those components.
+        if !topology.vertical_components().is_empty() {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
         let source = Arc::new(PolynomialCurveSource2 {
             topology,
             fiber_config,

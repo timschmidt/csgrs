@@ -54,12 +54,18 @@ fn excluded_axis_root_has_empty_topology() {
 }
 
 #[test]
-fn existing_constant_empty_and_live_vertical_outcomes_stay_distinct() {
+fn constant_empty_and_live_vertical_intervals_stay_distinct() {
     assert_empty(BivariatePolynomial::new(vec![vec![2_i32.into()]]));
     for offset in [-1_i32, 0, 1] {
         let equation = BivariatePolynomial::new(vec![vec![offset.into()], vec![1_i32.into()]]);
+        let topology = decompose_bivariate_curve(&equation, &domain(), Default::default()).unwrap();
+        assert!(!topology.is_empty());
+        assert_eq!(topology.equation(), &equation);
+        assert_eq!(topology.domain(), &domain());
+        assert_eq!(topology.vertical_components().len(), 1);
+        assert_eq!(topology.vertical_components()[0].defining_exponent(), 1);
         assert_eq!(
-            decompose_bivariate_curve(&equation, &domain(), Default::default()),
+            topology.rational_fiber(&(-offset).into(), Default::default()),
             Err(BivariateTopologyError::VerticalComponent)
         );
     }
@@ -92,17 +98,29 @@ fn algebraic_and_repeated_boundary_roots_remain_live_vertical_components() {
     rectangle.first = [(-2_i32).into(), 2_i32.into()];
     let irrational =
         BivariatePolynomial::new(vec![vec![(-2_i32).into()], vec![], vec![1_i32.into()]]);
-    assert_eq!(
-        decompose_bivariate_curve(&irrational, &rectangle, Default::default()),
-        Err(BivariateTopologyError::VerticalComponent)
+    let topology = decompose_bivariate_curve(&irrational, &rectangle, Default::default()).unwrap();
+    assert_eq!(topology.equation(), &irrational);
+    assert!(!topology.is_empty());
+    assert_eq!(topology.vertical_components().len(), 2);
+    assert!(
+        topology
+            .vertical_components()
+            .iter()
+            .all(|v| v.defining_exponent() == 1
+                && topology.events()[v.event_index()].parameter().is_valid())
     );
     let boundary = BivariatePolynomial::new(vec![
         vec![1_i32.into()],
         vec![(-2_i32).into()],
         vec![1_i32.into()],
     ]);
+    let topology = decompose_bivariate_curve(&boundary, &domain(), Default::default()).unwrap();
+    assert_eq!(topology.equation(), &boundary);
+    assert!(!topology.is_empty());
+    assert_eq!(topology.vertical_components().len(), 1);
+    assert_eq!(topology.vertical_components()[0].defining_exponent(), 2);
     assert_eq!(
-        decompose_bivariate_curve(&boundary, &domain(), Default::default()),
+        topology.rational_fiber(&1.into(), Default::default()),
         Err(BivariateTopologyError::VerticalComponent)
     );
 }

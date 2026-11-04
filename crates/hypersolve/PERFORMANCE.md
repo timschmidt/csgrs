@@ -5,6 +5,193 @@ This document records how every source in the README reference list maps to
 deliberately bounded or architecture-inapplicable. Solver proposals may cross a named lossy
 boundary, but no optimization may turn such a proposal into proof.
 
+## R06 vertical topology components (2026-11-04)
+
+Baseline `803c35da814c2ca0e9ea1705b97f20a1a4af1305` returns
+`VerticalComponent` for the original `x=0` witness. Repeated generic fibers
+and horizontal boundary components already succeed on this revision; R06's
+old pending inventory did not describe those later implementations. This
+increment retains exact rational vertical-component topology at its Hypersolve
+owner (P6/P15/P17–P20/P35–P39). The input remains a finite rational coefficient
+polynomial and a nondegenerate closed rational rectangle, under the existing
+axis/projection/refinement limits. Algebraic coefficients and selected
+rectangle bounds remain implementation gaps, with `UnsupportedCoefficient`.
+
+The existing finite-fiber path runs first. At a whole fiber, the fallback uses
+the existing exact axis-content GCD and division authority to retain
+`F(x,y) = p(x) R(x,y)`. It keeps all powers and the remaining scalar in that
+identity. The square-free content seeds the residual projection, so every
+vertical root is an event even when it is a regular point of `R`. Existing
+separator proofs connect the complete residual graph on both sides. Each
+vertical component names one validated selected event root and the whole
+closed second-coordinate interval. Successive exact derivative signs give
+its defining exponent. No coordinate materialization or sample fit is needed.
+A component meeting an isolated residual point includes that point in the
+interval; lack of residual half-branches does not make it isolated in the union.
+
+`equation()` retains `F`; `vertical_content()` retains `p` and original `R`.
+`graph_equation()` is the reduced nonvertical support, and
+`geometric_equation()` includes both supports. Repeated-factor records describe
+`R` when vertical content is present. Event `roots()` now means residual point
+roots; `vertical_components()` supplies the additional intervals and their
+event indices. `is_empty()` considers both. A finite `rational_fiber()` query
+at a vertical component honestly returns `VerticalComponent`. Replay reconstructs
+content, selectors, exponents and incidence from the original source. The
+optional content is boxed to avoid embedding its four containers in every
+ordinary topology value.
+
+| Stage | Demonstrated contract |
+| --- | --- |
+| Solver representation | Rational content, selected vertical coordinates, closed intervals and original factor powers |
+| Residual incidence | Exact splits/half-branch adjacency at regular crossings, nodes, cusps, isolated residual contacts and rectangle boundaries |
+| Reconstruction/query | Original equation/domain replay, fresh-process source decoding, rational finite slices and domain restriction |
+| Native curve admission | `PolynomialCurveSet2` returns construction/Unsupported before publication for whole vertical intervals |
+| Planar/BRep operations | Vertical chart and spatial/pcurve transport remain open; the original vertical tensor-section fixture keeps a typed failure at this later boundary |
+| Broader coefficients/resources | Algebraic coefficients/bounds, complete work/heap/cancellation accounting remain open |
+
+The curve importer guard is shared by native SVG and BRep source replay and
+plane/tensor section construction. No native archive flag or serialized
+connectivity is accepted as proof. The original BRep fixture is unchanged;
+it now additionally proves solver success and requires the exact later
+construction/Unsupported blocker. This is an explicit source/API migration,
+not completed vertical geometry in the modeling layer. See
+[migration](../../docs/MIGRATIONS.md) and the existing
+[curve capability catalog](../hypercurve/qualification/capabilities.json).
+
+The maintained corpus includes 20 rational line/power combinations, mixed
+vertical and horizontal powers, a regular parabola crossing, nodes, cusps,
+residual isolated points, both vertical rectangle boundaries and horizontal
+boundary contacts. Algebraic columns at `±sqrt(2)`, repeated three times,
+meet the circle `x²+y²=3` at independently known ordinates `±1`. A selected root of `x^5+5x+5` supplies a degree-five coordinate without a
+rational-coordinate prerequisite. Two columns separated by `2^-80` remain distinct. Exact coefficient recomposition,
+independent univariate root counts, selected-field identities, root isolators
+and expected half-branch counts establish the result; source/selector equality
+is a separate replay check. Positive/negative rational scales, invalid input,
+zero-budget exhaustion and larger-budget retry are retained. The old hard
+cases remain with stronger exact expectations for the intentional extension.
+
+Qualification on the final production source:
+
+- Hypersolve all-feature release: 1,344 passing executions, including its
+  doctest and fresh-process child. The seven new parent recipes cover the
+  quintic coordinate and actual promotion exhaustion/retry.
+- Hypercurve library and all 112 integration targets: 3,087 passing parent
+  tests, 37 existing ignored; BRep/IO library/integration suites: 815 passing
+  executions (one is a fresh child). Twelve owner/consumer doctests also pass;
+  Hypersolve's doctest is included in its separate full count. Together these
+  are 5,257 passing executions; 41 root modeling/receipt/revolution tests add
+  downstream coverage, including all 576 revolution matrix cells.
+- Minimal-feature solver recipes and native curve-importer tests pass. Stable
+  1.98.1 and MSRV 1.95.0 all-target/all-feature Clippy with `-D warnings`, strict
+  rustdoc, both standalone fuzz manifests and the new fuzz-target Clippy pass.
+  Formatting, whitespace and retention-budget checks pass.
+- Eight zero-import WASM recipes execute in Node 22.22.2: six shared solver
+  recipes and two mechanically exported native curve tests. The final module
+  is 3,648,871 bytes, SHA-256
+  `a8e6912a7de319962c91829c1589b0b003230f10f45053f9e8828e235a8bba23`; process maximum RSS is 74,620 KiB.
+- The expanded address-sanitized rational-product/selected-quintic fuzz target
+  executes 6,108 runs in 61 seconds, reported peak RSS 555 MB. Short inputs are
+  rejected before construction; this count is not 6,108 distinct completed
+  geometries. The earlier rational-only campaign's 7,411 runs and full corpora
+  remain. LeakSanitizer is disabled for this host; this is a bounded coverage-
+  guided address-sanitizer campaign, not complete lexicase or leak coverage.
+- All 17 capability-driver tests and the named vertical consumer witness pass;
+  the latter records solver reconstruction success and unsupported native
+  representation separately.
+
+Initial C++/MSRV attempts failed the read-only `ccache` directory; disabling
+that cache permits unchanged-source builds. A later disk quota interrupts
+minimal compilation, a probe link and the combined native run, whose output
+ends during a fresh-process chord test. Its child panic was not recoverable
+from the truncated log. After freeing completed reproducible build artifacts,
+that unchanged six-test target passes. Metadata accounts for every earlier
+completed binary and resumes all 19 remaining Hypercurve integration targets;
+all pass. Failed logs, the resume plan and separate successful root matrix
+remain. This qualifies the requested library/integration scope, not full CI,
+example execution or pre-push validation.
+
+Matched cost probe: Rust 1.98.1, shared Ryzen 7 5800X3D, CPU 15, three
+alternating process pairs, two warmups and 20 measured calls per legacy fixture
+per process (1,080 calls). Other validation jobs were active; these are
+observations, not statistically controlled nonregression or speedup evidence.
+Each call retains a complete topology and native curve collection, performs
+selected point/preimage queries and reversal, and attempts exact SVG
+export/import/re-encoding. It materializes source, selector and adjacency rows
+and keeps output models alive. Row-file writing is outside the timer.
+
+Eight SVG controls complete; the full implicit-circle control returns the same
+`BudgetExhausted` SVG receipt on baseline and candidate. Its producer cause is
+not certified by that receipt, so it is a reported failure, not a verified
+resource bound or completed SVG workflow. The original failed assumed-success
+probe is retained. All nine exact topology/outcome rows and available SVG bytes
+are identical in all six processes, SHA-256
+`bd4f2c207f537b93711fc7aa64aa62025b9d59a4e472d6bbbbe03f986b490580`.
+
+| Legacy fixture | Median microseconds, baseline → candidate | Additional requested bytes | Allocation-call change |
+| --- | ---: | ---: | ---: |
+| line | 229.2 → 229.1 | 16 | 0 |
+| parabola | 17,514.2 → 17,799.3 | 16 | 0 |
+| circle (SVG reports exhaustion) | 21,019.1 → 21,538.6 | 8 | 0 |
+| node | 74,137.4 → 78,236.0 | 40 | 0 |
+| cusp | 32,865.8 → 34,545.1 | 24 | 0 |
+| repeated-horizontal | 288.4 → 293.2 | 16 | 0 |
+| quintic-ordinate | 13,533.4 → 13,595.0 | 16 | 0 |
+| boundary | 205.9 → 207.3 | 16 | 0 |
+| empty-axis | 62.8 → 63.9 | 8 | 0 |
+
+Successful SVG-workflow median ratios range 0.9994–1.0553. The new optional
+pointer grows `BivariateCurveTopology` from 408 to 416 bytes on this host;
+`PolynomialCurveBranch2` remains 544 bytes. The 8–40-byte workflow traffic and
+retention increments match one pointer per held source. No allocation call is
+added on these legacy rows. The probe executable grows 20,725,920 → 21,414,080
+bytes (+688,160), including the new-domain probe code and source-path metadata.
+This is retained for exact domain extension, with these costs
+disclosed; it is not a performance-only simplification.
+
+| Newly successful solver workflow (20 samples) | Median microseconds | Requested bytes | Peak logical bytes | Retained bytes |
+| --- | ---: | ---: | ---: | ---: |
+| circle-algebraic-columns | 1,096.1 | 817,629–819,933 | 104,350–105,502 | 75,476–76,628 |
+| crossing-powers | 272.1 | 252,129 | 40,331 | 25,344 |
+| node-column | 375.0 | 294,862 | 47,715 | 30,974 |
+| vertical-line | 97.4 | 70,322 | 20,035 | 13,743 |
+
+These 80 calls complete solver topology and explicitly verify the native
+construction/Unsupported boundary; they do not complete a native curve workflow
+and have no speedup baseline against earlier rejection. Allocation requests
+count full new `realloc` sizes, separately from logical live-byte growth;
+neither is allocator RSS or a memory bound. Some circle/cusp samples retain
+0–384 bytes after receipt drop; the new algebraic-column samples retain
+0–1,152 bytes. They are not reported as zero.
+
+A separate 100-call/three-fresh-source-cycle audit reads the retained receipts.
+The first process cycle leaves 166,128 bytes for the circle and 303,192 for the
+cusp in both builds; the new column fixture additionally leaves 49,080 bytes.
+After 20 and 100 calls the live levels agree. Both later fresh-source cycles
+return to their starting live levels after dropping source inputs and results.
+This establishes observed warm stability for these fixtures, without locating
+every startup allocation or proving a universal leak/retention bound. Initial
+probe warnings and its quota-related link failure remain beside the final
+warning-free audit.
+
+Configured degrees/refinement rounds are resource restrictions. Promotions and
+instrumented isolation participate in `WorkBudget`, but content arithmetic,
+coefficient growth, derivative/sign work, retained heap and cancellation
+latency have no complete bound. The fallback can repeat failed finite-path
+work; its cost is measured separately from formerly successful controls.
+The tests prove an actually requested promotion is denied under zero budget,
+then a larger retry succeeds. Neither that receipt nor an external timeout
+establishes a total operation bound. No general algebraic closure, native
+vertical-curve operation completion, package/binding release, full pre-push
+qualification or complete lexicase/coverage campaign is claimed.
+
+All attempts, final source/locks, exact artifacts, samples, sanitizer corpus,
+WASM runtime and commands are retained as
+`docs/evidence/2026-11-04-research-r06-vertical` in the
+[evidence archive](../../docs/evidence-archive.md). R06 remains in progress;
+next admit selected vertical charts through the existing native curve carrier,
+incidence, SVG/BRep replay and subsequent operations while retaining this
+complete source decomposition and the existing horizontal/repeated corpus.
+
 ## Shared operation budget accounting
 
 `work_budget` accounts for instrumented root subdivisions and algebraic

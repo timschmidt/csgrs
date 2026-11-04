@@ -39,3 +39,34 @@ fn empty_axis_topology_enters_the_native_curve_set() {
         );
     }
 }
+
+#[test]
+fn whole_vertical_topology_never_publishes_a_partial_curve_collection() {
+    let domain = BivariateCurveDomain {
+        first: [(-2_i32).into(), 2_i32.into()],
+        second: [(-2_i32).into(), 2_i32.into()],
+    };
+    for equation in [
+        BivariatePolynomial::new(vec![vec![], vec![1_i32.into()]]), // x
+        BivariatePolynomial::new(vec![vec![], vec![0_i32.into(), 1_i32.into()]]), // xy
+        BivariatePolynomial::new(vec![
+            vec![],
+            vec![0_i32.into(), 0_i32.into(), 1_i32.into()],
+            vec![],
+            vec![1_i32.into()],
+        ]), // x(x²+y²)
+    ] {
+        let topology = decompose_bivariate_curve(&equation, &domain, Default::default()).unwrap();
+        assert!(!topology.is_empty());
+        assert_eq!(topology.vertical_components().len(), 1);
+        let replay =
+            decompose_bivariate_curve(topology.equation(), topology.domain(), topology.config())
+                .unwrap();
+        assert_eq!(topology, replay);
+        let error = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap_err();
+        assert_eq!(error.operation(), hypercurve::CurveOperation2::Construction);
+        assert!(
+            matches!(error, hypercurve::ExactCurveError::Blocked(blocker) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
+        );
+    }
+}

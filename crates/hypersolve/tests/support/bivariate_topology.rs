@@ -432,18 +432,23 @@ pub fn original_brep_patch_pullback_and_chart_changes() {
 pub fn explicit_dimension_degeneracy_budget_and_recovery() {
     let rectangle = domain(-2, 2, -2, 2);
     let config = BivariateTopologyConfig::default();
-    for (source, expected) in [
-        (polynomial(&[&[0]]), BivariateTopologyError::ZeroPolynomial),
-        (
-            polynomial(&[&[0], &[1]]),
-            BivariateTopologyError::VerticalComponent,
-        ),
-    ] {
-        assert_eq!(
-            decompose_bivariate_curve(&source, &rectangle, config),
-            Err(expected)
-        );
-    }
+    assert_eq!(
+        decompose_bivariate_curve(&polynomial(&[&[0]]), &rectangle, config),
+        Err(BivariateTopologyError::ZeroPolynomial)
+    );
+    // Original x=0 witness: a complete interval now has its own carrier.
+    let vertical_source = polynomial(&[&[0], &[1]]);
+    let vertical = decompose_bivariate_curve(&vertical_source, &rectangle, config).unwrap();
+    assert_eq!(vertical.equation(), &vertical_source);
+    assert_eq!(vertical.vertical_components().len(), 1);
+    assert_eq!(vertical.vertical_components()[0].defining_exponent(), 1);
+    assert_eq!(vertical.domain(), &rectangle);
+    assert!(!vertical.is_empty());
+    assert!(vertical.events().iter().all(|e| e.roots().is_empty()));
+    assert_eq!(
+        vertical.rational_fiber(&Real::zero(), config.fiber),
+        Err(BivariateTopologyError::VerticalComponent)
+    );
     let repeated = polynomial(&[&[0, 0, 1]]);
     let topology = build(&repeated, &rectangle);
     assert_eq!(topology.equation(), &repeated);
