@@ -117,3 +117,8 @@ open. Next investigations must reproduce on the committed tree. Application
 export's quantization/welding and retained-source contract require review before
 relaxing the f32 boundary; hole-bridging cost needs measured attribution before
 optimization. Source inspection alone establishes neither a fix nor admission.
+
+A subsequent [export equality correction](export-equality-2026-11-04.md) at
+SynapsCAD `124c31d` removes a reproduced tolerance merge of distinct projected
+vertices. Its 35 binary/UI tests pass; native-source export and the two earlier
+full-library CI failures remain open.

@@ -26,6 +26,9 @@ two SynapsCAD CI failures and deferred packages remain explicitly qualified in
 [`research/simplification-and-api-program.md`](research/simplification-and-api-program.md),
 which uses the K (kernel simplification), U (public modeling API) and D
 (downstream application) prefixes.
+A [subsequent export-boundary regression](research/export-equality-2026-11-04.md)
+is corrected locally at SynapsCAD `124c31d`; it preserves distinct projected
+vertices without claiming native-source interchange completion.
 
 This ledger records the evaluation of every project in the consolidated
 research handoff of 22 October 2026 (`docs/research/csgrs-remaining-research-projects.txt`

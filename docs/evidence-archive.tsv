@@ -408,6 +408,7 @@ docs/evidence/2026-11-02-hypercurve-closure-arithmetic-scope-validation	12156	25
 docs/evidence/2026-11-02-hypercurve-closure-chamfer-closing-identity	75	537409	4bd819c29e47a46cad0362357108154f14066561f2fadffbebc899247a412d95
 docs/evidence/2026-11-02-hypercurve-closure-chamfer-identity-validation	9074	23985190	e63f643847b8d6294bbf1b47ecaa821a6e126cf296f800f7113156c8bb7bee45
 docs/evidence/2026-11-04-downstream-api-admission	70	468721	22315100e54bfd9404f3b5cb2bccd1c88ec0b982afe1bf35107b80e172ec1d92
+docs/evidence/2026-11-04-export-equality	8	13718	eaf1fceaf66a0231d46df4ee91e5ee1f86977ae1a6c2830de9038f7b5ad64afb
 docs/evidence/2026-11-04-expression-node-errors	30	322219	326f3d6b42f7dfa528b0e26a8fbfda1e71dab909ca94ba7bc7cd620c8e5ea7a4
 docs/evidence/2026-11-04-research-consolidation	48	992163	9ecf03b87cbf15e1174e0b5fff363c66a3eca8bc5f6ffb884647dbb164957a5a
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912

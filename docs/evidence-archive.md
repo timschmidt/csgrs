@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `export-equality-2026-11-04` evidence branch ends at
+`0c0f10d4e10c1366018689e4cfefe57292779d5a`. Its record
+`docs/evidence/2026-11-04-export-equality` contains eight files and 13,718 bytes,
+SHA-256 `eaf1fceaf66a0231d46df4ee91e5ee1f86977ae1a6c2830de9038f7b5ad64afb`.
+It reproduces distinct binary32 planes merged during SynapsCAD OBJ/3MF export
+on `4fcb1d3`, and records the correction at `124c31d`: 35 passing binary/UI
+tests, warning-denied Clippy, WASM compilation and format checks. See the
+[admission](research/export-equality-2026-11-04.md) for finite-buffer scope and
+open native-source/CI contracts. The archive adds only this record; no push or
+full closure is claimed.
+
 The local `downstream-api-admission-2026-11-04` evidence branch ends at
 `668cde7f42cfb3ea8e86d09cff85058ff69a6c9f`. Its record
 `docs/evidence/2026-11-04-downstream-api-admission` contains 70 files and
