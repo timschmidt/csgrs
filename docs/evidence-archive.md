@@ -85,6 +85,18 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r30-hulls-2026-11-04` branch ends at
+`26f019be868b12227a498daa65cf2cbb18b13b2e`, parent `6dca69fdbbf7e96280889d6b5c04a1aacbbee625`.
+`docs/evidence/2026-11-04-research-r30-hulls` contains 244 files and
+9,934,089 bytes, SHA-256
+`643451b315d5823b4780829711be321d36e9ed314dbfe183d6790e5165a61a98`.
+Its [owner qualification](../crates/hypermesh/PERFORMANCE.md#r30-cache-independent-hull-scheduling-2026-11-04)
+retains the original cold/repeated and tie-only failures, changing coordinate
+views, independent exact halfspace/extreme-point checks, native cold-child and
+WASM execution, final source/static checks, matched artifact and allocation
+samples, and adverse symbolic costs. The durable bare archive verifies exactly
+244 additions under the new record and no prior-record changes. No push occurred.
+
 The local `research-r06-field-resultants-2026-11-04` branch ends at
 `6dca69fdbbf7e96280889d6b5c04a1aacbbee625`, parent
 `6d353969435e3ef8e79eed64da8d28c32439dfed`.

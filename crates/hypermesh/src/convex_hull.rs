@@ -89,13 +89,27 @@ pub(crate) fn convex_hull_impl(
     let approximate_points = points
         .iter()
         .map(|point| {
-            [
-                point.x.to_f64_lossy().unwrap_or(0.0),
-                point.y.to_f64_lossy().unwrap_or(0.0),
-                point.z.to_f64_lossy().unwrap_or(0.0),
-            ]
+            point.coordinates().map(|coordinate| {
+                // A fresh exact-rational view cannot inherit a symbolic
+                // primitive approximation cached before a rational proof.
+                coordinate
+                    .exact_rational_ref()
+                    .map_or_else(
+                        || coordinate.to_f64_lossy(),
+                        |value| Real::new(value.clone()).to_f64_lossy(),
+                    )
+                    .unwrap_or(0.0)
+            })
         })
         .collect::<Vec<_>>();
+    // Primitive approximations of symbolic values may change as their shared
+    // computation caches refine. They may schedule the BVH, but must not choose
+    // a different hull representation. Stored rational coordinates have fixed
+    // projections; otherwise use the first unprocessed input point as the eye.
+    let eye_points = points
+        .iter()
+        .all(PointCoordinates::has_exact_rational_coordinates)
+        .then_some(approximate_points.as_slice());
     let point_bvh =
         match ExactPointBvh::build_with_approximate(decisions, &points, &approximate_points) {
             Ok(point_bvh) => Some(point_bvh),
@@ -132,7 +146,7 @@ pub(crate) fn convex_hull_impl(
         if !face.active {
             return None;
         }
-        pop_farthest_outside(face, &approximate_points, &processed).map(|point| (index, point))
+        pop_farthest_outside(face, eye_points, &processed).map(|point| (index, point))
     }) {
         processed[eye] = true;
         let mut visible = Vec::new();
@@ -192,7 +206,7 @@ pub(crate) fn convex_hull_impl(
 
 fn pop_farthest_outside(
     face: &mut HullFace,
-    points: &[[f64; 3]],
+    points: Option<&[[f64; 3]]>,
     processed: &[bool],
 ) -> Option<usize> {
     face.outside.retain(|&point| !processed[point]);
@@ -203,8 +217,15 @@ fn pop_farthest_outside(
         .max_by(|left, right| {
             let left = *left.1;
             let right = *right.1;
-            approximate_face_distance(points, face.vertices, left)
-                .total_cmp(&approximate_face_distance(points, face.vertices, right))
+            points
+                .map_or(std::cmp::Ordering::Equal, |points| {
+                    approximate_face_distance(points, face.vertices, left)
+                        .total_cmp(&approximate_face_distance(points, face.vertices, right))
+                })
+                // Outside discovery may follow different certified BVH paths
+                // after caches warm. Equal scheduling scores must not inherit
+                // that order. Deduplication retains the first input index.
+                .then_with(|| right.cmp(&left))
         })?
         .0;
     Some(face.outside.swap_remove(farthest))
@@ -608,6 +629,37 @@ mod tests {
 
     fn p(x: i64, y: i64, z: i64) -> Point3 {
         Point3::new(Real::from(x), Real::from(y), Real::from(z))
+    }
+
+    #[test]
+    fn equal_eye_scores_choose_the_least_input_index_in_any_discovery_order() {
+        let points = [
+            [0.0, 0.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0],
+            [0.0, 0.0, 1.0],
+            [1.0, 1.0, 1.0],
+            [2.0, 0.0, 1.0],
+        ];
+        for outside in [vec![3, 4, 5], vec![5, 3, 4], vec![4, 5, 3]] {
+            let mut face = HullFace {
+                vertices: [0, 1, 2],
+                outside,
+                active: true,
+            };
+            let mut processed = [false; 6];
+            for expected in 3..6 {
+                assert_eq!(
+                    pop_farthest_outside(&mut face, Some(&points), &processed),
+                    Some(expected)
+                );
+                processed[expected] = true;
+            }
+            assert_eq!(
+                pop_farthest_outside(&mut face, Some(&points), &processed),
+                None
+            );
+        }
     }
 
     #[test]

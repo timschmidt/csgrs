@@ -1,5 +1,22 @@
 # Migrations
 
+## Cache-independent convex-hull scheduling (2026-11-04)
+
+Hypermesh's three convex-hull entry points now break equal scheduling scores
+by the first retained input index. If any coordinate is symbolic, eyes are
+chosen by input index instead of lossy distance. Stored rational coordinates
+retain distance scheduling through fresh exact-rational views. Certified
+visibility predicates, source coordinates, set semantics and failure types
+are unchanged.
+
+Triangle diagonals, row order and checksums may change, including for existing
+degenerate/coplanar hulls. Update artifact baselines intentionally; matching
+sets and matching serialized rows are separate checks. Fixed-input repeatability
+does not promise identical rows after input permutation. The original 32-by-16
+sampled sphere retains its trigonometric coordinates; it is not resampled.
+See the [R30 qualification](../crates/hypermesh/PERFORMANCE.md#r30-cache-independent-hull-scheduling-2026-11-04)
+for the reproduced failures, independent set checks and measured costs.
+
 ## Polynomial pair chart admission (2026-11-04)
 
 Native polynomial graph pairs with proved rational relative similarities now

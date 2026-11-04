@@ -10,6 +10,137 @@ adaptive spatial subdivision, together with Mesh Arrangements' separation of
 arrangement construction from winding-number extraction: approximate data may
 organize work, but it must never decide topology, classification, or output.
 
+## R30 cache-independent hull scheduling (2026-11-04)
+
+Status: kept for fixed-input representation correctness, with adverse costs.
+Owner: Hypermesh's hull eye selector, P27/P36; exact point deduplication,
+visibility, source coordinates, certainty and typed failures remain authoritative.
+The input is the existing finite 3D point-set domain, including retained facts.
+This is an intentional row/diagonal migration, not a performance-only refactor.
+
+### Reproduction and sufficient change
+
+On `d64c01aa69f31b37ddb14ea24f15c9f489f88aeb`, the original 32-by-16
+trigonometric sphere yields different vertex/triangle rows on consecutive
+strict hull calls. A direct equal-score test also chooses the last discovered
+point. An index tie-break alone fixes that test but still fails the sphere.
+A temporary trace retains identical seeds `[0,1,2,16]` and 482 points, but 40
+coordinate views change by one binary64 bit. The first different eye is number
+53: face `[377,406,422]` selects point 392 cold and 407 warm. The old account
+that unchanged coordinate projections left only discovery-order ties was
+incomplete. The original inputs and both failed variants remain in evidence.
+
+Stored rational coordinates retain distance scheduling through fresh rational
+views, independent of primitive approximation caches. Equal scores select the
+least retained input index. If any coordinate is symbolic, the selector uses
+input order; lossy coordinates still organize the BVH. No tolerance or sampled
+geometry replaces an exact coordinate. No new field, cache or geometry kernel
+is introduced.
+
+QuickHull requires an eye in the certified outside set, not a mathematically
+farthest point. Every selected eye still comes from that set; exact visibility
+and the existing horizon update preserve its convex-hull invariant for any
+such eye. Changing selection order can change diagonals and predicate order.
+The seed, scalar predicates, horizon rules and output qualification are not
+replaced. This qualifies the documented R30 scheduling workload, not every
+possible symbolic seed/predicate cache transition or a permutation-invariant
+triangulation. See [migration](../../docs/MIGRATIONS.md#cache-independent-convex-hull-scheduling-2026-11-04).
+
+### Exact acceptance and continuation
+
+The independent rational determinant checks every source point against every
+output halfspace. Eight known cube corners or 30 rational unit-sphere points
+prove the required extreme points; closed-PWN validation and original-point
+identity are separate checks. Both policies, three fixed input permutations,
+zero or `sqrt(2)` translations, interior/duplicate/coplanar points and all three
+public hull entry points are exercised. Tiny, rounded and overflowing
+scheduling views at powers -1100, -600, 60 and 1100 preserve distinct exact
+vertices. A convex intersection consumes the hull and feeds a further hull,
+with the same independent set oracle.
+
+The original 32-by-16 source is retained with exact trigonometric coordinates.
+Fresh, repeated, manually warmed, cloned and rebuilt hulls compare exact
+source-index/triangle rows and construction qualification. A fresh native child
+reconstructs the source before comparing the parent artifact. Neighboring
+24-by-12 and 17-by-9 sources exercise both policies. Existing sampled-sphere
+Boolean/hull and successive-operation tests remain unchanged. Finite checks do
+not establish all symbolic determinism or general operation/resource closure.
+
+### Matched completed-workload observations
+
+Nine controls use the same pinned inputs, features, allocator, validation and
+native row materialization in both revisions. Three alternating process pairs
+on one allowed CPU give 876 measured calls: 60 per revision for seven ordinary
+controls and nine per revision for each sphere. Sample zero is cold; later
+samples reuse the input. Hull construction and closed-PWN validation are timed;
+native JSON rows are generated afterward and compared separately. All calls
+complete with Certified local receipts. Geometry equality is not inferred from
+hashes. Five artifact rows agree with the baseline; curved-shell, symbolic-cube
+and both sphere artifacts intentionally change. Candidate rows agree across
+all repeated calls and fresh processes; baseline sphere32 rows do not.
+
+| Control | Candidate/base cold median | Candidate/base warm median |
+| --- | ---: | ---: |
+| Tetrahedron | 0.859 | 0.944 |
+| Coplanar-group API | 0.988 | 0.888 |
+| Retained-fact API | 1.045 | 0.855 |
+| 4,913-point grid | 0.930 | 0.924 |
+| 64-point moment curve | 0.988 | 0.999 |
+| 684-point curved shell | 1.027 | 0.965 |
+| Symbolically translated cube cloud | 3.387 | 3.538 |
+| 32-by-16 trigonometric sphere | 1.138 | 1.128 |
+| 17-by-9 trigonometric sphere | 1.169 | 1.195 |
+
+The symbolic cube's warm median is 12.569 ms versus 3.553 ms, with requested
+allocation traffic about 14.45 MB versus 4.23 MB. Sphere32 is 12.686 s versus
+11.245 s warm, about 10.27–10.30 GB versus 8.61–8.62 GB requested traffic.
+Sphere17 is 1.487 s versus 1.244 s warm, about 1.291 GB versus 1.025–1.028 GB.
+Rational tetrahedron, grid and moment-curve allocation sets and logical peaks
+agree; the curved-shell traffic grows slightly. Adverse observations remain.
+These shared-host medians are not a statistical speedup or nonregression claim.
+The correctness migration is retained despite its symbolic scheduling cost.
+
+Both matched native probe executables are 2,677,256 bytes; their hashes differ.
+Three mechanically shared exact geometry recipes execute in fresh zero-import
+WASM instances: 2,926,532-byte test artifact, runner maximum RSS 76,808 KiB.
+These are probe sizes, not library-only or installed-distribution measurements.
+Input-owned caches remain alive in allocation/drop observations. There is no
+new total-work, coefficient-growth, memory or cancellation-latency bound.
+
+### Validation and retained evidence
+
+The frozen three Rust source hashes bind these final checks:
+
+- `cargo test --offline --locked --release --all-features -p hypermesh`:
+  299 passing executions, seven existing ignores, 13 batches including docs.
+- Root release/dispatch-trace tests `hull_determinism`, `sampled_sphere_strict`,
+  `successive_operations`, `downstream_solids`, `construction_evidence` and
+  `receipt_composition`: 53 passes, six existing ignores. The original ignored
+  32-by-16 sphere hull is run separately and passes. Minimal-feature root
+  `hull_determinism`: three passes including its fresh child. Total: 356 native
+  executions; the three WASM recipes are additional.
+- Stable 1.98.1 and MSRV 1.95.0 warning-denied Clippy: all Hypermesh targets
+  and features, plus the six affected root test targets with dispatch traces.
+  Strict rustdoc for Hypermesh/root and the standalone Hypermesh fuzz-target
+  compile check pass. Workspace format, whitespace and retention checks pass.
+
+The first root witness used an equality assertion that dumped verbose scalar
+internals on failure; its unchanged geometry now uses a concise row assertion.
+The initial downstream command named a nonexistent `solid_regressions` target;
+the corrected command uses the actual six targets above. A first cost harness
+reimported `Ordering` from its allocator include; the corrected build is warning
+free. The initial owner-filtered command ran no new integration tests; the final
+full owner command runs all three unfiltered. These failures remain distinct
+from completed geometry and are retained in evidence.
+No runtime fuzz/sanitizer campaign, full pre-push CI, installed distribution,
+production binding qualification or push is claimed by this increment.
+
+Evidence: `docs/evidence/2026-11-04-research-r30-hulls`, SHA-256
+`643451b315d5823b4780829711be321d36e9ed314dbfe183d6790e5165a61a98`. The local archive branch ends at
+`26f019be868b12227a498daa65cf2cbb18b13b2e`; its durable bare copy verifies 244 new
+files (9,934,089 bytes), with prior records unchanged. Administrative receipts
+follow the retained source snapshot.
+
 ## 2026-10-23: store crossing coordinates as their exact normal form
 
 Status: **kept**

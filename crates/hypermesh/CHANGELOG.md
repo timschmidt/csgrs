@@ -2,6 +2,13 @@
 
 ## [0.1.0] - Unreleased
 
+- Make convex-hull eye scheduling independent of symbolic approximation caches.
+  Equal rational scheduling scores use the least retained input index; symbolic
+  inputs use input order. Exact visibility, source coordinates and typed failures
+  stay authoritative. Hull rows/diagonals may change; see the
+  [migration](../../docs/MIGRATIONS.md#cache-independent-convex-hull-scheduling-2026-11-04)
+  and [qualification](PERFORMANCE.md#r30-cache-independent-hull-scheduling-2026-11-04).
+
 Initial release.
 
 Hypermesh provides exact Boolean operations on 3D triangle meshes for the

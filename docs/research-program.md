@@ -150,7 +150,7 @@ part of this program's execution or coordination.
 | R27 | Place each exact section vertex once while streaming wall rows | pending |
 | R28 | Use certified nonconstant circular images to reject line fitting | shortcut rejected: thirty native pairs preserve 5,760 outcome-row pairs and improve circle queries, but five simultaneous protected intervals regress. Only seven independent fit/degeneracy/receipt tests and a correction to the misleading `NotLine` description are retained. All eight final checks pass, including 63 Hypercurve and 24 downstream tests. |
 | R29 | Factor only measured duplicated SDF setup and finalization | pending |
-| R30 | Make degenerate hull tie selection independent of cache warmth | pending |
+| R30 | Make degenerate hull tie selection independent of cache warmth | scheduling fix retained for the documented cold/repeated sphere and exact hull corpus; a tie-only fix fails because symbolic coordinate views change. Input-order symbolic scheduling restores rows, with explicit artifact migration and adverse symbolic costs. See the [owner qualification](../crates/hypermesh/PERFORMANCE.md#r30-cache-independent-hull-scheduling-2026-11-04). Broader symbolic seed/cache determinism and resource closure remain open. |
 
 The bounded alternatives are tracked separately so an old rejected variant
 cannot silently close a different research hypothesis:
