@@ -11,12 +11,13 @@ support; event point roots and interval components are distinct. The
 records exact reconstruction, singular/boundary and algebraic-coordinate cases,
 replay, native/WASM execution, costs and resource limits.
 
-Native selected vertical charts, planar operations, BRep lifting and exact
-interchange remain the next consumer work. `PolynomialCurveSet2` currently
-refuses whole intervals before publication. General algebraic coefficients
-and rectangle bounds, complete total-work/heap/cancellation accounting and
-broader R06/R07 closure remain open. Earlier finite-fiber records describe
-their historical domains; they are not current vertical-topology blockers.
+The subsequent [native R06 qualification](../hypercurve/PERFORMANCE.md#r06-native-vertical-charts-2026-11-04)
+records selected vertical charts, planar operations, BRep lifting and replay;
+the earlier importer refusal is historical. General algebraic coefficients
+and rectangle bounds, general rational-map incidence, complete total-work/heap/
+cancellation accounting and broader R06/R07 closure remain open. The new
+selected-coefficient resultant primitive below does not itself close topology.
+Earlier finite-fiber records describe their historical domains.
 
 ## Strict polynomial sign laws (2026-11-04)
 
@@ -353,20 +354,31 @@ remain without limits. Evidence:
 `docs/evidence/2026-10-30-hypercurve-closure-coefficient-limits-and-ph-offsets`,
 SHA-256 `ec3646428eada106e37ebdd690544487843ea60119033adc5af7a4d04282a5ac`.
 
-## Simplification program: hypersolve packages (planned, 2026-11-03)
+## Simplification program: current dispositions (2026-11-04)
 
-These come from the external review recorded in
-[`docs/research/simplification-and-api-program.md`](../../docs/research/simplification-and-api-program.md). They are planned
-only.
+The [program outcomes](../../docs/research/simplification-and-api-program.md#outcomes)
+supersede the original planned inventory. Current source has one
+`sort_reals_exact` in `algebraic.rs`; the former four private Real endpoint
+structs use `RealInterval`. Derivative and trimming helpers retain distinct
+failure/predicate contracts. K05 was rejected because the rational Bézier
+isolator is not equivalent to Hypersolve's row/field isolators; Hypercurve
+already delegates its nonrational coefficient path to the shared ordered-field
+solver. These are historical package dispositions, not a new universal
+completion claim or authorization for merging unlike kernels.
 
-- **K02:**
-  - share one `sort_reals_exact` (four copies) and one
-    `derivative_coefficients` across crates;
-  - replace the four private two-endpoint interval structs with
-    `RealInterval` where their invariants match;
-  - keep the structural and policy-decided polynomial trims as two separate
-    named functions.
-- **K05:** hypercurve's `bezier_parameter.rs` reimplements this crate's
-  `root_isolation` and `isolate_ordered_field_polynomial_roots`. Removing
-  that copy requires showing identical isolating intervals and root ownership
-  on the corpus.
+## Selected coefficient resultants (R06, 2026-11-04)
+
+`ordered_field_resultant_bivariate` now eliminates one axis directly over an
+admitted exact ordered field, including selected algebraic coefficient towers.
+It shares the existing pivot-free determinant recurrence, retains exact
+polynomial magnitude and coefficient dependencies, and feeds complete root
+isolation and further selection without coordinate projection. The
+[owner qualification](PERFORMANCE.md#r06-selected-coefficient-bivariate-resultants-2026-11-04)
+records the reproduced gap, independent polynomial identities, cold replay,
+actual cancellation/denial, source-preserving storage and practical envelope.
+
+This supplies elimination arithmetic for the R06/R07 target. Generic common
+components, full algebraic-coefficient topology/selected rectangles, rational-map
+preimage incidence and the complete filled/BRep operation chains still need
+integration and qualification. Total arithmetic, coefficient-growth and heap
+bounds remain open. A zero resultant is not evidence of a selected real arc.

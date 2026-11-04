@@ -548,6 +548,58 @@ fn determinant_linear_polynomial_matrix(
     determinant_integer_polynomial_matrix(&matrix, dimension)
 }
 
+/// Ring authority for the one shared Bezout coefficient construction.
+pub(crate) trait BezoutArithmetic<P>: crate::bareiss::DeterminantArithmetic<P> {
+    fn subtract(&mut self, first: &P, second: &P) -> Result<P, Self::Error>;
+    /// A sufficient exact zero certificate; false may mean unavailable.
+    fn is_zero(&mut self, value: &P) -> Result<bool, Self::Error>;
+}
+
+/// Flat Bezout matrix in the same coefficient ring as the two polynomials.
+/// Callers supply that ring's zero. Size/storage failure is not a zero matrix.
+pub(crate) fn bezout_matrix_with<P: Clone, A: BezoutArithmetic<P>>(
+    first: &[P],
+    second: &[P],
+    degree: usize,
+    zero: P,
+    arithmetic: &mut A,
+) -> Result<Option<Vec<P>>, A::Error> {
+    let Some(count) = degree.checked_add(1) else {
+        return Ok(None);
+    };
+    if first.len() != count || second.len() != count {
+        return Ok(None);
+    }
+    let Some(size) = degree.checked_mul(degree) else {
+        return Ok(None);
+    };
+    let mut matrix = Vec::new();
+    if matrix.try_reserve_exact(size).is_err() {
+        return Ok(None);
+    }
+    matrix.resize(size, zero);
+    for high in 1..=degree {
+        for low in 0..high {
+            let first_product = arithmetic.multiply(&first[high], &second[low])?;
+            let second_product = arithmetic.multiply(&first[low], &second[high])?;
+            let cross = arithmetic.subtract(&first_product, &second_product)?;
+            // Preserve the native builder's temporary-lifetime boundary.
+            drop(first_product);
+            drop(second_product);
+            if arithmetic.is_zero(&cross)? {
+                continue;
+            }
+            for offset in 0..(high - low) {
+                let row = high - 1 - offset;
+                let column = low + offset;
+                let index = row * degree + column;
+                matrix[index] = arithmetic.add(&matrix[index], &cross)?;
+            }
+        }
+    }
+    Ok(Some(matrix))
+}
+
 #[cfg(test)]
 fn quotient_ring_resultant_samples(
     source: &[Real],

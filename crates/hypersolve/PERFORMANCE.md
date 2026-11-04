@@ -5,6 +5,161 @@ This document records how every source in the README reference list maps to
 deliberately bounded or architecture-inapplicable. Solver proposals may cross a named lossy
 boundary, but no optimization may turn such a proposal into proof.
 
+## R06 selected-coefficient bivariate resultants (2026-11-04)
+
+At `5442eee1af553b1196c00dc4f211774948762414`, the native bivariate
+resultant API takes Real coefficient grids. It cannot consume a retained
+SelectedPolynomialValue coefficient field without independent scalar
+projection. The missing acceptance witness reproduces the absent field API
+on that revision. Hypersolve owns elimination arithmetic and coefficient
+identity (P6, P15, P19–P20); no geometry adapter or second kernel is added.
+The retained shear frontier still needs general preimage/component algorithms.
+
+### Contract and shared authority
+
+`ordered_field_resultant_bivariate` accepts finite ascending bivariate grids
+over the caller's existing OrderedFieldPolynomialContext. Ragged entries are
+zero. Input coefficient checks use that exact context, including authored
+zeros and an operand paired with a zero polynomial. The output is the exact
+univariate resultant with its original magnitude, not only its zero set.
+No primitive element or separately materialized coordinate is required.
+
+The original scalar pivot-free Faddeev-LeVerrier recurrence is now shared with
+the polynomial coefficient ring. The Sylvester determinant is valid over any
+admitted commutative ordered field of characteristic zero: the recurrence's
+only division is exact scaling by -1/k. There is no finite degree or
+coefficient-field-degree admission cap. Retaining the first or second axis
+changes only the coefficient view. A constant in the eliminated axis uses the
+exact power identity, avoiding a diagonal characteristic matrix. A linear
+eliminand uses division-free homogeneous Horner evaluation, including a
+nonconstant leading polynomial and exact resultant parity. Equal nontrivial
+degrees reuse the native Bezout coefficient builder and an n-by-n determinant;
+other degrees use the (m+n)-by-(m+n) Sylvester matrix. The native caller keeps
+its integer Bareiss path and original coefficient-operation order. Ragged
+transposition fills necessary coefficient holes without rasterizing every
+polynomial to its bounding rectangle.
+
+The existing scalar caller retains its original in-place Real diagonal update
+and operand-lifetime boundary. A draft abstraction lost that in-place dispatch
+and retained a trace temporary too long. A matched control exposed five extra
+allocations/472 bytes in one 3-by-3 fallback. Restoring both boundaries removes
+that difference; no old scalar predicate or arithmetic dispatch is replaced.
+
+A zero input yields [0]; two nonzero eliminated-degree-zero inputs yield [1].
+These are declared elimination conventions, not geometric classifications.
+A zero resultant proves neither a real common arc nor absence of residual
+isolated points. The no-real-point common support s^2+t^2+1 and the downstream
+IdenticallyZero root-isolation outcome are explicit witnesses. Incidence
+consumers must retain and replay their original equations and selections.
+
+### Demonstrated coefficient and composition envelope
+
+Independent factored systems use Res(product(t-f_i), product(t-g_j)) =
+product(f_i-g_j), including nonunit/nonmonic input scales and both retained
+axes. Their coefficients include dependent degree-5 and degree-7 selections.
+A separate independent Eisenstein quintic/septic join has degree 35. Exact
+zero checks compare coefficient values, not allocation identity. A repeated
+nonmonic -3(a^5+5a+5)^2 definition preserves its degree-10 defining polynomial
+while its degree-5 factor vanishes in value and trims a leading coefficient.
+
+The output of eliminating t from t-s^2 and t-(a+1), with a^5+5a+5=0 in
+(-1,0), is exactly s^2-(a+1). The existing complete ordered-field solver
+isolates both real roots, selects the positive one and verifies its original
+relation in the retained common field. Fresh-process native graph replay
+revalidates the coefficient/root selections, re-eliminates and isolates again;
+deterministic bytes are checked separately. STRICT and approximate-policy
+contexts consume no approximate terminal in the stated fixtures.
+
+Sixteen ordinary native witnesses include eliminated degree 17, a degree-257
+constant equation, ragged support extents 1025 by 1025, joined/dependent fields,
+repeated definitions, empty inputs and invalid coefficient fields. The
+constant/ragged witnesses complete within their predeclared 10,000 coefficient
+callback allowances. The unoptimized matrix/rectangle variants reach those
+actual callback allowances and return Context errors; they are retained as
+failed completion controls, not geometric exhaustion or exact successes.
+The allowance counts callbacks, not arithmetic inside them or total work.
+
+### Resources and remaining integration
+
+One shared promotion unit admits the field-resultant call. A zero allowance
+actually declines requested 1, used 0, limit 0. Pre-cancellation, cancellation
+inside coefficient multiplication and cancellation during the final zero
+construction all return a typed failure before completed output. The last
+case caught a draft early-return error and remains unchanged after its fix.
+A later attempt succeeds. Storage unavailability, caller context errors and
+actual work-scope exhaustion remain distinct; there is no partial polynomial.
+
+Cancellation checks do not bound one field operation. Coefficient arithmetic,
+projected-system size, temporary/retained heap and cancellation latency still
+lack total limits; existing coefficient-bit instrumentation does not cover
+this general field arithmetic. There is no uniform practical bound over
+arbitrary degree, coefficient complexity or operation depth.
+
+This completes a field-elimination primitive and its demonstrated downstream
+root/replay contracts. It does not admit algebraic coefficients/bounds into
+BivariateCurveTopology or close general rational-map preimage incidence,
+common-component topology, offsets, corner edits or filled/BRep chains. R06/R07
+remain in progress; a successful resultant is not completed curve support.
+
+### Validation and cost observations
+
+Final qualification uses the six Rust source hashes retained with the record:
+
+- All-feature release Hypersolve library/integration tests: 1,359 passing
+  executions in 41 batches, including 16 new parent recipes and the cold child.
+- Affected Hypercurve polynomial unit tests: 75 pass, one existing ignore;
+  six unfiltered integration targets: 63 pass. Four downstream BRep integration
+  targets: 21 pass. All four owner/consumer packages' doctests: 12 pass.
+- Stable and MSRV 1.95.0 all-target/all-feature Clippy for Hypersolve,
+  Hypercurve, HyperBRep and HyperBRep IO pass with warnings denied. Strict
+  rustdoc and all three standalone solver/curve/BRep fuzz-manifest compile
+  checks pass. No runtime fuzz or sanitizer campaign is claimed here.
+- Fifteen mechanically shared recipes execute under Node in fresh zero-import
+  WASM instances; cold native replay is separate. The final root-pinned build
+  is 2,901,479 bytes; the runner reports maximum RSS 79,640 KiB. Earlier
+  differently resolved harness runs remain distinct from final evidence.
+
+Nine legacy public-API controls cover rational, swapped and singular 3-by-3
+matrices, pivot-free sizes 2–4 and native Bezout sizes 2–4, including full
+coefficient/root replay. Three alternating process pairs, 20 samples each,
+produce 1,080 measured calls. Exact artifact rows, requested allocation bytes,
+allocation counts, logical peaks and post-drop observations agree between the
+base and candidate; separate dispatch/rational-stat snapshots agree for all
+nine cases. Candidate/base median time ratios range from 0.961 to 1.062;
+the adverse controls remain recorded. Shared-host timings establish neither
+a statistical speedup nor a universal nonregression guarantee.
+
+Thirteen unchanged new-API recipes are measured separately, five samples each,
+including construction, exact oracle assertions and subsequent consumption.
+Some are explicit invalid/resource controls. This compares completed draft
+and improved implementations of the new API, not a formerly unsupported
+baseline's rejection time. The degree-17 recipe's median falls from 143.718 ms
+to 0.865 ms, with requested traffic falling from about 190.28 MB to 1.305 MB.
+The six-system factored-field recipe falls from 8.482 s to 3.176 s and about
+10.98 GB to 4.35 GB requested traffic; its final logical peak is 9.16–9.35 MB.
+The unequal-degree field schedule still causes substantial allocation traffic.
+These observations do not qualify a minimum performant implementation.
+
+A separate 30-call factored-field run after one warmup records initial
+post-drop deltas up to 204,960 bytes, declining to zero by sample 7 and staying
+zero through sample 29. Requested traffic then stabilizes at 4,346,697,860 bytes
+and the logical peak at 9,143,188 bytes. This finite observation is not a bound
+on retained memory, global caches or arbitrary compositions. Binary sizes and
+hashes are retained separately; external probe linkage is not library-only size.
+
+Earlier failed cancellation/constant/ragged implementations, harness oracle and
+Clippy failures, differently resolved locks, and the owned temporary-copy quota
+failure remain recorded with their corrections. No hard input is removed.
+Formatting, whitespace and repository retention-budget checks accompany the
+local commit. No full pre-push, installed-package, production-binding or
+publication qualification is implied.
+
+Evidence: `docs/evidence/2026-11-04-research-r06-field-resultants`, SHA-256
+`40a0ca28c8d526468db35d084002b964fc36f41d78407f680b6d5641bff4fda2`.
+The local evidence branch ends at `6dca69fdbbf7e96280889d6b5c04a1aacbbee625`;
+its durable bare copy verifies 974 additions (5,962,972 bytes), no prior-record
+changes. Administrative archive receipts follow the retained source snapshot.
+
 ## R06 vertical topology components (2026-11-04)
 
 Baseline `803c35da814c2ca0e9ea1705b97f20a1a4af1305` returns

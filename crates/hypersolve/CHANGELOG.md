@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `ordered_field_resultant_bivariate` over an existing exact ordered
+  coefficient context, including correlated selected algebraic values. Share
+  the pivot-free determinant recurrence, preserve original polynomial scale,
+  use compact constant-resultant powers and ragged scans, and propagate typed
+  context/storage/resource failures. Native topology and rational-map preimage
+  integration remain open. See the [qualification](PERFORMANCE.md#r06-selected-coefficient-bivariate-resultants-2026-11-04).
+
 - Decompose rational vertical polynomial content into selected closed interval
   components with defining exponents and residual graph attachments. Preserve
   exact content/quotient reconstruction. Event point roots describe the

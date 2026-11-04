@@ -2332,6 +2332,36 @@ fn bivariate_has_only_rational_coefficients(polynomial: &BivariatePolynomial) ->
         .all(|coefficient| coefficient.exact_rational_ref().is_some())
 }
 
+// The generic coefficient builder reuses every native arithmetic and zero
+// decision, in the original order. The determinant remains integer Bareiss.
+struct NativePolynomialArithmetic;
+impl crate::bareiss::DeterminantArithmetic<Vec<Real>> for NativePolynomialArithmetic {
+    type Error = std::convert::Infallible;
+    fn constant(&mut self, value: &Real) -> Result<Vec<Real>, Self::Error> {
+        Ok(vec![value.clone()])
+    }
+    fn add(&mut self, a: &Vec<Real>, b: &Vec<Real>) -> Result<Vec<Real>, Self::Error> {
+        Ok(add_exact_polynomials(a, b))
+    }
+    fn multiply(&mut self, a: &Vec<Real>, b: &Vec<Real>) -> Result<Vec<Real>, Self::Error> {
+        Ok(multiply_exact_polynomials(a, b))
+    }
+    fn scale(&mut self, value: &Vec<Real>, scale: &Real) -> Result<Vec<Real>, Self::Error> {
+        Ok(scale_exact_polynomial(value, scale))
+    }
+    fn negate(&mut self, value: Vec<Real>) -> Result<Vec<Real>, Self::Error> {
+        Ok(value.into_iter().map(|c| -c).collect())
+    }
+}
+impl crate::resultant::BezoutArithmetic<Vec<Real>> for NativePolynomialArithmetic {
+    fn subtract(&mut self, a: &Vec<Real>, b: &Vec<Real>) -> Result<Vec<Real>, Self::Error> {
+        Ok(subtract_exact_polynomials(a, b))
+    }
+    fn is_zero(&mut self, value: &Vec<Real>) -> Result<bool, Self::Error> {
+        Ok(exact_polynomial_is_zero(value))
+    }
+}
+
 fn symbolic_bivariate_bezout_resultant(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
@@ -2345,24 +2375,14 @@ fn symbolic_bivariate_bezout_resultant(
     if first.len() != eliminated_degree + 1 || second.len() != eliminated_degree + 1 {
         return None;
     }
-    let mut matrix = vec![Vec::<Real>::new(); eliminated_degree.checked_mul(eliminated_degree)?];
-    for high in 1..=eliminated_degree {
-        for low in 0..high {
-            let cross = subtract_exact_polynomials(
-                &multiply_exact_polynomials(&first[high], &second[low]),
-                &multiply_exact_polynomials(&first[low], &second[high]),
-            );
-            if exact_polynomial_is_zero(&cross) {
-                continue;
-            }
-            for offset in 0..(high - low) {
-                let row = high - 1 - offset;
-                let column = low + offset;
-                let index = row * eliminated_degree + column;
-                matrix[index] = add_exact_polynomials(&matrix[index], &cross);
-            }
-        }
-    }
+    let matrix = crate::resultant::bezout_matrix_with(
+        &first,
+        &second,
+        eliminated_degree,
+        Vec::new(),
+        &mut NativePolynomialArithmetic,
+    )
+    .unwrap_or_else(|never| match never {})?;
     let mut determinant = determinant_polynomial_matrix(&matrix, eliminated_degree)?;
     if !(eliminated_degree * eliminated_degree.saturating_sub(1) / 2).is_multiple_of(2) {
         determinant

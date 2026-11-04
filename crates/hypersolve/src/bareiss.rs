@@ -317,60 +317,113 @@ fn integer_scaled_rational_matrix(matrix: &[Vec<Real>]) -> Option<(Vec<Vec<Real>
     Some((work, scales))
 }
 
-fn pivot_free_determinant(matrix: &[Vec<Real>]) -> BareissDeterminantReport {
+/// Ring operations used by the one pivot-free determinant recurrence.
+/// Integer reciprocals are exact central scalars; no pivot division is used.
+pub(crate) trait DeterminantArithmetic<V> {
+    type Error;
+    fn constant(&mut self, value: &Real) -> Result<V, Self::Error>;
+    fn add(&mut self, first: &V, second: &V) -> Result<V, Self::Error>;
+    fn multiply(&mut self, first: &V, second: &V) -> Result<V, Self::Error>;
+    fn scale(&mut self, value: &V, scale: &Real) -> Result<V, Self::Error>;
+    fn negate(&mut self, value: V) -> Result<V, Self::Error>;
+    fn add_assign(&mut self, value: &mut V, increment: &V) -> Result<(), Self::Error> {
+        *value = self.add(value, increment)?;
+        Ok(())
+    }
+}
+
+pub(crate) fn pivot_free_determinant_with<V: Clone, A: DeterminantArithmetic<V>>(
+    matrix: &[Vec<V>],
+    arithmetic: &mut A,
+) -> Result<V, A::Error> {
     let n = matrix.len();
+    debug_assert!(matrix.iter().all(|row| row.len() == n));
     if n == 0 {
-        return BareissDeterminantReport {
-            determinant: Real::one(),
-            swaps: 0,
-            pivots: Vec::new(),
-            method: BareissDeterminantMethod::PivotFreeFaddeevLeverrier,
-        };
+        return arithmetic.constant(&Real::one());
     }
-
     // Faddeev-LeVerrier constructs the characteristic coefficients without a
-    // data-dependent division. Its only scale is the exact rational -1/k, so
-    // an unresolved matrix pivot cannot block determinant construction.
-    let mut coefficient_matrix = vec![vec![Real::zero(); n]; n];
+    // data-dependent division. Its only scale is the exact rational -1/k.
+    let zero = arithmetic.constant(&Real::zero())?;
+    let mut coefficient_matrix = vec![vec![zero.clone(); n]; n];
     for (index, row) in coefficient_matrix.iter_mut().enumerate() {
-        row[index] = Real::one();
+        row[index] = arithmetic.constant(&Real::one())?;
     }
-
     for step in 1..=n {
-        let mut product = vec![vec![Real::zero(); n]; n];
+        let mut product = vec![vec![arithmetic.constant(&Real::zero())?; n]; n];
         for (row_index, row) in product.iter_mut().enumerate() {
             for (column, value) in row.iter_mut().enumerate() {
-                *value = (0..n).fold(Real::zero(), |sum, inner| {
-                    sum + &matrix[row_index][inner] * &coefficient_matrix[inner][column]
-                });
+                let mut sum = arithmetic.constant(&Real::zero())?;
+                for inner in 0..n {
+                    let term = arithmetic.multiply(
+                        &matrix[row_index][inner],
+                        &coefficient_matrix[inner][column],
+                    )?;
+                    sum = arithmetic.add(&sum, &term)?;
+                }
+                *value = sum;
             }
         }
-        let trace = (0..n).fold(Real::zero(), |sum, index| sum + &product[index][index]);
+        let mut trace = arithmetic.constant(&Real::zero())?;
+        for (index, row) in product.iter().enumerate() {
+            trace = arithmetic.add(&trace, &row[index])?;
+        }
         let denominator = u64::try_from(step).expect("an allocated matrix dimension fits u64");
         let scale = Real::from(
             Rational::fraction(-1, denominator).expect("Faddeev-LeVerrier step is nonzero"),
         );
-        let coefficient = trace * scale;
+        let coefficient = arithmetic.scale(&trace, &scale)?;
+        // The scalar recurrence consumed these operands before updating the
+        // diagonal. Release their shared storage at that same boundary.
+        drop(trace);
+        drop(scale);
         if step == n {
-            let determinant = if n.is_multiple_of(2) {
-                coefficient
+            return if n.is_multiple_of(2) {
+                Ok(coefficient)
             } else {
-                -coefficient
-            };
-            return BareissDeterminantReport {
-                determinant,
-                swaps: 0,
-                pivots: Vec::new(),
-                method: BareissDeterminantMethod::PivotFreeFaddeevLeverrier,
+                arithmetic.negate(coefficient)
             };
         }
         for (index, row) in product.iter_mut().enumerate() {
-            row[index] += coefficient.clone();
+            arithmetic.add_assign(&mut row[index], &coefficient)?;
         }
         coefficient_matrix = product;
     }
-
     unreachable!("a nonempty determinant construction executes at least one step")
+}
+
+struct RealDeterminantArithmetic;
+impl DeterminantArithmetic<Real> for RealDeterminantArithmetic {
+    type Error = std::convert::Infallible;
+    fn constant(&mut self, value: &Real) -> Result<Real, Self::Error> {
+        Ok(value.clone())
+    }
+    fn add(&mut self, a: &Real, b: &Real) -> Result<Real, Self::Error> {
+        Ok(a + b)
+    }
+    fn multiply(&mut self, a: &Real, b: &Real) -> Result<Real, Self::Error> {
+        Ok(a * b)
+    }
+    fn scale(&mut self, value: &Real, scale: &Real) -> Result<Real, Self::Error> {
+        Ok(value * scale)
+    }
+    fn negate(&mut self, value: Real) -> Result<Real, Self::Error> {
+        Ok(-value)
+    }
+    fn add_assign(&mut self, value: &mut Real, increment: &Real) -> Result<(), Self::Error> {
+        // Preserve the original rational in-place fast path and dispatch.
+        *value += increment.clone();
+        Ok(())
+    }
+}
+fn pivot_free_determinant(matrix: &[Vec<Real>]) -> BareissDeterminantReport {
+    let determinant = pivot_free_determinant_with(matrix, &mut RealDeterminantArithmetic)
+        .unwrap_or_else(|never| match never {});
+    BareissDeterminantReport {
+        determinant,
+        swaps: 0,
+        pivots: Vec::new(),
+        method: BareissDeterminantMethod::PivotFreeFaddeevLeverrier,
+    }
 }
 
 /// Computes an exact determinant with Bareiss fraction-free elimination.

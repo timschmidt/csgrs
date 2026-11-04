@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r06-field-resultants-2026-11-04` branch ends at
+`6dca69fdbbf7e96280889d6b5c04a1aacbbee625`, parent
+`6d353969435e3ef8e79eed64da8d28c32439dfed`.
+`docs/evidence/2026-11-04-research-r06-field-resultants` contains 974 files and
+5,962,972 bytes, SHA-256
+`40a0ca28c8d526468db35d084002b964fc36f41d78407f680b6d5641bff4fda2`.
+The [owner qualification](../crates/hypersolve/PERFORMANCE.md#r06-selected-coefficient-bivariate-resultants-2026-11-04)
+records the missing-API witness, shared determinant/Bezout authority, selected
+coefficient/root/cold-replay contracts, canceled-zero regression, compact
+constant/linear/ragged schedules, native/static/WASM checks, legacy artifact
+and dispatch controls, allocation samples and remaining high-degree costs.
+Failed prototypes, harness corrections and differently resolved locks remain
+separate. The durable local bare archive verifies only these 974 additions
+and the record digest; prior evidence is unchanged. No push occurred.
+
 The local `research-r07-charts-2026-11-04` evidence branch ends at
 `6d353969435e3ef8e79eed64da8d28c32439dfed`. `docs/evidence/2026-11-04-research-r07-charts`
 contains 176 files and 5,500,566 bytes, with SHA-256
