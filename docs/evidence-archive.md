@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `native-source-boundaries-2026-11-04` evidence branch ends at
+`ca3f86e84fa0531d0493597f89f7e8b9672f4ce2`. Its record
+`docs/evidence/2026-11-04-native-source-boundaries` contains 75 files and
+273,076 bytes, SHA-256 `0617a293285b952868bf5037a3fa85d7ed2159df176152f5f4fb55ac189e40a2`.
+SynapsCAD `1f1ec3e` retains native source through display/export and resolves the
+near-coincident rendering failure. Final focused checks pass; configured CI
+records 64 passes, one B-text failure and two ignores. Visual limitations,
+adverse conversion costs and increased retention are preserved in the
+[admission](research/native-source-boundaries-2026-11-04.md). The archive adds
+only this record; no push, full CI success or universal closure is claimed.
+
 The local `export-equality-2026-11-04` evidence branch ends at
 `0c0f10d4e10c1366018689e4cfefe57292779d5a`. Its record
 `docs/evidence/2026-11-04-export-equality` contains eight files and 13,718 bytes,

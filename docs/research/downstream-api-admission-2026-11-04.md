@@ -122,3 +122,8 @@ A subsequent [export equality correction](export-equality-2026-11-04.md) at
 SynapsCAD `124c31d` removes a reproduced tolerance merge of distinct projected
 vertices. Its 35 binary/UI tests pass; native-source export and the two earlier
 full-library CI failures remain open.
+
+The subsequent [native-source admission](native-source-boundaries-2026-11-04.md)
+at SynapsCAD `1f1ec3e` supersedes renderer-buffer export and resolves the
+near-coincident failure. Configured CI now has 64 passes, one B-text failure and
+two ignores; conversion costs and remaining boundary/visual limits are retained.

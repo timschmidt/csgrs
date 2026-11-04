@@ -29,6 +29,9 @@ which uses the K (kernel simplification), U (public modeling API) and D
 A [subsequent export-boundary regression](research/export-equality-2026-11-04.md)
 is corrected locally at SynapsCAD `124c31d`; it preserves distinct projected
 vertices without claiming native-source interchange completion.
+SynapsCAD `1f1ec3e` then [retains native geometry through display and export](research/native-source-boundaries-2026-11-04.md),
+resolving the near-coincident failure. B-text CI completion, visual differential
+limits and adverse native-normal costs remain explicit.
 
 This ledger records the evaluation of every project in the consolidated
 research handoff of 22 October 2026 (`docs/research/csgrs-remaining-research-projects.txt`

@@ -53,3 +53,8 @@ The source patch, baseline failures, all-test success, Clippy/WASM/format logs,
 source revisions and replay commands are retained. Earlier archive paths are
 unchanged, and the branch is unpushed. This CSGRS update is receipt-only; affected
 checks are formatting, links, whitespace, archive integrity and retention budget.
+
+The subsequent [native-source admission](native-source-boundaries-2026-11-04.md)
+at SynapsCAD `1f1ec3e` supersedes renderer-buffer export and resolves the
+near-coincident failure. Configured CI now has 64 passes, one B-text failure and
+two ignores; conversion costs and remaining boundary/visual limits are retained.
