@@ -17,6 +17,15 @@ pub enum CurveBooleanError {
 #[derive(Debug, Clone, thiserror::Error, PartialEq)]
 #[non_exhaustive]
 pub enum ValidationError {
+    /// Lazy expression evaluation failed at the specified path from its root.
+    /// An empty path identifies the root evaluation, including arrangement
+    /// failures that cannot be attributed to an individual operand.
+    #[error("CSG expression node {node_path:?}: {source}")]
+    Expression {
+        node_path: Vec<crate::solid_expr::SolidExprChild>,
+        #[source]
+        source: Box<ValidationError>,
+    },
     /// A length or radius that must be nonnegative was proved negative.
     #[error("{name} must be nonnegative")]
     NegativeParameter { name: &'static str },
@@ -187,6 +196,7 @@ const fn curve_error_kind(source: &CurveError) -> ValidationErrorKind {
 impl ValidationError {
     pub const fn kind(&self) -> ValidationErrorKind {
         match self {
+            Self::Expression { source, .. } => source.kind(),
             Self::Gpu(error) => match error {
                 hypermesh::GpuMeshError::TriangleNormalUndecided { .. }
                 | hypermesh::GpuMeshError::TriangleNormalFailed {

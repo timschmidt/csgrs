@@ -5,6 +5,25 @@ represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a
 deliberate contract change (P27), not a performance-only change.
 
+## Lazy expression failure context
+
+`SolidExpr::evaluate_with_context` and `Csg::evaluate` now wrap evaluation
+failures in `Error::Expression { node_path, source }`. `Error::kind()` is
+unchanged; callers matching a native variant directly should inspect the
+boxed `source`. The standard error source chain also retains that boxed cause
+and its native sources. Geometry, predicate order and successful receipts are
+unchanged. Failures converting a transform's number at construction time still
+return `Error::InvalidNumber` directly, before an expression node exists.
+
+`node_path` is a sequence of `SolidExprChild::{Input, Left, Right}`, relative
+to the expression being evaluated. `SolidExpr::node_at(&node_path)` resolves
+it. Transform failures identify that transform. Indexed input failures
+identify the first lowered occurrence of that operand, even when it is
+shared. Unlocalized kernel and shared-arrangement failures identify the root
+evaluation with an empty path; that does not claim a unique offending leaf.
+Paths are not stable identifiers across expression edits. This is an
+intentional diagnostic change to the unreleased lazy API.
+
 ## One name per transform and query
 
 Eleven operations had two public names with identical signatures, where the

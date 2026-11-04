@@ -315,6 +315,14 @@ mirror, center and the other transforms exist only as free functions.
 
 ### U06 — A lazy CSG expression tree compiled to one `BooleanProgram` (P21)
 
+Follow-up (4 November): evaluation errors now retain a `SolidExprChild` path
+and boxed native cause in `Error::Expression`. `SolidExpr::node_at` resolves
+that path. Indexed input failures and failed transforms are localized; shared
+arrangement errors and native failures without an operand index identify the
+root evaluation. Failure categories and source chains remain available. The
+[admission record](expression-node-errors-2026-11-04.md) records the reproduced
+missing context, current checks, cost observations and remaining limits.
+
 Hypermesh already has `BooleanProgram` and shares arrangement work across
 expression roots, but the public API evaluates one Boolean at a time.
 

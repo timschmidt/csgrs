@@ -82,7 +82,7 @@ pub use context::{GeometryCertainty, GeometryContext, GeometryOutcome};
 pub use hypermesh::{ConstructionEvidence, TriangleMesh};
 pub use hyperreal::Real;
 pub use session::{Csg, Error, IntoReal, Result, decimal, ratio};
-pub use solid_expr::SolidExpr;
+pub use solid_expr::{SolidExpr, SolidExprChild};
 
 pub(crate) const PREDICATE_POLICY: hyperlimit::PredicatePolicy =
     hyperlimit::PredicatePolicy::STRICT;

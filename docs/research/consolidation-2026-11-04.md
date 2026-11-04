@@ -100,9 +100,11 @@ additions under the new record and no changed or deleted prior archive files.
 Package dispositions in the simplification plan are historical evidence, not
 a fresh universal completion claim. Read-only checks of the workspace sibling
 repositories confirm D01/D02/D04 still have uncommitted work. openscad-rs is
-clean at `c0d92e6`; the Manifold comparison remains deferred. U06's proposed
-expression-node attribution for errors is not implemented by the current
-lowering API. The general curve/BRep closure plans, remaining research queue,
+clean at `c0d92e6`; the Manifold comparison remains deferred. U06's missing
+expression-node attribution was subsequently addressed in the
+[diagnostic follow-up](expression-node-errors-2026-11-04.md), with explicit
+limits for failures the native kernel cannot localize. The general curve/BRep
+closure plans, remaining research queue,
 full pre-push gates and installed-distribution validation remain open. The
 next research changes must reproduce their witnesses on this integrated tree;
 none of these open requirements is closed by the branch cleanup.

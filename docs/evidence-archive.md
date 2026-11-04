@@ -85,6 +85,17 @@ in this repository.
 
 ## Follow-on records
 
+The local `expression-node-errors-2026-11-04` evidence branch ends at
+`34fb72de7b2eb4cb3a75074124287518d9b009c0`. Its new record
+`docs/evidence/2026-11-04-expression-node-errors` contains 30 files and 322,219
+bytes, SHA-256 `326f3d6b42f7dfa528b0e26a8fbfda1e71dab909ca94ba7bc7cd620c8e5ea7a4`.
+It records typed lazy-expression node paths on `c0db6b33bf` plus its Rust patch:
+681 passing CSGRS tests/doctests, seven existing ignores, current/MSRV Clippy,
+docs and actual SynapsCAD all-target/lint/fuzz compilation after the policy
+argument migration. Adverse timing samples and cdylib growth are retained;
+no latency nonregression, application-runtime, release or universal closure
+claim is made. The tree adds only this record; the branch is unpushed.
+
 The local `research-consolidation-2026-11-04` evidence branch ends at
 `c6bf7692d80cce9f3212a965f1b8c48ad638b4ca`. Its new record
 `docs/evidence/2026-11-04-research-consolidation` contains 48 files and 992,163

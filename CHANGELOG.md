@@ -18,6 +18,10 @@ migrations, including changed serialized output, are listed in
   evaluated as one Boolean program, so a multi-operation model builds one
   surface arrangement instead of one per operation. `SolidExt` gains
   `rotated`, `scaled`, `mirrored` and `centered`.
+- Lazy expression failures now carry `Error::Expression` with a node path and
+  their original typed cause. `SolidExpr::node_at` resolves the path, and
+  `Error::kind()` keeps the cause's category. Shared-arrangement errors that
+  cannot be localized identify the root evaluation.
 - Transforms and queries have one name each. The duplicate `try_` aliases and
   the `try_` prefix of their policy-taking variants were removed (see
   MIGRATIONS).
