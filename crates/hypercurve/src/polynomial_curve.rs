@@ -1102,6 +1102,50 @@ impl PolynomialCurveBranch2 {
         if first.is_lt() || last.is_gt() {
             return Ok(None);
         }
+        let query_parameter =
+            |parameter: CurveParameter2| -> ExactCurveResult<Option<CurveParameter2>> {
+                let parameter = if parameter.as_polynomial_query().is_some() {
+                    parameter
+                } else {
+                    // An affine coordinate of this known point can lack a rational
+                    // source lift. Retain its original point/field recipe instead
+                    // of requiring a new scalar projection of the coordinate.
+                    let query = crate::bezier_offset::PointFormSource2::new(
+                        point.clone(),
+                        hypersolve::BivariatePolynomial::new(vec![
+                            vec![form[2].clone(), form[1].clone()],
+                            vec![form[0].clone()],
+                        ]),
+                        hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+                    );
+                    CurveParameter2::from_polynomial_query(decided(
+                        crate::selected_query_scalar::SelectedQueryScalar2::replay(query, policy)
+                            .map_err(invalid)?,
+                    )?)
+                };
+                let ordinate = crate::bezier_offset::PointFormSource2::new(
+                    point.clone(),
+                    hypersolve::BivariatePolynomial::new(vec![
+                        vec![ordinate_form[2].clone(), ordinate_form[1].clone()],
+                        vec![ordinate_form[0].clone()],
+                    ]),
+                    hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+                );
+                let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
+                    self.fiber_equation(),
+                    &parameter,
+                    &ordinate,
+                    &self.topology().domain().second,
+                    policy,
+                )?
+                else {
+                    return Ok(None);
+                };
+                if count != self.topology().slabs()[self.slab].arcs().len() {
+                    return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+                }
+                Ok((rank == self.root).then_some(parameter))
+            };
         let expected = if first.is_eq() {
             parameter = self.range.start().clone();
             self.endpoints[0].clone()
@@ -1109,30 +1153,19 @@ impl PolynomialCurveBranch2 {
             parameter = self.range.end().clone();
             self.endpoints[1].clone()
         } else if parameter.as_polynomial_query().is_some() {
-            let ordinate = crate::bezier_offset::PointFormSource2::new(
-                point.clone(),
-                hypersolve::BivariatePolynomial::new(vec![
-                    vec![ordinate_form[2].clone(), ordinate_form[1].clone()],
-                    vec![ordinate_form[0].clone()],
-                ]),
-                hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
-            );
-            let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
-                self.fiber_equation(),
-                &parameter,
-                &ordinate,
-                &self.topology().domain().second,
-                policy,
-            )?
-            else {
-                return Ok(None);
-            };
-            if count != self.topology().slabs()[self.slab].arcs().len() {
-                return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
-            }
-            return Ok((rank == self.root).then_some(parameter));
+            return query_parameter(parameter);
         } else {
-            self.map_point(self.interior_point(&parameter, policy)?, policy)?
+            let source = match self.interior_point(&parameter, policy) {
+                Ok(source) => source,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Unsupported
+                        && parameter.as_selected_fiber().is_some() =>
+                {
+                    return query_parameter(parameter);
+                }
+                Err(error) => return Err(error),
+            };
+            self.map_point(source, policy)?
         };
         Ok(decided(expected.same_point(point, policy))?.then_some(parameter))
     }

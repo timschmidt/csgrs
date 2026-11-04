@@ -709,11 +709,33 @@ fn polynomial_pairs_keep_contacts_and_overlaps_in_shared_similarity_charts() {
     )
     .unwrap();
     let image = g.curves()[0].transform_similarity(&translation).unwrap();
+    // Preserve the original different-chart frontier input as exact empty
+    // geometry. Its x domains meet only at x=1, where the translated parabola
+    // has y=0 and the quintic's independent equation has residual 4.
+    assert!(
+        image
+            .start()
+            .coincides_with(&Point2::from_values(1, 0).into())
+            .unwrap()
+    );
+    assert_eq!(
+        image
+            .start()
+            .rational_form(
+                polynomial(&[&[5, 5, 0, 0, 0, 1], &[-1]]),
+                polynomial(&[&[1]])
+            )
+            .unwrap()
+            .compare_to_real(&Real::zero())
+            .unwrap(),
+        Ordering::Greater,
+    );
     for (a, b) in [(&f.curves()[0], &image), (&image, &f.curves()[0])] {
-        let error = a.intersect_curve(b).unwrap_err();
+        let result = a.intersect_curve(b).unwrap();
         assert!(
-            matches!(error, hypercurve::ExactCurveError::Blocked(blocker) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
+            result.is_complete() && result.contacts().is_empty() && result.overlaps().is_empty()
         );
+        assert!(a.intersection_topology(b).unwrap().result().is_disjoint());
     }
 }
 

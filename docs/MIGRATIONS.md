@@ -1,5 +1,18 @@
 # Migrations
 
+## Polynomial pair chart admission (2026-11-04)
+
+Native polynomial graph pairs with proved rational relative similarities now
+return complete contacts, overlaps or disjointness where earlier revisions
+returned Unsupported. Both source charts and nonlinear overlap maps remain
+retained. Public types and native archive grammar are unchanged. Existing
+shared-chart semantics remain; closed overlaps own their endpoints without
+duplicate isolated contacts. The original quintic/parabola unsupported fixture
+now proves emptiness on unchanged operands. General rational image maps and
+algebraic relative transforms remain unqualified. See the
+[owner qualification](../crates/hypercurve/PERFORMANCE.md#r07-polynomial-pairs-in-distinct-charts-2026-11-04).
+
+
 This document lists the CSGRS changes that need caller action or that change
 represented geometry or serialized artifacts. The [README](../readme.md) and
 the API documentation describe current behavior only. A migration is a

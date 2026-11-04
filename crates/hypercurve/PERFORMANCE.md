@@ -10,6 +10,141 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## R07 polynomial pairs in distinct charts (2026-11-04)
+
+At `c688fbfd9e4d1d06ba6113986a7752de8bdabb24`, the two native
+half axes of xy in distinct source charts report intersection/Unsupported.
+The retained missing witness reproduces that failure. Hypercurve owns pair
+incidence and source parameter transport (P15, P17–P20); its known-point
+incidence also lacked a usable parameter for the exchanged parabola at
+(1/2,1/4). This increment admits native rational-coefficient graph supports
+with no rational image maps and a proved rational relative similarity.
+Algebraic selected coordinates and dependent query parameters remain exact.
+
+### Representation and completeness within this increment
+
+For world images A and B, form the rational query view L=B^-1 A and pull
+B's equation into A's chart. Existing exact resultant and component extraction
+own finite candidates and common supports. Every retained candidate is checked
+against both selected branches and active domains. The original sources and
+world images remain authoritative; no sampled or fitted geometry is added.
+The existing shared-chart path keeps its dispatch and algorithms.
+
+On a common component, injective graph arcs are regular inside their certified
+slabs. Membership can change only at an endpoint; singular events already bound
+those slabs. Transport both operands' endpoints into A, then test one exact
+interior point per interval. Paired endpoints determine monotone transport and
+traversal orientation. A private correspondence retains both original curves
+and ranges and maps either direction through exact point incidence, including
+nonlinear relations such as t=s^2. Mixed common/residual intersections are
+covered by residual resultants and both operands' endpoints. Closed overlaps
+own their endpoints; they do not publish duplicate isolated contacts.
+
+Differential cross signs use pulled-back gradients and both chart orientations.
+A singular support gradient still yields an unknown tangent germ, rather than
+inventing a tangent. For an affine coordinate of an already selected point,
+the point-incidence fallback retains its original joint field/query recipe
+and validates the complete source-fiber census and selected ordinal. It does
+not require independent coordinate projection or swallow budget/invalid errors.
+
+### Demonstrated scope and limits
+
+The maintained corpus covers axes, swapped parabolas, translated disjoint
+supports, a rational rotation with an independently isolated cubic contact,
+nonlinear overlaps in both orders and traversals, repeated quintic columns,
+32 mixed common-component branch pairs, opposite reducible roots and distinct
+2^-80 translations. A degree-17 overlap transports inverse cuts without
+materializing scalar roots. Independent quintic and septic supports retain a
+joint degree-35 selected point and feed splitting and further intersection.
+Rotated implicit-circle overlaps feed the existing CurveRegion2 arrangement,
+all four Boolean identities and EvenOdd reconstruction. Fresh-process native
+SVG replay retains both selected contact equations, endpoint identity and
+source locations, then completes another intersection and split. Native
+archive grammar is unchanged; deterministic bytes are checked separately.
+
+The former quintic/parabola Unsupported assertion keeps its original operands
+and now proves complete emptiness: their x domains meet only at x=1, where
+the parabola endpoint (1,0) has strictly positive quintic residual. The line
+oracle for mixed common components explicitly reconciles closed-overlap
+endpoint duplicates with the polynomial kernel's isolated-contact convention;
+both closed endpoints must agree exactly. No hard case is removed.
+
+Zero allowance actually declines a promotion (used 0, limit 0, requested 1),
+pre-cancellation propagates, and larger-budget/policy-transition retries
+complete with certified outputs. These controls do not bound total coefficient
+arithmetic, projected-system size, retained heap or cancellation latency.
+General algebraic coefficients/bounds, unproved nonrational relative views,
+rational image maps, complete singular germs, implicit offset/corner closure,
+and arbitrary filled/BRep chains remain open. R06/R07 remain in progress.
+
+A current-source frontier probe shears y=x^2 by (x,y)->(x+y,y), retaining the
+map, then queries y=1/2 on x in [-2,2]. Both the native polynomial and authored
+line operand report intersection/Unsupported. The two exact contacts satisfy
+(X-Y)^2=Y, 2Y=1 and both active domains. The nonconstant image is not silently
+lowered to a fitted or authored specialization. Its source and raw outcomes
+remain in the archive for the next admission increment.
+
+### Completed-workload cost observations
+
+The same external allocator and nine legacy recipes run against an archive of
+the committed base and this candidate. Three alternating process pairs, pinned
+to one allowed CPU, supply 1,080 measured calls. All six outcome/artifact files
+have SHA-256 `bd4f2c207f537b93711fc7aa64aa62025b9d59a4e472d6bbbbe03f986b490580`;
+allocation-call and requested-byte observations are identical in every row.
+Eight native SVG controls complete; the full implicit-circle SVG row already
+reports BudgetExhausted on the base and remains an exhausted outcome. Its
+receipt alone does not prove an actual reached resource guard. Median time
+ratios range from 0.898 to 0.999 on this shared host with concurrent validation;
+these observations establish neither a speedup nor statistical nonregression.
+
+The 13 shared native chart-pair test recipes supply another 260 completed
+construction/query/validation/drop samples. Medians range from 0.774 to
+763.781 ms, with measured peak logical live increments of 36,760–536,562 bytes.
+These include the assertions and subsequent operations in each named test,
+not merely result construction; they exclude the native cold-child SVG recipe.
+They have no successful counterpart on the base, so rejection time is not a
+speedup baseline. Some samples retain allocations after drop. A separate
+500-call degree-17 workflow, after two warmups, retains 105,848 bytes over the first 100 measured
+calls and zero additional bytes over each following 100-call block. This
+bounds only that observation and does not identify every owner or establish a
+universal retained-memory/cancellation bound.
+
+The matched legacy native probe grows from 20,784,200 to 20,835,824 bytes
+(+51,624). That is a linked executable observation including dependency paths,
+not isolated library size. The six measured public carrier sizes are unchanged:
+Curve2 8, CurveParameter2 56, CurveIntersectionResult2 8,
+CurveIntersectionOverlap2 584, PolynomialCurveBranch2 544 and CurveRegion2 8
+bytes. Raw samples, allocator, sources, build inputs and binary hashes remain
+in the evidence record. The inherited cost driver's four additional vertical
+rows were already supported by R06; they are controls, not newly completed
+chart-pair contracts. Its initial missing-feature harness failure is retained
+alongside the corrected warning-free campaign.
+
+### Validation
+
+The final combined Hypercurve/BRep/IO library and integration run completes
+3,927 passing tests in 205 batches, with 37 pre-existing ignores. The unchanged
+1848-pass Hypercurve unit group takes 582.67 s; BRep/IO contribute 817 passes.
+Additional final commands pass 11 root adapter/receipt tests, 13 minimal-feature
+chart tests and 11 doctests. Stable and MSRV 1.95 Clippy cover all targets and
+features of all three packages with warnings denied; strict docs, formatting
+and both fuzz manifests' bin checks pass. The 17 capability-driver guards pass,
+then all eight new witnesses pass with a stable source snapshot. Thirteen
+mechanically shared geometry recipes run in fresh zero-import WebAssembly
+instances under Node 22.22.2; native cold-child replay is a separate test.
+All six final Rust source hashes remain unchanged through these checks.
+
+No runtime sanitizer/fuzz campaign, full pre-push CI, installed package or
+production binding qualification was added by this increment. The archive
+retains all raw results and earlier failures; its receipt follows below.
+
+Local evidence branch `research-r07-charts-2026-11-04`, commit
+`6d353969435e3ef8e79eed64da8d28c32439dfed`, record `docs/evidence/2026-11-04-research-r07-charts`
+(176 files; 5,500,566 bytes), SHA-256
+`55f79bbaf2cd07e594373412f54c753116d22871663bcb188eee1f78216a645c`. The durable local bare archive is verified;
+only this record is added to parent `7764d5b4fd4d81ae529924c0dd8cd7c9684c5efe`.
+Earlier archive records and root receipts remain unchanged. No push occurred.
+
 ## R06 native vertical charts (2026-11-04)
 
 The original `x=0` topology on `[-1,1] × [-2,2]` is certified by
@@ -79,8 +214,9 @@ These controls do not bound total coefficient arithmetic, expression size,
 heap, elapsed time or cancellation latency. The second complete projection
 can add avoidable events and retained work; this is not a minimal-cost atlas.
 
-A direct current-source probe of two half axes from xy in distinct retained
-charts still reports intersection/Unsupported. General mixed-chart
+At that R06 revision, two half axes from xy in distinct retained
+charts report intersection/Unsupported; the subsequent R07 increment above
+resolves that witness. General mixed-chart
 polynomial incidence, singular differential germs, algebraic coefficient and
 bound admission, implicit offset/corner closure and complete trimmed solids
 remain open. Passing these named workflows does not complete R06/R07 or prove

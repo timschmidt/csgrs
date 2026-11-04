@@ -20,6 +20,10 @@ use crate::CurveFamily2;
 use crate::curve::polynomial_is_zero;
 use crate::{PolynomialCurveBranch2, Similarity2};
 
+#[path = "polynomial_curve_pair_charts.rs"]
+mod charts;
+pub(super) use charts::PolynomialPairCorrespondence2;
+
 fn invalid(cause: CurveError) -> ExactCurveError {
     ExactCurveError::invalid(
         CurveOperation2::Intersection,
@@ -249,7 +253,7 @@ pub(super) fn intersect(
         return Ok(None);
     };
     let Some(image) = shared_similarity(a, b, policy)? else {
-        return Ok(None);
+        return charts::intersect(first, second, &policy.strict_counterpart());
     };
     let inverse = image
         .as_ref()

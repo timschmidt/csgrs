@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r07-charts-2026-11-04` evidence branch ends at
+`6d353969435e3ef8e79eed64da8d28c32439dfed`. `docs/evidence/2026-11-04-research-r07-charts`
+contains 176 files and 5,500,566 bytes, with SHA-256
+`55f79bbaf2cd07e594373412f54c753116d22871663bcb188eee1f78216a645c`. It retains the original chart and point-incidence blockers,
+corrected harness failures, exact overlap/joint-field/region/cold-replay
+witnesses, final native/static/minimal/doc/fuzz-compile checks, thirteen actual
+zero-import WASM recipes, matched legacy artifacts and allocation samples,
+500-call retention observations and the still-unsupported retained shear.
+Its [owner qualification](../crates/hypercurve/PERFORMANCE.md#r07-polynomial-pairs-in-distinct-charts-2026-11-04)
+separates this completed increment from the open algebraic/resource target.
+The durable local bare archive verifies exactly 176 additions under this new
+record, no prior changes, and the recorded digest. Its parent is
+`7764d5b4fd4d81ae529924c0dd8cd7c9684c5efe`. No push or publication occurred.
+
 The local `research-r06-native-2026-11-04` evidence branch ends at
 `7764d5b4fd4d81ae529924c0dd8cd7c9684c5efe`.
 `docs/evidence/2026-11-04-research-r06-native` contains 744 files and 8,142,828 bytes,

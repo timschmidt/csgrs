@@ -17208,6 +17208,279 @@
       ],
       "oracle": "Actual BudgetExceeded receipts (kind, requested, used and limit) and successful larger-budget retry; no total-work, heap or cancellation-latency bound.",
       "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_native_axes",
+      "target": "polynomial_pair_charts",
+      "test": "whole_axes_contact_consumes_the_exchanged_native_chart",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Two native half axes of xy in distinct retained source charts.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Exactly one transverse endpoint contact at the origin, followed by split and requery."
+        }
+      ],
+      "oracle": "Independent axes and exact contact census.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_nonlinear_overlap",
+      "target": "polynomial_pair_charts",
+      "test": "nonlinear_overlap_retains_bidirectional_parameter_transport",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "y=x^2 and the exchanged positive branch of x=y^2, both orders and reversed traversal.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "One closed overlap; inverse and forward transport preserve points and maximal restricted bounds x=1/4,1/2."
+        }
+      ],
+      "oracle": "Independent t=s^2 parameter relation and exact paired endpoint identities.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_degree_seventeen",
+      "target": "polynomial_pair_charts",
+      "test": "degree_seventeen_overlap_keeps_nonmaterialized_inverse_cuts",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "y=x^17 and an exchanged inverse branch, restricted by rational ordinate cuts.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Overlap cuts transport seventeenth-root parameters without independent scalar materialization."
+        }
+      ],
+      "oracle": "Exact original equation and independent rational image bounds -2^-16 and -2^-18.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_joint_system",
+      "target": "polynomial_pair_charts",
+      "test": "independent_quintic_and_septic_supports_keep_the_joint_selected_system",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Independent quintic horizontal and septic vertical supports with a joint degree-35 selected contact.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Exactly one certified transverse contact retains both defining relations and feeds point location, splitting and another intersection."
+        }
+      ],
+      "oracle": "Strictly increasing Eisenstein supports have one real root each; coprime field degrees imply joint degree 35.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_common_components",
+      "target": "polynomial_pair_charts",
+      "test": "mixed_common_components_keep_other_crossings_and_endpoint_contacts",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Node support y^2-x^2 and exchanged product (t-s)(t-1), all 32 branch/traversal pairs.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Common overlaps coexist with separate crossings and endpoint contacts."
+        }
+      ],
+      "oracle": "Independent factored finite line segments; compare isolated events and closed overlap endpoint sets separately.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_filled_booleans",
+      "target": "polynomial_pair_charts",
+      "test": "rotated_circle_overlaps_feed_the_same_filled_set_arrangement",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Implicit unit circle and rational 3/5,4/5 rotation.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Exact overlap ranges feed region admission, all four Boolean identities and EvenOdd reconstruction."
+        }
+      ],
+      "oracle": "Independent unit-circle identity, explicit overlap bounds and equality of regularized filled sets.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_cold_replay",
+      "target": "polynomial_pair_charts",
+      "test": "selected_chart_pair_cuts_replay_cold_and_feed_another_intersection",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Reversed quintic/septic selected cuts through native SVG metadata in a fresh child process.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Cold replay retains both equations, endpoint identity and source locations, then completes another pair intersection and split. Deterministic bytes checked separately."
+        }
+      ],
+      "oracle": "Independent original equations and unique selected-root contact; fresh-process replay.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "pair_charts_resource_retry",
+      "target": "polynomial_pair_charts",
+      "test": "separate_chart_resource_denial_cancellation_and_policy_retry",
+      "owner": "Hypercurve polynomial incidence and retained source charts",
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "domain": "Rational horizontal graph against translated selected septic column.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Rational-coefficient native graph supports, no rational image maps, and proved rational relative similarities. Original source charts, joint point fields and domains remain authoritative. Named witnesses do not qualify the complete algebraic target.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Zero budget declines one promotion; cancellation propagates; larger-budget and policy-transition retries complete with certified contact and consumable cuts."
+        }
+      ],
+      "oracle": "Actual WorkKind/limit/used/requested receipts and independent one-contact expectation.",
+      "timeout_seconds": 300
     }
   ]
 }

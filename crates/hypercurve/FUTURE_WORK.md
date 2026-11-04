@@ -3956,9 +3956,27 @@ separate fixtures cover selected quintics, singular/boundary columns, filled
 reconstruction, cold replay and actual resource-denial/retry receipts.
 
 R06/R07 remain in progress. General algebraic coefficient fields and selected
-rectangle bounds, complete incidence across distinct polynomial charts,
+rectangle bounds, incidence beyond the proved rational relative-chart domain,
 singular differential germs, implicit offset/corner operations and total
 resource contracts remain open. The second complete decomposition can add
 avoidable projection events and work; this is not the minimum-cost chart atlas
 or a general closure claim. Keep native specializations and original hard
 cases while completing these consumers.
+
+## Distinct polynomial charts (R07, 2026-11-04)
+
+Native polynomial pairs with proved rational relative similarities now use
+shared resultant/component authority while retaining both source charts and
+nonlinear overlap transport. Degree-17 inverse cuts and joint quintic/septic
+selected contacts remain consumable; named circle overlaps feed filled
+Booleans and reconstruction, and selected cuts replay cold. The
+[qualification](PERFORMANCE.md#r07-polynomial-pairs-in-distinct-charts-2026-11-04)
+records the missing witnesses, sufficient closure argument and actual scope.
+This does not complete general algebraic coefficients, rational images,
+singular differential germs, arbitrary BRep trims, offset/corner chains or
+total resource bounds. Keep R06/R07 open.
+
+The current retained-map frontier is the shear (x,y)->(x+y,y) of y=x^2
+against y=1/2 on [-2,2]. Both polynomial and authored-line query forms still
+report Unsupported despite two algebraic contacts. The owner qualification
+and archived public-API probe retain that input for the next increment.
