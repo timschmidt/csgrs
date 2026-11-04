@@ -137,6 +137,53 @@ fn empty_leaves_are_the_empty_set() {
     assert!(evaluate(&(&empty | &empty)).triangles.is_empty());
 }
 
+/// Regularization can produce an empty mesh while retaining approximate
+/// construction ancestry. Lowering that leaf to `false` must keep its receipt.
+#[test]
+fn empty_leaves_keep_construction_evidence_through_further_operations() {
+    let approximate = Csg::approximate_512();
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let zero = uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
+    let cube = approximate.cube(1).unwrap();
+    let touching = approximate
+        .translate(&cube, Real::one() + zero, 0, 0)
+        .unwrap();
+    let empty = approximate.intersection(&cube, &touching).unwrap();
+    assert!(empty.positions.is_empty() && empty.triangles.is_empty());
+    assert!(empty.construction_evidence().approximate_512_consumed());
+
+    for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+        let leaf = SolidExpr::from(empty.clone());
+        let body = SolidExpr::from(cube.clone());
+        for expression in [
+            leaf.clone(),
+            &leaf | &body,
+            &body | &leaf,
+            &leaf & &body,
+            &body - &leaf,
+            &leaf - &body,
+            &leaf ^ &body,
+            &leaf | &leaf,
+        ] {
+            let outcome = expression.evaluate_with_context(context).unwrap();
+            assert_eq!(outcome.certainty, GeometryCertainty::Certified);
+            assert!(
+                outcome
+                    .value
+                    .construction_evidence()
+                    .approximate_512_consumed()
+            );
+
+            let strict = Csg::strict();
+            let moved = strict.translate(&outcome.value, 3, 0, 0).unwrap();
+            let next = strict.union(&moved, &cube).unwrap();
+            assert_eq!(strict.certainty(), GeometryCertainty::Certified);
+            assert!(next.construction_evidence().approximate_512_consumed());
+        }
+    }
+}
+
 #[test]
 fn shared_subtrees_and_an_approximate_step_keep_their_meaning() {
     // A strict session cannot decide the touching union; an approximate one

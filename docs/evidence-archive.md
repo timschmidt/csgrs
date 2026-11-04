@@ -85,6 +85,18 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-consolidation-2026-11-04` evidence branch ends at
+`c6bf7692d80cce9f3212a965f1b8c48ad638b4ca`. Its new record
+`docs/evidence/2026-11-04-research-consolidation` contains 48 files and 992,163
+bytes, SHA-256 `9ecf03b87cbf15e1174e0b5fff363c66a3eca8bc5f6ffb884647dbb164957a5a`.
+It retains the 86-branch inventory, archival transaction, historical dirty
+worktree snapshots, reproduced empty-expression ancestry failure and passing
+local qualification (675 CSGRS tests/doctests, seven existing ignores; focused
+checks, default/minimal Clippy, docs, format, budget and seven tokenizer tests).
+The source base is `a08c698757` plus the record's Rust patch. This branch is
+unpushed; it does not establish full pre-push qualification, installed
+consumer delivery or general operation closure.
+
 The closure-integration archive branch `hypercurve-closure-integration-2026-10-30` now ends at
 `221d99c40675a7503185f8717d53278feddc2da8` with 408 records. Its new record
 `docs/evidence/2026-11-02-hypercurve-closure-chamfer-identity-validation` contains 9,074 files and

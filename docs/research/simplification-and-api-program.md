@@ -11,6 +11,13 @@ and the repository [agent rules](../../AGENTS.md), with the governing order:
 
 **exactness > completeness > performance > memory > binary size > source size**
 
+Integration follow-up (4 November): `closure-integration` fast-forwarded to
+`a08c698757`, bringing the implementation here. The
+[integration record](consolidation-2026-11-04.md) distinguishes historical
+package outcomes from fresh verification and remaining work. A new U06
+regression reproduced lost construction ancestry on empty expression leaves;
+lowering now retains that evidence before replacing their geometry with `false`.
+
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with
 evidence. Two packages are higher-priority correctness work and are marked as

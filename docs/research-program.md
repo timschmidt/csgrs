@@ -1,7 +1,10 @@
 # Research program, October 2026
 
-The research program is paused at the maintainer's request on 26 October
-2026. R19 is the final admitted experiment in this run; the remaining entries
+The October campaign paused at the maintainer's request on 26 October
+2026. Work resumed on 4 November under the simplification, branch consolidation
+and remaining-research objective; see the
+[current integration record](research/consolidation-2026-11-04.md).
+R19 is the final admitted experiment in the October run; the remaining entries
 keep their open scope. R20 received read-only preparation, with no candidate,
 measurement campaign or admission. The exact curve and BRep closure plans and
 agent instructions are retained as requirements, not completed implementations.
@@ -16,8 +19,9 @@ outside local execution. Registry publication, broad operation closure and the
 remaining research packages are still open.
 
 A separate simplification and modeling-API program was opened on 3 November
-2026 from an external review. It is planning only, with no package started.
-It is tracked in
+2026 from an external review. Its implementation and package dispositions
+were integrated on 4 November through `a08c698757`; downstream uncommitted work
+and deferred packages remain explicitly qualified in
 [`research/simplification-and-api-program.md`](research/simplification-and-api-program.md),
 which uses the K (kernel simplification), U (public modeling API) and D
 (downstream application) prefixes.

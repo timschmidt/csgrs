@@ -267,10 +267,12 @@ impl Program {
                     };
                     mesh = decisions.record(apply(&mesh, transform, context)?);
                 }
+                // Empty geometry still carries construction ancestry. Keep it
+                // before replacing its geometry with the constant false node.
+                decisions.record_construction(mesh.construction_evidence());
                 if mesh.positions.is_empty() && mesh.triangles.is_empty() {
                     self.false_node()
                 } else {
-                    decisions.record_construction(mesh.construction_evidence());
                     self.meshes.push(mesh);
                     let operand = u32::try_from(self.meshes.len() - 1)
                         .expect("a CSG expression exceeds u32 operands");
