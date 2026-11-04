@@ -136,6 +136,12 @@ fn unresolved_revolve_angle_is_not_invalid_input_or_empty_geometry() {
         .revolve(unresolved_zero(), 4, GeometryContext::STRICT)
         .unwrap_err();
     assert_cause(error, native, ValidationErrorKind::Undecided);
+    let native = curve::revolve_solid(&square, unresolved_zero(), 4, GeometryContext::STRICT)
+        .unwrap_err();
+    let error = raw
+        .revolve_solid(unresolved_zero(), 4, GeometryContext::STRICT)
+        .expect_err("undecided regularized angle");
+    assert_cause(error, native, ValidationErrorKind::Undecided);
 }
 
 // Axis-aligned integer rectangles partition the plane into unit cells. The
@@ -198,4 +204,36 @@ fn successful_curve_booleans_and_empty_results_remain_composable() {
     composition::<F32>();
     composition::<F64>();
     composition::<I128>();
+}
+
+fn regularized_revolution_adapter<A: ScalarAdapter>() {
+    let source = curve::translated(&curve::rectangle(5, 2).unwrap(), -2, 0).unwrap();
+    let wrapped = ScalarCurve::<A>::from_native(source.clone());
+    for context in [GeometryContext::STRICT, GeometryContext::APPROXIMATE_512] {
+        let angle = A::from_real(&Real::from(270)).unwrap();
+        let result = wrapped.revolve_solid(angle, 3, context).unwrap();
+        assert_eq!(result.certainty, csgrs::GeometryCertainty::Certified);
+        let volume = csgrs::solid::exact_mass_properties(result.value.native(), Real::one())
+            .unwrap()
+            .volume;
+        assert_eq!(
+            volume.exact_rational_normal_form(),
+            Real::from(31).exact_rational_normal_form()
+        );
+        let angle = A::from_real(&Real::from(0)).unwrap();
+        let native = curve::revolve_solid(&source, Real::zero(), 3, context).unwrap_err();
+        let error = wrapped
+            .revolve_solid(angle, 3, context)
+            .err()
+            .expect("zero angle fails");
+        assert_cause(error, native, ValidationErrorKind::InvalidInput);
+    }
+}
+
+#[test]
+fn regularized_revolution_survives_every_scalar_adapter() {
+    regularized_revolution_adapter::<RawReal>();
+    regularized_revolution_adapter::<F32>();
+    regularized_revolution_adapter::<F64>();
+    regularized_revolution_adapter::<I128>();
 }

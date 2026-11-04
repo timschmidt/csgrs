@@ -141,3 +141,10 @@ path = "fuzz_targets/fuzz_part_blueprint.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "fuzz_curve_revolve_solid"
+path = "fuzz_targets/fuzz_curve_revolve_solid.rs"
+test = false
+doc = false
+bench = false

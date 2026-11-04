@@ -2688,7 +2688,7 @@ fn emit_section_walls(
     Ok(())
 }
 
-/// Segmented solid of revolution of a native filled region about the Y axis.
+/// Segmented swept boundary of a native filled region about the Y axis.
 ///
 /// The X coordinate of the profile is its radius. Each profile point `(x, y)`
 /// is placed at `(x cos t, y, x sin t)` for `segments + 1` equally spaced
@@ -2717,12 +2717,64 @@ fn emit_section_walls(
 /// authored turn direction. Oversized noninteger sweeps (such as 450 degrees)
 /// remain invalid: neither saturation nor modulo reduction is implicit. If
 /// integrality cannot be proved, the result is a typed undecided predicate.
-/// Use [`revolve_from`] to choose the authored starting angle explicitly.
+/// Use [`revolve_from`] to choose the authored starting angle explicitly, or
+/// [`revolve_solid`] for regularized partial material including axis crossings.
 pub fn revolve(
     region: &CurveRegion2,
     angle_degrees: Real,
     segments: usize,
     context: GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    revolve_with_output(
+        region,
+        angle_degrees,
+        segments,
+        context,
+        RevolutionOutput::SweptBoundary,
+    )
+}
+
+/// Regularized material of a segmented revolution about the Y axis.
+///
+/// Uses the same authored angular lattice, profile conversion, angle domain and
+/// direction as [`revolve`]. Signed material is split at the axis without folding
+/// partial sweeps; its one-sided swept polyhedra are united by the exact mesh
+/// arrangement. Axis-crossing profiles are admitted, and overlapping pieces
+/// contribute material once. The result is the regularized union of the sampled
+/// polyhedra, not an analytic surface of revolution. Nonlinear profile sampling
+/// retains the same construction qualifications as [`revolve`].
+///
+/// Regularization can retain point/edge contacts with a nonmanifold boundary;
+/// the output satisfies the native closed PWN contract rather than requiring a
+/// manifold boundary. Legacy [`revolve`] retains its swept-boundary semantics.
+/// This operation adds no total-work, retained-byte or cancellation bound.
+pub fn revolve_solid(
+    region: &CurveRegion2,
+    angle_degrees: Real,
+    segments: usize,
+    context: GeometryContext,
+) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
+    revolve_with_output(
+        region,
+        angle_degrees,
+        segments,
+        context,
+        RevolutionOutput::RegularizedSolid,
+    )
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum RevolutionOutput {
+    SweptBoundary,
+    RegularizedSolid,
+}
+
+fn revolve_with_output(
+    region: &CurveRegion2,
+    angle_degrees: Real,
+    segments: usize,
+    context: GeometryContext,
+    output: RevolutionOutput,
 ) -> Result<GeometryOutcome<TriangleMesh>, ValidationError> {
     let decisions = GeometryDecisions::new(context);
     if segments < 2 {
@@ -2774,6 +2826,9 @@ pub fn revolve(
             .checked_add(1)
             .ok_or(ValidationError::InvalidArguments)?
     };
+    // The required angular table must fit the platform's addressable Vec size.
+    // This is a capacity preflight, not a total-work or retained-heap budget.
+    solid::capacity::<(Real, Real)>(Some(sample_count))?;
     let angle_degrees = if magnitude_order == Ordering::Greater {
         Real::from(if sign == hyperlimit::Sign::Positive {
             360
@@ -2797,18 +2852,18 @@ pub fn revolve(
     let has_radial_sign = |radii: &[Vec<Vec<hyperreal::RealSign>>], sign| {
         radii.iter().flatten().flatten().any(|radial| *radial == sign)
     };
-    if full
+    if (full || output == RevolutionOutput::RegularizedSolid)
         && has_radial_sign(&radii, hyperreal::RealSign::Negative)
         && has_radial_sign(&radii, hyperreal::RealSign::Positive)
     {
-        if !segments.is_multiple_of(2) {
+        if !(full && segments.is_multiple_of(2)) {
             let halves = split_at_revolution_axis(profiles, &decisions)?;
             let mut meshes = Vec::with_capacity(2);
             for half in &halves {
                 let profiles = try_modeling_profiles_with(half, &decisions)?;
                 let radii = profile_radial_signs(&profiles, &decisions)?;
                 meshes.push(revolve_profiles(
-                    &profiles, &radii, &samples, full, sign, &decisions,
+                    &profiles, &radii, &samples, full, sign, output, &decisions,
                 )?);
             }
             let united = decisions.consume_geometry(solid::boolean_with_context(
@@ -2817,13 +2872,14 @@ pub fn revolve(
                 hypermesh::BooleanOp::Union,
                 context,
             )?);
-            let mesh = validate_closed_mesh(united, region.is_empty(), &decisions)?;
+            let mesh =
+                validate_revolution_mesh(united, region.is_empty(), output, &decisions)?;
             return Ok(decisions.finish_mesh(mesh));
         }
         profiles = fold_across_revolution_axis(profiles, &decisions)?;
         radii = profile_radial_signs(&profiles, &decisions)?;
     }
-    let mesh = revolve_profiles(&profiles, &radii, &samples, full, sign, &decisions)?;
+    let mesh = revolve_profiles(&profiles, &radii, &samples, full, sign, output, &decisions)?;
     Ok(decisions.finish_mesh(mesh))
 }
 
@@ -2858,6 +2914,7 @@ fn revolve_profiles(
     samples: &[(Real, Real)],
     full: bool,
     sign: hyperlimit::Sign,
+    output: RevolutionOutput,
     decisions: &GeometryDecisions,
 ) -> Result<TriangleMesh, ValidationError> {
     let segments = if full {
@@ -2978,11 +3035,33 @@ fn revolve_profiles(
             )?;
         }
     }
-    validate_closed_mesh(
+    validate_revolution_mesh(
         TriangleMesh::new(positions, triangles),
         profiles.is_empty(),
+        output,
         decisions,
     )
+}
+
+fn validate_revolution_mesh(
+    mesh: TriangleMesh,
+    allow_empty: bool,
+    output: RevolutionOutput,
+    decisions: &GeometryDecisions,
+) -> Result<TriangleMesh, ValidationError> {
+    if output == RevolutionOutput::SweptBoundary {
+        return validate_closed_mesh(mesh, allow_empty, decisions);
+    }
+    if allow_empty && mesh.positions.is_empty() && mesh.triangles.is_empty() {
+        return Ok(decisions.qualify_mesh(mesh));
+    }
+    if mesh.triangles.is_empty() {
+        return Err(ValidationError::Geometry(
+            "nonempty revolution produced no material".into(),
+        ));
+    }
+    decisions.consume_mesh(mesh.validate_closed_pwn(decisions.mesh_context())?);
+    Ok(decisions.qualify_mesh(mesh))
 }
 
 /// Radial sign of every ring vertex, by profile and by ring in the order of

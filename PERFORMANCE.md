@@ -1322,3 +1322,39 @@ operation peak is 741,328 bytes above its starting live allocation. No speed
 improvement or new work/memory/cancellation bound is claimed. Processes have
 an external 120-second limit. The matched probe's `.text` changes from
 12,782,847 to 12,780,767 bytes; this is not application or WASM size attribution.
+## R20 regularized segmented revolution
+
+The [4 November R20 qualification](docs/research/regularized-revolution-2026-11-04.md)
+adds a material API without changing legacy successful rows. Five controls,
+three alternating baseline/candidate process pairs and 20 measured warm calls
+per fixture give the following medians with allocator instrumentation enabled:
+
+| Legacy fixture | Baseline µs | Candidate µs | Requested allocation B/call |
+| --- | ---: | ---: | ---: |
+| Positive partial, 270°, N=3 | 26.798 | 27.143 | 25,069 |
+| Negative partial, −270°, N=4 | 381.334 | 324.173 | 280,053 |
+| Positive full, N=5 | 337.932 | 339.187 | 341,949 |
+| Positive full, N=6 | 129.587 | 131.286 | 133,581 |
+| Opposite-side legacy boundary, 270°, N=4 | 619.638 | 629.767 | 570,870 |
+
+All exact rows, allocation counts, requested bytes, peak logical live bytes and
+retention agree between baseline `9a8bd78184` and candidate. Timing includes
+adverse movements and does not establish a statistical nonregression claim.
+Serialization is outside both timed regions; geometry and evidence are
+materialized inside them. Probe sources, locks and individual samples are in
+the evidence archive. These are shared-host, allocator-instrumented measurements.
+
+The new regularized opposite-side fixture takes 194.622 ms (20 warm samples),
+2,797,760 allocation calls, 208,222,247 requested allocation bytes, 819,378
+peak logical live bytes and 197,440 retained bytes. It performs exact union
+where the legacy result retains winding two, so their times compare different
+contracts. A crossing rectangle takes 986.318 µs, 3,437 calls, 558,992
+requested bytes, 88,392 peak logical live bytes and 5,816 retained bytes.
+Every measured result has zero post-drop logical allocation delta. Requested
+bytes include repeated allocation traffic and are not retained memory or RSS.
+
+All 576 declared matrix rows complete in the final release suite (674.46 s).
+The ASan stress campaign fails its 15-second per-input limit on an axis-touching
+hole at 359°, N=5; it is not a passing sanitizer envelope. Release matrix row
+325 completes in 6.61 s with independent membership and winding checks. No
+new internal work/memory/cancellation bound or general speedup is claimed.

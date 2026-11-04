@@ -140,6 +140,10 @@ void csgrs_curve_region_free(csgrs_curve_region_t *value);
 csgrs_status_t csgrs_triangle_mesh_family(const csgrs_triangle_mesh_t *value, csgrs_scalar_family_t *out);
 csgrs_status_t csgrs_curve_region_family(const csgrs_curve_region_t *value, csgrs_scalar_family_t *out);
 
+/* revolve retains partial swept boundaries; revolve_solid returns regularized
+ * segmented material, admits axis crossings and permits closed PWN contacts.
+ * Both use strict decisions and the mesh construction-evidence queries. */
+
 /*
  * Array pointers may be NULL only when their corresponding length is zero.
  * Polyhedron face_offsets must start at zero and end at face_index_len, so
@@ -181,6 +185,7 @@ csgrs_status_t csgrs_curve_region_family(const csgrs_curve_region_t *value, csgr
   csgrs_status_t csgrs_curve_region_##Name##_extrude(const csgrs_curve_region_t *region, Scalar height, csgrs_triangle_mesh_t **out); \
   csgrs_status_t csgrs_curve_region_##Name##_extrude_vector(const csgrs_curve_region_t *region, Vec3 direction, csgrs_triangle_mesh_t **out); \
   csgrs_status_t csgrs_curve_region_##Name##_revolve(const csgrs_curve_region_t *region, Scalar angle_degrees, size_t segments, csgrs_triangle_mesh_t **out); \
+  csgrs_status_t csgrs_curve_region_##Name##_revolve_solid(const csgrs_curve_region_t *region, Scalar angle_degrees, size_t segments, csgrs_triangle_mesh_t **out); \
   csgrs_status_t csgrs_curve_region_##Name##_region_profiles(const csgrs_curve_region_t *region, RegionProfiles *out); \
   void csgrs_triangle_mesh_buffers_##Name##_free(MeshBuffers value); \
   void csgrs_graphics_mesh_##Name##_free(GraphicsMesh value); \

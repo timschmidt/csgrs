@@ -237,6 +237,21 @@ try {
     assert.throws(() => signedProfiles.revolve(450, 3, approximate), (error) =>
       error instanceof Error && error.name === "GeometryError" && error.code === "invalid_input");
   }
+  // R20: keep the legacy swept boundary and request regularized material explicitly.
+  const crossingRectangle = keep(CurveRegionJs.rectangle(5, 2));
+  const crossingProfile = keep(crossingRectangle.translate(-2, 0));
+  const solidWitness = keep(new Point3Js(1, 1, 0.5));
+  for (const approximate of [false, true, false]) {
+    assert.throws(() => crossingProfile.revolve(270, 3, approximate));
+    const result = crossingProfile.revolveSolid(270, 3, approximate);
+    assert.equal(result.certainty, Certainty.Certified);
+    const mesh = keep(result.intoMesh());
+    const membership = keep(mesh.containsPointWithContext(solidWitness, false));
+    assert.equal(membership.certainty, Certainty.Certified);
+    assert.equal(membership.value, true);
+    assert.throws(() => crossingProfile.revolveSolid(0, 3, approximate), (error) =>
+      error instanceof Error && error.name === "GeometryError" && error.code === "invalid_input");
+  }
   for (const approximate of [false, true]) {
     for (const [operation, code] of [
       [() => square.revolve(360, 1, approximate), "invalid_input"],

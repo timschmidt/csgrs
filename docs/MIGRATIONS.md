@@ -648,6 +648,18 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   Mesh coverage does not represent the traversal multiplicity of a
   parameterized multi-turn surface. These are CSGRS semantics, without a
   claim of matching every OpenSCAD version or call default.
+- **Regularized partial revolution.** The additive `curve::revolve_solid`
+  operation accepts axis-crossing profiles and returns the regularized union
+  of their signed segmented sweeps. Move callers requiring material with
+  winding zero or one to this API; legacy `revolve` and `revolve_from` keep
+  their partial swept-boundary semantics. The scalar adapters, C ABI, C++ and
+  Python expose `revolve_solid`; WASM exposes `revolveSolid`. These use the
+  existing failure and certainty channels. Contacts can be nonmanifold under
+  the native closed PWN contract. Nonlinear profiles retain their existing
+  sampling qualifications. Angular tables exceeding platform addressability
+  now fail with `CapacityOverflow` before allocation; this is not a total
+  work or memory budget. See the [R20 record](research/regularized-revolution-2026-11-04.md)
+  for measured completion and unresolved sanitizer stress limits.
 - **Imported face triangulation.** OBJ, DXF and VRML import project each
   planar polygon face onto two coordinates before triangulating it. The
   dropped coordinate is still the largest normal component whenever strict

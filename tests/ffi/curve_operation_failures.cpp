@@ -30,6 +30,13 @@ int main() {
   fails([&] { square.intersection(opaque); }, CSGRS_STATUS_PREDICATE_UNDECIDED, "blocked by Predicate");
   fails([&] { square.xor_with(opaque); }, CSGRS_STATUS_PREDICATE_UNDECIDED, "blocked by Predicate");
   fails([&] { square.revolve(360, 1); }, CSGRS_STATUS_VALIDATION_FAILED, "segments must not be less than 2");
+  const auto crossing = Region::rectangle(5, 2).translate(-2, 0, 0);
+  fails([&] { crossing.revolve(270, 3); }, CSGRS_STATUS_VALIDATION_FAILED, "invalid arguments");
+  fails([&] { crossing.revolve_solid(0, 3); }, CSGRS_STATUS_VALIDATION_FAILED, "invalid arguments");
+  const auto revolved = crossing.revolve_solid(270, 3);
+  const auto revolved_bounds = revolved.bounding_box().value();
+  assert(revolved_bounds.mins.x == -3 && revolved_bounds.maxs.x == 3);
+  assert(revolved_bounds.mins.y == 0 && revolved_bounds.maxs.y == 2);
   const auto large = Region::square(std::numeric_limits<double>::max()).scale(2, 2, 1);
   fails([&] { large.region_profiles(); }, CSGRS_STATUS_VALIDATION_FAILED, "finite projection point is not finite");
   const auto empty = square.difference(square);

@@ -4,9 +4,11 @@ The October campaign paused at the maintainer's request on 26 October
 2026. Work resumed on 4 November under the simplification, branch consolidation
 and remaining-research objective; see the
 [current integration record](research/consolidation-2026-11-04.md).
-R19 is the final admitted experiment in the October run; the remaining entries
-keep their open scope. R20 received read-only preparation, with no candidate,
-measurement campaign or admission. The exact curve and BRep closure plans and
+R19 is the final admitted experiment in the October run. R20 resumed on
+4 November with an additive segmented-mesh solid API; its
+[qualification record](research/regularized-revolution-2026-11-04.md) separates
+completed release fixtures from an unresolved sanitizer timeout. Its analytic
+and BRep extensions remain open. The exact curve and BRep closure plans and
 agent instructions are retained as requirements, not completed implementations.
 The milestone narratives below describe their original validation checkpoints;
 publication status is maintained in the [evidence index](evidence-archive.md).
@@ -138,7 +140,7 @@ part of this program's execution or coordination.
 | R17 | Reduce retained scalar accelerators at their actual owner | ownership reproduced; private lazy-slot layout rejected. Complete trace replay and a separate census locate held storage, with no decline-only evaluation cells. The candidate lowers Nano report payload by 5.3% and release peak by 4.6%, but a protected warm query regresses and all 64 latency upper bounds exceed 1. Only three retention/source-drop/concurrency tests are retained; all eight final primary checks pass (1,776 tests). Internal resource bounds remain open. See the [owner's evidence](../crates/hyperreal/PERFORMANCE.md#retained-scalar-ownership-and-rejected-layout-r17-2026-10-25). |
 | R18 | Prove hard compound rotation relations without a global limit increase | kept for scoped exact completion after all 20 final primary/downstream checks pass on 2,352 unchanged source inputs. Late common-factor recovery completes the original binary64 and decimal workflows plus 18 axis/family/policy cells without raising expanded degree or work limits. Thirty native pairs preserve 227,028,480 predicate results; eight workflow pairs preserve 32 exact artifact pairs. Every protected simultaneous latency upper bound exceeds 1; two scalar controls are marginally adverse, and the deliberate degree-14 decline requests 2,096 more bytes per query. General performance admission fails; no speedup is claimed. See the [owner record](../crates/hyperreal/PERFORMANCE.md#factored-compound-rotation-completion-r18-2026-10-25) and evidence record `2026-10-25-research-r18`. |
 | R19 | Audit cold proof continuation and real resource bounds at import boundaries | kept for scoped exact completion after all 20 final primary/downstream checks pass on 2,354 unchanged source inputs: 303 new exact import/consumer cells and cold exact BRep archive replay. Thirty scalar pairs and eight workflow pairs preserve all declared results/artifacts, but fail general performance admission: 101 of 118 simultaneous upper bounds exceed one, with three adverse native-construction metrics. Costs, intentional expression changes and still-missing cumulative resource contracts are recorded in the [owner record](../crates/hyperreal/PERFORMANCE.md#cold-domain-continuation-and-resource-audit-r19-2026-10-25) and evidence record `2026-10-25-research-r19`. |
-| R20 | Separate partial swept boundaries from regularized revolution solids | pending |
+| R20 | Separate partial swept boundaries from regularized revolution solids | mesh milestone retained; analytic/BRep and resource closure open; [qualification](research/regularized-revolution-2026-11-04.md) |
 | R21 | Canonicalize straight sweep images with isolated stationary parameters | pending |
 | R22 | Extend one affine-image BRep family through all required consumers | pending |
 | R23 | Complete box containment with selected extrema on retained spans | exact rational/selected-span milestone kept after all seven final primary checks pass. The identical private source passes 2,610 Hypercurve tests, 24 CSGRS tests and all twenty Alumina envelope cases versus six completed / fourteen unresolved on baseline. Thirty cost pairs preserve 1,080 old artifacts and add 12,000 successful queries. Nineteen adverse timing cells, eight extra bytes on polynomial extrema and native size growth are disclosed; no speedup claim. Public witness locations and broader derivative domains remain open. |

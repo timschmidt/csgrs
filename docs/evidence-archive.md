@@ -85,6 +85,20 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r20-2026-11-04` evidence branch ends at
+`c61d518350df1e7b651fc06fb2e527fb80c60a13`.
+`docs/evidence/2026-11-04-research-r20` contains 683 files and 1,185,353 bytes,
+with SHA-256 `fea7b534f13b88a6affc94b4c4a41864fd4b88000709785da962701dbe8ead13`.
+It retains the regularized revolution source patch, reproduced baseline gaps,
+687 passing root tests/doctests, all 576 independent matrix rows, binding and
+downstream checks, exact legacy rows and allocation samples. It also retains
+the full ASan campaign's 15-second timeout and original seed, separate from
+two passing sanitizer smoke seeds and the completed ordinary release corpus.
+See the [qualification](research/regularized-revolution-2026-11-04.md) for
+source attribution, substantial union cost and open resource/analytic scope.
+The archive adds only this record to `ca3f86e84fa0531d0493597f89f7e8b9672f4ce2`;
+earlier evidence is unchanged. No push or publication is claimed.
+
 The local `native-source-boundaries-2026-11-04` evidence branch ends at
 `ca3f86e84fa0531d0493597f89f7e8b9672f4ce2`. Its record
 `docs/evidence/2026-11-04-native-source-boundaries` contains 75 files and

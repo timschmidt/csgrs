@@ -1258,6 +1258,7 @@ macro_rules! export_family {
             extrude: $region_extrude:ident,
             extrude_vector: $region_extrude_vector:ident,
             revolve: $region_revolve:ident,
+            revolve_solid: $region_revolve_solid:ident,
             region_profiles: $region_region_profiles:ident
         }
     ) => {
@@ -1815,6 +1816,27 @@ macro_rules! export_family {
         }
 
         #[unsafe(no_mangle)]
+        pub unsafe extern "C" fn $region_revolve_solid(
+            region: *const CsgrsCurveRegion,
+            angle_degrees: <$family as Family>::CScalar,
+            segments: usize,
+            out: *mut *mut CsgrsTriangleMesh,
+        ) -> CsgrsStatus {
+            ffi_status(|| {
+                let region =
+                    <$family as Family>::curve_region_ref(unsafe { ptr_ref(region) }?)?;
+                let mesh = region
+                    .revolve_solid(
+                        <$family as Family>::scalar_to_adapter(angle_degrees)?,
+                        segments,
+                        csgrs::GeometryContext::STRICT,
+                    )?
+                    .into_value();
+                unsafe { out_handle(out, triangle_mesh_handle::<$family>(mesh)) }
+            })
+        }
+
+        #[unsafe(no_mangle)]
         pub unsafe extern "C" fn $region_region_profiles(
             region: *const CsgrsCurveRegion,
             out: *mut <$family as Family>::CRegionProfiles,
@@ -1869,6 +1891,7 @@ export_family!(
         extrude: csgrs_curve_region_f32_extrude,
         extrude_vector: csgrs_curve_region_f32_extrude_vector,
         revolve: csgrs_curve_region_f32_revolve,
+        revolve_solid: csgrs_curve_region_f32_revolve_solid,
         region_profiles: csgrs_curve_region_f32_region_profiles
     }
 );
@@ -1913,6 +1936,7 @@ export_family!(
         extrude: csgrs_curve_region_f64_extrude,
         extrude_vector: csgrs_curve_region_f64_extrude_vector,
         revolve: csgrs_curve_region_f64_revolve,
+        revolve_solid: csgrs_curve_region_f64_revolve_solid,
         region_profiles: csgrs_curve_region_f64_region_profiles
     }
 );
@@ -1957,6 +1981,7 @@ export_family!(
         extrude: csgrs_curve_region_i128_extrude,
         extrude_vector: csgrs_curve_region_i128_extrude_vector,
         revolve: csgrs_curve_region_i128_revolve,
+        revolve_solid: csgrs_curve_region_i128_revolve_solid,
         region_profiles: csgrs_curve_region_i128_region_profiles
     }
 );
@@ -2001,6 +2026,7 @@ export_family!(
         extrude: csgrs_curve_region_real_extrude,
         extrude_vector: csgrs_curve_region_real_extrude_vector,
         revolve: csgrs_curve_region_real_revolve,
+        revolve_solid: csgrs_curve_region_real_revolve_solid,
         region_profiles: csgrs_curve_region_real_region_profiles
     }
 );
@@ -2451,6 +2477,11 @@ mod tests {
                     .unwrap()
                     .contains("revolution angle sign is undecided")
             );
+            assert_eq!(
+                csgrs_curve_region_real_revolve_solid(&square, &zero, 4, &mut output),
+                CsgrsStatus::PredicateUndecided
+            );
+            assert!(output.is_null());
             let full = CsgrsReal { inner: 360.into() };
             assert_eq!(
                 csgrs_curve_region_real_revolve(&square, &full, 1, &mut output),

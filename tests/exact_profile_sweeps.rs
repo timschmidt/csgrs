@@ -1210,3 +1210,409 @@ fn sampled_nonlinear_profiles_remain_qualified() {
         assert!(evidence.coordinates_projected());
     }
 }
+
+/// R20 requests a regularized material API distinct from the legacy swept
+/// boundary. This fixture's three 90-degree sectors give volume 27: the right
+/// annulus contributes 24, and the left contributes only 3 outside that set.
+#[test]
+fn regularized_revolution_removes_overlap_without_changing_legacy_semantics() {
+    let right = rectangle(&int(1), &int(0), &int(3), &int(2));
+    let left = rectangle(&int(-2), &int(0), &int(-1), &int(2));
+    let profile = region(&[right, left], &[], false);
+    let result = curve::revolve_solid(&profile, int(270), 3, GeometryContext::STRICT)
+        .expect("regularized solid must accept overlapping partial pieces");
+    assert_eq!(result.certainty, GeometryCertainty::Certified);
+    assert!(strictly_equal(&six_volume(&result.value), &int(162)));
+    let witness = Point3::new(int(1), int(1), q(1, 2));
+    assert!(
+        result
+            .value
+            .contains_point(&STRICT_MESH, &witness)
+            .unwrap()
+            .value
+    );
+    let off_diagonal = Point3::new(q(7, 5), int(1), q(2, 5));
+    assert_eq!(vertical_prism_winding(&result.value, &off_diagonal), Some(1));
+}
+
+#[test]
+fn regularized_revolution_splits_crossing_material_at_the_axis() {
+    let profile = region(&[rectangle(&int(-2), &int(0), &int(3), &int(2))], &[], false);
+    let result = curve::revolve_solid(&profile, int(270), 3, GeometryContext::STRICT)
+        .expect("regularized solid must accept an axis-crossing profile");
+    assert_eq!(result.certainty, GeometryCertainty::Certified);
+    assert!(strictly_equal(&six_volume(&result.value), &int(186)));
+    let witness = Point3::new(int(1), int(1), q(1, 2));
+    assert_eq!(vertical_prism_winding(&result.value, &witness), Some(1));
+    // Independently authored pieces exercise the public composition contract;
+    // the sector-membership matrix below supplies an independent set oracle.
+    let pieces = [(-2, 0), (0, 3)].map(|(low, high)| {
+        let source = region(
+            &[rectangle(&int(low), &int(0), &int(high), &int(2))],
+            &[],
+            false,
+        );
+        curve::revolve(&source, int(270), 3, GeometryContext::STRICT)
+            .unwrap()
+            .value
+    });
+    let united = solid::boolean_with_context(
+        &pieces[0],
+        &pieces[1],
+        BooleanOp::Union,
+        GeometryContext::STRICT,
+    )
+    .unwrap();
+    let difference = solid::boolean_with_context(
+        &united.value,
+        &result.value,
+        BooleanOp::SymmetricDifference,
+        GeometryContext::STRICT,
+    )
+    .unwrap();
+    assert!(difference.value.positions.is_empty() && difference.value.triangles.is_empty());
+}
+
+/// Membership in the independently constructed convex trapezoids between
+/// consecutive authored meridians. A point on any support is excluded from
+/// this interior oracle, even if that support is only an internal subdivision.
+fn rectangular_sector_membership(
+    rectangles: &[Vec<[Real; 2]>],
+    negative_radius: bool,
+    angle: i64,
+    segments: usize,
+    point: &Point3,
+) -> Option<bool> {
+    let classify = |value: &Real| {
+        hyperlimit::classify_real_sign(value, PredicatePolicy::STRICT)
+            .value()
+            .expect("exact sector sign")
+    };
+    let mut any = false;
+    for rectangle in rectangles {
+        let y0 = &rectangle[0][1];
+        let y1 = &rectangle[2][1];
+        if classify(&(&point.y - y0)) != hyperlimit::Sign::Positive
+            || classify(&(y1 - &point.y)) != hyperlimit::Sign::Positive
+        {
+            continue;
+        }
+        let (mut low, high) = if negative_radius {
+            (-rectangle[2][0].clone(), -rectangle[0][0].clone())
+        } else {
+            (rectangle[0][0].clone(), rectangle[2][0].clone())
+        };
+        if classify(&high) != hyperlimit::Sign::Positive {
+            continue;
+        }
+        if classify(&low) != hyperlimit::Sign::Positive {
+            low = Real::zero();
+        }
+        let direction = |i: usize, radius: &Real| {
+            let theta = (Real::pi() * int(angle) * Real::from(i as u64)
+                / Real::from(180 * segments as u64))
+            .unwrap();
+            let radius = if negative_radius {
+                -radius.clone()
+            } else {
+                radius.clone()
+            };
+            [radius.clone() * theta.clone().cos(), radius * theta.sin()]
+        };
+        for i in 0..segments {
+            let polygon = [
+                direction(i, &high),
+                direction(i + 1, &high),
+                direction(i + 1, &low),
+                direction(i, &low),
+            ];
+            let orientation = if angle > 0 {
+                hyperlimit::Sign::Positive
+            } else {
+                hyperlimit::Sign::Negative
+            };
+            let mut inside = true;
+            for j in 0..polygon.len() {
+                let a = &polygon[j];
+                let b = &polygon[(j + 1) % polygon.len()];
+                if a == b {
+                    continue;
+                }
+                let cross = (&b[0] - &a[0]) * (&point.z - &a[1])
+                    - (&b[1] - &a[1]) * (&point.x - &a[0]);
+                let sign = classify(&cross);
+                if sign == hyperlimit::Sign::Zero {
+                    return None;
+                }
+                inside &= sign == orientation;
+            }
+            any |= inside;
+        }
+    }
+    Some(any)
+}
+
+/// The complete R20 angle/lattice and ownership corpus. CSGRS_R20_CASE selects
+/// one row for fresh-process containment; the ordinary test runs every row.
+/// Each result is checked against source-sector membership and independent
+/// oriented cap winding, rather than only an area/volume or another wrapper.
+#[test]
+fn regularized_revolution_declared_matrix() {
+    let selected = std::env::var("CSGRS_R20_CASE")
+        .ok()
+        .map(|s| s.parse::<usize>().unwrap());
+    let rect = |a, b, c, d| rectangle(&int(a), &int(b), &int(c), &int(d));
+    let fixtures = [
+        (vec![rect(1, 0, 3, 2), rect(-2, 0, -1, 2)], vec![]),
+        (vec![rect(-2, 0, 3, 2)], vec![]),
+        (vec![rect(-3, 0, 3, 4)], vec![rect(-1, 1, 1, 3)]),
+        (vec![rect(-3, 0, 3, 4)], vec![rect(-1, 1, 0, 3)]),
+        (vec![rect(1, 0, 3, 1), rect(-2, 2, -1, 3)], vec![]),
+        (vec![rect(0, 0, 2, 1), rect(-2, 1, 0, 2)], vec![]),
+    ];
+    let mut row = 0;
+    let mut executed = 0;
+    for (fixture, (materials, holes)) in fixtures.iter().enumerate() {
+        for angle in [
+            179, 180, 181, 270, 359, 360, -179, -180, -181, -270, -359, -360,
+        ] {
+            for segments in [3, 4, 5, 6] {
+                for context in CONTEXTS {
+                    let this_row = row;
+                    row += 1;
+                    if selected.is_some_and(|selected| selected != this_row) {
+                        continue;
+                    }
+                    eprintln!(
+                        "R20 start\trow={this_row}\tfixture={fixture}\tangle={angle}\tsegments={segments}\tcontext={context:?}"
+                    );
+                    let source = region(materials, holes, this_row % 2 == 1);
+                    let outcome = curve::revolve_solid(&source, int(angle), segments, context)
+                        .unwrap_or_else(|error| panic!("row {this_row}: {error:?}"));
+                    assert_eq!(
+                        outcome.certainty,
+                        GeometryCertainty::Certified,
+                        "row {this_row}"
+                    );
+                    let mesh = outcome.value;
+                    mesh.validate_closed_pwn(&STRICT_MESH).unwrap();
+                    let mut checked = 0;
+                    let mut windings = 0;
+                    let mut interior = 0;
+                    for twice_y in [1, 3, 5] {
+                        for nx in [-17, -9, -2, 3, 11, 19] {
+                            for nz in [-17, -9, -2, 3, 11, 19] {
+                                let point = Point3::new(q(nx, 7), q(twice_y, 2), q(nz, 7));
+                                let mut expected = Some(false);
+                                for negative in [false, true] {
+                                    expected = expected.and_then(|inside| {
+                                        Some(
+                                            inside
+                                                || (rectangular_sector_membership(
+                                                    materials, negative, angle, segments,
+                                                    &point,
+                                                )? && !rectangular_sector_membership(
+                                                    holes, negative, angle, segments, &point,
+                                                )?),
+                                        )
+                                    });
+                                }
+                                let Some(expected) = expected else {
+                                    continue;
+                                };
+                                let actual =
+                                    mesh.contains_point(&STRICT_MESH, &point).unwrap();
+                                assert_eq!(actual.certainty, MeshCertainty::Certified);
+                                assert_eq!(
+                                    actual.value, expected,
+                                    "row={this_row}, query=({nx}/7,{twice_y}/2,{nz}/7)"
+                                );
+                                checked += 1;
+                                interior += usize::from(expected);
+                                if let Some(winding) = vertical_prism_winding(&mesh, &point) {
+                                    assert_eq!(winding, i32::from(expected), "row {this_row}");
+                                    windings += 1;
+                                }
+                            }
+                        }
+                    }
+                    assert!(
+                        checked >= 70 && windings >= 50 && interior > 0,
+                        "row {this_row}: insufficient independent coverage ({checked}, {windings}, {interior})"
+                    );
+                    eprintln!(
+                        "R20 complete\trow={this_row}\ttriangles={}\tqueries={checked}\twindings={windings}",
+                        mesh.triangles.len()
+                    );
+                    executed += 1;
+                }
+            }
+        }
+    }
+    assert_eq!(row, 576);
+    assert_eq!(executed, if selected.is_some() { 1 } else { 576 });
+}
+
+#[test]
+fn regularized_revolution_preserves_same_side_rows_and_input_validation() {
+    let positive = region(&[rectangle(&q(1, 3), &int(0), &q(5, 3), &int(2))], &[], false);
+    let negative = region(
+        &[rectangle(&q(-5, 3), &int(0), &q(-1, 3), &int(2))],
+        &[],
+        true,
+    );
+    for source in [&positive, &negative] {
+        for angle in [
+            179, 180, 181, 270, 359, 360, -179, -180, -181, -270, -359, -360,
+        ] {
+            for segments in [2, 3, 4, 5, 6] {
+                if segments == 2 && (angle == 360 || angle == -360) {
+                    for outcome in [
+                        curve::revolve(source, int(angle), segments, GeometryContext::STRICT),
+                        curve::revolve_solid(
+                            source,
+                            int(angle),
+                            segments,
+                            GeometryContext::STRICT,
+                        ),
+                    ] {
+                        assert!(matches!(
+                            outcome,
+                            Err(ValidationError::FieldLessThan {
+                                name: "segments",
+                                min: 3
+                            })
+                        ));
+                    }
+                    continue;
+                }
+                let legacy =
+                    curve::revolve(source, int(angle), segments, GeometryContext::STRICT)
+                        .unwrap();
+                let material = curve::revolve_solid(
+                    source,
+                    int(angle),
+                    segments,
+                    GeometryContext::STRICT,
+                )
+                .unwrap();
+                assert_eq!(material.certainty, legacy.certainty);
+                assert_eq!(material.value.positions, legacy.value.positions);
+                assert_eq!(material.value.triangles, legacy.value.triangles);
+                assert_eq!(
+                    material.value.construction_evidence(),
+                    legacy.value.construction_evidence()
+                );
+            }
+        }
+    }
+    for source in [&positive, &curve::empty()] {
+        for angle in [0, 450, -450] {
+            assert_eq!(
+                curve::revolve_solid(source, int(angle), 3, GeometryContext::STRICT)
+                    .unwrap_err()
+                    .kind(),
+                ValidationErrorKind::InvalidInput
+            );
+        }
+        assert!(matches!(
+            curve::revolve_solid(source, int(360), usize::MAX, GeometryContext::STRICT),
+            Err(ValidationError::CapacityOverflow)
+        ));
+    }
+    let empty =
+        curve::revolve_solid(&curve::empty(), int(270), 3, GeometryContext::STRICT).unwrap();
+    assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
+}
+
+#[test]
+fn regularized_revolution_retains_sub_binary64_axis_features() {
+    let tiny = power_of_two(-80);
+    let source = region(
+        &[rectangle(&-tiny.clone(), &int(0), &tiny, &int(1))],
+        &[],
+        false,
+    );
+    let result = curve::revolve_solid(&source, int(270), 3, GeometryContext::STRICT).unwrap();
+    assert_eq!(result.certainty, GeometryCertainty::Certified);
+    assert!(strictly_equal(
+        &six_volume(&result.value),
+        &(int(12) * tiny.clone() * tiny)
+    ));
+    assert!(!result.value.construction_evidence().coordinates_projected());
+}
+
+#[test]
+fn regularized_revolution_continues_through_export_and_subtraction() {
+    let result = {
+        let source = region(&[rectangle(&int(-2), &int(0), &int(3), &int(2))], &[], false);
+        curve::revolve_solid(&source, int(270), 3, GeometryContext::STRICT).unwrap()
+    };
+    let cutter = solid::cube(1).unwrap();
+    for context in [
+        GeometryContext::STRICT,
+        GeometryContext::APPROXIMATE_512,
+        GeometryContext::STRICT,
+    ] {
+        let cut = solid::boolean_with_context(
+            &result.value,
+            &cutter,
+            BooleanOp::Difference,
+            context,
+        )
+        .unwrap();
+        assert_eq!(cut.certainty, GeometryCertainty::Certified);
+        assert!(strictly_equal(&six_volume(&cut.value), &int(180)));
+        let restored =
+            solid::boolean_with_context(&cut.value, &cutter, BooleanOp::Union, context)
+                .unwrap();
+        let empty = solid::boolean_with_context(
+            &restored.value,
+            &result.value,
+            BooleanOp::SymmetricDifference,
+            context,
+        )
+        .unwrap();
+        assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
+    }
+    #[cfg(feature = "stl-io")]
+    {
+        let artifact =
+            csgrs::io::stl::to_stl_binary_artifact(&result.value, "regularized revolution")
+                .unwrap();
+        let replay = artifact.import().unwrap();
+        assert!(replay.construction_evidence().coordinates_projected());
+        replay.validate_closed_pwn(&STRICT_MESH).unwrap();
+        let cut = solid::boolean_with_context(
+            &replay,
+            &cutter,
+            BooleanOp::Difference,
+            GeometryContext::STRICT,
+        )
+        .unwrap();
+        assert!(cut.value.construction_evidence().coordinates_projected());
+        let overlap = solid::boolean_with_context(
+            &replay,
+            &cutter,
+            BooleanOp::Intersection,
+            GeometryContext::STRICT,
+        )
+        .unwrap();
+        let restored = solid::boolean_with_context(
+            &cut.value,
+            &overlap.value,
+            BooleanOp::Union,
+            GeometryContext::STRICT,
+        )
+        .unwrap();
+        let empty = solid::boolean_with_context(
+            &restored.value,
+            &replay,
+            BooleanOp::SymmetricDifference,
+            GeometryContext::STRICT,
+        )
+        .unwrap();
+        assert!(empty.value.positions.is_empty() && empty.value.triangles.is_empty());
+        assert!(empty.value.construction_evidence().coordinates_projected());
+    }
+}

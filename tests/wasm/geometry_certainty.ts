@@ -84,3 +84,13 @@ const hullResult = cube.minkowskiHullWithContext(cube, false);
 hullResult.intoMesh().free();
 cube.minkowskiHull(cube).free();
 cube.free();
+
+const solidRectangle = CurveRegionJs.rectangle(5, 2);
+const solidProfile = solidRectangle.translate(-2, 0);
+const solidResult = solidProfile.revolveSolid(270, 3, false);
+const solidReceipt: GeometryCertaintyJs = solidResult.certainty;
+if (solidReceipt !== GeometryCertaintyJs.Certified) throw new Error("Uncertified revolution");
+const revolvedSolid: MeshJs = solidResult.intoMesh();
+revolvedSolid.free();
+solidProfile.free();
+solidRectangle.free();

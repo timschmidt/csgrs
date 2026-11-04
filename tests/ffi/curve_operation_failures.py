@@ -51,3 +51,11 @@ bounds = recovered.bounding_box()
 assert bounds.mins.x == 0 and bounds.mins.y == 0 and bounds.maxs.x == 2 and bounds.maxs.y == 2
 del recovered, empty, large, opaque, restored, square
 print('Python curve categories, diagnostics, empty composition and recovery passed')
+
+crossing = csgrs.CurveRegionF64.rectangle(5, 2).translate(-2, 0, 0)
+fails(lambda: crossing.revolve(270, 3), 4, 'invalid arguments')
+fails(lambda: crossing.revolve_solid(0, 3), 4, 'invalid arguments')
+regularized = crossing.revolve_solid(270, 3)
+regularized_bounds = regularized.bounding_box()
+assert regularized_bounds.mins.x == -3 and regularized_bounds.maxs.x == 3
+assert regularized_bounds.mins.y == 0 and regularized_bounds.maxs.y == 2

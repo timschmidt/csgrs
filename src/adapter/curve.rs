@@ -256,6 +256,17 @@ where
             .map_err(AdapterError::from)
     }
 
+    pub fn revolve_solid(
+        &self,
+        angle_degrees: A::Scalar,
+        segments: usize,
+        context: GeometryContext,
+    ) -> AdapterResult<GeometryOutcome<ScalarMesh<A>>> {
+        curve::revolve_solid(&self.inner, A::into_real(angle_degrees)?, segments, context)
+            .map(|outcome| outcome.map(ScalarMesh::from_native))
+            .map_err(AdapterError::from)
+    }
+
     pub fn region_profiles(
         &self,
         context: GeometryContext,

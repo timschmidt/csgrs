@@ -135,6 +135,7 @@ struct RawReal;
     static csgrs_status_t region_extrude(const csgrs_curve_region_t *region, scalar_type height, csgrs_triangle_mesh_t **out) { return csgrs_curve_region_##Name##_extrude(region, height, out); } \
     static csgrs_status_t region_extrude_vector(const csgrs_curve_region_t *region, vec3_type direction, csgrs_triangle_mesh_t **out) { return csgrs_curve_region_##Name##_extrude_vector(region, direction, out); } \
     static csgrs_status_t region_revolve(const csgrs_curve_region_t *region, scalar_type angle, std::size_t segments, csgrs_triangle_mesh_t **out) { return csgrs_curve_region_##Name##_revolve(region, angle, segments, out); } \
+    static csgrs_status_t region_revolve_solid(const csgrs_curve_region_t *region, scalar_type angle, std::size_t segments, csgrs_triangle_mesh_t **out) { return csgrs_curve_region_##Name##_revolve_solid(region, angle, segments, out); } \
     static csgrs_status_t region_profiles(const csgrs_curve_region_t *region, region_profiles_type *out) { return csgrs_curve_region_##Name##_region_profiles(region, out); } \
     static void mesh_buffers_free(mesh_buffers_type value) { csgrs_triangle_mesh_buffers_##Name##_free(value); } \
     static void graphics_mesh_free(graphics_mesh_type value) { csgrs_graphics_mesh_##Name##_free(value); } \
@@ -256,6 +257,7 @@ public:
   TriangleMesh<Traits> extrude(scalar_type height) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_extrude(handle_, height, &out)); return TriangleMesh<Traits>(out); }
   TriangleMesh<Traits> extrude_vector(vec3_type direction) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_extrude_vector(handle_, direction, &out)); return TriangleMesh<Traits>(out); }
   TriangleMesh<Traits> revolve(scalar_type angle, std::size_t segments) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_revolve(handle_, angle, segments, &out)); return TriangleMesh<Traits>(out); }
+  TriangleMesh<Traits> revolve_solid(scalar_type angle, std::size_t segments) const { csgrs_triangle_mesh_t *out = nullptr; check(Traits::region_revolve_solid(handle_, angle, segments, &out)); return TriangleMesh<Traits>(out); }
   region_profiles_type region_profiles() const { region_profiles_type out{}; check(Traits::region_profiles(handle_, &out)); return out; }
   csgrs_curve_region_t *get() const { return handle_; }
 

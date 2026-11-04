@@ -356,11 +356,14 @@ A zero extrusion height is invalid input (`ZeroParameter`), not an empty
 solid, for `try_extrude`, `try_extrude_vector` and `extrude_twisted`. Both
 `extrude_twisted` end scales zero taper the profile to the apex
 `(0, 0, height)`; one zero or a negative scale is rejected. A full turn of
-`revolve` revolves the fold of a profile with material on both sides of the
-axis, the positive material united with the mirror image of the negative
-material, so a profile may cross the axis. A partial turn requires each loop
-to lie on one side of the axis, and opposite loops beyond a half turn are not
-normalized against each other (see the `revolve` documentation).
+`revolve` splits material at the axis and unites the signed swept polyhedra,
+preserving their angular phase; even segment counts permit an equivalent
+planar fold. Its legacy partial turn requires each loop to lie on one side
+of the axis and can retain overlapping opposite-side boundaries with winding
+two. Use `curve::revolve_solid(region, angle, segments, context)` for regularized
+partial material: it accepts axis crossings and unites overlapping pieces
+exactly. Both APIs construct segmented polyhedra. Point and edge contacts in
+`revolve_solid` satisfy the closed PWN contract and can be nonmanifold.
 
 ### Solid construction
 

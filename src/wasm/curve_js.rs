@@ -520,6 +520,23 @@ impl CurveRegionJs {
         .map_err(crate::wasm::mesh_js::geometry_error)
     }
 
+    #[wasm_bindgen(js_name = revolveSolid)]
+    pub fn revolve_solid(
+        &self,
+        angle_degrees: f64,
+        segments: usize,
+        approximate_512: bool,
+    ) -> Result<GeometryMeshResultJs, JsValue> {
+        curve::revolve_solid(
+            &self.inner,
+            real_from_js_named(angle_degrees, "angleDegrees")?,
+            segments,
+            geometry_context(approximate_512),
+        )
+        .map(Into::into)
+        .map_err(crate::wasm::mesh_js::geometry_error)
+    }
+
     pub fn sweep(
         &self,
         path: Vec<Point3Js>,

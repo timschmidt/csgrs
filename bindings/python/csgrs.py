@@ -588,6 +588,11 @@ class CurveRegion:
         _call(f"csgrs_curve_region_{self.family.prefix}_revolve", self.ptr, self.family.scalar(angle), ctypes.c_size_t(segments), ctypes.byref(out))
         return mesh_class_for(self.family)(out)
 
+    def revolve_solid(self, angle, segments: int):
+        out = MeshPtr()
+        _call(f"csgrs_curve_region_{self.family.prefix}_revolve_solid", self.ptr, self.family.scalar(angle), ctypes.c_size_t(segments), ctypes.byref(out))
+        return mesh_class_for(self.family)(out)
+
     def region_profiles(self):
         out = self.family.region_profiles_type()
         _call(f"csgrs_curve_region_{self.family.prefix}_region_profiles", self.ptr, ctypes.byref(out))

@@ -41,6 +41,21 @@ int main(void) {
   assert(csgrs_curve_region_f64_revolve(square, 360, 1, &mesh) == CSGRS_STATUS_VALIDATION_FAILED);
   assert(mesh == NULL && strcmp(csgrs_last_error_message(), "segments must not be less than 2") == 0);
 
+  csgrs_curve_region_t *wide = NULL, *crossing = NULL;
+  assert(csgrs_curve_region_f64_rectangle(5, 2, &wide) == CSGRS_STATUS_OK);
+  assert(csgrs_curve_region_f64_translate(wide, -2, 0, 0, &crossing) == CSGRS_STATUS_OK);
+  assert(csgrs_curve_region_f64_revolve(crossing, 270, 3, &mesh) == CSGRS_STATUS_VALIDATION_FAILED);
+  assert(mesh == NULL);
+  assert(csgrs_curve_region_f64_revolve_solid(crossing, 0, 3, &mesh) == CSGRS_STATUS_VALIDATION_FAILED);
+  assert(mesh == NULL);
+  assert(csgrs_curve_region_f64_revolve_solid(crossing, 270, 3, &mesh) == CSGRS_STATUS_OK);
+  assert(mesh != NULL);
+  assert(csgrs_curve_region_f64_revolve_solid(crossing, 270, 3, NULL) == CSGRS_STATUS_NULL_POINTER);
+  csgrs_triangle_mesh_free(mesh);
+  mesh = NULL;
+  csgrs_curve_region_free(crossing);
+  csgrs_curve_region_free(wide);
+
   csgrs_curve_region_t *large = NULL, *scaled = NULL;
   assert(csgrs_curve_region_f64_square(DBL_MAX, &large) == CSGRS_STATUS_OK);
   assert(csgrs_curve_region_f64_scale(large, 2, 2, 1, &scaled) == CSGRS_STATUS_OK);
