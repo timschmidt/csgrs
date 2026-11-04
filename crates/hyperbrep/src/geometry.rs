@@ -22,6 +22,10 @@ mod location;
 mod pcurve;
 mod periodic_charts;
 mod planar_image;
+mod sweep_progress;
+pub(crate) use sweep_progress::{
+    SweepProgress, certified_straight_sweep_image, certified_sweep_progress,
+};
 mod plane_tensor;
 mod planes;
 mod point;

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-10-30",
+  "updated_on": "2026-11-04",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -3181,6 +3181,54 @@
       "validation": "Eight focused groups and 24 affected groups pass, including the eight plane/tensor section groups, fresh-process native replay, original even and added odd repeated contacts, both pcurve images, restriction/reversal/affine replay and subsequent intersection. Full BRep reports 680 passed; BRep IO reports 127 passed. The linked ledger records commands, source attribution, all downstream checks and the evidence digest.",
       "cost_evidence": "No speedup claim. Command timing and maximum process RSS include compilation; existing allocation lifetime tests do not measure a matched repeated-factor workload.",
       "limits": "Rational finite-fiber repeated-factor admission does not complete vertical components, arbitrary algebraic coefficients, general surface intersections, trimmed solids or total resource bounds. Native pcurves reconstruct source-factor evidence; no new trusted archive flag or format is added. All work-package statuses and the general closure target remain open/in-progress. Full pre-push qualification is separate."
+    },
+    {
+      "id": "stationary-straight-sweep-images-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP06",
+        "WP09",
+        "WP13",
+        "WP21"
+      ],
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P27",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "Retain the scoped R21 exact straight-image extension; broader sweep and resource contracts remain open.",
+      "change": "Admit fixed-frame positive-weight rational Bezier straight images with strictly increasing progress and isolated stationary source parameters. Regular plane/line charts retain original rational progress through shared pcurves and coordinate correspondences. Share the geometry certificate with native replay; Hypersolve owns the exact nonnegative polynomial sign law and Hyperlimit owns certified-only policy restriction. Planar queries, cuts and exact triangulation consume validated geometric images without replacing authored parameterization.",
+      "source": [
+        "../src/geometry/sweep_progress.rs",
+        "../src/construction.rs",
+        "../src/topology/validation/analytic_image.rs",
+        "../src/topology/correspondence.rs",
+        "../src/topology/edit/face.rs",
+        "../src/topology/query.rs",
+        "../src/boolean_kernel.rs",
+        "../src/meshing.rs",
+        "../tests/stationary_straight_sweeps.rs",
+        "../tests/support/stationary_straight_sweeps.rs",
+        "../../hypersolve/src/root_isolation.rs",
+        "../../hypersolve/tests/polynomial_nonnegative.rs",
+        "../../hyperlimit/src/predicate.rs"
+      ],
+      "evidence": "../PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04",
+      "validation": "Unchanged final Rust source passes 2,537 all-feature release test/doctest executions across BRep (701, including one fresh-process child), IO (123), Hyperlimit (377) and Hypersolve (1,336); zero failed or ignored. Minimal-feature monotone/stationary suites pass 16 parent tests plus one child. Stable 1.98.1 and MSRV 1.95.0 all-target/all-feature warning-denied Clippy, warning-denied rustdoc, both standalone fuzz manifests, formatting and retention checks pass. All 12 zero-import WASM exports execute in Node 22.22.2, including eight shared BRep and four solver recipes; 20,799,312-byte module. Failed disk-quota build attempts and unchanged duplicate-example Cargo warnings remain recorded; no example execution or full CI is claimed.",
+      "cost_evidence": "Final source: three alternating pinned-CPU process pairs, 960 measured legacy construction/measure/classification/native-encode/validate/re-encode calls, exact identical legacy JSON/receipt rows. Seven successful legacy median ratios 0.9702-1.0084; six allocation observations unchanged, cuboid chain +52 calls/+1,664 requested bytes. Typed backtracking rejection +4.2 us/+18 calls. Five newly successful workflows add 100 samples, 1.160-2.702 ms medians, with explicit requested/peak/retained bytes and zero post-drop deltas. Probe grows 71,688 bytes. Both earlier phases and adverse roughly 10.5% Sturm timing remain, with incomplete earlier source attribution stated. Shared-host observations do not prove a statistical speedup or universal nonregression; see the single qualification record and evidence digest.",
+      "limits": "Uncharged Sturm chain/root-count/coefficient/sign-cell work completes under WorkBudget::ZERO. Separate constructor/inverse calls exhaust a requested root refinement; same-model retry preserves the selected nonscalar inverse. No total-work/heap/cancellation bound, general guided/lateral stationary sweep, curved-solid Boolean, offset/fillet, package/binding, coverage, directed sanitizer/lexicase or full-workspace/pre-push qualification is claimed. Backtracking, invalid weights, constant images and varying-frame stationary paths retain typed failure. All broader work-package statuses and the algebraic closure target remain open/in-progress."
     }
   ],
   "work_packages": [

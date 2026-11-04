@@ -454,6 +454,29 @@ fn sampled_boundaries(
         if wire_index > 0 {
             hole_indices.push(parameters.len());
         }
+        if lines_only {
+            // Exact triangulation consumes the geometric line boundary. A
+            // validated regular plane/canonical-line correspondence can retain
+            // a nonlinear authored pcurve without changing this complete image.
+            // Keep one image per edge use so split vertices are preserved.
+            for curve in model.model_wire_curve_images(*wire_id)? {
+                let Some(hypercurve::CurveGeometry2::Line(line)) = curve.geometry() else {
+                    return Err(TessellationError::CurvedBoundary);
+                };
+                for segment in 0..segments_per_use {
+                    let numerator = Real::from(
+                        u128::try_from(segment)
+                            .map_err(|_| TessellationError::RefinementOverflow)?,
+                    );
+                    let fraction = (numerator / &denominator).map_err(GeometryError::Numeric)?;
+                    parameters.push(Point2::new(
+                        line.start().x() + (line.end().x() - line.start().x()) * &fraction,
+                        line.start().y() + (line.end().y() - line.start().y()) * &fraction,
+                    ));
+                }
+            }
+            continue;
+        }
         let wire = model.wire(*wire_id).expect("validated face wire ID");
         for edge_use_id in wire.edge_uses() {
             let edge_use = model
@@ -462,9 +485,6 @@ fn sampled_boundaries(
             let pcurve = model
                 .pcurve(edge_use.pcurve())
                 .expect("validated edge-use pcurve ID");
-            if lines_only && pcurve.line_segment().is_none() {
-                return Err(TessellationError::CurvedBoundary);
-            }
             let span = pcurve.represented_end()? - pcurve.represented_start()?;
             for segment in 0..segments_per_use {
                 let numerator = Real::from(

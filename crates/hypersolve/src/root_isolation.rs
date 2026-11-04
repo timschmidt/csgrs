@@ -95,6 +95,98 @@ pub enum UnivariateSturmPoint {
     NonRoot(usize),
 }
 
+/// Decides whether a polynomial is nonnegative throughout a closed interval.
+///
+/// A shared exact Sturm chain separates intervals with at most one distinct
+/// root. Inward Taylor signs at their endpoints then decide every open cell,
+/// including repeated roots and stationary endpoints. Zero polynomials are
+/// nonnegative. `None` means invalid interval order or an unresolved exact
+/// predicate, never a negative answer. All decisions restrict the explicit
+/// requested policy to its certified stages; an approximate terminal is never
+/// used to certify a polynomial sign law.
+/// Bisection has no configured total-work
+/// bound; arbitrary coefficient/degree/root-separation costs remain unbounded.
+pub fn certify_univariate_polynomial_nonnegative(
+    polynomial: &[Real],
+    lower: &Real,
+    upper: &Real,
+    policy: PredicatePolicy,
+) -> Option<bool> {
+    let policy = policy.certified_only();
+    if polynomial.is_empty() {
+        return None;
+    }
+    match compare_reals(lower, upper, policy).value()? {
+        Ordering::Greater => return None,
+        Ordering::Equal => return Some(sign_at(polynomial, lower, policy)? != Ordering::Less),
+        Ordering::Less => {}
+    }
+    let polynomial = trim_polynomial(polynomial.to_vec(), policy)?;
+    if polynomial.len() == 1 {
+        return Some(sign_at(&polynomial, lower, policy)? != Ordering::Less);
+    }
+    if polynomial_inward_sign(&polynomial, lower, false, policy)? == Ordering::Less
+        || polynomial_inward_sign(&polynomial, upper, true, policy)? == Ordering::Less
+    {
+        return Some(false);
+    }
+    let sturm = UnivariateSturmSequence::new(&polynomial, policy)?;
+    let mut intervals = Vec::new();
+    let roots = sturm.count_distinct_roots(lower, upper, policy)?;
+    if roots > 1 {
+        intervals.push((lower.clone(), upper.clone(), roots));
+    }
+    while let Some((lower, upper, roots)) = intervals.pop() {
+        let midpoint = ((&lower + &upper) / Real::from(2)).ok()?;
+        if polynomial_inward_sign(&polynomial, &midpoint, false, policy)? == Ordering::Less
+            || polynomial_inward_sign(&polynomial, &midpoint, true, policy)? == Ordering::Less
+        {
+            return Some(false);
+        }
+        let left_roots = sturm.count_distinct_roots(&lower, &midpoint, policy)?;
+        let right_roots = roots.checked_sub(left_roots)?;
+        // Inherit the already proved inward signs on both child endpoints.
+        // Root-free and singleton cells are complete, so do not accumulate
+        // empty siblings while separating an arbitrarily narrow root cluster.
+        if right_roots > 1 {
+            intervals.push((midpoint.clone(), upper, right_roots));
+        }
+        if left_roots > 1 {
+            intervals.push((lower, midpoint, left_roots));
+        }
+    }
+    Some(true)
+}
+
+fn polynomial_inward_sign(
+    polynomial: &[Real],
+    point: &Real,
+    from_left: bool,
+    policy: PredicatePolicy,
+) -> Option<Ordering> {
+    let sign = sign_at(polynomial, point, policy)?;
+    if sign != Ordering::Equal {
+        return Some(sign);
+    }
+    let mut jet = derivative(polynomial);
+    let mut odd = true;
+    loop {
+        let sign = sign_at(&jet, point, policy)?;
+        if sign != Ordering::Equal {
+            return Some(if from_left && odd {
+                sign.reverse()
+            } else {
+                sign
+            });
+        }
+        if jet.len() <= 1 {
+            return None;
+        }
+        jet = derivative(&jet);
+        odd = !odd;
+    }
+}
+
 impl UnivariateSturmSequence {
     /// Constructs the complete exact chain, or returns `None` when a required
     /// coefficient sign or division cannot be certified under `policy`.

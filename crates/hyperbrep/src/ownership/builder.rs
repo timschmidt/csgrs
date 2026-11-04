@@ -406,10 +406,15 @@ pub fn sweep_region(
 /// certified strictly positive speed at every parameter, so each section plane
 /// meets it exactly once. Affine progress is recognized by an exact Bernstein
 /// identity; other progress by a Bernstein or exact Sturm proof that its
-/// derivative never vanishes. A stationary or retreating parameter returns
-/// [`ConstructionError::NonMonotoneSweepPath`]. Lateral path curvature is
-/// unrestricted. Side faces are native tensor rational Bézier translation
-/// surfaces and no moving-frame, sampling, or corner policy is inferred.
+/// derivative never vanishes. A straight image may additionally have isolated
+/// stationary parameters: nonnegative progress and distinct endpoints prove
+/// strict increase, and regular planar side charts replace the singular tensor
+/// chart. Canonical spatial line edges retain the authored progress through
+/// exact rational pcurves and coordinate correspondences. Backtracking and
+/// lateral stationary paths return [`ConstructionError::NonMonotoneSweepPath`].
+/// Other lateral curvature retains native tensor rational Bézier translation
+/// sides. No moving-frame, sampling, or corner policy is inferred. Exact Sturm
+/// work is not charged to the current root-refinement/promotions budget.
 pub fn sweep_curve(
     profile: &[Point2],
     u: Vector3,

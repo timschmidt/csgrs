@@ -19,7 +19,7 @@ use crate::geometry::{
     ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact,
     SurfaceIntersectionCurve, SurfaceIntersectionOperand, SurfaceIntersectionPcurve,
     SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePcurveCorrespondence,
-    affine_transform_orientation, materialize_nurbs_parameter_graph,
+    SweepProgress, affine_transform_orientation, materialize_nurbs_parameter_graph,
     rational_bilinear_parameter_curve, resolve_planar_classification,
 };
 use crate::{GeometricPoint3, Parameter, ParameterRange};
@@ -39,13 +39,12 @@ mod transform;
 mod validation;
 mod wire_geometry;
 
+pub(crate) use crate::geometry::{certified_straight_sweep_image, certified_sweep_progress};
 pub use correspondence::ParameterCorrespondence;
 pub use edit::*;
 pub use error::*;
 use helpers::*;
-pub(crate) use helpers::{
-    certified_sweep_progress, circle_data_parameterizations_equal, compare_curve3_exact_data,
-};
+pub(crate) use helpers::{circle_data_parameterizations_equal, compare_curve3_exact_data};
 pub use ids::*;
 use records::FaceBoundary;
 pub use records::*;
@@ -520,19 +519,6 @@ enum CertifiedLoftInterpolation {
         lower: Vec<CurvePoint2>,
         upper: Vec<CurvePoint2>,
     },
-}
-
-/// How a certified sweep path advances through its parallel section planes.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum SweepProgress {
-    /// Plane progress is an exact affine function of the path parameter, so
-    /// one exact division gives the section parameter of a point.
-    Affine,
-    /// Plane progress has a certified positive derivative on the closed
-    /// parameter domain without being affine. A point's section parameter is
-    /// the path's unique exact contact with the point's section plane. This is
-    /// admitted only for a fixed profile frame.
-    Monotone,
 }
 
 #[derive(Clone, Debug)]

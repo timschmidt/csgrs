@@ -1,5 +1,26 @@
 # Future work
 
+## Strict polynomial sign laws (2026-11-04)
+
+`certify_univariate_polynomial_nonnegative` shares one exact Sturm chain and
+checks inward Taylor signs on cells with at most one distinct root. It handles
+stationary endpoints, repeated roots and negative pockets without sampling or
+an approximate terminal. The explicit requested policy is restricted through
+`PredicatePolicy::certified_only`, including after a warmed terminal query.
+`None` retains unresolved arithmetic or invalid input;
+it is never a negative classification. Only cells with multiple roots stay
+pending, so a narrow cluster does not accumulate empty sibling intervals.
+
+The four acceptance groups include 486 independently derived rational
+root-multiset sign laws, algebraic coefficients, a `2^-80` negative pocket,
+endpoint roots and strict/terminal/strict cache behavior. HyperBRep R21 consumes
+this proof for straight sweep images; its
+[qualification](../hyperbrep/PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04)
+records native/WASM execution and cost. The sign-cell subdivisions, root counts
+and coefficient arithmetic are outside `WorkBudget`; a zero usage receipt does
+not bound their work. Total work, coefficient growth, heap and cancellation
+remain separate open contracts.
+
 ## Recursive quadratic field contracts
 
 Two contract gaps were found while writing the independent recursive quadratic

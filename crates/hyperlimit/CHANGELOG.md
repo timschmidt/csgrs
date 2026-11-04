@@ -2,6 +2,9 @@
 
 ## [0.5.0] - Unreleased
 
+- Add `PredicatePolicy::certified_only` to disable a requested approximate
+  terminal when constructing exact algebraic certificates.
+
 - Generic 2D orientations and triangle normals reuse the scalar product
   cancellation primitive. Repeated symbolic endpoints and vertical extrusion
   faces retain their exact zero determinants before expression expansion.

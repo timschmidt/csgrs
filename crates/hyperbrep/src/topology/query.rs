@@ -1170,7 +1170,7 @@ impl ArenaModel {
         Contour2::try_new(segments).map_err(GeometryError::from)
     }
 
-    pub(in crate::topology) fn build_model_wire_curve_path(
+    pub(crate) fn build_model_wire_curve_path(
         &self,
         wire: WireId,
     ) -> Result<CurvePath2, GeometryError> {
@@ -1178,19 +1178,70 @@ impl ArenaModel {
     }
 
     fn model_wire_curves(&self, wire: WireId) -> Result<Vec<Curve2>, GeometryError> {
+        crate::topology::wire_geometry::coalesce_restrictions(self.model_wire_curve_images(wire)?)
+    }
+
+    /// One exact query image per directed use, preserving every boundary
+    /// vertex. Authored parameterizations remain on the immutable model.
+    pub(crate) fn model_wire_curve_images(
+        &self,
+        wire: WireId,
+    ) -> Result<Vec<Curve2>, GeometryError> {
+        let surface = self
+            .face_of_wire(wire)
+            .and_then(|face| self.face(face))
+            .and_then(|face| self.surface(face.surface));
         let wire = self.wire(wire).expect("validated wire ID");
         let curves = wire
             .edge_uses
             .iter()
             .map(|edge_use| {
                 let edge_use = self.edge_use(*edge_use).expect("validated edge-use ID");
-                self.pcurve(edge_use.pcurve)
+                let pcurve = self
+                    .pcurve(edge_use.pcurve)
                     .expect("validated pcurve ID")
                     .curve()
-                    .clone()
+                    .clone();
+                if pcurve.family() != CurveFamily2::Line
+                    && let Some(surface) = surface
+                    && let Some(origin) = surface.plane_origin()
+                {
+                    let edge = self.edge(edge_use.edge).expect("validated edge");
+                    if self.curve(edge.curve).expect("validated curve").kind() == Curve3Kind::Line {
+                        let (u, v) = surface.plane_directions().expect("plane frame");
+                        let (start, end) = match edge_use.direction {
+                            Direction::Forward => (edge.start, edge.end),
+                            Direction::Reversed => (edge.end, edge.start),
+                        };
+                        if let (Some(start), Some(end)) = (
+                            self.vertex(start)
+                                .expect("validated endpoint")
+                                .point
+                                .try_coordinates(),
+                            self.vertex(end)
+                                .expect("validated endpoint")
+                                .point
+                                .try_coordinates(),
+                        ) {
+                            // A validated plane use of a canonical spatial line
+                            // proves the complete affine projected image. Keep
+                            // its nonlinear source chart on the model; queries
+                            // need not invert it to rediscover this line.
+                            let start =
+                                crate::geometry::project_point_to_plane_frame(origin, u, v, start)?;
+                            let end =
+                                crate::geometry::project_point_to_plane_frame(origin, u, v, end)?;
+                            return Ok(Curve2::from(LineSeg2::try_new(
+                                CurvePoint2::new(start.x, start.y),
+                                CurvePoint2::new(end.x, end.y),
+                            )?));
+                        }
+                    }
+                }
+                Ok(pcurve)
             })
-            .collect();
-        crate::topology::wire_geometry::coalesce_restrictions(curves)
+            .collect::<Result<Vec<_>, GeometryError>>()?;
+        Ok(curves)
     }
 
     pub(crate) fn classify_surface_parameter_on_face(

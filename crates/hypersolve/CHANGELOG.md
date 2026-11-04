@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `certify_univariate_polynomial_nonnegative` with an explicit policy
+  restricted to certified stages. Shared Sturm counts and inward Taylor signs
+  cover repeated and endpoint roots; unresolved decisions remain `None`.
+  Sign-cell subdivision and coefficient arithmetic have no total-work bound.
+
 - Add `with_coefficient_bit_limit` and `observe_coefficient_bits`. Integer
   polynomial Bareiss entries, pseudo-quotient multiplication matrix entries and
   exact rational dense tensor products report their bit lengths, and one above

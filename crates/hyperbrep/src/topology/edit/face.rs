@@ -435,10 +435,32 @@ impl ArenaModel {
                             let pcurve = self
                                 .pcurve(edge_use.pcurve)
                                 .expect("validated edge-use pcurve ID");
-                            Ok((pcurve.curve().start().clone())
-                                .coordinates()
-                                .ok_or(GeometryError::UnsupportedPcurveContour)?
-                                .clone())
+                            if let Some(point) = pcurve.curve().start().coordinates() {
+                                return Ok(point.clone());
+                            }
+                            // The validated edge use identifies this UV with
+                            // the same shared spatial endpoint. A regular
+                            // plane chart can recover its exact coordinates
+                            // without materializing the source path parameter.
+                            let origin = surface
+                                .plane_origin()
+                                .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                            let (u, v) = surface
+                                .plane_directions()
+                                .expect("plane origin has directions");
+                            let edge = self.edge(edge_use.edge).expect("validated edge");
+                            let vertex = match edge_use.direction {
+                                Direction::Forward => edge.start,
+                                Direction::Reversed => edge.end,
+                            };
+                            let spatial = self
+                                .vertex(vertex)
+                                .expect("validated endpoint")
+                                .represented_point()?;
+                            let point = crate::geometry::project_point_to_plane_frame(
+                                origin, u, v, spatial,
+                            )?;
+                            Ok(CurvePoint2::new(point.x, point.y))
                         };
                     let start_uv = pcurve_start(outer_uses[start_index])?;
                     let end_uv = pcurve_start(outer_uses[end_index])?;

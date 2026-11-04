@@ -19,6 +19,9 @@
 //! participate. Complete ordered-field Sturm discovery charges each dyadic
 //! subdivision, including exclusion of separately emitted exact roots.
 //! Its root counts and coefficient arithmetic are not bounded by that counter.
+//! Reusable Sturm chains and polynomial nonnegativity certificates are outside
+//! these counters, including the latter's sign-cell subdivisions. A zero
+//! refinement receipt is not evidence that those computations did no work.
 //! Polynomial, rational, and binary represented-root images charge
 //! their eliminant constructions; rational maps can reuse a cached eliminant
 //! without a new promotion charge. Constant and affine shortcuts need no

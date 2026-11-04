@@ -660,6 +660,19 @@ These changes alter represented sets, coordinates, file lengths or checksums.
   now fail with `CapacityOverflow` before allocation; this is not a total
   work or memory budget. See the [R20 record](research/regularized-revolution-2026-11-04.md)
   for measured completion and unresolved sanitizer stress limits.
+- **Stationary straight BRep sweeps.** `hyperbrep::builder::sweep_curve`, its
+  region form and fixed-axis moving-frame inputs admit strictly increasing
+  straight images with isolated stationary parameters. Their surfaces and
+  spatial edges use regular plane/line charts; rational pcurves and coordinate
+  correspondences retain the authored progress and inverse selections. The
+  original stationary fixtures now construct prisms. Existing regular-success
+  archive rows are preserved in the measured control corpus. Backtracking,
+  lateral stationary paths and varying-frame stationary paths keep the
+  `NonMonotoneSweepPath` code; its diagnostic now states the missing admitted
+  certificate. Archive syntax is unchanged, but the new plane-correspondence
+  payloads require the updated validator. See the
+  [R21 qualification](../crates/hyperbrep/PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04)
+  for completion evidence, costs and uncounted Sturm work.
 - **Imported face triangulation.** OBJ, DXF and VRML import project each
   planar polygon face onto two coordinates before triangulating it. The
   dropped coordinate is still the largest normal component whenever strict

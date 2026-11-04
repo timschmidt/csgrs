@@ -275,8 +275,8 @@ domain. General nonuniform analytic promotion remains open. See the
 | `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS and supported procedural meridians with selected latitudes, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
 | `revolve_curve_region` | Unified region winding/holes; one solid per material component; canonical empty stays empty; native line/arc fast path and retained procedural/selected profiles | Existing per-family measurements only | Existing moments when available; unsupported integrals do not prevent solid admission | Exact radial/profile classification including cavities | Certified similarity / exact |
 | `sweep` / `sweep_region` | Exact affine image of a polygonal linear-path sweep | Yes | Exact determinant-scaled prism volume | Exact inverse-frame profile test | Affine / exact |
-| `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon or through-hole region swept along a rational Bézier path with certified positive plane speed (affine, or monotone by Bernstein/Sturm proof) / native tensor translation sides and inner cap wires | Caps only | Exact material-region area × signed plane progress | Exact affine progress inversion, or the unique exact path/section-plane contact, and outer-minus-hole profile test | Affine / exact |
-| `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires | Caps only | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test | Affine / exact |
+| `sweep_curve` / `sweep_curve_region` | Fixed-frame polygon/holes and positive-weight rational Bézier path; regular positive progress retains tensor sides. Strictly increasing straight images also admit isolated stationary parameters through planes, canonical lines and authored rational pcurve correspondences | Caps for tensor sides; all planar faces for the stationary straight-image path | Exact material-region area × signed plane progress | Existing affine/regular inversion, or canonical prism membership for straight images; original pcurve inverse remains selected when needed | Affine / exact |
+| `sweep_moving_frame` / `sweep_moving_frame_region` | Explicit shared-weight rational Bézier origin/axis frame / native tensor sides and inner cap wires; constant axes also use the straight-image certificate | Caps for tensor sides; all planar faces for the stationary straight-image path | Exact material-region area × signed plane progress × integrated frame-area law | Exact moving inverse-frame profile test or canonical prism membership | Affine / exact |
 | `loft` | Two or more corresponding sections; each span positive homothetic or exact convex interpolation / planar or bilinear tensor sides with explicit C⁰ rings | Homothetic sides only | Exact piecewise-integrated quadratic section area | Exact span/section test | Affine / exact |
 | `planar_face` | One exact `CurvePath2` outer loop plus disjoint holes in an authored plane, including supported selected procedural/source-restriction endpoints / open shell | Exact Hypercurve signed region area × plane-frame Jacobian when represented; otherwise explicit unsupported query | N/A | N/A | Affine / exact |
 | `extrusion_patch` | One finite rectangular exact extrusion face, including selected profile domains with retained connector origins and authored sweep bounds / open shell | Line, normal-circle, and transverse-monotone planar rational Bézier/NURBS profiles exact; other variable-speed profiles unsupported | N/A | N/A | Family-preserving / exact |
@@ -345,9 +345,17 @@ case. Their plane progress `h = N/W` may be non-affine when `N'W - NW'` is
 proven positive on the closed domain: by nonnegative degree `2d - 1` Bernstein
 coefficients with positive ends, or else by an exact Sturm count with no root.
 Classification then locates a point's section by the path's unique exact
-plane contact. A zero rate anywhere, including a stationary endpoint such as
-`z = t²`, stays `NonMonotoneSweepPath`. Region holes are exact inner cap wires joined by reversed material-side
-tensor walls in one genus shell, not detached voids.
+plane contact. Straight images additionally admit isolated stationary
+parameters, including `z = t²` and interior zeros: nonnegative progress
+derivative and distinct endpoints prove strict increase. Regular planes and
+canonical spatial lines carry their image; two shared rational pcurves retain
+the authored progress and selected inverse through coordinate correspondences.
+Backtracking, lateral stationary paths and varying-frame stationary paths keep
+`NonMonotoneSweepPath`. Region holes are exact inner cap wires joined by reversed material-side
+tensor or planar walls in one genus shell, not detached voids.
+The [R21 record](../PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04)
+separates native/WASM completion, replay and triangulation from the still
+unbounded Sturm/coefficient work. It does not complete general guided sweeps.
 Multi-section lofts expose
 identity-shared C⁰ section rings and make no stronger continuity claim.
 Non-homothetic spans are accepted only when the corresponding endpoint

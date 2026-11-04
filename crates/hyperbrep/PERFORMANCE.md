@@ -1,5 +1,149 @@
 # HyperBREP Performance Contract
 
+## R21 stationary straight sweep images (2026-11-04)
+
+Baseline `8b6749ec24a3d388a6f2628e41d7e8b43146a08f` rejects `t²` and the
+shifted cubic even though their fixed-frame images are ordinary prisms. The
+missing acceptance witness reproduced `NonMonotoneSweepPath`; the original
+hard fixtures remain in `tests/monotone_sweeps.rs`, with exact positive
+expectations for this intentional domain extension. The owning layers are
+Hyperlimit for certified policy restriction, Hypersolve for polynomial sign
+laws, and BRep geometry/topology for regular charts and full-image admission
+(P6/P8/P9/P17–P20/P25–P27/P35–P39).
+
+The existing affine and regular-positive-progress paths run first. The new
+certificate requires positive weights, collinear controls, distinct oriented
+endpoints and `D = N'W - NW' >= 0` on the complete source domain. Since the
+endpoints differ, `D` is nonzero and has finitely many zeros: progress is
+strictly increasing on every nonempty interval. Bernstein coefficients give
+the cheap proof; otherwise one shared Sturm chain and inward Taylor signs
+separate every sign cell, including repeated roots. The explicit predicate
+policy is restricted to certified stages; neither a requested nor cached
+approximate terminal can certify this law. Backtracking, lateral stationary
+paths, constant images, invalid weights and varying-frame stationary paths
+remain typed failures. This does not extend general guided sweeps.
+
+New images use regular planar sides and canonical spatial lines. Two shared
+rational pcurves retain the authored normalized progress, weights and reversed
+traversal through the existing coordinate correspondence. Replay proves the
+whole coefficient identity and injective source law; endpoint matching and
+serialized flags are insufficient. Selected inverse parameters remain selected.
+Planar queries and exact triangulation consume the proven line image without
+replacing the stored source chart; triangulation retains every split vertex.
+The chordal sampler still evaluates the authored parameter law. No archive
+variant, trusted flag, general curve fit or approximate geometric fallback is
+introduced. See [migration](../../docs/MIGRATIONS.md).
+
+The shared eight-recipe corpus covers `t/t²/t³`, shifted cubic and quintic,
+degree elevation, nonuniform positive weights, oblique/reversed frames, holes,
+`2^-80` features, algebraic height, all four Booleans, repeated cuts,
+reconstruction, reflection/nonuniform scaling, replay and further operation.
+Independent prism expectations, 1,400 affine-coordinate membership checks,
+full defining relations and exact triangulation incidence/Euler/volume checks
+supplement symmetric-difference emptiness. Cubic and quintic inverse queries
+explicitly lack scalar views. Mutating lateral controls or reversing progress
+with unchanged endpoints fails publication and leaves the source unchanged.
+Four solver groups include 486 independent signed rational-root multisets,
+algebraic coefficients, endpoint roots and a `2^-80` negative pocket. A native
+child process independently reloads and cuts the archive.
+
+Final unchanged Rust source (hashes retained in the archive) passes:
+
+- `cargo test --offline --locked --release --all-features` for Hyperlimit,
+  Hypersolve, BRep and BRep IO: **2,537 passing executions**, zero failures or
+  ignores, including one fresh-process child execution. BRep accounts for
+  701, IO 123, Hyperlimit 377 and Hypersolve 1,336.
+- Without optional features, both monotone and stationary BRep suites pass
+  16 parent tests plus the fresh-process child.
+- All-target/all-feature Clippy with `-D warnings` on stable Rust 1.98.1 and
+  MSRV 1.95.0, and warning-denied all-feature rustdoc for the same four crates.
+- Both BRep and Hypersolve standalone fuzz manifests compile with `--locked`;
+  this is compilation, not a runtime sanitizer campaign. The BRep lock was
+  already stale on the baseline; reconciliation adds its existing direct
+  `stacker` dependency and moves 0.1.24 to the manifest-required 0.1.25.
+- Actual Node 22.22.2 execution of all **12 zero-import WASM exports**: the
+  eight shared BRep recipes and four mechanically exported solver tests.
+  Module size 20,799,312 bytes; process maximum RSS 152,832 KiB. Workspace-path
+  dependencies and native process spawning are separate qualification limits.
+- Workspace formatting, whitespace and repository retention budget checks.
+
+Initial final native/Clippy/docs/cost builds failed the OS disk quota. Removing
+reproducible owned build and incremental caches allowed unchanged source to
+pass on retry. All failed logs remain. The combined native command warns of
+unchanged duplicate example output names; its hashed test executables are
+separate, and it does not qualify example execution. Separate Clippy is clean.
+
+The final cost probe compares frozen baseline `8b6749ec24` and the source
+hashes above on Rust 1.98.1, shared x86-64 host, one pinned CPU. Three alternating
+process pairs each run two warmups, one artifact call and 20 measured calls per
+legacy fixture (960 measured calls: 840 successful, 120 expected rejections).
+Each successful call constructs, obtains exact volume/classification, encodes,
+decodes and validates a fresh model, and re-encodes it while retaining both
+models and the JSON receipt. Row-file writing is outside the timer. All six
+legacy row files are byte-identical (SHA-256
+`d908a8c37383d0e63ee99b9dea6ab91ad39a287a75f93993ad516748c68589bd`);
+this deterministic comparison supplements the independent geometric corpus.
+These costs measure this construction/replay workload, not every cut recipe.
+
+| Legacy fixture | Median microseconds, baseline → candidate | Requested bytes, baseline → candidate | Allocation calls, baseline → candidate |
+| --- | ---: | ---: | ---: |
+| affine-lateral | 1,087.2 → 1,063.0 | 1,309,808 → 1,309,808 | 4,016 → 4,016 |
+| monotone-lateral | 1,165.0 → 1,130.3 | 1,332,314 → 1,332,314 | 4,417 → 4,417 |
+| elevated-straight | 3,120.9 → 3,083.5 | 2,593,026 → 2,593,026 | 13,278 → 13,278 |
+| strict-sturm | 1,295.7 → 1,302.7 | 1,504,248 → 1,504,248 | 4,752 → 4,752 |
+| monotone-hole | 2,337.9 → 2,324.6 | 2,767,387 → 2,767,387 | 9,957 → 9,957 |
+| moving-taper | 1,095.5 → 1,076.5 | 1,310,711 → 1,310,711 | 4,057 → 4,057 |
+| cuboid-cut-reunion | 34,619.1 → 34,910.1 | 37,237,017 → 37,238,681 | 234,221 → 234,273 |
+| backtracking-rejection | 18.5 → 22.7 | 11,175 → 12,759 | 68 → 86 |
+
+Successful legacy median ratios range 0.9702–1.0084. Six have identical
+allocation traffic/calls; the cuboid chain adds 52 calls/1,664 bytes from shared
+wire-image collection. Rejection costs about 4.2 microseconds and 18 calls more
+because it checks the additional admitted certificate. Legacy logical peaks
+and retained bytes agree in every sample; post-drop deltas are zero.
+
+| Newly successful workflow (20 samples each) | Median microseconds | Requested bytes | Peak logical bytes | Retained bytes |
+| --- | ---: | ---: | ---: | ---: |
+| stationary-cubic | 1,437.7 | 1,193,049 | 382,014 | 252,744 |
+| stationary-fifth | 1,986.3 | 1,453,573 | 387,774 | 259,012 |
+| stationary-hole | 2,702.1 | 2,158,104 | 603,566 | 472,566 |
+| stationary-quadratic | 1,159.7 | 966,558 | 315,030 | 251,045 |
+| stationary-rational | 1,417.7 | 1,051,613 | 318,742 | 254,756 |
+
+New rows have no speedup ratio to former rejection. Retention includes two
+models and encoded evidence; all post-drop deltas are zero. Requested traffic
+counts the full new allocation request on `realloc`, separately from logical
+live-byte growth. Neither is allocator RSS or a memory limit. Probe executable
+size is 29,570,344 → 29,642,032 bytes (+71,688); hashes and section sizes are
+retained. Shared-host timings with allocator instrumentation do not establish
+a statistical speedup or universal nonregression.
+
+Both exploratory cost phases remain: the first counts positive realloc growth,
+and the second corrects request traffic before the final source changes.
+Their exact earlier source hashes were not retained, so neither is attributed
+to this final candidate. The first observed an adverse roughly 10.5% Sturm
+latency increase; the final observed ratio is 1.0054. Preserve both observations
+without treating repeated shared-host timing as a statistical admission proof.
+
+Resource audit: under `WorkBudget::ZERO`, a multi-root sign-law proof completes
+with zero charged usage. Its Sturm chain, root counts, coefficient arithmetic
+and sign-cell subdivision are **not accounted**. The stationary constructor
+and inverse query separately exhaust an actually requested root refinement;
+the same-model inverse retries successfully with 512 refinements/64 promotions
+using 68 refinements and preserving a nonscalar selected inverse. These are
+resource-handling observations, not a total-runtime/heap bound or cancellation
+qualification. Arbitrary degree, root separation and algebraic coefficient
+complexity remain unbounded. Broader guided sweeps, general curved Booleans,
+offsets/fillets, release packages, external language bindings, full-workspace
+CI, coverage and directed sanitizer/lexicase qualification remain open. No
+push or complete algebraic closure claim.
+
+Raw baseline failures, rejected prototypes, source hashes, locks, commands,
+all cost phases, native/WASM results and resource receipts are retained in
+`docs/evidence/2026-11-04-research-r21` in the
+[evidence archive](../../docs/evidence-archive.md). The support matrix and
+implementation ledger link this single qualification record.
+
 ## 2026-10-23: reflected charts of shared pcurves
 
 An orientation-reversing transform reflected every pcurve about one pivot,

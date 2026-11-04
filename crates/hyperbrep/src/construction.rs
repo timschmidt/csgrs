@@ -47,9 +47,9 @@ pub enum ConstructionError {
     IncompatibleLoftSections,
     /// A curve sweep currently requires a rational Bézier path.
     UnsupportedSweepPath,
-    /// A curve sweep path lacks a certificate that it crosses the initial
-    /// profile planes with strictly positive speed at every parameter, or a
-    /// moving frame pairs such a non-affine path with varying axes.
+    /// A curve sweep lacks regular positive plane progress or a certified
+    /// strictly increasing straight image in a fixed frame. Moving frames
+    /// still require affine progress when their axes vary.
     NonMonotoneSweepPath,
     /// A rational Bézier moving frame has inconsistent control counts or
     /// invalid projective data.
@@ -224,7 +224,7 @@ impl fmt::Display for ConstructionError {
                 formatter.write_str("curve sweep requires a rational Bézier path")
             }
             Self::NonMonotoneSweepPath => formatter.write_str(
-                "curve sweep path must cross the profile planes with certified positive speed",
+                "curve sweep requires regular positive progress or a strictly increasing straight image in a fixed frame",
             ),
             Self::InvalidSweepFrame => formatter.write_str(
                 "moving sweep frame requires matching valid rational Bezier control data",
@@ -2771,10 +2771,15 @@ pub fn sweep_region(
 /// certified strictly positive speed at every parameter, so each section plane
 /// meets it exactly once. Affine progress is recognized by an exact Bernstein
 /// identity; other progress by a Bernstein or exact Sturm proof that its
-/// derivative never vanishes. A stationary or retreating parameter returns
-/// [`ConstructionError::NonMonotoneSweepPath`]. Lateral path curvature is
-/// unrestricted. Side faces are native tensor rational Bézier translation
-/// surfaces and no moving-frame, sampling, or corner policy is inferred.
+/// derivative never vanishes. A straight image may additionally have isolated
+/// stationary parameters: nonnegative progress and distinct endpoints prove
+/// strict increase, and regular planar side charts replace the singular tensor
+/// chart. Canonical spatial line edges retain the authored progress through
+/// exact rational pcurves and coordinate correspondences. Backtracking and
+/// lateral stationary paths return [`ConstructionError::NonMonotoneSweepPath`].
+/// Other lateral curvature retains native tensor rational Bézier translation
+/// sides. No moving-frame, sampling, or corner policy is inferred. Exact Sturm
+/// work is not charged to the current root-refinement/promotions budget.
 pub fn sweep_curve(
     profile: &[Point2],
     u: Vector3,
@@ -2869,16 +2874,24 @@ fn sweep_rational_bezier_frame_region(
     loops.push(outer);
     loops.extend(holes);
     let (normal, _) = certify_sweep_frame(&origins, &u_axes, &v_axes, &weights)?;
-    match crate::topology::certified_sweep_progress(&origins, &weights, &normal)? {
-        Some(crate::topology::SweepProgress::Affine) => {}
-        // Non-affine progress is inverted through the path's plane contacts,
-        // which locate a profile section only in one fixed frame.
-        Some(crate::topology::SweepProgress::Monotone)
-            if sweep_frame_is_fixed(&u_axes, &v_axes)? => {}
-        Some(crate::topology::SweepProgress::Monotone) | None => {
-            return Err(ConstructionError::NonMonotoneSweepPath);
-        }
-    }
+    let straight_image =
+        match crate::topology::certified_sweep_progress(&origins, &weights, &normal)? {
+            Some(crate::geometry::SweepProgress::Affine) => None,
+            // Non-affine progress is inverted through the path's plane contacts,
+            // which locate a profile section only in one fixed frame.
+            Some(crate::geometry::SweepProgress::Monotone)
+                if sweep_frame_is_fixed(&u_axes, &v_axes)? =>
+            {
+                None
+            }
+            None if sweep_frame_is_fixed(&u_axes, &v_axes)? => Some(
+                crate::topology::certified_straight_sweep_image(&origins, &weights, &normal)?
+                    .ok_or(ConstructionError::NonMonotoneSweepPath)?,
+            ),
+            Some(crate::geometry::SweepProgress::Monotone) | None => {
+                return Err(ConstructionError::NonMonotoneSweepPath);
+            }
+        };
 
     let count = loops.iter().map(Vec::len).sum::<usize>();
     let mut loop_offsets = Vec::with_capacity(loops.len());
@@ -2944,17 +2957,20 @@ fn sweep_rational_bezier_frame_region(
                 upper_curve,
                 (ParameterDomain::unit()).into(),
             )?);
-            let translated_controls = origins
-                .iter()
-                .zip(u_axes.iter().zip(&v_axes))
-                .map(|(origin, (u, v))| {
-                    origin.clone() + u.clone() * &profile[local].x + v.clone() * &profile[local].y
-                })
-                .collect();
-            let translated_path = builder.curve(Curve3::rational_bezier(
-                translated_controls,
-                weights.clone(),
-            )?)?;
+            let translated_path = builder.curve(if straight_image.is_some() {
+                Curve3::line(lower_points[index].clone(), upper_points[index].clone())?
+            } else {
+                let translated_controls = origins
+                    .iter()
+                    .zip(u_axes.iter().zip(&v_axes))
+                    .map(|(origin, (u, v))| {
+                        origin.clone()
+                            + u.clone() * &profile[local].x
+                            + v.clone() * &profile[local].y
+                    })
+                    .collect();
+                Curve3::rational_bezier(translated_controls, weights.clone())?
+            })?;
             path_edges.push(builder.edge(
                 lower_vertices[index],
                 upper_vertices[index],
@@ -3031,6 +3047,28 @@ fn sweep_rational_bezier_frame_region(
         CurvePoint2::new(Real::one(), Real::one()),
         CurvePoint2::new(Real::zero(), Real::one()),
     ];
+    let straight_pcurves = if let Some(progress) = &straight_image {
+        let forward = progress
+            .iter()
+            .map(|value| CurvePoint2::new(Real::one(), value.clone()))
+            .collect();
+        let reverse = progress
+            .iter()
+            .rev()
+            .map(|value| CurvePoint2::new(Real::zero(), value.clone()))
+            .collect();
+        Some([
+            builder.pcurve(Pcurve::new(Curve2::from(
+                RationalBezier2::try_new(forward, weights.clone()).map_err(GeometryError::from)?,
+            )))?,
+            builder.pcurve(Pcurve::new(Curve2::from(
+                RationalBezier2::try_new(reverse, weights.iter().rev().cloned().collect())
+                    .map_err(GeometryError::from)?,
+            )))?,
+        ])
+    } else {
+        None
+    };
     let mut faces = vec![lower_face, upper_face];
     for (profile, profile_offset) in loops.iter().zip(&loop_offsets) {
         for local in 0..profile.len() {
@@ -3038,22 +3076,29 @@ fn sweep_rational_bezier_frame_region(
             let next = profile_offset + (local + 1) % profile.len();
             let start = &profile[local];
             let end = &profile[(local + 1) % profile.len()];
-            let surface_controls = origins
-                .iter()
-                .zip(u_axes.iter().zip(&v_axes))
-                .map(|(origin, (u, v))| {
-                    vec![
-                        origin.clone() + u.clone() * &start.x + v.clone() * &start.y,
-                        origin.clone() + u.clone() * &end.x + v.clone() * &end.y,
-                    ]
-                })
-                .collect::<Vec<_>>();
-            let surface_weights = weights
-                .iter()
-                .map(|weight| vec![weight.clone(), weight.clone()])
-                .collect::<Vec<_>>();
-            let surface =
-                builder.surface(Surface::rational_bezier(surface_controls, surface_weights)?)?;
+            let surface = builder.surface(if straight_image.is_some() {
+                Surface::plane(
+                    lower_points[index].clone(),
+                    &lower_points[next] - &lower_points[index],
+                    &origins[origins.len() - 1] - &origins[0],
+                )?
+            } else {
+                let surface_controls = origins
+                    .iter()
+                    .zip(u_axes.iter().zip(&v_axes))
+                    .map(|(origin, (u, v))| {
+                        vec![
+                            origin.clone() + u.clone() * &start.x + v.clone() * &start.y,
+                            origin.clone() + u.clone() * &end.x + v.clone() * &end.y,
+                        ]
+                    })
+                    .collect::<Vec<_>>();
+                let surface_weights = weights
+                    .iter()
+                    .map(|weight| vec![weight.clone(), weight.clone()])
+                    .collect::<Vec<_>>();
+                Surface::rational_bezier(surface_controls, surface_weights)?
+            })?;
             let specs = [
                 (lower_edges[index], Direction::Forward, 0, 1),
                 (path_edges[next], Direction::Forward, 1, 2),
@@ -3062,21 +3107,35 @@ fn sweep_rational_bezier_frame_region(
             ];
             let mut uses = Vec::with_capacity(4);
             for (edge, direction, start, end) in specs {
-                let pcurve = builder.pcurve(Pcurve::new(Curve2::from(
-                    LineSeg2::try_new(
-                        parameter_corners[start].clone(),
-                        parameter_corners[end].clone(),
-                    )
-                    .map_err(GeometryError::from)?,
-                )))?;
+                let pcurve = if let Some(progress) = &straight_pcurves
+                    && (start == 1 || start == 3)
+                {
+                    progress[usize::from(start == 3)]
+                } else {
+                    builder.pcurve(Pcurve::new(Curve2::from(
+                        LineSeg2::try_new(
+                            parameter_corners[start].clone(),
+                            parameter_corners[end].clone(),
+                        )
+                        .map_err(GeometryError::from)?,
+                    )))?
+                };
                 uses.push(builder.edge_use(
                     edge,
                     direction,
                     pcurve,
-                    match direction {
-                        Direction::Forward => ParameterCorrespondence::identity(),
-                        Direction::Reversed => {
-                            ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                    if straight_image.is_some() && (start == 1 || start == 3) {
+                        ParameterCorrespondence::coordinate(
+                            hypercurve::Axis2::Y,
+                            Real::one(),
+                            Real::zero(),
+                        )?
+                    } else {
+                        match direction {
+                            Direction::Forward => ParameterCorrespondence::identity(),
+                            Direction::Reversed => {
+                                ParameterCorrespondence::affine(-Real::one(), Real::one())?
+                            }
                         }
                     },
                 )?);

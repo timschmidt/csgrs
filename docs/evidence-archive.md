@@ -85,6 +85,21 @@ in this repository.
 
 ## Follow-on records
 
+The local `research-r21-2026-11-04` evidence branch ends at
+`ec872218ace389ea5048e2505421c7a1490d8f5b`.
+`docs/evidence/2026-11-04-research-r21` contains 199 files and 17,301,176 bytes,
+with SHA-256 `926a91787d265a83691bb618c7654ba58806f2b490eb3f1a6dc45da77b254a01`.
+It retains the reproduced stationary-sweep gap, rejected prototypes, final
+source hashes, 2,537 passing native test executions, 12 executed zero-import
+WASM recipes, stable/MSRV Clippy, both fuzz builds and exact legacy receipts.
+All three cost phases remain, including earlier adverse observations and their
+source-attribution limits. The zero-budget Sturm audit, typed exhaustion and
+successful selected-inverse retry distinguish completed geometry from the
+open total-resource contract. See the
+[qualification](../crates/hyperbrep/PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04).
+The archive adds only this record to `c61d518350df1e7b651fc06fb2e527fb80c60a13`;
+earlier evidence is unchanged. No push or publication is claimed.
+
 The local `research-r20-2026-11-04` evidence branch ends at
 `c61d518350df1e7b651fc06fb2e527fb80c60a13`.
 `docs/evidence/2026-11-04-research-r20` contains 683 files and 1,185,353 bytes,

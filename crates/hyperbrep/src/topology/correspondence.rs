@@ -13,6 +13,9 @@ pub enum ParameterCorrespondence {
     /// `edge_parameter = scale * coordinate(pcurve(t)) + offset`.
     /// Whole-image admission proves an injective straight pcurve and its
     /// surface image; its parameter may be a retained point-order parameter.
+    /// A regular plane chart also admits rational progress with isolated
+    /// stationary parameters, retaining the authored chart while the spatial
+    /// line uses its canonical parameter.
     Coordinate {
         /// Face-local coordinate used by the relation.
         axis: hypercurve::Axis2,
@@ -174,9 +177,8 @@ impl ParameterCorrespondence {
             let constant = first
                 .affine_form(a.clone(), b.clone(), Real::zero())
                 .parameter()?;
-            if pcurve.kind() != CurveFamily2::Line
-                || constant.compare(&last.affine_form(a, b, Real::zero()).parameter()?)?
-                    != std::cmp::Ordering::Equal
+            if constant.compare(&last.affine_form(a, b, Real::zero()).parameter()?)?
+                != std::cmp::Ordering::Equal
             {
                 return Err(GeometryError::UnsupportedPcurveContour);
             }

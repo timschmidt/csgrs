@@ -371,8 +371,8 @@ fn bernstein_inconclusive_progress_is_decided_by_sturm() {
         ),
         // z = 2t - 3t²/2 descends after t = 2/3.
         (vec![Real::zero(), Real::one(), q(1, 2)], "backtracking end"),
-        // z = t² and z = (t - 1/2)³ + 1/8 rise strictly but stop at one
-        // parameter; this certificate requires a nonvanishing rate.
+        // These original stationary witnesses now take the straight-image
+        // path with regular planar charts, rather than the rate certificate.
         (
             vec![Real::zero(), Real::zero(), Real::one()],
             "stationary start",
@@ -382,12 +382,24 @@ fn bernstein_inconclusive_progress_is_decided_by_sturm() {
             "stationary interior",
         ),
     ] {
-        assert_eq!(
-            builder::sweep_curve(&square, Vector3::x(), Vector3::y(), vertical(&levels))
-                .unwrap_err(),
-            ConstructionError::NonMonotoneSweepPath,
-            "{reason}"
-        );
+        let outcome = builder::sweep_curve(&square, Vector3::x(), Vector3::y(), vertical(&levels));
+        if reason.starts_with("stationary") {
+            let swept = outcome.expect("stationary straight image has regular planar charts");
+            let height = levels.last().unwrap();
+            assert_exact(&volume(&swept), height);
+            assert_eq!(
+                body(&swept)
+                    .classify_point(&point(q(1, 2), q(1, 2), (height / Real::from(2)).unwrap()))
+                    .unwrap(),
+                SolidPointLocation::Inside
+            );
+        } else {
+            assert_eq!(
+                outcome.unwrap_err(),
+                ConstructionError::NonMonotoneSweepPath,
+                "{reason}"
+            );
+        }
     }
 }
 

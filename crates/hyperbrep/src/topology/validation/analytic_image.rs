@@ -57,6 +57,10 @@ impl ArenaModelBuilder {
         else {
             return Err(BuildError::EdgeUseSupportMismatch);
         };
+        if surface.kind() == SurfaceKind::Plane {
+            return self
+                .validate_coordinate_plane_image(curve, pcurve, surface, *axis, scale, offset);
+        }
         // Exact line geometry plus a constant orthogonal coordinate proves the
         // full iso image, including selected endpoints. Endpoint coincidence
         // alone does not establish either assertion.
@@ -127,6 +131,78 @@ impl ArenaModelBuilder {
                 }
             }
         }
+    }
+
+    /// A regular plane chart can carry an authored rational boundary progress
+    /// even when its derivative vanishes. Reprove its whole image and strict
+    /// traversal on replay; endpoints and serialized flags are insufficient.
+    fn validate_coordinate_plane_image(
+        &self,
+        curve: &Curve3,
+        pcurve: &Pcurve,
+        surface: &Surface,
+        axis: hypercurve::Axis2,
+        scale: &Real,
+        offset: &Real,
+    ) -> Result<(), BuildError> {
+        let Curve3ExactData::Line(line) = curve.exact_data() else {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        };
+        let source = pcurve
+            .curve()
+            .source_restriction()
+            .map(|(source, _, _)| source)
+            .unwrap_or(pcurve.curve());
+        let (points, weights) = match source.geometry() {
+            Some(CurveGeometry2::Line(line)) => (
+                vec![line.start().clone(), line.end().clone()],
+                vec![Real::one(); 2],
+            ),
+            Some(CurveGeometry2::RationalBezier(source)) => (
+                source
+                    .affine_control_points()
+                    .ok_or(BuildError::EdgeUseSupportMismatch)?
+                    .to_vec(),
+                source.weights().to_vec(),
+            ),
+            _ => return Err(BuildError::EdgeUseSupportMismatch),
+        };
+        let origin = surface.plane_origin().expect("plane image");
+        let (u, v) = surface.plane_directions().expect("plane image");
+        let constant = match axis {
+            hypercurve::Axis2::X => points[0].y(),
+            hypercurve::Axis2::Y => points[0].x(),
+        };
+        for point in &points {
+            let coefficient = match axis {
+                hypercurve::Axis2::X => point.y(),
+                hypercurve::Axis2::Y => point.x(),
+            };
+            require_real_equal(coefficient, constant, BuildError::EdgeUseSupportMismatch)?;
+        }
+        let lifted = points
+            .iter()
+            .map(|p| origin.clone() + u.clone() * p.x() + v.clone() * p.y())
+            .collect::<Vec<_>>();
+        let direction = &lifted[lifted.len() - 1] - &lifted[0];
+        // This also validates positive denominator guards before certifying
+        // the finite source's injectivity and endpoint coverage.
+        Curve3::rational_bezier(lifted.clone(), weights.clone())?;
+        if crate::geometry::certified_straight_sweep_image(&lifted, &weights, &direction)?.is_none()
+        {
+            return Err(BuildError::EdgeUseSupportMismatch);
+        }
+        for (point, lifted) in points.iter().zip(lifted) {
+            let coordinate = match axis {
+                hypercurve::Axis2::X => point.x(),
+                hypercurve::Axis2::Y => point.y(),
+            };
+            let parameter = scale * coordinate + offset;
+            if !points_equal(&lifted, &line.start.lerp(&line.end, &parameter))? {
+                return Err(BuildError::EdgeUseSupportMismatch);
+            }
+        }
+        Ok(())
     }
 
     fn validate_coordinate_revolution_image(

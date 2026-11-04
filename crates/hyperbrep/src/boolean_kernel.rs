@@ -1753,20 +1753,7 @@ fn face_interior_parameter_witnesses(
             })
             .collect();
     }
-    let outer = model.wire(outer).expect("validated outer wire");
-    let curves = outer
-        .edge_uses()
-        .iter()
-        .map(|edge_use| {
-            let edge_use = model.edge_use(*edge_use).expect("validated edge use");
-            model
-                .pcurve(edge_use.pcurve())
-                .expect("validated pcurve")
-                .curve()
-                .clone()
-        })
-        .collect::<Vec<_>>();
-    let outer = CurvePath2::try_new(curves).map_err(GeometryError::from)?;
+    let outer = model.build_model_wire_curve_path(outer)?;
     let vertices = outer
         .curves()
         .iter()

@@ -2592,6 +2592,39 @@ Defects fixed during the merge:
   panicked otherwise. A shared accessor now returns
   `GeometryError::UnsupportedIntersection`.
 
+### Stationary straight sweep images (R21, 2026-11-04)
+
+`sweep_curve`, its region form and fixed-axis moving-frame inputs now admit
+strictly increasing straight rational Bézier images with isolated stationary
+parameters. The original `D = N'W - NW' > 0` certificate remains the regular
+path. The additional image certificate proves collinearity, positive weights,
+distinct oriented endpoints and `D >= 0`; a nonzero polynomial has only finitely
+many zeros, so every nonempty parameter interval has positive progress.
+
+The result uses regular planar sides and canonical spatial lines. Two shared
+rational pcurves retain the original progress, weights and traversal through
+the existing coordinate-correspondence grammar. Replay checks the complete
+coefficient relation and source monotonicity, including selected restrictions;
+serialized flags and endpoint matching are insufficient. The original
+stationary tensor chart is not published as regular. Lateral stationary paths,
+backtracking and non-affine progress with varying axes remain outside this law.
+
+| Capability | Demonstrated increment |
+| --- | --- |
+| Representation/evaluation | Planes and spatial lines with retained rational progress; cubic and quintic inverse parameters without scalar views |
+| Complete intersections | Existing line/plane geometry; no new general surface-pair algorithm |
+| Chart arrangements/stitching | Selected edge splits, cap cuts, repeated restriction, reunion and exact set comparison against independent prisms |
+| Solid admission | Existing polygon/hole nesting and manifold-shell validation; whole-image correspondence reconstructed on replay |
+| Later operations | All four regularized Booleans, reversal with oriented frame, affine reflection/scaling, measurements and derived triangulation |
+| Replay | Deterministic native syntax, cold process validation and further cut; no new trusted flag or archive variant |
+| Resource control | Existing instrumented limits still apply; sign-cell Sturm work, coefficient arithmetic, total heap and cancellation remain open |
+
+The [support matrix](SUPPORT_MATRIX.md),
+[implementation ledger](IMPLEMENTATION_STATUS.json) and
+[qualification/cost record](../PERFORMANCE.md#r21-stationary-straight-sweep-images-2026-11-04)
+describe the same increment. Broader WP09 and the algebraic closure target
+remain in progress.
+
 ### Research program increments (2026-10-23)
 
 These extend existing records and transforms; they add no whole-solid
@@ -2607,10 +2640,10 @@ recognizer or surface-pair case. Measurements are in
   count. Classification locates a monotone sweep's section by the path's
   unique plane contact, retained as a selected root when needed. The volume
   formula is unchanged because the frame is fixed. Remaining:
-  - a zero rate (the stationary endpoint of `z = t²`, a stationary interior
-    point) is still `NonMonotoneSweepPath`. Admitting it needs a
-    strict-monotonicity proof and a contract for the singular side
-    parameterization at that parameter;
+  - at this checkpoint, a zero rate (the stationary endpoint of `z = t²`, a
+    stationary interior point) was `NonMonotoneSweepPath`. R21 now admits
+    straight images through regular plane charts and retained source maps;
+    lateral stationary paths remain open;
   - non-affine progress with a moving frame stays rejected. Its section
     point needs the frame's rational inverse at a selected root, and its
     volume the integral of the area law times the progress rate;

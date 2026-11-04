@@ -349,6 +349,13 @@ impl PredicatePolicy {
     /// Lowest binary precision Real refinement may request.
     pub const MAX_REFINEMENT_PRECISION: i32 = -512;
 
+    /// Restricts this policy to certified stages, disabling its approximate
+    /// terminal. Exact algebraic certificates may require this subpolicy even
+    /// when their caller permits a qualified terminal predicate.
+    pub const fn certified_only(self) -> Self {
+        Self(self.0 & !Self::APPROXIMATE_512.0)
+    }
+
     /// Terminal approximation precision, when one is authorized.
     pub const fn final_approximation_precision(self) -> Option<i32> {
         match self.0 {
@@ -367,6 +374,39 @@ impl PredicatePolicy {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn certified_subpolicy_refuses_a_warm_terminal_without_losing_exact_decisions() {
+        use hyperreal::Real;
+        let zero = (Real::e() + Real::one()).sin()
+            - Real::e().sin() * Real::one().cos()
+            - Real::e().cos() * Real::one().sin();
+        assert!(matches!(
+            crate::compare_reals(&zero, &Real::zero(), PredicatePolicy::APPROXIMATE_512),
+            PredicateOutcome::Decided {
+                certainty: Certainty::Approximate,
+                ..
+            }
+        ));
+        let certified = PredicatePolicy::APPROXIMATE_512.certified_only();
+        assert!(matches!(
+            crate::compare_reals(&zero, &Real::zero(), certified),
+            PredicateOutcome::Unknown { .. }
+        ));
+        assert!(matches!(
+            crate::compare_reals(&Real::one(), &Real::zero(), certified),
+            PredicateOutcome::Decided {
+                value: std::cmp::Ordering::Greater,
+                certainty: Certainty::Exact | Certainty::Filtered,
+                ..
+            }
+        ));
+        assert_eq!(certified.certified_only(), certified);
+        assert_eq!(
+            PredicatePolicy::STRICT.certified_only(),
+            PredicatePolicy::STRICT
+        );
+    }
 
     #[test]
     fn predicate_policy_is_one_byte_and_has_no_hidden_state() {
