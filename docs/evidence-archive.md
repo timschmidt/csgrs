@@ -85,6 +85,19 @@ in this repository.
 
 ## Follow-on records
 
+The local `downstream-api-admission-2026-11-04` evidence branch ends at
+`668cde7f42cfb3ea8e86d09cff85058ff69a6c9f`. Its record
+`docs/evidence/2026-11-04-downstream-api-admission` contains 70 files and
+468,721 bytes, SHA-256 `22315100e54bfd9404f3b5cb2bccd1c88ec0b982afe1bf35107b80e172ec1d92`.
+It retains SynapsCAD source-stage regressions, passing focused/UI/build/lint
+checks, the failing configured CI run, native UI and OpenSCAD visual artifacts,
+bounded debugger snapshots and the Alumina README fidelity replays. Source
+qualification names SynapsCAD `657e6b1`; `4fcb1d3` subsequently adds only its
+representation-migration explanation. See the
+[admission](research/downstream-api-admission-2026-11-04.md) for limits. Compared
+with `34fb72de7b`, the archive adds only this record and preserves prior paths.
+Nothing was pushed, and no full CI, release or universal closure claim is made.
+
 The local `expression-node-errors-2026-11-04` evidence branch ends at
 `34fb72de7b2eb4cb3a75074124287518d9b009c0`. Its new record
 `docs/evidence/2026-11-04-expression-node-errors` contains 30 files and 322,219

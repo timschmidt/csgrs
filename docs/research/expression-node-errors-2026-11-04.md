@@ -52,7 +52,9 @@ After the final Rust edit:
 The actual SynapsCAD consumer initially failed on five stale by-reference
 `GeometryContext` calls from the preceding API migration. Corresponding
 source, test, benchmark and fuzz call sites in six files now pass the policy
-by value. Its existing D01/D02 edits remain uncommitted. With the corrected
+by value. At this checkpoint its existing D01/D02 edits remained uncommitted; the
+[subsequent downstream admission](downstream-api-admission-2026-11-04.md) records
+their local commits and runtime qualification. With the corrected
 calls, offline locked all-target checks, warning-denied all-target Clippy,
 formatting and locked fuzz-target checks pass against this source. `CCACHE_DISABLE=1`
 avoids the host C cache's read-only directory; the initial environmental failure

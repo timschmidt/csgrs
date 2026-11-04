@@ -98,8 +98,9 @@ additions under the new record and no changed or deleted prior archive files.
 ## Open work
 
 Package dispositions in the simplification plan are historical evidence, not
-a fresh universal completion claim. Read-only checks of the workspace sibling
-repositories confirm D01/D02/D04 still have uncommitted work. openscad-rs is
+a fresh universal completion claim. At this initial checkpoint, read-only checks
+of the sibling repositories found uncommitted D01/D02/D04 work. Those packages have since received the
+[local downstream admission](downstream-api-admission-2026-11-04.md). openscad-rs is
 clean at `c0d92e6`; the Manifold comparison remains deferred. U06's missing
 expression-node attribution was subsequently addressed in the
 [diagnostic follow-up](expression-node-errors-2026-11-04.md), with explicit
@@ -108,3 +109,14 @@ closure plans, remaining research queue,
 full pre-push gates and installed-distribution validation remain open. The
 next research changes must reproduce their witnesses on this integrated tree;
 none of these open requirements is closed by the branch cleanup.
+
+## Local main promotion
+
+After the diagnostic and downstream review, local `main` was advanced from
+`8cda1ec3a4` to its descendant `d9b06483a3`, and the root worktree switched to
+`main` without changing its tree. The former `closure-integration` tip is
+retained as `research-archive/2026-11-04/closure-integration`; that branch was
+removed. Eleven local branches remain: `main` and ten controls checked out in
+historical worktrees. Those worktrees and their pending content were untouched.
+The 86-branch TSV remains the original inventory snapshot. Receipt-only commits
+follow the promotion on `main`. No remote ref was changed.

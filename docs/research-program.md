@@ -20,8 +20,9 @@ remaining research packages are still open.
 
 A separate simplification and modeling-API program was opened on 3 November
 2026 from an external review. Its implementation and package dispositions
-were integrated on 4 November through `a08c698757`; downstream uncommitted work
-and deferred packages remain explicitly qualified in
+were integrated on 4 November through `a08c698757`. Downstream D01/D02/D04
+now have [local commits and a bounded admission](research/downstream-api-admission-2026-11-04.md);
+two SynapsCAD CI failures and deferred packages remain explicitly qualified in
 [`research/simplification-and-api-program.md`](research/simplification-and-api-program.md),
 which uses the K (kernel simplification), U (public modeling API) and D
 (downstream application) prefixes.
