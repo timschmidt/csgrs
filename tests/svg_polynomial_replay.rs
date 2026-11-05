@@ -5,7 +5,7 @@ use csgrs::io::{
     IoError,
     svg::{export_svg, import_svg},
 };
-use hypercurve::{CurvePath2, CurveRegion2, PolynomialCurveSet2, Real};
+use hypercurve::{CurvePath2, CurveRegion2, Point2, PolynomialCurveSet2, Real};
 use hypersolve::bivariate_topology::{
     BivariateCurveDomain, BivariateTopologyConfig, BivariateTopologyError,
     decompose_bivariate_curve,
@@ -77,9 +77,8 @@ fn svg_adapter_preserves_polynomial_failure_categories() {
         BivariateTopologyError::ZeroPolynomial,
         ValidationErrorKind::InvalidInput,
     );
-    expect_source_error(
-        &unused_source(&[&[0], &[1]], [-1, 1, -1, 1], 8),
-        BivariateTopologyError::VerticalComponent,
+    assert_eq!(
+        ValidationError::PolynomialTopology(BivariateTopologyError::VerticalComponent).kind(),
         ValidationErrorKind::Unsupported,
     );
     expect_source_error(
@@ -101,6 +100,67 @@ fn svg_adapter_preserves_polynomial_failure_categories() {
     assert!(denied.result.is_err());
     let (region, wires, paths) = import_svg(&valid).unwrap();
     assert!(region.is_empty() && wires.is_empty() && paths.is_empty());
+}
+
+#[test]
+fn svg_adapter_retains_vertical_sources_for_further_operations() {
+    let (region, wires, paths) =
+        import_svg(&unused_source(&[&[0], &[1]], [-1, 1, -1, 1], 8)).unwrap();
+    assert!(region.is_empty() && wires.is_empty() && paths.is_empty());
+
+    // The same source must also survive when a boundary actually uses it.
+    let equation = BivariatePolynomial::new(vec![vec![0.into()], vec![1.into()]]);
+    let topology = decompose_bivariate_curve(
+        &equation,
+        &BivariateCurveDomain {
+            first: [(-1).into(), 1.into()],
+            second: [(-1).into(), 1.into()],
+        },
+        BivariateTopologyConfig::default(),
+    )
+    .unwrap();
+    let source = PolynomialCurveSet2::from_topology(
+        topology,
+        AlgebraicFiberRootIsolationConfig::default(),
+    )
+    .unwrap();
+    assert_eq!(source.curves().len(), 1);
+    let path = CurvePath2::try_new(source.curves().to_vec()).unwrap();
+    let text = export_svg(&CurveRegion2::empty(), &[], &[path]).unwrap();
+    let (region, wires, paths) = import_svg(&text).unwrap();
+    assert!(region.is_empty() && wires.is_empty());
+    assert_eq!(paths.len(), 1);
+    assert_eq!(paths[0].curves().len(), 1);
+    let curve = &paths[0].curves()[0];
+    // A vertical source uses the transposed native chart. Check its image
+    // equation rather than confusing chart coordinates with image coordinates.
+    assert!(
+        curve
+            .polynomial_branch()
+            .unwrap()
+            .certifies_polynomial_identity(&equation)
+    );
+    let bottom = Point2::from_values(0, -1).into();
+    let middle = Point2::from_values(0, 0).into();
+    let top = Point2::from_values(0, 1).into();
+    assert!(curve.start().coincides_with(&bottom).unwrap());
+    assert!(curve.end().coincides_with(&top).unwrap());
+    assert!(
+        curve
+            .point_at(&Real::zero().into())
+            .unwrap()
+            .coincides_with(&middle)
+            .unwrap()
+    );
+    let (left, right) = curve.split_at(Real::zero().into()).unwrap();
+    assert!(left.start().coincides_with(&bottom).unwrap());
+    assert!(left.end().coincides_with(&middle).unwrap());
+    assert!(right.start().coincides_with(&middle).unwrap());
+    assert!(right.end().coincides_with(&top).unwrap());
+    let reversed = curve.reversed().unwrap();
+    assert!(reversed.start().coincides_with(&top).unwrap());
+    assert!(reversed.end().coincides_with(&bottom).unwrap());
+    assert_eq!(export_svg(&region, &wires, &paths).unwrap(), text);
 }
 
 #[test]
