@@ -2147,8 +2147,44 @@ fn nonlinear_cap_line_trims_keep_selected_endpoints_and_replay() {
 
 #[test]
 fn nonuniform_tensor_sections_retain_both_charts_on_folding_plane_projections() {
+    fn validate_images(
+        surface: &Surface,
+        plane: &Surface,
+        curve: &Curve3,
+        first: &Curve2,
+        second: &Curve2,
+    ) {
+        // These are whole-parameterization certificates. Endpoint/sample
+        // agreement below cannot establish the two edge-use image relations.
+        let mut builder = ModelBuilder::new();
+        let start = builder
+            .vertex(curve.point_at(curve.domain().start()).unwrap())
+            .unwrap();
+        let end = builder
+            .vertex(curve.point_at(curve.domain().end()).unwrap())
+            .unwrap();
+        let source = builder.curve(curve.clone()).unwrap();
+        let edge = builder
+            .edge(&start, &end, &source, curve.domain().clone())
+            .unwrap();
+        for (support, pcurve) in [(surface, first), (plane, second)] {
+            let support = builder.surface(support.clone()).unwrap();
+            let pcurve = builder.pcurve(Pcurve::new(pcurve.clone())).unwrap();
+            builder
+                .validate_edge_image(
+                    &edge,
+                    Direction::Forward,
+                    &pcurve,
+                    ParameterCorrespondence::identity(),
+                    &support,
+                )
+                .unwrap();
+        }
+        builder.finish().unwrap();
+    }
     fn verify(surface: &Surface, plane: &Surface, curve: &Curve3, first: &Curve2, second: &Curve2) {
         assert_eq!(curve.kind(), Curve3Kind::TensorImage);
+        validate_images(surface, plane, curve, first, second);
         for t in [Real::zero(), q(1, 2), Real::one()] {
             let parameter: Parameter = t.clone().into();
             let spatial = curve.point_at(&parameter).unwrap();
