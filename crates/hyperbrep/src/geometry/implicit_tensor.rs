@@ -577,10 +577,11 @@ mod axis_factor_tests {
         assert!(zeros.points.is_empty());
     }
 
-    /// (8u^3 - 2)(2v - 1): the vertical component u = cbrt(1/4) has no
-    /// scalar view, so no exact chord exists yet and the set stays typed.
+    /// (8u^3 - 2)(2v - 1) has one vertical and one horizontal component.
+    /// Native selected vertical charts consume the cubic root directly;
+    /// their shared crossing splits the two components into four arcs.
     #[test]
-    fn axis_roots_without_scalar_views_stay_typed() {
+    fn cubic_axis_components_keep_native_crossings_without_scalar_views() {
         let cubic = poly(vec![
             vec![(-2).into()],
             vec![0.into()],
@@ -588,9 +589,111 @@ mod axis_factor_tests {
             vec![8.into()],
         ]);
         let horizontal = poly(vec![vec![(-1).into(), 2.into()]]);
-        assert!(matches!(
-            unit_square_zeros(&bivariate_multiply(&cubic, &horizontal)),
-            Err(GeometryError::UnsupportedIntersection)
-        ));
+        let equation = bivariate_multiply(&cubic, &horizontal);
+        let outcome = hypercurve::evaluate_under(hypercurve::PredicatePolicy::STRICT, || {
+            unit_square_zeros(&equation)
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        let zeros = outcome.into_unverified().unwrap();
+        assert_eq!(zeros.curves.len(), 4);
+        assert!(zeros.points.is_empty());
+        let mut factors = [0; 2];
+        let mut boundary = [0; 4];
+        let mut crossing: Option<hypercurve::CurvePoint2> = None;
+        for curve in &zeros.curves {
+            let branch = curve.polynomial_branch().unwrap();
+            assert!(branch.certifies_polynomial_identity(&equation));
+            let vertical = branch.certifies_polynomial_identity(&cubic);
+            let horizontal = branch.certifies_polynomial_identity(&horizontal);
+            assert_ne!(vertical, horizontal);
+            factors[usize::from(horizontal)] += 1;
+            let mut crossing_ends = 0;
+            for point in [curve.start(), curve.end()] {
+                let x = point.affine_form(1.into(), 0.into(), 0.into());
+                let y = point.affine_form(0.into(), 1.into(), 0.into());
+                let sides = [
+                    x.compare_to_real(&0.into()).unwrap().is_eq(),
+                    x.compare_to_real(&1.into()).unwrap().is_eq(),
+                    y.compare_to_real(&0.into()).unwrap().is_eq(),
+                    y.compare_to_real(&1.into()).unwrap().is_eq(),
+                ];
+                if let Some(side) = sides.iter().position(|side| *side) {
+                    assert_eq!(sides.iter().filter(|side| **side).count(), 1);
+                    boundary[side] += 1;
+                } else {
+                    // 8u^3-2 is strictly increasing here, so this isolator
+                    // and v=1/2 identify the unique crossing independently.
+                    assert!(x.compare_to_real(&q(1, 2)).unwrap().is_gt());
+                    assert!(x.compare_to_real(&q(3, 4)).unwrap().is_lt());
+                    assert!(y.compare_to_real(&q(1, 2)).unwrap().is_eq());
+                    assert!(
+                        point
+                            .rational_form(cubic.clone(), poly(vec![vec![1.into()]]))
+                            .unwrap()
+                            .compare_to_real(&Real::zero())
+                            .unwrap()
+                            .is_eq()
+                    );
+                    assert!(point.coordinates().is_none());
+                    if let Some(previous) = &crossing {
+                        assert!(point.coincides_with(previous).unwrap());
+                    } else {
+                        crossing = Some(point.clone());
+                    }
+                    crossing_ends += 1;
+                }
+            }
+            assert_eq!(crossing_ends, 1);
+        }
+        assert_eq!(factors, [2, 2]);
+        assert_eq!(boundary, [1, 1, 1, 1]);
+        assert!(crossing.is_some());
+
+        let probe: Curve2 = hypercurve::LineSeg2::try_new(
+            hypercurve::Point2::new(0.into(), q(1, 4)),
+            hypercurve::Point2::new(1.into(), q(1, 4)),
+        )
+        .unwrap()
+        .into();
+        for reversed in [false, true] {
+            let mut contacts = 0;
+            for curve in &zeros.curves {
+                let curve = if reversed {
+                    curve.reversed().unwrap()
+                } else {
+                    curve.clone()
+                };
+                let result = curve.intersect_curve(&probe).unwrap();
+                assert!(result.is_complete());
+                assert!(result.overlaps().is_empty() && result.parameter_components().is_empty());
+                for contact in result.contacts() {
+                    let point = contact.point();
+                    assert!(
+                        point
+                            .affine_form(0.into(), 1.into(), 0.into())
+                            .compare_to_real(&q(1, 4))
+                            .unwrap()
+                            .is_eq()
+                    );
+                    assert!(
+                        point
+                            .rational_form(cubic.clone(), poly(vec![vec![1.into()]]))
+                            .unwrap()
+                            .compare_to_real(&Real::zero())
+                            .unwrap()
+                            .is_eq()
+                    );
+                    assert!(
+                        curve
+                            .point_at(&contact.first().parameter().unwrap())
+                            .unwrap()
+                            .coincides_with(point)
+                            .unwrap()
+                    );
+                    contacts += 1;
+                }
+            }
+            assert_eq!(contacts, 1);
+        }
     }
 }
