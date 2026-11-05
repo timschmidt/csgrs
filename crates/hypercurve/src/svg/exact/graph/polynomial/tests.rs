@@ -22,7 +22,7 @@ fn read(bytes: &[u8], count: u32) -> SvgResult<Vec<Definition>> {
     let mut input = count.to_be_bytes().to_vec();
     input.extend_from_slice(bytes);
     let mut reader = ExactReader::new(&input, 1_048_576);
-    let definitions = read_definitions(&mut reader, 256)?;
+    let definitions = read_definitions(&mut reader, 256, 64)?;
     assert!(reader.is_empty());
     Ok(definitions)
 }

@@ -129,6 +129,7 @@ impl PlanarPoint {
 impl Pcurve {
     fn depth(&self, depths: &[usize]) -> usize {
         match self {
+            Self::ParallelFidelity { definition, .. } => definition.0.dependency_depth,
             Self::ChordReference(index) => referenced(*index, depths),
             Self::Chord { start, end } => 1 + start.depth(depths).max(end.depth(depths)),
             Self::PolynomialBranch { range: r, .. }

@@ -8,10 +8,19 @@ pub(crate) use polynomial_curve::{PolynomialLineSections2, polynomial_is_zero};
 #[path = "curve_evaluation.rs"]
 pub(crate) mod curve_evaluation;
 
+#[path = "curve_fidelity.rs"]
+mod curve_fidelity;
 #[path = "curve_injectivity.rs"]
 mod curve_injectivity;
 #[path = "curve_subdivision.rs"]
 mod curve_subdivision;
+pub use curve_fidelity::{
+    CurveParallelFidelity2, CurveParallelFidelityMetric2, CurveParallelFidelityTransform2,
+};
+pub(crate) use curve_fidelity::{
+    ParallelFidelityConstruction2, ParallelFidelityEdit2, ParallelFidelityReceipt2,
+    ParallelFidelitySource2, ParallelFidelityStep2,
+};
 #[path = "curve_vector.rs"]
 mod curve_vector;
 use crate::bezier_split::{CurveParameterDomain2, CurveParameterRange2};
@@ -429,12 +438,14 @@ struct CurveParameterLineage2 {
     /// One composed image map; sharing a parameter source alone does not
     /// certify coincidence after transporting its geometry.
     image_transform: Option<Arc<Similarity2>>,
+    fidelity_replay: Option<Arc<ParallelFidelityStep2>>,
 }
 
 #[derive(Debug)]
 struct CurveParameterLineageRoot2 {
     domain: ParamRange,
     image_is_injective: OnceLock<bool>,
+    parallel_fidelity: Option<Arc<ParallelFidelityReceipt2>>,
 }
 
 impl CurveParameterLineage2 {
@@ -443,9 +454,11 @@ impl CurveParameterLineage2 {
             root: Arc::new(CurveParameterLineageRoot2 {
                 domain: range.clone(),
                 image_is_injective: OnceLock::new(),
+                parallel_fidelity: None,
             }),
             range,
             image_transform: None,
+            fidelity_replay: None,
         }
     }
 
@@ -454,6 +467,7 @@ impl CurveParameterLineage2 {
             root: Arc::clone(&self.root),
             range: ParamRange::new(self.range.end().clone(), self.range.start().clone()),
             image_transform: self.image_transform.clone(),
+            fidelity_replay: self.record_fidelity_edit(|| ParallelFidelityEdit2::Reversal),
         }
     }
 
@@ -461,6 +475,8 @@ impl CurveParameterLineage2 {
         Self {
             root: Arc::clone(&self.root),
             range: self.range.clone(),
+            fidelity_replay: self
+                .record_fidelity_edit(|| ParallelFidelityEdit2::Similarity(transform.clone())),
             image_transform: Some(Arc::new(
                 self.image_transform
                     .as_ref()
@@ -1469,6 +1485,25 @@ impl Curve2 {
                 .expect("native lineage")
                 .image_transform
                 .clone(),
+            fidelity_replay: self
+                .data
+                .lineage
+                .as_ref()
+                .expect("native lineage")
+                .record_fidelity_edit(|| {
+                    ParallelFidelityEdit2::Restriction(
+                        start.clone(),
+                        end.clone(),
+                        !matches!(
+                            self.geometry(),
+                            Some(
+                                CurveGeometry2::CircularArc(_)
+                                    | CurveGeometry2::PolynomialBSpline(_)
+                                    | CurveGeometry2::Nurbs(_)
+                            )
+                        ),
+                    )
+                }),
         })
     }
 
@@ -3649,11 +3684,29 @@ fn promote_native_bezier_fragments(
     curve: &Curve2,
     policy: &CurveContext,
 ) -> ExactCurveResult<Classification<Vec<NativeBezierFragment2>>> {
+    let native_index = std::cell::Cell::new(0usize);
     let native = |native_curve, parameter_start: Real, parameter_end: Real| {
+        let index = native_index.get();
+        native_index.set(index + 1);
+        let mut lineage = curve
+            .lineage_subrange(&parameter_start, &parameter_end)
+            .map_err(|error| error.with_operation(CurveOperation2::NativeTopology))?;
+        let source_lineage = curve.data.lineage.as_ref().expect("native lineage");
+        lineage.fidelity_replay = if matches!(
+            curve.geometry(),
+            Some(
+                CurveGeometry2::QuadraticBezier(_)
+                    | CurveGeometry2::CubicBezier(_)
+                    | CurveGeometry2::RationalQuadraticBezier(_)
+                    | CurveGeometry2::RationalBezier(_)
+            )
+        ) {
+            source_lineage.fidelity_replay.clone()
+        } else {
+            source_lineage.record_fidelity_edit(|| ParallelFidelityEdit2::NativeSpan(index))
+        };
         Ok(NativeBezierFragment2 {
-            lineage: curve
-                .lineage_subrange(&parameter_start, &parameter_end)
-                .map_err(|error| error.with_operation(CurveOperation2::NativeTopology))?,
+            lineage,
             curve: native_curve,
             span_range: CurveSpanRange2 {
                 start: parameter_start,

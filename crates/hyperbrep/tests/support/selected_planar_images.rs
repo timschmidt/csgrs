@@ -4,6 +4,116 @@ use hypercurve::{
 };
 use std::cmp::Ordering;
 
+pub fn parallel_fidelity_survives_spatial_restriction_and_native_replay() {
+    let source = hypercurve::CurvePath2::try_new(vec![
+        QuadraticBezier2::new(
+            Uv::from_values(0, 0),
+            Uv::from_values(1, 0),
+            Uv::from_values(1, 1),
+        )
+        .into(),
+    ])
+    .unwrap();
+    let options = hypercurve::BezierParallelVerificationOptions::try_new(q(1, 20), 16).unwrap();
+    let output = source
+        .approximate_parallel_blend2d_certified(q(1, 10), &options)
+        .unwrap();
+    for source in output.into_path().curves() {
+        let image = frame(source.clone())
+            .restrict_source(ParameterRange::new(q(1, 4).into(), q(3, 4).into()).unwrap())
+            .unwrap()
+            .reversed()
+            .unwrap();
+        let mut builder = ModelBuilder::new();
+        builder.curve(image.clone()).unwrap();
+        let model = builder.finish().unwrap();
+        let json = model.to_json().unwrap();
+        for (limits, resource) in [
+            (
+                ArchiveLimits {
+                    degree: 1,
+                    ..Default::default()
+                },
+                ArchiveResource::Degree,
+            ),
+            (
+                ArchiveLimits {
+                    geometry_elements: 0,
+                    ..Default::default()
+                },
+                ArchiveResource::GeometryElements,
+            ),
+            (
+                ArchiveLimits {
+                    dependency_depth: 0,
+                    ..Default::default()
+                },
+                ArchiveResource::DependencyDepth,
+            ),
+            (
+                ArchiveLimits {
+                    solver_steps: 1,
+                    ..Default::default()
+                },
+                ArchiveResource::SolverSteps,
+            ),
+        ] {
+            assert!(
+                matches!(RawModel::from_json(&json, &limits), Err(PersistenceError::ResourceLimit(error)) if error.resource == resource)
+            );
+        }
+        fn corrupt_scalar(value: &mut serde_json::Value) -> bool {
+            if let Some(native) = value.get_mut("ParallelFidelity") {
+                let encoded = native["definition"].as_str().unwrap();
+                let mut encoded = encoded.to_owned();
+                // HCP4 header, native-definition/support tags, scalar length.
+                encoded.replace_range(30..32, "ff");
+                native["definition"] = encoded.into();
+                return true;
+            }
+            match value {
+                serde_json::Value::Array(values) => values.iter_mut().any(corrupt_scalar),
+                serde_json::Value::Object(values) => values.values_mut().any(corrupt_scalar),
+                _ => false,
+            }
+        }
+        let mut bad: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(corrupt_scalar(&mut bad));
+        let bad = bad.to_string();
+        assert!(
+            matches!(RawModel::from_json(&bad, &ArchiveLimits {degree:1,..Default::default()}),Err(PersistenceError::ResourceLimit(error)) if error.resource == ArchiveResource::Degree)
+        );
+        let bad = RawModel::from_json(&bad, &ArchiveLimits::default()).unwrap();
+        assert!(matches!(
+            bad.validate(),
+            Err(PersistenceError::NativeCurve(_))
+        ));
+        let restored = reload(&model);
+        let restored = restored.curves().next().unwrap();
+        let source = restored.geometry().planar_geometry().unwrap().source;
+        let receipt = source
+            .parallel_fidelity()
+            .expect("spatial replay retains planar source fidelity");
+        assert_eq!(
+            receipt.metric(),
+            hypercurve::CurveParallelFidelityMetric2::SameParameterEuclidean
+        );
+        assert_eq!(receipt.error_bound(), q(1, 20));
+        assert_eq!(receipt.source_curve_index(), 0);
+        let further = restored.geometry().reversed().unwrap();
+        assert_eq!(
+            further
+                .planar_geometry()
+                .unwrap()
+                .source
+                .parallel_fidelity()
+                .unwrap()
+                .error_bound(),
+            q(1, 20)
+        );
+    }
+}
+
 // Reuse the unchanged original full cap, including quadratic closing segments.
 #[allow(dead_code)]
 #[path = "parallel_profile_extrusion.rs"]

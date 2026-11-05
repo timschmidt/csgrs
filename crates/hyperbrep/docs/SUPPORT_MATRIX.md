@@ -1,5 +1,11 @@
 # HyperBREP Exact Support Matrix
 
+R24's named native planar-image receipt pilot preserves source fidelity through
+restriction/reversal and native save/reload, with metadata admission before
+scalar decoding. It adds no filled-solid or spatial error-bound claim. The
+[Hypercurve owner record](../../hypercurve/PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04)
+owns its measured qualification; other consumers remain open.
+
 This matrix describes certified behavior in the current clean-break API.
 “Unsupported” means the operation returns a structured error; it never means
 that sampled or tolerance-based geometry is substituted.

@@ -3276,6 +3276,24 @@
       "validation": "The original vertical section fixture now completes source relation checks, exact pcurves, image validation, native replay, general affine transport/revalidation and further plane contact. A squared vertical section also replays in a fresh process and retains defining exponent two. The single owner record reports final source qualification and storage failures separately. An independent translated-parabola witness has in-domain endpoints and out-of-domain interior; it reproduces the draft over-admission and now receives no whole-surface image certificate. Full BRep/IO and static checks rerun after this final guard.",
       "cost_evidence": "Matched legacy native-curve workload allocation/outcome rows are unchanged; timing varies in both directions on a shared host. Newly completed native chart workloads are measured separately. BRep performance was not rebenchmarked.",
       "limits": "General mixed-chart polynomial incidence remains intersection/Unsupported on the direct xy half-axis probe. Algebraic coefficient/bound admission, complete trimmed solids, implicit offset/corner closure and total-resource guarantees remain open. This increment does not complete R06/R07 or any broader work package."
+    },
+    {
+      "id": "r24-planar-parallel-fidelity",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "change": "Preserve native planar source fidelity using the Hypercurve definition graph; inspect actual graph counts before scalar decoding and retain typed replay errors.",
+      "source": "../src/persistence.rs",
+      "decision": "Native curve/path milestone; qualification owned by Hypercurve PERFORMANCE.md, R24. General region/solid/consumer fidelity and total resource closure remain open.",
+      "validation_reference": "../../hypercurve/PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04",
+      "tests": [
+        "../tests/selected_planar_images.rs::parallel_fidelity_survives_spatial_restriction_and_native_replay"
+      ],
+      "limits": "Planar source-frame bounds only. Syntax limits are not arithmetic, work, memory, latency or native-stack guarantees. No STEP or general solid-fidelity claim."
     }
   ],
   "work_packages": [

@@ -1,5 +1,18 @@
 # Selected geometry in archive version 15
 
+`ParallelFidelity { definition, verification_depth }` retains annotated native
+planar sources through Hypercurve's existing checked graph. Native syntax is
+inspected before scalar decoding: definitions and explicit backwards graph
+references count as records, supports contribute their degrees and variable
+arrays, and dependency depth is checked. The declared current verifier depth
+counts as an individual solver control; historical generation budgets grant no
+work. Strict replay reconstructs the source and checks its candidate bound;
+serialized flags and shape counts are not proofs. Selected outer restrictions
+keep the existing `SourceRange` carrier and shared source table. Unannotated
+pcurves retain their old encoding. This record preserves planar fidelity; it
+adds no spatial error bound or STEP/source-fidelity guarantee. See the
+[owner qualification](../../hypercurve/PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04).
+
 Version 15 interns planar point and generated chord definitions in the existing
 selection graph. Typed backward references preserve repeated dependencies without
 duplicating recursive trees. Replay still reconstructs every definition and its

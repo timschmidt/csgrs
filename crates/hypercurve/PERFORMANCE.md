@@ -10,6 +10,145 @@ optimization experiments were retained or rejected. The governing constraint is
 that a speedup may not weaken exact topology, erase retained evidence, or move a
 finite approximation across a predicate boundary.
 
+## R24 per-output parallel fidelity (2026-11-04)
+
+At baseline `628ede94d28404cd9e81b85442c81102de6c35d4`, extracted curves
+have no per-output fidelity query. The corrected missing-API witness fails to
+compile there; an initial metadata-only prototype then demonstrably loses the
+receipt at native SVG reload. Hypercurve's immutable parameter lineage owns
+this repair (P15/P19/P20/P27/P36). The published domain is the existing
+`approximate_parallel_blend2d_certified` primitive path constructor, with
+exact restrictions, reversal, copying, native spans, similarities and the
+existing native SVG affine image backend. Its smooth-path and moving-corner
+preconditions are unchanged. This is a provenance and interchange extension,
+not a performance-only refactor or a general closure claim.
+
+`Curve2::parallel_fidelity` borrows one shared construction: the original path,
+source index, original signed distance, construction source span, consumed
+qualification, metric and verifier leaf count. Exact-image receipts carry zero
+error without asserting same-parameter correspondence. Fitted quadratic/cubic
+spans retain the verifier's continuous same-parameter Euclidean bound. The
+range accessor intentionally reports the original certified span; later exact
+restrictions retain a conservative bound, and `source_parameter_at` uses the
+existing selected-parameter/lineage authority without scalar projection.
+Earlier construction errors remain visible through the immediate source;
+this receipt does not silently add them into an end-to-end error budget.
+`Curve2::new(curve.geometry().unwrap().clone())` explicitly creates an
+unverified source model. Allocation identity is only a sharing accelerator.
+
+Similarities transport the bound by their positive scale. An affine SVG image
+retains its actual map and uses the certified operator upper bound
+`|a|+|b|+|c|+|d|`; the reference is the transformed original parallel, never an
+offset commuting through a shear. Its realized image has fresh incidence
+identity. Consecutive affine native restrictions and image maps compose;
+reversal pairs and identity maps cancel. Circular restrictions retain their
+actual charts, rather than applying a false affine parameter identity. Shared
+source paths, shallow debug views and edit normalization avoid copying the
+construction DAG into a tree; arbitrary composition still has no uniform cost
+bound.
+
+Native SVG tags 33–39 retain source constructions, checked root receipts and
+exact edits in the existing graph grammar. A decoder revalidates source paths,
+indices, spans, candidate geometry and bounds under STRICT. Serialized flags
+never establish a proof; a weaker historical qualification remains weaker.
+The caller's `SvgOptions.max_parallel_verification_depth` (default 64) controls
+actual verifier subdivision, independently of a serialized generation request.
+An actually reached cap returns a named size limit; cancellation/exhaustion is
+typed before publication, and a larger-budget retry is not poisoned. Existing
+byte/collection/dependency-depth guards remain. These are not bounds on total
+work, coefficient growth, allocation, latency or all nested solvers. Export
+keeps annotated lines/arcs as paths to avoid dropping the receipt in a string
+conversion; see [migration](../../docs/MIGRATIONS.md#per-output-parallel-fidelity-2026-11-04).
+
+The maintained pilot covers mixed exact/fitted output, both policies, scalar
+and selected algebraic cuts, reversal/reflection/scaling, shear, circle chart
+edits and native spans, explicit unverified reconstruction, the independent
+`t³` versus chord error of 3/8, 128 repeated edit pairs, successive nonzero parallels retaining both receipts, original quadratic
+normal formulas, native replay in a fresh child process and subsequent edits.
+Separate graph adversaries reject invalid references/ranges/bounds and test
+actual depth exhaustion, cancellation and successful retry. A HyperBRep
+planar-image consumer restricts/reverses these outputs, saves/reloads them and
+queries the retained planar source before another edit. None of this proves
+that arbitrary filled arrangements, all other consumers, machine commands or
+lossy exports preserve this new receipt. Those R24 obligations remain open;
+no region/quantization or moving-join policy is replaced.
+
+A reproduced downstream failure showed that BRep persistence kept only native
+controls. Its new `ParallelFidelity` pcurve record uses Hypercurve's same exact
+graph, with no display projection or second geometry solver. Scalar-free graph
+inspection counts actual definitions/backwards references, polynomial degree,
+variable controls/weights/knots and dependency depth before BRep scalar decoding.
+BRep also charges the declared independent proof-replay depth to `solver_steps`;
+the historical generation request cannot authorize work. Four restrictive BRep
+admission controls reject these records before decoding; corrupt scalar CBOR
+still permits syntax inspection, but strict native replay rejects it. Larger
+admission limits recover. Native graph byte/definition-depth limits remain
+separate from arithmetic, total work and memory. The source-only planar bound
+is not silently converted into a spatial Euclidean bound.
+
+The native cost probe runs three alternating process pairs, five cases and
+12 calls per case/process (360 completed Certified calls). Registry versions,
+features, allocator, source formulas and candidate generation are matched; the
+baseline lacks the newly required fidelity/replay work. Raw geometry artifacts
+agree in all five cases, and the plain native control is byte-identical.
+Annotated native artifacts intentionally grow: construction 1,766 to 4,222
+bytes, and the retained quadratic after edit/replay 1,200 to 4,308 bytes.
+
+| Completed probe | Median time, base → candidate (ms) | Requested bytes, base → candidate | Allocation calls, base → candidate | Logical peak bytes, base → candidate |
+| --- | --- | --- | --- | --- |
+| Plain edit and native replay | 0.094 → 0.094 | 57,851 → 57,963 | 351 → 351 | 18,392 → 18,440 |
+| Construct mixed parallel | 0.797 → 0.959 | 603,512 → 604,448 | 11,800 → 11,805 | 44,760 → 45,304 |
+| Construct and edit | 0.898 → 0.951 | 615,880 → 619,080 | 11,908 → 11,919 | 44,760 → 45,304 |
+| Construct, edit and recheck native replay | 0.960 → 2.042 | 666,107 → 1,434,108 | 12,208 → 24,094 | 44,760 → 94,464 |
+
+| Construct, edit and recheck BRep native replay | 0.930 → 1.874 | 637,784 → 1,310,686 | 11,991 → 23,636 | 44,760 → 80,141 |
+
+These are descriptive observations under concurrent validation load, not
+confidence intervals, a speedup, or a performance nonregression admission.
+The recheck's additional proof work is material. Allocation traffic counts
+requested payload (including reallocations), and logical peak excludes
+allocator overhead/RSS. Warm post-drop deltas reach zero; cold residuals in
+the raw data include input-owned scalar caches, so no leak or retained-memory
+bound is inferred. A retained output deliberately keeps the original connected
+source path alive. No source-slicing memory optimization is claimed.
+`Curve2` remains 8 bytes on this host; its native lineage and lineage root each
+gain one optional shared pointer (8 bytes each). The matched standalone native
+probe grows 21,664,360 → 21,836,928 bytes; this is not an installed library or
+binding-size measurement. The shared six-recipe zero-import WASM pilot is
+19,411,035 bytes. Five unchanged core recipe bodies use 1,835,008 bytes
+of linear memory after each fresh-instance run; the unchanged BRep receipt
+consumer uses 5,111,808 bytes. The BRep dependency explicitly enables the
+existing SVG/native graph feature; these matched probes include that feature
+on both revisions. This does not isolate the feature's compile/distribution
+cost. Native SVG/cold-process checks remain native-only in this pilot.
+
+
+Fourteen primary commands pass: nine receipt tests, twelve SVG graph tests,
+eleven BRep persistence unit tests, 26 profile/planar consumers, 127 BRep IO
+results, 67 root profile/receipt results and five minimal-feature receipt tests;
+stable/MSRV all-target Clippy, strict docs and owner fuzz compilation also pass.
+Configurations overlap. A separate current-source check repeats the named
+receipts and SVG tests, standalone default-feature BRep replay and both archive
+admission targets. Eight capability witnesses pass individually with stable
+source/binary inputs. The larger earlier Hypercurve stage records 3,124 passes
+and 37 unchanged ignores; it predates final native-consumer/compiler work and
+is not a whole-final-source suite claim. Source stages and failed attempts stay
+in the evidence record.
+
+The expanded immutable type graph overflowed rustdoc's auto-trait search at the
+compiler default of 128. A crate-local compiler recursion limit of 256 permits
+strict documentation generation. Runtime precision, geometry, solver, work,
+memory and validation limits are unchanged. The affected native tests, docs,
+stable/MSRV owner/downstream Clippy and fuzz compiles are rerun after that
+compiler-only adjustment. Stored span/control-net degrees in native admission
+are distinct from implicit support and coefficient-field degrees.
+
+The [sealed record](https://github.com/timschmidt/csgrs-evidence/blob/83fee6675297a92c1d58d04be6fa7d5db2c73656/docs/evidence/2026-11-04-research-r24-fidelity/README.md)
+contains raw source stages, recipes, commands, data and digests. Its local
+append-only archive receipt is recorded in [the source ledger](../../docs/evidence-archive.md#r24-per-output-parallel-fidelity-2026-11-04).
+It was local-only at the source-commit checkpoint; final pre-push validation and
+publication are separate. Broader target coverage remains unqualified.
+
 ## R07 polynomial pairs in distinct charts (2026-11-04)
 
 At `c688fbfd9e4d1d06ba6113986a7752de8bdabb24`, the two native

@@ -1,5 +1,41 @@
 # Migrations
 
+## Per-output parallel fidelity (2026-11-04)
+
+Certified primitive path parallels now retain per-output source/fidelity
+receipts on `Curve2`, including after extraction and supported exact edits.
+`parallel_fidelity()` distinguishes exact images from continuously verified
+same-parameter approximations; `None` means unrecorded fidelity. Rebuilding
+from raw geometry starts an unverified model. Similarity and affine-image
+bounds refer to explicitly transported reference images.
+
+Native SVG graph tags 33–39 add checked construction/edit definitions. Old
+plain native payloads retain their grammar; older readers can reject the new
+tags as unsupported. Annotated lines/arcs remain `SvgGeometry2` paths after
+reimport, instead of becoming strings that would discard their receipts.
+Native bytes and container counts can therefore change intentionally; ordinary
+SVG rendering still projects the represented geometry. Native import performs
+fresh strict verification and can fail typed at its configured resource limit.
+
+BRep now explicitly enables Hypercurve’s existing SVG/native graph feature
+for exact definition replay; its new scalar-free admission shares that codec.
+BRep archive version 15 adds the `ParallelFidelity` pcurve tag for annotated
+native sources; older readers can reject this new tag. Ordinary unannotated
+pcurves keep their existing encoding. `PersistenceError::NativeCurve` preserves
+strict native proof failures; update exhaustive matches. `SvgError` now supports
+`Clone`, `Eq` and `PartialEq` for that typed carrier. Native graph records,
+references, array sizes/degrees and dependency depth count toward existing
+BRep admission limits before scalar decoding, and the declared verification
+depth counts toward `solver_steps`.
+
+`SvgOptions` gains `max_parallel_verification_depth`, default 64 and required
+positive. Update exhaustive struct literals, or use `..Default::default()`.
+The serialized construction depth request grants no replay budget. A verifier
+that actually needs a deeper subdivision returns the named parallel
+verification depth limit, allowing an explicit larger-budget retry. This is
+not a total-work or memory guarantee. See the [owner qualification](../crates/hypercurve/PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04)
+for demonstrated compositions and remaining consumer gaps.
+
 ## Cache-independent convex-hull scheduling (2026-11-04)
 
 Hypermesh's three convex-hull entry points now break equal scheduling scores

@@ -1327,3 +1327,17 @@ checks. The equivalent-field replay is kept for scoped exact completion;
 performance-only admission fails. Its measured cost base predates R23, as the
 record states. The branch was unpublished at this checkpoint; historical paths
 and published `main` are unchanged.
+
+## R24 per-output parallel fidelity (2026-11-04)
+
+Local branch `research-r24-fidelity-2026-11-04` at
+`83fee6675297a92c1d58d04be6fa7d5db2c73656` appends `docs/evidence/2026-11-04-research-r24-fidelity` to
+`26f019be868b12227a498daa65cf2cbb18b13b2e`. Its 786 files and
+11,149,607 bytes have SHA-256 `7be024a19e64d72265c1800bc9e24bee4f3ec7e0ac483b316a72a65b202bcbcd`. It retains reproduced
+receipt-loss witnesses, exact/pointwise metric and source correspondence checks,
+strict native SVG/BRep replay, actual admission/cancellation/retry controls,
+six shared zero-import WASM recipes and matched native cost/size observations.
+Earlier full-stage checks are distinguished from final-source checks. Native
+proof replay costs more; no performance-only or general closure admission is
+claimed. The local bare archive is verified before the source commit; archive
+and source publication remain subject to their final push checks.

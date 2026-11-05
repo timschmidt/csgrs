@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Retain per-output parallel fidelity through extraction, exact edits and checked
+  native SVG replay. Distinguish exact images and same-parameter error bounds;
+  preserve source selections and qualification. Native graph tags and annotated
+  path/string handling change intentionally; `SvgOptions` gains an independent
+  replay verification-depth limit. See the [R24 qualification](PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04)
+  for supported compositions, measured costs and remaining consumer gaps.
+
 - Intersect native polynomial branches in distinct charts with proved rational
   relative similarities. Preserve both source parameters, selected joint
   fields and nonlinear overlap correspondences through restriction, splitting,

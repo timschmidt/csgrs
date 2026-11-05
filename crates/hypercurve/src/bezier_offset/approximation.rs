@@ -405,6 +405,7 @@ impl PolynomialBezierNode2 {
 pub(super) struct ParallelVerificationTrace {
     pub(super) leaf_count: usize,
     pub(super) maximum_depth: usize,
+    pub(super) depth_limit_reached: bool,
 }
 
 pub(super) fn verify_parallel_node(
@@ -416,6 +417,11 @@ pub(super) fn verify_parallel_node(
     depth: usize,
     trace: &mut ParallelVerificationTrace,
 ) -> CurveResult<Classification<()>> {
+    if hypersolve::work_budget::exhaustion().is_some() {
+        return Ok(Classification::Uncertain(
+            UncertaintyReason::BudgetExhausted,
+        ));
+    }
     trace.maximum_depth = trace.maximum_depth.max(depth);
     let exact_midpoint = decided!(source.exact_parallel_midpoint(distance, policy)?, Ok);
     let candidate_midpoint = candidate.point_at_half();
@@ -429,6 +435,7 @@ pub(super) fn verify_parallel_node(
         Classification::Decided(Some(speed)) => speed,
         Classification::Decided(None) => {
             if depth >= options.max_depth {
+                trace.depth_limit_reached = true;
                 return Ok(Classification::Uncertain(UncertaintyReason::Boundary));
             }
             return subdivide_parallel_verification(
@@ -437,6 +444,7 @@ pub(super) fn verify_parallel_node(
         }
         Classification::Uncertain(reason) => {
             if depth >= options.max_depth {
+                trace.depth_limit_reached = true;
                 return Ok(Classification::Uncertain(reason));
             }
             return subdivide_parallel_verification(
@@ -464,6 +472,7 @@ pub(super) fn verify_parallel_node(
             )
         }
         Some(std::cmp::Ordering::Greater) => {
+            trace.depth_limit_reached = true;
             Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
         }
         None => Ok(Classification::Uncertain(UncertaintyReason::Ordering)),

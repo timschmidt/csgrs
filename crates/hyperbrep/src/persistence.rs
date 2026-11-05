@@ -47,6 +47,8 @@ pub enum PersistenceError {
     ResourceLimit(ArchiveLimitExceeded),
     /// JSON syntax or exact-scalar decoding failed.
     Json(String),
+    /// Native planar fidelity definition or its strict proof replay failed.
+    NativeCurve(hypercurve::SvgError),
     /// The encoded format version is not supported.
     UnsupportedVersion(u32),
     /// This persistence version does not support a spatial curve family.
@@ -73,6 +75,7 @@ impl fmt::Display for PersistenceError {
         match self {
             Self::ResourceLimit(error) => error.fmt(formatter),
             Self::Json(error) => write!(formatter, "model JSON failed: {error}"),
+            Self::NativeCurve(error) => error.fmt(formatter),
             Self::UnsupportedVersion(version) => {
                 write!(formatter, "unsupported model format version {version}")
             }
@@ -98,6 +101,7 @@ impl std::error::Error for PersistenceError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::ResourceLimit(error) => Some(error),
+            Self::NativeCurve(error) => Some(error),
             Self::Build(error) => Some(error),
             Self::Validation(report) => Some(report),
             _ => None,
@@ -653,6 +657,10 @@ struct RawEllipseArc3 {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 enum RawPcurve {
+    ParallelFidelity {
+        definition: String,
+        verification_depth: usize,
+    },
     ChordReference(usize),
     PolynomialBranch(Box<RawPolynomialBranch>),
     Chord {
@@ -716,7 +724,8 @@ fn set_raw_pcurve_start(curve: &mut RawPcurve, start: [Real; 2]) {
         | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
-        | RawPcurve::AnalyticParallel(_) => {}
+        | RawPcurve::AnalyticParallel(_)
+        | RawPcurve::ParallelFidelity { .. } => {}
     }
 }
 
@@ -744,7 +753,8 @@ fn set_raw_pcurve_end(curve: &mut RawPcurve, end: [Real; 2]) {
         | RawPcurve::Nurbs { .. }
         | RawPcurve::Chord { .. }
         | RawPcurve::SourceRange { .. }
-        | RawPcurve::AnalyticParallel(_) => {}
+        | RawPcurve::AnalyticParallel(_)
+        | RawPcurve::ParallelFidelity { .. } => {}
     }
 }
 
@@ -1393,6 +1403,28 @@ fn shell_id(index: usize) -> ShellId {
 
 fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceError> {
     match raw {
+        RawPcurve::ParallelFidelity {
+            definition,
+            verification_depth,
+        } => {
+            // Input admission has already bounded actual graph sizes/depth and
+            // this declared verifier control. Recompute syntax, never trust a
+            // serialized summary or proof flag. Byte/depth limits here match
+            // the admitted payload; the independent verifier limit stays explicit.
+            let shape =
+                Curve2::inspect_native_parallel_fidelity_definition(&definition, definition.len())
+                    .map_err(PersistenceError::NativeCurve)?;
+            Curve2::from_native_parallel_fidelity_definition(
+                &definition,
+                hypercurve::SvgOptions {
+                    max_extension_bytes: definition.len(),
+                    max_point_definition_depth: shape.dependency_depth,
+                    max_parallel_verification_depth: verification_depth,
+                    ..Default::default()
+                },
+            )
+            .map_err(PersistenceError::NativeCurve)
+        }
         RawPcurve::ChordReference(index) => graph.chord_reference(index),
         RawPcurve::PolynomialBranch(branch) => branch.into_curve(graph),
         RawPcurve::Chord { start, end } => Ok(Curve2::try_line(
@@ -1516,6 +1548,14 @@ fn pcurve(raw: RawPcurve, graph: &SelectionGraph) -> Result<Curve2, PersistenceE
 }
 
 fn raw_native_pcurve(curve: &Curve2) -> Result<RawPcurve, PersistenceError> {
+    if curve.parallel_fidelity().is_some() {
+        return Ok(RawPcurve::ParallelFidelity {
+            definition: curve
+                .to_native_parallel_fidelity_definition()
+                .map_err(PersistenceError::NativeCurve)?,
+            verification_depth: hypercurve::SvgOptions::default().max_parallel_verification_depth,
+        });
+    }
     match curve.geometry() {
         Some(CurveGeometry2::QuadraticBezier(curve)) => Ok(RawPcurve::QuadraticBezier(
             curve.control_points().map(curve_point_array),

@@ -1,6 +1,9 @@
 //! Exact parallel construction: hodograph offsets, singularities and spans.
 
 use super::*;
+use crate::curve::{
+    ParallelFidelityConstruction2, ParallelFidelityReceipt2, ParallelFidelitySource2,
+};
 
 /// Exact rational parallel certified from a homogeneous Pythagorean hodograph.
 #[derive(Clone, Debug, PartialEq)]
@@ -720,6 +723,11 @@ impl CurvePath2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> ExactCurveResult<Classification<CertifiedCurvePathParallel2>> {
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
         let source_curve_count = self.curves().len();
         if real_sign(&distance, policy) == Some(RealSign::Zero) {
             return Ok(Classification::Decided(CertifiedCurvePathParallel2 {
@@ -736,17 +744,30 @@ impl CurvePath2 {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
 
+        let fidelity_construction = Arc::new(ParallelFidelityConstruction2 {
+            path: self.clone(),
+            distance: distance.clone(),
+            max_verification_depth: options.max_depth(),
+            qualified: std::sync::OnceLock::new(),
+        });
         let mut output = Vec::new();
         let mut exact_source_curve_count = 0;
         let mut approximated_source_curve_count = 0;
         let mut verification_leaf_count = 0;
-        for source in self.curves() {
+        for (index, source) in self.curves().iter().enumerate() {
+            let fidelity_source = Arc::new(ParallelFidelitySource2 {
+                construction: Arc::clone(&fidelity_construction),
+                index,
+            });
             match source.geometry() {
                 None => return Ok(Classification::Uncertain(UncertaintyReason::Unsupported)),
                 Some(CurveGeometry2::Line(line)) => {
-                    output.push(Curve2::from(
-                        line.offset_left(distance.clone())
-                            .map_err(|cause| parallel_path_error(source, cause))?,
+                    output.push(exact_parallel_fidelity(
+                        Curve2::from(
+                            line.offset_left(distance.clone())
+                                .map_err(|cause| parallel_path_error(source, cause))?,
+                        ),
+                        &fidelity_source,
                     ));
                     exact_source_curve_count += 1;
                 }
@@ -756,7 +777,10 @@ impl CurvePath2 {
                             .map_err(|cause| parallel_path_error(source, cause))?,
                         Ok
                     );
-                    output.push(Curve2::from(offset));
+                    output.push(exact_parallel_fidelity(
+                        Curve2::from(offset),
+                        &fidelity_source,
+                    ));
                     exact_source_curve_count += 1;
                 }
                 Some(CurveGeometry2::QuadraticBezier(curve)) => {
@@ -774,6 +798,7 @@ impl CurvePath2 {
                         policy,
                         &mut output,
                         &mut verification_leaf_count,
+                        &fidelity_source,
                     )
                     .map_err(|cause| parallel_path_error(source, cause))?
                     {
@@ -799,6 +824,7 @@ impl CurvePath2 {
                         policy,
                         &mut output,
                         &mut verification_leaf_count,
+                        &fidelity_source,
                     )
                     .map_err(|cause| parallel_path_error(source, cause))?
                     {
@@ -816,6 +842,7 @@ impl CurvePath2 {
                             .map_err(|cause| parallel_path_error(source, cause))?,
                         policy,
                         &mut output,
+                        &fidelity_source,
                     )
                     .map_err(|cause| parallel_path_error(source, cause))?
                     {
@@ -832,6 +859,7 @@ impl CurvePath2 {
                             .map_err(|cause| parallel_path_error(source, cause))?,
                         policy,
                         &mut output,
+                        &fidelity_source,
                     )
                     .map_err(|cause| parallel_path_error(source, cause))?
                     {
@@ -869,6 +897,16 @@ impl CurvePath2 {
         }
         let output_curve_count = output.len();
         let path = CurvePath2::try_new(output)?;
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Ok(Classification::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        let retained = policy.retained_object_policy();
+        fidelity_construction
+            .qualified
+            .set(retained != retained.strict_counterpart())
+            .expect("one publication per construction");
         Ok(Classification::Decided(CertifiedCurvePathParallel2 {
             path,
             max_parallel_error: options.max_error().clone(),
@@ -881,10 +919,23 @@ impl CurvePath2 {
     }
 }
 
+fn exact_parallel_fidelity(curve: Curve2, source: &Arc<ParallelFidelitySource2>) -> Curve2 {
+    curve.with_parallel_fidelity(ParallelFidelityReceipt2 {
+        source: Arc::clone(source),
+        source_range: crate::ParamRange::new(Real::zero(), Real::one()),
+        metric: crate::CurveParallelFidelityMetric2::ExactImage,
+        error_bound: Real::zero(),
+        verification_leaf_count: 0,
+        #[cfg(feature = "svg")]
+        candidate: None,
+    })
+}
+
 pub(super) fn append_exact_rational_parallel(
     parallel: BezierParallel2,
     policy: &CurveContext,
     output: &mut Vec<Curve2>,
+    fidelity_source: &Arc<ParallelFidelitySource2>,
 ) -> CurveResult<Classification<()>> {
     let singularities = decided!(
         parallel.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
@@ -895,7 +946,10 @@ pub(super) fn append_exact_rational_parallel(
     }
     match parallel.exact_pythagorean_hodograph_offset_with_policy(policy)? {
         Classification::Decided(Some(exact)) => {
-            output.push(Curve2::from(exact.curve().clone()));
+            output.push(exact_parallel_fidelity(
+                Curve2::from(exact.curve().clone()),
+                fidelity_source,
+            ));
             Ok(Classification::Decided(()))
         }
         Classification::Decided(None) => {
@@ -911,6 +965,7 @@ pub(super) fn append_polynomial_parallel<F>(
     policy: &CurveContext,
     output: &mut Vec<Curve2>,
     verification_leaf_count: &mut usize,
+    fidelity_source: &Arc<ParallelFidelitySource2>,
 ) -> CurveResult<Classification<bool>>
 where
     F: FnOnce() -> CurveResult<Classification<CertifiedBezierParallelPath2>>,
@@ -924,7 +979,10 @@ where
     }
     match parallel.exact_pythagorean_hodograph_offset_with_policy(policy)? {
         Classification::Decided(Some(exact)) => {
-            output.push(Curve2::from(exact.curve().clone()));
+            output.push(exact_parallel_fidelity(
+                Curve2::from(exact.curve().clone()),
+                fidelity_source,
+            ));
             return Ok(Classification::Decided(true));
         }
         Classification::Decided(None) => {}
@@ -932,15 +990,24 @@ where
     }
     let fitted = decided!(approximate()?, Ok);
     *verification_leaf_count += fitted.verification_leaf_count();
-    output.extend(
-        fitted
-            .spans()
-            .iter()
-            .map(|span| match span.approximation().curve() {
-                BezierParallelApproximationCurve2::Quadratic(curve) => Curve2::from(curve.clone()),
-                BezierParallelApproximationCurve2::Cubic(curve) => Curve2::from(curve.clone()),
-            }),
-    );
+    output.extend(fitted.spans().iter().map(|span| {
+        let curve = match span.approximation().curve() {
+            BezierParallelApproximationCurve2::Quadratic(curve) => Curve2::from(curve.clone()),
+            BezierParallelApproximationCurve2::Cubic(curve) => Curve2::from(curve.clone()),
+        };
+        curve.with_parallel_fidelity(ParallelFidelityReceipt2 {
+            source: Arc::clone(fidelity_source),
+            source_range: crate::ParamRange::new(
+                span.source_start().clone(),
+                span.source_end().clone(),
+            ),
+            metric: crate::CurveParallelFidelityMetric2::SameParameterEuclidean,
+            error_bound: span.approximation().error_bound().clone(),
+            verification_leaf_count: span.approximation().leaf_count(),
+            #[cfg(feature = "svg")]
+            candidate: None,
+        })
+    }));
     Ok(Classification::Decided(false))
 }
 

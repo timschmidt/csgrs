@@ -17,6 +17,7 @@ use std::collections::HashMap;
 #[cfg(test)]
 mod circle_certificate_tests;
 mod circles;
+mod fidelity;
 mod points;
 mod polynomial;
 #[cfg(test)]
@@ -90,6 +91,10 @@ struct GraphWriter {
             u32,
         ),
     >,
+    fidelity_constructions: HashMap<*const crate::curve::ParallelFidelityConstruction2, u32>,
+    fidelity_roots: HashMap<*const crate::curve::ParallelFidelityReceipt2, u32>,
+    fidelity_steps: HashMap<*const crate::curve::ParallelFidelityStep2, u32>,
+    active_fidelity_depth: usize,
 }
 
 impl GraphWriter {
@@ -112,6 +117,10 @@ impl GraphWriter {
             circles: HashMap::new(),
             polynomial_sources: HashMap::new(),
             circle_parameters: HashMap::new(),
+            fidelity_constructions: HashMap::new(),
+            fidelity_roots: HashMap::new(),
+            fidelity_steps: HashMap::new(),
+            active_fidelity_depth: 0,
         }
     }
 
@@ -191,13 +200,17 @@ impl GraphWriter {
             let start = self.scalar_parameter(range.start())?;
             let end = self.scalar_parameter(range.end())?;
             let index = self.begin(SOURCE_RESTRICTION)?;
-            self.point_depths[index as usize] =
-                self.point_depths[start as usize].max(self.point_depths[end as usize]);
+            self.point_depths[index as usize] = self.point_depths[start as usize]
+                .max(self.point_depths[end as usize])
+                .max(self.point_depths[source as usize]);
             self.writer.write_u32(source)?;
             self.writer.write_u32(start)?;
             self.writer.write_u32(end)?;
             self.writer.write_bool(reversed)?;
             return Ok(index);
+        }
+        if curve.parallel_fidelity_replay().is_some() {
+            return self.fidelity_curve(curve);
         }
         let Some(geometry) = curve.geometry() else {
             return Err(SvgError::Unsupported(
@@ -306,6 +319,7 @@ impl GraphWriter {
 }
 
 enum Definition {
+    FidelityConstruction(std::sync::Arc<crate::curve::ParallelFidelityConstruction2>),
     PolynomialSource(crate::PolynomialCurveSet2),
     Curve(Curve2),
     Parameter(BezierParameter2),
@@ -366,6 +380,7 @@ pub(super) fn decode_path(
     bytes: &[u8],
     max_bytes: usize,
     max_point_depth: usize,
+    max_verification_depth: usize,
 ) -> SvgResult<CurvePath2> {
     let mut reader = ExactReader::new(bytes, max_bytes);
     if reader.take(MAGIC.len())? != MAGIC {
@@ -373,7 +388,7 @@ pub(super) fn decode_path(
             "exact path extension has an invalid graph header",
         ));
     }
-    let definitions = read_definitions(&mut reader, max_point_depth)?;
+    let definitions = read_definitions(&mut reader, max_point_depth, max_verification_depth)?;
     let count = reader.read_len()?;
     reader.check_collection_len(count, 4)?;
     let curves = (0..count)
@@ -390,6 +405,7 @@ pub(super) fn decode_path(
 fn read_definitions(
     reader: &mut ExactReader<'_>,
     max_point_depth: usize,
+    max_verification_depth: usize,
 ) -> SvgResult<Vec<Definition>> {
     let count = reader.read_len()?;
     reader.check_collection_len(count, 1)?;
@@ -452,7 +468,8 @@ fn read_definitions(
                 ))?)
             }
             SOURCE_RESTRICTION => {
-                let source = curve_reference(&definitions, reader.read_len()?)?;
+                let source_index = reader.read_len()?;
+                let source = curve_reference(&definitions, source_index)?;
                 if source.geometry().is_none() {
                     return Err(malformed(
                         "exact path restriction must reference a native source",
@@ -462,7 +479,9 @@ fn read_definitions(
                 let end_index = reader.read_len()?;
                 let start = scalar_parameter_reference(&definitions, start_index)?;
                 let end = scalar_parameter_reference(&definitions, end_index)?;
-                point_depth = point_depths[start_index].max(point_depths[end_index]);
+                point_depth = point_depths[start_index]
+                    .max(point_depths[end_index])
+                    .max(point_depths[source_index]);
                 let reversed = reader.read_bool()?;
                 let range = certified(CurveParameterRange2::try_new_with_policy(
                     start,
@@ -637,6 +656,24 @@ fn read_definitions(
                 point_depth = depth;
                 definition
             }
+            tag @ (fidelity::CONSTRUCTION
+            | fidelity::ROOT
+            | fidelity::RESTRICTION
+            | fidelity::REVERSAL
+            | fidelity::SIMILARITY
+            | fidelity::NATIVE_SPAN
+            | fidelity::AFFINE) => {
+                let (definition, depth) = fidelity::read_definition(
+                    tag,
+                    reader,
+                    &definitions,
+                    &point_depths,
+                    max_point_depth,
+                    max_verification_depth,
+                )?;
+                point_depth = depth;
+                definition
+            }
             tag => {
                 return Err(SvgError::Unsupported(format!(
                     "unknown exact Hypercurve definition tag {tag}"
@@ -691,6 +728,7 @@ pub(super) fn decode_paths(
     bytes: &[u8],
     max_bytes: usize,
     max_point_depth: usize,
+    max_verification_depth: usize,
 ) -> SvgResult<Vec<CurvePath2>> {
     let mut reader = ExactReader::new(bytes, max_bytes);
     if reader.take(PATHS_MAGIC.len())? != PATHS_MAGIC {
@@ -698,7 +736,7 @@ pub(super) fn decode_paths(
             "exact path extension has an invalid compound graph header",
         ));
     }
-    let definitions = read_definitions(&mut reader, max_point_depth)?;
+    let definitions = read_definitions(&mut reader, max_point_depth, max_verification_depth)?;
     let count = reader.read_len()?;
     reader.check_collection_len(count, 4)?;
     let paths = (0..count)

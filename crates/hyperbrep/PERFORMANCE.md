@@ -1,5 +1,9 @@
 # HyperBREP Performance Contract
 
+R24's planar-image receipt consumer is qualified in the [Hypercurve owner record](../hypercurve/PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04).
+It exercises restriction, reversal and native persistence of the retained
+planar source; it makes no new spatial error-bound or solid-fidelity claim.
+
 ## R21 stationary straight sweep images (2026-11-04)
 
 Baseline `8b6749ec24a3d388a6f2628e41d7e8b43146a08f` rejects `t²` and the

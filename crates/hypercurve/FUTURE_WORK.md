@@ -2802,7 +2802,7 @@ tangent bound at an irrational parameter is never decided, because a hull
 exceeds the curve wherever the curve's maximum is interior. Derivative roots
 decide both exactly.
 
-**Rechecked, no change (C07 fixtures 2 to 4, Alumina `ef94d9e`).**
+**C07 fixtures 2 to 4 (Alumina `ef94d9e`), with R24 follow-up (2026-11-04).**
 - *Set distance and same-parameter distance.* `BezierFlatteningCertificate`
   bounds the distance between the curve and its chords as point sets: each
   control lies in the capsule around its chord, so every curve point is
@@ -2814,14 +2814,13 @@ decide both exactly.
   bounds explicitly, so there is no conflation to fix. The polyline does not
   publish each chord's source parameter interval; a consumer that needs a
   pointwise certificate builds it from the control net, as Alumina does.
-- *Fidelity across split and copy.* `Curve2` lineage keeps source parameter
-  identity through split, reversal and transform, but there is no fidelity
-  classification on curves. `CertifiedCurvePathParallel2` keeps only aggregate
-  exact and approximated counts: after `path()` or `into_path()` a split or
-  copied path cannot tell exact parallel curves from verified approximations.
-  A per-output-curve source index and fidelity record would preserve it.
-  Alumina's moving-join policy uses its own span classification, so this is
-  recorded, not changed.
+- *Fidelity across split and copy.* The R24 curve/path milestone now retains
+  per-output source, metric, bound and consumed qualification through extraction,
+  supported edits and checked native replay. Selected source parameters are not
+  projected to scalars. See the [single owner qualification](PERFORMANCE.md#r24-per-output-parallel-fidelity-2026-11-04)
+  for the demonstrated domain and costs. Filled arrangements, other consumers
+  and command quantization remain open; Alumina's moving-join policy retains
+  its own conservative span classification.
 - *Step quantization.* No Hypercurve or Hyperpath API rounds to a machine
   lattice or writes commands back into source geometry. Alumina rounds with
   `Real::round_certified` and keeps source and canonical-command travel checks

@@ -9,7 +9,8 @@
     "Invalid operands other than offset options paired with canonical empty, disappearance chains beyond the named circle, polygon, ellipse and dumbbell witnesses, and all hole/disconnected configurations.",
     "Total arithmetic, projected-system size and retained-memory limits. Coefficient-growth limits cover only Bareiss, pseudo-quotient and dense tensor constructions, and cooperative cancellation is observed only at instrumented work units; neither bounds uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
-    "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure."
+    "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure.",
+    "Per-output parallel fidelity beyond the named curve/path and planar-image receipt pilots: general filled arrangements, other consumers, end-to-end cumulative error, machine quantization, and total work/memory bounds remain unqualified. See PERFORMANCE.md, R24."
   ],
   "fixtures": [
     {
@@ -17480,6 +17481,324 @@
         }
       ],
       "oracle": "Actual WorkKind/limit/used/requested receipts and independent one-contact expectation.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_extraction",
+      "target": "parallel_fidelity",
+      "test": "extracted_parallel_curves_keep_their_individual_source_and_metric",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "Connected rational line and quadratic, left distance 1/10, verification error 1/20 and depth 16.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Extracted outputs retain their individual source index and source curve."
+        },
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "One exact-image and one verified-approximation source are distinguished; native replay retains receipts."
+        }
+      ],
+      "oracle": "Independent authored source/index identity and aggregate counts; fresh strict native proof replay.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_similarity",
+      "target": "parallel_fidelity",
+      "test": "restriction_reversal_and_scale_preserve_the_pointwise_source_map",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "The first fitted quadratic span of the mixed path, scalar half split, reversal, reflected scale three, native extraction and raw reconstruction.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Exact scalar source correspondence follows split, reversal and native extraction."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Reflected similarity scales the bound to 3/20 and retains original signed distance; raw reconstruction is explicitly unverified."
+        }
+      ],
+      "oracle": "Independent affine source-parameter fractions and exact bound values; out-of-domain query fails typed.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_selected",
+      "target": "parallel_fidelity",
+      "test": "selected_restrictions_keep_the_selected_parameter_without_projection",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "Fitted quadratic split at selected sqrt(1/2), followed by reversal and native replay.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Both pieces retain equal selected source parameters and coincident endpoints without scalar projection."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Edited selected pieces retain native receipts and exact endpoints after fresh strict verification."
+        }
+      ],
+      "oracle": "Defining polynomial and isolator for sqrt(1/2); independent selected-parameter comparisons.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_nested",
+      "target": "parallel_fidelity",
+      "test": "zero_distance_keeps_inherited_fidelity_and_unverified_geometry_stays_unverified",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "Mixed line/quadratic parallel, zero and then nonzero 1/20 continuation, plus the independent t^3/chord counterexample.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier",
+        "CubicBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "repeated_offsets",
+          "outcome": "qualified_approximation",
+          "assertion": "Zero distance retains inherited receipts; a nonzero continuation retains both immediate-source constructions with separate 1/20 approximation bounds."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Nested construction definitions recheck and retain their exact represented output and fidelity relation."
+        }
+      ],
+      "oracle": "Both original signed source distances; separate current/inherited bounds; independently exact 3/8 midpoint counterexample and explicit unverified raw curves.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_affine",
+      "target": "parallel_fidelity",
+      "test": "shear_transports_the_reference_image_and_uses_a_proved_operator_bound",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "The mixed path under SVG matrix(2 0 1 1 3 -2), scalar restriction, reversal and native replay.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Retain the actual affine reference image and conservative norm-four bound without offset/affine commutation."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Derived affine-image receipts recheck through native reload."
+        }
+      ],
+      "oracle": "Independent coordinate formula (2x+y+3,y-2), exact norm multiplier and endpoint equality.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_circle",
+      "target": "parallel_fidelity",
+      "test": "exact_arc_edits_replay_their_actual_charts_and_native_spans",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "Unit semicircle offset by 1/4, two successive nontrivial trims, reversal and native Bezier spans.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "CircularArc",
+        "RationalQuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Retain actual circle-chart edits; exact-image evidence makes no same-parameter assertion."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Circle and native-span receipts preserve exact endpoints and independent image/error classes on replay."
+        }
+      ],
+      "oracle": "Exact source circle, zero bound, explicit absent pointwise map, endpoints and deterministic native bytes checked separately.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_cold",
+      "target": "parallel_fidelity",
+      "test": "cold_process_rechecks_fidelity_before_further_editing",
+      "owner": "Hypercurve immutable parameter lineage and checked native SVG replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "Mixed exact/fitted path encoded on the parent process, rechecked in a new child, restricted/reversed and replayed again.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "QuadraticBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "The exact model is the constructed curve; its receipt separately relates it to an immediate normal-parallel source. Exact-image and same-parameter Euclidean claims differ. Earlier source qualification/errors remain nested, not silently summed. No filled-region or command-fidelity completion is claimed.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A new process reconstructs both receipt categories and consumes them in subsequent exact edits and replay."
+        }
+      ],
+      "oracle": "Fresh-process native strict verification, separate exact-image/pointwise metrics, endpoint checks and deterministic reexport.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "parallel_fidelity_native_admission",
+      "target": "parallel_fidelity",
+      "test": "native_fidelity_admission_counts_syntax_without_certifying_scalars",
+      "owner": "Hypercurve native fidelity syntax and strict proof replay",
+      "properties": [
+        "P15",
+        "P19",
+        "P20",
+        "P27",
+        "P36"
+      ],
+      "domain": "The mixed path, exact PH cubic C=(t-t^3/3,t^2) also authored with unit rational weights, generated lines with algebraic endpoints and arcs with algebraic centers; finite byte limit, malformed scalar and reference controls.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line",
+        "CircularArc",
+        "QuadraticBezier",
+        "CubicBezier",
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Syntactic counts grant no geometric proof. Native replay uses the existing strict graph verifier. PH offsets retain their exact rational definitions; fitted spans retain pointwise approximation bounds.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "An actually exceeded decoded-byte limit rejects inspection, and a larger limit succeeds. Exact record/degree/element/dependency counts precede scalar decoding."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native fitted and exact PH receipts replay; malformed scalar payloads never publish geometry, and bad references are rejected."
+        }
+      ],
+      "oracle": "Independent graph field counts, cubic derivative/speed formulas and degree-five rational offset structure; malformed CBOR deliberately remains unparsed during syntactic admission.",
       "timeout_seconds": 300
     }
   ]

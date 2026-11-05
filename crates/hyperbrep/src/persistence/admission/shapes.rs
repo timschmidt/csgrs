@@ -180,6 +180,10 @@ impl Record for Curve {
 
 #[derive(Deserialize)]
 pub(super) enum Pcurve {
+    ParallelFidelity {
+        definition: NativeFidelityShape,
+        verification_depth: usize,
+    },
     ChordReference(usize),
     PolynomialBranch {
         maps: RationalMaps,
@@ -216,9 +220,38 @@ pub(super) enum Pcurve {
         knots: Count,
     },
 }
+pub(super) struct NativeFidelityShape(hypercurve::NativeParallelFidelityShape2);
+impl<'de> Deserialize<'de> for NativeFidelityShape {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        let definition = String::deserialize(decoder)?;
+        hypercurve::Curve2::inspect_native_parallel_fidelity_definition(
+            &definition,
+            definition.len(),
+        )
+        .map(Self)
+        .map_err(D::Error::custom)
+    }
+}
 impl Record for Pcurve {
     fn admit<E: Error>(self, budget: &mut Budget<'_>) -> Result<(), E> {
         match self {
+            Self::ParallelFidelity {
+                definition,
+                verification_depth,
+            } => {
+                let shape = definition.0;
+                for _ in 0..shape.records {
+                    budget.record()?;
+                }
+                budget.degree(shape.degree)?;
+                budget.geometry(shape.geometry_elements)?;
+                budget.solver_steps(verification_depth)?;
+                budget.check(
+                    ArchiveResource::DependencyDepth,
+                    shape.dependency_depth,
+                    budget.limits.dependency_depth,
+                )
+            }
             Self::ChordReference(_) => Ok(()),
             Self::PolynomialBranch { maps, .. } => maps.admit(budget),
             Self::Chord { start, end } => {

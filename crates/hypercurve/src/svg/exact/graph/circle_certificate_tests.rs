@@ -41,7 +41,7 @@ fn replay(curve: &Curve2) -> SvgResult<Curve2> {
     let mut input = writer.count.to_be_bytes().to_vec();
     input.extend_from_slice(&writer.writer.bytes);
     let mut reader = ExactReader::new(&input, 1_048_576);
-    let definitions = read_definitions(&mut reader, 256)?;
+    let definitions = read_definitions(&mut reader, 256, 64)?;
     assert!(reader.is_empty());
     curve_reference(&definitions, reference as usize).cloned()
 }

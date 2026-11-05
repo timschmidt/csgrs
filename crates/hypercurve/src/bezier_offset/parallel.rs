@@ -7400,6 +7400,29 @@ impl BezierParallel2 {
         options: &BezierParallelVerificationOptions,
         policy: &CurveContext,
     ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
+        self.verify_polynomial_candidate_with_depth_diagnostic(candidate, options, policy)
+            .map(|(result, _)| result)
+    }
+
+    pub(crate) fn verify_polynomial_candidate_with_depth_diagnostic(
+        &self,
+        candidate: BezierParallelApproximationCurve2,
+        options: &BezierParallelVerificationOptions,
+        policy: &CurveContext,
+    ) -> CurveResult<(Classification<CertifiedBezierParallelApproximation2>, bool)> {
+        let mut reached = false;
+        let result =
+            self.verify_polynomial_candidate_impl(candidate, options, policy, &mut reached)?;
+        Ok((result, reached))
+    }
+
+    fn verify_polynomial_candidate_impl(
+        &self,
+        candidate: BezierParallelApproximationCurve2,
+        options: &BezierParallelVerificationOptions,
+        policy: &CurveContext,
+        depth_limit_reached: &mut bool,
+    ) -> CurveResult<Classification<CertifiedBezierParallelApproximation2>> {
         let analysis = decided!(
             self.singularity_analysis_with_policy(&CurveParameterRange2::unit(), policy)?,
             Ok
@@ -7418,7 +7441,7 @@ impl BezierParallel2 {
         };
         let candidate_node = PolynomialBezierNode2::from_candidate(&candidate);
         let mut trace = ParallelVerificationTrace::default();
-        match verify_parallel_node(
+        let result = verify_parallel_node(
             source,
             candidate_node,
             self.distance(),
@@ -7426,7 +7449,9 @@ impl BezierParallel2 {
             policy,
             0,
             &mut trace,
-        )? {
+        )?;
+        *depth_limit_reached = trace.depth_limit_reached;
+        match result {
             Classification::Decided(()) => Ok(Classification::Decided(
                 CertifiedBezierParallelApproximation2 {
                     curve: candidate,

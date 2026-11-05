@@ -42,6 +42,7 @@
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;
+pub use exact::NativeParallelFidelityShape2;
 
 use crate::{
     Aabb2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
@@ -59,7 +60,7 @@ fn svg_real_sign(value: &Real) -> Option<RealSign> {
 }
 
 /// Error produced by strict SVG geometry import or export.
-#[derive(Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum SvgError {
     /// Syntactically malformed SVG input or invalid finite attributes.
     MalformedInput(String),
@@ -142,9 +143,14 @@ pub struct SvgOptions {
     /// Maximum decoded byte length of one exact Hypercurve path extension.
     pub max_extension_bytes: usize,
     /// Maximum nested rational-image, similarity, chord-displacement, supporting-line point
-    /// or selected-circle frame constructions in one exact path graph. Leaf point definitions have
-    /// depth zero. This is distinct from arithmetic work and memory limits.
+    /// or selected-circle frame constructions and parallel-fidelity dependencies
+    /// in one exact path graph. Leaf definitions have depth zero. This is distinct
+    /// from arithmetic work and memory limits.
     pub max_point_definition_depth: usize,
+    /// Maximum bisection depth of each source-fidelity verification on import.
+    /// Serialized construction budgets cannot increase this replay limit.
+    /// This bounds neither scalar arithmetic, total nodes nor heap bytes.
+    pub max_parallel_verification_depth: usize,
 }
 
 impl Default for SvgOptions {
@@ -154,6 +160,7 @@ impl Default for SvgOptions {
             max_curve_segments: 4096,
             max_extension_bytes: 16 * 1024 * 1024,
             max_point_definition_depth: 256,
+            max_parallel_verification_depth: 64,
         }
     }
 }
@@ -164,9 +171,10 @@ impl SvgOptions {
             || self.curve_tolerance <= 0.0
             || self.max_curve_segments < 8
             || self.max_extension_bytes < 64
+            || self.max_parallel_verification_depth == 0
         {
             return Err(SvgError::MalformedInput(
-                "SVG options require a positive finite tolerance, at least 8 segments, and at least 64 extension bytes".into(),
+                "SVG options require a positive finite tolerance, at least 8 segments, at least 64 extension bytes, and a positive parallel-verification depth".into(),
             ));
         }
         Ok(self)
@@ -932,6 +940,62 @@ fn transform_path(path: &CurvePath2, transform: &ExactAffine2) -> SvgResult<Curv
 }
 
 fn transform_curve(curve: &Curve2, transform: &ExactAffine2) -> SvgResult<Vec<Curve2>> {
+    if curve.parallel_fidelity().is_some() {
+        if let Some(similarity) = transform.similarity() {
+            return curve
+                .transform_similarity_with_policy(&similarity, &CurveContext::STRICT)
+                .map(|curve| vec![curve.into_value()])
+                .map_err(svg_geometry_error);
+        }
+        if let Some((source, range, reversed)) = curve.source_restriction() {
+            let mut sources = transform_curve(source, transform)?;
+            if sources.len() != 1 {
+                return Err(SvgError::Unsupported(
+                    "affine transport of a selected multichart fidelity source".into(),
+                ));
+            }
+            let curve = sources
+                .pop()
+                .expect("one source")
+                .restrict_source(range.clone())
+                .map_err(SvgError::Exact)?;
+            return Ok(vec![if reversed {
+                curve.reversed().map_err(SvgError::Exact)?
+            } else {
+                curve
+            }]);
+        }
+        if matches!(curve.geometry(), Some(CurveGeometry2::CircularArc(_))) {
+            let mut curves = Vec::new();
+            for span in curve
+                .native_bezier_fragments_with_policy(&CurveContext::STRICT)
+                .map_err(SvgError::Exact)?
+                .into_value()
+            {
+                curves.extend(transform_curve(&span.clone().into_curve(), transform)?);
+            }
+            return Ok(curves);
+        }
+        let bare = Curve2::new(curve.geometry().expect("native fidelity source").clone());
+        return transform_curve(&bare, transform).map(|curves| {
+            curves
+                .into_iter()
+                .map(|result| {
+                    curve.retain_parallel_affine_image(
+                        result,
+                        [
+                            transform.m00.clone(),
+                            transform.m01.clone(),
+                            transform.m10.clone(),
+                            transform.m11.clone(),
+                            transform.tx.clone(),
+                            transform.ty.clone(),
+                        ],
+                    )
+                })
+                .collect()
+        });
+    }
     let invalid = |cause| ExactCurveError::Invalid {
         operation: CurveOperation2::Transformation,
         family: Some(curve.family()),
@@ -1232,6 +1296,13 @@ fn rectangle_path(attrs: &svg::node::Attributes, options: SvgOptions) -> SvgResu
 }
 
 fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
+    if path
+        .curves()
+        .iter()
+        .any(|curve| curve.parallel_fidelity().is_some())
+    {
+        return None;
+    }
     let segments = path
         .curves()
         .iter()
@@ -1325,6 +1396,7 @@ fn path_geometry(
             encoded,
             options.max_extension_bytes,
             options.max_point_definition_depth,
+            options.max_parallel_verification_depth,
         )?;
         if context.fills() {
             for path in &paths {

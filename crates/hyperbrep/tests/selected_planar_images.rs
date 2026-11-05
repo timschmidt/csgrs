@@ -2,6 +2,11 @@
 mod acceptance;
 
 #[test]
+fn parallel_fidelity_survives_spatial_restriction_and_native_replay() {
+    acceptance::parallel_fidelity_survives_spatial_restriction_and_native_replay();
+}
+
+#[test]
 fn selected_planar_points_keep_frame_and_source_correlation() {
     acceptance::selected_planar_points_keep_frame_and_source_correlation();
 }

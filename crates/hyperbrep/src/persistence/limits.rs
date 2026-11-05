@@ -31,6 +31,7 @@ pub struct ArchiveLimits {
     /// Shared point/chord definitions and their encoded reference occurrences count.
     /// Inline extrusion/revolution profiles, rotation origins and
     /// analytic-parallel sources count as additional geometry records.
+    /// Native fidelity graph definitions and each encoded reference also count.
     pub records: usize,
     /// Largest authored spline/root degree (Bezier control count minus one).
     /// Tensor Bezier and bivariate fiber extents use row count and maximum row
@@ -39,11 +40,14 @@ pub struct ArchiveLimits {
     pub degree: usize,
     /// Maximum individual declared polynomial construction/evaluation control:
     /// subdivision depth, refinement rounds, or fiber refinement steps.
+    /// Native fidelity proof-replay subdivision depth also counts; its historical
+    /// generation request grants no work.
     /// This does not bound their combined work, arithmetic, or allocation.
     pub solver_steps: usize,
     /// Total variable geometry-array entries: controls, weights, knots, root
     /// coefficients, analytic-parallel source controls, and tensor/fiber row headers.
     /// A control point counts once, including polynomial parallel controls.
+    /// Native fidelity supports/arrays are inspected before exact scalar decoding.
     /// Empty tensor rows still count; fixed analytic coordinate fields do not.
     pub geometry_elements: usize,
     /// Total entries in variable topology lists: wire uses, face inner wires,

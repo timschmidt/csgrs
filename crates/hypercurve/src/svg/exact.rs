@@ -1,9 +1,11 @@
+mod native_fidelity;
 use super::{SvgError, SvgResult};
 use crate::{
     CircularArc2, CubicBezier2, Curve2, CurveGeometry2, CurvePath2, LineSeg2, NurbsCurve2, Point2,
     PolynomialSplineCurve2, QuadraticBezier2, RationalBezier2, RationalQuadraticBezier2, Real,
     SplinePeriodicity2,
 };
+pub use native_fidelity::NativeParallelFidelityShape2;
 use std::fmt::Write;
 
 mod graph;
@@ -17,7 +19,8 @@ pub(super) fn encode_path(
     max_point_depth: usize,
 ) -> SvgResult<String> {
     if path.curves().iter().any(|curve| {
-        curve.polynomial_branch().is_some()
+        curve.parallel_fidelity().is_some()
+            || curve.polynomial_branch().is_some()
             || curve.source_restriction().is_some()
             || curve.analytic_parallel().is_some()
             || matches!(
@@ -62,20 +65,32 @@ pub(super) fn decode_paths(
     encoded: &str,
     max_bytes: usize,
     max_point_depth: usize,
+    max_verification_depth: usize,
 ) -> SvgResult<Vec<CurvePath2>> {
     if let Some(hex) = encoded.strip_prefix(graph::PATHS_PREFIX) {
-        return graph::decode_paths(&decode_bytes(hex, max_bytes)?, max_bytes, max_point_depth);
+        return graph::decode_paths(
+            &decode_bytes(hex, max_bytes)?,
+            max_bytes,
+            max_point_depth,
+            max_verification_depth,
+        );
     }
-    decode_path(encoded, max_bytes, max_point_depth).map(|path| vec![path])
+    decode_path(encoded, max_bytes, max_point_depth, max_verification_depth).map(|path| vec![path])
 }
 
 pub(super) fn decode_path(
     encoded: &str,
     max_bytes: usize,
     max_point_depth: usize,
+    max_verification_depth: usize,
 ) -> SvgResult<CurvePath2> {
     if let Some(hex) = encoded.strip_prefix(graph::PREFIX) {
-        return graph::decode_path(&decode_bytes(hex, max_bytes)?, max_bytes, max_point_depth);
+        return graph::decode_path(
+            &decode_bytes(hex, max_bytes)?,
+            max_bytes,
+            max_point_depth,
+            max_verification_depth,
+        );
     }
     let hex = encoded.strip_prefix(PREFIX).ok_or_else(|| {
         SvgError::Unsupported("unknown Hypercurve SVG path extension version".into())

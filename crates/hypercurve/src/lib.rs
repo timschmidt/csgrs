@@ -1,3 +1,6 @@
+// Rustdoc's auto-trait walk crosses the shared curve/provenance graph. This
+// compiler bound is separate from every runtime geometry/resource limit.
+#![recursion_limit = "256"]
 #![allow(
     clippy::large_enum_variant,
     clippy::result_large_err,
@@ -190,6 +193,7 @@ pub use contour::{Contour2, ContourPointLocation, FillRule};
 pub use curve::{
     Curve2, CurveCornerMode2, CurveCornerNoSolution2, CurveCornerSolutions2, CurveDerivative2,
     CurveFamily2, CurveFillet2, CurveFilletContact2, CurveGeometry2, CurveLoopOrientation2,
+    CurveParallelFidelity2, CurveParallelFidelityMetric2, CurveParallelFidelityTransform2,
     CurveParameterSide2, CurvePath2, CurveSpanRange2, CurveVector2, NativeBezierFragment2,
     PolynomialCurveBranch2, PolynomialCurveSet2,
 };
@@ -288,9 +292,9 @@ pub use straight_skeleton::{
 };
 #[cfg(feature = "svg")]
 pub use svg::{
-    SvgError, SvgGeometry2, SvgOptions, SvgResult, SvgSubpath2, export_svg_document,
-    export_svg_document_with_options, import_svg_document, import_svg_document_with_options,
-    parse_svg_path_data,
+    NativeParallelFidelityShape2, SvgError, SvgGeometry2, SvgOptions, SvgResult, SvgSubpath2,
+    export_svg_document, export_svg_document_with_options, import_svg_document,
+    import_svg_document_with_options, parse_svg_path_data,
 };
 pub use transform::Similarity2;
 pub use translation_obstacle::{
