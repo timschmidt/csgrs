@@ -8,7 +8,14 @@
 //! counts distinct roots, including roots of even multiplicity, without
 //! sampling either algebraic value.
 
-use std::{borrow::Cow, cell::RefCell, cmp::Ordering, sync::Arc};
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    cmp::Ordering,
+    collections::BTreeMap,
+    hash::{DefaultHasher, Hash, Hasher},
+    sync::Arc,
+};
 
 mod refinement;
 mod subresultant;
@@ -3949,6 +3956,7 @@ fn rational_local_subresultant_rows(
         .signed_polynomials
         .append(&mut field.signed_polynomials);
     field.signed_polynomials = proof.signed_polynomials;
+    field.rebuild_sign_index();
     field.root = proof.root;
     field.refinement_steps += proof.refinement_steps;
     field.observe_certainty(proof.certainty);
@@ -4586,6 +4594,7 @@ impl LocalFieldElement {
 struct LocalAlgebraicField {
     root: AlgebraicRootRepresentation,
     signed_polynomials: Vec<(Vec<Real>, Ordering)>,
+    rational_sign_index: BTreeMap<u64, Vec<usize>>,
     inverse_polynomials: Vec<(Vec<Real>, Vec<Real>)>,
     policy: PredicatePolicy,
     certainty: Certainty,
@@ -4670,6 +4679,7 @@ impl LocalAlgebraicField {
         Self {
             root: root.clone(),
             signed_polynomials: Vec::new(),
+            rational_sign_index: BTreeMap::new(),
             inverse_polynomials: Vec::new(),
             policy,
             certainty: Certainty::Exact,
@@ -4885,6 +4895,40 @@ impl LocalAlgebraicField {
         );
     }
 
+    // Rational::Hash canonicalizes lazy ratios and agrees with exact equality.
+    // A fingerprint only selects candidates; original coefficient equality is
+    // still required. Nonrational Real values retain the structural search.
+    fn rational_sign_fingerprint(polynomial: &[Real]) -> Option<u64> {
+        let mut hash = DefaultHasher::new();
+        polynomial.len().hash(&mut hash);
+        for coefficient in polynomial {
+            coefficient.exact_rational_ref()?.hash(&mut hash);
+        }
+        Some(hash.finish())
+    }
+
+    fn remember_polynomial_sign(&mut self, polynomial: &[Real], sign: Ordering) {
+        if let Some(fingerprint) = Self::rational_sign_fingerprint(polynomial) {
+            self.rational_sign_index
+                .entry(fingerprint)
+                .or_default()
+                .push(self.signed_polynomials.len());
+        }
+        self.signed_polynomials.push((polynomial.to_vec(), sign));
+    }
+
+    fn rebuild_sign_index(&mut self) {
+        self.rational_sign_index.clear();
+        for (index, (polynomial, _)) in self.signed_polynomials.iter().enumerate() {
+            if let Some(fingerprint) = Self::rational_sign_fingerprint(polynomial) {
+                self.rational_sign_index
+                    .entry(fingerprint)
+                    .or_default()
+                    .push(index);
+            }
+        }
+    }
+
     fn known_polynomial_sign(&self, polynomial: &[Real]) -> Option<Ordering> {
         // Constants do not depend on the selected root. Reuse native exact
         // facts without searching or populating the local polynomial cache.
@@ -4902,6 +4946,17 @@ impl LocalAlgebraicField {
             .all(|coefficient| coefficient.zero_status() == ZeroKnowledge::Zero)
         {
             return Some(Ordering::Equal);
+        }
+        if let Some(fingerprint) = Self::rational_sign_fingerprint(polynomial) {
+            return self
+                .rational_sign_index
+                .get(&fingerprint)
+                .and_then(|indices| {
+                    indices.iter().find_map(|&index| {
+                        let (signed, sign) = &self.signed_polynomials[index];
+                        (signed == polynomial).then_some(*sign)
+                    })
+                });
         }
         self.signed_polynomials
             .iter()
@@ -4921,7 +4976,7 @@ impl LocalAlgebraicField {
             return Ok(sign);
         }
         let sign = self.sign_reduced_polynomial(polynomial)?;
-        self.signed_polynomials.push((polynomial.to_vec(), sign));
+        self.remember_polynomial_sign(polynomial, sign);
         Ok(sign)
     }
 
@@ -4970,7 +5025,7 @@ impl LocalAlgebraicField {
             }
         }
         if let Some(sign) = sign {
-            self.signed_polynomials.push((polynomial.to_vec(), sign));
+            self.remember_polynomial_sign(polynomial, sign);
         }
         Ok(sign)
     }
@@ -4988,7 +5043,7 @@ impl LocalAlgebraicField {
         }
         let evaluation = evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
         if let Some(sign) = local_evaluation_sign(&evaluation)? {
-            self.signed_polynomials.push((polynomial.to_vec(), sign));
+            self.remember_polynomial_sign(polynomial, sign);
             return Ok(sign == Ordering::Equal);
         }
         match polynomial_vanishes_at_owned_root(
@@ -4998,8 +5053,7 @@ impl LocalAlgebraicField {
             self.policy,
         ) {
             Some(true) => {
-                self.signed_polynomials
-                    .push((polynomial.to_vec(), Ordering::Equal));
+                self.remember_polynomial_sign(polynomial, Ordering::Equal);
                 return Ok(true);
             }
             Some(false) => return Ok(false),
@@ -5014,7 +5068,7 @@ impl LocalAlgebraicField {
             let evaluation =
                 evaluate_polynomial_at_algebraic_root(&self.root, polynomial, self.policy);
             if let Some(sign) = local_evaluation_sign(&evaluation)? {
-                self.signed_polynomials.push((polynomial.to_vec(), sign));
+                self.remember_polynomial_sign(polynomial, sign);
                 return Ok(sign == Ordering::Equal);
             }
         }
@@ -5025,8 +5079,7 @@ impl LocalAlgebraicField {
             self.policy,
         ) {
             Some(true) => {
-                self.signed_polynomials
-                    .push((polynomial.to_vec(), Ordering::Equal));
+                self.remember_polynomial_sign(polynomial, Ordering::Equal);
                 Ok(true)
             }
             Some(false) => Ok(false),
@@ -6054,6 +6107,87 @@ mod tests {
                 CurveResultantParameter::First,
             ),
             None
+        );
+    }
+
+    #[test]
+    fn local_rational_sign_index_agrees_with_ordered_proofs_and_symbolic_fallback() {
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let alpha = represented_root(
+                vec![real(-2), Real::zero(), Real::one()],
+                Real::one(),
+                real(2),
+                policy,
+            );
+            let mut field = LocalAlgebraicField::new(&alpha, policy).unwrap();
+            // Every polynomial is positive at the independently selected sqrt(2).
+            for constant in 0..1024 {
+                field.remember_polynomial_sign(&[real(constant), Real::one()], Ordering::Greater);
+            }
+            let symbolic = vec![Real::pi(), Real::one()];
+            field.remember_polynomial_sign(&symbolic, Ordering::Greater);
+            let half = vec![(real(1) / real(2)).unwrap(), Real::one()];
+            field.remember_polynomial_sign(&half, Ordering::Greater);
+            let equivalent = vec![(real(2) / real(4)).unwrap(), Real::one()];
+            let absent = vec![real(-3), Real::one()];
+            for polynomial in field
+                .signed_polynomials
+                .iter()
+                .map(|(p, _)| p)
+                .chain([&equivalent, &absent])
+            {
+                let original = field
+                    .signed_polynomials
+                    .iter()
+                    .find(|(signed, _)| signed == polynomial)
+                    .map(|(_, sign)| *sign);
+                assert_eq!(field.known_polynomial_sign(polynomial), original);
+            }
+            assert_eq!(
+                field.known_polynomial_sign(&equivalent),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(
+                field.known_polynomial_sign(&symbolic),
+                Some(Ordering::Greater)
+            );
+            assert_eq!(field.known_polynomial_sign(&absent), None);
+            assert_eq!(field.certainty, Certainty::Exact);
+            assert_eq!(field.refinement_steps, 0);
+        }
+    }
+
+    #[test]
+    fn local_rational_sign_index_checks_collisions_and_rebuilds_after_proof_prepend() {
+        let alpha = represented_root(
+            vec![real(-2), Real::zero(), Real::one()],
+            Real::one(),
+            real(2),
+            PredicatePolicy::STRICT,
+        );
+        let mut field = LocalAlgebraicField::new(&alpha, PredicatePolicy::STRICT).unwrap();
+        let first = vec![real(-3), Real::one()];
+        let second = vec![real(3), Real::one()];
+        field.remember_polynomial_sign(&first, Ordering::Less);
+        let fingerprint = LocalAlgebraicField::rational_sign_fingerprint(&second).unwrap();
+        // Deliberately force a fingerprint collision with a different sign.
+        field.rational_sign_index.insert(fingerprint, vec![0]);
+        assert_eq!(field.known_polynomial_sign(&second), None);
+        field.remember_polynomial_sign(&second, Ordering::Greater);
+        assert_eq!(
+            field.known_polynomial_sign(&second),
+            Some(Ordering::Greater)
+        );
+        // This is the ordered transfer performed by the strict subresultant proof.
+        field
+            .signed_polynomials
+            .insert(0, (second.clone(), Ordering::Greater));
+        field.rebuild_sign_index();
+        assert_eq!(field.rational_sign_index[&fingerprint], vec![0, 2]);
+        assert_eq!(field.known_polynomial_sign(&first), Some(Ordering::Less));
+        assert_eq!(
+            field.known_polynomial_sign(&second),
+            Some(Ordering::Greater)
         );
     }
 
