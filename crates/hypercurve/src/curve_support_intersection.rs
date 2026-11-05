@@ -1219,17 +1219,36 @@ impl Pair<'_> {
             return self.finite_rational(first, second, false, result);
         }
 
+        // Scalar formulas may evaluate a contact without retaining the field
+        // relation required by a selected trim. Keep their cheap exact result
+        // only when its domains can consume it; otherwise reuse the native
+        // rational-pair authority with its selected parameters and points.
+        let mut candidate = Evidence::default();
         for contact in evidence.isolated_contacts() {
-            self.admit_contact(
-                result,
-                self.contact(
-                    contact.first_parameter().clone().into(),
-                    contact.second_parameter().clone().into(),
-                    contact.point().clone(),
-                    contact.is_certified_transverse(),
-                    contact.tangent_cross_sign(),
-                ),
-            )?;
+            let admitted = self.policy.bounded_exact_predicate_pass(|| {
+                self.admit_contact(
+                    &mut candidate,
+                    self.contact(
+                        contact.first_parameter().clone().into(),
+                        contact.second_parameter().clone().into(),
+                        contact.point().clone(),
+                        contact.is_certified_transverse(),
+                        contact.tangent_cross_sign(),
+                    ),
+                )
+            });
+            match admitted {
+                Ok(()) => {}
+                Err(ExactCurveError::Blocked(blocker))
+                    if !blocker.reason().is_resource_failure() =>
+                {
+                    return self.finite_rational(first, second, false, result);
+                }
+                Err(error) => return Err(error),
+            }
+        }
+        for contact in candidate.contacts {
+            self.append_contact(result, contact)?;
         }
         if let Some(overlap) = evidence.overlap() {
             self.rational_overlap(
