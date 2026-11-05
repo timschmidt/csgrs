@@ -14,6 +14,9 @@ This repository keeps a digest for each archived record in
 | Historical records | 309 records, 552,370 files, 13.96 GB |
 | Research branch | [`research-2026-10-25`](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25) |
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
+| Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
+| Current manifest commit | `f9373479078afb36b85094ee23402696d83bf191` |
+| Current records | 435 |
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
@@ -1341,3 +1344,32 @@ Earlier full-stage checks are distinguished from final-source checks. Native
 proof replay costs more; no performance-only or general closure admission is
 claimed. The local bare archive is verified before the source commit; archive
 and source publication remain subject to their final push checks.
+
+## Main publication and retained integration research (2026-11-05)
+
+Commit `f9373479078afb36b85094ee23402696d83bf191` retains all earlier manifest rows and adds the
+qualified main publication record. Its parent records preserve the reviewed
+incoming source and unsuccessful experiments separately from main admission.
+The complete 435-record manifest was generated from the archive and verified
+against its contents. The [main admission](research/main-publication-2026-11-05.md)
+records the tested code revision, workflow coverage, downstream checks and
+remaining research gaps.
+
+| Record under `docs/evidence/` | Scope |
+| --- | --- |
+| `2026-11-05-curve-public-traits` | Public carrier regression, owner tests and matched cost evidence; 217 files, digest `304ec667064d71b8756beab321cae2e4196a3980f2f7243b8a726735d1187afb` |
+| `2026-11-05-integration-review` | Unqualified incoming BRep review, complete source patches, original failures and external-source preservation |
+| `2026-11-05-native-contact-replay-review` | Unqualified contact experiment and exact cold-replay counterexample |
+| `2026-11-05-tensor-source-projection-review` | One optimized original fixture completes; broader candidate qualification remains open |
+| `2026-11-05-main-publication` | Qualified main source, all 280 local workflow/Clippy commands, stable/MSRV package consumers and source-scope proofs |
+
+Every record's file count, byte count and digest is in
+[`evidence-archive.tsv`](evidence-archive.tsv). Raw research source patches retain
+local candidates without merging or publishing unqualified code branches.
+The large rejected debug log is retained losslessly as gzip with original and
+compressed digests; no failed attempt is credited as geometric completion.
+
+```sh
+python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
+  f9373479078afb36b85094ee23402696d83bf191
+```

@@ -429,6 +429,11 @@ docs/evidence/2026-11-04-research-r20	683	1185353	fea7b534f13b88a6affc94b4c4a418
 docs/evidence/2026-11-04-research-r21	199	17301176	926a91787d265a83691bb618c7654ba58806f2b490eb3f1a6dc45da77b254a01
 docs/evidence/2026-11-04-research-r24-fidelity	786	11149607	7be024a19e64d72265c1800bc9e24bee4f3ec7e0ac483b316a72a65b202bcbcd
 docs/evidence/2026-11-04-research-r30-hulls	244	9934089	643451b315d5823b4780829711be321d36e9ed314dbfe183d6790e5165a61a98
+docs/evidence/2026-11-05-curve-public-traits	217	957504	304ec667064d71b8756beab321cae2e4196a3980f2f7243b8a726735d1187afb
+docs/evidence/2026-11-05-integration-review	953	86856198	f7fcd3cff376386247ee1a4abe159fdf82b54521afb44dee00f2afbec114eb8f
+docs/evidence/2026-11-05-main-publication	15044	73274911	b49685cd91423f957e597152ca88c492fdba4a2e7ecb5b35a23f7fd7e84d82b7
+docs/evidence/2026-11-05-native-contact-replay-review	21	801836	e92c83e52a2ca099eb82787239bbb593000349b8f8ccaee16feeb77a0f98d22e
+docs/evidence/2026-11-05-tensor-source-projection-review	20	1109011	374bce9430eec78b55b17f0df924606ffdbaeb95636ac9d071135f9959bb439c
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775
