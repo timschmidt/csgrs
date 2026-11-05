@@ -12,16 +12,54 @@ pub enum CurveParallelFidelityMetric2 {
     SameParameterEuclidean,
 }
 
-pub(crate) struct ParallelFidelityConstruction2 {
+pub(crate) struct ParallelFidelityConstructionData2 {
     pub(crate) path: CurvePath2,
     pub(crate) distance: Real,
     pub(crate) max_verification_depth: usize,
     pub(crate) qualified: OnceLock<bool>,
 }
 
+// Stop public auto-trait proofs at this existing shared allocation rather than
+// expanding the entire recursive provenance graph in every consumer. The
+// concrete definition must still satisfy every bound here; no manual unsafe
+// Send/Sync assertion or omitted source relation is involved.
+trait SharedFidelityConstruction2:
+    Send + Sync + std::panic::UnwindSafe + std::panic::RefUnwindSafe
+{
+    fn definition(&self) -> &ParallelFidelityConstructionData2;
+}
+
+impl SharedFidelityConstruction2 for ParallelFidelityConstructionData2 {
+    fn definition(&self) -> &ParallelFidelityConstructionData2 {
+        self
+    }
+}
+
+#[derive(Clone)]
+pub(crate) struct ParallelFidelityConstruction2(Arc<dyn SharedFidelityConstruction2>);
+
+impl ParallelFidelityConstruction2 {
+    pub(crate) fn new(definition: ParallelFidelityConstructionData2) -> Self {
+        Self(Arc::new(definition))
+    }
+
+    #[cfg(feature = "svg")]
+    pub(crate) fn allocation_key(&self) -> *const () {
+        Arc::as_ptr(&self.0).cast()
+    }
+}
+
+impl std::ops::Deref for ParallelFidelityConstruction2 {
+    type Target = ParallelFidelityConstructionData2;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.definition()
+    }
+}
+
 #[derive(Debug)]
 pub(crate) struct ParallelFidelitySource2 {
-    pub(crate) construction: Arc<ParallelFidelityConstruction2>,
+    pub(crate) construction: ParallelFidelityConstruction2,
     pub(crate) index: usize,
 }
 

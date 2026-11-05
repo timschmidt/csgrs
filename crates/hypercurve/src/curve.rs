@@ -18,8 +18,8 @@ pub use curve_fidelity::{
     CurveParallelFidelity2, CurveParallelFidelityMetric2, CurveParallelFidelityTransform2,
 };
 pub(crate) use curve_fidelity::{
-    ParallelFidelityConstruction2, ParallelFidelityEdit2, ParallelFidelityReceipt2,
-    ParallelFidelitySource2, ParallelFidelityStep2,
+    ParallelFidelityConstruction2, ParallelFidelityConstructionData2, ParallelFidelityEdit2,
+    ParallelFidelityReceipt2, ParallelFidelitySource2, ParallelFidelityStep2,
 };
 #[path = "curve_vector.rs"]
 mod curve_vector;

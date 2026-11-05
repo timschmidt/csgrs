@@ -2,7 +2,8 @@
 
 use super::*;
 use crate::curve::{
-    ParallelFidelityConstruction2, ParallelFidelityReceipt2, ParallelFidelitySource2,
+    ParallelFidelityConstruction2, ParallelFidelityConstructionData2, ParallelFidelityReceipt2,
+    ParallelFidelitySource2,
 };
 
 /// Exact rational parallel certified from a homogeneous Pythagorean hodograph.
@@ -744,19 +745,20 @@ impl CurvePath2 {
             return Ok(Classification::Uncertain(UncertaintyReason::RealSign));
         }
 
-        let fidelity_construction = Arc::new(ParallelFidelityConstruction2 {
-            path: self.clone(),
-            distance: distance.clone(),
-            max_verification_depth: options.max_depth(),
-            qualified: std::sync::OnceLock::new(),
-        });
+        let fidelity_construction =
+            ParallelFidelityConstruction2::new(ParallelFidelityConstructionData2 {
+                path: self.clone(),
+                distance: distance.clone(),
+                max_verification_depth: options.max_depth(),
+                qualified: std::sync::OnceLock::new(),
+            });
         let mut output = Vec::new();
         let mut exact_source_curve_count = 0;
         let mut approximated_source_curve_count = 0;
         let mut verification_leaf_count = 0;
         for (index, source) in self.curves().iter().enumerate() {
             let fidelity_source = Arc::new(ParallelFidelitySource2 {
-                construction: Arc::clone(&fidelity_construction),
+                construction: fidelity_construction.clone(),
                 index,
             });
             match source.geometry() {

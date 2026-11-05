@@ -1,8 +1,8 @@
 //! Replay fidelity from source definitions and checked edits, never flags.
 use super::*;
 use crate::curve::{
-    ParallelFidelityConstruction2, ParallelFidelityEdit2, ParallelFidelityReceipt2,
-    ParallelFidelitySource2, ParallelFidelityStep2,
+    ParallelFidelityConstruction2, ParallelFidelityConstructionData2, ParallelFidelityEdit2,
+    ParallelFidelityReceipt2, ParallelFidelitySource2, ParallelFidelityStep2,
 };
 use crate::{
     BezierParallelApproximationCurve2, BezierParallelVerificationOptions,
@@ -74,9 +74,9 @@ impl GraphWriter {
 
     fn fidelity_construction(
         &mut self,
-        construction: &Arc<ParallelFidelityConstruction2>,
+        construction: &ParallelFidelityConstruction2,
     ) -> SvgResult<u32> {
-        let key = Arc::as_ptr(construction);
+        let key = construction.allocation_key();
         if let Some(index) = self.fidelity_constructions.get(&key) {
             return Ok(*index);
         }
@@ -216,12 +216,14 @@ pub(super) fn read_definition(
             .set(reader.read_bool()?)
             .expect("new construction");
         return Ok((
-            Definition::FidelityConstruction(Arc::new(ParallelFidelityConstruction2 {
-                path,
-                distance,
-                max_verification_depth,
-                qualified,
-            })),
+            Definition::FidelityConstruction(ParallelFidelityConstruction2::new(
+                ParallelFidelityConstructionData2 {
+                    path,
+                    distance,
+                    max_verification_depth,
+                    qualified,
+                },
+            )),
             depth,
         ));
     }
@@ -315,7 +317,7 @@ fn read_root(
     let strict = &CurveContext::STRICT;
     let construction_index = reader.read_len()?;
     let construction = match definitions.get(construction_index) {
-        Some(Definition::FidelityConstruction(source)) => Arc::clone(source),
+        Some(Definition::FidelityConstruction(source)) => source.clone(),
         _ => return Err(malformed("invalid fidelity construction reference")),
     };
     let index = reader.read_len()?;

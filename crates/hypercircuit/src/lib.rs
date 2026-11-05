@@ -1,7 +1,3 @@
-// Rustdoc traverses the shared curve/provenance graph for exported auto traits.
-// This compiler-only bound does not change runtime geometry/resource limits.
-#![cfg_attr(doc, recursion_limit = "256")]
-
 //! Exact-aware circuit carriers and MNA residual replay.
 //!
 //! `hypercircuit` owns circuit-domain structure: instances, nets, ports, buses,
