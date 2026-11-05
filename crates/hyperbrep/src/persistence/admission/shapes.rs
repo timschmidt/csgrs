@@ -129,6 +129,11 @@ pub(super) enum Curve {
     PlanarImage {
         source: Box<Pcurve>,
     },
+    TensorImage {
+        source: Box<Pcurve>,
+        control_points: Rows,
+        weights: Rows,
+    },
     Line(IgnoredAny),
     EllipseArc(IgnoredAny),
     RationalBezier {
@@ -155,6 +160,17 @@ impl Record for Curve {
             }
             Self::PlanarImage { source } => {
                 budget.record()?;
+                source.admit(budget)
+            }
+            Self::TensorImage {
+                source,
+                control_points,
+                weights,
+            } => {
+                budget.record()?;
+                budget.degree(control_points.rows.saturating_sub(1))?;
+                budget.degree(control_points.columns.saturating_sub(1))?;
+                budget.geometry(control_points.entries() + weights.entries())?;
                 source.admit(budget)
             }
             Self::Line(_) | Self::EllipseArc(_) => Ok(()),
@@ -429,6 +445,10 @@ impl Record for Surface {
 pub(super) enum Selection {
     PlanarPoint(Box<PlanarPoint>),
     Chord(Box<[PlanarPoint; 2]>),
+    PointOnChord {
+        chord: dependency_depth::Index,
+        point: Box<PlanarPoint>,
+    },
     RationalForm {
         point: Box<PlanarPoint>,
         numerator: Rows,
@@ -479,7 +499,7 @@ impl Record for Selection {
                     budget.geometry(polynomial.entries())?;
                 }
             }
-            Self::AffineForm { point } => {
+            Self::AffineForm { point } | Self::PointOnChord { point, .. } => {
                 budget.record()?;
                 point.admit(budget)?;
             }

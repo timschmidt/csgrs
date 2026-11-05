@@ -72,6 +72,9 @@ impl ArenaModel {
             if let Some(axial) = &self.data.certified_axial_shells[solid_id.index()] {
                 return Self::classify_point_against_axial(axial, point);
             }
+            if let Some(graph) = &self.data.certified_tensor_graphs[solid_id.index()] {
+                return Self::classify_point_against_tensor_graph(graph, point);
+            }
             for shell in std::iter::once(&solid.outer).chain(solid.voids.iter()) {
                 for face in &self.shell(*shell).expect("validated shell ID").faces {
                     let signed = self.face_plane_value(*face, point)?;
@@ -216,6 +219,138 @@ impl ArenaModel {
             }
         }
         Ok(SolidPointLocation::Inside)
+    }
+
+    /// Classifies against a certified tensor graph solid: the base location
+    /// of `(a, b)`, then `c` against `0` and the exact graph height.
+    pub(in crate::topology) fn classify_point_against_tensor_graph(
+        graph: &CertifiedTensorGraphShell,
+        point: &Point3,
+    ) -> Result<SolidPointLocation, QueryError> {
+        let displacement = point - &graph.origin;
+        let determinant = graph.u.dot(&graph.v.cross(&graph.direction));
+        let coordinate = |form: Vector3| {
+            (displacement.dot(&form) / &determinant).map_err(GeometryError::Numeric)
+        };
+        let a = coordinate(graph.v.cross(&graph.direction))?;
+        let b = coordinate(graph.direction.cross(&graph.u))?;
+        let c = coordinate(graph.u.cross(&graph.v))?;
+        let base_point: hypercurve::CurvePoint2 = CurvePoint2::new(a.clone(), b.clone()).into();
+        let classify_base = |path: &CurvePath2| -> Result<ContourPointLocation, QueryError> {
+            match crate::error::classified(path.classify_point(&base_point))
+                .map_err(GeometryError::from)?
+            {
+                Classification::Decided(location) => Ok(location),
+                Classification::Uncertain(reason) => {
+                    Err(GeometryError::PlanarClassificationUnresolved(reason).into())
+                }
+            }
+        };
+        // The base region is the profile minus its holes.
+        let mut base = classify_base(&graph.profile)?;
+        for hole in &graph.profile_holes {
+            if base == ContourPointLocation::Outside {
+                break;
+            }
+            match classify_base(hole)? {
+                ContourPointLocation::Inside => base = ContourPointLocation::Outside,
+                ContourPointLocation::Boundary => base = ContourPointLocation::Boundary,
+                ContourPointLocation::Outside => {}
+            }
+        }
+        if base == ContourPointLocation::Outside {
+            return Ok(SolidPointLocation::Outside);
+        }
+        match decided_model_order(compare_reals(&c, &Real::zero(), crate::STRICT_PREDICATES))? {
+            std::cmp::Ordering::Less => return Ok(SolidPointLocation::Outside),
+            std::cmp::Ordering::Equal => return Ok(SolidPointLocation::Boundary),
+            std::cmp::Ordering::Greater => {}
+        }
+        let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
+        // Every top face faces along `direction` in a closed shell whose
+        // walls are parallel to it, so each vertical line over the profile
+        // leaves through exactly one top face: strictly inside a cap's
+        // region the cap is the top, outside every cap the tensor is. On a
+        // cap boundary every adjacent top is a candidate, and only a
+        // comparison that agrees with all of them is decided.
+        let mut orders = Vec::new();
+        let mut strictly_capped = false;
+        let mut tensor_candidate = false;
+        for cap in &graph.caps {
+            let projected = graph.origin.clone()
+                + graph.u.clone() * &a
+                + graph.v.clone() * &b
+                + graph.direction.clone() * &cap.height;
+            let offset = &projected - &cap.origin;
+            let (uu, uv, vv) = (cap.u.dot(&cap.u), cap.u.dot(&cap.v), cap.v.dot(&cap.v));
+            let (du, dv) = (offset.dot(&cap.u), offset.dot(&cap.v));
+            let gram = &uu * &vv - &uv * &uv;
+            let s = ((&vv * &du - &uv * &dv) / &gram).map_err(GeometryError::Numeric)?;
+            let t = ((&uu * &dv - &uv * &du) / &gram).map_err(GeometryError::Numeric)?;
+            let probe: hypercurve::CurvePoint2 = CurvePoint2::new(s, t).into();
+            let classify = |path: &CurvePath2| -> Result<ContourPointLocation, QueryError> {
+                match crate::error::classified(path.classify_point(&probe))
+                    .map_err(GeometryError::from)?
+                {
+                    Classification::Decided(location) => Ok(location),
+                    Classification::Uncertain(reason) => {
+                        Err(GeometryError::PlanarClassificationUnresolved(reason).into())
+                    }
+                }
+            };
+            // The cap's region is its outer boundary minus its holes.
+            let mut location = classify(&cap.boundary)?;
+            for hole in &cap.holes {
+                if location == ContourPointLocation::Outside {
+                    break;
+                }
+                match classify(hole)? {
+                    ContourPointLocation::Inside => location = ContourPointLocation::Outside,
+                    ContourPointLocation::Boundary => location = ContourPointLocation::Boundary,
+                    ContourPointLocation::Outside => {}
+                }
+            }
+            if location == ContourPointLocation::Outside {
+                continue;
+            }
+            strictly_capped |= location == ContourPointLocation::Inside;
+            orders.push(decided_model_order(compare_reals(
+                &c,
+                &cap.height,
+                crate::STRICT_PREDICATES,
+            ))?);
+        }
+        if !strictly_capped {
+            match graph.top.tensor_graph_height_order(frame, &a, &b, &c)? {
+                Some(order) => {
+                    tensor_candidate = true;
+                    orders.push(order);
+                }
+                // The certified graph projects onto the whole base region.
+                None if orders.is_empty() => {
+                    return Err(GeometryError::UnsupportedIntersection.into());
+                }
+                None => {}
+            }
+        }
+        let height = orders[0];
+        if orders.iter().any(|order| *order != height) {
+            // Inside the profile, a point on exactly one cap's boundary has
+            // the tensor on the other side, joined to the cap by a wall
+            // parallel to `direction`: between the two tops it lies on that
+            // wall. Every other disagreement stays undecided.
+            if base == ContourPointLocation::Inside && orders.len() == 2 && tensor_candidate {
+                return Ok(SolidPointLocation::Boundary);
+            }
+            return Err(GeometryError::UnsupportedIntersection.into());
+        }
+        Ok(match (height, base) {
+            (std::cmp::Ordering::Greater, _) => SolidPointLocation::Outside,
+            (std::cmp::Ordering::Equal, _) | (_, ContourPointLocation::Boundary) => {
+                SolidPointLocation::Boundary
+            }
+            _ => SolidPointLocation::Inside,
+        })
     }
 
     pub(in crate::topology) fn classify_point_against_loft(
@@ -1122,6 +1257,15 @@ impl ArenaModel {
             ((&dv * &uu - &du * &uv) / determinant).map_err(GeometryError::Numeric)?;
         let point = CurvePoint2::new(parameter_u, parameter_v);
         self.classify_surface_parameter_on_face(face, &point.into())
+    }
+
+    /// Exact boundary paths of a face's wires in its surface chart, for faces
+    /// whose boundaries have no line/arc contour.
+    pub(crate) fn face_curve_paths(&self, face: FaceId) -> Result<Vec<CurvePath2>, GeometryError> {
+        let face = self.face(face).expect("validated face ID");
+        face.boundary_wires()
+            .map(|wire| self.build_model_wire_curve_path(*wire))
+            .collect()
     }
 
     pub(crate) fn face_contours(&self, face: FaceId) -> Result<&[Contour2], GeometryError> {

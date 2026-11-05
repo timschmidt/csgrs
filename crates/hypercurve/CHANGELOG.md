@@ -45,6 +45,29 @@
 - Add `evaluate_with_cancellable_budget` and re-export `CancellationToken`.
   A cancelled evaluation reports `WorkKind::Cancellation`, publishes no
   partial result, and leaves no cached blocker that prevents a retry.
+- `PolynomialCurveBranch2::affine_view` is public. Two polynomial branches
+  with equal exact affine views intersect in their shared source chart
+  (pulling points back through the inverse affine map and flipping tangent
+  signs for reflections), point location inverts exact affine views, and
+  injective-image certification accepts injective affine views.
+
+- Polynomial branches whose retained rational maps are all certified exact
+  nonsingular affine maps (not only similarities) are no longer collapsed in
+  subdivision, intersect native lines through the inverse affine view (with
+  tangent signs flipped by reflecting views), and supply generated-chord
+  supports. Original maps stay authoritative; nonlinear rational images keep
+  their typed `Unsupported` frontier.
+
+- Intersect, locate points on and certify injectivity of polynomial branches
+  whose retained rational maps are all certified exact similarities, through
+  the public `PolynomialCurveBranch2::similarity_view`. Chord sections and
+  shared-chart pair intersections use the composed affine view; returned
+  points still evaluate the authoritative maps.
+
+- Trim polynomial branches whose retained rational maps are all certified
+  exact similarities inside regions. Such images are decidedly not points and
+  their line-chord forms use the maps' composed affine view; the original maps
+  and denominators remain authoritative.
 
 - Preserve typed exact failures from SVG region arrangement and region union
   through the public importer and its adapters.

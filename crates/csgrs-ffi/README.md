@@ -79,6 +79,11 @@ finite region projections, and curve-to-solid operations.
   regions; an empty or malformed polygon ring fails. Resolution and companion
   dimensions are validated before a zero-size shortcut. No ABI signature or
   numeric status changed in this planar failure migration.
+- Unavailable storage or unaddressable storage dimensions report
+  `RESOURCE_UNAVAILABLE` (11), separately from a reached configured allowance
+  (`RESOURCE_EXHAUSTED`, 6). Existing numeric statuses retain their values.
+  Neither failure publishes a partial model; a larger-budget or later retry
+  remains possible where its native cause permits it.
 - Mesh transforms retain native failure categories. A projective image that
   reaches or crosses infinity reports `UNBOUNDED` (9). Invalid transforms and
   undecided predicates remain distinct failures, and publish no model handle.
@@ -109,7 +114,7 @@ finite region projections, and curve-to-solid operations.
   retain it in `CsgrsError.status`; Go retains it in `StatusError.Status`.
   WASM primitive constructors, transforms, bounds, and positioning throw a
   `GeometryError` with a string `code` (`invalid_input`, `undecided`,
-  `resource_exhausted`, `unsupported`, `unbounded`, or `geometry_failure`) and a diagnostic
+  `resource_exhausted`, `resource_unavailable`, `unsupported`, `unbounded`, or `geometry_failure`) and a diagnostic
   message. Other binding operations that still flatten native error categories
   remain outside this migration.
 - The last-error pointer is borrowed, thread-local, and valid only until the

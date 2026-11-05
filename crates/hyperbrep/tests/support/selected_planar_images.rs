@@ -126,7 +126,7 @@ fn q(n: i32, d: i32) -> Real {
 fn root(scale: i32) -> Parameter {
     let curve = root_source(scale);
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("selected root")
     };
@@ -562,9 +562,9 @@ pub fn selected_planar_archives_reject_forged_sources_and_recover() {
 pub fn selected_planar_policies_and_work_exhaustion_recover() {
     let source = root_source(1);
     let denied = OperationContext::strict(WorkBudget::ZERO)
-        .evaluate(|| source.parameters_of(&Point3::origin()));
+        .evaluate(|| source.parameters_of(Point3::origin()));
     assert_eq!(denied.result.unwrap_err().limit, 0);
-    source.parameters_of(&Point3::origin()).unwrap();
+    source.parameters_of(Point3::origin()).unwrap();
     let curve = frame(parallel(0, 1));
     let parameter = root(1);
     let point = curve.point_at(&parameter).unwrap();

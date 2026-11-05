@@ -245,6 +245,7 @@ pub(super) fn translated_curve(curve: &Curve3, offset: &Vector3) -> Result<Curve
             image.origin = image.origin + offset;
             Ok(Curve3::from_planar_image(*image)?)
         }
+        Curve3ExactData::TensorImage(image) => Ok(image.translated(offset)?),
         Curve3ExactData::Line(data) => Ok(Curve3::line(data.start + offset, data.end + offset)?),
         Curve3ExactData::RationalBezier {
             control_points,
@@ -1482,6 +1483,9 @@ pub(super) fn curve_parameterizations_equal(
         (Curve3ExactData::PlanarImage(actual), Curve3ExactData::PlanarImage(expected)) => actual
             .parameterization_equals(&expected)
             .map_err(Into::into),
+        (Curve3ExactData::TensorImage(actual), Curve3ExactData::TensorImage(expected)) => actual
+            .parameterization_equals(&expected)
+            .map_err(Into::into),
         (Curve3ExactData::Line(actual), Curve3ExactData::Line(expected)) => {
             Ok(points_equal(&actual.start, &expected.start)?
                 && points_equal(&actual.end, &expected.end)?)
@@ -1598,16 +1602,12 @@ pub(super) fn real_values_equal(left: &Real, right: &Real) -> Result<bool, Build
 }
 
 pub(super) fn insert_exact_split_parameter(
-    parameters: &mut Vec<Real>,
-    candidate: Real,
+    parameters: &mut Vec<Parameter>,
+    candidate: Parameter,
 ) -> Result<(), GeometryError> {
     let mut insertion = parameters.len();
     for (index, parameter) in parameters.iter().enumerate() {
-        match decided_model_order(compare_reals(
-            &candidate,
-            parameter,
-            crate::STRICT_PREDICATES,
-        ))? {
+        match candidate.compare(parameter)? {
             std::cmp::Ordering::Less => {
                 insertion = index;
                 break;
@@ -2212,6 +2212,7 @@ pub(crate) fn compare_curve3_exact_data(
         Curve3ExactData::EllipseArc(data) if data.circle => 3,
         Curve3ExactData::EllipseArc(_) => 4,
         Curve3ExactData::PlanarImage(_) => 5,
+        Curve3ExactData::TensorImage(_) => 9,
         Curve3ExactData::Translation(_) => 6,
         Curve3ExactData::Rotation(_) => 7,
         Curve3ExactData::AffineImage(_) => 8,
@@ -2275,6 +2276,9 @@ pub(crate) fn compare_curve3_exact_data(
                 }
             }
             compare_vector3(&left.displacement, &right.displacement)
+        }
+        (Curve3ExactData::TensorImage(left), Curve3ExactData::TensorImage(right)) => {
+            left.canonical_order(right)
         }
         (Curve3ExactData::PlanarImage(left), Curve3ExactData::PlanarImage(right)) => {
             let order = exact_point_order(&left.origin, &right.origin)?;
@@ -2459,9 +2463,28 @@ pub(super) fn compare_ordered_surface_curve_traces(
     left: &OrderedSurfaceCurveTrace,
     right: &OrderedSurfaceCurveTrace,
 ) -> Result<std::cmp::Ordering, GeometryError> {
-    match compare_curve3_exact_data(&left.exact_key.exact_data(), &right.exact_key.exact_data()) {
+    let (left_data, right_data) = (left.exact_key.exact_data(), right.exact_key.exact_data());
+    match compare_curve3_exact_data(&left_data, &right_data) {
         Ok(order) => Ok(order),
         Err(GeometryError::PredicateUnresolved { .. }) => {
+            Ok(left.source_index.cmp(&right.source_index))
+        }
+        // Images over equal carriers with structurally distinct sources have
+        // no canonical order, but they are not duplicates: insertion keeps
+        // the caller order and the pairwise trace intersection still rejects
+        // any overlap explicitly.
+        Err(GeometryError::UnsupportedIntersection)
+            if matches!(
+                (&left_data, &right_data),
+                (
+                    Curve3ExactData::PlanarImage(_),
+                    Curve3ExactData::PlanarImage(_)
+                ) | (
+                    Curve3ExactData::TensorImage(_),
+                    Curve3ExactData::TensorImage(_)
+                )
+            ) =>
+        {
             Ok(left.source_index.cmp(&right.source_index))
         }
         Err(error) => Err(error),
@@ -2569,4 +2592,24 @@ pub(super) fn insert_face_split_cut(
     }
     cuts.push(parameter);
     Ok(())
+}
+
+/// Prefer an already certified native endpoint, while retaining the exact
+/// curve image when no independent scalar point is available.
+pub(super) fn retained_curve_endpoints(
+    curve: &Curve3,
+) -> Result<(GeometricPoint3, GeometricPoint3), GeometryError> {
+    let endpoint = |native: Result<Point3, GeometryError>, parameter: &Parameter| match native {
+        Ok(point) => Ok(point.into()),
+        Err(
+            GeometryError::UnrepresentableParameter
+            | GeometryError::UnsupportedSelectedEvaluation
+            | GeometryError::UnsupportedPcurveContour,
+        ) => curve.point_at(parameter),
+        Err(error) => Err(error),
+    };
+    Ok((
+        endpoint(curve.start(), curve.domain().start())?,
+        endpoint(curve.end(), curve.domain().end())?,
+    ))
 }

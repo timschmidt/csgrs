@@ -19,20 +19,31 @@ use crate::curve::PolynomialLineSections2;
 mod polynomial_curve_chord;
 pub(super) use polynomial_curve_chord::PolynomialChordCorrespondence2;
 
-/// An authored native line, or a retained restriction of one, in the source
-/// chart shared by its public parameter.
-///
-/// Only a native line evaluates an affine-form parameter by replaying its
-/// source point, which the split of the line operand relies on. A degree-
-/// elevated line image keeps its existing dispatch.
-fn native_line(curve: &Curve2) -> Option<&crate::LineSeg2> {
+/// A line view proved to have the same parameterization as the original
+/// source span. A general collinear rational span is insufficient: its
+/// nonlinear parameter correspondence must keep its own incidence path.
+fn parameterized_line(
+    curve: &Curve2,
+    span: &crate::curve::CurveSourceSpan2,
+    mapped_branch: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<crate::LineSeg2>> {
     let source = curve
         .source_restriction()
         .map_or(curve, |(source, _, _)| source);
-    let Some(CurveGeometry2::Line(line)) = source.geometry() else {
-        return None;
-    };
-    Some(line)
+    if let Some(CurveGeometry2::Line(line)) = source.geometry() {
+        return Ok(Some(line.clone()));
+    }
+    // Unmapped rational incidence already owns component and tangent recipes.
+    // Use this additional view when an image map needs line pullback instead.
+    if !mapped_branch {
+        return Ok(None);
+    }
+    Ok(decided(
+        crate::curve_support::CurveSupport2::from_fragment(&span.fragment)
+            .exact_rational_component(policy),
+    )?
+    .and_then(|rational| rational.exact_linear_parameterization_line()))
 }
 
 fn decided<T>(value: CurveResult<Classification<T>>) -> ExactCurveResult<T> {
@@ -217,7 +228,7 @@ fn shared_line_section(
 /// A boundary keeps its retained parameter. The line chart is injective, so
 /// when an order is undecided, a proved equal endpoint point identifies the
 /// boundary parameter. Any other undecided order is a typed blocker.
-fn admit_line_parameter(
+pub(super) fn admit_line_parameter(
     curve: &Curve2,
     parameter: CurveParameter2,
     point: &CurvePoint2,
@@ -268,7 +279,8 @@ fn negate(sign: hyperreal::RealSign) -> hyperreal::RealSign {
 }
 
 /// Intersects a polynomial graph branch, including a retained rational
-/// similarity, with an authored native line in either operand order.
+/// similarity, with a native or parameter-preserving rational line in either
+/// operand order.
 ///
 /// Returns `None` for every other pair, which keeps its existing dispatch.
 /// Both active domains are checked. The line parameter is `(y - y0) / dy`
@@ -287,17 +299,19 @@ pub(super) fn polynomial_line_section(
             (None, Some(branch)) => (branch, first, false),
             _ => return Ok(None),
         };
-    let Some(line) = native_line(line_curve) else {
+    let spans = line_curve.source_spans(policy, CurveOperation2::Intersection)?;
+    let [span] = &spans[..] else {
+        return Ok(None);
+    };
+    let Some(line) =
+        parameterized_line(line_curve, span, !branch.rational_maps().is_empty(), policy)?
+    else {
         return polynomial_curve_chord::intersect(
             if branch_first { first } else { second },
             line_curve,
             branch_first,
             policy,
         );
-    };
-    let spans = line_curve.source_spans(policy, CurveOperation2::Intersection)?;
-    let [span] = &spans[..] else {
-        return Ok(None);
     };
     let chart = span.chart();
     if chart.endpoints() != (&Real::zero(), &Real::one()) {
@@ -306,7 +320,7 @@ pub(super) fn polynomial_line_section(
         return Ok(None);
     }
     let Some(sections) = branch
-        .line_sections(line, policy)
+        .line_sections(&line, policy)
         .map_err(|error| error.with_operation(CurveOperation2::Intersection))?
     else {
         return Ok(None);

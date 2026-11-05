@@ -716,3 +716,52 @@ fn generated_polynomial_sections_retry_and_keep_certainty() {
         Err(hypercurve::ExactCurveError::Invalid { .. })
     ));
 }
+
+/// A nonlinear image and a degree-elevated line keep their original charts.
+/// At world x=0 the admitted source x is exactly zero (the other preimage,
+/// -4, is outside the source domain), so the original quintic is independent
+/// contact evidence. Its ordinate stays selected through splitting and replay.
+#[test]
+fn nonlinear_image_sections_consume_parameter_preserving_rational_lines() {
+    let set = curves(quintic_equation());
+    let map = hypercurve::RationalMap2::new(
+        [polynomial(&[&[], &[4], &[1]]), polynomial(&[&[0, 4]])],
+        polynomial(&[&[4]]),
+    );
+    let branch = set.curves()[0].rational_image(&map).unwrap();
+    let line = Curve2::from(
+        hypercurve::RationalBezier2::try_new(
+            vec![
+                Point2::from_values(0, -2),
+                Point2::from_values(0, 0),
+                Point2::from_values(0, 2),
+            ],
+            vec![Real::one(); 3],
+        )
+        .unwrap(),
+    );
+    vertical_contact(&branch, &line);
+    vertical_contact(&branch.reversed().unwrap(), &line.reversed().unwrap());
+}
+
+#[test]
+fn collinear_rational_spans_keep_nonlinear_parameter_correspondences() {
+    let set = curves(quintic_equation());
+    for weights in [
+        vec![Real::one(); 3],
+        vec![Real::one(), 2.into(), Real::one()],
+    ] {
+        let line = Curve2::from(
+            hypercurve::RationalBezier2::try_new(
+                vec![
+                    Point2::from_values(0, -2),
+                    Point2::from_values(0, -1),
+                    Point2::from_values(0, 2),
+                ],
+                weights,
+            )
+            .unwrap(),
+        );
+        vertical_contact(&set.curves()[0], &line);
+    }
+}

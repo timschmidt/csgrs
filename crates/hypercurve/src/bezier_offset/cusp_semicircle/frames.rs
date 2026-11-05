@@ -38,6 +38,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "hypercurve",
                     "represented-chord-normal-frame",
                     match reason {
+                        UncertaintyReason::StorageUnavailable => "center-storage-unavailable",
                         UncertaintyReason::BudgetExhausted => "center-budget-exhausted",
                         UncertaintyReason::Unsupported => "center-unsupported",
                         UncertaintyReason::Predicate => "center-predicate",
@@ -69,6 +70,7 @@ impl BezierAlgebraicCuspSemicircle2 {
                     "hypercurve",
                     "represented-chord-normal-frame",
                     match reason {
+                        UncertaintyReason::StorageUnavailable => "normal-storage-unavailable",
                         UncertaintyReason::BudgetExhausted => "normal-budget-exhausted",
                         UncertaintyReason::Unsupported => "normal-unsupported",
                         UncertaintyReason::Predicate => "normal-predicate",

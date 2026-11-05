@@ -1,5 +1,8 @@
 //! Retained spatial curve images and their exact query authority.
 
+#[path = "point_queries.rs"]
+mod queries;
+
 use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
@@ -187,6 +190,27 @@ impl GeometricPoint3 {
                 && Arc::ptr_eq(first, second)
             {
                 return Ok(true);
+            }
+            // Distinct points almost always differ along a generic direction,
+            // which refinement separates cheaply; proving a shared coordinate
+            // exactly equal first can cost far more. A decided difference
+            // proves distinctness; equality or no decision falls through.
+            if let (Some((first, first_uv)), Some((second, second_uv))) = (
+                self.rational_surface_source(),
+                other.rational_surface_source(),
+            ) {
+                let direction = Vector3::new([
+                    Real::one(),
+                    (Real::one() / Real::from(3)).map_err(GeometryError::Numeric)?,
+                    (Real::one() / Real::from(7)).map_err(GeometryError::Numeric)?,
+                ]);
+                if let (Ok(a), Ok(b)) = (
+                    first.linear_form(first_uv, &direction),
+                    second.linear_form(second_uv, &direction),
+                ) && matches!(a.compare(&b), Ok(Ordering::Less | Ordering::Greater))
+                {
+                    return Ok(false);
+                }
             }
             let mut unresolved = None;
             for axis in [Axis::X, Axis::Y, Axis::Z] {
@@ -507,6 +531,14 @@ impl Curve3 {
                 )
             });
         }
+        if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+            return crate::context::strict(|| {
+                if !self.domain().contains(parameter)? {
+                    return Err(GeometryError::ParameterOutsideDomain);
+                }
+                image.geometric_point_at(parameter)
+            });
+        }
         if let Some(value) = parameter.try_real()
             && !matches!(self.data.geometry, CurveGeometry3::PlanarImage(_))
         {
@@ -597,7 +629,8 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
-            | CurveGeometry3::PlanarImage(_) => {
+            | CurveGeometry3::PlanarImage(_)
+            | CurveGeometry3::TensorImage(_) => {
                 return Err(GeometryError::UnsupportedSelectedEvaluation);
             }
         })
@@ -618,7 +651,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            curve.parameters_of(&Point3::origin()).unwrap()
+            curve.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("selected root");
         };
@@ -672,7 +705,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            native.parameters_of(&Point3::origin()).unwrap()
+            native.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("selected root");
         };
@@ -719,7 +752,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            curve.parameters_of(&Point3::origin()).unwrap()
+            curve.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("expected a selected root");
         };

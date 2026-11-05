@@ -3,7 +3,9 @@
 #[path = "polynomial_curve.rs"]
 mod polynomial_curve;
 pub use polynomial_curve::{PolynomialCurveBranch2, PolynomialCurveSet2};
-pub(crate) use polynomial_curve::{PolynomialLineSections2, polynomial_is_zero};
+pub(crate) use polynomial_curve::{
+    PolynomialLineSection2, PolynomialLineSections2, polynomial_is_zero,
+};
 
 #[path = "curve_evaluation.rs"]
 pub(crate) mod curve_evaluation;
@@ -18,8 +20,8 @@ pub use curve_fidelity::{
     CurveParallelFidelity2, CurveParallelFidelityMetric2, CurveParallelFidelityTransform2,
 };
 pub(crate) use curve_fidelity::{
-    ParallelFidelityConstruction2, ParallelFidelityEdit2, ParallelFidelityReceipt2,
-    ParallelFidelitySource2, ParallelFidelityStep2,
+    ParallelFidelityConstruction2, ParallelFidelityConstructionData2, ParallelFidelityEdit2,
+    ParallelFidelityReceipt2, ParallelFidelitySource2, ParallelFidelityStep2,
 };
 #[path = "curve_vector.rs"]
 mod curve_vector;
@@ -1018,11 +1020,67 @@ impl Curve2 {
         self.period().is_some()
     }
 
+    /// Sufficient supporting-line and point-order chart identity for retained
+    /// straight chords, using their exact support relation and monotone axis.
+    /// Finite restrictions remain separate: this does not assert equal domains.
+    /// A false result is absence of this proof, not general curve inequality.
+    pub fn has_same_point_ordered_line_support_chart(
+        &self,
+        other: &Self,
+    ) -> crate::ExactCurveResult<bool> {
+        let (
+            Some(crate::BezierSplitFragment2::AlgebraicChord(a)),
+            Some(crate::BezierSplitFragment2::AlgebraicChord(b)),
+        ) = (self.retained_fragment(), other.retained_fragment())
+        else {
+            return Ok(false);
+        };
+        ExactCurveError::principal_query(
+            CurveOperation2::Intersection,
+            resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+                a.same_point_order_chart(b, policy)
+            }),
+        )
+    }
+
+    /// Affine map from this curve's parameters to those of its reversal.
+    ///
+    /// Native curves reverse their scalar interval. Retained source charts
+    /// preserve their parameters; a point-ordered straight chord instead uses
+    /// the order-dual map `-t`, retaining the identical support point. The map
+    /// does not assert numeric scalar coordinates for geometric parameters.
+    pub fn reversal_parameter_affine_map(&self) -> crate::ExactCurveResult<(Real, Real)> {
+        if matches!(
+            self.retained_fragment(),
+            Some(crate::BezierSplitFragment2::AlgebraicChord(_))
+        ) {
+            return Ok((-Real::one(), Real::zero()));
+        }
+        if self.geometry().is_none() {
+            return Ok((Real::one(), Real::zero()));
+        }
+        let (start, end) = self.parameter_endpoints();
+        let offset = start
+            .scalar()
+            .zip(end.scalar())
+            .map(|(start, end)| start + end)
+            .ok_or_else(|| {
+                ExactCurveError::blocked(
+                    CurveOperation2::Reversal,
+                    self.family(),
+                    crate::UncertaintyReason::Unsupported,
+                )
+            })?;
+        Ok((-Real::one(), offset))
+    }
+
     /// Returns the same exact curve image with traversal direction reversed.
     ///
     /// Authored native curves reflect their public parameter mapping as
     /// `u -> start + end - u`. Retained source restrictions keep their source
-    /// chart and reverse traversal independently of parameter order.
+    /// chart and reverse traversal independently of parameter order. A
+    /// point-ordered chord reverses its order chart; use
+    /// [`Self::reversal_parameter_affine_map`] to transport parameters.
     pub fn reversed(&self) -> crate::ExactCurveResult<Self> {
         self.reversed_with_policy(&crate::policy::principal_context())
             .map(crate::CurveOutcome::into_value)

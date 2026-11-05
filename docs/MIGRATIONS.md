@@ -1,5 +1,42 @@
 # Migrations
 
+## BRep integration and resource refusal (2026-11-05)
+
+HyperBRep's native archive is now version 17. The incoming tensor-image and
+point-on-chord grammar requires an explicit discriminator migration from
+versions 15/16 followed by fresh full validation; changing a version number
+never grants a geometry certificate. The checked `ParallelFidelity` records
+from main remain supported in version 17. Preserve originals before migration.
+See [selected archive grammar](../crates/hyperbrep/docs/SELECTED_ARCHIVE.md).
+
+`CurvePointLocations2::Components` adds continuous parameter components to
+complete point-preimage results. Update exhaustive matches and retain each
+component's source span chart and endpoint inclusion; a range closure alone
+does not represent excluded denominator roots. Isolated visits remain explicit.
+The existing `EntireCurve` and finite `Locations` outcomes remain distinct.
+
+Point-ordered generated chords reverse their order chart with `t -> -t`.
+Use `Curve2::reversal_parameter_affine_map()` when transporting parameters:
+native intervals reflect about their endpoint sum, while other retained source
+charts preserve their parameters and reverse traversal independently. This map
+does not materialize selected scalar coordinates.
+
+`UncertaintyReason::StorageUnavailable` distinguishes unavailable storage or
+unaddressable dimensions from a reached configured work limit. Update exhaustive
+matches. It remains retryable, cannot authorize an approximate terminal, and
+cannot become a permanent cached blocker. CSGRS exposes
+`ValidationErrorKind::ResourceUnavailable` (`resource_unavailable` in JS/TS),
+and the C ABI adds `CSGRS_STATUS_RESOURCE_UNAVAILABLE = 11`; existing status
+numbers retain their values. Resource refusal remains an error with its source.
+
+The bounded ordered-field resultant API delegates to the existing shared
+resultant engine. Its coefficient-operation allowance counts arithmetic/sign
+context calls. Its matrix-entry allowance bounds the Sylvester problem size
+`(m+n)^2`, even when the chosen algorithm allocates less. Neither allowance
+bounds the cost of one coefficient operation, coefficient growth, heap bytes,
+or cancellation latency within an operation. Storage refusal does not imply
+that either configured allowance was reached.
+
 ## Per-output parallel fidelity (2026-11-04)
 
 Certified primitive path parallels now retain per-output source/fidelity

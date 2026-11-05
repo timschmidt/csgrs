@@ -68,7 +68,7 @@ pub(super) fn common_parameter_boundary_traces(
                         for interval in intervals {
                             traces.push(
                                 trace
-                                    .subcurve(&interval.start, &interval.end)?
+                                    .trimmed_interval(&interval.start, &interval.end)?
                                     .with_boundary_contacts(
                                         target_operand,
                                         interval.start_contacts,

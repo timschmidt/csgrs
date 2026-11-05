@@ -67,8 +67,16 @@ impl ArenaModelBuilder {
         // complete-source proof below, including after a selected edge split.
         let finite_planar_image =
             curve.kind() == Curve3Kind::PlanarImage && surface.kind() == SurfaceKind::Plane;
+        // A tensor image on a rational tensor face has a direct whole-definition
+        // proof; its selected restriction endpoints need no scalar view.
+        let tensor_image = curve.kind() == Curve3Kind::TensorImage
+            && matches!(
+                surface.kind(),
+                SurfaceKind::RationalBezier | SurfaceKind::Plane
+            );
         if !edge_use.image_certificate
             && !finite_planar_image
+            && !tensor_image
             && !coordinate_image
             && let Some((source, _, _)) = pcurve.curve().source_restriction()
         {
@@ -135,6 +143,14 @@ impl ArenaModelBuilder {
             ),
             (
                 Curve3Kind::PlanarImage,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { .. },
+            ) | (
+                Curve3Kind::TensorImage,
+                SurfaceKind::RationalBezier,
+                ParameterCorrespondence::Affine { .. },
+            ) | (
+                Curve3Kind::TensorImage,
                 SurfaceKind::Plane,
                 ParameterCorrespondence::Affine { .. },
             )
@@ -227,6 +243,38 @@ impl ArenaModelBuilder {
                 ParameterCorrespondence::Affine { .. },
             ) => {
                 self.validate_planar_curve_image(curve, edge, edge_use, pcurve, surface)?;
+            }
+            (
+                Curve3Kind::TensorImage,
+                _,
+                SurfaceKind::RationalBezier,
+                ParameterCorrespondence::Affine { .. },
+            ) => {
+                self.validate_tensor_curve_image(curve, edge_use, pcurve, surface)?;
+            }
+            (
+                Curve3Kind::TensorImage,
+                _,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { scale, offset },
+            ) if surface.certifies_tensor_section_image(
+                curve,
+                pcurve.curve(),
+                scale,
+                offset,
+            )? => {}
+            (
+                Curve3Kind::TensorImage,
+                CurveFamily2::RationalQuadraticBezier | CurveFamily2::RationalBezier,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { .. },
+            ) => {
+                // A tensor image of a whole iso-line is exactly the tensor's
+                // iso-curve, whose planar spline image proof applies.
+                let iso = curve
+                    .tensor_image_as_iso_curve()?
+                    .ok_or(BuildError::EdgeUseSupportMismatch)?;
+                self.validate_planar_spline_image(&iso, edge, edge_use, pcurve, surface)?;
             }
             (
                 Curve3Kind::Line,

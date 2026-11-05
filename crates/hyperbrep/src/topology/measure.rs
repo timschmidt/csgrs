@@ -277,8 +277,15 @@ impl ArenaModel {
                 }
                 data @ (SurfaceExactData::RationalBezier { .. }
                 | SurfaceExactData::Nurbs { .. }) => {
-                    return affine_tensor_face_area(&data, &parameter_area)
+                    if let Some(area) = affine_tensor_face_area(&data, &parameter_area)
                         .map_err(build_error_geometry)?
+                    {
+                        return Ok(area);
+                    }
+                    // A flat tensor with a curved parameterization: the exact
+                    // Green integral of its plane Jacobian over the trims.
+                    return surface
+                        .planar_tensor_area(&self.face_graph_trims(face)?)?
                         .ok_or(GeometryError::UnsupportedMeasurement)
                         .map_err(QueryError::from);
                 }
@@ -669,6 +676,174 @@ impl ArenaModel {
                 }
                 return Ok(Real::from(2) * Real::pi() * first_moment);
             }
+            if let Some(graph) = &self.data.certified_tensor_graphs[id.index()] {
+                // The top face's oriented UV boundary segments.
+                let solid = self.solid(id).expect("validated solid ID");
+                let mut loops = Vec::new();
+                for face_id in &self.shell(solid.outer).expect("validated shell ID").faces {
+                    let face = self.face(*face_id).expect("validated face ID");
+                    if self
+                        .surface(face.surface)
+                        .expect("validated surface")
+                        .kind()
+                        != SurfaceKind::RationalBezier
+                    {
+                        continue;
+                    }
+                    loops.extend(self.face_graph_trims(face)?);
+                }
+                let frame = (&graph.origin, &graph.u, &graph.v, &graph.direction);
+                let mut volume = graph
+                    .top
+                    .tensor_graph_volume(frame, &loops)?
+                    .ok_or(GeometryError::UnsupportedMeasurement)?;
+                // Each cap adds |det(u, v, d)| * height * its region's area in
+                // base coordinates: the exact cap-frame area times |det M|,
+                // where M carries cap-frame coordinates to base coordinates.
+                let determinant = graph.u.dot(&graph.v.cross(&graph.direction));
+                let a_form = graph.v.cross(&graph.direction);
+                let b_form = graph.direction.cross(&graph.u);
+                let path_area = |path: &CurvePath2| -> Result<Real, QueryError> {
+                    if let Ok(contour) = path.boundary_loop()
+                        && let Some(area) = crate::error::classified(contour.signed_area())
+                            .map_err(GeometryError::from)
+                            .and_then(resolve_planar_classification)?
+                    {
+                        return Ok(area.abs());
+                    }
+                    let contour_area = |segments: Vec<hypercurve::Segment2>| {
+                        hypercurve::Contour2::try_new(segments)
+                            .ok()
+                            .and_then(|contour| contour.signed_area().ok().flatten())
+                            .map(|area| area.abs())
+                    };
+                    // Circle-branch boundaries measure through their exact
+                    // native arc views; the boundary curves stay authoritative.
+                    let mut segments = Vec::with_capacity(path.curves().len());
+                    for curve in path.curves() {
+                        match curve.geometry() {
+                            Some(hypercurve::CurveGeometry2::Line(line)) => {
+                                segments.push(hypercurve::Segment2::Line(line.clone()));
+                            }
+                            _ => match crate::geometry::circular_arc_of(curve)? {
+                                Some(arc) => segments.push(hypercurve::Segment2::Arc(arc)),
+                                None => break,
+                            },
+                        }
+                    }
+                    if segments.len() == path.curves().len()
+                        && let Some(area) = contour_area(segments)
+                    {
+                        return Ok(area);
+                    }
+                    // Lines and polynomial-graph pieces: an exact Green sum
+                    // of x dy, the graph pieces in their source parameter.
+                    let mut doubled = Some(Real::zero());
+                    let x_form = hypersolve::BivariatePolynomial::new(vec![
+                        vec![Real::zero()],
+                        vec![Real::one()],
+                    ]);
+                    for curve in path.curves() {
+                        let Some(sum) = doubled.as_mut() else {
+                            break;
+                        };
+                        match curve.geometry() {
+                            Some(hypercurve::CurveGeometry2::Line(line)) => {
+                                let (start, end) = (line.start(), line.end());
+                                *sum = sum.clone() + (start.x() + end.x()) * (end.y() - start.y());
+                            }
+                            _ => match crate::geometry::polynomial_graph_piece(curve)? {
+                                Some(piece) => {
+                                    *sum = sum.clone()
+                                        + piece.integral(&x_form, false) * Real::from(2);
+                                }
+                                None => doubled = None,
+                            },
+                        }
+                    }
+                    if let Some(doubled) = doubled {
+                        return Ok((doubled / Real::from(2))
+                            .map_err(GeometryError::Numeric)?
+                            .abs());
+                    }
+                    // Otherwise every curved piece may be an affine image of a
+                    // circle arc in one shared source chart: measure there, with
+                    // lines pulled back, and scale by |det| of that view.
+                    let mut view: Option<[Real; 6]> = None;
+                    let mut arcs = Vec::with_capacity(path.curves().len());
+                    for curve in path.curves() {
+                        if matches!(curve.geometry(), Some(hypercurve::CurveGeometry2::Line(_))) {
+                            arcs.push(None);
+                            continue;
+                        }
+                        let (arc, piece_view) = crate::geometry::source_circular_arc(curve)?
+                            .ok_or(GeometryError::UnsupportedMeasurement)?;
+                        match &view {
+                            None => view = Some(piece_view),
+                            Some(view) => {
+                                for (a, b) in view.iter().zip(&piece_view) {
+                                    if decided_model_order(compare_reals(
+                                        a,
+                                        b,
+                                        crate::STRICT_PREDICATES,
+                                    ))? != std::cmp::Ordering::Equal
+                                    {
+                                        return Err(GeometryError::UnsupportedMeasurement.into());
+                                    }
+                                }
+                            }
+                        }
+                        arcs.push(Some(arc));
+                    }
+                    let [a, b, d, e, x, y] = view.ok_or(GeometryError::UnsupportedMeasurement)?;
+                    let determinant = &a * &e - &b * &d;
+                    let inverse =
+                        |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
+                    let (ia, ib, id, ie) = (
+                        inverse(e.clone())?,
+                        inverse(-b.clone())?,
+                        inverse(-d.clone())?,
+                        inverse(a.clone())?,
+                    );
+                    let pull = |point: &hypercurve::Point2| {
+                        let (px, py) = (point.x() - &x, point.y() - &y);
+                        hypercurve::Point2::new(&ia * &px + &ib * &py, &id * &px + &ie * &py)
+                    };
+                    let mut segments = Vec::with_capacity(arcs.len());
+                    for (curve, arc) in path.curves().iter().zip(arcs) {
+                        segments.push(match (arc, curve.geometry()) {
+                            (Some(arc), _) => hypercurve::Segment2::Arc(arc),
+                            (None, Some(hypercurve::CurveGeometry2::Line(line))) => {
+                                hypercurve::Segment2::Line(
+                                    hypercurve::LineSeg2::try_new(
+                                        pull(line.start()),
+                                        pull(line.end()),
+                                    )
+                                    .map_err(|_| GeometryError::UnsupportedMeasurement)?,
+                                )
+                            }
+                            _ => return Err(GeometryError::UnsupportedMeasurement.into()),
+                        });
+                    }
+                    let area =
+                        contour_area(segments).ok_or(GeometryError::UnsupportedMeasurement)?;
+                    Ok(area * determinant.abs())
+                };
+                for cap in &graph.caps {
+                    // The cap region's area is its outer area minus its holes.
+                    let mut area = path_area(&cap.boundary)?;
+                    for hole in &cap.holes {
+                        area -= path_area(hole)?;
+                    }
+                    let map = |form: &Vector3, axis: &Vector3| {
+                        (axis.dot(form) / &determinant).map_err(GeometryError::Numeric)
+                    };
+                    let jacobian = map(&a_form, &cap.u)? * map(&b_form, &cap.v)?
+                        - map(&a_form, &cap.v)? * map(&b_form, &cap.u)?;
+                    volume += determinant.clone().abs() * &cap.height * (area * jacobian).abs();
+                }
+                return Ok(volume);
+            }
             if let Some(loft) = &self.data.certified_lofts[id.index()] {
                 let jacobian = loft.u.dot(&loft.v.cross(&loft.height_axis)).abs();
                 return Ok(jacobian * &loft.parameter_volume);
@@ -882,4 +1057,83 @@ fn area_magnitude(signed: Real) -> Real {
         } => signed,
         PredicateOutcome::Unknown { .. } => signed.abs(),
     }
+}
+
+/// The exact endpoints of a straight pcurve: a native line segment, or a
+/// polynomial branch whose defining equation has total degree one (an exact
+/// line), with endpoints from their scalar views or certified from that
+/// equation. `None` for other curves.
+impl ArenaModel {
+    /// The oriented UV trims of a tensor face for exact Green integrals:
+    /// straight trims, circular trims (native views of circle branches) and
+    /// polynomial-graph trims; other trims are typed unsupported.
+    fn face_graph_trims(
+        &self,
+        face: &Face,
+    ) -> Result<Vec<Vec<crate::geometry::GraphTrim>>, GeometryError> {
+        let mut loops = Vec::new();
+        for wire in face.boundary_wires() {
+            let mut segments = Vec::new();
+            for use_id in &self.wire(*wire).expect("validated wire").edge_uses {
+                let edge_use = self.edge_use(*use_id).expect("validated edge use");
+                let pcurve = self.pcurve(edge_use.pcurve).expect("validated pcurve");
+                segments.push(match straight_pcurve_segment(pcurve.curve())? {
+                    Some((start, end)) => crate::geometry::GraphTrim::Line(start, end),
+                    None => match crate::geometry::circular_arc_of(pcurve.curve())? {
+                        Some(arc) => crate::geometry::GraphTrim::Arc(arc),
+                        None => crate::geometry::GraphTrim::Graph(
+                            crate::geometry::polynomial_graph_piece(pcurve.curve())?
+                                .ok_or(GeometryError::UnsupportedMeasurement)?,
+                        ),
+                    },
+                });
+            }
+            loops.push(segments);
+        }
+        Ok(loops)
+    }
+}
+
+fn straight_pcurve_segment(
+    curve: &Curve2,
+) -> Result<Option<(CurvePoint2, CurvePoint2)>, GeometryError> {
+    if let Some(hypercurve::CurveGeometry2::Line(line)) = curve.geometry() {
+        return Ok(Some((
+            CurvePoint2::new(line.start().x().clone(), line.start().y().clone()),
+            CurvePoint2::new(line.end().x().clone(), line.end().y().clone()),
+        )));
+    }
+    let Some(branch) = curve.polynomial_branch() else {
+        return Ok(None);
+    };
+    if branch.image_transform().is_some() || !branch.rational_maps().is_empty() {
+        return Ok(None);
+    }
+    let equation = branch.topology().geometric_equation();
+    for (i, row) in equation.coefficients.iter().enumerate() {
+        for (j, coefficient) in row.iter().enumerate() {
+            if i + j > 1
+                && decided_model_order(compare_reals(
+                    coefficient,
+                    &Real::zero(),
+                    crate::STRICT_PREDICATES,
+                ))? != std::cmp::Ordering::Equal
+            {
+                return Ok(None);
+            }
+        }
+    }
+    let scalar = |point: hypercurve::CurvePoint2| -> Result<Option<CurvePoint2>, GeometryError> {
+        if let Some(coordinates) = point.coordinates() {
+            return Ok(Some(CurvePoint2::new(
+                coordinates.x().clone(),
+                coordinates.y().clone(),
+            )));
+        }
+        crate::geometry::certified_scalar_point(&point, equation)
+    };
+    let (Some(start), Some(end)) = (scalar(curve.start())?, scalar(curve.end())?) else {
+        return Ok(None);
+    };
+    Ok(Some((start, end)))
 }

@@ -61,6 +61,10 @@ impl Curve3 {
                     Self::from_planar_image(image.restricted_to(&range)?)
                         .map(|curve| curve.retaining_parameterization_of(self))
                 }
+                CurveGeometry3::TensorImage(image) => {
+                    Self::from_tensor_image(image.restricted_to(&range)?)
+                        .map(|curve| curve.retaining_parameterization_of(self))
+                }
                 CurveGeometry3::AffineImage(image) => Self::affine_image(
                     image.source.restrict_source(range)?,
                     image.transform.clone(),
@@ -159,23 +163,89 @@ impl PlanarCurve3 {
         let equal = |a: &Real, b: &Real| -> GeometryResult<bool> {
             Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Equal)
         };
+        // A native line has an affine world image even when the two plane
+        // frames intersect rather than coincide. Compare its complete
+        // coefficient law, not samples or values outside an active trim.
+        let affine_line = |image: &Self| {
+            let source = image
+                .source
+                .source_restriction()
+                .map_or(&image.source, |(source, _, _)| source);
+            let Some(CurveGeometry2::Line(line)) = source.geometry() else {
+                return None;
+            };
+            let (dx, dy) = line.delta();
+            let direction = image.u.clone() * dx + image.v.clone() * dy;
+            Some((
+                image.origin.clone()
+                    + image.u.clone() * line.start().x()
+                    + image.v.clone() * line.start().y()
+                    + direction.clone() * &image.source_offset,
+                direction * &image.source_scale,
+            ))
+        };
+        if let (Some((first_origin, first_direction)), Some((second_origin, second_direction))) =
+            (affine_line(self), affine_line(other))
+        {
+            for (a, b) in [
+                &first_origin.x,
+                &first_origin.y,
+                &first_origin.z,
+                &first_direction[0],
+                &first_direction[1],
+                &first_direction[2],
+            ]
+            .into_iter()
+            .zip([
+                &second_origin.x,
+                &second_origin.y,
+                &second_origin.z,
+                &second_direction[0],
+                &second_direction[1],
+                &second_direction[2],
+            ]) {
+                if !equal(a, b)? {
+                    return Ok(false);
+                }
+            }
+            return Ok(true);
+        }
         if !equal(&self.source_scale, &other.source_scale)?
             || !equal(&self.source_offset, &other.source_offset)?
         {
+            // A point-ordered chord reverses its order chart as well as its
+            // traversal. Transport the proved reversal map before comparing
+            // whole source definitions; matching endpoints is insufficient.
+            let (scale, offset) = other.source.reversal_parameter_affine_map()?;
+            let source_scale = &scale * &other.source_scale;
+            let source_offset = scale * &other.source_offset + offset;
+            if equal(&self.source_scale, &source_scale)?
+                && equal(&self.source_offset, &source_offset)?
+            {
+                return self.parameterization_equals(&Self {
+                    source: other.source.reversed()?,
+                    source_scale,
+                    source_offset,
+                    origin: other.origin.clone(),
+                    u: other.u.clone(),
+                    v: other.v.clone(),
+                });
+            }
             return Ok(false);
         }
-        let definitions_equal = |a: &Curve2, b: &Curve2| {
+        let definitions_equal = |a: &Curve2, b: &Curve2| -> GeometryResult<bool> {
             // Source restrictions and their traversal retain the authored
             // parameter chart. The caller checks the requested domain and
             // endpoint map; complete carrier equality is independent of a
             // restriction's traversal flag and selected interval.
             let a = a.source_restriction().map_or(a, |(source, _, _)| source);
             let b = b.source_restriction().map_or(b, |(source, _, _)| source);
-            a == b
+            Ok(a == b
+                || a.has_same_point_ordered_line_support_chart(b)?
                 || matches!((a.polynomial_branch(), b.polynomial_branch()),
                     (Some(a), Some(b)) if a.has_same_parameterization(b))
                 || matches!((a.analytic_parallel(), b.analytic_parallel()),
-                (Some(a), Some(b)) if a.parallel() == b.parallel())
+                (Some(a), Some(b)) if a.parallel() == b.parallel()))
         };
         let mut frame_equal = true;
         for (a, b) in [
@@ -207,7 +277,7 @@ impl PlanarCurve3 {
             }
         }
         if frame_equal {
-            return Ok(definitions_equal(&self.source, &other.source));
+            return definitions_equal(&self.source, &other.source);
         }
         let normal = self.u.cross(&self.v);
         for vector in [
@@ -241,7 +311,25 @@ impl PlanarCurve3 {
             origin.y,
         )?;
         let projected = other.source.transform_similarity(&transform)?;
-        Ok(definitions_equal(&self.source, &projected))
+        if other
+            .source
+            .parameter_domain()
+            .start()
+            .point_ordered_line_definition()
+            .is_some()
+            && (!other
+                .source
+                .has_same_point_ordered_line_support_chart(&projected)?
+                || !other.source.start().coincides_with(&projected.start())?
+                || !other.source.end().coincides_with(&projected.end())?)
+        {
+            // Equal world images do not identify point-order parameters in
+            // different UV frames. Without explicit parameter transport, only
+            // a pointwise-fixed line (proved by affine action on its two
+            // distinct endpoints) can reuse the original geometric parameters.
+            return Ok(false);
+        }
+        definitions_equal(&self.source, &projected)
     }
 
     pub(super) fn parameter(&self, s: &Real) -> Real {
@@ -266,6 +354,98 @@ impl PlanarCurve3 {
 
     pub(super) fn point_at(&self, s: &Real) -> GeometryResult<Point3> {
         Ok(self.lift(&represented_curve_point(&self.source, &self.parameter(s))?))
+    }
+
+    /// Scalar evaluation at a possibly selected spatial parameter. A selected
+    /// point of a polynomial-branch source whose image is a certified
+    /// similarity view is certified exactly against the branch's defining
+    /// polynomial carried into the image chart, then lifted. Other selected
+    /// points have no scalar view.
+    pub(super) fn certified_point(&self, s: &Parameter) -> GeometryResult<Point3> {
+        use hypersolve::BivariatePolynomial;
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_add, bivariate_multiply, bivariate_scale,
+        };
+        if let Some(value) = s.try_real() {
+            match self.point_at(value) {
+                // A scalar parameter can still select a point without a
+                // scalar view; certify it below.
+                Err(GeometryError::UnsupportedPcurveContour) => {}
+                other => return other,
+            }
+        }
+        let mapped = s.affine_image(&self.source_scale, &self.source_offset)?;
+        let selected = self.source.point_at(&mapped.curve_parameter())?;
+        if let Some(coordinates) = selected.coordinates() {
+            return Ok(self.lift(coordinates));
+        }
+        let original = self
+            .source
+            .source_restriction()
+            .map_or(&self.source, |(original, _, _)| original);
+        let Some(branch) = original.polynomial_branch() else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        if let Some(image) = certified_branch_point(&selected, branch)? {
+            return Ok(self.lift(&image));
+        }
+        // The composed-equation fallback is used only for similarity views.
+        let Some([a, b, d, e, x, y]) = branch
+            .affine_view()
+            .filter(|_| branch.similarity_view().is_some())
+        else {
+            return Err(GeometryError::UnrepresentableParameter);
+        };
+        let defining = branch.topology().geometric_equation();
+        // F(T^-1(X, Y)) for the exact affine view T, composed exactly.
+        let equation = {
+            // F(T^-1(X, Y)) with T(p) = M p + t, so T^-1(q) = M^-1 (q - t).
+            let (a, b, d, e, x, y) = (&a, &b, &d, &e, &x, &y);
+            let determinant = a * e - b * d;
+            let inverse = |value: Real| (value / &determinant).map_err(GeometryError::Numeric);
+            let p1 = inverse(e.clone())?;
+            let q1 = inverse(-b.clone())?;
+            let p2 = inverse(-d.clone())?;
+            let q2 = inverse(a.clone())?;
+            let r1 = -(&p1 * x + &q1 * y);
+            let r2 = -(&p2 * x + &q2 * y);
+            let first = BivariatePolynomial::new(vec![vec![r1, q1], vec![p1]]);
+            let second = BivariatePolynomial::new(vec![vec![r2, q2], vec![p2]]);
+            let powers = |base: &BivariatePolynomial, count: usize| {
+                let mut powers = vec![BivariatePolynomial::new(vec![vec![Real::one()]])];
+                for _ in 1..count {
+                    let next = bivariate_multiply(powers.last().expect("nonempty"), base);
+                    powers.push(next);
+                }
+                powers
+            };
+            let rows = defining.coefficients.len().max(1);
+            let columns = defining
+                .coefficients
+                .iter()
+                .map(Vec::len)
+                .max()
+                .unwrap_or(1)
+                .max(1);
+            let first_powers = powers(&first, rows);
+            let second_powers = powers(&second, columns);
+            let mut composed = BivariatePolynomial::new(Vec::new());
+            for (i, row) in defining.coefficients.iter().enumerate() {
+                for (j, coefficient) in row.iter().enumerate() {
+                    composed = bivariate_add(
+                        &composed,
+                        &bivariate_scale(
+                            bivariate_multiply(&first_powers[i], &second_powers[j]),
+                            coefficient,
+                        ),
+                    );
+                }
+            }
+            composed
+        };
+        let point = super::certified_scalar_point(&selected, &equation)?
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        Ok(self.lift(&point))
     }
 
     pub(super) fn derivative_at(
@@ -387,21 +567,22 @@ impl PlanarCurve3 {
         })
     }
 
-    pub(super) fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
+    pub(super) fn parameters_of(
+        &self,
+        point: &GeometricPoint3,
+    ) -> GeometryResult<CurveParameterLocation> {
         let normal = self.u.cross(&self.v);
-        if decided_order(compare_reals(
-            &normal.dot(&(point - &self.origin)),
-            &Real::zero(),
-            crate::STRICT_PREDICATES,
-        ))? != Ordering::Equal
+        if point.compare_linear_form(&normal, &normal.dot(&Vector3::from(self.origin.clone())))?
+            != Ordering::Equal
         {
             return Ok(CurveParameterLocation::None);
         }
-        let uv = project_point_to_plane_frame(&self.origin, &self.u, &self.v, point)?;
-        let locations = self
-            .source
-            .point_locations(&CurvePoint2::new(uv.x, uv.y).into())?;
+        let uv = point.projected_to_plane_frame(&self.origin, &self.u, &self.v)?;
+        let locations = self.source.point_locations(&uv)?;
         let locations = match locations {
+            hypercurve::CurvePointLocations2::Components(_) => {
+                return Err(GeometryError::UnsupportedParameterLocation);
+            }
             hypercurve::CurvePointLocations2::EntireCurve => {
                 return Ok(CurveParameterLocation::EntireDomain);
             }
@@ -442,4 +623,65 @@ impl PlanarCurve3 {
             ..self.clone()
         })
     }
+}
+
+/// Certifies a selected point of a mapped polynomial branch: the unmapped
+/// source point is certified in the branch's own chart, where its selection
+/// was made, carried exactly through the composed affine view or, for other
+/// maps, through every retained rational map and the final similarity, and
+/// accepted only when proved equal to the selected image.
+pub(crate) fn certified_branch_point(
+    selected: &hypercurve::CurvePoint2,
+    branch: &hypercurve::PolynomialCurveBranch2,
+) -> GeometryResult<Option<CurvePoint2>> {
+    let mut base = selected.clone();
+    while let Ok(
+        hypercurve::CurvePointDefinition2::RationalImage { source, .. }
+        | hypercurve::CurvePointDefinition2::Similarity { source, .. },
+    ) = base.definition()
+    {
+        base = source;
+    }
+    let image = if let Some([a, b, d, e, x, y]) = branch.affine_view() {
+        let Some(source_point) =
+            super::certified_scalar_point(&base, branch.topology().geometric_equation())?
+        else {
+            return Ok(None);
+        };
+        let (px, py) = (source_point.x(), source_point.y());
+        CurvePoint2::new(&a * px + &b * py + x, &d * px + &e * py + y)
+    } else if branch.rational_maps().is_empty() {
+        return Ok(None);
+    } else {
+        let Some(source_point) =
+            super::certified_scalar_point(&base, branch.topology().geometric_equation())?
+        else {
+            return Ok(None);
+        };
+        let mut image = hypercurve::CurvePoint2::from(source_point);
+        for map in branch.rational_maps() {
+            image = image.rational_image(map)?;
+        }
+        let Some(point) = image.coordinates() else {
+            return Ok(None);
+        };
+        let (px, py) = (point.x(), point.y());
+        match branch.image_transform() {
+            Some(transform) => {
+                let (a, b, d, e, x, y) = transform.affine_components();
+                CurvePoint2::new(a * px + b * py + x, d * px + e * py + y)
+            }
+            None => point.clone(),
+        }
+    };
+    let candidate: hypercurve::CurvePoint2 = image.clone().into();
+    let equal = [hypercurve::Axis2::X, hypercurve::Axis2::Y]
+        .into_iter()
+        .all(|axis| {
+            matches!(
+                selected.compare_coordinate(&candidate, axis),
+                Ok(std::cmp::Ordering::Equal)
+            )
+        });
+    Ok(equal.then_some(image))
 }

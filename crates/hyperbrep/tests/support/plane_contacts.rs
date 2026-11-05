@@ -957,7 +957,7 @@ pub fn plane_contacts_reject_poles_before_empty_or_contained_shortcuts() {
         ));
         finite.bounds().unwrap();
         let CurveParameterLocation::Parameters(endpoint) = finite
-            .parameters_of(&Point3::new(1.into(), 1.into(), 0.into()))
+            .parameters_of(Point3::new(1.into(), 1.into(), 0.into()))
             .unwrap()
         else {
             panic!("finite endpoint inverse");

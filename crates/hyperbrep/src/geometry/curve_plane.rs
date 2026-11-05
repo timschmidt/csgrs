@@ -59,6 +59,7 @@ pub(super) fn intersect_rational_bezier_plane(
     )?);
     let mut points = Vec::new();
     match projected.point_locations(&CurvePoint2::new(Real::zero(), Real::zero()).into())? {
+        CurvePointLocations2::Components(_) => return Err(GeometryError::UnsupportedIntersection),
         CurvePointLocations2::EntireCurve => return Ok(CurveSurfaceIntersection::Contained),
         CurvePointLocations2::Locations(locations) => {
             for location in locations {
@@ -296,7 +297,7 @@ pub(super) fn intersect_planar_image_plane(
     assemble(curve, points, overlaps)
 }
 
-fn is_zero(value: &Real) -> GeometryResult<bool> {
+pub(super) fn is_zero(value: &Real) -> GeometryResult<bool> {
     Ok(decided_order(compare_reals(
         value,
         &Real::zero(),
@@ -304,7 +305,7 @@ fn is_zero(value: &Real) -> GeometryResult<bool> {
     ))? == Ordering::Equal)
 }
 
-fn classify_derivative(sign: RealSign) -> CurveSurfaceContactKind {
+pub(super) fn classify_derivative(sign: RealSign) -> CurveSurfaceContactKind {
     if sign == RealSign::Zero {
         CurveSurfaceContactKind::Repeated
     } else {
@@ -314,7 +315,7 @@ fn classify_derivative(sign: RealSign) -> CurveSurfaceContactKind {
 
 /// Normalize in the original source chart. Distinct visits to one spatial
 /// point remain distinct parameters. Coincident ranges own their endpoints.
-fn assemble(
+pub(super) fn assemble(
     curve: &Curve3,
     points: Vec<CurveSurfacePoint>,
     overlaps: Vec<ParameterRange>,

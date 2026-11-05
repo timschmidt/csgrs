@@ -202,8 +202,8 @@ pub(crate) use curve_intersection::CurveIntersectionCandidates2;
 pub use curve_intersection::{
     CurveIntersectionContact2, CurveIntersectionOverlap2, CurveIntersectionPairBlocker2,
     CurveIntersectionPairBlockerKind2, CurveIntersectionParameterComponent2,
-    CurveIntersectionResult2, CurveIntersectionTopology2, CurveLocation2, CurveOverlapOrientation2,
-    CurveParameterSet2, CurvePointLocations2,
+    CurveIntersectionResult2, CurveIntersectionTopology2, CurveLocation2, CurveLocationComponent2,
+    CurveOverlapOrientation2, CurveParameterSet2, CurvePointLocations2,
 };
 pub use curve_native_image::CurveNativeImage2;
 pub use curve_native_segment::CurveNativeSegment2;

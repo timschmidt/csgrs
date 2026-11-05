@@ -41,6 +41,9 @@ fn point_parameters(
     .value
     {
         hypercurve::CurvePointLocations2::EntireCurve => None,
+        hypercurve::CurvePointLocations2::Components(_) => {
+            panic!("expected isolated visits or the entire curve")
+        }
         hypercurve::CurvePointLocations2::Locations(locations) => Some(
             locations
                 .iter()

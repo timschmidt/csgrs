@@ -7,6 +7,7 @@ mod face;
 mod partition;
 mod results;
 mod surface;
+mod surface_loop;
 mod transaction;
 
 pub use results::*;

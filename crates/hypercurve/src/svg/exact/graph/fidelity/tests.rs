@@ -32,14 +32,14 @@ fn recipe(
         let flag = OnceLock::new();
         flag.set(qualified.unwrap_or(*old.qualified.get().unwrap()))
             .unwrap();
-        Arc::new(ParallelFidelityConstruction2 {
+        ParallelFidelityConstruction2::new(ParallelFidelityConstructionData2 {
             path: old.path.clone(),
             distance: old.distance.clone(),
             max_verification_depth: depth_request.unwrap_or(old.max_verification_depth),
             qualified: flag,
         })
     } else {
-        Arc::clone(&receipt.source.construction)
+        receipt.source.construction.clone()
     };
     let source = writer.fidelity_construction(&construction).unwrap();
     let candidate = writer

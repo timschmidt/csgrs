@@ -73,7 +73,7 @@ pub(super) fn axial_support_traces(
         for interval in intervals {
             result.push(
                 support
-                    .subcurve(&interval.start, &interval.end)?
+                    .trimmed_interval(&interval.start, &interval.end)?
                     .with_boundary_contacts(
                         operand,
                         interval.start_contacts,

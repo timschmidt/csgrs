@@ -6,6 +6,10 @@ Changes since 0.20.1; versions 0.21 and 0.22 were not published. Caller-facing
 migrations, including changed serialized output, are listed in
 [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
 
+- BRep integration preserves selected trace endpoints and affine iso-line
+  charts through full boundary-image validation and exact trace deduplication.
+  Storage refusal now has a distinct retryable uncertainty/error category,
+  including C status 11 and JS/TS `resource_unavailable`; see MIGRATIONS.
 - `Csg` is a modeling session. It selects the predicate policy once and reports
   the weakest certainty of every operation in the chain, so the convenient path
   no longer discards receipts. Its methods accept ordinary numbers through the

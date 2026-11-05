@@ -35,7 +35,7 @@ fn controls() -> Vec<Point3> {
 
 fn root(curve: &Curve3) -> Parameter {
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("expected a selected root");
     };

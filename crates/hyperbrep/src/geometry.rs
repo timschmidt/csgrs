@@ -16,8 +16,17 @@ use crate::{Parameter, ParameterRange};
 mod affine_image;
 mod analytic;
 mod axial_lines;
+mod cone_atlas;
 mod conical_revolution;
+mod curve_curve;
+mod curve_extrusion;
+mod curve_implicit;
 mod curve_plane;
+mod curve_revolution;
+mod curve_tensor_image;
+mod cylinder_atlas;
+mod implicit_tensor;
+mod line_tensor;
 mod location;
 mod pcurve;
 mod periodic_charts;
@@ -34,6 +43,14 @@ mod rotation;
 mod selected_pcurves;
 mod spline;
 mod surface_point;
+mod tensor_graph;
+pub(crate) use tensor_graph::{
+    GraphTrim, circular_arc_of, polynomial_graph_piece, source_circular_arc,
+};
+mod tensor_image;
+mod tensor_image_location;
+pub(crate) use tensor_image::certified_scalar_point;
+mod torus_atlas;
 mod transform;
 mod translation;
 mod vector;
@@ -41,6 +58,7 @@ pub(crate) use affine_image::AffineCurve3;
 pub use affine_image::AffineCurveGeometry;
 pub use analytic::{CircularArcGeometry, ConeGeometry, CylinderGeometry, TorusGeometry};
 pub use conical_revolution::{ConeBranch, ConicalRevolution, ConicalRevolutionChart};
+pub use curve_curve::{CurveCurveIntersection, CurveCurvePoint};
 use curve_plane::{
     intersect_nurbs_plane, intersect_planar_image_plane, intersect_rational_bezier_plane,
 };
@@ -49,13 +67,15 @@ use location::{
     locate_rational_bezier_parameters,
 };
 pub use planar_image::PlanarCurveGeometry;
-pub(crate) use planar_image::{PlanarCurve3, represented_curve_point};
+pub(crate) use planar_image::{PlanarCurve3, certified_branch_point, represented_curve_point};
 use planes::intersect_planes;
 pub use point::{Axis, GeometricPoint3};
 pub(crate) use rotation::RotationCurve3;
 pub use rotation::RotationCurveGeometry;
 use rotation::rotation_transform;
 pub use spline::{NurbsCurveGeometry, RationalBezierCurveGeometry};
+pub(crate) use tensor_image::TensorCurve3;
+pub use tensor_image::TensorCurveGeometry;
 pub(crate) use transform::TransformMetric;
 pub(crate) use translation::TranslationCurve3;
 pub use translation::TranslationCurveGeometry;
@@ -147,6 +167,8 @@ pub enum Curve3Kind {
     Translation,
     /// Exact affine lift of a retained planar curve.
     PlanarImage,
+    /// Exact image of a retained UV curve on a rational Bézier tensor.
+    TensorImage,
     /// Finite line segment.
     Line,
     /// Arbitrary-degree rational Bézier curve.
@@ -304,15 +326,19 @@ impl Pcurve {
 
     /// Recovers every incident public parameter without replacing the native
     /// chart or discarding selected-root authority.
-    pub(crate) fn parameters_at_point(&self, point: &Point2) -> GeometryResult<Vec<Parameter>> {
+    pub(crate) fn parameters_at_point(
+        &self,
+        point: &hypercurve::CurvePoint2,
+    ) -> GeometryResult<Vec<Parameter>> {
         crate::context::strict(|| {
-            let point = CurvePoint2::new(point.x.clone(), point.y.clone());
-            if let Some(line) = self.line_segment() {
+            if let Some(line) = self.line_segment()
+                && let Some(point) = point.coordinates()
+            {
                 // A native strict side proof can exclude unrelated source
                 // uses before constructing their rational incidence equations.
                 // On-line and blocked classifications still use the complete
                 // native inverse, including finite domains and root identity.
-                match line.classify_point(&point) {
+                match line.classify_point(point) {
                     Ok(hypercurve::LineSide::Left | hypercurve::LineSide::Right) => {
                         return Ok(Vec::new());
                     }
@@ -321,12 +347,13 @@ impl Pcurve {
                     Err(error) => return Err(error.into()),
                 }
             }
-            match self.curve.point_locations(&point.into())? {
+            match self.curve.point_locations(point)? {
                 hypercurve::CurvePointLocations2::Locations(locations) => locations
                     .iter()
                     .map(|location| Parameter::from_curve(&location.parameter()?))
                     .collect(),
-                hypercurve::CurvePointLocations2::EntireCurve => {
+                hypercurve::CurvePointLocations2::EntireCurve
+                | hypercurve::CurvePointLocations2::Components(_) => {
                     Err(GeometryError::UnsupportedPcurveContour)
                 }
             }
@@ -387,6 +414,7 @@ enum CurveGeometry3 {
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
+    TensorImage(Box<TensorCurve3>),
     Line(Line3),
     RationalBezier(RationalBezier3),
     Nurbs(NurbsCurve3),
@@ -400,6 +428,7 @@ pub(crate) enum Curve3ExactData {
     Rotation(Box<RotationCurve3>),
     Translation(Box<TranslationCurve3>),
     PlanarImage(Box<PlanarCurve3>),
+    TensorImage(Box<TensorCurve3>),
     Line(Box<Line3ExactData>),
     RationalBezier {
         control_points: Vec<Point3>,
@@ -723,6 +752,7 @@ impl Curve3 {
             CurveGeometry3::Rotation(_) => Curve3Kind::Rotation,
             CurveGeometry3::Translation(_) => Curve3Kind::Translation,
             CurveGeometry3::PlanarImage(_) => Curve3Kind::PlanarImage,
+            CurveGeometry3::TensorImage(_) => Curve3Kind::TensorImage,
             CurveGeometry3::Line(_) => Curve3Kind::Line,
             CurveGeometry3::RationalBezier(_) => Curve3Kind::RationalBezier,
             CurveGeometry3::Nurbs(_) => Curve3Kind::Nurbs,
@@ -813,6 +843,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
@@ -841,6 +872,7 @@ impl Curve3 {
                 CurveGeometry3::Rotation(rotation) => rotation.bounds(),
                 CurveGeometry3::Translation(line) => line.bounds(),
                 CurveGeometry3::PlanarImage(image) => image.bounds(),
+                CurveGeometry3::TensorImage(image) => image.bounds(),
                 CurveGeometry3::Line(line) => {
                     exact_point_bounds(&[line.start.clone(), line.end.clone()])
                 }
@@ -915,6 +947,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => None,
         };
         if let Some(controls) = controls {
@@ -1008,6 +1041,7 @@ impl Curve3 {
                     .cloned()
                     .ok_or(GeometryError::UnrepresentablePoint),
                 CurveGeometry3::PlanarImage(image) => image.point_at(parameter),
+                CurveGeometry3::TensorImage(image) => image.point_at(parameter),
                 CurveGeometry3::Line(line) => {
                     if parameter == self.domain().represented_start()? {
                         return Ok(line.start.clone());
@@ -1085,6 +1119,7 @@ impl Curve3 {
                         .affine_image(&image.transform);
                 }
                 CurveGeometry3::PlanarImage(image) => return image.derivative_at(parameter, order),
+                CurveGeometry3::TensorImage(image) => return image.derivative_at(parameter, order),
                 CurveGeometry3::Translation(line) => {
                     return Ok(GeometricVector3::from_coordinates(if order == 1 {
                         line.displacement.clone()
@@ -1187,12 +1222,29 @@ impl Curve3 {
 
     /// Evaluates the curve at its exact domain start.
     pub fn start(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().represented_start()?))
+        crate::context::strict(|| {
+            if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                // A selected end whose UV preimage is certified scalar.
+                return image.certified_point(self.domain().start());
+            }
+            if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().start());
+            }
+            self.evaluate_real(self.domain().represented_start()?)
+        })
     }
 
     /// Evaluates the curve at its exact domain end.
     pub fn end(&self) -> GeometryResult<Point3> {
-        crate::context::strict(|| self.evaluate_real(self.domain().represented_end()?))
+        crate::context::strict(|| {
+            if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().end());
+            }
+            if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
+                return image.certified_point(self.domain().end());
+            }
+            self.evaluate_real(self.domain().represented_end()?)
+        })
     }
 
     pub(crate) fn line_endpoints(&self) -> Option<(&Point3, &Point3)> {
@@ -1205,6 +1257,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => None,
         }
     }
@@ -1248,6 +1301,7 @@ impl Curve3 {
             | CurveGeometry3::AffineImage(_)
             | CurveGeometry3::Rotation(_)
             | CurveGeometry3::Translation(_)
+            | CurveGeometry3::TensorImage(_)
             | CurveGeometry3::PlanarImage(_) => Ok(None),
         }
     }
@@ -1258,6 +1312,7 @@ impl Curve3 {
             CurveGeometry3::Rotation(rotation) => Curve3ExactData::Rotation(rotation.clone()),
             CurveGeometry3::Translation(line) => Curve3ExactData::Translation(line.clone()),
             CurveGeometry3::PlanarImage(image) => Curve3ExactData::PlanarImage(image.clone()),
+            CurveGeometry3::TensorImage(image) => Curve3ExactData::TensorImage(image.clone()),
             CurveGeometry3::Line(line) => Curve3ExactData::Line(Box::new(Line3ExactData {
                 start: line.start.clone(),
                 end: line.end.clone(),
@@ -1307,6 +1362,7 @@ impl Curve3 {
             Curve3ExactData::Rotation(rotation) => Self::from_rotation(*rotation),
             Curve3ExactData::Translation(line) => Self::translation(line.origin, line.displacement),
             Curve3ExactData::PlanarImage(image) => Self::from_planar_image(*image),
+            Curve3ExactData::TensorImage(image) => Self::from_tensor_image(*image),
             Curve3ExactData::Line(data) => Self::line(data.start, data.end),
             Curve3ExactData::RationalBezier {
                 control_points,
@@ -1379,6 +1435,11 @@ impl Curve3 {
                 Self::translation(line.point_at(&Real::one())?, -line.displacement.clone())
             }
             CurveGeometry3::PlanarImage(image) => Self::from_planar_image(PlanarCurve3 {
+                source_scale: -&image.source_scale,
+                source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
+                ..(**image).clone()
+            }),
+            CurveGeometry3::TensorImage(image) => Self::from_tensor_image(TensorCurve3 {
                 source_scale: -&image.source_scale,
                 source_offset: &image.source_offset + &image.source_scale * self.reversal_pivot(),
                 ..(**image).clone()
@@ -1482,6 +1543,10 @@ impl Curve3 {
                     image.restricted(self.domain().represented_start()?, parameter)?,
                     image.restricted(parameter, self.domain().represented_end()?)?,
                 )),
+                CurveGeometry3::TensorImage(image) => Ok((
+                    image.restricted(self.domain().represented_start()?, parameter)?,
+                    image.restricted(parameter, self.domain().represented_end()?)?,
+                )),
                 CurveGeometry3::Line(line) => {
                     let split = line.start.lerp(&line.end, parameter);
                     Ok((
@@ -1581,6 +1646,7 @@ impl Curve3 {
                 CurveGeometry3::Rotation(rotation) => rotation.restricted(start, end),
                 CurveGeometry3::Translation(line) => line.restricted(start, end),
                 CurveGeometry3::PlanarImage(image) => image.restricted(start, end),
+                CurveGeometry3::TensorImage(image) => image.restricted(start, end),
                 CurveGeometry3::Line(_) => {
                     Self::line(self.evaluate_real(start)?, self.evaluate_real(end)?)
                 }
@@ -1646,26 +1712,69 @@ impl Curve3 {
 
     /// Locates every certified exact parameter whose image is `point`.
     ///
+    /// Accepts authored points and retained selected points. Selected inputs use
+    /// complete native-line, rational Bézier, NURBS, admitted tensor-source,
+    /// planar-source and affine-image inverses where available. Other selected input families
+    /// report unsupported parameter location.
     /// Rational Bézier and NURBS queries retain selected algebraic roots even
     /// without a stored `Real` view. All three coordinates must be certified;
     /// a planar projection alone is not spatial incidence. Self-intersections
     /// may return more than one parameter. Partly constant NURBS preimages
     /// remain an explicit unsupported result, never an incomplete finite set.
-    pub fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
-        crate::context::strict(|| match &self.data.geometry {
-            CurveGeometry3::AffineImage(image) => image.parameters_of(point),
-            CurveGeometry3::Rotation(_) | CurveGeometry3::Translation(_) => {
-                Err(GeometryError::UnsupportedParameterLocation)
+    pub fn parameters_of(
+        &self,
+        point: impl Into<GeometricPoint3>,
+    ) -> GeometryResult<CurveParameterLocation> {
+        let point = point.into();
+        crate::context::strict(|| {
+            if let CurveGeometry3::AffineImage(image) = &self.data.geometry {
+                return image.parameters_of(&point);
             }
-            CurveGeometry3::PlanarImage(image) => image.parameters_of(point),
-            CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
-            CurveGeometry3::RationalBezier(curve) => {
-                locate_rational_bezier_parameters(self, curve, point)
+            if let CurveGeometry3::PlanarImage(image) = &self.data.geometry {
+                return image.parameters_of(&point);
             }
-            CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
-                locate_ellipse_arc_parameters(self, arc, point)
+            if let CurveGeometry3::RationalBezier(curve) = &self.data.geometry {
+                return locate_rational_bezier_parameters(self, curve, &point);
             }
-            CurveGeometry3::Nurbs(curve) => locate_nurbs_parameters(curve, point),
+            if let CurveGeometry3::Nurbs(curve) = &self.data.geometry {
+                return locate_nurbs_parameters(curve, &point);
+            }
+            if let CurveGeometry3::TensorImage(image) = &self.data.geometry {
+                if let Some(coordinates) = point.try_coordinates() {
+                    match image.parameters_of(coordinates) {
+                        Err(GeometryError::UnsupportedParameterLocation) => {}
+                        result => return result,
+                    }
+                }
+                return image.mapped_parameters_of(self, &point);
+            }
+            if point.try_coordinates().is_none() {
+                return match &self.data.geometry {
+                    CurveGeometry3::Line(line) => self.selected_line_parameters(line, &point),
+                    _ => Err(GeometryError::UnsupportedParameterLocation),
+                };
+            }
+            let point = point
+                .try_coordinates()
+                .expect("authored point handled above");
+            match &self.data.geometry {
+                CurveGeometry3::AffineImage(_) => {
+                    unreachable!("retained affine query handled above")
+                }
+                CurveGeometry3::Rotation(_) | CurveGeometry3::Translation(_) => {
+                    Err(GeometryError::UnsupportedParameterLocation)
+                }
+                CurveGeometry3::PlanarImage(_) => {
+                    unreachable!("retained point query handled above")
+                }
+                CurveGeometry3::TensorImage(_) => unreachable!("retained query handled above"),
+                CurveGeometry3::Line(line) => locate_line_parameter(self, line, point),
+                CurveGeometry3::RationalBezier(_) => unreachable!("retained query handled above"),
+                CurveGeometry3::CircleArc(arc) | CurveGeometry3::EllipseArc(arc) => {
+                    locate_ellipse_arc_parameters(self, arc, point)
+                }
+                CurveGeometry3::Nurbs(_) => unreachable!("retained query handled above"),
+            }
         })
     }
 
@@ -1691,6 +1800,7 @@ impl Curve3 {
                 transform.transform_direction3(&line.displacement),
             ),
             CurveGeometry3::PlanarImage(image) => image.transformed(transform),
+            CurveGeometry3::TensorImage(image) => image.transformed(transform),
             CurveGeometry3::Line(line) => Self::line(
                 transform_point(transform, &line.start)?,
                 transform_point(transform, &line.end)?,
@@ -2054,6 +2164,22 @@ pub struct SurfaceIntersectionComponents {
     surface_curves: Vec<SurfaceIntersectionCurve>,
 }
 
+impl SurfaceSurfaceIntersection {
+    /// Whether some curve component carries no exact pcurve on either
+    /// operand, such as a piece sectioned through an internal exact atlas.
+    /// Face-trimming consumers need operand pcurves and cannot use it.
+    pub(crate) fn has_curve_without_operand_pcurves(&self) -> bool {
+        let unavailable =
+            |curve: &SurfaceIntersectionCurve| curve.image_certificates == [false, false];
+        match self {
+            Self::Curve(curve) => unavailable(curve),
+            Self::Curves(curves) => curves.iter().any(unavailable),
+            Self::Components(components) => components.surface_curves.iter().any(unavailable),
+            _ => false,
+        }
+    }
+}
+
 impl SurfaceIntersectionComponents {
     pub(crate) fn new(
         points: Vec<GeometricPoint3>,
@@ -2121,19 +2247,19 @@ pub struct SurfaceIntersectionCurve {
 #[derive(Clone, Debug)]
 pub(crate) struct SurfaceIntersectionBoundaryContact {
     curve: Curve3,
-    parameter: Real,
-    affine_parameter: Option<Real>,
-    pcurve_point: CurvePoint2,
-    spatial_point: Point3,
+    parameter: Parameter,
+    affine_parameter: Option<Parameter>,
+    pcurve_point: hypercurve::CurvePoint2,
+    spatial_point: GeometricPoint3,
 }
 
 impl SurfaceIntersectionBoundaryContact {
     pub(crate) fn new(
         curve: Curve3,
-        parameter: Real,
-        affine_parameter: Option<Real>,
-        pcurve_point: CurvePoint2,
-        spatial_point: Point3,
+        parameter: Parameter,
+        affine_parameter: Option<Parameter>,
+        pcurve_point: hypercurve::CurvePoint2,
+        spatial_point: GeometricPoint3,
     ) -> Self {
         Self {
             curve,
@@ -2148,22 +2274,22 @@ impl SurfaceIntersectionBoundaryContact {
         &self.curve
     }
 
-    pub(crate) const fn parameter(&self) -> &Real {
+    pub(crate) const fn parameter(&self) -> &Parameter {
         &self.parameter
     }
 
     /// The same spatial preimage before canonicalization, retained from a
     /// certified affine pcurve contact. All incident affine uses can consume
     /// this representative without reconstructing the contact's coordinates.
-    pub(crate) const fn affine_parameter(&self) -> Option<&Real> {
+    pub(crate) const fn affine_parameter(&self) -> Option<&Parameter> {
         self.affine_parameter.as_ref()
     }
 
-    pub(crate) const fn pcurve_point(&self) -> &CurvePoint2 {
+    pub(crate) const fn pcurve_point(&self) -> &hypercurve::CurvePoint2 {
         &self.pcurve_point
     }
 
-    pub(crate) const fn spatial_point(&self) -> &Point3 {
+    pub(crate) const fn spatial_point(&self) -> &GeometricPoint3 {
         &self.spatial_point
     }
 }
@@ -2555,6 +2681,17 @@ impl SurfaceIntersectionCurve {
         })
     }
 
+    pub(crate) fn trimmed_interval(
+        &self,
+        start: &Parameter,
+        end: &Parameter,
+    ) -> GeometryResult<Self> {
+        if let (Some(start), Some(end)) = (start.try_real(), end.try_real()) {
+            return self.subcurve(start, end);
+        }
+        self.restrict_source(ParameterRange::new(start.clone(), end.clone())?)
+    }
+
     /// Restricts the spatial curve and both exact pcurve mappings to one
     /// increasing represented parameter interval.
     pub fn subcurve(&self, start: &Real, end: &Real) -> GeometryResult<Self> {
@@ -2649,18 +2786,11 @@ fn orient_affine_surface_pcurve(
     if mapped_first.compare(target.end())? == Ordering::Equal
         && mapped_last.compare(target.start())? == Ordering::Equal
     {
-        // Authored reversal changes coefficients in a reflected chart;
-        // generated and source-restricted curves keep their existing chart.
-        if curve.geometry().is_some() {
-            let pivot = first
-                .scalar()
-                .ok_or(GeometryError::UnrepresentableParameter)?
-                + last
-                    .scalar()
-                    .ok_or(GeometryError::UnrepresentableParameter)?;
-            offset += &scale * pivot;
-            scale = -scale;
-        }
+        // Transport the source chart as well as traversal. Point-ordered
+        // chords use the order-dual chart without materializing coordinates.
+        let (reverse_scale, reverse_offset) = curve.reversal_parameter_affine_map()?;
+        offset += &scale * reverse_offset;
+        scale *= reverse_scale;
         curve = curve.reversed()?;
     } else if mapped_first.compare(target.start())? != Ordering::Equal
         || mapped_last.compare(target.end())? != Ordering::Equal
@@ -4148,6 +4278,11 @@ impl Surface {
                 image.v = rotate_vector(&image.v);
                 Curve3::from_planar_image(*image)
             }
+            Curve3ExactData::TensorImage(image) => image.transformed(&rotation_transform(
+                &surface.axis_origin,
+                &surface.axis,
+                angle,
+            )),
             Curve3ExactData::Line(line) => {
                 Curve3::line(rotate_point(&line.start), rotate_point(&line.end))
             }
@@ -4315,6 +4450,23 @@ impl Surface {
     }
 
     /// Intersects this surface with a finite spatial curve.
+    ///
+    /// Lines, positive-weight rational Bézier curves and NURBS against
+    /// spheres, cylinders, cones and ring tori return the complete contact set
+    /// of the exact homogenized carrier equation; roots without a scalar view
+    /// remain selected parameters. Cone roots on the opposite nappe are
+    /// rejected, and a coincident span crossing the cone apex fails typed.
+    /// The same curve families against an extrusion of a line, rational
+    /// Bézier or NURBS profile return complete contacts and coincident ranges
+    /// from the exact projection along the extrusion direction.
+    /// Full revolutions of such profiles use the exact quotient map to
+    /// squared axis distance and height, again returning complete contacts.
+    /// Tensor-image curves against planes and these implicit carriers use the
+    /// complete UV decomposition of the pulled-back surface equation.
+    /// Finite lines against rational Bézier tensors intersect the pullbacks of
+    /// two planes through the line and keep selected rational-form parameters.
+    /// Unsupported curve/surface pairs fail with
+    /// [`GeometryError::UnsupportedIntersection`].
     pub fn intersect_curve(&self, curve: &Curve3) -> GeometryResult<CurveSurfaceIntersection> {
         crate::context::strict(|| {
             if let (
@@ -4358,6 +4510,32 @@ impl Surface {
                 (&self.data.geometry, &curve.data.geometry)
             {
                 return intersect_transverse_circle_arc_torus(curve, arc, torus);
+            }
+            if let CurveGeometry3::TensorImage(image) = &curve.data.geometry
+                && let Some(result) = curve_tensor_image::intersect_tensor_image(curve, image, self)
+            {
+                return result;
+            }
+            // Lines keep their quadratic sphere/cylinder/cone fast paths below.
+            if !matches!(&curve.data.geometry, CurveGeometry3::Line(_))
+                && let Some(carrier) =
+                    curve_implicit::ImplicitCarrier::from_surface(&self.data.geometry)
+                && let Some(result) =
+                    curve_implicit::intersect_rational_curve_implicit(curve, carrier)
+            {
+                return result;
+            }
+            if let SurfaceGeometry::Extrusion(surface) = &self.data.geometry
+                && let Some(result) =
+                    curve_extrusion::intersect_rational_curve_extrusion(curve, surface)
+            {
+                return result;
+            }
+            if let SurfaceGeometry::Revolution(surface) = &self.data.geometry
+                && let Some(result) =
+                    curve_revolution::intersect_rational_curve_revolution(curve, surface)
+            {
+                return result;
             }
             let Some((start, end)) = curve.line_endpoints() else {
                 return Err(GeometryError::UnsupportedIntersection);
@@ -4414,10 +4592,16 @@ impl Surface {
                     )
                 }
                 SurfaceGeometry::Cone(surface) => intersect_line_cone(curve, start, end, surface),
-                SurfaceGeometry::Torus(_)
-                | SurfaceGeometry::Extrusion(_)
+                SurfaceGeometry::Torus(torus) => curve_implicit::intersect_rational_curve_implicit(
+                    curve,
+                    curve_implicit::ImplicitCarrier::Torus(torus),
+                )
+                .expect("a line is a rational span"),
+                SurfaceGeometry::RationalBezier(patch) => {
+                    line_tensor::intersect_line_tensor(curve, start, end, patch)
+                }
+                SurfaceGeometry::Extrusion(_)
                 | SurfaceGeometry::Revolution(_)
-                | SurfaceGeometry::RationalBezier(_)
                 | SurfaceGeometry::Nurbs(_) => Err(GeometryError::UnsupportedIntersection),
             }
         })
@@ -4431,7 +4615,16 @@ impl Surface {
     /// whole-rectangle injectivity proof certifies its planar spatial image.
     /// Both pcurves keep the original source parameters. Folded images and
     /// unsupported vertical, repeated or boundary components fail typed;
-    /// no incomplete trace is returned as a complete section. The configured
+    /// no incomplete trace is returned as a complete section. Spheres,
+    /// cylinders, cones and ring tori against such a tensor use the same
+    /// complete decomposition of the pulled-back carrier equation; branches
+    /// become retained tensor-image curves when an injective coordinate-plane
+    /// projection certifies the tensor. Cylinders against nonparallel
+    /// cylinders and off-axis spheres or tori are sectioned through an exact
+    /// rational atlas of the cylinder's bounded relevant height range; ring tori
+    /// against off-axis spheres and cones use an exact rational torus atlas,
+    /// and cones against off-axis spheres an exact atlas of the cone.
+    /// The configured
     /// solver work context participates where instrumented, but these limits
     /// do not bound all coefficient growth, heap use, elapsed time or cancellation.
     pub fn intersect_surface(&self, other: &Self) -> GeometryResult<SurfaceSurfaceIntersection> {
@@ -4492,31 +4685,75 @@ impl Surface {
                 intersect_plane_nurbs_surface(plane, surface).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Cylinder(first), SurfaceGeometry::Cylinder(second)) => {
-                intersect_parallel_cylinders(first, second)
+                let other = curve_implicit::ImplicitCarrier::Cylinder(second);
+                if cylinder_atlas::special_route_applies(first, other)? {
+                    intersect_parallel_cylinders(first, second)
+                } else {
+                    cylinder_atlas::intersect(first, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cone(first), SurfaceGeometry::Cone(second)) => {
                 intersect_coaxial_cones(first, second)
             }
             (SurfaceGeometry::Torus(first), SurfaceGeometry::Torus(second)) => {
-                intersect_coaxial_tori(first, second)
+                if tori_certifiably_disjoint(first, second)? {
+                    return Ok(SurfaceSurfaceIntersection::None);
+                }
+                let other = curve_implicit::ImplicitCarrier::Torus(second);
+                if torus_atlas::special_route_applies(first, other)? {
+                    intersect_coaxial_tori(first, second)
+                } else {
+                    torus_atlas::intersect(first, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_sphere_torus(sphere, torus)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_sphere_torus(sphere, torus)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_sphere_torus(sphere, torus).map(swapped_curve_intersection)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_cylinder_torus(cylinder, torus)
+                let other = curve_implicit::ImplicitCarrier::Torus(torus);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_cylinder_torus(cylinder, torus)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cylinder(cylinder)) => {
-                intersect_coaxial_cylinder_torus(cylinder, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Torus(torus);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_cylinder_torus(cylinder, torus)
+                        .map(swapped_curve_intersection)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Torus(torus)) => {
-                intersect_coaxial_cone_torus(cone, torus)
+                let other = curve_implicit::ImplicitCarrier::Cone(cone);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_cone_torus(cone, torus)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Torus(torus), SurfaceGeometry::Cone(cone)) => {
-                intersect_coaxial_cone_torus(cone, torus).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Cone(cone);
+                if torus_atlas::special_route_applies(torus, other)? {
+                    intersect_coaxial_cone_torus(cone, torus).map(swapped_curve_intersection)
+                } else {
+                    torus_atlas::intersect(torus, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Cone(cone)) => {
                 intersect_coaxial_cylinder_cone(cylinder, cone)
@@ -4525,20 +4762,63 @@ impl Surface {
                 intersect_coaxial_cylinder_cone(cylinder, cone).map(swapped_curve_intersection)
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cylinder(cylinder)) => {
-                intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cylinder(cylinder), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_cylinder(sphere, cylinder).map(swapped_curve_intersection)
+                let other = curve_implicit::ImplicitCarrier::Sphere(sphere);
+                if cylinder_atlas::special_route_applies(cylinder, other)? {
+                    intersect_coaxial_sphere_cylinder(sphere, cylinder)
+                        .map(swapped_curve_intersection)
+                } else {
+                    cylinder_atlas::intersect(cylinder, other, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(sphere), SurfaceGeometry::Cone(cone)) => {
-                intersect_coaxial_sphere_cone(sphere, cone)
+                if cone_atlas::special_route_applies(cone, sphere)? {
+                    intersect_coaxial_sphere_cone(sphere, cone)
+                } else {
+                    cone_atlas::intersect(cone, sphere, SurfaceIntersectionOperand::Second)
+                }
             }
             (SurfaceGeometry::Cone(cone), SurfaceGeometry::Sphere(sphere)) => {
-                intersect_coaxial_sphere_cone(sphere, cone).map(swapped_curve_intersection)
+                if cone_atlas::special_route_applies(cone, sphere)? {
+                    intersect_coaxial_sphere_cone(sphere, cone).map(swapped_curve_intersection)
+                } else {
+                    cone_atlas::intersect(cone, sphere, SurfaceIntersectionOperand::First)
+                }
             }
             (SurfaceGeometry::Sphere(first), SurfaceGeometry::Sphere(second)) => {
                 intersect_spheres(first, second)
             }
+            (
+                SurfaceGeometry::RationalBezier(_),
+                SurfaceGeometry::Sphere(_)
+                | SurfaceGeometry::Cylinder(_)
+                | SurfaceGeometry::Cone(_)
+                | SurfaceGeometry::Torus(_),
+            ) => implicit_tensor::intersect(
+                curve_implicit::ImplicitCarrier::from_surface(&other.data.geometry)
+                    .expect("implicit analytic carrier"),
+                self,
+                SurfaceIntersectionOperand::First,
+            ),
+            (
+                SurfaceGeometry::Sphere(_)
+                | SurfaceGeometry::Cylinder(_)
+                | SurfaceGeometry::Cone(_)
+                | SurfaceGeometry::Torus(_),
+                SurfaceGeometry::RationalBezier(_),
+            ) => implicit_tensor::intersect(
+                curve_implicit::ImplicitCarrier::from_surface(&self.data.geometry)
+                    .expect("implicit analytic carrier"),
+                other,
+                SurfaceIntersectionOperand::Second,
+            ),
             _ => Err(GeometryError::UnsupportedIntersection),
         })
     }
@@ -5460,6 +5740,7 @@ pub(crate) fn project_curve_to_plane_frame(
         | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::TensorImage(_)
         | Curve3ExactData::PlanarImage(_) => Ok(None),
     }
 }
@@ -5650,6 +5931,7 @@ fn linear_section_pcurve_carriers(
         | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_) => Ok(None),
     }
 }
@@ -6811,6 +7093,7 @@ fn project_revolution_meridian(
         | Curve3ExactData::Rotation(_)
         | Curve3ExactData::Translation(_)
         | Curve3ExactData::EllipseArc(_)
+        | Curve3ExactData::TensorImage(_)
         | Curve3ExactData::PlanarImage(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
@@ -7441,6 +7724,7 @@ fn curve_is_strictly_on_one_plane_side(
         | CurveGeometry3::AffineImage(_)
         | CurveGeometry3::Rotation(_)
         | CurveGeometry3::Translation(_)
+        | CurveGeometry3::TensorImage(_)
         | CurveGeometry3::PlanarImage(_) => Ok(false),
     }
 }
@@ -9117,6 +9401,43 @@ fn intersect_coaxial_cone_torus(
     }
 }
 
+/// Exact disjointness certificates for two ring tori in any relative
+/// position. Torus `i` lies in the ball `|p - c_i| <= rho_i = R_i + r_i`, in
+/// the slab `|n_i . (p - c_i)| <= r_i`, and outside the open cylinder of
+/// radius `R_i - r_i` about its axis. The pair is disjoint when the balls are
+/// separated, when one ball lies outside the other's slab, or when one ball
+/// lies inside the other's central hole. Every comparison is exact on squares
+/// of nonnegative quantities; `false` proves nothing.
+fn tori_certifiably_disjoint(first: &TorusSurface, second: &TorusSurface) -> GeometryResult<bool> {
+    let greater = |a: &Real, b: &Real| -> GeometryResult<bool> {
+        Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Greater)
+    };
+    let offset = &second.center - &first.center;
+    let outer = |torus: &TorusSurface| &torus.major_radius + &torus.minor_radius;
+    let reach = outer(first) + outer(second);
+    if greater(&offset.norm_squared(), &(&reach * &reach))? {
+        return Ok(true);
+    }
+    for (this, other, displacement) in [
+        (first, second, offset.clone()),
+        (second, first, -offset.clone()),
+    ] {
+        let axial = this.frame.z.dot(&displacement);
+        let slab = &this.minor_radius + outer(other);
+        if greater(&(&axial * &axial), &(&slab * &slab))? {
+            return Ok(true);
+        }
+        let hole = &this.major_radius - &this.minor_radius - outer(other);
+        if greater(&hole, &Real::zero())? {
+            let radial_squared = displacement.norm_squared() - &axial * &axial;
+            if greater(&(&hole * &hole), &radial_squared)? {
+                return Ok(true);
+            }
+        }
+    }
+    Ok(false)
+}
+
 fn intersect_coaxial_tori(
     first: &TorusSurface,
     second: &TorusSurface,
@@ -9916,6 +10237,7 @@ fn split_ellipse_arc(
         | Curve3Kind::AffineImage
         | Curve3Kind::Rotation
         | Curve3Kind::Translation
+        | Curve3Kind::TensorImage
         | Curve3Kind::PlanarImage => {
             unreachable!("ellipse split kind")
         }
@@ -10882,6 +11204,10 @@ pub(crate) fn represented_test_surface_parameter(point: hypercurve::CurvePoint2)
 
 #[cfg(test)]
 mod tests {
+    fn retained_uv(point: &super::Point2) -> hypercurve::CurvePoint2 {
+        hypercurve::Point2::new(point.x.clone(), point.y.clone()).into()
+    }
+
     use super::*;
     use hyperlimit::point3_equal;
     use hyperreal::Rational;
@@ -11012,7 +11338,7 @@ mod tests {
                 .unwrap();
             assert_eq!(carrier.curve.family(), CurveFamily2::CircularArc);
             let local = Pcurve::new(carrier.curve.clone())
-                .parameters_at_point(&uv)
+                .parameters_at_point(&retained_uv(&uv))
                 .unwrap();
             assert_eq!(local.len(), 1);
             let spatial_parameter = carrier
@@ -11203,7 +11529,7 @@ mod tests {
             .unwrap(),
         ));
         for curve in [curve.clone(), curve.reversed().unwrap()] {
-            let parameters = curve.parameters_at_point(&point).unwrap();
+            let parameters = curve.parameters_at_point(&retained_uv(&point)).unwrap();
             assert_eq!(parameters.len(), 1);
             let replay = curve
                 .evaluate_real(parameters[0].try_real().unwrap())
@@ -11213,7 +11539,12 @@ mod tests {
                 Some(true)
             );
             let near = Point2::new(r(3), r(4) + q(1, 1_000_000_000_000));
-            assert!(curve.parameters_at_point(&near).unwrap().is_empty());
+            assert!(
+                curve
+                    .parameters_at_point(&retained_uv(&near))
+                    .unwrap()
+                    .is_empty()
+            );
         }
         let full = Pcurve::new(Curve2::from(
             CircularArc2::try_from_center(
@@ -11224,7 +11555,9 @@ mod tests {
             )
             .unwrap(),
         ));
-        let parameters = full.parameters_at_point(&Point2::new(r(5), r(0))).unwrap();
+        let parameters = full
+            .parameters_at_point(&retained_uv(&Point2::new(r(5), r(0))))
+            .unwrap();
         assert_eq!(parameters.len(), 2);
         assert_eq!(parameters[0].try_real(), Some(&Real::zero()));
         assert_eq!(parameters[1].try_real(), Some(&Real::one()));
@@ -11246,7 +11579,7 @@ mod tests {
             for (curve, reversed) in [(pcurve.clone(), false), (pcurve.reversed().unwrap(), true)] {
                 for t in [Real::zero(), q(1, 4), q(1, 2), Real::one()] {
                     let expected = point(t.clone());
-                    let parameters = curve.parameters_at_point(&expected).unwrap();
+                    let parameters = curve.parameters_at_point(&retained_uv(&expected)).unwrap();
                     assert_eq!(parameters.len(), 1);
                     let actual = parameters[0].try_real().unwrap();
                     assert_eq!(
@@ -11269,10 +11602,20 @@ mod tests {
                     );
                     let tiny = q(1, 1_000_000_000_000);
                     let near = Point2::new(expected.x - r(dy) * &tiny, expected.y + r(dx) * tiny);
-                    assert!(curve.parameters_at_point(&near).unwrap().is_empty());
+                    assert!(
+                        curve
+                            .parameters_at_point(&retained_uv(&near))
+                            .unwrap()
+                            .is_empty()
+                    );
                 }
                 for t in [q(-1, 2), q(3, 2)] {
-                    assert!(curve.parameters_at_point(&point(t)).unwrap().is_empty());
+                    assert!(
+                        curve
+                            .parameters_at_point(&retained_uv(&point(t)))
+                            .unwrap()
+                            .is_empty()
+                    );
                 }
             }
         }
@@ -11686,7 +12029,7 @@ mod tests {
             Ordering::Equal
         );
         assert!(matches!(
-            line.parameters_of(&p(2, 5, 6)).unwrap(),
+            line.parameters_of(p(2, 5, 6)).unwrap(),
             CurveParameterLocation::None
         ));
         let reversed = line.reversed().unwrap();
@@ -11773,14 +12116,14 @@ mod tests {
             Ordering::Equal
         );
         assert!(matches!(
-            rational.parameters_of(&p(8, 8, 8)).unwrap(),
+            rational.parameters_of(p(8, 8, 8)).unwrap(),
             CurveParameterLocation::None
         ));
 
         let constant =
             Curve3::rational_bezier(vec![p(3, 4, 5), p(3, 4, 5)], vec![r(1), r(2)]).unwrap();
         assert!(matches!(
-            constant.parameters_of(&p(3, 4, 5)).unwrap(),
+            constant.parameters_of(p(3, 4, 5)).unwrap(),
             CurveParameterLocation::EntireDomain
         ));
         let algebraic = Curve3::rational_bezier(
@@ -11789,7 +12132,7 @@ mod tests {
         )
         .unwrap();
         let CurveParameterLocation::Parameters(parameters) = algebraic
-            .parameters_of(&Point3::new(q(1, 2), r(0), r(0)))
+            .parameters_of(Point3::new(q(1, 2), r(0), r(0)))
             .unwrap()
         else {
             panic!("the selected positive square root must survive the query");
@@ -11817,7 +12160,7 @@ mod tests {
         )
         .unwrap();
         let CurveParameterLocation::Parameters(seam) =
-            full_circle.parameters_of(&p(2, 0, 0)).unwrap()
+            full_circle.parameters_of(p(2, 0, 0)).unwrap()
         else {
             panic!("full-circle seam must retain both exact parameters");
         };
@@ -13043,6 +13386,432 @@ mod tests {
                 .to_json()
                 .unwrap(),
             json
+        );
+    }
+
+    #[test]
+    fn surface_trace_chains_keep_prior_cut_junctions() {
+        let (model, _) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (face, surface) = model
+            .faces()
+            .find_map(|(id, face)| {
+                let surface = model.surface(face.surface()).unwrap();
+                (surface.plane_origin() == Some(&p(0, 0, 2))).then_some((id, surface))
+            })
+            .unwrap();
+        let traces = [
+            (p(0, 0, 2), p(2, 2, 2)),
+            (p(0, 2, 2), p(1, 1, 2)),
+            (p(1, 1, 2), p(2, 0, 2)),
+        ]
+        .into_iter()
+        .map(|(a, b)| {
+            SurfaceIntersectionCurve::on_plane(Curve3::line(a, b).unwrap(), surface).unwrap()
+        })
+        .collect::<Vec<_>>();
+        let (partitioned, partition) = model
+            .split_face_by_surface_curves(face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(partition.faces.len(), 4);
+        let mut owners = Vec::new();
+        for (x, y) in [
+            (Real::one(), q(1, 4)),
+            (q(1, 4), Real::one()),
+            (Real::one(), q(7, 4)),
+            (q(7, 4), Real::one()),
+        ] {
+            let found = partition
+                .faces
+                .iter()
+                .copied()
+                .filter(|id| {
+                    partitioned
+                        .classify_surface_parameter_on_face(
+                            *id,
+                            &CurvePoint2::new(x.clone(), y.clone()).into(),
+                        )
+                        .unwrap()
+                        == Classification::Decided(hypercurve::ContourPointLocation::Inside)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(found.len(), 1);
+            assert!(!owners.contains(&found[0]));
+            owners.push(found[0]);
+        }
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn surface_trace_chains_keep_existing_boundary_junctions() {
+        let (model, _) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (face, surface) = model
+            .faces()
+            .find_map(|(id, face)| {
+                let surface = model.surface(face.surface()).unwrap();
+                (surface.plane_origin() == Some(&p(0, 0, 2))).then_some((id, surface))
+            })
+            .unwrap();
+        let points = [p(0, 1, 2), p(1, 2, 2), p(2, 1, 2)];
+        let traces = points
+            .windows(2)
+            .map(|points| {
+                SurfaceIntersectionCurve::on_plane(
+                    Curve3::line(points[0].clone(), points[1].clone()).unwrap(),
+                    surface,
+                )
+                .unwrap()
+            })
+            .collect::<Vec<_>>();
+        let (partitioned, partition) = model
+            .split_face_by_surface_curves(face, &traces, SurfaceIntersectionOperand::First)
+            .unwrap();
+        assert_eq!(partition.faces.len(), 3);
+        let mut owners = Vec::new();
+        for (x, y) in [
+            (q(1, 4), q(7, 4)),
+            (q(7, 4), q(7, 4)),
+            (Real::one(), Real::one()),
+        ] {
+            let found = partition
+                .faces
+                .iter()
+                .copied()
+                .filter(|id| {
+                    partitioned
+                        .classify_surface_parameter_on_face(
+                            *id,
+                            &CurvePoint2::new(x.clone(), y.clone()).into(),
+                        )
+                        .unwrap()
+                        == Classification::Decided(hypercurve::ContourPointLocation::Inside)
+                })
+                .collect::<Vec<_>>();
+            assert_eq!(found.len(), 1);
+            assert!(!owners.contains(&found[0]));
+            owners.push(found[0]);
+        }
+        let json = partitioned.to_json().unwrap();
+        assert_eq!(
+            crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap()
+                .to_json()
+                .unwrap(),
+            json
+        );
+    }
+
+    #[test]
+    fn selected_pcurve_endpoints_attach_without_boundary_contact_records() {
+        let (model, _) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (face, surface) = model
+            .faces()
+            .find_map(|(id, face)| {
+                let surface = model.surface(face.surface()).unwrap();
+                (surface.plane_origin() == Some(&p(0, 0, 2))).then_some((id, surface))
+            })
+            .unwrap();
+        let roots = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+            [-1, 1, 0, 0, 0, 1].into_iter().map(Real::from).collect(),
+        )
+        .unwrap()
+        .isolate_unit_interval_roots()
+        .unwrap();
+        assert_eq!(roots.len(), 1);
+        let selected: hypercurve::CurveParameter2 = roots[0].clone().into();
+        assert!(selected.scalar().is_none());
+        let point = |y: i32| {
+            Curve2::from(
+                hypercurve::LineSeg2::try_new(
+                    CurvePoint2::from_values(0, y),
+                    CurvePoint2::from_values(2, y),
+                )
+                .unwrap(),
+            )
+            .point_at(&selected)
+            .unwrap()
+        };
+        let planar = Curve2::try_line(point(0), point(2)).unwrap();
+        assert!(planar.start().coordinates().is_none());
+        let (u, v) = surface.plane_directions().unwrap();
+        let curve = Curve3::planar_image(
+            planar.clone(),
+            surface.plane_origin().unwrap().clone(),
+            u.clone(),
+            v.clone(),
+        )
+        .unwrap();
+        // Identical world images in reflected UV frames do not supply an
+        // identity parameter map for their point-ordered domains.
+        let reflection = hypercurve::Similarity2::try_from_real_affine(
+            (-1).into(),
+            0.into(),
+            0.into(),
+            1.into(),
+            0.into(),
+            0.into(),
+        )
+        .unwrap();
+        let reflected = Curve3::planar_image(
+            planar.transform_similarity(&reflection).unwrap(),
+            surface.plane_origin().unwrap().clone(),
+            -u.clone(),
+            v.clone(),
+        )
+        .unwrap();
+        let (Curve3ExactData::PlanarImage(a), Curve3ExactData::PlanarImage(b)) =
+            (curve.exact_data(), reflected.exact_data())
+        else {
+            unreachable!()
+        };
+        assert!(!a.parameterization_equals(&b).unwrap());
+        let trace =
+            SurfaceIntersectionCurve::from_exact_pcurves(curve, planar.clone(), planar).unwrap();
+        assert!(
+            trace
+                .start_boundary_contacts(SurfaceIntersectionOperand::First)
+                .is_empty()
+        );
+        let continue_after_replay = |cold: &crate::topology::ArenaModel| {
+            let (edge_id, _) = cold
+                .edges()
+                .find(|(_, edge)| {
+                    cold.curve(edge.curve()).unwrap().kind() == Curve3Kind::PlanarImage
+                })
+                .unwrap();
+            let usage = cold.uses_of_edge(edge_id).unwrap()[0];
+            let uv = point(1);
+            let local = cold
+                .pcurve(cold.edge_use(usage).unwrap().pcurve())
+                .unwrap()
+                .parameters_at_point(&uv)
+                .unwrap();
+            assert_eq!(local.len(), 1);
+            let parameter = cold.edge_parameter_at(usage, &local[0]).unwrap();
+            let (refined, detail) = cold.split_edge(edge_id, parameter).unwrap();
+            let expected = surface.point_at(&uv).unwrap();
+            assert!(
+                refined
+                    .vertex(detail.vertex)
+                    .unwrap()
+                    .point()
+                    .coincides_with(&expected)
+                    .unwrap()
+            );
+            let text = refined.to_json().unwrap();
+            let again = crate::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
+            assert_eq!(again.to_json().unwrap(), text);
+        };
+        const INPUT: &str = "HYPERBREP_SELECTED_ATTACHMENT_REPLAY";
+        if let Some(path) = std::env::var_os(INPUT) {
+            let text = std::fs::read_to_string(path).unwrap();
+            let cold = crate::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
+            continue_after_replay(&cold);
+            assert_eq!(cold.to_json().unwrap(), text);
+            return;
+        }
+        let materialized = trace.first_pcurve().materialize().unwrap();
+        let hypercurve::CurvePointLocations2::Locations(locations) =
+            materialized.curve().point_locations(&point(1)).unwrap()
+        else {
+            unreachable!()
+        };
+        let middle = materialized
+            .spatial_parameter_at(&locations[0].parameter().unwrap())
+            .unwrap();
+        let parts = [
+            trace
+                .restrict_source(
+                    ParameterRange::new(trace.curve().domain().start().clone(), middle.clone())
+                        .unwrap(),
+                )
+                .unwrap(),
+            trace
+                .restrict_source(
+                    ParameterRange::new(middle, trace.curve().domain().end().clone()).unwrap(),
+                )
+                .unwrap(),
+        ];
+        assert_eq!(
+            selected.compare(&q(1, 4).into()).unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(selected.compare(&q(7, 8).into()).unwrap(), Ordering::Less);
+        for parts in [
+            parts.clone(),
+            [parts[1].clone(), parts[0].clone()],
+            [parts[1].reversed().unwrap(), parts[0].reversed().unwrap()],
+        ] {
+            let (chained, partition) = model
+                .split_face_by_surface_curves(face, &parts, SurfaceIntersectionOperand::First)
+                .unwrap();
+            assert_eq!(partition.faces.len(), 2);
+            assert_eq!(partition.traces.len(), 2);
+            let receipts = partition
+                .traces
+                .iter()
+                .map(|trace| {
+                    let crate::ArenaSurfaceCurveFaceSplit::ChainMember(receipt) = &trace.splits[0]
+                    else {
+                        panic!("one atomic chain edit");
+                    };
+                    receipt
+                })
+                .collect::<Vec<_>>();
+            assert!(Arc::ptr_eq(&receipts[0].chain, &receipts[1].chain));
+            assert_ne!(receipts[0].chain_index, receipts[1].chain_index);
+            assert_eq!(receipts[0].chain.edges.len(), 2);
+            for edge in &receipts[0].chain.edges {
+                assert_eq!(chained.uses_of_edge(*edge).unwrap().len(), 2);
+            }
+            // The root bounds above put the vertical chain strictly between
+            // x=1/2 and x=7/4. Both levels must select opposite material faces.
+            for y in [q(1, 2), q(3, 2)] {
+                let mut material = [Vec::new(), Vec::new()];
+                for descendant in &partition.faces {
+                    for (side, x) in [q(1, 2), q(7, 4)].into_iter().enumerate() {
+                        match chained
+                            .classify_surface_parameter_on_face(
+                                *descendant,
+                                &CurvePoint2::new(x, y.clone()).into(),
+                            )
+                            .unwrap()
+                        {
+                            Classification::Decided(hypercurve::ContourPointLocation::Inside) => {
+                                material[side].push(*descendant)
+                            }
+                            Classification::Decided(hypercurve::ContourPointLocation::Outside) => {}
+                            other => panic!("strict interior witness: {other:?}"),
+                        }
+                    }
+                }
+                assert_eq!(material[0].len(), 1);
+                assert_eq!(material[1].len(), 1);
+                assert_ne!(material[0], material[1]);
+            }
+            let chained_json = chained.to_json().unwrap();
+            assert_eq!(
+                crate::ImportedModel::from_json(&chained_json, &crate::ArchiveLimits::default())
+                    .unwrap()
+                    .validate()
+                    .unwrap()
+                    .to_json()
+                    .unwrap(),
+                chained_json
+            );
+        }
+        let before = model.to_json().unwrap();
+        let wrong_face = model
+            .faces()
+            .find(|(_, face)| {
+                model.surface(face.surface()).unwrap().plane_origin() == Some(&p(0, 0, 0))
+            })
+            .unwrap()
+            .0;
+        assert!(matches!(
+            model.split_face_by_surface_curve(
+                wrong_face,
+                &trace,
+                SurfaceIntersectionOperand::First
+            ),
+            Err(crate::TopologyEditError::SurfaceCurveEndpointImageMismatch { .. })
+        ));
+        assert_eq!(model.to_json().unwrap(), before);
+        let (split, detail) = model
+            .split_face_by_surface_curve(face, &trace, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let edge = split.edge(detail.open().unwrap().face.edge).unwrap();
+        assert_eq!(
+            split
+                .uses_of_edge(detail.open().unwrap().face.edge)
+                .unwrap()
+                .len(),
+            2
+        );
+        for vertex in [edge.start(), edge.end()] {
+            assert!(
+                split
+                    .vertex(vertex)
+                    .unwrap()
+                    .point()
+                    .try_coordinates()
+                    .is_none()
+            );
+        }
+        let text = split.to_json().unwrap();
+        let raw: serde_json::Value = serde_json::from_str(&text).unwrap();
+        let definitions = raw["selection"]["parameters"].as_array().unwrap();
+        let selector = definitions
+            .iter()
+            .position(|v| v.get("PointOnChord").is_some())
+            .unwrap();
+        for reference in [selector, definitions.len(), 0] {
+            let mut forged = raw.clone();
+            forged["selection"]["parameters"][selector]["PointOnChord"]["chord"] =
+                serde_json::json!(reference);
+            let forged = serde_json::to_string(&forged).unwrap();
+            assert!(
+                crate::ImportedModel::from_json(&forged, &crate::ArchiveLimits::default())
+                    .and_then(|raw| raw.validate())
+                    .is_err()
+            );
+        }
+        let mut forged = raw.clone();
+        forged["selection"]["parameters"][selector]["PointOnChord"]["point"] =
+            serde_json::json!({"Coordinates": [Real::zero(), Real::zero()]});
+        assert!(
+            crate::ImportedModel::from_json(
+                &serde_json::to_string(&forged).unwrap(),
+                &crate::ArchiveLimits::default()
+            )
+            .and_then(|raw| raw.validate())
+            .is_err()
+        );
+        let limited = crate::ArchiveLimits {
+            dependency_depth: 2,
+            ..Default::default()
+        };
+        assert!(matches!(
+            crate::ImportedModel::from_json(&text, &limited),
+            Err(crate::PersistenceError::ResourceLimit(_))
+        ));
+
+        let cold = crate::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(cold.to_json().unwrap(), text);
+        continue_after_replay(&cold);
+        let path = std::env::temp_dir().join(format!(
+            "hyperbrep-selected-attachment-{}.json",
+            std::process::id()
+        ));
+        std::fs::write(&path, text).unwrap();
+        let replay = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "geometry::tests::selected_pcurve_endpoints_attach_without_boundary_contact_records", "--nocapture"])
+            .env(INPUT, &path).output().unwrap();
+        std::fs::remove_file(path).unwrap();
+        assert!(
+            replay.status.success(),
+            "{}{}",
+            String::from_utf8_lossy(&replay.stdout),
+            String::from_utf8_lossy(&replay.stderr)
         );
     }
 
@@ -16424,6 +17193,40 @@ mod tests {
         );
     }
 
+    /// Exact piece end points of an atlas section result.
+    fn atlas_piece_ends(result: SurfaceSurfaceIntersection) -> Vec<GeometricPoint3> {
+        let pieces = match result {
+            SurfaceSurfaceIntersection::Curves(curves) => curves,
+            SurfaceSurfaceIntersection::Curve(curve) => vec![*curve],
+            SurfaceSurfaceIntersection::Components(components) => {
+                components.surface_curves().to_vec()
+            }
+            other => panic!("atlas pieces required, found {other:?}"),
+        };
+        assert!(!pieces.is_empty());
+        pieces
+            .iter()
+            .flat_map(|piece| {
+                let curve = piece.curve();
+                [
+                    curve.point_at(curve.domain().start()).unwrap(),
+                    curve.point_at(curve.domain().end()).unwrap(),
+                ]
+            })
+            .collect()
+    }
+
+    /// Whether some end has the represented x and y and the given exact z.
+    fn atlas_has_end(ends: &[GeometricPoint3], x: &Real, y: &Real, z: &Real) -> bool {
+        ends.iter().any(|point| {
+            [(Vector3::x(), x), (Vector3::y(), y), (Vector3::z(), z)]
+                .into_iter()
+                .all(|(axis, value)| {
+                    point.compare_linear_form(&axis, value).unwrap() == Ordering::Equal
+                })
+        })
+    }
+
     #[test]
     fn parallel_cylinder_intersections_retain_exact_axial_lines() {
         let cylinder = Surface::cylinder(
@@ -16494,10 +17297,17 @@ mod tests {
             r(2),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&skew).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: equal radii and perpendicular axes
+        // give z^2 = x^2, so every atlas piece end lies in z = x or z = -x.
+        for point in atlas_piece_ends(cylinder.intersect_surface(&skew).unwrap()) {
+            let plus = point
+                .compare_linear_form(&Vector3::new([r(1), r(0), r(-1)]), &Real::zero())
+                .unwrap();
+            let minus = point
+                .compare_linear_form(&Vector3::new([r(1), r(0), r(1)]), &Real::zero())
+                .unwrap();
+            assert!(plus == Ordering::Equal || minus == Ordering::Equal);
+        }
     }
 
     #[test]
@@ -16683,10 +17493,12 @@ mod tests {
         ));
         let off_axis =
             Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(3)).unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on x^2 + y^2 = 4 the sphere gives
+        // z^2 = 4 + 2x, so the atlas seam over (2, 0) is crossed at z = ±2√2.
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(2) * Real::from(2).sqrt().unwrap()).clone();
+        assert!(atlas_has_end(&ends, &r(2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &r(2), &r(0), &-z));
     }
 
     #[test]
@@ -16897,10 +17709,15 @@ mod tests {
         );
         let off_axis =
             Surface::sphere(p(1, 0, 0), Vector3::x(), Vector3::y(), Vector3::z(), r(2)).unwrap();
-        assert_eq!(
-            off_axis.intersect_surface(&cone).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on the cone seams (±3h/4, 0, h) the
+        // sphere gives 25h^2 ∓ 24h - 48 = 0, so h = (8√21 ± 12)/25.
+        let ends = atlas_piece_ends(off_axis.intersect_surface(&cone).unwrap());
+        let root = Real::from(21).sqrt().unwrap();
+        for sign in [1, -1] {
+            let h = ((Real::from(8) * &root + Real::from(12 * sign)) / Real::from(25)).unwrap();
+            let x = (Real::from(3 * sign) * &h / Real::from(4)).unwrap();
+            assert!(atlas_has_end(&ends, &x, &r(0), &h));
+        }
 
         let rotated_parameters =
             Surface::sphere(p(0, 0, 5), Vector3::y(), -Vector3::x(), Vector3::z(), r(5)).unwrap();
@@ -17586,19 +18403,9 @@ mod tests {
             first.intersect_surface(&rotated_parameters).unwrap(),
             SurfaceSurfaceIntersection::Circles(_)
         ));
-        let off_axis = Surface::torus(
-            p(1, 0, 1),
-            Vector3::x(),
-            Vector3::y(),
-            Vector3::z(),
-            r(3),
-            r(1),
-        )
-        .unwrap();
-        assert_eq!(
-            first.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // The off-axis equal torus is non-coaxial: it is covered by
+        // `non_coaxial_equal_tori_cross_known_points` in
+        // tests/torus_atlas_sections.rs.
     }
 
     #[test]
@@ -17794,10 +18601,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            sphere.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: the torus atlas seam over
+        // (-7/25, 24/25) about (1, 0, 0) meets |p| = 3 where the tube cosine is
+        // -1/17, at (3/17, 48/17, ±12√2/17).
+        let ends = atlas_piece_ends(sphere.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(12) * Real::from(2).sqrt().unwrap() / Real::from(17)).unwrap();
+        assert!(atlas_has_end(&ends, &q(3, 17), &q(48, 17), &z));
+        assert!(atlas_has_end(&ends, &q(3, 17), &q(48, 17), &-z));
         let transverse = Surface::torus(
             Point3::origin(),
             Vector3::x(),
@@ -18008,10 +18818,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on x^2 + y^2 = 49/4 the distance
+        // from the torus axis satisfies rho^2 = 53/4 - 2x; at the seam over
+        // (7/2, 0) rho = 5/2, so (rho - 3)^2 + z^2 = 1 gives z = ±√3/2.
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&off_axis).unwrap());
+        let z = (Real::from(3).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &-z));
         let transverse = Surface::torus(
             Point3::origin(),
             Vector3::x(),
@@ -18021,10 +18834,13 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cylinder.intersect_surface(&transverse).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: with w = |p|^2 the torus about -y is
+        // (w + 8)^2 = 36(x^2 + z^2). At the seam over (7/2, 0), x^2 + z^2 = w,
+        // so w = 16 and z = ±√15/2 (the root w = 4 has no real z).
+        let ends = atlas_piece_ends(cylinder.intersect_surface(&transverse).unwrap());
+        let z = (Real::from(15).sqrt().unwrap() / Real::from(2)).unwrap();
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &z));
+        assert!(atlas_has_end(&ends, &q(7, 2), &r(0), &-z));
     }
 
     #[test]
@@ -18226,10 +19042,11 @@ mod tests {
             r(1),
         )
         .unwrap();
-        assert_eq!(
-            cone.intersect_surface(&off_axis).unwrap_err(),
-            GeometryError::UnsupportedIntersection
-        );
+        // Formerly an unsupported blocker: on the torus seam theta = 0 about
+        // (1, 0, 3), x^2 = z^2 gives 4 + c = 3 + s, so (4, 0, 4) and (3, 0, 3).
+        let ends = atlas_piece_ends(cone.intersect_surface(&off_axis).unwrap());
+        assert!(atlas_has_end(&ends, &r(4), &r(0), &r(4)));
+        assert!(atlas_has_end(&ends, &r(3), &r(0), &r(3)));
         let transverse = Surface::torus(
             p(0, 0, 3),
             Vector3::x(),

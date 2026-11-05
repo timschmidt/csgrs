@@ -1678,6 +1678,22 @@ pub(crate) fn simple_loop_orientation(
     path: &crate::CurvePath2,
     policy: &CurveContext,
 ) -> ExactCurveResult<crate::CurveLoopOrientation2> {
+    if let Some((source, reverses)) = injective_source_loop(path, policy)? {
+        // An injective C1 map with a Jacobian of one strict sign on a convex
+        // rectangle containing the loop is a homeomorphism onto its image
+        // there: it carries the simple source loop to a simple image loop,
+        // preserving its orientation exactly when the Jacobian is positive.
+        let orientation = simple_loop_orientation(&source, policy)?;
+        return Ok(match (orientation, reverses) {
+            (orientation, false) => orientation,
+            (crate::CurveLoopOrientation2::Counterclockwise, true) => {
+                crate::CurveLoopOrientation2::Clockwise
+            }
+            (crate::CurveLoopOrientation2::Clockwise, true) => {
+                crate::CurveLoopOrientation2::Counterclockwise
+            }
+        });
+    }
     let raw = CurveRegion2::try_from_boundary_paths_raw(std::slice::from_ref(path), policy)?;
     let context = CurveRegionBooleanContext::try_new_unary(&raw, policy)?;
     let topology = context.build_split_topology()?;
@@ -1715,6 +1731,58 @@ pub(crate) fn simple_loop_orientation(
         path.curves()[0].family(),
         last_reason,
     ))
+}
+
+/// The source-chart loop of a path whose every piece is a polynomial branch
+/// carried by structurally equal rational maps, certified injective on
+/// one shared source domain rectangle, and whether that map reverses
+/// orientation. Pieces keep their ranges and traversal; their endpoints are
+/// rewound to the source points.
+fn injective_source_loop(
+    path: &crate::CurvePath2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<(crate::CurvePath2, bool)>> {
+    let mut chart: Option<(
+        &crate::PolynomialCurveBranch2,
+        bool,
+        &hypersolve::bivariate_topology::BivariateCurveDomain,
+    )> = None;
+    let mut sources = Vec::with_capacity(path.curves().len());
+    for curve in path.curves() {
+        let Some(branch) = curve.polynomial_branch() else {
+            return Ok(None);
+        };
+        if branch.affine_view().is_some() {
+            return Ok(None);
+        }
+        let domain = branch.topology().domain();
+        match chart {
+            Some((image, _, known)) => {
+                let same_domain = known
+                    .first
+                    .iter()
+                    .chain(&known.second)
+                    .zip(domain.first.iter().chain(&domain.second))
+                    .all(|(a, b)| a.partial_cmp(b) == Some(std::cmp::Ordering::Equal));
+                if !branch.same_image_maps(image) || !same_domain {
+                    return Ok(None);
+                }
+            }
+            None => {
+                let Some(reverses) = branch.injective_image_orientation() else {
+                    return Ok(None);
+                };
+                chart = Some((branch, reverses, domain));
+            }
+        }
+        sources.push(Curve2::from_polynomial_branch(
+            branch.source_branch(policy)?,
+        ));
+    }
+    let Some((_, reverses, _)) = chart else {
+        return Ok(None);
+    };
+    Ok(Some((crate::CurvePath2::try_new(sources)?, reverses)))
 }
 
 /// Classifies retained multi-field point evidence against one certified simple

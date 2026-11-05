@@ -4085,8 +4085,7 @@ mod point_locations {
     use super::{p, q, r};
     use hypercurve::{
         Classification, CubicBezier2, Curve2, CurveParameter2, CurvePoint2, CurvePointLocations2,
-        ExactCurveError, Point2, PredicatePolicy, QuadraticBezier2, RationalBezier2, Real,
-        UncertaintyReason,
+        Point2, PredicatePolicy, QuadraticBezier2, RationalBezier2, Real,
     };
 
     fn locations(curve: &Curve2, point: Point2, policy: &PredicatePolicy) -> Vec<CurveParameter2> {
@@ -4165,7 +4164,7 @@ mod point_locations {
     }
 
     #[test]
-    fn constant_and_unrepresented_queries_are_explicit() {
+    fn constant_and_unrepresented_queries_keep_exact_locations() {
         let policy = PredicatePolicy::STRICT;
         let constant = Curve2::from(QuadraticBezier2::new(p(1, 1), p(1, 1), p(1, 1)));
         assert_eq!(
@@ -4194,11 +4193,27 @@ mod point_locations {
         assert!(crossing.is_complete() && crossing.contacts().len() == 1);
         let point = crossing.contacts()[0].point();
         assert!(point.coordinates().is_none());
-        assert!(matches!(
-            crate::support::under(&policy, || Curve2::from(parabola).point_locations(point)),
-            Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::Unsupported
-        ));
+        // C(t)=(t,t^2), 0<=t<=1, so t=sqrt(1/2) is the
+        // unique preimage. Its selected query coordinates remain unmaterialized.
+        let parabola = Curve2::from(parabola);
+        let outcome = crate::support::under(&policy, || parabola.point_locations(point)).unwrap();
+        assert_eq!(outcome.certainty, hypercurve::CurveCertainty::Certified);
+        let CurvePointLocations2::Locations(found) = outcome.value else {
+            panic!("one exact preimage")
+        };
+        assert_eq!(found.len(), 1);
+        let parameter = found[0].parameter().unwrap();
+        assert_eq!(
+            parameter.compare(&q(1, 2).sqrt().unwrap().into()).unwrap(),
+            std::cmp::Ordering::Equal
+        );
+        assert!(
+            parabola
+                .point_at(&parameter)
+                .unwrap()
+                .coincides_with(point)
+                .unwrap()
+        );
     }
 
     #[test]
@@ -4266,7 +4281,7 @@ mod point_locations {
                         crate::support::under(&policy, || curve.point_locations(&start)).unwrap();
                     match outcome.value {
                         CurvePointLocations2::Locations(found) => assert!(!found.is_empty()),
-                        CurvePointLocations2::EntireCurve => {
+                        CurvePointLocations2::EntireCurve | CurvePointLocations2::Components(_) => {
                             panic!("offset curves are not constant")
                         }
                     }

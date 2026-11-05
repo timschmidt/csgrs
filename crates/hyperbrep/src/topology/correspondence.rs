@@ -271,51 +271,39 @@ impl ParameterCorrespondence {
     }
 
     pub(crate) fn reversed_pcurve(&self, pcurve: &Pcurve) -> Result<Self, GeometryError> {
-        // Generated restrictions reverse traversal in their existing chart.
-        if pcurve.curve().geometry().is_none() {
-            return Ok(self.clone());
-        }
+        let (reversal_scale, reversal_offset) = pcurve.curve().reversal_parameter_affine_map()?;
         Ok(match self {
             Self::Affine { scale, offset } => Self::Affine {
-                scale: -scale.clone(),
-                offset: scale * (pcurve.represented_start()? + pcurve.represented_end()?) + offset,
+                scale: scale * reversal_scale,
+                offset: scale * reversal_offset + offset,
             },
             Self::AngularSweep => Self::AngularSweep,
             Self::Coordinate { .. } => self.clone(),
         })
     }
 
+    /// Composes the proved affine transport from the source edge chart to
+    /// the transferred canonical edge. Selected domain ends are not scalars.
     pub(crate) fn remapped_edge(
         &self,
-        source: &ParameterDomain,
-        target: &ParameterDomain,
-        reversed: bool,
+        factor: &Real,
+        translation: &Real,
     ) -> Result<Self, GeometryError> {
-        match self {
-            Self::Affine { scale, offset } | Self::Coordinate { scale, offset, .. } => {
-                let factor = ((target.end() - target.start()) / (source.end() - source.start()))
-                    .map_err(GeometryError::Numeric)?;
-                let (scale, offset) = if reversed {
-                    (
-                        -(&factor * scale),
-                        target.end() - &factor * (offset - source.start()),
-                    )
-                } else {
-                    (
-                        &factor * scale,
-                        target.start() + factor * (offset - source.start()),
-                    )
-                };
-                Ok(match self {
-                    Self::Coordinate { axis, .. } => Self::Coordinate {
-                        axis: *axis,
-                        scale,
-                        offset,
-                    },
-                    _ => Self::Affine { scale, offset },
-                })
-            }
-            Self::AngularSweep => Ok(Self::AngularSweep),
-        }
+        Ok(match self {
+            Self::Affine { scale, offset } => Self::Affine {
+                scale: factor * scale,
+                offset: factor * offset + translation,
+            },
+            Self::Coordinate {
+                axis,
+                scale,
+                offset,
+            } => Self::Coordinate {
+                axis: *axis,
+                scale: factor * scale,
+                offset: factor * offset + translation,
+            },
+            Self::AngularSweep => Self::AngularSweep,
+        })
     }
 }

@@ -1,4 +1,4 @@
-//! Normalized chord queries retain one positive speed over their source field.
+//! Selected chord constructions retain exact fields and shared normalization.
 
 use super::*;
 use crate::selected_field::{self as field, Value};
@@ -165,5 +165,80 @@ impl BezierAlgebraicChordParallelPoint2 {
             ])
         };
         Ok([point(4)?, point(6)?])
+    }
+}
+
+impl BezierAlgebraicChordPairPoint2 {
+    pub(crate) fn uses_selected_field(&self) -> bool {
+        *self.data.selected_field_hint.get_or_init(|| {
+            [&self.data.first, &self.data.second]
+                .into_iter()
+                .flat_map(|line| [line.start(), line.end()])
+                .any(point_retains_joint_field)
+        })
+    }
+
+    pub(crate) fn selected_field_values(&self, policy: &CurveContext) -> field::Result<[Value; 2]> {
+        if !self.accepts_policy(policy) {
+            return Err(field::FieldError::Uncertain(UncertaintyReason::Unsupported));
+        }
+        self.data
+            .first
+            .validate_policy(policy)
+            .map_err(field::FieldError::Context)?;
+        self.data
+            .second
+            .validate_policy(policy)
+            .map_err(field::FieldError::Context)?;
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Err(field::FieldError::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        if let Some(values) = self.data.selected_point.get() {
+            return Ok((**values).clone());
+        }
+        let values = policy.strict_predicate_pass(|| self.build_selected_point(policy))?;
+        if hypersolve::work_budget::exhaustion().is_some() {
+            return Err(field::FieldError::Uncertain(
+                UncertaintyReason::BudgetExhausted,
+            ));
+        }
+        // These exact values depend only on the immutable four source points
+        // and their nonparallel supports. Failed joins/proofs are never cached.
+        let _ = self.data.selected_point.set(Box::new(values));
+        Ok((**self
+            .data
+            .selected_point
+            .get()
+            .expect("a successful selected point is retained"))
+        .clone())
+    }
+
+    fn build_selected_point(&self, policy: &CurveContext) -> field::Result<[Value; 2]> {
+        let mut endpoints = Vec::with_capacity(8);
+        for line in [&self.data.first, &self.data.second] {
+            for point in [line.start(), line.end()] {
+                endpoints.extend(coordinates(point, policy)?);
+            }
+        }
+        let values = common_values(endpoints, policy)?;
+        let dx = values[2].subtract(&values[0])?;
+        let dy = values[3].subtract(&values[1])?;
+        let ex = values[6].subtract(&values[4])?;
+        let ey = values[7].subtract(&values[5])?;
+        let denominator = dx.multiply(&ey)?.subtract(&dy.multiply(&ex)?)?;
+        if field::decided(denominator.sign(policy)?)? == RealSign::Zero {
+            return Err(field::FieldError::Context(CurveError::ParallelLineSupports));
+        }
+        let numerator = values[4]
+            .subtract(&values[0])?
+            .multiply(&ey)?
+            .subtract(&values[5].subtract(&values[1])?.multiply(&ex)?)?;
+        let parameter = field::decided(numerator.divide(&denominator, policy)?)?;
+        Ok([
+            values[0].add(&dx.multiply(&parameter)?)?,
+            values[1].add(&dy.multiply(&parameter)?)?,
+        ])
     }
 }

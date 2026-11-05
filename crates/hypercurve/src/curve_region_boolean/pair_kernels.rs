@@ -3525,6 +3525,9 @@ CurvePoint2(CurvePointData2::RationalImage(_)) => "rational-image",
                                 "hypercurve",
                                 "algebraic-circle-chord-pair",
                                 match reason {
+                                    UncertaintyReason::StorageUnavailable => {
+                                        "kernel-storage-unavailable"
+                                    }
                                     UncertaintyReason::BudgetExhausted => "kernel-budget-exhausted",
                                     UncertaintyReason::Unsupported => "kernel-unsupported",
                                     UncertaintyReason::Predicate => "kernel-predicate",

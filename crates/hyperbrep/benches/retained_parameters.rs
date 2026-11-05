@@ -23,7 +23,7 @@ fn controls() -> Vec<Real> {
 
 fn check_roots(curve: &Curve3, ranges: &[(Parameter, Parameter)]) -> usize {
     let CurveParameterLocation::Parameters(parameters) =
-        black_box(curve).parameters_of(&Point3::origin()).unwrap()
+        black_box(curve).parameters_of(Point3::origin()).unwrap()
     else {
         panic!("expected selected roots");
     };
@@ -82,7 +82,7 @@ fn main() {
     let (elapsed, checksum) = measure(|| {
         assert!(matches!(
             black_box(&separated)
-                .parameters_of(&Point3::origin())
+                .parameters_of(Point3::origin())
                 .unwrap(),
             CurveParameterLocation::None
         ));

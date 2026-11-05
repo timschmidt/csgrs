@@ -133,15 +133,19 @@ fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
     let contact = |source: Curve3, parameter: Real| {
         SurfaceIntersectionBoundaryContact::new(
             source,
-            parameter,
+            parameter.into(),
             None,
-            hypercurve::Point2::new((-2).into(), 0.into()),
-            p(-2, 0, 0),
+            hypercurve::Point2::new((-2).into(), 0.into()).into(),
+            p(-2, 0, 0).into(),
         )
     };
     let hint = contact(curve.clone(), Real::pi());
-    let actual = retained_spatial_parameter(&carrier, &middle, &[hint], &curve).unwrap();
-    assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+    let actual =
+        retained_spatial_parameter(&carrier, &middle.clone().into(), &[hint], &curve).unwrap();
+    assert_eq!(
+        exact_order(actual.try_real().unwrap(), &Real::pi()).unwrap(),
+        Ordering::Equal
+    );
     // These source curves pass through the same point at pi/2. Neither that
     // shared point nor a shared circle support proves equal parameterization.
     for source in [
@@ -160,10 +164,17 @@ fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
         assert!(
             points_exactly_equal(&source.evaluate_real(&parameter).unwrap(), &p(-2, 0, 0)).unwrap()
         );
-        let actual =
-            retained_spatial_parameter(&carrier, &middle, &[contact(source, parameter)], &curve)
-                .unwrap();
-        assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+        let actual = retained_spatial_parameter(
+            &carrier,
+            &middle.clone().into(),
+            &[contact(source, parameter)],
+            &curve,
+        )
+        .unwrap();
+        assert_eq!(
+            exact_order(actual.try_real().unwrap(), &Real::pi()).unwrap(),
+            Ordering::Equal
+        );
     }
     let shift = Real::from(100) * Real::tau();
     let shifted = circle(
@@ -174,26 +185,36 @@ fn circular_clip_preimages_preserve_chart_scope_and_both_seam_ends() {
     );
     let actual = retained_spatial_parameter(
         &carrier,
-        &middle,
+        &middle.clone().into(),
         &[contact(shifted, shift + Real::pi())],
         &curve,
     )
     .unwrap();
-    assert_eq!(exact_order(&actual, &Real::pi()).unwrap(), Ordering::Equal);
+    assert_eq!(
+        exact_order(actual.try_real().unwrap(), &Real::pi()).unwrap(),
+        Ordering::Equal
+    );
     // A seam contact has two exact lifts; the selected pcurve endpoint owns
     // which parameter identity is used.
     let seam = SurfaceIntersectionBoundaryContact::new(
         curve.clone(),
-        Real::tau(),
+        Real::tau().into(),
         None,
-        hypercurve::Point2::new(2.into(), 0.into()),
-        p(2, 0, 0),
+        hypercurve::Point2::new(2.into(), 0.into()).into(),
+        p(2, 0, 0).into(),
     );
     for (parameter, expected) in [(&start, Real::zero()), (&end, Real::tau())] {
-        let actual =
-            retained_spatial_parameter(&carrier, parameter, std::slice::from_ref(&seam), &curve)
-                .unwrap();
-        assert_eq!(exact_order(&actual, &expected).unwrap(), Ordering::Equal);
+        let actual = retained_spatial_parameter(
+            &carrier,
+            &parameter.clone().into(),
+            std::slice::from_ref(&seam),
+            &curve,
+        )
+        .unwrap();
+        assert_eq!(
+            exact_order(actual.try_real().unwrap(), &expected).unwrap(),
+            Ordering::Equal
+        );
     }
 }
 

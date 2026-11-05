@@ -18,11 +18,11 @@ fn polynomial(rows: Vec<Vec<Real>>) -> BivariatePolynomial {
     BivariatePolynomial::new(rows)
 }
 
-fn form(point: &CurvePoint2, numerator: BivariatePolynomial) -> ExactCurveResult<Form> {
+pub(super) fn form(point: &CurvePoint2, numerator: BivariatePolynomial) -> ExactCurveResult<Form> {
     point.rational_form(numerator, polynomial(vec![vec![Real::one()]]))
 }
 
-fn coordinates(point: &CurvePoint2) -> ExactCurveResult<[Form; 2]> {
+pub(super) fn coordinates(point: &CurvePoint2) -> ExactCurveResult<[Form; 2]> {
     Ok([
         form(point, polynomial(vec![vec![], vec![Real::one()]]))?,
         form(point, polynomial(vec![vec![Real::zero(), Real::one()]]))?,
@@ -182,12 +182,15 @@ impl PolynomialCurveBranch2 {
         chord: &BezierAlgebraicChord2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Option<Vec<PolynomialLineSection2>>> {
-        if !self.maps.is_empty() {
+        // Maps certified as exact similarities give their composed affine
+        // view for the source-chart query; returned interior points still
+        // replay the authoritative maps through `map_point`.
+        let Some(view) = self.similarity_view() else {
             return Err(blocked(UncertaintyReason::Unsupported));
-        }
+        };
         chord.validate_policy(policy).map_err(invalid)?;
         let local = |point: &CurvePoint2| -> ExactCurveResult<CurvePoint2> {
-            Ok(match &self.transform {
+            Ok(match &view {
                 Some(transform) => CurvePoint2::from(BezierSimilarityPoint2::new(
                     point.clone(),
                     transform.inverse().map_err(invalid)?,
@@ -246,11 +249,7 @@ impl PolynomialCurveBranch2 {
                 Ordering::Greater => RealSign::Positive,
             };
             Ok(Some(
-                if self
-                    .transform
-                    .as_ref()
-                    .is_some_and(|t| t.reverses_orientation())
-                {
+                if view.as_ref().is_some_and(|t| t.reverses_orientation()) {
                     negate(sign)
                 } else {
                     sign

@@ -67,7 +67,7 @@ fn main() -> Result<()> {
 
     // Transform: a translation and an exact quarter turn.
     let drill = bar.translated(Real::from(4), Real::from(4), Real::from(-2))?;
-    let cross = solid::try_rotate(&bar, Real::from(90), Real::zero(), Real::zero())?
+    let cross = solid::rotate(&bar, Real::from(90), Real::zero(), Real::zero())?
         .translated(Real::from(4), Real::from(14), Real::from(4))?;
 
     // Compose, keeping the aggregate certainty of every consumed decision.

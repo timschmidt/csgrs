@@ -497,6 +497,22 @@ impl ArenaModelBuilder {
             if !analytic_closed && axial.is_none() {
                 self.validate_outer_shell_orientation(outer)?;
             }
+            let tensor_graph = if analytic_closed
+                || simple_prism
+                || line_arc_prism
+                || cone_frustum.is_some()
+                || torus.is_some()
+                || curve_sweep.is_some()
+                || loft.is_some()
+                || convex_planar
+                || general_planar
+                || axial.is_some()
+                || !voids.is_empty()
+            {
+                None
+            } else {
+                self.certified_tensor_graph_shell(outer)?
+            };
             if !analytic_closed
                 && !simple_prism
                 && !line_arc_prism
@@ -507,6 +523,7 @@ impl ArenaModelBuilder {
                 && !convex_planar
                 && !general_planar
                 && axial.is_none()
+                && tensor_graph.is_none()
             {
                 return Err(BuildError::UnsupportedSolidShell(outer));
             }
@@ -565,6 +582,7 @@ impl ArenaModelBuilder {
                     curve_sweep: if voids.is_empty() { curve_sweep } else { None },
                     prism: None,
                     axial,
+                    tensor_graph,
                 }));
             for shell in shells {
                 self.shell_solid[shell.index()] = Some(id);
@@ -633,6 +651,7 @@ impl ArenaModelBuilder {
                 loft: None,
                 curve_sweep: None,
                 axial: None,
+                tensor_graph: None,
                 prism: Some(CertifiedPrismShell {
                     profile: CertifiedPrismProfile::CurveRegion { region, area },
                     origin: Point3::new(Real::zero(), Real::zero(), z_min.clone()),
@@ -871,6 +890,36 @@ impl ArenaModelBuilder {
                 .map_err(|error| ValidationReport {
                     errors: vec![error],
                 })?;
+            let certified_tensor_graphs = self
+                .solids
+                .iter()
+                .enumerate()
+                .map(|(index, solid)| {
+                    let eligible = solid.voids.is_empty()
+                        && certified_prisms[index].is_none()
+                        && certified_cylinders[index].is_none()
+                        && certified_lofts[index].is_none()
+                        && certified_curve_sweeps[index].is_none()
+                        && certified_spheres[index].is_none()
+                        && certified_sphere_pairs[index].is_none()
+                        && certified_cone_frustums[index].is_none()
+                        && certified_tori[index].is_none()
+                        && certified_revolutions[index].is_none()
+                        && certified_axial_shells[index].is_none();
+                    if let Some(certificate) =
+                        self.solid_certificates[index].reuse(|proof| &proof.tensor_graph, eligible)
+                    {
+                        Ok(certificate)
+                    } else if eligible {
+                        self.certified_tensor_graph_shell(solid.outer)
+                    } else {
+                        Ok(None)
+                    }
+                })
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(|error| ValidationReport {
+                    errors: vec![error],
+                })?;
             Ok(ArenaModel {
                 data: Arc::new(ModelData {
                     vertices: self.vertices,
@@ -900,6 +949,7 @@ impl ArenaModelBuilder {
                     certified_curve_sweeps,
                     certified_prisms,
                     certified_axial_shells,
+                    certified_tensor_graphs,
                     bounds: OnceLock::new(),
                     face_contours: (0..face_count).map(|_| OnceLock::new()).collect(),
                 }),

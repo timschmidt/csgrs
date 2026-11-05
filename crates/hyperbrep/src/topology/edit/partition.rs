@@ -81,25 +81,20 @@ impl ArenaModel {
                 }
                 ordered.insert(insertion, trace);
             }
+            // Every trace keeps its source chart, including selected ends
+            // and selected interior crossings. Native intervals still use
+            // their established rebased subdivision when represented.
             let mut split_parameters = ordered
                 .iter()
                 .map(|trace| {
-                    Ok(vec![
-                        trace
-                            .intersection
-                            .curve()
-                            .domain()
-                            .represented_start()?
-                            .clone(),
-                        trace
-                            .intersection
-                            .curve()
-                            .domain()
-                            .represented_end()?
-                            .clone(),
-                    ])
+                    let domain = trace.intersection.curve().domain();
+                    vec![domain.start().clone(), domain.end().clone()]
                 })
-                .collect::<Result<Vec<_>, GeometryError>>()?;
+                .collect::<Vec<_>>();
+            let mut endpoint_adjacency =
+                vec![[Vec::<usize>::new(), Vec::<usize>::new()]; ordered.len()];
+            let mut no_interior_contacts = vec![true; ordered.len()];
+            let mut endpoint_crossings = vec![[false; 2]; ordered.len()];
             let materialized = ordered
                 .iter()
                 .map(|trace| trace.intersection.pcurve(operand).materialize())
@@ -138,13 +133,76 @@ impl ArenaModel {
                         {
                             return Err(GeometryError::UnsupportedIntersection.into());
                         }
+                        let second_spatial =
+                            materialized[second_index].spatial_parameter_at(&second_parameter)?;
+                        if !ordered[second_index]
+                            .intersection
+                            .curve()
+                            .domain()
+                            .contains(&second_spatial)?
+                        {
+                            return Err(GeometryError::UnsupportedIntersection.into());
+                        }
+                        let endpoint =
+                            |index: usize,
+                             parameter: &Parameter|
+                             -> Result<Option<usize>, GeometryError> {
+                                let domain = ordered[index].intersection.curve().domain();
+                                if parameter.compare(domain.start())?.is_eq() {
+                                    Ok(Some(0))
+                                } else if parameter.compare(domain.end())?.is_eq() {
+                                    Ok(Some(1))
+                                } else {
+                                    Ok(None)
+                                }
+                            };
+                        let first_end = endpoint(first_index, &first_spatial)?;
+                        let second_end = endpoint(second_index, &second_spatial)?;
+                        no_interior_contacts[first_index] &= first_end.is_some();
+                        no_interior_contacts[second_index] &= second_end.is_some();
+                        if let (Some(end), None) = (first_end, second_end) {
+                            endpoint_crossings[first_index][end] = true;
+                        }
+                        if let (None, Some(end)) = (first_end, second_end) {
+                            endpoint_crossings[second_index][end] = true;
+                        }
+                        if let (Some(first_end), Some(second_end)) = (first_end, second_end) {
+                            let uv = ordered[first_index]
+                                .intersection
+                                .pcurve(operand)
+                                .point_at(&first_spatial)?;
+                            match self.classify_surface_parameter_on_face(face_id, &uv)? {
+                                Classification::Decided(ContourPointLocation::Inside) => {
+                                    if !endpoint_adjacency[first_index][first_end]
+                                        .contains(&second_index)
+                                    {
+                                        endpoint_adjacency[first_index][first_end]
+                                            .push(second_index);
+                                    }
+                                    if !endpoint_adjacency[second_index][second_end]
+                                        .contains(&first_index)
+                                    {
+                                        endpoint_adjacency[second_index][second_end]
+                                            .push(first_index);
+                                    }
+                                }
+                                // Existing boundary junctions delimit separate
+                                // face edits; joining across one can merge
+                                // disconnected descendant material regions.
+                                Classification::Decided(
+                                    ContourPointLocation::Boundary | ContourPointLocation::Outside,
+                                ) => {}
+                                Classification::Uncertain(reason) => {
+                                    return Err(GeometryError::PlanarClassificationUnresolved(
+                                        reason,
+                                    )
+                                    .into());
+                                }
+                            }
+                        }
                         insert_exact_split_parameter(
                             &mut split_parameters[second_index],
-                            materialized[second_index]
-                                .spatial_parameter_at(&second_parameter)?
-                                .try_real()
-                                .cloned()
-                                .ok_or(GeometryError::UnrepresentableParameter)?,
+                            second_spatial,
                         )?;
                     }
                 }
@@ -165,25 +223,72 @@ impl ArenaModel {
                     return Ok((model, partition));
                 }
             }
+            // Defer uncrossed chains until individual support traces have
+            // partitioned the face. Their interior junctions are retained
+            // together rather than required to be pre-existing boundaries.
+            let uncrossed = (0..ordered.len())
+                .filter(|index| split_parameters[*index].len() == 2)
+                .collect::<Vec<_>>();
+            let chains = closed_trace_chains(&ordered, &uncrossed)?;
+            let mut deferred = chains.iter().flatten().copied().collect::<Vec<_>>();
+            let open_candidates = uncrossed
+                .iter()
+                .copied()
+                .filter(|index| !deferred.contains(index) && no_interior_contacts[*index])
+                .collect::<Vec<_>>();
+            // A support cut through a junction creates a boundary before the
+            // deferred chain runs. Keep that incidence: each side must attach
+            // separately rather than span two descendant material regions.
+            for (sides, crossings) in endpoint_adjacency.iter_mut().zip(endpoint_crossings) {
+                for (neighbors, crossed) in sides.iter_mut().zip(crossings) {
+                    if crossed {
+                        neighbors.clear();
+                    }
+                }
+            }
+            let open_chains = open_trace_chains(&endpoint_adjacency, &open_candidates);
+            deferred.extend(open_chains.iter().flatten().copied());
+            let open_chains = open_chains
+                .iter()
+                .map(|chain| {
+                    chain
+                        .iter()
+                        .map(|index| ordered[*index].clone())
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let loops = chains
+                .iter()
+                .map(|chain| {
+                    chain
+                        .iter()
+                        .map(|index| ordered[*index].clone())
+                        .collect::<Vec<_>>()
+                })
+                .collect::<Vec<_>>();
+            let (ordered, split_parameters): (Vec<_>, Vec<_>) = ordered
+                .into_iter()
+                .zip(split_parameters)
+                .enumerate()
+                .filter(|(index, _)| !deferred.contains(index))
+                .map(|(_, pair)| pair)
+                .unzip();
             let mut staged = self.clone();
             let mut faces = vec![face_id];
             let mut traces = Vec::with_capacity(ordered.len());
             for (trace, parameters) in ordered.into_iter().zip(split_parameters) {
                 let segments = parameters
                     .windows(2)
-                    .map(|range| trace.intersection.subcurve(&range[0], &range[1]))
+                    .map(|range| trace.intersection.trimmed_interval(&range[0], &range[1]))
                     .collect::<Result<Vec<_>, _>>()?;
                 let mut splits = Vec::with_capacity(segments.len());
                 let mut snapshots = Vec::with_capacity(segments.len());
-                let whole_closed_trace = segments.len() == 1
-                    && matches!(
-                        point3_equal(
-                            &segments[0].curve().start()?,
-                            &segments[0].curve().end()?,
-                            crate::STRICT_PREDICATES,
-                        ),
-                        PredicateOutcome::Decided { value: true, .. }
-                    );
+                let whole_closed_trace = if segments.len() == 1 {
+                    let (start, end) = retained_curve_endpoints(segments[0].curve())?;
+                    start.coincides_with(&end)?
+                } else {
+                    false
+                };
                 if whole_closed_trace {
                     let segment = &segments[0];
                     let mut candidates = Vec::new();
@@ -222,21 +327,22 @@ impl ArenaModel {
                         break;
                     }
                     let curve = segment.curve();
-                    let start = curve.start()?;
-                    let end = curve.end()?;
+                    let (start, end) = retained_curve_endpoints(curve)?;
                     let mut candidates = Vec::new();
                     for (index, candidate) in faces.iter().copied().enumerate() {
                         let start_location = staged.locate_surface_curve_split_endpoint(
                             candidate,
                             Endpoint::Start,
                             &start,
-                            segment.start_boundary_contacts(operand),
+                            segment,
+                            operand,
                         );
                         let end_location = staged.locate_surface_curve_split_endpoint(
                             candidate,
                             Endpoint::End,
                             &end,
-                            segment.end_boundary_contacts(operand),
+                            segment,
+                            operand,
                         );
                         match (start_location, end_location) {
                             (Ok(_), Ok(_)) => candidates.push((index, candidate)),
@@ -320,6 +426,118 @@ impl ArenaModel {
                     boundary: None,
                     snapshots,
                 });
+            }
+            for chain in open_chains {
+                let pieces = chain
+                    .iter()
+                    .map(|trace| trace.intersection.clone())
+                    .collect::<Vec<_>>();
+                let (oriented, ends) =
+                    staged.orient_surface_curve_chain(face_id, &pieces, operand)?;
+                let mut candidates = Vec::new();
+                for (index, candidate) in faces.iter().copied().enumerate() {
+                    let start = staged.locate_surface_curve_split_endpoint(
+                        candidate,
+                        Endpoint::Start,
+                        &ends[0].0,
+                        &oriented[0],
+                        operand,
+                    );
+                    let end = staged.locate_surface_curve_split_endpoint(
+                        candidate,
+                        Endpoint::End,
+                        &ends[ends.len() - 1].1,
+                        &oriented[oriented.len() - 1],
+                        operand,
+                    );
+                    match (start, end) {
+                        (Ok(_), Ok(_)) => candidates.push((index, candidate)),
+                        (Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. }), _)
+                        | (_, Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. })) =>
+                            {}
+                        (Err(error), _) | (_, Err(error)) => return Err(error),
+                    }
+                }
+                let [(face_index, candidate)] = candidates.as_slice() else {
+                    return Err(if candidates.is_empty() {
+                        TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    } else {
+                        TopologyEditError::FaceSplitTraceAmbiguous {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    });
+                };
+                let (next, split) =
+                    staged.split_face_by_surface_curve_chain(*candidate, &pieces, operand)?;
+                let shared_split = Arc::new(split);
+                for (chain_index, trace) in chain.iter().enumerate() {
+                    traces.push(ArenaFaceTracePartition {
+                        source_index: trace.source_index,
+                        segments: vec![trace.intersection.curve().clone()],
+                        splits: vec![ArenaSurfaceCurveFaceSplit::ChainMember(
+                            ArenaChainMemberCurveSplit {
+                                chain_index,
+                                chain: shared_split.clone(),
+                            },
+                        )],
+                        boundary: None,
+                        snapshots: vec![(staged.clone(), next.clone())],
+                    });
+                }
+                faces[*face_index] = shared_split.face.first_face;
+                faces.insert(*face_index + 1, shared_split.face.second_face);
+                staged = next;
+            }
+            for chain in loops {
+                let pieces = chain
+                    .iter()
+                    .map(|trace| trace.intersection.clone())
+                    .collect::<Vec<_>>();
+                let mut accepted = Vec::new();
+                for candidate in faces.iter().copied() {
+                    match staged.split_face_by_surface_curve_loop(candidate, &pieces, operand) {
+                        Ok(result) => accepted.push(result),
+                        Err(TopologyEditError::ClosedFaceSplitNotInMaterial { .. }) => {}
+                        Err(error) => return Err(error),
+                    }
+                }
+                let [(next, split)] = accepted.as_slice() else {
+                    return Err(if accepted.is_empty() {
+                        TopologyEditError::FaceSplitTraceNotInSingleRegion {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    } else {
+                        TopologyEditError::FaceSplitTraceAmbiguous {
+                            face: face_id,
+                            trace: chain[0].source_index,
+                            segment: 0,
+                        }
+                    });
+                };
+                for (loop_index, trace) in chain.iter().enumerate() {
+                    traces.push(ArenaFaceTracePartition {
+                        source_index: trace.source_index,
+                        segments: vec![trace.intersection.curve().clone()],
+                        splits: vec![ArenaSurfaceCurveFaceSplit::LoopMember(
+                            ArenaLoopMemberCurveSplit {
+                                loop_index,
+                                face: split.clone(),
+                            },
+                        )],
+                        boundary: None,
+                        snapshots: vec![(staged.clone(), next.clone())],
+                    });
+                }
+                faces.push(split.second_face);
+                staged = next.clone();
             }
             traces.extend(boundary_traces);
             Ok((
@@ -552,10 +770,9 @@ impl ArenaModel {
 
         let mut endpoint_wires = Vec::with_capacity(bridges.len());
         for (_, bridge) in bridges {
-            let start = bridge.curve().start()?;
-            let end = bridge.curve().end()?;
+            let (start, end) = retained_curve_endpoints(bridge.curve())?;
             let locate = |endpoint, point| match self
-                .locate_face_boundary_split_endpoint(face_id, endpoint, point)
+                .locate_surface_curve_boundary_endpoint(face_id, endpoint, point, bridge, operand)
             {
                 Ok(location) => Ok(Some(location)),
                 Err(TopologyEditError::FaceSplitEndpointNotOnOuterBoundary { .. }) => Ok(None),
@@ -633,13 +850,24 @@ impl ArenaModel {
         let mut staged = self.clone();
         let mut attached = Vec::with_capacity(bridges.len());
         for (source_index, bridge) in bridges {
-            let start = bridge.curve().start()?;
-            let end = bridge.curve().end()?;
-            let (next, start_wire, start_vertex, start_edge) =
-                staged.attach_face_boundary_split_endpoint(face_id, Endpoint::Start, &start)?;
+            let (start, end) = retained_curve_endpoints(bridge.curve())?;
+            let (next, start_wire, start_vertex, start_edge) = staged
+                .attach_surface_curve_boundary_endpoint(
+                    face_id,
+                    Endpoint::Start,
+                    &start,
+                    bridge,
+                    operand,
+                )?;
             staged = next;
-            let (next, end_wire, end_vertex, end_edge) =
-                staged.attach_face_boundary_split_endpoint(face_id, Endpoint::End, &end)?;
+            let (next, end_wire, end_vertex, end_edge) = staged
+                .attach_surface_curve_boundary_endpoint(
+                    face_id,
+                    Endpoint::End,
+                    &end,
+                    bridge,
+                    operand,
+                )?;
             staged = next;
             attached.push(AttachedBridge {
                 source_index: *source_index,
@@ -786,15 +1014,7 @@ impl ArenaModel {
             let reverse_pcurve = PcurveId::from_index(data.pcurves.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Pcurve))?;
             data.pcurves.push(reverse_pcurve_geometry.clone());
-            let (scale, offset) = bridge
-                .correspondence
-                .affine_coefficients()
-                .expect("boundary bridge requires affine correspondence");
-            let reverse_correspondence = ParameterCorrespondence::affine(
-                -scale.clone(),
-                scale * (bridge.pcurve.represented_start()? + bridge.pcurve.represented_end()?)
-                    + offset,
-            )?;
+            let reverse_correspondence = bridge.correspondence.reversed_pcurve(&bridge.pcurve)?;
             let forward_use = EdgeUseId::from_index(data.edge_uses.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::EdgeUse))?;
             data.edge_uses.push(EdgeUse {
@@ -1050,4 +1270,119 @@ impl ArenaModel {
             },
         )))
     }
+}
+
+/// Maximal unbranched open chains among uncrossed traces. Every joining
+/// vertex must have exactly one continuation; a branch is not an invitation
+/// to choose a path. Closed components are handled by the loop census.
+fn open_trace_chains(adjacency: &[[Vec<usize>; 2]], candidates: &[usize]) -> Vec<Vec<usize>> {
+    // These incidences were proved by the complete original pcurve-pair
+    // contacts. Keep them instead of rediscovering unrelated 3D point fields.
+    let adjacency = adjacency
+        .iter()
+        .map(|sides| {
+            sides.clone().map(|neighbors| {
+                neighbors
+                    .into_iter()
+                    .filter(|index| candidates.contains(index))
+                    .collect::<Vec<_>>()
+            })
+        })
+        .collect::<Vec<_>>();
+    let mut used = vec![false; adjacency.len()];
+    let mut result = Vec::new();
+    for &start in candidates {
+        if used[start] || !adjacency[start].iter().any(Vec::is_empty) {
+            continue;
+        }
+        let mut chain = vec![start];
+        let mut previous = None;
+        let mut current = start;
+        loop {
+            if adjacency[current].iter().any(|side| side.len() > 1) {
+                break;
+            }
+            let next = adjacency[current]
+                .iter()
+                .flatten()
+                .copied()
+                .find(|next| Some(*next) != previous);
+            let Some(next) = next else {
+                if chain.len() > 1 {
+                    for index in &chain {
+                        used[*index] = true;
+                    }
+                    result.push(chain);
+                }
+                break;
+            };
+            if used[next] || chain.contains(&next) {
+                break;
+            }
+            chain.push(next);
+            previous = Some(current);
+            current = next;
+        }
+    }
+    result
+}
+
+/// Closed chains among `candidates`, each joining every piece's end to the
+/// next piece's start or end exactly; pieces on no closed chain are left out.
+fn closed_trace_chains(
+    traces: &[OrderedSurfaceCurveTrace],
+    candidates: &[usize],
+) -> Result<Vec<Vec<usize>>, TopologyEditError> {
+    let ends = traces
+        .iter()
+        .map(|trace| retained_curve_endpoints(trace.intersection.curve()))
+        .collect::<Result<Vec<_>, GeometryError>>()?;
+    let equal = |a: &GeometricPoint3, b: &GeometricPoint3| -> Result<bool, TopologyEditError> {
+        Ok(a.coincides_with(b)?)
+    };
+    let mut used = vec![false; traces.len()];
+    let mut chains = Vec::new();
+    for first in candidates.iter().copied() {
+        if used[first] {
+            continue;
+        }
+        let mut chain = vec![first];
+        let mut taken = vec![first];
+        let mut tail = ends[first].1.clone();
+        let mut closed = false;
+        loop {
+            if chain.len() >= 2 && equal(&tail, &ends[first].0)? {
+                closed = true;
+                break;
+            }
+            let mut next = None;
+            for index in candidates.iter().copied() {
+                if used[index] || taken.contains(&index) {
+                    continue;
+                }
+                let (start, end) = &ends[index];
+                if equal(start, &tail)? {
+                    next = Some((index, end.clone()));
+                    break;
+                }
+                if equal(end, &tail)? {
+                    next = Some((index, start.clone()));
+                    break;
+                }
+            }
+            let Some((index, new_tail)) = next else {
+                break;
+            };
+            chain.push(index);
+            taken.push(index);
+            tail = new_tail;
+        }
+        if closed {
+            for index in &chain {
+                used[*index] = true;
+            }
+            chains.push(chain);
+        }
+    }
+    Ok(chains)
 }

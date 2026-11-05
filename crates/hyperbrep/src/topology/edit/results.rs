@@ -93,6 +93,28 @@ pub enum ArenaSurfaceCurveFaceSplit {
     Bridge(ArenaBoundaryBridgeCurveSplit),
     /// A closed trace wholly inside the source face's material region.
     Closed(ArenaClosedSurfaceCurveFaceSplit),
+    /// One piece of a closed chain of traces inside the source face.
+    LoopMember(ArenaLoopMemberCurveSplit),
+    /// One piece of an open chain split atomically between boundary points.
+    ChainMember(ArenaChainMemberCurveSplit),
+}
+
+/// One piece of an open chain split as one face edit.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaChainMemberCurveSplit {
+    /// Position of this piece in the oriented chain.
+    pub chain_index: usize,
+    /// The complete atomic chain edit, shared by every member.
+    pub chain: Arc<ArenaSurfaceCurveChainFaceSplit>,
+}
+
+/// One piece of a closed chain of traces split as a single loop.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaLoopMemberCurveSplit {
+    /// Position of this piece in the oriented loop.
+    pub loop_index: usize,
+    /// The complete loop split shared by every piece.
+    pub face: ArenaSurfaceCurveLoopFaceSplit,
 }
 
 impl ArenaSurfaceCurveFaceSplit {
@@ -100,7 +122,7 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn open(&self) -> Option<&ArenaCurveFaceSplit> {
         match self {
             Self::Open(split) => Some(split),
-            Self::Bridge(_) | Self::Closed(_) => None,
+            Self::Bridge(_) | Self::Closed(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
         }
     }
 
@@ -108,33 +130,37 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn bridge(&self) -> Option<&ArenaBoundaryBridgeCurveSplit> {
         match self {
             Self::Bridge(split) => Some(split),
-            Self::Open(_) | Self::Closed(_) => None,
+            Self::Open(_) | Self::Closed(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
         }
     }
 
     /// Returns the outer/inner-wire result when this trace is closed.
     pub const fn closed(&self) -> Option<&ArenaClosedSurfaceCurveFaceSplit> {
         match self {
-            Self::Open(_) | Self::Bridge(_) => None,
+            Self::Open(_) | Self::Bridge(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
             Self::Closed(split) => Some(split),
         }
     }
 
     /// Returns the source face retained by the first descendant.
-    pub const fn first_face(&self) -> FaceId {
+    pub fn first_face(&self) -> FaceId {
         match self {
             Self::Open(split) => split.face.first_face,
             Self::Bridge(split) => split.face.first_face,
             Self::Closed(split) => split.first_face,
+            Self::LoopMember(split) => split.face.first_face,
+            Self::ChainMember(split) => split.chain.face.first_face,
         }
     }
 
     /// Returns the newly appended enclosed or second descendant.
-    pub const fn second_face(&self) -> FaceId {
+    pub fn second_face(&self) -> FaceId {
         match self {
             Self::Open(split) => split.face.second_face,
             Self::Bridge(split) => split.face.second_face,
             Self::Closed(split) => split.second_face,
+            Self::LoopMember(split) => split.face.second_face,
+            Self::ChainMember(split) => split.chain.face.second_face,
         }
     }
 }
@@ -160,6 +186,36 @@ pub struct ArenaClosedSurfaceCurveFaceSplit {
     pub first_face: FaceId,
     /// Newly appended second descendant.
     pub second_face: FaceId,
+}
+
+/// Stable identifiers produced by one closed chain of surface curves.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaSurfaceCurveLoopFaceSplit {
+    /// New vertices at the chain's junctions, starting at the first piece.
+    pub vertices: Vec<VertexId>,
+    /// One canonical edge per piece, shared by both descendants.
+    pub edges: Vec<EdgeId>,
+    /// New inner wire of the retained first descendant.
+    pub first_wire: WireId,
+    /// Outer wire of the appended enclosed descendant.
+    pub second_wire: WireId,
+    /// First descendant retaining the source face ID.
+    pub first_face: FaceId,
+    /// Newly appended enclosed descendant.
+    pub second_face: FaceId,
+}
+
+/// Stable identifiers produced by one open chain of surface curves.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaSurfaceCurveChainFaceSplit {
+    /// Optional canonical edge split that attached the chain start.
+    pub start_edge: Option<ArenaEdgeSplit>,
+    /// Optional canonical edge split that attached the chain end.
+    pub end_edge: Option<ArenaEdgeSplit>,
+    /// The resulting face split; its edge fields describe the first piece.
+    pub face: ArenaFaceSplit,
+    /// One canonical edge per piece, in chain order.
+    pub edges: Vec<EdgeId>,
 }
 
 /// Stable result of deterministic exact multi-trace face partitioning.

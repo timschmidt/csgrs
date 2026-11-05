@@ -97,9 +97,18 @@ pub enum UncertaintyReason {
     Unsupported,
     /// The caller's explicit operation work budget stopped a required proof.
     BudgetExhausted,
+    /// Checked storage dimensions or a fallible allocation were unavailable.
+    /// This does not assert that a configured work limit was reached.
+    StorageUnavailable,
 }
 
 impl UncertaintyReason {
+    /// Whether this stop must remain retryable rather than becoming lasting
+    /// evidence of undecidability or permission for an approximate terminal.
+    pub const fn is_resource_failure(self) -> bool {
+        matches!(self, Self::BudgetExhausted | Self::StorageUnavailable)
+    }
+
     /// Distinguishes an undefined scalar quotient from an unresolved nonzero proof.
     pub fn from_real_division(error: hyperreal::Problem) -> Self {
         match error {

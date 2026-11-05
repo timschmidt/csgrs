@@ -37,7 +37,7 @@ impl ArenaModel {
             return Err(GeometryError::InvalidParameterDomain.into());
         }
         let split_point = if let Some((_, contact)) = &retained_contact {
-            contact.spatial_point().clone().into()
+            contact.spatial_point().clone()
         } else {
             self.curve(edge.curve)
                 .expect("validated edge curve ID")
@@ -61,7 +61,7 @@ impl ArenaModel {
         let affine_parameter = retained_contact
             .as_ref()
             .and_then(|(_, contact)| contact.affine_parameter())
-            .map(|value| Parameter::from_real(value.clone()))
+            .cloned()
             .unwrap_or_else(|| parameter.clone());
 
         struct UseSplit {
@@ -111,7 +111,11 @@ impl ArenaModel {
                         let (first, second) = match crate::error::classified(
                             arc.split_at_retained_sweep_point(
                                 &fraction,
-                                contact.pcurve_point().clone(),
+                                contact
+                                    .pcurve_point()
+                                    .coordinates()
+                                    .cloned()
+                                    .ok_or(GeometryError::UnsupportedPcurveContour)?,
                             ),
                         )
                         .map_err(GeometryError::from)?
@@ -300,5 +304,91 @@ impl ArenaModel {
                 edge_uses: split_uses,
             },
         ))
+    }
+}
+
+#[cfg(test)]
+mod retained_contact_tests {
+    use super::*;
+
+    #[test]
+    fn selected_boundary_contact_splits_all_incident_uses_and_replays() {
+        let (model, _) = crate::construction::cuboid(
+            Point3::origin(),
+            Point3::new(2.into(), 3.into(), 4.into()),
+        )
+        .unwrap();
+        let selected = hypercurve::BezierAlgebraicParameter2::try_isolate(
+            hypercurve::BezierParameterPolynomial::try_new_power_basis(vec![
+                (-1).into(),
+                1.into(),
+                0.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+            ])
+            .unwrap(),
+            hypercurve::BezierParameterInterval::try_new(0.into(), 1.into()).unwrap(),
+        )
+        .unwrap();
+        let parameter = Parameter::from_bezier(hypercurve::BezierParameter2::Algebraic(selected));
+        assert!(parameter.try_real().is_none());
+        let edge_id = EdgeId::from_index(0).unwrap();
+        let edge = model.edge(edge_id).unwrap();
+        let use_id = model.uses_of_edge(edge_id).unwrap()[0];
+        let edge_use = model.edge_use(use_id).unwrap();
+        let local = model.pcurve_parameter_at(use_id, &parameter).unwrap();
+        let uv = model
+            .pcurve(edge_use.pcurve())
+            .unwrap()
+            .point_at(&local)
+            .unwrap();
+        let curve = model.curve(edge.curve()).unwrap().clone();
+        let expected = curve.point_at(&parameter).unwrap();
+        assert!(expected.try_coordinates().is_none());
+        let contact = SurfaceIntersectionBoundaryContact::new(
+            curve,
+            parameter.clone(),
+            Some(parameter.clone()),
+            uv,
+            expected.clone(),
+        );
+        let (split, details) = model
+            .split_edge_with_pcurve_parameter(edge_id, parameter.clone(), Some((use_id, contact)))
+            .unwrap();
+        assert!(
+            split
+                .vertex(details.vertex)
+                .unwrap()
+                .point()
+                .coincides_with(&expected)
+                .unwrap()
+        );
+        assert_eq!(details.edge_uses.len(), 2);
+        assert_eq!(
+            split
+                .edge(edge_id)
+                .unwrap()
+                .domain()
+                .end()
+                .compare(&parameter)
+                .unwrap(),
+            std::cmp::Ordering::Equal
+        );
+        let text = split.to_json().unwrap();
+        let replay =
+            crate::persistence::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
+        assert!(
+            replay
+                .vertex(details.vertex)
+                .unwrap()
+                .point()
+                .coincides_with(&expected)
+                .unwrap()
+        );
+        assert_eq!(replay.to_json().unwrap(), text);
     }
 }

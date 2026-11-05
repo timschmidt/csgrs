@@ -84,6 +84,13 @@ impl Selection {
         match self {
             Self::PlanarPoint(point) => point.depth(depths),
             Self::Chord(points) => 1 + points.iter().map(|p| p.depth(depths)).max().unwrap_or(0),
+            Self::PointOnChord { chord, point } => {
+                let source = match chord {
+                    Index::Valid(index) => referenced(*index, depths),
+                    _ => 0,
+                };
+                1 + source.max(point.depth(depths))
+            }
             Self::RationalForm { point, .. } | Self::AffineForm { point } => {
                 1 + point.depth(depths)
             }

@@ -34,8 +34,7 @@ impl ArenaModel {
             {
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
-            let start = curve.start()?;
-            let end = curve.end()?;
+            let (start, end) = retained_curve_endpoints(curve)?;
             if self.retained_surface_curve_endpoints_equal(
                 face_id,
                 intersection,
@@ -105,13 +104,15 @@ impl ArenaModel {
                 face_id,
                 Endpoint::Start,
                 &start,
-                intersection.start_boundary_contacts(operand),
+                intersection,
+                operand,
             )?;
             let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
                 face_id,
                 Endpoint::End,
                 &end,
-                intersection.end_boundary_contacts(operand),
+                intersection,
+                operand,
             )?;
             let (staged, face) = staged.split_face_with_geometry(
                 face_id,

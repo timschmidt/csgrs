@@ -793,6 +793,27 @@ impl ArenaModelBuilder {
         {
             return Ok(orientation);
         }
+        if curved && let Some(graph) = self.certified_tensor_graph_shell(shell)? {
+            let tensors = self
+                .shell_ref(shell)?
+                .faces
+                .iter()
+                .copied()
+                .filter(|face| {
+                    self.surfaces[self.faces[face.index()].surface.index()].kind()
+                        == SurfaceKind::RationalBezier
+                })
+                .collect::<Vec<_>>();
+            // A closed graph shell has its base directed away from the
+            // material, every cap above it, and the graph strictly above it.
+            // Prove the tensor normal too, including the single uncapped
+            // tensor case where graph admission alone relies on orientation.
+            // This establishes positive volume without requiring its integral
+            // or materialized selected vertices.
+            if self.tensor_faces_face_along(&tensors, &graph.top, &graph.direction)? {
+                return Ok(std::cmp::Ordering::Greater);
+            }
+        }
         let mut sum = Real::zero();
         for face_id in &self.shell_ref(shell)?.faces {
             let face = self.face_ref(*face_id)?;

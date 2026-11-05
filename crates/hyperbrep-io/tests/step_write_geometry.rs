@@ -290,7 +290,7 @@ fn unsupported_curves_cavities_and_selected_images_fail_with_source_sites() {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("root")
     };

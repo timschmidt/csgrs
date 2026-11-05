@@ -1,4 +1,32 @@
-# Selected geometry in archive version 15
+# Selected geometry in archive version 17
+
+Version 17 adds `PointOnChord { chord, point }` to the selected-definition
+DAG. The chord is a typed backward reference to an oriented finite line; the
+point retains its defining selected fields. Replay reconstructs that line,
+checks complete point incidence and finite-domain membership, and requires one
+preimage. A point-order parameter is not an independently materialized scalar.
+Input admission charges the point record and the logical depth of both the
+chord and point dependencies before exact decoding. Forward, cyclic, wrong-kind,
+off-support and out-of-domain selectors are invalid.
+
+Version 16 documents require an explicit structural migration: preserve the
+original document, change only its `version` field from 16 to 17, then parse and
+validate with the version-17 reader. All prior record payloads and selectors
+retain their meaning; migration grants no geometry certificate. The three
+maintained cone fixtures undergo exactly that discriminator change. The reader
+rejects earlier versions rather than silently adapting them. Version 17 extends
+the grammar and does not turn the remaining operation gaps into exact success.
+
+Version 16 introduced the `TensorImage` spatial curve record: an admitted pcurve source
+in the unit chart of an inline positive-weight rational Bézier tensor, with its
+signed source chart. Curves decode before surfaces, so the tensor controls and
+weights are embedded and revalidated on replay, together with the complete
+source bounds; nothing in the record is a trusted proof. Admission charges one
+record, both tensor degrees, every control and weight entry, and the source.
+That migration rejected version-15 archives without an adapter and advanced
+only the version field of the three retained cone fixtures. Its record payloads
+remain supported by version 17.
+
 
 `ParallelFidelity { definition, verification_depth }` retains annotated native
 planar sources through Hypercurve's existing checked graph. Native syntax is
@@ -47,8 +75,8 @@ definitions described below. Plane/tensor section curves retain both pcurves
 through these carriers. A saved model does not serialize a complete intersection
 query result or certify a trim arrangement.
 
-Version 15 retains authored coordinates and selected curve images in the same
-model. It rejects versions through 14; there is no migration reader.
+Version 17 retains authored coordinates and selected curve images in the same
+model. It rejects versions through 16; there is no implicit migration reader.
 `RawModel::from_json(json, &limits)` admits input syntax and record structure
 under explicit `ArchiveLimits`, checks the format version before decoding exact
 scalar data and rejects trailing input.

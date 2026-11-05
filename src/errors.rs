@@ -162,6 +162,8 @@ pub enum ValidationErrorKind {
     Unsupported,
     Undecided,
     ResourceExhausted,
+    /// Storage could not be obtained without a configured work limit being reached.
+    ResourceUnavailable,
     Unbounded,
     Geometry,
 }
@@ -174,14 +176,36 @@ impl ValidationErrorKind {
             Self::Unsupported => "unsupported",
             Self::Undecided => "undecided",
             Self::ResourceExhausted => "resource_exhausted",
+            Self::ResourceUnavailable => "resource_unavailable",
             Self::Unbounded => "unbounded",
             Self::Geometry => "geometry_failure",
         }
     }
 }
 
+const fn uncertainty_reason_kind(
+    reason: hypercurve::UncertaintyReason,
+) -> ValidationErrorKind {
+    use hypercurve::UncertaintyReason;
+    match reason {
+        UncertaintyReason::RealSign
+        | UncertaintyReason::Predicate
+        | UncertaintyReason::Ordering => ValidationErrorKind::Undecided,
+        UncertaintyReason::Boundary => ValidationErrorKind::InvalidInput,
+        UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,
+        UncertaintyReason::BudgetExhausted => ValidationErrorKind::ResourceExhausted,
+        UncertaintyReason::StorageUnavailable => ValidationErrorKind::ResourceUnavailable,
+    }
+}
+
 const fn curve_error_kind(source: &CurveError) -> ValidationErrorKind {
     match source {
+        CurveError::UncertainFiniteCurveProjection { reason } => {
+            uncertainty_reason_kind(*reason)
+        },
+        CurveError::UnsupportedFiniteCurveProjection { .. } => {
+            ValidationErrorKind::Unsupported
+        },
         CurveError::IncompatiblePredicatePolicy
         | CurveError::AmbiguousBulge
         | CurveError::AmbiguousCurveStringConnection => ValidationErrorKind::Undecided,
@@ -263,18 +287,7 @@ impl ValidationError {
                 ) => ValidationErrorKind::Undecided,
                 hypercurve::MarchingSquaresError::Region(ExactCurveError::Blocked(
                     blocker,
-                )) => match blocker.reason() {
-                    hypercurve::UncertaintyReason::Unsupported => {
-                        ValidationErrorKind::Unsupported
-                    },
-                    hypercurve::UncertaintyReason::BudgetExhausted => {
-                        ValidationErrorKind::ResourceExhausted
-                    },
-                    hypercurve::UncertaintyReason::Boundary => {
-                        ValidationErrorKind::InvalidInput
-                    },
-                    _ => ValidationErrorKind::Undecided,
-                },
+                )) => uncertainty_reason_kind(blocker.reason()),
                 _ => ValidationErrorKind::Geometry,
             },
             #[cfg(any(feature = "sdf", feature = "metaballs"))]
@@ -322,13 +335,8 @@ impl ValidationError {
                     ValidationErrorKind::Undecided
                 },
             },
-            Self::ExactCurve(ExactCurveError::Blocked(blocker)) => match blocker.reason() {
-                hypercurve::UncertaintyReason::Unsupported => ValidationErrorKind::Unsupported,
-                hypercurve::UncertaintyReason::BudgetExhausted => {
-                    ValidationErrorKind::ResourceExhausted
-                },
-                hypercurve::UncertaintyReason::Boundary => ValidationErrorKind::InvalidInput,
-                _ => ValidationErrorKind::Undecided,
+            Self::ExactCurve(ExactCurveError::Blocked(blocker)) => {
+                uncertainty_reason_kind(blocker.reason())
             },
             Self::ExactCurve(ExactCurveError::Invalid { .. }) => {
                 ValidationErrorKind::InvalidInput

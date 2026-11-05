@@ -49,16 +49,16 @@ pub use context::OperationContext;
 pub use error::{GeometryError, GeometryResult, NonConicalGeneratorReason};
 pub use geometry::{
     AffineCurveGeometry, Axis, CircularArcGeometry, ConeBranch, ConeGeometry, ConicalRevolution,
-    ConicalRevolutionChart, Curve3, Curve3Kind, CurveParameterLocation, CurveSurfaceComponents,
-    CurveSurfaceContactKind, CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry,
-    GeometricPoint3, GeometricVector3, MaterializedSurfacePcurve, NurbsCurveGeometry,
-    ParameterDomain, Pcurve, PlanarCurveGeometry, RationalBezierCurveGeometry,
-    RotationCurveGeometry, Surface, SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents,
-    SurfaceIntersectionCurve, SurfaceIntersectionLine, SurfaceIntersectionOperand,
-    SurfaceIntersectionParameterRay, SurfaceIntersectionPcurve, SurfaceIntersectionRay,
-    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePartials,
-    SurfacePcurveCorrespondence, SurfaceSurfaceIntersection, TorusGeometry,
-    TranslationCurveGeometry,
+    ConicalRevolutionChart, Curve3, Curve3Kind, CurveCurveIntersection, CurveCurvePoint,
+    CurveParameterLocation, CurveSurfaceComponents, CurveSurfaceContactKind,
+    CurveSurfaceIntersection, CurveSurfacePoint, CylinderGeometry, GeometricPoint3,
+    GeometricVector3, MaterializedSurfacePcurve, NurbsCurveGeometry, ParameterDomain, Pcurve,
+    PlanarCurveGeometry, RationalBezierCurveGeometry, RotationCurveGeometry, Surface,
+    SurfaceBounds, SurfaceDomain, SurfaceIntersectionComponents, SurfaceIntersectionCurve,
+    SurfaceIntersectionLine, SurfaceIntersectionOperand, SurfaceIntersectionParameterRay,
+    SurfaceIntersectionPcurve, SurfaceIntersectionRay, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePartials, SurfacePcurveCorrespondence,
+    SurfaceSurfaceIntersection, TensorCurveGeometry, TorusGeometry, TranslationCurveGeometry,
 };
 pub use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector2, Vector3};
 pub use hypersolve::work_budget::{BudgetExceeded, BudgetOutcome, WorkBudget, WorkKind, WorkUsage};
@@ -74,8 +74,8 @@ pub use topology::{
 pub(crate) use topology::{
     ArenaBoundaryBridgeCurveSplit, ArenaBoundaryBridgeFaceSplit, ArenaClosedSurfaceCurveFaceSplit,
     ArenaCurveFaceSplit, ArenaEdgeSplit, ArenaEdit, ArenaFacePartition, ArenaFaceSplit,
-    ArenaFaceTracePartition, ArenaModel, ArenaModelBuilder, ArenaSurfaceCurveFaceSplit, Edge,
-    EdgeUse, Face, Solid,
+    ArenaFaceTracePartition, ArenaModel, ArenaModelBuilder, ArenaSurfaceCurveChainFaceSplit,
+    ArenaSurfaceCurveFaceSplit, ArenaSurfaceCurveLoopFaceSplit, Edge, EdgeUse, Face, Solid,
 };
 pub use topology::{
     Curve3Id, EdgeId, EdgeUseId, FaceId, PcurveId, ShellId, SolidId, SurfaceId, VertexId, WireId,

@@ -848,6 +848,9 @@ pub fn empty_contained_boundary_and_solver_frontier() {
             );
         }
     }
+    // S(u, v) = (u, v, u - 1/2) meets z = 0 along the vertical component
+    // u = 1/2, formerly a typed blocker: now the exact iso-segment from
+    // (1/2, 0, 0) to (1/2, 1, 0) through (1/2, 1/2, 0).
     let equation = polynomial(vec![vec![q(-1, 2)], vec![1.into()]]);
     // Keep the original vertical-section input. R06 now certifies its whole
     // interval at the solver and retains its exchanged native chart downstream.
@@ -890,6 +893,25 @@ pub fn empty_contained_boundary_and_solver_frontier() {
                 .unwrap()
         );
     }
+    let curve = sections[0].curve();
+    let ends = [curve.start().unwrap(), curve.end().unwrap()];
+    for expected in [
+        Point3::new(q(1, 2), 0.into(), 0.into()),
+        Point3::new(q(1, 2), 1.into(), 0.into()),
+    ] {
+        assert!(ends.iter().any(|end| {
+            GeometricPoint3::from(end.clone())
+                .coincides_with(&expected.clone().into())
+                .unwrap()
+        }));
+    }
+    assert!(
+        curve
+            .point_at(&Parameter::from_real(q(1, 2)))
+            .unwrap()
+            .coincides_with(&Point3::new(q(1, 2), q(1, 2), 0.into()).into())
+            .unwrap()
+    );
 }
 
 pub fn repeated_section_native_replay_is_cold() {

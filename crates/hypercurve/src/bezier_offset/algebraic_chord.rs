@@ -600,6 +600,19 @@ impl BezierAlgebraicChord2 {
         }))
     }
 
+    pub(crate) fn same_point_order_chart(
+        &self,
+        other: &Self,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<bool>> {
+        self.validate_policy(policy)?;
+        other.validate_policy(policy)?;
+        if self.data.parameter_axis != other.data.parameter_axis {
+            return Ok(Classification::Decided(false));
+        }
+        self.support_collinearity(other, policy)
+    }
+
     /// Returns the endpoint at the start of boundary traversal.
     pub fn start(&self) -> &CurvePoint2 {
         if self.data.reversed {
@@ -4837,6 +4850,9 @@ impl BezierAlgebraicChord2 {
             match forward {
                 Classification::Decided(true) => "equal",
                 Classification::Decided(false) => "different",
+                Classification::Uncertain(UncertaintyReason::StorageUnavailable) => {
+                    "storage-unavailable"
+                }
                 Classification::Uncertain(UncertaintyReason::BudgetExhausted) => "budget-exhausted",
                 Classification::Uncertain(UncertaintyReason::Unsupported) => "unsupported",
                 Classification::Uncertain(UncertaintyReason::Predicate) => "predicate",

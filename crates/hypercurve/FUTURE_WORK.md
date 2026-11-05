@@ -6,6 +6,48 @@ The detailed chronological log, including commit hashes, timings and samples, is
 
 ## Current state
 
+The 2026-11-04 nonlinear-chart increment extends finite-map line sections,
+jointly injective shared-chart pair incidence and simple-loop orientation, with
+source-selected contacts and inverse queries in admitted selected fields. A
+selected ordinate can become another graph's abscissa through the existing
+joint-query fiber-rank verifier when univariate pullback is unavailable. Isolated pullback
+zeros and disjoint domains identified by a noninjective map have explicit
+regressions. Distinct affine images validate resultant candidates on both
+original branches. The [HyperBRep support matrix](../hyperbrep/docs/SUPPORT_MATRIX.md#booleans)
+and [implementation ledger](../hyperbrep/docs/IMPLEMENTATION_STATUS.json) hold
+the linked scope and qualification record: a nonlinear tensor cap now admits
+and replays; its transverse recut now also completes reconstruction, checked
+fresh-process replay and another exact cut.
+Continuous pullbacks, general preimage enumeration, distinct nonlinear charts,
+nonzero offsets and general corner edits remain open; this is not general
+operation closure.
+
+The follow-on selected-coefficient increment adds caller-field resultants for
+isolated chord contacts through nonlinear maps and retains selected-field
+queries on supporting-line intersection points. Fresh native replay followed by
+another line intersection and split is exercised through HyperBRep. The same
+linked ledger records resource units, qualification and the then-failing
+transverse solid graph; continuous components and scalar-only BRep trim/contact
+plumbing remain open.
+
+The selected-trim follow-on consumes foreign selected points through the same
+coordinate-level resultant, including vertical-level fallback and exact finite
+range exclusion. HyperBRep now retains selected clipping/contact parameters and
+point images, and supplies plane pcurves on selected tensor sections without
+requiring an injective ambient plane projection. The linked ledger separates
+the passing line-cut/replay and dual-chart consumers from the full solid recut,
+which still reaches a scalar-only topology blocker.
+
+The retained-boundary bridge increment also consumes certified
+parameter-preserving rational line views in sections of mapped polynomial
+branches. Native unmapped rational incidence retains its existing component
+and tangent recipes. A shared affine-form proof lookup replays selected line
+points without an evaluator fallback cycle; the selected rational-overlap
+policy regression guards that distinction. BRep now exercises outer/hole
+bridges, partition winding, shared-edge ownership and fresh-process partition
+replay. The full solid recut remains open at selected endpoints without boundary
+contacts; the same ledger records the executed failure and affected checks.
+
 The initial [executable capability matrix](qualification/README.md) ties named
 public fixtures to separate operation stages and asserted outcomes. Its bounded
 catalog distinguishes exact successes from typed gaps and inherited qualification;
@@ -3979,3 +4021,96 @@ The current retained-map frontier is the shear (x,y)->(x+y,y) of y=x^2
 against y=1/2 on [-2,2]. Both polynomial and authored-line query forms still
 report Unsupported despite two algebraic contacts. The owner qualification
 and archived public-API probe retain that input for the next increment.
+
+## Selected native-line inverse and point-order transport (2026-11-04)
+
+A native straight line now locates a joint selected point without requiring
+independent coordinates. Its original affine support equation must vanish; a
+proved nonzero direction component supplies the inverse affine parameter. The
+existing finite-domain admission retains endpoint identity, selected trims and
+explicit uncertainty. The regression uses an independently replayed quintic
+point, reversed and restricted target charts, an excluded interval and a
+distinct parallel line separated by 2^-60.
+
+Generated straight chords expose their defining oriented support and selected
+point for checked consumer replay. Reversal transports the order-dual chart
+without treating a geometric parameter as a stored scalar. A sufficient
+support/chart proof checks oriented coordinate order and exact collinearity;
+finite restrictions remain a separate obligation. HyperBRep consumes these
+laws in materialized pcurves, edge uses and native archive version 17. It
+checks wrong-frame identity separately from equal spatial images.
+
+The consumer acceptance splits a face with selected endpoints and no retained
+boundary-contact records, chains selected restrictions in reordered/reversed
+input, checks material on opposite sides and shared-edge ownership, and
+replays the model before another split. The original nonlinear tensor recut
+now passes partition, selection, retained-point atomization, reconstruction,
+cold/fresh-process replay and another exact cut. A polynomial relation proof
+pulls through the original rational maps before divisibility testing; a
+nonconstant affine image coordinate in the graph abscissa supplies a sufficient
+single-branch injectivity proof even when the ambient plane map folds. Neither
+proof certifies a general inverse or an injective chart for different branches.
+This extends incidence/chart/replay support; it does not complete general
+spatial inverse queries, solid Booleans, arbitrary algebraic operation closure
+or total-resource/cancellation guarantees. Current validation and remaining
+work stay in HyperBRep's linked implementation ledger.
+
+## Selected native rational preimages (2026-11-04)
+
+Native polynomial/rational Bézier and finite spline spans now invert retained
+joint queries through the existing selected polynomial coefficient-field
+solver. Candidate roots satisfy an original homogeneous coordinate equation;
+the other coordinate, original denominator and exact active domain validate
+each candidate. Entire constant spans need a nonzero-denominator proof.
+Authored knot maps and exact seam identity survive spline decomposition.
+Mixed discrete/interval preimages and punctured constant-span preimages remain
+explicit gaps in the current result contract. General retained rational images
+still require their own complete inverse authority.
+
+Acceptance covers independently constructed quintic queries, rational targets,
+selected trims, reversals, retracing maps, constant coordinates, original poles,
+nearby distinct roots, policy transitions and budget refusal followed by retry.
+The spatial consumer additionally checks all three coordinates, then consumes
+recovered parameters in topology splits, native replay and another operation.
+This uses existing selected-root definitions rather than a new archive format.
+No total-work, coefficient-growth, memory or universal completion bound follows
+from the solver's existing refinement limits. Qualification and remaining
+consumer work are recorded in HyperBRep's implementation ledger.
+
+## Rational-map preimages and selected tensor consumers (2026-11-04)
+
+`Curve2::rational_image_point_locations` queries a retained rational map
+without publishing a replacement image curve. Native homogeneous spans use
+exact polynomial substitution and the existing selected coefficient-field
+root solver. Selected polynomial branches pull coordinate levels through all
+original maps, isolate resultant candidates over the query's joint field, and
+replay the original branch, exact active trim, map guards and both coordinates.
+Ordinary mapped-branch point location now reports every finite visit. Private
+consumers requiring uniqueness retain their explicit blocker on several visits.
+
+Map/source poles remain excluded after cancellation. A zero global map
+denominator is invalid. A zero tangent derivative on the original connected
+branch can prove a constant image; entire-domain success additionally requires
+nonzero-denominator coverage. Constant projections, retracing maps, nearby
+selected fields, native circular charts and spline seams have independent
+acceptance witnesses. Source UV equality is proved before merging equal knot
+parameters; discontinuous one-sided charts remain distinct even when a map
+identifies their images. Budget refusal and larger retry remain separate from
+geometric completion. Native rational point preimages now retain proper
+intervals, isolated visits and original denominator punctures in
+`CurvePointLocations2::Components`; exact parameter-component intersection is
+owned here and consumed by TensorImage inversion. Components keep source span
+charts, selected endpoints and inclusion flags, including distinct discontinuous
+knot germs. Finite-only consumers retain explicit blockers. Selected implicit
+branch punctures, unresolved shared components and unsupported procedural
+sources remain open. Checked expansion can reach platform storage limits;
+existing refinement and local resultant counters do not establish aggregate
+work or heap bounds.
+
+HyperBRep consumes these roots as spatial inverse parameters, checking all three
+original tensor coordinates and transporting the source chart. Acceptance
+continues through both uses of a face edge, cold and fresh native replay, another
+selected split and reflected affine replay. The tensor U-reflection proof checks
+complete controls/weights and the transported UV source and parameter law.
+Current qualification and remaining work belong to the linked BRep ledger;
+no whole work package or all-operation closure claim follows from this increment.

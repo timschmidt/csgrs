@@ -13,13 +13,16 @@ use hypercurve::{
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
 use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, point3_equal};
 
+#[cfg(test)]
+use crate::ParameterDomain;
+
 use crate::error::GeometryError;
 use crate::geometry::{
-    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData,
-    ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact,
-    SurfaceIntersectionCurve, SurfaceIntersectionOperand, SurfaceIntersectionPcurve,
-    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePcurveCorrespondence,
-    SweepProgress, affine_transform_orientation, materialize_nurbs_parameter_graph,
+    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData, Pcurve,
+    Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact, SurfaceIntersectionCurve,
+    SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePcurveCorrespondence, SweepProgress,
+    affine_transform_orientation, materialize_nurbs_parameter_graph,
     rational_bilinear_parameter_curve, resolve_planar_classification,
 };
 use crate::{GeometricPoint3, Parameter, ParameterRange};
@@ -58,7 +61,7 @@ enum FaceSplitEndpointLocation {
     Vertex(VertexId),
     Edge {
         edge: EdgeId,
-        parameter: Real,
+        parameter: Parameter,
         pcurve_split: Option<Box<(EdgeUseId, SurfaceIntersectionBoundaryContact)>>,
     },
 }
@@ -70,6 +73,7 @@ struct OrderedFaceSplitTrace {
     upper: Point3,
 }
 
+#[derive(Clone)]
 struct OrderedSurfaceCurveTrace {
     source_index: usize,
     intersection: SurfaceIntersectionCurve,
@@ -121,6 +125,7 @@ struct ModelData {
     certified_curve_sweeps: Vec<Option<CertifiedCurveSweepShell>>,
     certified_prisms: Vec<Option<CertifiedPrismShell>>,
     certified_axial_shells: Vec<Option<CertifiedAxialShell>>,
+    certified_tensor_graphs: Vec<Option<CertifiedTensorGraphShell>>,
     bounds: OnceLock<Option<Aabb>>,
     face_contours: Vec<OnceLock<Vec<Contour2>>>,
 }
@@ -137,6 +142,7 @@ struct CertifiedSolid {
     curve_sweep: Option<CertifiedCurveSweepShell>,
     prism: Option<CertifiedPrismShell>,
     axial: Option<CertifiedAxialShell>,
+    tensor_graph: Option<CertifiedTensorGraphShell>,
 }
 
 /// A complete oriented boundary proof, reconstructed from native faces. Each
@@ -491,6 +497,38 @@ impl CertifiedRevolutionBoundary {
     }
 }
 
+/// A solid between a planar base region and a rational Bézier tensor graph
+/// above it, with planar walls parallel to `direction`. Points decompose as
+/// `p - origin = a u + b v + c direction`; the solid is `(a, b)` in `profile`
+/// and `0 <= c <= f(a, b)`, where `f` is the graph height of `top` or, over
+/// a cap's region, the cap's height.
+#[derive(Clone, Debug)]
+struct CertifiedTensorGraphShell {
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    direction: Vector3,
+    profile: CurvePath2,
+    /// Holes of the base region, in the base frame.
+    profile_holes: Vec<CurvePath2>,
+    top: Surface,
+    /// Up-facing planar caps parallel to the base at one height `c`; each
+    /// keeps its plane frame and its exact outer boundary in that frame.
+    caps: Vec<CertifiedGraphCap>,
+}
+
+/// One planar cap of a tensor graph solid.
+#[derive(Clone, Debug)]
+struct CertifiedGraphCap {
+    origin: Point3,
+    u: Vector3,
+    v: Vector3,
+    height: Real,
+    boundary: CurvePath2,
+    /// Inner boundaries of the cap's region, in the cap frame.
+    holes: Vec<CurvePath2>,
+}
+
 #[derive(Clone, Debug)]
 struct CertifiedLoftShell {
     origin: Point3,
@@ -734,6 +772,7 @@ fn invalidate_model_certificates(data: &mut ModelData) {
     data.certified_curve_sweeps.fill(None);
     data.certified_prisms.fill(None);
     data.certified_axial_shells.fill(None);
+    data.certified_tensor_graphs.fill(None);
 }
 
 fn compact_wire_arena(

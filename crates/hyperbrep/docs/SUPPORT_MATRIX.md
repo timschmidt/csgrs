@@ -120,7 +120,7 @@ The [query archive witnesses](../tests/selected_query_archive.rs) cover a line
 with independent cubic-root endpoints, a rational parabola restriction, cold
 replay, re-export and further split/replay. Input admission counts nested query
 sources and all stored polynomial rows/coefficients before scalar decoding.
-These entries extend [the version-15 record grammar](SELECTED_ARCHIVE.md);
+These entries extend [the version-17 record grammar](SELECTED_ARCHIVE.md);
 qualification and remaining derivative/region gaps are recorded in the linked
 [Hypercurve execution ledger](../../hypercurve/FUTURE_WORK.md). They do not
 establish general spatial intersection or solid closure.
@@ -141,6 +141,7 @@ view. See the [selected-image admission](https://github.com/timschmidt/csgrs-evi
 | --- | --- | --- | --- | --- | --- |
 | Affine image | Source-supported exact point/derivative mapped by a certified invertible matrix | Conservative image of source bounds | Source query in inverse coordinates; original typed limitations | Source domain/restriction semantics | Exact source and matrix, archive 12 |
 | Planar image | Represented or retained selected point, including selected finite-domain endpoints; owner-supported represented-parameter derivatives (first order for analytic parallels) | Conservative lifted finite source or point bound | Plane membership plus exact source inverse query and chart filtering | Exact represented restriction / reversal; selected topology edge split | Exact for admitted pcurve sources, source charts and selected points/trims |
+| Tensor image | Represented or selected UV source point through the retained positive-weight rational Bézier tensor (joint rational surface image); first derivatives at represented UV points and tangents; higher orders and selected derivatives typed | Tensor control hull | Represented-point pullback census plus retained-query preimages for admitted native rational/spline and selected polynomial UV sources; complete planar projections supply all candidates, validated against all three spatial coordinates. Constant projections try another coordinate pair; whole constant images require three complete projection proofs. Shared continuous components or unavailable source inverses stay typed | Exact source restriction / reversal; topology edge split; scalar endpoints materialized when one UV coordinate is scalar or proved equal to a patch-boundary value or to an exact root candidate of the projection-event resultant Res(F, dF/d(other)), and the other is proved equal to a boundary value, a rational root (bounded exact search), a radical root of the remaining linear/quadratic factor, an exact radical root of a remaining cubic (pure cube root, or Cardano form when its comparison is decided) or quartic (shifted biquadratic, or Ferrari split with a rational resolvent root); a remaining factor of degree five or more contributes the radical roots of rational quadratic factors (bounded Kronecker search over divisors of its values at 0, 1 and -1, confirmed by exact division) and, recursively, of the quotient; undecided candidates certify nothing; open face splits on the tensor face, including radical endpoints; bridge cycles of restricted sections between the outer boundary and generated holes (`FaceRef::split_by_surface_curves`); open chains of sections between two outer-boundary points (`FaceRef::split_by_surface_curve_chain`) split the face through new junction vertices; closed chains of sections (`FaceRef::split_by_surface_curve_loop`) become an inner wire plus an enclosed face, oriented by exact area or, for implicit branches, by the exact signed ray crossings of a proposed interior grid point; whole-definition edge-image proof against a pcurve on an equal tensor or one with a proved unit-U reflection and exact source-chart reversal transport (selected endpoints need no scalar view) | Inline tensor controls and weights with the admitted pcurve source, archive 16 |
 | Translation of retained point | Authored parameter retains the original point; constant first derivative | Conservative union of endpoint bounds | Unsupported | Exact reversal and authored-parameter split | Exact retained origin and authored displacement |
 | Rotation of retained point | Authored angle retains source; positive-order derivatives require stored origin coordinates | Conservative full-orbit enclosure | Unsupported | Exact reversal and authored-angle split | Exact origin, axis and angular chart |
 | Finite line | Exact, arbitrary positive derivative order | Exact | Certified | Exact | Exact |
@@ -162,12 +163,74 @@ procedural sources remain typed frontiers. Extrusion inverse queries are exact
 when the retained source plane is transverse to the extrusion direction.
 No STEP family or general metric integration is added.
 
-`Curve3::parameters_of` returns `Parameter` values, including selected algebraic
-roots without a stored `Real` view. Rational Bézier queries certify all three
-coordinates at the same selected root. NURBS queries preserve authored knot
+`Curve3::parameters_of` accepts authored or retained `GeometricPoint3` inputs
+and returns `Parameter` values, including selected algebraic roots without a
+stored `Real` view. Native lines check all three support equations and their
+finite domains for selected inputs. Planar images use exact plane incidence,
+joint affine projection and Hypercurve's complete inverse; affine images
+transport the retained query through the inverse transform. Other selected
+input families without complete inverses report `UnsupportedParameterLocation`. Native rational Bézier and NURBS inverses also accept retained
+joint queries without coordinate materialization. Hypercurve isolates roots
+over that query's selected coefficient field and checks both original planar
+equations, denominator guards and exact active domains; the spatial consumer
+then certifies all three coordinates at each selected root. NURBS queries preserve authored knot
 charts and deduplicate seam parameters. Partly constant NURBS preimages remain
 `UnsupportedParameterLocation`; the API does not return a finite subset of an
 interval preimage.
+
+Recovered selected native spline parameters support edge splitting, cold and
+fresh-process replay, inverse location after reload and another split. The
+degree-elevated affine tensor cube with a quintic-trimmed native spline edge
+also completes graph stitching, cold replay and a further Boolean cut, with
+both directed differences against an independently specified half cube empty.
+This does not complete arbitrary curve pairs or every retained source inverse.
+
+TensorImage inverses now consume joint selected queries through
+`Curve2::rational_image_point_locations`, retaining the tensor, original UV
+source, and source/spatial parameter map. Native span substitution and selected
+branch coefficient-field sections share planar incidence authority. Every
+candidate is checked on the full spatial image; matching two coordinates is
+insufficient. Spline knots and distinct visits survive projection and reversal.
+Zero coordinate pullbacks mean containment and do not invalidate the query.
+The original paraboloid section supports inverse location, a split of both
+incident face uses, cold/fresh-process replay, another selected split and
+reflected affine replay. Exact tensor row/weight reversal and UV/source chart
+transport prove the reflected whole image, with changed interiors and wrong
+parameter laws rejected independently of endpoint agreement.
+
+Rational-map queries preserve source and map poles even when factors cancel.
+Native circular charts keep all visits and shared seams. Discontinuous spline
+knots retain both source charts even when their parameter and mapped point
+agree; only proved equal original UV seam points are merged. A proved constant
+image returns the entire domain only with nonzero-denominator coverage.
+`CurvePointLocations2::Components` now retains proper continuous and mixed
+preimages on native rational spans, with the original source span chart and
+exact endpoint inclusion. `CurveParameterSet2` supplies each component closure;
+open ends retain original source/map denominator zeros, including canceled
+factors and selected algebraic roots. Ordinary native point queries share this
+authority. `Curve2::intersect_point_locations` consumes complete results from
+the same unchanged source atlas, preserving one-sided knot germs rather than
+intersecting authored scalar values alone. Finite-only callers explicitly reject
+continuous results; existence-only callers consume their nonempty membership.
+This is an additive public enum variant with updated exhaustive consumers, not
+a parallel inverse interface. Native archive version 17 is unchanged.
+
+TensorImage inversion intersects complete projection loci before transporting
+finite candidates to the spatial chart and validating the original three
+coordinates. The preserved quadratic tensor/spline witness now recovers exactly
+`{0, 1/3, 2/3, 1}`, although every planar projection has an interval component;
+restriction, reversal and reflected affine-image queries consume its result.
+The original planar spline witness yields `[0,1] union {5/2}`. Denominator
+punctures, algebraic restriction endpoints and discontinuous germ intersection
+have independent exact expectations. These are scoped completion claims,
+subject to the linked increment's fixed-source validation receipts.
+
+Proper continuous/mixed *spatial* inverse results still exceed the current
+`CurveParameterLocation` carrier and return an explicit blocker. Punctured
+constant images of selected implicit branches, unresolved shared components,
+other procedural UV sources and general arrangement/solid reconstruction
+remain open. No general algebraic inverse or total work/heap/cancellation bound
+is claimed.
 
 `Curve3::point_at(&Parameter)` returns `GeometricPoint3`, retaining selected
 images for lines, rational Béziers, finite NURBS and planar images. It supports strict
@@ -276,6 +339,7 @@ domain. General nonuniform analytic promotion remains open. See the
 | `sphere_with_voids` | Complete outer and inward spherical faces | Yes | Exact sphere subtraction | Analytic radial test | Certified similarity / exact |
 | `cone_frustum` | Circular caps and one cone carrier | Yes | Truncated-cone formula | Analytic | Certified similarity / exact |
 | `torus` | 4×4 periodic native-circle grid | Yes | `2*pi²*R*r²` | Analytic implicit test | Certified similarity / exact |
+| Authored tensor-graph solids (`ModelBuilder`) | Positive-weight rational Bézier top faces on one tensor, one planar base (holes allowed; points over a hole are outside), planar walls parallel to the base's inward normal, and optional planar caps (holes allowed) parallel to the base strictly above it (several tensor faces or any cap also require every top face to face along the inward normal, so the tops' regions tile the base); admitted when the top is certified a graph strictly above the base (exact positivity of its height polynomial on the unit square, by Bernstein coefficients or an empty complete zero set, and a certified injective base projection), or (with or without caps) when the projection is certified injective and the top is certified above the base over the base profile only (every complete plane/tensor section runs along the profile boundary or never meets it and lies outside, and an interior profile point has positive height) | Not claimed | Exact for polynomial tops whose face is trimmed by UV segments: `|det(u, v, d)|` times the exact Green's-theorem boundary integral of `c |d(a, b)/d(u, v)|`; capped graphs add each cap's height times its exact cap-frame area (holes subtracted) carried to base coordinates by the exact frame Jacobian; circular trims (polynomial branches of circles under similarity views, with certified endpoints) integrate exactly through native arc views, both for cap areas and for the tensor Green integral, and caps bounded by affine images of such arcs (elliptical trims under one exact affine view) measure in the source chart scaled by |det|; polynomial-graph trims (c y + G(x) = 0 or c x + G(y) = 0 with constant c) under exact affine views integrate as polynomials in their source graph parameter, for both the tensor Green integral and exact cap Green sums (a trigonometric polynomial in the arc angle, from the exact directed sweep and endpoint cosines and sines); rational tops, other curved trims and caps without an exact area are typed | Exact: base-profile location, then the height against 0 and against the cap height strictly inside a cap region or the graph at the selected preimage outside every cap; on a cap boundary only a comparison that agrees with every adjacent top is decided, except that inside the profile a point on exactly one cap's boundary between that cap and the graph lies on the joining wall (radical seam points through polynomial-branch cap boundaries are typed) | Affine (certificate frame and top transformed) / exact cold replay; Booleans whose results stay tensor-graph solids (for example intersection and difference with a cuboid cutting the top along an iso section and the walls along lines that end on their Bézier edges, or intersection with a slab whose plane cuts the top in curved arcs, leaving planar caps, and union and difference with a block piercing the top, leaving a raised cap with step walls or a pocket floor, also when the block's frames are stretched nonuniformly or mirrored so plane pcurves carry non-similarity affine maps, and intersection, difference and union with a block sharing the base and every wall: coincident walls trace each other's curved edges, wall traces along the tensor boundary are recognized as boundary, and repeated traces are proved and dropped, keeping the authored native edge form so it stitches to the operand edge it repeats; a shared-wall block whose top cuts the tensor in curved arcs ending on the walls also intersects and unites exactly, its selected wall contacts certified in the mapped section's source chart, and one cutting a closed section inside the top leaves a holed cap or a holed tensor face) are exact, including chains that reuse a Boolean result (also after cold replay) as the next operand; other result shells remain typed |
 | `revolve` / `revolve_region` | Four periodic cells per off-axis polygon edge; inward cavity shells | Exact line-profile integral | Exact first-moment theorem with hole subtraction | Exact radial/profile test | Certified similarity / exact |
 | `revolve_contour` / `revolve_contour_region` | Four periodic cells per native line/arc profile segment; inward line/arc cavity shells | Exact line/circular-arc profile integral | Exact contour x-first-moment theorem with hole subtraction | Exact radial/line-arc profile test | Certified similarity / exact |
 | `revolve_path` / `revolve_path_region` | Four periodic cells per exact `CurvePath2` carrier; retained Bézier/B-spline/NURBS and supported procedural meridians with selected latitudes, exact clamped knot-span partition of single periodic spline carriers, and curved cavity shells | Line/arc and certified monotone rational line-image faces exact; general curved spline faces explicitly unsupported | Exact for polynomial-equivalent, rational-quadratic, exact degree-elevated conic, arbitrary-degree at-most-quadratic-weight, and nonuniform rational line-image moments; cubic-or-higher weight-degree rational moments explicitly unsupported | Exact radial/curved-path test | Certified similarity / exact |
@@ -373,6 +437,17 @@ strict-convexity certificate.
 | Pair | Exact outcomes |
 | --- | --- |
 | Finite line / plane | None, point, contained |
+| Finite line / finite line (curve/curve) | `Curve3::intersect_curve`: crossing point, none for skew or parallel offset lines, collinear coincident range in both charts, or a single touching point |
+| Finite line / positive-weight rational Bézier or NURBS (curve/curve, either order) | Complete isolated incidences: the curve's affine image in the line's normal plane is located at the origin by Hypercurve, and the line parameter is read from a second affine image at the same selected curve parameter. Curves lying along the line and other family pairs fail typed |
+| Coplanar lines, positive-weight rational Bézier or NURBS curves and planar images (curve/curve) | Both curves are projected exactly into a common plane frame (a planar image's own frame, or three noncollinear controls); Hypercurve's complete planar intersection returns points with selected parameters on both curves, coincident ranges in both charts, or mixed components. Planar images whose frames differ by a non-similarity, collapsed-span components and noncoplanar non-line pairs fail typed |
+| Finite line / planar image across its plane (curve/curve) | The line's single plane crossing is located exactly on the planar source; none when it misses |
+| Finite line / circular or elliptic arc (curve/curve, either order) | A coplanar line solves one exact quadratic in its parameter; a line crossing the arc's plane meets it at most at its crossing. Arc parameters, including seam visits, come from the arc's exact point location (for example π/6 and 5π/6 exactly) |
+| Circular or elliptic arc / positive-weight rational Bézier or NURBS (curve/curve, either order) | A coplanar curve's contacts are the complete roots of the exact Bernstein numerator ry^2 a^2 + rx^2 b^2 - rx^2 ry^2 W^2 (per NURBS span); otherwise its complete plane contacts are checked on the arc. Arc angles need scalar contact points: a selected coplanar contact is certified as an exact radical parameter among the numerator's exact root candidates (zero and rational roots, quadratic radicals, decided cube-root and Cardano forms, quartic radicals) by exact comparison, undecided candidates certifying nothing, and its arc angle is located without re-deciding membership in the conic it provably lies on; other selected contacts, and curves lying along the conic, fail typed |
+| Circular or elliptic arc pairs other than two circles (curve/curve) | The first conic is covered exactly by four rational quadratic quarter spans (weights 1, 1, 2) and each span uses the conic/rational route; contacts are located on the first arc from scalar points and quarter joints are merged exactly. Closed arcs report both seam visits. Quartic-root contacts with radical forms (shifted biquadratic or rational Ferrari resolvent) are certified exactly; other contacts without scalar points and coincident conics fail typed |
+| Circular arc / circular arc (curve/curve) | Common points lie on the radical line (coplanar circles) or on the intersection line of the planes; that line meets the first circle in an exact quadratic and candidates are kept only on the second. Both arc parameters, including seam visits, are exact. Arcs of one circle return exact coincident ranges in both charts (boundaries at either arc's endpoints, intervals tested at exact midpoints, ranges paired by equal angular length) and touching points |
+| Tensor-image curve / tensor-image curve on the same exact tensor (curve/curve) | Hypercurve's complete planar intersection of the UV sources, mapped through both source charts: points with selected parameters, coincident ranges and components. Curves on different tensors, and reflected (exchanged-chart) sources against unmapped ones, fail typed |
+| Noncoplanar positive-weight rational Bézier or NURBS pairs (curve/curve) | Complete isolated incidences: an exact linear projection keeping both charts gives every candidate pair through Hypercurve, and exact spatial coincidence keeps only true incidences. Projections where the images collapse, share a component or overlap are replaced by another direction; persistent overlaps fail typed |
+| Planar image / noncoplanar positive-weight rational Bézier or NURBS (curve/curve, either order) | The rational curve's complete plane contacts are matched on the planar source through one exact planar intersection of the source with the curve's plane-frame projection, taking the contacts whose curve parameter equals each plane contact; selected crossings need no scalar view. When that planar intersection has overlaps or components, point location is used and selected crossings fail typed |
 | Positive-weight rational Bézier / plane | Complete finite isolated contacts with retained selected parameters and original-source point images; none or contained |
 | Finite positive-weight NURBS / plane | Authored-knot contacts, maximal coincident ranges, mixed components, none or contained; shared joints deduplicated without merging distinct visits |
 | Planar image / plane | Owner-supported complete finite point/range contacts after bounds prove the consumed source interval; selected points retain the original planar authority and spatial frame |
@@ -385,15 +460,28 @@ strict-convexity certificate.
 | Finite line / sphere | None, tangent/simple points |
 | Finite line / cylinder | None, tangent/simple points |
 | Finite line / cone | None, tangent/simple points, generator overlap; lower nappe rejected |
+| Finite line / positive-weight rational Bézier tensor | Complete isolated contacts: two plane pullbacks through the line are decomposed on the unit square and their branches intersected; each line parameter is a source-bound rational form at the selected UV point. Tangency is the exact vanishing of the pullback Jacobian `W^2 (n1 x n2)·(S_u x S_v)`. Independent plane pairs are retried only on polynomial-topology blockers. Lines in a tensor's plane (coincident ranges) and remaining vertical/repeated components fail typed |
+| Finite line / ring torus | Complete simple/repeated isolated contacts from the homogeneous quartic; irrational roots stay selected parameters with original-line point images; never contained |
+| Positive-weight rational Bézier or NURBS / sphere, cylinder or ring torus | Complete isolated contacts from the exact Bernstein numerator of the homogenized carrier equation, with selected parameters, original-source point images and first-derivative classification; authored NURBS knot parameters; none, contained, or contained spans as maximal ranges |
+| Positive-weight rational Bézier or NURBS / cone | The same double-cone numerator with roots on the opposite nappe rejected; contained spans with nonnegative axial Bernstein coefficients are contained, nonpositive spans keep only apex `Boundary` contacts, and spans crossing the apex fail with a typed unsupported relation |
 | Plane / sphere | None, tangent point, full circle; authored-axis transverse circles retain exact pcurves on both carriers |
 | Sphere / sphere | None, coincident, tangent point, full circle |
 | Plane / cylinder | Perpendicular circle; oblique ellipse; axial-parallel none, tangent line, or two lines, with exact native affine axial correspondence and authored-periodic trim transfer |
 | Plane / cone | Transverse lower none, apex point, or upper circle; axis-containing two lower-bounded upper-nappe generator rays with exact affine pcurves on both operands |
 | Plane / torus | Axis-transverse none, tangent circle, or two latitude circles; axis-containing two meridian circles; parallel-to-axis outer point tangency or strict separation |
+| Line, positive-weight rational Bézier or NURBS / extrusion of a line, rational Bézier or NURBS profile | Projection along the extrusion direction preserves both charts; Hypercurve's complete planar incidence returns simple/repeated contacts with selected parameters, maximal coincident ranges, mixed components, none or contained. Curves parallel to the direction are contained or disjoint. Spline contacts classify both sides of authored joints; an undecidable tangent cross sign or a profile parallel to the direction fails typed |
+| Line, positive-weight rational Bézier or NURBS / full revolution of a line, rational Bézier or NURBS profile | The exact quotient map to (squared axis distance, height) doubles span degree without changing either chart; Hypercurve's complete planar incidence returns simple/repeated contacts with selected parameters, coincident ranges, none or contained, for profiles on either side of or crossing the axis. Latitude-circle curve spans are contained or disjoint; latitude-circle profile spans and undecidable tangent cross signs fail typed |
+| Sphere, cylinder, cone or ring torus / positive-weight rational Bézier tensor | Complete UV decomposition of the pulled-back homogeneous carrier equation on the unit square: none, isolated points, retained branches as tensor-image curves with the UV pcurve and defining exponent, mixed components, or tensor containment. Pullback components of constant u, which the topology's projection reports as vertical, are decomposed in the exchanged UV chart and reflected back exactly. Requires an injective coordinate-plane projection certificate for the tensor; cone hulls strictly below the apex miss, hulls crossing the apex plane fail typed. Angular pcurves on the analytic carrier are typed unavailable, not fitted |
+| Tensor-image curve / plane, sphere, cylinder, cone or ring torus | The surface equation pulled back through the curve's tensor is decomposed on the unit square; Hypercurve intersects the UV source with every branch and locates isolated points, returning simple/repeated contacts with selected parameters in the curve's chart, coincident ranges, none or contained. Cone roots on the opposite nappe are rejected. Vertical pullback components are decomposed in the exchanged chart, but Hypercurve's curve/curve intersection does not yet accept the resulting mapped branches, so such cuts, repeated/boundary components, uncertified tangencies and apex-crossing contained tensors fail typed |
+| Unit-square zero sets with vertical line components (tensor sections, tensor-image contacts, tensor-image point location, line/tensor contacts) | Tried first for every vertical component, falling back to the swapped-chart decomposition: Hypersolve's exact axis-content extraction splits the pullback into a pure-`u` factor, pure-`v` factor and primitive remainder. Pure-`u` components become exact chords `u = r` over its roots in [0, 1]; the others decompose natively. Branches of different parts are split at their exact Hypercurve crossings and isolated points on another part are dropped. Pure-`u` roots without a scalar view (for example u = cbrt(1/4)) and crossings Hypercurve cannot decide fail typed |
 | Plane / extrusion surface | Transverse native line/rational Bézier/NURBS curve; parallel none or lifted profile-contact lines |
 | Plane / revolution surface | Authored-axis transverse none, isolated axis point, or one/more exact profile-contact circles with native pcurves on both carriers; finite multi-span NURBS contacts map to authored knot parameters and deduplicate knot seams |
 | Coaxial revolution / revolution surface | Line/rational Bézier/NURBS meridians in certified positive-radius axial half-planes reduce to exact Hypercurve contacts; represented contacts lift to latitude circles, equal or reversed complete meridians are coincident, and equal/mirrored angular frames retain both native pcurves |
 | Parallel cylinder / cylinder | None, coincident, tangent line, or two axial lines |
+| Nonparallel cylinder / cylinder; cylinder / off-axis sphere; cylinder / off-axis or tilted ring torus | The common points lie in an exactly bounded cylinder height range, covered by an exact atlas of ten rational quadratic tensor patches (rational seam points and weights from half-angle tangents 0, ±5/12, ±3/4, ±4/3, ±12/5, ∞); each patch is sectioned completely. The result is the complete set of exact tensor-image pieces and isolated points, with no operand pcurves claimed and with pieces meeting at atlas seams that are not physical vertices. The pieces depend on which cylinder is charted; existing parallel/coaxial routes are unchanged |
+| Ring torus / off-axis sphere; ring torus / non-coaxial cone | The torus is the tensor product of two rational circles; sixteen rational biquadratic patches from the coarse exact atlas (half-angle tangents 0, ±4/3, ∞) are sectioned completely after exact box pruning against bounded carriers. Exact tensor-image pieces with no operand pcurves, as for the cylinder atlas; cone patches crossing the apex plane fail typed. Non-coaxial torus pairs keep their typed refusal: a measured overlapping pair took about 250 s |
+| Ring torus / ring torus | Coaxial pairs keep the meridian-circle route. Pairs in any relative position are the exact empty result when an exact certificate separates them: separated bounding balls (radius R + r), one ball outside the other's slab |n . (p - c)| <= r, or one ball inside the other's central hole of radius R - r. Other non-coaxial pairs (including parallel off-axis ones and touching bounds) are sectioned through the coarse torus atlas against the other torus's exact equation: complete exact pieces. Seam points are merged only between patches whose closed images can meet (shared edge or corner, from the atlas's arc adjacency) and only at the corresponding UV boundaries; distinct selected points are first separated along a generic direction. Measured release envelope: about 1.7 s for the off-axis equal (3, 1) pair (formerly about 150 s) and a few seconds for the other witnessed overlapping pairs |
+| Cone / off-axis sphere | Common points have axial distance at most an exact rational bound; ten rational patches, quadratic along the fine exact arcs and linear in axial distance from the apex, are sectioned completely. Exact tensor-image pieces with no operand pcurves; a sphere through the apex is refused typed because the atlas apex row collapses, and a sphere wholly below the apex plane is a complete empty result |
 | Coaxial cylinder / cone | One exact circle; authored-frame-aligned carriers retain cylinder height and cone slant pcurves |
 | Coaxial sphere / cylinder | None, tangent circle, or two circles; authored-frame-aligned circles retain both exact pcurves |
 | Coaxial sphere / cone | None, isolated apex point, one tangent/secant circle, or two circles; authored-frame-aligned circles retain sphere latitude and cone slant pcurves |
@@ -403,6 +491,7 @@ strict-convexity certificate.
 | Plane / degree-1 translation-axis NURBS tensor | None or one complete native non-isoparametric NURBS curve |
 | Plane / positive-weight `2×2` rational Bézier tensor | None; one/multiple isolated corner points; one/two native boundary or factorized iso-lines; one/multiple exact bounded rational-quartic branches, including retained denominator poles; or exact containment of the complete bounded tensor surface |
 | Plane / positive-weight degree-one `2×2` NURBS tensor | The same complete rational-bilinear outcome matrix, with every retained line or rational pcurve mapped exactly into the authored active knot domains |
+| Plane / general positive-weight rational Bézier tensor | Complete UV decomposition of the plane pullback, including vertical components. Vertical chords u = r are published as the tensor's exact iso-curves with native iso-segment tensor pcurves and plane pcurves projected from their weighted controls. Branches of a polynomial in v alone (exactly certified constant) whose plane projection folds keep the branch (and its repeated-factor multiplicity) as tensor pcurve and tensor-image spatial curve, with the exact projected iso-curve as plane pcurve. For other branches, when the plane's own projection is certified injective on the unit square, sections are planar images with both exact pcurves; when it folds the tensor but a coordinate-plane projection certifies the tensor injective, sections are tensor images with the tensor pcurve retained and the plane pcurve unavailable (not fitted). Otherwise typed |
 
 The rational tensor surfaces `S(u,v)=(u,v,v)` and `S(u,v)=(u,v,v-1)` on
 `[0,1]^2` now retain their complete horizontal boundary section with `z=0`.
@@ -581,6 +670,214 @@ stitching on partially clipped tensor operands, and the rest of the
 analytic/spline pair matrix.
 
 ## Booleans
+
+Nonlinear rational images of selected polynomial branches now intersect lines
+and generated chords with a certified world support by pulling the support
+through the complete retained map chain and final similarity. Source-branch
+selection validates candidate contacts, including isolated pullback zeros;
+original denominator guards remain authoritative. Equal map chains transport
+pair intersections and simple-loop orientation only with an injectivity proof
+on one rectangle containing the participating source domains. Separate local
+injectivity proofs cannot establish complete image incidence. Distinct affine
+charts have a resultant-candidate path with exact validation on both original
+branches; tangent signs on that path remain unclassified.
+Source-chart recovery selects endpoint fibers from the retained parameter and
+original branch/event incidence; an equivalent arrangement endpoint from
+another world definition is not treated as an inverse-map certificate.
+
+Generated chords whose supporting line has selected coefficients now have an
+isolated-contact path through nonlinear rational image maps. Hypersolve computes
+the actual bivariate resultant over the caller's retained coefficient field,
+including its sign and coefficient factors, without primitive-element
+projection. Hypercurve selects candidate source abscissas and validates the
+original branch, active range, mapped line equation and denominator guards.
+The quintic-coefficient witness checks exact relations, both operand parameters,
+reversal, reflection, a negative rational denominator, finite-chord exclusion,
+policy transitions and an exhausted attempt followed by a larger-budget retry.
+A zero resultant still needs continuous-component correspondences and returns
+an explicit unsupported outcome; its safety regression is not overlap completion.
+
+Intersections of generated supporting lines also retain queries in their
+endpoint-selected fields. Signs and rational/affine queries preserve successful
+recursive paths and their affine source identities before trying the new field
+fallback. Native-line parameters can consume that evidence
+after the existing recursive-field path is unavailable. Only successful field
+values are cached, with source/policy and ambient exhaustion checks on reuse;
+the four original endpoint definitions remain replay authority. A native model
+containing the new selected pcurve replays in a fresh process, intersects a
+native line, splits, and replays again. This pcurve test is separate from solid
+admission. The resultant's defaults limit coefficient-context calls to 1,000,000
+and entries per square matrix to 262,144; neither limit bounds arithmetic inside
+a coefficient call, total work, expression growth, heap bytes or cancellation.
+The field cache adds retained state; no cost improvement is claimed.
+
+An inverse query whose source abscissa depends on a selected ordinate now
+falls back to the existing joint selected-query field when the univariate
+pullback is unsupported. It verifies the original equation, ordinate rank and
+complete fiber census before returning a reusable parameter. The regression
+swaps `(1/2, a)`, where `a^5+a=1/2`, onto `y=x^5+x`, then checks evaluation,
+reversal, replay and rejection of the shifted curve without materializing `a`.
+
+The nonuniform tensor graph `x=-1+3u-u²`, `y=2v-1`,
+`z=(2u-1)²+(2v-1)²`, intersected with `z <= 1/2`, now produces
+an exact cap with nonlinear section pcurves, validates its solid, classifies
+the independently derived probes, and replays natively in a fresh process. The regression
+`nonlinear_tensor_caps_support_transverse_recuts` now executes the full subsequent
+`x <= 0` cut in the ordinary suite, including native replay and another cut. The subsequent selected-trim
+increment carries clipping bounds, boundary parameters, joint UV contacts and
+spatial point images without requiring scalar views. Native line clipping stays
+the first path; selected contacts use retained common line charts on both planes.
+The cap has a curved hole: its `x=0` line cut retains two outer intervals, whose
+inner ends satisfy `4y^4+68y^2-31=0` with opposite signs. They replay in a fresh
+process and accept another plane intersection and source subdivision. A separate
+selected-contact regression splits both incident edge uses and replays their
+validated model.
+
+Foreign selected points on nonlinear polynomial images now use coordinate-level
+pullbacks through the existing selected-coefficient resultant. The original
+branch, range and both world coordinates validate candidates; a continuous
+vertical level falls back to the horizontal level. The regression locates the
+independently constructed `(a+a^2,a^2)`, `a^5+a=1`, on the image of `y=x^2`
+without requiring a matching construction graph or native coordinates.
+
+Polynomial plane/tensor sections can retain both pcurves even when the plane
+projection folds elsewhere in the UV rectangle. The already-certified injective
+tensor remains the spatial authority; its selected pullback zero set proves
+that the rational plane pcurve lifts to the same whole spatial curve. No
+injectivity claim is made for the ambient two-dimensional plane map. The
+nonuniform section at `x=0` verifies both images, the selected height relation,
+native replay and a further `z=1/2` intersection.
+
+Retained boundary contacts now attach the two intervals as bridges between
+outer and hole wires without scalar endpoints. The cap partitions into two
+validated faces: independent planar winding checks retain opposite material
+sides, exclude the original hole, and classify both bridge intervals as shared
+boundary. Each bridge has opposite uses on the two descendants. Fresh-process
+replay reconstructs the same partition and repeats those checks. Shell
+orientation uses the existing exact graph certificate plus explicit tensor
+normal directions; a volume integral is not required for this proof.
+
+A parameter-preserving rational line view now shares the polynomial line-section
+authority, including nonlinear image branches. Evaluation reuses the native
+line's validated affine-form point relation. Merely collinear rational spans
+retain their original nonlinear parameter correspondences. Regressions exercise
+both orders, reversal, exact quintic contacts, selected subdivision, repeated
+intersection and native replay.
+
+Missing boundary-contact records no longer require scalar endpoint coordinates.
+Attachment evaluates the original operand pcurve, checks its spatial lift on
+the target surface, asks Hypercurve for all boundary preimages, and transports
+them through the validated canonical edge correspondence. Native straight-line
+inverse queries retain selected point fields and check the original support
+equation and finite domain. A mismatched target surface is an explicit invalid
+image, with no edited model published.
+
+Uncrossed finite traces can form an unbranched open chain after supporting lines
+partition the face. The original complete pcurve-pair contacts supply adjacency;
+an atomic chain edit retains selected interior junctions and shares its result
+receipt across members. Branches are not resolved by choosing an arbitrary path.
+Only strictly interior junctions join this census; an existing boundary junction
+delimits separate edits. The two-chord boundary-junction regression retains three
+distinct material descendants and checks their separate interior witnesses and
+native replay. Traces with interior contacts are not deferred as uncrossed chains.
+Endpoint incidences with another trace's interior also remain in the census:
+when that support cut creates a boundary through a junction, the pieces attach
+separately. A three-trace regression preserves four independently selected
+material descendants and native replay, as the prior separate-split control does.
+Point-ordered line reversal transports its order-dual chart through pcurve
+materialization and edge-use correspondence. Selected supporting-line chart
+equality is distinct from equality of images in different UV frames.
+
+Boolean atomization and reconstruction retain `GeometricPoint3` endpoints,
+selected `Parameter` cuts and `ParameterRange` edge trims. Exact point equality
+merges known incident parameter recipes. Independent native-line, rational
+Bézier, NURBS and retained planar preimages keep their original joint fields. Copying a selected edge
+retains its support chart; merging edges requires a whole-image affine chart
+proof plus exact transport of both active-domain endpoints. Edge-use maps
+compose that proved transport. Allocation identity only reuses immutable support
+storage and never defines geometric equality.
+Flat non-native faces with selected trims or retained spatial images lacking a
+complete plane projection retain their original surface chart and supporting
+curves. Scalar trim domains can still have selected endpoint coordinates.
+A canonical support plane does not establish the UV transport needed to reuse
+those pcurves. A cold-valid quintic lens reproduces the wrong world image under
+that replacement; preserving its tensor definition supports replay and another
+split. The degree-elevated affine tensor cube also completes its original full
+graph stitch, replay and another Boolean cut against an independent half cube.
+
+Cold replay re-establishes native-line images across intersecting plane frames
+by comparing their complete affine world functions. A retained tensor section
+on a plane pulls the plane equation through its original polynomial branch and
+all rational maps, checks exact divisibility, and compares the complete projected
+image and parameter correspondence. Original denominator guards remain admitted.
+A mapped polynomial graph whose image has a nonconstant affine coordinate in
+its source abscissa is injective even if the surrounding plane map folds; this
+single-branch proof does not establish an invertible shared chart for other
+branches. Wrong interior images, wrong planes/charts, and retracing maps retain
+explicit rejection or unsupported outcomes.
+
+The original transverse recut now passes reconstruction, independently derived
+material and boundary probes (including exact 2^-60 roof separations), cold and
+fresh-process native replay, and a further `z <= -1/2` cut. That result agrees
+with the independently specified rectangular prism in both exact set differences,
+has volume one, and supports native replay and empty-result recovery. The
+original cap/hole/quartic fixtures remain intact. Earlier attachment, stitching,
+image-agreement and self-incidence failures remain archived. Cap volume
+measurement, general solid reconstruction and preimage enumeration, continuous
+pullbacks, distinct nonlinear charts, arbitrary algebraic operation closure and
+complete work/heap/cancellation bounds remain open. Qualification and measured
+completion scope are recorded in [the implementation ledger](IMPLEMENTATION_STATUS.json).
+
+Native archive version 17 adds a checked `PointOnChord` selector retaining the
+defining oriented chord and joint selected point. Replay rechecks complete
+incidence and finite-domain membership. Typed backward references and logical
+dependency-depth admission cover both dependencies. The documented 16-to-17
+migration changes only the version discriminator in the three cone fixtures;
+earlier formats are rejected. See [the archive contract](SELECTED_ARCHIVE.md).
+
+Flat rational Bézier faces (equal weights, coplanar controls) with curved
+parameterizations have exact face area when the plane Jacobian is certified
+of one strict sign on the whole patch: the Green integral of that Jacobian
+over the face's straight, circular or polynomial-graph trims, carried by the
+plane frame's area element; patches with Jacobians of undecided or changing
+sign stay typed.
+
+General multi-trace face partitions (`FaceRef::split_by_surface_curves`, also
+used by Booleans) set aside uncrossed traces that chain end to end into closed
+loops, arrange the remaining traces, and split each loop into the unique
+descendant whose material admits it (ambiguity and absence stay typed). Selected
+endpoints and interior crossings keep exact parameters; supported retained
+planar/tensor sources subdivide in their original charts. Native represented
+intervals keep their existing rebasing. Chain matching and contact attachment
+can retain geometric points when an independent coordinate view is unavailable;
+remaining scalar-only topology consumers stay explicit blockers.
+
+Several plane-section traces over one plane frame with structurally distinct
+mapped sources keep caller order in face partitions (overlaps still fail
+explicitly), and selected planar-image ends are certified in the branch's own
+chart and carried through the exact similarity view; the four corner arcs of
+the bump top cut by z = 5/4 partition the unit cap into four corners and a
+centre that replay cold.
+
+Plane sections of tensors whose plane projection is an exact similarity keep
+mapped-branch plane pcurves that Hypercurve now intersects, locates and
+classifies through their similarity view; planar-image curve ends with selected
+coordinates are certified exactly from the branch's defining polynomial
+carried into the plane chart, so closed section loops split planar faces into
+a ring and a disk that replay cold.
+
+Planar faces whose boundaries contain generated or spline edges (no line/arc
+contour) take part in Boolean face-pair graphs: their regions are the exact
+non-zero fill of their boundary curve paths, and line traces are cut at their
+exact contacts with each boundary curve. The native segment clipper still uses
+scalar parameters; plane-pair processing falls back to retained line charts and
+the shared exact region trimmer for selected contacts. Boundary records retain
+selected UV/spatial points and original source parameters, while proved native
+views remain useful accelerators. Face interior witnesses skip
+boundary vertices without scalar views (every candidate is proved inside); a
+tensor image of an iso-line validates on a plane through its exact iso-curve's
+spline image proof; tensor-graph volume accepts straight polynomial-branch
+trims with certified endpoints.
 
 The [axial-shell evidence](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-17-axial-shells/README.md) completes the three original
 partial-depth cylinder cuts and covering reversed difference. Eight rationally

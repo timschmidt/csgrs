@@ -50,6 +50,8 @@ pub enum CsgrsStatus {
     Unbounded = 9,
     /// The bounds query completed on empty geometry; no AABB was written.
     NoBounds = 10,
+    /// Storage was unavailable without reaching a configured work limit.
+    ResourceUnavailable = 11,
     Panic = 255,
 }
 
@@ -1045,17 +1047,22 @@ fn status_for_error(error: &FfiError) -> CsgrsStatus {
         FfiError::NoBounds => CsgrsStatus::NoBounds,
         FfiError::Adapter(AdapterError::Validation(_)) => CsgrsStatus::ValidationFailed,
         FfiError::Adapter(AdapterError::Construction(error)) => {
-            use csgrs::errors::ValidationErrorKind;
-            match error.kind() {
-                ValidationErrorKind::InvalidInput => CsgrsStatus::ValidationFailed,
-                ValidationErrorKind::Undecided => CsgrsStatus::PredicateUndecided,
-                ValidationErrorKind::Unbounded => CsgrsStatus::Unbounded,
-                ValidationErrorKind::ResourceExhausted => CsgrsStatus::ResourceExhausted,
-                ValidationErrorKind::Unsupported => CsgrsStatus::Unsupported,
-                _ => CsgrsStatus::GeometryFailed,
-            }
+            status_for_validation_kind(error.kind())
         },
         FfiError::Adapter(_) => CsgrsStatus::ConversionFailed,
+    }
+}
+
+fn status_for_validation_kind(kind: csgrs::errors::ValidationErrorKind) -> CsgrsStatus {
+    use csgrs::errors::ValidationErrorKind;
+    match kind {
+        ValidationErrorKind::InvalidInput => CsgrsStatus::ValidationFailed,
+        ValidationErrorKind::Undecided => CsgrsStatus::PredicateUndecided,
+        ValidationErrorKind::Unbounded => CsgrsStatus::Unbounded,
+        ValidationErrorKind::ResourceExhausted => CsgrsStatus::ResourceExhausted,
+        ValidationErrorKind::ResourceUnavailable => CsgrsStatus::ResourceUnavailable,
+        ValidationErrorKind::Unsupported => CsgrsStatus::Unsupported,
+        _ => CsgrsStatus::GeometryFailed,
     }
 }
 
@@ -2334,6 +2341,24 @@ pub unsafe extern "C" fn csgrs_region_profiles_real_free(value: CsgrsRegionProfi
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn unavailable_storage_has_a_distinct_stable_status() {
+        assert_eq!(
+            super::status_for_validation_kind(
+                csgrs::errors::ValidationErrorKind::ResourceUnavailable
+            ),
+            super::CsgrsStatus::ResourceUnavailable
+        );
+        assert_eq!(
+            super::status_for_validation_kind(
+                csgrs::errors::ValidationErrorKind::ResourceExhausted
+            ),
+            super::CsgrsStatus::ResourceExhausted
+        );
+        assert_eq!(super::CsgrsStatus::ResourceUnavailable as u32, 11);
+        assert_eq!(super::CsgrsStatus::ResourceExhausted as u32, 6);
+    }
+
     use super::*;
 
     // Preserve the original exact proof and keep the ABI's undecided controls

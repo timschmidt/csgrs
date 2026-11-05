@@ -24,7 +24,7 @@ fn root() -> Parameter {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("expected a finite selected root");
     };
@@ -241,7 +241,7 @@ fn selected_spline_trims_keep_their_authored_parameter_charts() {
             )
             .unwrap();
             let CurveParameterLocation::Parameters(parameters) =
-                selector.parameters_of(&Point3::origin()).unwrap()
+                selector.parameters_of(Point3::origin()).unwrap()
             else {
                 panic!("expected finite selected knot parameter");
             };

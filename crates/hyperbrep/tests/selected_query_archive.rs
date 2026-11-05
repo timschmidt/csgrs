@@ -410,3 +410,158 @@ fn dependent_polynomial_fiber_replays_in_a_fresh_process_and_feeds_geometry() {
         String::from_utf8_lossy(&child.stderr)
     );
 }
+
+#[test]
+fn nonlinear_selected_line_contacts_replay_and_split_in_a_fresh_process() {
+    const INPUT: &str = "HYPERBREP_NONLINEAR_SELECTED_LINE_REPLAY";
+    fn verify(text: &str) {
+        let model = replay(text);
+        assert_eq!(model.to_json().unwrap(), text);
+        let curve = model.pcurves().next().unwrap().curve().clone();
+        let point = curve.start();
+        // These two defining relations and x>0 select the intended contact;
+        // neither byte equality nor a numerical coordinate fit supplies it.
+        for equation in [
+            polynomial(&[&[-1, 1, 0, 0, 0, 1]]),
+            polynomial(&[&[0, 1], &[], &[-2]]),
+        ] {
+            assert_eq!(
+                point
+                    .rational_form(equation, polynomial(&[&[1]]))
+                    .unwrap()
+                    .compare_to_real(&Real::zero())
+                    .unwrap(),
+                Ordering::Equal
+            );
+        }
+        assert_eq!(
+            point
+                .affine_form(1.into(), 0.into(), 0.into())
+                .compare_to_real(&q(1, 2))
+                .unwrap(),
+            Ordering::Greater
+        );
+        assert_eq!(
+            point
+                .affine_form(1.into(), 0.into(), 0.into())
+                .compare_to_real(&Real::one())
+                .unwrap(),
+            Ordering::Less
+        );
+        let cutter = Curve2::from(
+            hypercurve::LineSeg2::try_new(Uv::from_values(1, -1), Uv::from_values(1, 2)).unwrap(),
+        );
+        let relation = curve.intersect_curve(&cutter).unwrap();
+        assert!(relation.is_complete(), "{:?}", relation.blockers());
+        assert_eq!(relation.contacts().len(), 1);
+        let contact = &relation.contacts()[0];
+        assert_eq!(
+            contact
+                .point()
+                .affine_form(1.into(), 0.into(), 0.into())
+                .compare_to_real(&Real::one())
+                .unwrap(),
+            Ordering::Equal
+        );
+        assert_eq!(
+            contact
+                .point()
+                .affine_form(0.into(), 1.into(), 0.into())
+                .compare(&point.affine_form(0.into(), 1.into(), 0.into()))
+                .unwrap(),
+            Ordering::Equal
+        );
+        let (first, second) = curve
+            .split_at(contact.first().parameter().unwrap())
+            .unwrap();
+        assert!(first.end().coincides_with(&second.start()).unwrap());
+        let mut builder = ModelBuilder::new();
+        builder.pcurve(Pcurve::new(first)).unwrap();
+        builder.pcurve(Pcurve::new(second)).unwrap();
+        let next = replay(&builder.finish().unwrap().to_json().unwrap());
+        assert!(
+            next.pcurves()
+                .next()
+                .unwrap()
+                .curve()
+                .start()
+                .coincides_with(&point)
+                .unwrap()
+        );
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        verify(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let alpha = CurvePointDefinition2::PolynomialFiber {
+        equation: polynomial(&[&[-1, 1, 0, 0, 0, 1]]),
+        parameter: Real::zero().into(),
+        root: IsolatedRootInterval {
+            lower: 0.into(),
+            upper: 1.into(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+    }
+    .into_point()
+    .unwrap();
+    let endpoint = alpha
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[1], &[1]]), polynomial(&[&[0, 1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    let chord = Curve2::try_line(alpha, endpoint).unwrap();
+    let topology = hypersolve::bivariate_topology::decompose_bivariate_curve(
+        &polynomial(&[&[0, 1], &[], &[-1]]),
+        &hypersolve::bivariate_topology::BivariateCurveDomain {
+            first: [0.into(), 1.into()],
+            second: [(-1).into(), 2.into()],
+        },
+        Default::default(),
+    )
+    .unwrap();
+    let set = hypercurve::PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+    let image = set.curves()[0]
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[], &[1]]), polynomial(&[&[0, 1], &[], &[1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    let relation = image.intersect_curve(&chord).unwrap();
+    assert!(relation.is_complete(), "{:?}", relation.blockers());
+    assert_eq!(relation.contacts().len(), 1);
+    let point = relation.contacts()[0].point().clone();
+    let endpoint = point
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[1], &[1]]), polynomial(&[&[0, 1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    let mut builder = ModelBuilder::new();
+    builder
+        .pcurve(Pcurve::new(Curve2::try_line(point, endpoint).unwrap()))
+        .unwrap();
+    let text = builder.finish().unwrap().to_json().unwrap();
+    verify(&text);
+    let path = std::env::temp_dir().join(format!(
+        "hyperbrep-nonlinear-selected-line-{}.json",
+        std::process::id()
+    ));
+    std::fs::write(&path, &text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "nonlinear_selected_line_contacts_replay_and_split_in_a_fresh_process",
+        ])
+        .env(INPUT, &path)
+        .output()
+        .unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert!(
+        child.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}

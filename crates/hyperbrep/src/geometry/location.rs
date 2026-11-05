@@ -5,7 +5,7 @@ use super::{
     certified_atan2, control_coordinate, decided_order, decompose_nurbs_into_bezier_segments,
     ellipse_arc_parameters_at_angle, points_equal, surface_projection_varies,
 };
-use crate::{GeometryError, GeometryResult, Parameter, Point3, Real};
+use crate::{GeometricPoint3, GeometryError, GeometryResult, Parameter, Point3, Real, Vector3};
 use hypercurve::{Curve2, CurvePointLocations2, Point2 as CurvePoint2, RationalBezier2};
 use hyperlimit::{PredicateOutcome, compare_reals, point3_equal};
 use std::cmp::Ordering;
@@ -56,7 +56,7 @@ pub(super) fn locate_line_parameter(
 pub(super) fn locate_rational_bezier_parameters(
     curve: &Curve3,
     rational: &RationalBezier3,
-    point: &Point3,
+    point: &GeometricPoint3,
 ) -> GeometryResult<CurveParameterLocation> {
     let mut projection = None;
     for axes in [(0, 1), (0, 2), (1, 2)] {
@@ -66,19 +66,27 @@ pub(super) fn locate_rational_bezier_parameters(
         }
     }
     let Some((first_axis, second_axis)) = projection else {
-        return if points_equal(&rational.control_points[0], point)? {
+        return if point.coincides_with(&rational.control_points[0].clone().into())? {
             Ok(CurveParameterLocation::EntireDomain)
         } else {
             Ok(CurveParameterLocation::None)
         };
     };
     let projected = project_bezier(rational, (first_axis, second_axis))?;
-    let query = CurvePoint2::new(
-        control_coordinate(point, first_axis).clone(),
-        control_coordinate(point, second_axis).clone(),
-    );
-    match projected.point_locations(&query.into())? {
-        CurvePointLocations2::EntireCurve => Err(GeometryError::UnsupportedParameterLocation),
+    let query = if let Some(coordinates) = point.try_coordinates() {
+        CurvePoint2::new(
+            control_coordinate(coordinates, first_axis).clone(),
+            control_coordinate(coordinates, second_axis).clone(),
+        )
+        .into()
+    } else {
+        let axes = [Vector3::x(), Vector3::y(), Vector3::z()];
+        point.projected_to_plane_frame(&Point3::origin(), &axes[first_axis], &axes[second_axis])?
+    };
+    match projected.point_locations(&query)? {
+        CurvePointLocations2::EntireCurve | CurvePointLocations2::Components(_) => {
+            Err(GeometryError::UnsupportedParameterLocation)
+        }
         CurvePointLocations2::Locations(locations) => {
             let mut parameters = Vec::new();
             let mut remaining_projection = None;
@@ -86,14 +94,25 @@ pub(super) fn locate_rational_bezier_parameters(
             for location in locations {
                 // One unit-chart span: local and authored parameters agree.
                 let parameter = location.local_parameter();
-                let incident = if let Some(value) = parameter.scalar() {
+                let incident = if point.try_coordinates().is_none() {
+                    let selected = Parameter::from_curve(parameter)?;
+                    // A complete planar inverse only proposes spatial candidates.
+                    // The original three-coordinate image validates each one.
+                    curve.point_at(&selected)?.coincides_with(point)?
+                } else if let Some(value) = parameter.scalar() {
                     // Preserve the represented-value path without constructing
                     // another projected carrier or a selected point image.
-                    points_equal(&curve.evaluate_real(value)?, point)?
+                    points_equal(
+                        &curve.evaluate_real(value)?,
+                        point.try_coordinates().expect("represented branch"),
+                    )?
                 } else if let Some(constant) = &rational.constant_coordinates[remaining_axis] {
                     decided_order(compare_reals(
                         constant,
-                        control_coordinate(point, remaining_axis),
+                        control_coordinate(
+                            point.try_coordinates().expect("represented branch"),
+                            remaining_axis,
+                        ),
                         crate::STRICT_PREDICATES,
                     ))? == Ordering::Equal
                 } else {
@@ -104,8 +123,16 @@ pub(super) fn locate_rational_bezier_parameters(
                             Some(project_bezier(rational, (first_axis, remaining_axis))?);
                     }
                     let query = CurvePoint2::new(
-                        control_coordinate(point, first_axis).clone(),
-                        control_coordinate(point, remaining_axis).clone(),
+                        control_coordinate(
+                            point.try_coordinates().expect("represented branch"),
+                            first_axis,
+                        )
+                        .clone(),
+                        control_coordinate(
+                            point.try_coordinates().expect("represented branch"),
+                            remaining_axis,
+                        )
+                        .clone(),
                     );
                     remaining_projection
                         .as_ref()
@@ -114,10 +141,11 @@ pub(super) fn locate_rational_bezier_parameters(
                         .coincides_with(&query.into())?
                 };
                 if incident {
-                    let parameter = parameter
-                        .as_bezier_parameter()
-                        .ok_or(GeometryError::UnsupportedParameterLocation)?;
-                    parameters.push(Parameter::from_bezier(parameter.clone()));
+                    parameters.push(if let Some(native) = parameter.as_bezier_parameter() {
+                        Parameter::from_bezier(native.clone())
+                    } else {
+                        Parameter::from_curve(parameter)?
+                    });
                 }
             }
             if parameters.is_empty() {
@@ -148,7 +176,7 @@ fn project_bezier(rational: &RationalBezier3, axes: (usize, usize)) -> GeometryR
 
 pub(super) fn locate_nurbs_parameters(
     nurbs: &NurbsCurve3,
-    point: &Point3,
+    point: &GeometricPoint3,
 ) -> GeometryResult<CurveParameterLocation> {
     let mut all_controls_equal = true;
     for control in &nurbs.control_points[1..] {
@@ -158,7 +186,7 @@ pub(super) fn locate_nurbs_parameters(
         }
     }
     if all_controls_equal {
-        return if points_equal(&nurbs.control_points[0], point)? {
+        return if point.coincides_with(&nurbs.control_points[0].clone().into())? {
             Ok(CurveParameterLocation::EntireDomain)
         } else {
             Ok(CurveParameterLocation::None)
@@ -250,6 +278,43 @@ pub(super) fn locate_ellipse_arc_parameters(
             return Err(GeometryError::PredicateUnresolved { needed, stage });
         }
     }
+    ellipse_arc_parameters_at_point(curve, arc, normalized_x, normalized_y)
+}
+
+/// Arc parameters of a point the caller has already proved to lie on the
+/// arc's whole conic (in its plane and on its equation), such as an exact
+/// root of the conic's pulled-back equation. Endpoint identity is still
+/// preferred when decided, and the arc's own angular domain is applied
+/// exactly; only the redundant membership predicates are skipped.
+pub(super) fn locate_ellipse_arc_parameters_on_conic(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    point: &Point3,
+) -> GeometryResult<CurveParameterLocation> {
+    let mut endpoints = Vec::new();
+    if point3_equal(&curve.start()?, point, crate::STRICT_PREDICATES).value() == Some(true) {
+        endpoints.push(curve.domain().start().clone());
+    }
+    if point3_equal(&curve.end()?, point, crate::STRICT_PREDICATES).value() == Some(true)
+        && (endpoints.is_empty() || endpoints[0].compare(curve.domain().end())? != Ordering::Equal)
+    {
+        endpoints.push(curve.domain().end().clone());
+    }
+    if !endpoints.is_empty() {
+        return Ok(CurveParameterLocation::Parameters(endpoints));
+    }
+    let relative = point - &arc.center;
+    let normalized_x = (arc.x.dot(&relative) / &arc.x_radius).map_err(GeometryError::Numeric)?;
+    let normalized_y = (arc.y.dot(&relative) / &arc.y_radius).map_err(GeometryError::Numeric)?;
+    ellipse_arc_parameters_at_point(curve, arc, normalized_x, normalized_y)
+}
+
+fn ellipse_arc_parameters_at_point(
+    curve: &Curve3,
+    arc: &EllipseArc3,
+    normalized_x: Real,
+    normalized_y: Real,
+) -> GeometryResult<CurveParameterLocation> {
     let angle = match certified_atan2(normalized_y.clone(), normalized_x.clone()) {
         Ok(angle) => angle,
         Err(GeometryError::PredicateUnresolved { .. }) => {

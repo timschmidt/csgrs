@@ -207,6 +207,8 @@ impl BezierAlgebraicChordPairPoint2 {
                 policy: policy.retained_object_policy(),
                 recursive_support_lines: OnceLock::new(),
                 recursive_point: OnceLock::new(),
+                selected_field_hint: OnceLock::new(),
+                selected_point: OnceLock::new(),
             }),
         }
     }

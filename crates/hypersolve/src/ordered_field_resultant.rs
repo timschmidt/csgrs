@@ -382,3 +382,9 @@ pub fn ordered_field_resultant_bivariate<C: Clone, F: OrderedFieldPolynomialCont
     check()?;
     Ok(result)
 }
+
+mod bounded;
+pub use bounded::{
+    BoundedOrderedFieldResultantError, OrderedFieldResultant, OrderedFieldResultantConfig,
+    resultant_bivariate_ordered_field,
+};

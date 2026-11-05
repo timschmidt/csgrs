@@ -55,7 +55,9 @@ impl ArenaModel {
                         // coincidence. Leave it to the ordinary split validator.
                         LineLineIntersection::Uncertain { .. } => return Ok(None),
                     }
-                } else if pcurve.circular_arc().is_some() {
+                } else if pcurve.circular_arc().is_some()
+                    || pcurve.curve().polynomial_branch().is_some()
+                {
                     // Boundary editing may retain a circular image as a
                     // rational Bezier or restriction. Native overlap witnesses
                     // establish its complete image without changing family.
@@ -70,11 +72,26 @@ impl ArenaModel {
                         if !overlap.includes_start() || !overlap.includes_end() {
                             return Ok(None);
                         }
-                        let mut a = crate::geometry::native_span_parameter_range(
-                            pcurve.curve(),
-                            overlap.first_span_index(),
-                            overlap.first_range(),
-                        )?;
+                        // A polynomial branch's overlap range is already in
+                        // its own (abscissa) parameter.
+                        let mut a = if pcurve.curve().polynomial_branch().is_some() {
+                            let scalar = |parameter: &hypercurve::CurveParameter2| {
+                                parameter
+                                    .scalar()
+                                    .cloned()
+                                    .ok_or(GeometryError::UnrepresentableParameter)
+                            };
+                            hypercurve::ParamRange::new(
+                                scalar(overlap.first_range().start())?,
+                                scalar(overlap.first_range().end())?,
+                            )
+                        } else {
+                            crate::geometry::native_span_parameter_range(
+                                pcurve.curve(),
+                                overlap.first_span_index(),
+                                overlap.first_range(),
+                            )?
+                        };
                         let mut b = crate::geometry::native_span_parameter_range(
                             boundary.curve(),
                             overlap.second_span_index(),
@@ -107,7 +124,17 @@ impl ArenaModel {
             }
             ordered.insert(index, overlap);
         }
-        let mut covered = Real::zero();
+        // Coverage runs over the trace's own parameter domain.
+        let (mut covered, full) = match pcurve.curve().polynomial_branch() {
+            Some(_) => {
+                let domain = pcurve.curve().parameter_domain();
+                match (domain.start().scalar(), domain.end().scalar()) {
+                    (Some(start), Some(end)) => (start.clone(), end.clone()),
+                    _ => return Ok(None),
+                }
+            }
+            None => (Real::zero(), Real::one()),
+        };
         for overlap in &ordered {
             if order(overlap.trace_range.start(), &covered)? == std::cmp::Ordering::Greater {
                 return Ok(None);
@@ -116,7 +143,7 @@ impl ArenaModel {
                 covered = overlap.trace_range.end().clone();
             }
         }
-        if order(&covered, &Real::one())? != std::cmp::Ordering::Equal {
+        if order(&covered, &full)? != std::cmp::Ordering::Equal {
             return Ok(None);
         }
 
@@ -125,8 +152,10 @@ impl ArenaModel {
         // face carrier, without trusting the intersection's cached proof flag.
         let curve = intersection.curve();
         let mut builder = ArenaModelBuilder::new();
-        let start = builder.vertex(curve.start()?.into())?;
-        let end = builder.vertex(curve.end()?.into())?;
+        // Endpoint coordinates need not have independent scalar views. Keep
+        // the selected point and its source relation for image validation.
+        let start = builder.vertex(curve.point_at(curve.domain().start())?)?;
+        let end = builder.vertex(curve.point_at(curve.domain().end())?)?;
         let curve_id = builder.curve(curve.clone())?;
         let edge = builder.edge(start, end, curve_id, curve.domain().clone())?;
         let pcurve = builder.pcurve(pcurve)?;

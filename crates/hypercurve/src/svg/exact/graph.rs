@@ -91,7 +91,7 @@ struct GraphWriter {
             u32,
         ),
     >,
-    fidelity_constructions: HashMap<*const crate::curve::ParallelFidelityConstruction2, u32>,
+    fidelity_constructions: HashMap<*const (), u32>,
     fidelity_roots: HashMap<*const crate::curve::ParallelFidelityReceipt2, u32>,
     fidelity_steps: HashMap<*const crate::curve::ParallelFidelityStep2, u32>,
     active_fidelity_depth: usize,
@@ -319,7 +319,7 @@ impl GraphWriter {
 }
 
 enum Definition {
-    FidelityConstruction(std::sync::Arc<crate::curve::ParallelFidelityConstruction2>),
+    FidelityConstruction(crate::curve::ParallelFidelityConstruction2),
     PolynomialSource(crate::PolynomialCurveSet2),
     Curve(Curve2),
     Parameter(BezierParameter2),

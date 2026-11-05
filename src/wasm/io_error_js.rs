@@ -10,7 +10,7 @@ const IO_ERROR_TYPES: &str = r#"
 export type GeometryValidationError = Error & {
     readonly name: "GeometryError";
     readonly code: "invalid_input" | "unsupported" | "undecided" |
-        "resource_exhausted" | "unbounded" | "geometry_failure";
+        "resource_exhausted" | "resource_unavailable" | "unbounded" | "geometry_failure";
 };
 
 /**

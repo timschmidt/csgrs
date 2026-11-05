@@ -759,7 +759,7 @@ where
             let strict = evaluate(&key, &policy.strict_counterpart());
             match strict {
                 Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() == UncertaintyReason::BudgetExhausted =>
+                    if blocker.reason().is_resource_failure() =>
                 {
                     return Err(ExactCurveError::Blocked(blocker));
                 }
@@ -776,18 +776,16 @@ where
         None => retain_strict_result(evaluate(&key, policy)),
     };
 
-    let budget_blocked = match &resolved {
-        PolicyResultCacheEntry::StrictBlocked(blocker) => {
-            blocker.reason() == UncertaintyReason::BudgetExhausted
-        }
+    let resource_blocked = match &resolved {
+        PolicyResultCacheEntry::StrictBlocked(blocker) => blocker.reason().is_resource_failure(),
         PolicyResultCacheEntry::Approximate512(resolved) => matches!(
             resolved.result,
             Err(ExactCurveError::Blocked(blocker))
-                if blocker.reason() == UncertaintyReason::BudgetExhausted
+                if blocker.reason().is_resource_failure()
         ),
         _ => false,
     };
-    if budget_blocked {
+    if resource_blocked {
         return replay_cached_result(&resolved, policy);
     }
 
@@ -956,10 +954,8 @@ fn resolve_uncached_evaluation<'a, T, E>(
     let resolved = if policy.permits_approximate_512() {
         match evaluate(&policy.strict_counterpart())? {
             Classification::Decided(value) => (value, None),
-            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
-                return Ok(Classification::Uncertain(
-                    UncertaintyReason::BudgetExhausted,
-                ));
+            Classification::Uncertain(reason) if reason.is_resource_failure() => {
+                return Ok(Classification::Uncertain(reason));
             }
             Classification::Uncertain(strict_reason) => match evaluate(policy)? {
                 Classification::Decided(value) => (value, Some(strict_reason)),
@@ -1044,10 +1040,8 @@ fn resolve_uncached_classification<'a, T, E>(
             Classification::Decided(value) => {
                 let _ = cache.certified.set(value);
             }
-            Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
-                return Ok(Classification::Uncertain(
-                    UncertaintyReason::BudgetExhausted,
-                ));
+            Classification::Uncertain(reason) if reason.is_resource_failure() => {
+                return Ok(Classification::Uncertain(reason));
             }
             Classification::Uncertain(strict_reason) => match evaluate(policy)? {
                 Classification::Decided(value) => {
@@ -1168,6 +1162,86 @@ mod tests {
         resolve_cached_evaluation, resolve_certified_operation,
     };
     use crate::{Classification, UncertaintyReason};
+
+    #[test]
+    fn bounded_cache_does_not_retain_storage_failure_or_try_an_approximate_terminal() {
+        use crate::{CurveFamily2, CurveOperation2, ExactCurveError};
+        let cache: super::BoundedPolicyResultCache<u8, u8> = std::sync::OnceLock::new();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let calls = Cell::new(0);
+            let error = super::resolve_bounded_cached_result(&cache, 1, 2, &policy, |_, _| {
+                calls.set(calls.get() + 1);
+                Err(ExactCurveError::blocked(
+                    CurveOperation2::Intersection,
+                    CurveFamily2::ImplicitPolynomial,
+                    UncertaintyReason::StorageUnavailable,
+                ))
+            })
+            .unwrap_err();
+            assert!(
+                matches!(error, ExactCurveError::Blocked(b) if b.reason() == UncertaintyReason::StorageUnavailable)
+            );
+            assert_eq!(calls.get(), 1);
+            assert!(cache.get().unwrap().lock().unwrap().is_empty());
+        }
+        assert_eq!(
+            super::resolve_bounded_cached_result(&cache, 1, 2, &CurveContext::STRICT, |_, _| Ok(
+                29
+            ))
+            .unwrap(),
+            29
+        );
+    }
+
+    #[test]
+    fn storage_unavailability_cannot_consume_an_approximate_terminal_or_poison_retry() {
+        let evaluation = PolicyEvaluationCache::new();
+        let classification = PolicyClassificationCache::new();
+        for policy in [CurveContext::STRICT, CurveContext::APPROXIMATE_512] {
+            let calls = Cell::new(0);
+            let failure = resolve_certified_operation(&policy, |attempt| {
+                resolve_cached_evaluation(&evaluation, attempt, |_| {
+                    calls.set(calls.get() + 1);
+                    Ok::<Classification<u8>, ()>(Classification::Uncertain(
+                        UncertaintyReason::StorageUnavailable,
+                    ))
+                })
+            })
+            .unwrap();
+            assert_eq!(failure.certainty, CurveCertainty::Certified);
+            assert_eq!(
+                failure.value,
+                Classification::Uncertain(UncertaintyReason::StorageUnavailable)
+            );
+            assert_eq!(calls.get(), 1);
+            assert!(evaluation.is_empty());
+            let failure = resolve_cached_classification(&classification, &policy, |_| {
+                Ok::<Classification<u8>, ()>(Classification::Uncertain(
+                    UncertaintyReason::StorageUnavailable,
+                ))
+            })
+            .unwrap();
+            assert_eq!(
+                failure,
+                Classification::Uncertain(UncertaintyReason::StorageUnavailable)
+            );
+            assert!(classification.is_empty());
+        }
+        assert_eq!(
+            resolve_cached_evaluation(&evaluation, &CurveContext::STRICT, |_| {
+                Ok::<_, ()>(Classification::Decided(17_u8))
+            })
+            .unwrap(),
+            Classification::Decided(&17),
+        );
+        assert_eq!(
+            resolve_cached_classification(&classification, &CurveContext::STRICT, |_| {
+                Ok::<_, ()>(Classification::Decided(23_u8))
+            })
+            .unwrap(),
+            Classification::Decided(&23),
+        );
+    }
 
     #[test]
     fn curve_modes_name_both_hyperlimit_policies() {

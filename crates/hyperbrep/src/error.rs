@@ -111,6 +111,8 @@ pub enum GeometryError {
     UnsupportedMeasurement,
     /// The pcurve family cannot yet form an authoritative face contour.
     UnsupportedPcurveContour,
+    /// A tensor-image curve requires a positive-weight rational Bézier tensor.
+    UnsupportedImageSurface,
     /// A point is not on the requested finite curve.
     PointNotOnCurve,
     /// A point is not on the requested surface carrier.
@@ -220,6 +222,9 @@ impl fmt::Display for GeometryError {
             }
             Self::UnsupportedMeasurement => {
                 formatter.write_str("exact measurement is unsupported for this geometry")
+            }
+            Self::UnsupportedImageSurface => {
+                formatter.write_str("tensor-image curves require a rational Bézier tensor surface")
             }
             Self::UnsupportedPcurveContour => {
                 formatter.write_str("pcurve family is unsupported in face contours")

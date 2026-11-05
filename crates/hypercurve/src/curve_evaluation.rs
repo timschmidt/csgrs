@@ -286,16 +286,15 @@ impl Curve2 {
         Ok(vec![CurveVector2::represented(derivative)])
     }
 
-    fn point_at_selected_native_parameter(
+    /// Replays only the proved affine-form image of a native line. `None`
+    /// leaves the caller's evaluator authoritative; it must not recursively
+    /// dispatch through that evaluator again.
+    fn line_affine_form_point(
         &self,
         parameter: &CurveParameter2,
-        side: CurveParameterSide2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<CurvePoint2> {
+    ) -> ExactCurveResult<Option<CurvePoint2>> {
         let family = self.family();
-        if parameter.as_bezier_parameter().is_none() && !parameter.is_retained_scalar() {
-            return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
-        }
         if let Some(CurveGeometry2::Line(line)) = self.geometry()
             && let Some(form) = parameter.affine_form_source()
         {
@@ -357,8 +356,24 @@ impl Curve2 {
                 if !in_domain {
                     return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
                 }
-                return Ok(image);
+                return Ok(Some(image));
             }
+        }
+        Ok(None)
+    }
+
+    fn point_at_selected_native_parameter(
+        &self,
+        parameter: &CurveParameter2,
+        side: CurveParameterSide2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<CurvePoint2> {
+        let family = self.family();
+        if parameter.as_bezier_parameter().is_none() && !parameter.is_retained_scalar() {
+            return Err(evaluation_error(family, CurveError::InvalidCurveParameter));
+        }
+        if let Some(image) = self.line_affine_form_point(parameter, policy)? {
+            return Ok(image);
         }
         let fragments =
             self.native_bezier_fragments_for_operation(policy, CurveOperation2::Evaluation)?;
@@ -449,6 +464,19 @@ pub(crate) fn rational_point(
     policy: &CurveContext,
 ) -> ExactCurveResult<CurvePoint2> {
     validate_rational_point(source, parameter, family, policy)?;
+    // A parameter-preserving line certificate transports the native line's
+    // joint-point replay proof. Collinearity alone cannot justify this map.
+    // Exterior parameters retain the rational evaluator's extension contract.
+    if parameter.affine_form_source().is_some()
+        && let Some(line) = source.exact_linear_parameterization_line()
+        && CurveParameterDomain2::new(&CurveParameterRange2::unit(), None)
+            .contains_finite_parameter(parameter, policy)
+            .map_err(|cause| evaluation_error(family, cause))?
+            == Classification::Decided(true)
+        && let Some(point) = Curve2::from(line).line_affine_form_point(parameter, policy)?
+    {
+        return Ok(point);
+    }
     if let Some(parameter) = parameter.as_polynomial_query() {
         return parameter.rational_point(source, policy);
     }

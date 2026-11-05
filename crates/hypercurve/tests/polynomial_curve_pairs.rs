@@ -815,3 +815,83 @@ fn polynomial_pairs_continue_past_the_hot_resultant_degree() {
         assert_eq!(next.result().contacts().len(), 1);
     }
 }
+
+#[test]
+fn polynomial_zero_proofs_follow_retained_rational_maps_and_similarity() {
+    use hypercurve::{RationalMap2, Similarity2};
+    // Source y=x^2, then swap (x,y), then scale both coordinates by two.
+    let set = curves(polynomial(&[&[0, 1], &[], &[-1]]));
+    let map = RationalMap2::new(
+        [polynomial(&[&[0, 1]]), polynomial(&[&[], &[1]])],
+        polynomial(&[&[1]]),
+    );
+    let image = set.curves()[0]
+        .rational_image(&map)
+        .unwrap()
+        .transform_similarity(
+            &Similarity2::try_from_real_affine(
+                2.into(),
+                0.into(),
+                0.into(),
+                2.into(),
+                0.into(),
+                0.into(),
+            )
+            .unwrap(),
+        )
+        .unwrap();
+    let relation = polynomial(&[&[0, 0, -1], &[2]]); // 2X-Y^2=0
+    let wrong = polynomial(&[&[1, 0, -1], &[2]]);
+    for image in [image.clone(), image.reversed().unwrap()] {
+        let branch = image.polynomial_branch().unwrap();
+        assert!(branch.certifies_polynomial_identity(&relation));
+        assert!(!branch.certifies_polynomial_identity(&wrong));
+        assert!(!branch.certifies_polynomial_identity(&polynomial(&[&[0, 1], &[], &[-1]])));
+    }
+    // A nonconstant guarded denominator must be included in the pullback.
+    let map = RationalMap2::new(
+        [polynomial(&[&[], &[1]]), polynomial(&[&[0, 1]])],
+        polynomial(&[&[3], &[1]]),
+    );
+    let image = set.curves()[0].rational_image(&map).unwrap();
+    // X=x/(3+x), Y=x^2/(3+x), so Y(1-X)=3X^2.
+    assert!(
+        image
+            .polynomial_branch()
+            .unwrap()
+            .certifies_polynomial_identity(&polynomial(&[&[0, 1], &[0, -1], &[-3]]))
+    );
+}
+
+#[test]
+fn branch_parameter_coordinate_proves_injectivity_without_a_plane_inverse() {
+    use hypercurve::RationalMap2;
+    let set = curves(polynomial(&[&[0, 1], &[], &[-1]]));
+    let source = &set.curves()[0];
+    let image = source
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[], &[1]]), polynomial(&[&[0, 0, 1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    // (x,x^2) -> (x,x^4). The ambient map folds across y=0;
+    // the first image coordinate still identifies the source parameter.
+    for image in [image.clone(), image.reversed().unwrap()] {
+        let contacts = image.self_intersections().unwrap();
+        assert!(contacts.is_complete());
+        assert!(contacts.contacts().is_empty() && contacts.overlaps().is_empty());
+    }
+    // (x,x^2) -> (x^2,x^2) retraces; zero self events are not certified.
+    let retraced = source
+        .rational_image(&RationalMap2::new(
+            [polynomial(&[&[], &[], &[1]]), polynomial(&[&[0, 1]])],
+            polynomial(&[&[1]]),
+        ))
+        .unwrap();
+    match retraced.self_intersections() {
+        Err(_) => {}
+        Ok(result) => assert!(
+            !result.is_complete() || !result.contacts().is_empty() || !result.overlaps().is_empty()
+        ),
+    }
+}

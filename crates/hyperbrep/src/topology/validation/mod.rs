@@ -22,6 +22,7 @@ mod sphere;
 mod sphere_cylinder;
 mod sweep;
 mod tensor;
+mod tensor_graph;
 mod torus;
 mod wire;
 #[cfg(test)]
