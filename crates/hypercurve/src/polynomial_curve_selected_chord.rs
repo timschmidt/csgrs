@@ -18,11 +18,11 @@ fn polynomial(rows: Vec<Vec<Real>>) -> BivariatePolynomial {
     BivariatePolynomial::new(rows)
 }
 
-fn form(point: &CurvePoint2, numerator: BivariatePolynomial) -> ExactCurveResult<Form> {
+pub(super) fn form(point: &CurvePoint2, numerator: BivariatePolynomial) -> ExactCurveResult<Form> {
     point.rational_form(numerator, polynomial(vec![vec![Real::one()]]))
 }
 
-fn coordinates(point: &CurvePoint2) -> ExactCurveResult<[Form; 2]> {
+pub(super) fn coordinates(point: &CurvePoint2) -> ExactCurveResult<[Form; 2]> {
     Ok([
         form(point, polynomial(vec![vec![], vec![Real::one()]]))?,
         form(point, polynomial(vec![vec![Real::zero(), Real::one()]]))?,

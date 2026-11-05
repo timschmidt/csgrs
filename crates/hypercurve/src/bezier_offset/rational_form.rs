@@ -57,6 +57,7 @@ pub(crate) fn point_retains_joint_field(point: &CurvePoint2) -> bool {
             _ => false,
         },
         CurvePointData2::AlgebraicChordParallel(point) => point.uses_selected_field(),
+        CurvePointData2::AlgebraicChordPair(point) => point.uses_selected_field(),
         CurvePointData2::AlgebraicCuspChordDerived(point) => {
             point
                 .data
@@ -1086,6 +1087,36 @@ impl<'a> PointSignScope<'a> {
                 Classification::Decided,
             )),
             CurvePointData2::Polynomial(point) => point.polynomial_sign(polynomial, policy),
+            CurvePointData2::AlgebraicChordPair(point) if point.uses_selected_field() => {
+                let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+                let recursive = match recursive_rational_value(source, polynomial, &one, policy)? {
+                    Classification::Decided(Some(value)) => value.numerator.sign(policy)?,
+                    Classification::Decided(None) => {
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    }
+                    Classification::Uncertain(reason) => Classification::Uncertain(reason),
+                };
+                if !matches!(recursive, Classification::Uncertain(reason) if reason != UncertaintyReason::BudgetExhausted)
+                {
+                    return Ok(recursive);
+                }
+                let selected = crate::selected_field::finish(|| {
+                    let values = point.selected_field_values(policy)?;
+                    crate::selected_field::decided(
+                        crate::selected_field::bivariate(polynomial, &values)?.sign(policy)?,
+                    )
+                })?;
+                Ok(
+                    if matches!(
+                        selected,
+                        Classification::Uncertain(UncertaintyReason::Unsupported)
+                    ) {
+                        recursive
+                    } else {
+                        selected
+                    },
+                )
+            }
             CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
                 crate::selected_field::finish(|| {
                     let values = point.selected_field_values(policy)?;
@@ -1160,6 +1191,36 @@ pub(crate) fn point_rational_form_parameter(
         CurvePointData2::Polynomial(point) => {
             point.rational_parameter(numerator, denominator, policy)
         }
+        CurvePointData2::AlgebraicChordPair(point) if point.uses_selected_field() => {
+            let recursive =
+                recursive_rational_form_parameter(source, numerator, denominator, sign, policy)?;
+            if !matches!(recursive, Classification::Uncertain(reason) if reason != UncertaintyReason::BudgetExhausted)
+            {
+                return Ok(recursive);
+            }
+            let selected = crate::selected_field::finish(|| {
+                let value = crate::selected_field::query(
+                    [numerator, denominator],
+                    &point.selected_field_values(policy)?,
+                    policy,
+                )?;
+                let query =
+                    PointFormSource2::new(source.clone(), numerator.clone(), denominator.clone());
+                Ok(CurveParameter2::from_polynomial_query(
+                    crate::selected_query_scalar::SelectedQueryScalar2::new(query, value, policy)?,
+                ))
+            })?;
+            Ok(
+                if matches!(
+                    selected,
+                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                ) {
+                    recursive
+                } else {
+                    selected
+                },
+            )
+        }
         CurvePointData2::AlgebraicChordParallel(point) if point.uses_selected_field() => {
             crate::selected_field::finish(|| {
                 let value = crate::selected_field::query(
@@ -1194,31 +1255,38 @@ pub(crate) fn point_rational_form_parameter(
                 policy,
             )
         }
-        _ => {
-            let mut value = match recursive_rational_value(source, numerator, denominator, policy)?
-            {
-                Classification::Decided(Some(value)) => value,
-                Classification::Decided(None) => {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                }
-                Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
-            };
-            if sign == RealSign::Negative {
-                let Some(numerator) = value.numerator.scale(&Real::from(-1)) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                let Some(denominator) = value.denominator.scale(&Real::from(-1)) else {
-                    return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
-                };
-                value = RecursiveQuadraticProjectiveScalar {
-                    numerator,
-                    denominator,
-                };
-            }
-            Ok(BezierRecursiveProjectiveParameter2::new(value, policy)?
-                .map(CurveParameter2::from_recursive_projective))
-        }
+        _ => recursive_rational_form_parameter(source, numerator, denominator, sign, policy),
     }
+}
+
+fn recursive_rational_form_parameter(
+    source: &CurvePoint2,
+    numerator: &BivariatePolynomial,
+    denominator: &BivariatePolynomial,
+    sign: RealSign,
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    let mut value = match recursive_rational_value(source, numerator, denominator, policy)? {
+        Classification::Decided(Some(value)) => value,
+        Classification::Decided(None) => {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        }
+        Classification::Uncertain(reason) => return Ok(Classification::Uncertain(reason)),
+    };
+    if sign == RealSign::Negative {
+        let Some(numerator) = value.numerator.scale(&Real::from(-1)) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        let Some(denominator) = value.denominator.scale(&Real::from(-1)) else {
+            return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+        };
+        value = RecursiveQuadraticProjectiveScalar {
+            numerator,
+            denominator,
+        };
+    }
+    Ok(BezierRecursiveProjectiveParameter2::new(value, policy)?
+        .map(CurveParameter2::from_recursive_projective))
 }
 
 pub(super) fn recursive_rational_value(

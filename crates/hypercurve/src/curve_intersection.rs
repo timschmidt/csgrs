@@ -1,5 +1,13 @@
 //! Top-level exact curve-pair intersection with retained parameter intervals.
 
+#[path = "curve_line_location.rs"]
+mod curve_line_location;
+#[path = "curve_point_components.rs"]
+mod curve_point_components;
+#[path = "curve_rational_location.rs"]
+mod curve_rational_location;
+#[path = "curve_rational_map_location.rs"]
+mod curve_rational_map_location;
 #[path = "curve_support_intersection.rs"]
 mod curve_support_intersection;
 #[path = "polynomial_curve_pair.rs"]
@@ -50,6 +58,22 @@ pub enum CurvePointLocations2 {
     /// visited more than once keeps one location per visit; a continuous
     /// spline seam is reported once.
     Locations(Vec<CurveLocation2>),
+    /// Complete preimages containing proper continuous components. Components
+    /// retain source span charts and endpoint inclusion; adjacent charts need
+    /// not be merged. Isolated visits remain explicit `Single` components.
+    Components(Vec<CurveLocationComponent2>),
+}
+
+/// One connected parameter component in an original source span chart.
+///
+/// Open interval ends preserve original denominator exclusions. Different
+/// one-sided source charts at a discontinuous knot remain distinct.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CurveLocationComponent2 {
+    span_index: usize,
+    span_range: CurveSpanRange2,
+    parameters: CurveParameterSet2,
+    endpoint_inclusion: [bool; 2],
 }
 
 /// One exact top-level curve contact with parameters on both operands.
@@ -2710,8 +2734,14 @@ impl Curve2 {
     /// rounded. Distinct visits of the same point are all reported.
     /// Selected polynomial graph branches and their invertible similarities
     /// recover the original source abscissa and validate the selected fiber,
-    /// including closed algebraic trims and retained point inputs. General
-    /// rational images require a separate inverse/preimage authority.
+    /// including closed algebraic trims and retained point inputs. Native
+    /// rational and spline spans solve their original homogeneous equations
+    /// over the retained query's selected coefficient field, then check both
+    /// coordinates, original denominator guards and exact active domains.
+    /// Spline results retain authored knots and deduplicate shared seams.
+    /// Partly constant spans and punctured constant domains retain continuous
+    /// components and exact endpoint inclusion.
+    /// General rational images require a separate inverse/preimage authority.
     /// Retained points on generated straight chords reuse the chord's exact
     /// incidence and finite-order proofs. Other retained-point queries without
     /// an applicable incidence authority report an unsupported blocker rather
@@ -2739,28 +2769,85 @@ impl Curve2 {
         policy: &CurveContext,
     ) -> ExactCurveResult<CurvePointLocations2> {
         if let Some(branch) = self.polynomial_branch() {
-            let parameter = branch
-                .point_parameter(point, policy)
-                .map_err(|error| error.with_operation(CurveOperation2::Intersection))?;
-            return Ok(CurvePointLocations2::Locations(
-                parameter
-                    .into_iter()
-                    .map(|parameter| {
-                        CurveLocation2::new(
-                            0,
-                            CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
-                            parameter,
-                        )
-                    })
-                    .collect(),
-            ));
+            return Ok(match branch.point_parameters(point, policy)? {
+                None => CurvePointLocations2::EntireCurve,
+                Some(parameters) => CurvePointLocations2::Locations(
+                    parameters
+                        .into_iter()
+                        .map(|parameter| {
+                            CurveLocation2::new(
+                                0,
+                                CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+                                parameter,
+                            )
+                        })
+                        .collect(),
+                ),
+            });
         }
         let blocked =
             |reason| ExactCurveError::blocked(CurveOperation2::Intersection, self.family(), reason);
         let Some(point) = point.coordinates() else {
+            if let Some(locations) =
+                curve_line_location::selected_point_locations(self, point, policy)?
+            {
+                return Ok(locations);
+            }
             let spans = self.source_spans(policy, CurveOperation2::Intersection)?;
-            let mut locations = Vec::new();
+            let mut components = Vec::new();
+            let mut entire_spans = 0;
             for (span_index, span) in spans.iter().enumerate() {
+                if let crate::curve_support::CurveSupport2::Bezier(source) =
+                    crate::curve_support::CurveSupport2::from_fragment(&span.fragment)
+                {
+                    let source = RationalBezier2::try_from_subcurve(&source).map_err(|cause| {
+                        ExactCurveError::invalid(
+                            CurveOperation2::Intersection,
+                            self.family(),
+                            cause,
+                        )
+                    })?;
+                    let range = if matches!(
+                        span.fragment,
+                        crate::BezierSplitFragment2::Materialized { .. }
+                    ) {
+                        crate::CurveParameterRange2::unit()
+                    } else {
+                        span.fragment.curve_region_parameter_range()
+                    };
+                    let parameters = curve_rational_location::parameters(
+                        &source,
+                        &range,
+                        point,
+                        self.family(),
+                        policy,
+                    )?;
+                    let ordered = ExactCurveError::decided(
+                        CurveOperation2::Intersection,
+                        range.ordered_endpoints(policy).map_err(|cause| {
+                            ExactCurveError::invalid(
+                                CurveOperation2::Intersection,
+                                self.family(),
+                                cause,
+                            )
+                        })?,
+                    )?;
+                    if parameters.len() == 1
+                        && parameters[0].1 == [true, true]
+                        && matches!(&parameters[0].0,CurveParameterSet2::Range(r) if r.start()==ordered[0] && r.end()==ordered[1])
+                    {
+                        entire_spans += 1;
+                    }
+                    components.extend(parameters.into_iter().map(|(parameters, inclusion)| {
+                        CurveLocationComponent2::new(
+                            span_index,
+                            span.chart(),
+                            parameters,
+                            inclusion,
+                        )
+                    }));
+                    continue;
+                }
                 let parameter =
                     match crate::curve_support::CurveSupport2::from_fragment(&span.fragment) {
                         crate::curve_support::CurveSupport2::Line(chord) => {
@@ -2786,14 +2873,28 @@ impl Curve2 {
                     })?,
                 )?;
                 if let Some(parameter) = parameter {
-                    locations.push(CurveLocation2::new(span_index, span.chart(), parameter));
+                    components.push(CurveLocationComponent2::new(
+                        span_index,
+                        span.chart(),
+                        CurveParameterSet2::Single(parameter),
+                        [true, true],
+                    ));
                 }
             }
-            return Ok(CurvePointLocations2::Locations(locations));
+            if entire_spans == spans.len() {
+                return Ok(CurvePointLocations2::EntireCurve);
+            }
+            return self.normalize_point_components(components, policy);
         };
         let spans = match self.span_point_locations(point, CurveOperation2::Intersection, policy)? {
             Classification::Decided(Some(locations)) => locations,
             Classification::Decided(None) => return Ok(CurvePointLocations2::EntireCurve),
+            Classification::Uncertain(
+                UncertaintyReason::Unsupported | UncertaintyReason::Boundary,
+            ) => {
+                return self
+                    .identity_point_locations_raw(&CurvePoint2::from(point.clone()), policy);
+            }
             Classification::Uncertain(reason) => return Err(blocked(reason)),
         };
         // A continuous spline seam is the end of one span and the start of

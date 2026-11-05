@@ -506,3 +506,99 @@ fn selected_parallel_subrange_replays_regular_support() {
         Curve2::try_analytic_parallel(parallel, range).expect("checked parallel construction");
     assert!(curve.analytic_parallel().is_some());
 }
+
+#[test]
+fn selected_supports_preserve_available_affine_and_rational_query_sources() {
+    // A polynomial fiber has the selected-field recipe; a rational image of
+    // a selected Bezier point also has the existing recursive affine recipe.
+    // Preserve the strongest already available source identity in both cases.
+    let alpha = CurvePointDefinition2::PolynomialFiber {
+        equation: hypersolve::BivariatePolynomial::new(vec![vec![(-2).into(), 0.into(), 1.into()]]),
+        parameter: Real::zero().into(),
+        root: hypersolve::IsolatedRootInterval {
+            lower: 1.into(),
+            upper: 2.into(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+    }
+    .into_point()
+    .unwrap();
+    let t = BezierParameter2::Algebraic(
+        BezierAlgebraicParameter2::try_isolate(
+            BezierParameterPolynomial::try_new_power_basis(vec![(-1).into(), 0.into(), 2.into()])
+                .unwrap(),
+            BezierParameterInterval::try_new(q(1, 2), Real::one()).unwrap(),
+        )
+        .unwrap(),
+    );
+    let bezier: Curve2 = hypercurve::RationalBezier2::try_new(
+        vec![Point2::from_values(0, 0), Point2::from_values(0, 2)],
+        vec![Real::one(); 2],
+    )
+    .unwrap()
+    .into();
+    let mapped = bezier
+        .point_at(&t.into())
+        .unwrap()
+        .rational_image(&hypercurve::RationalMap2::new(
+            [
+                hypersolve::BivariatePolynomial::new(vec![
+                    vec![0.into()],
+                    vec![1.into()],
+                    vec![1.into()],
+                ]),
+                hypersolve::BivariatePolynomial::new(vec![vec![0.into(), 1.into()]]),
+            ],
+            hypersolve::BivariatePolynomial::new(vec![vec![1.into()]]),
+        ))
+        .unwrap();
+    for (alpha, recursive) in [(alpha, false), (mapped, true)] {
+        let end = CurvePointDefinition2::Similarity {
+            source: alpha.clone(),
+            transform: Similarity2::try_from_real_affine(
+                1.into(),
+                0.into(),
+                0.into(),
+                1.into(),
+                2.into(),
+                0.into(),
+            )
+            .unwrap(),
+        }
+        .into_point()
+        .unwrap();
+        let point = CurvePointDefinition2::SupportingLineIntersection {
+            first: [alpha, end],
+            second: [
+                Point2::from_values(1, 0).into(),
+                Point2::from_values(1, 2).into(),
+            ],
+        }
+        .into_point()
+        .unwrap();
+        for source in [
+            point.clone(),
+            point.definition().unwrap().into_point().unwrap(),
+        ] {
+            let parameter = source
+                .affine_form(1.into(), 1.into(), 0.into())
+                .parameter()
+                .unwrap();
+            assert!(
+                if recursive {
+                    parameter.affine_form_source().is_some()
+                } else {
+                    parameter.rational_form_source().is_some()
+                },
+                "retain the available supporting-line query identity"
+            );
+            assert_eq!(
+                parameter
+                    .compare(&(Real::one() + Real::from(2).sqrt().unwrap()).into())
+                    .unwrap(),
+                Ordering::Equal
+            );
+        }
+    }
+}

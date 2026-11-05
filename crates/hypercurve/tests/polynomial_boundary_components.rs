@@ -434,19 +434,46 @@ fn boundary_rational_similarity_views_retain_original_guards_and_contacts() {
             .coincides_with(contact.point())
             .unwrap()
     );
-    assert!(
-        contact
-            .tangent_cross_sign()
-            .is_some_and(|sign| sign != hyperreal::RealSign::Zero)
-    );
-    // A nonlinear rational image keeps its typed capability gap.
+    let stretch_sign = contact.tangent_cross_sign();
+    assert!(stretch_sign.is_some_and(|sign| sign != hyperreal::RealSign::Zero));
+    // The nonlinear map (x + x²/8, y) pulls x = 0 back to x(8 + x) = 0,
+    // whose only root on the source domain is x = 0: one contact at the
+    // independently derived image point (0, -2), with the original map
+    // retained. Its image tangent (1 + x/4, 0) points along +X there, as
+    // the stretch's does, so both cross the line with the same sign.
     let curved = hypercurve::RationalMap2::new(
         [polynomial(&[&[], &[8], &[1]]), polynomial(&[&[0, 8]])],
         polynomial(&[&[8]]),
     );
     let image = source.rational_image(&curved).unwrap();
-    let error = image
+    assert_eq!(
+        image.polynomial_branch().unwrap().rational_maps(),
+        std::slice::from_ref(&curved)
+    );
+    let relation = image
         .intersect_curve(&line(0.into(), (-8).into(), 0.into(), 8.into()))
+        .unwrap();
+    assert!(relation.is_complete());
+    assert_eq!(relation.contacts().len(), 1);
+    let contact = &relation.contacts()[0];
+    assert!(
+        contact
+            .point()
+            .coincides_with(&CurvePoint2::from(Point2::from_values(0, -2)))
+            .unwrap()
+    );
+    assert!(
+        image
+            .point_at(&contact.first().parameter().unwrap())
+            .unwrap()
+            .coincides_with(contact.point())
+            .unwrap()
+    );
+    assert_eq!(contact.tangent_cross_sign(), stretch_sign);
+    // The line y = -2 contains the whole nonlinear image: the continuous
+    // section keeps its typed capability gap.
+    let error = image
+        .intersect_curve(&line((-8).into(), (-2).into(), 8.into(), (-2).into()))
         .unwrap_err();
     assert!(
         matches!(error, hypercurve::ExactCurveError::Blocked(blocker) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)

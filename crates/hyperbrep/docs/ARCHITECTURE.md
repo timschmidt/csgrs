@@ -193,6 +193,48 @@ Bezier-span decomposition and Hypercurve's affine root transport to retain
 authored knot parameters; exact comparison deduplicates shared seams.
 Partly constant preimages remain an explicit unsupported result.
 
+`Curve3::parameters_of` also accepts retained `GeometricPoint3` inputs through
+the same entry point. [`geometry/point_queries.rs`](../src/geometry/point_queries.rs)
+checks native-line incidence with all spatial support equations, then obtains
+the inverse as a retained affine functional. Planar sources use exact plane
+incidence and joint affine projection; affine images transport the retained
+query through the inverse transform. Native rational Bézier/NURBS inverses
+project the joint query into a varying control-coordinate plane, consume the
+planar owner's complete selected-field roots and validate all three original
+spatial coordinates at each candidate. Original knot maps and exact shared-seam
+identity remain authoritative. These paths preserve shared fields and
+original denominator guards. An unavailable complete inverse is an explicit
+unsupported result, never a false outside classification.
+
+Tensor-image inverse location projects the retained tensor definition and
+joint query into coordinate planes. Hypercurve owns complete rational-map
+preimages for native rational/spline spans and selected polynomial branches;
+BRep transports their original parameters and validates all three world
+coordinates. Constant projections carry no finite location information and
+must be combined with another complete projection. Entire-domain success needs
+three whole projection proofs. Original source/map denominator guards and
+selected branch ranks remain authoritative. The represented-coordinate census
+retains its existing fast path; a zero coordinate pullback is containment.
+
+Tensor image agreement also proves the unit-U chart law by reversing every
+control and weight row, then comparing the transported full UV source.
+Source reversal contributes its certified parameter map. This supports
+reflected affine model replay without changing tensor geometry or accepting
+endpoint coincidence as a whole-image proof.
+
+Boolean atomization keeps selected points and parameter recipes, and
+reconstruction retains selected edge domains in their source chart. Matching
+requires a complete image proof and exact transport of the active trim before
+composing edge-use correspondences. Flat non-native faces with selected trims
+or retained curve images without a complete plane projection keep their
+original surface chart and supporting curves. Scalar trim parameters do not
+authorize a new UV frame; selected points can still lack coordinate views.
+The same support plane alone does not prove the required UV transport.
+Cold native replay re-establishes these
+relations, including tensor sections on planes: the plane equation is pulled
+through the retained UV maps before exact branch divisibility, and the full
+projected image must agree. No serialized certificate substitutes for that proof.
+
 The [inverse-query qualification record](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-15-retained-inverse-parameters/manifest.json)
 records that increment's covered cases and limits. The selected spatial
 evaluation added subsequently is described below.

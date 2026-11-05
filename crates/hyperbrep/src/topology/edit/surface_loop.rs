@@ -3,7 +3,10 @@
 use crate::topology::*;
 
 /// Oriented chain pieces and their oriented end points.
-type OrientedSurfaceCurveChain = (Vec<SurfaceIntersectionCurve>, Vec<(Point3, Point3)>);
+type OrientedSurfaceCurveChain = (
+    Vec<SurfaceIntersectionCurve>,
+    Vec<(GeometricPoint3, GeometricPoint3)>,
+);
 
 impl ArenaModel {
     /// Splits a trimmed face along a closed chain of retained surface curves.
@@ -36,9 +39,10 @@ impl ArenaModel {
             if intersections.len() < 2 {
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
-            let equal = |a: &Point3, b: &Point3| -> Result<bool, TopologyEditError> {
-                Ok(exact_point_order(a, b)? == std::cmp::Ordering::Equal)
-            };
+            let equal =
+                |a: &GeometricPoint3, b: &GeometricPoint3| -> Result<bool, TopologyEditError> {
+                    Ok(a.coincides_with(b)?)
+                };
             let (oriented, ends) =
                 self.orient_surface_curve_chain(face_id, intersections, operand)?;
             if !equal(&ends[ends.len() - 1].1, &ends[0].0)? {
@@ -160,7 +164,7 @@ impl ArenaModel {
                 let vertex = VertexId::from_index(data.vertices.len())
                     .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
                 data.vertices.push(Vertex {
-                    point: start.clone().into(),
+                    point: start.clone(),
                 });
                 vertices.push(vertex);
             }
@@ -287,11 +291,12 @@ impl ArenaModel {
         intersections: &[SurfaceIntersectionCurve],
         operand: SurfaceIntersectionOperand,
     ) -> Result<OrientedSurfaceCurveChain, TopologyEditError> {
-        let equal = |a: &Point3, b: &Point3| -> Result<bool, TopologyEditError> {
-            Ok(exact_point_order(a, b)? == std::cmp::Ordering::Equal)
+        let equal = |a: &GeometricPoint3, b: &GeometricPoint3| -> Result<bool, TopologyEditError> {
+            Ok(a.coincides_with(b)?)
         };
         let mut oriented: Vec<SurfaceIntersectionCurve> = Vec::with_capacity(intersections.len());
-        let mut ends: Vec<(Point3, Point3)> = Vec::with_capacity(intersections.len());
+        let mut ends: Vec<(GeometricPoint3, GeometricPoint3)> =
+            Vec::with_capacity(intersections.len());
         for intersection in intersections {
             if self
                 .retained_surface_trace_on_boundary(face_id, intersection, operand)?
@@ -299,8 +304,7 @@ impl ArenaModel {
             {
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
-            let start = intersection.curve().start()?;
-            let end = intersection.curve().end()?;
+            let (start, end) = retained_curve_endpoints(intersection.curve())?;
             if equal(&start, &end)? {
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
@@ -310,8 +314,7 @@ impl ArenaModel {
                     match intersections.get(1) {
                         None => true,
                         Some(next) => {
-                            let (next_start, next_end) =
-                                (next.curve().start()?, next.curve().end()?);
+                            let (next_start, next_end) = retained_curve_endpoints(next.curve())?;
                             if equal(&end, &next_start)? || equal(&end, &next_end)? {
                                 true
                             } else if equal(&start, &next_start)? || equal(&start, &next_end)? {
@@ -371,7 +374,7 @@ impl ArenaModel {
             let (oriented, ends) =
                 self.orient_surface_curve_chain(face_id, intersections, operand)?;
             let (start, end) = (ends[0].0.clone(), ends[ends.len() - 1].1.clone());
-            if exact_point_order(&start, &end)? == std::cmp::Ordering::Equal {
+            if start.coincides_with(&end)? {
                 // A closed chain is a loop split, not an open chain.
                 return Err(TopologyEditError::DegenerateFaceSplit);
             }
@@ -399,13 +402,15 @@ impl ArenaModel {
                 face_id,
                 Endpoint::Start,
                 &start,
-                first.start_boundary_contacts(operand),
+                first,
+                operand,
             )?;
             let (staged, end_vertex, end_edge) = staged.attach_surface_curve_split_endpoint(
                 face_id,
                 Endpoint::End,
                 &end,
-                last.end_boundary_contacts(operand),
+                last,
+                operand,
             )?;
             let junctions = ends[..ends.len() - 1]
                 .iter()

@@ -164,7 +164,7 @@ impl ArenaModelBuilder {
     /// Whether every tensor face's outward normal points along `direction`.
     /// The certified graph's projection is injective, so its normal has one
     /// sign against `direction` across the patch; the patch centre decides it.
-    fn tensor_faces_face_along(
+    pub(in crate::topology) fn tensor_faces_face_along(
         &self,
         tensors: &[FaceId],
         surface: &Surface,

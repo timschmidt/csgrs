@@ -271,7 +271,7 @@ mod tests {
                                 assert_eq!(
                                     point3_equal(
                                         &point,
-                                        contact.spatial_point(),
+                                        contact.spatial_point().try_coordinates().unwrap(),
                                         crate::STRICT_PREDICATES
                                     )
                                     .value(),
@@ -282,7 +282,7 @@ mod tests {
                                         &point,
                                         &contact
                                             .curve()
-                                            .evaluate_real(contact.parameter())
+                                            .evaluate_real(contact.parameter().try_real().unwrap())
                                             .unwrap(),
                                         crate::STRICT_PREDICATES
                                     )

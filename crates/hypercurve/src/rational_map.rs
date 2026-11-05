@@ -177,6 +177,15 @@ impl RationalMap2 {
     /// not assert noninjectivity. Precision is inherited from strict scalar
     /// predicates; coefficient growth and total work have no additional bound.
     pub fn certify_injective_on(&self, domain: &Aabb2) -> ExactCurveResult<()> {
+        self.certify_injective_orientation_on(domain).map(|_| ())
+    }
+
+    /// [`Self::certify_injective_on`], also returning whether the map reverses
+    /// orientation on the rectangle. The certificate makes the normalized
+    /// Jacobian's determinant positive throughout, so the homogeneous
+    /// Jacobian's sign, a positive square multiple of the map's, is that of
+    /// its exact midpoint value.
+    pub fn certify_injective_orientation_on(&self, domain: &Aabb2) -> ExactCurveResult<bool> {
         self.bounds(domain)?;
         let axes = axes(domain);
         let center = axes.clone().map(|axis| {
@@ -212,7 +221,7 @@ impl RationalMap2 {
             }
         }
         let determinant = &midpoint[0][0] * &midpoint[1][1] - &midpoint[0][1] * &midpoint[1][0];
-        RealInterval {
+        let orientation = RealInterval {
             lower: determinant.clone(),
             upper: determinant.clone(),
         }
@@ -253,7 +262,7 @@ impl RationalMap2 {
                 return Err(blocked());
             }
         }
-        Ok(())
+        Ok(orientation == hyperreal::RealSign::Negative)
     }
 }
 

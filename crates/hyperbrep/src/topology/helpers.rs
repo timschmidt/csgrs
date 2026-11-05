@@ -1779,16 +1779,12 @@ pub(super) fn real_values_equal(left: &Real, right: &Real) -> Result<bool, Build
 }
 
 pub(super) fn insert_exact_split_parameter(
-    parameters: &mut Vec<Real>,
-    candidate: Real,
+    parameters: &mut Vec<Parameter>,
+    candidate: Parameter,
 ) -> Result<(), GeometryError> {
     let mut insertion = parameters.len();
     for (index, parameter) in parameters.iter().enumerate() {
-        match decided_model_order(compare_reals(
-            &candidate,
-            parameter,
-            crate::STRICT_PREDICATES,
-        ))? {
+        match candidate.compare(parameter)? {
             std::cmp::Ordering::Less => {
                 insertion = index;
                 break;
@@ -2773,4 +2769,24 @@ pub(super) fn insert_face_split_cut(
     }
     cuts.push(parameter);
     Ok(())
+}
+
+/// Prefer an already certified native endpoint, while retaining the exact
+/// curve image when no independent scalar point is available.
+pub(super) fn retained_curve_endpoints(
+    curve: &Curve3,
+) -> Result<(GeometricPoint3, GeometricPoint3), GeometryError> {
+    let endpoint = |native: Result<Point3, GeometryError>, parameter: &Parameter| match native {
+        Ok(point) => Ok(point.into()),
+        Err(
+            GeometryError::UnrepresentableParameter
+            | GeometryError::UnsupportedSelectedEvaluation
+            | GeometryError::UnsupportedPcurveContour,
+        ) => curve.point_at(parameter),
+        Err(error) => Err(error),
+    };
+    Ok((
+        endpoint(curve.start(), curve.domain().start())?,
+        endpoint(curve.end(), curve.domain().end())?,
+    ))
 }

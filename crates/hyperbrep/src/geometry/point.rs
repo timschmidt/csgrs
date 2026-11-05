@@ -1,5 +1,8 @@
 //! Retained spatial curve images and their exact query authority.
 
+#[path = "point_queries.rs"]
+mod queries;
+
 use std::cmp::Ordering;
 use std::sync::{Arc, OnceLock};
 
@@ -648,7 +651,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            curve.parameters_of(&Point3::origin()).unwrap()
+            curve.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("selected root");
         };
@@ -702,7 +705,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            native.parameters_of(&Point3::origin()).unwrap()
+            native.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("selected root");
         };
@@ -749,7 +752,7 @@ mod tests {
         )
         .unwrap();
         let crate::CurveParameterLocation::Parameters(parameters) =
-            curve.parameters_of(&Point3::origin()).unwrap()
+            curve.parameters_of(Point3::origin()).unwrap()
         else {
             panic!("expected a selected root");
         };

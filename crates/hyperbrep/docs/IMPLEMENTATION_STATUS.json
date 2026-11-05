@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-11-01",
+  "updated_on": "2026-11-04",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -4855,6 +4855,458 @@
       "validation": "New witness flat_tensor_faces_with_curved_parameterizations_measure_exactly: a non-uniformly parameterized flat square has area exactly 4, the same patch tilted into z = x exactly 4 sqrt(2), and bulging the bottom edge's middle control to (1/2, -3/2) exactly 13/3 (SymPy, Jacobian of one sign); a folded flat patch (x controls -1, 3, 1) stays UnsupportedMeasurement. Mutations removing the flat-tensor path, the sign certificate, the frame area element or the frame scale each fail the witness. On Rust stable: cargo fmt --check and strict Clippy for hyperbrep and hyperbrep-io pass; hyperbrep release all-feature tests report 812 passes and debug tests 804 passes, hyperbrep-io 127 passes, 0 failures.",
       "cost_evidence": "No performance claim.",
       "limits": "Curved (non-flat) tensor face area generally has no elementary closed form and stays typed; unequal-weight flat patches and Jacobians of undecided sign stay typed. General implicit trims, analytic-side faces, remaining higher-degree roots and nonlinear Hypercurve maps remain open. No work package or pre-push gate closes."
+    },
+    {
+      "id": "nonlinear-chart-closure-2026-11-04",
+      "work_packages": [
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P37"
+      ],
+      "decision": "kept for scoped correctness; broader campaign qualification and general closure remain open",
+      "change": "Consume nonlinear rational polynomial-branch images by exact line pullback through retained finite map chains and final similarities. Preserve isolated pullback contacts, compare duplicate parameters exactly, and propagate solver exhaustion. Shared image incidence and loop orientation require injectivity on one common source enclosure, rather than independent per-domain certificates. Different affine charts validate resultant candidates on both original branches. Proven injective construction paths supply singleton inverse locations; noninjective paths cannot imply complete preimage enumeration. HyperBRep carries certified source endpoint coordinates through the existing Hypercurve map evaluator, avoiding a second rational-map implementation. When a located source abscissa depends on a selected ordinate, reuse the existing joint selected-query field and known-fiber rank/census verifier instead of requiring a univariate pullback. Source-chart recovery rebuilds endpoint fibers from authoritative parameters and original branch/event incidence, rather than stripping wrappers from arrangement-certified world endpoints. The endpoint-definition counterexample was reproduced before this correction.",
+      "source": [
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_curve_pair.rs",
+        "../../hypercurve/src/rational_map.rs",
+        "../../hypercurve/src/curve_region_boolean.rs",
+        "../src/geometry/planar_image.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../../hypercurve/tests/polynomial_closure_composition.rs",
+        "../../hypercurve/tests/polynomial_boundary_components.rs",
+        "../tests/tensor_graph_solids.rs",
+        "../../hypercurve/tests/polynomial_point_locations.rs"
+      ],
+      "validation": "After the final source correction: 66 affected curve integration tests, 33 BRep integration tests, 127 IO tests including doctests, and one source-chart unit regression pass (227 total). The tensor suite has 17 passes and one ignored full recut target; that target was explicitly executed on final source and fails Unsupported. The nonlinear cap replays and classifies in a fresh process. Strict all-target/all-feature Clippy for hypercurve/hyperbrep/hyperbrep-io, warning-denied rustdoc, WASM library compilation, repository formatting and diff checks pass. Counterexamples for isolated contacts, joint injectivity, selected-ordinate abscissas and foreign endpoint definitions are reproduced and repaired. A translated disjoint pair retains both original inputs and now requires independently justified complete emptiness. Initial broad release runtime tests pass; four IO doctests hit E0460 during concurrent shared-artifact rebuilds and then pass in a serial release retry. The exploratory all-feature curve library/polynomial and earlier broad qualification processes remain live (sessions 81222 and 3468); their archived snapshots are not completed or final-source qualification.",
+      "cost_evidence": "No performance or total-resource-bound claim. Source endpoint recovery may re-isolate original source fibers, retaining the original parameter and branch/event selection instead of inferring an inverse from unrelated endpoint definitions. Source topology and map graphs remain shared. The eight selected-chord tests complete in 394.16s in a debug run concurrent with other campaigns; this is not a matched benchmark or a published completion envelope. Full arithmetic/heap/cancellation and performance qualification remain open.",
+      "limits": "Nonlinear cap measurement and transverse recut arrangements remain open. The complete-preimage regression permits an explicit implementation blocker but never incomplete success; it does not establish complete preimage support. General distinct nonlinear chart incidence, continuous pullback components, broad offsets/corner edits, arbitrary algebraic closure, full operation resource accounting/cancellation, actual WASM execution, package delivery and complete pre-push checks remain open. The full transverse fixture is retained as an ignored, explicitly failing target; it is not a conformance success.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "00884d6b15c118fd05dffbaf029e49e8a9c278b2",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-nonlinear-chart-closure",
+        "sha256": "7561a34e81f05b0818c68f1518dda22e6c304828a77de386db25f2479ae1d01f",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-coefficient-map-incidence-2026-11-04",
+      "work_packages": [
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for scoped correctness and successor replay; general closure and broad conversion qualification remain open",
+      "change": "Hypersolve evaluates a bivariate Sylvester resultant over the caller-owned exact ordered coefficient field using Faddeev-LeVerrier arithmetic, without primitive-element projection, field pivots or projective coefficient normalization. Hypercurve pulls selected chord line equations through nonlinear retained map chains, discovers candidate source abscissas in the original selected field, and validates the original branch, range, world line and denominator guards. Tangent signs use the original implicit derivatives when certified; unavailable signs remain unclassified. Supporting-line intersection points preserve their four endpoint definitions and can reuse jointly selected field coordinates for exact signs, rational queries and native-line parameters. Only immutable successful field values and structural hints are cached; policy/source and ambient exhaustion guards remain active. No native archive grammar change is introduced. Existing successful recursive signs, rational field queries and affine parameters take priority over the new fallback; in particular their affine support identity remains available. A retained rational-Bezier image witness reproduces the early-dispatch loss and verifies the corrected source receipt, independently of the selected-polynomial-fiber recipe.",
+      "source": [
+        "../../hypersolve/src/ordered_field_resultant.rs",
+        "../../hypercurve/src/polynomial_curve_mapped_chord.rs",
+        "../../hypercurve/src/polynomial_curve_chord.rs",
+        "../../hypercurve/src/bezier_offset/algebraic_chord/selected_points.rs",
+        "../../hypercurve/src/bezier_offset/rational_form.rs",
+        "../../hypercurve/src/bezier_offset/polynomial_field.rs",
+        "../../hypercurve/src/bezier_offset/affine_form.rs",
+        "../../hypercurve/src/bezier_offset.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../../hypersolve/tests/ordered_field_resultants.rs",
+        "../../hypercurve/tests/polynomial_closure_composition.rs",
+        "../../hypercurve/tests/selected_point_definitions.rs",
+        "../tests/selected_query_archive.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "validation": "Final fixed source: 46 solver integration tests, 85 polynomial integration tests, 87 selected-curve integration tests, 21 algebraic-chord library tests, five rational-map library tests, two known-fiber library tests, 102 BRep integration tests and 127 IO tests including doctests pass (475 total). Two pre-existing targets remain ignored. The full transverse recut was explicitly executed on final source and fails Geometry(UnsupportedPcurveContour) while constructing its face-pair graph; it is not a conformance success. Native selected-line replay runs in a fresh process and performs a subsequent native intersection, split and reload. The early affine-dispatch preservation regression has an isolated failing override and repaired receipts; an initial probe conflated mathematical quadratic degree with recursive storage support, and its adverse logs are retained with the corrected interpretation. Strict all-target/all-feature Clippy for hypersolve/hypercurve/hyperbrep/hyperbrep-io, warning-denied rustdoc, production-feature WASM library compilation, repository formatting, budget and diff checks pass. All 808 affected source/test fingerprints remain fixed during final qualification, and all 27 changed/new Rust files reconstruct byte-for-byte from the source base and archived patch. A mistyped library filter ran zero tests and is not credited; its corrected known_fiber filter passes two. The extra all-feature WASM probe fails in Curvo/rand/getrandom 0.4.2 without a wasm_js backend; this optional comparative-benchmark configuration is not qualified. An initial correction used nonexistent BRep feature names and failed Cargo feature selection, with the adverse log retained. Broad exploratory/current conversion campaigns remain live at the evidence snapshot; their partial logs are not completed qualification.",
+      "cost_evidence": "No speed or whole-operation resource-bound claim. The local resultant defaults allow 1,000,000 coefficient-context calls and 262,144 entries per square matrix, with checked storage dimensions/fallible reservations. Coefficient arithmetic, expression growth, total work, total/peak heap and cancellation remain outside those units. The supporting-line point adds a memoized structural selected-field hint and optional boxed successful field coordinates; failed construction/joins are not cached. Root/projection work continues to share existing instrumented Hypersolve counters; this does not bound all elimination work. Final debug polynomial-focused command takes 841.422s and the chord library filter 446.677s while other campaigns run; these include compilation/scheduling and are smoke observations, not matched comparisons or a general completion envelope.",
+      "limits": "Continuous/common pullbacks still return Unsupported; the new component fixture checks absence of false empty success, not completed overlap support. The full nonlinear solid recut, cap measurement, generic distinct nonlinear-chart pairs, complete preimages, arbitrary algebraic curve/surface closure, broad offsets/blends/chamfers, whole-operation resources/cancellation, actual WASM execution, package delivery and full pre-push validation remain open. BRep retained clipping intervals and boundary-contact records still require Real views and need a coherent selected-parameter/point extension. No whole-solid recognizer or coordinate materialization fallback was added. The optional comparative-benchmarks feature is not qualified on WASM: its existing Curvo/rand/getrandom dependency requires a configured wasm_js backend. The production-feature WASM build passes; actual execution is untested.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "8696b583266002cfa276cb2b6f597cca821835cd",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-coefficient-incidence",
+        "sha256": "9f560b00b5388168a6920f19d1b3b56a84137e6977777a7a9c9186d02fa133e9",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-trim-carriers-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for scoped correctness, selected consumption and replay; full solid recut and general closure remain open",
+      "change": "Keep face-clipping and trace-arrangement bounds as Parameter, and boundary contacts as original curve/parameter identities with joint UV and GeometricPoint3 images. Native line clipping and proved native endpoint views retain priority. A plane-pair whose native segment carrier cannot hold selected trims falls back to the same common affine line in both exact plane charts and Hypercurve region trimming. Affine boundary inverses, edge correspondence, attachment, source subdivision and chain matching retain selected evidence rather than requiring Real views. Selected endpoints no longer prohibit interior trace crossings on retained planar/tensor carriers; represented intervals preserve existing rebasing. Foreign selected points on nonlinear polynomial images use coordinate-level pullbacks through the existing caller-field resultant, checking the original branch, range and both world coordinates, with horizontal fallback for a continuous vertical level. Plane/tensor polynomial sections now retain rational plane pcurves even when that plane projection folds off the selected zero set: a separately certified injective tensor remains spatial authority and the pullback equation proves whole-curve plane agreement, without asserting injectivity of the ambient plane map.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../src/geometry.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/topology/helpers.rs",
+        "../src/topology/edit/partition.rs",
+        "../src/topology/edit/attachment.rs",
+        "../src/topology/edit/edge.rs",
+        "../src/topology/edit/surface.rs",
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_curve_mapped_chord.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../tests/tensor_graph_solids.rs",
+        "../src/topology/edit/edge.rs",
+        "../../hypercurve/tests/polynomial_point_locations.rs",
+        "../src/boolean_kernel/seam_tests.rs"
+      ],
+      "validation": "Final fixed source: 84 Hypercurve integration tests, all 348 BRep library tests, 109 BRep integration tests and 127 IO tests including doctests pass (668 total); one original full recut target remains ignored in the ordinary suite. That target was explicitly executed on final source: unsupported/unresolved/NotAvailable trim assertions pass, but the Boolean fails Topology(Geometry(UnrepresentableParameter)). It is not a conformance success. The selected contact splits both incident edge uses and replays their validated model. The independent foreign quintic point locates in its original chart, reverses, excludes a restricted range and handles a continuous vertical level through horizontal fallback. Two cap-line intervals satisfy the independently derived quartic/sign/outer-boundary conditions, both plane images, further plane incidence, source subdivision and fresh-process native curve replay. The folding-projection tensor section checks both pcurves, its selected height equation, native replay and further plane incidence. The initial cap-slice expectation of one central interval was mathematically incorrect; its adverse log and the corrected hole interpretation are preserved. Strict all-target/all-feature Clippy for hypercurve/hyperbrep/hyperbrep-io, warning-denied rustdoc, production-feature WASM compilation, repository formatting, budget and diff/linked-ledger checks pass. The driver verifies all 808 affected source/test fingerprints around each command. All 42 changed/new Rust files reconstruct byte-for-byte from the recorded source base and patch. Legacy session 81222 completed 2038 older/mixed-source tests with seven ignored and status 0; 77504 failed at optional comparative-feature WASM dependency setup, and 20423 failed Clippy while compiling a transitional type migration. Those campaigns are not current-source qualification; their final receipts remain archived.",
+      "cost_evidence": "No performance improvement or whole-operation resource-bound claim. Parameters and point images retain shared curve, root, field and surface definitions. Optional native views preserve existing fast behavior where proved. The ambient-folding path keeps a compact tensor spatial definition plus a source-preserving rational plane map, without fitting, forced implicitization or independent coordinate materialization. Exact parameter vectors now retain interior crossings previously rejected; their total work, expression/coefficient growth, retained/peak heap and cancellation cost are not bounded or measured as a completed envelope. Existing resultant attempt limits and shared instrumented refinement/promotion counters remain partial resource accounting. Full recut timings compare incomplete stages and cannot establish a completed-workload performance claim.",
+      "limits": "The original full recut and broad all-operation closure remain open. The prior scalar-only closed-chain endpoint failure has a source trace and is repaired by retained geometric endpoints, but another scalar-only topology path remains and needs a fresh trace on final source. Selected subdivision is available for the retained planar/tensor/affine spatial carriers admitted by restrict_source; other families still have explicit blockers. General preimage enumeration for multiply visited images, continuous pullbacks, broad offsets/blends/chamfers, arbitrary algebraic surface closure, whole-operation resource/cancellation accounting, actual WASM execution and shipped/pre-push gates remain open. The inherited comparative-benchmarks WASM dependency configuration remains unqualified; no manifest or dependency policy was weakened.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "453d9acd46224146ed50f1ab468d0372308612c2",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-trim-carriers",
+        "sha256": "923243a258d49996363d30810abf57382e703ebfaf2c28946bd81da65de28715",
+        "published": false
+      }
+    },
+    {
+      "id": "retained-boundary-bridges-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for exact boundary-bridge partition and cold replay; complete solid recut and general operation closure remain open",
+      "change": "Generalize retained-contact attachment from the outer wire to all face boundary wires, preserving wire ownership, original canonical parameters and pcurve split witnesses. Bridge-cycle partitioning consumes retained GeometricPoint3 endpoints instead of mandatory native coordinates. Hypercurve sections of mapped polynomial branches reuse parameter-preserving rational line certificates; unmapped rational incidence keeps its existing component and tangent recipes. Extract the native line affine-form proof as an optional shared lookup so rational evaluation can retain the joint selected point without an evaluator fallback cycle. Shell orientation reuses the admitted tensor graph certificate with an explicit tensor-normal direction check, including the single uncapped tensor case, to prove positive orientation without a volume integral or scalar vertex fan.",
+      "source": [
+        "../src/topology/edit/attachment.rs",
+        "../src/topology/edit/partition.rs",
+        "../src/topology/edit/face.rs",
+        "../src/topology/validation/prism_topology.rs",
+        "../src/topology/validation/tensor_graph.rs",
+        "../../hypercurve/src/polynomial_curve_section.rs",
+        "../../hypercurve/src/curve_evaluation.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../tests/tensor_graph_solids.rs",
+        "../tests/tensor_face_splits.rs",
+        "../../hypercurve/tests/polynomial_generated_lines.rs",
+        "../../hypercurve/tests/polynomial_rational_sections.rs"
+      ],
+      "validation": "Final fixed source: 129 Hypercurve integration tests, eight selected-evaluation unit tests and one polynomial source-chart unit test; all 348 BRep library tests; 109 affected BRep integration tests; and all 127 IO tests including doctests pass (722 total). The cap-line acceptance now partitions the actual holed cap, checks independently derived material-side and hole membership, opposite bridge-edge ownership, both source lifts, quartic selected endpoints, later plane incidence/subdivision, and fresh-process validated partition replay. Existing ring bridges and transformed tensor sections pass. Both orders, reversal, selected splitting and later contacts consume a nonlinear polynomial image with a parameter-preserving rational line. Nonlinear collinear rational spans keep their original correspondences. Candidate regressions changed a legacy tangent receipt and introduced a line/rational evaluator fallback cycle; preceding incidence/evaluation-code controls pass, and the corrected final source passes the unchanged rational-overlap policy and degree-37 section corpus. The original full recut is explicitly executed and still fails Topology(Geometry(UnsupportedSelectedEvaluation)); its ordinary ignored status is retained and is not a conformance pass. Strict all-target/all-feature Clippy for hypercurve/hyperbrep/hyperbrep-io, warning-denied rustdoc, production-feature WASM compilation and repository formatting pass. All 808 affected Rust source/test fingerprints remain unchanged around every final command; the archived patch reconstructs all 47 changed/new affected Rust files byte-for-byte from the recorded base. Raw commands, statuses, timings, traces, prior-code controls and superseded failed campaigns remain in the evidence archive. Post-record JSON, new ledger links, evidence index, repository budget and diff checks pass.",
+      "cost_evidence": "No speedup or whole-operation resource-bound claim. Selected contacts reuse shared canonical supports and joint point fields; line incidence and evaluation share existing proof authorities. The cold graph orientation proof does not require evaluating a volume integral. The additional graph-certificate and normal checks have not been qualified as a cost improvement. Final logs preserve observed completed-scope timings separately from the still-incomplete full recut; none supplies a uniform precision, work, coefficient-growth, heap-memory or cancellation bound.",
+      "limits": "The original transverse recut remains an executed failure, not a conformance success. Fresh traces locate selected endpoint attachment with empty boundary-contact records in locate_surface_curve_split_endpoint while selecting the second operand. Preserve the two exact material intervals, hole semantics, complete partition/cold-replay regression and all hard original fixtures. Next retain trace-crossing incidence or consume the operand pcurve's selected UV through the existing canonical edge correspondence; unavailable spatial coordinates must not become a false outside classification. General preimage enumeration, continuous pullbacks, distinct nonlinear charts, arbitrary algebraic surface closure, offsets, blends/chamfers, total-resource/cancellation accounting, actual WASM execution and release/pre-push gates remain open. All 28 work packages remain open or in progress. No push.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "3e1d4e91cb23db2a4e3844cbdf565a64c7561cea",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-retained-boundary-bridges",
+        "sha256": "82e865a4adb6f47e95ee51ab7e6eb5bf249c4e17a1f8db46391e2937f4bce3b9",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-endpoint-chains-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for exact selected endpoint attachment, open-chain face partition and checked native replay; solid reconstruction and general operation closure remain open",
+      "change": "Recover absent boundary-contact evidence through the original operand pcurve: validate its spatial lift on the target surface, enumerate complete boundary preimages in Hypercurve and transport them through the admitted canonical edge correspondence. Native line inverse queries retain joint selected point fields, check the support equation and active domain, and preserve typed uncertainty. Reuse complete original pcurve-pair contacts to group unbranched open chains with strictly interior junctions after support-line partitioning; existing boundary junctions delimit separate edits, interior-crossing traces are not deferred as uncrossed chains, and endpoint incidences with another trace interior prevent joining across the new boundary; retain geometric junctions and share one atomic chain receipt. Hypercurve exposes the point-order reversal map and a sufficient support/chart proof; BRep composes reversal through materialization and edge-use correspondence. Equal world images in different UV frames do not authorize identity point-order parameter transport. Archive 17 adds checked PointOnChord definitions with typed backward references and logical dependency-depth admission. The documented 16-to-17 migration changes only the three cone fixture version discriminators.",
+      "source": [
+        "../src/topology/edit/attachment.rs",
+        "../src/topology/edit/partition.rs",
+        "../src/topology/edit/surface_loop.rs",
+        "../src/topology/edit/results.rs",
+        "../src/topology/correspondence.rs",
+        "../src/geometry.rs",
+        "../src/geometry/planar_image.rs",
+        "../src/persistence/selection.rs",
+        "../src/persistence/admission/shapes/dependency_depth.rs",
+        "../../hypercurve/src/curve_line_location.rs",
+        "../../hypercurve/src/bezier_split.rs",
+        "../../hypercurve/src/bezier_offset/algebraic_chord.rs",
+        "../../hypercurve/src/curve.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../src/geometry.rs",
+        "../../hypercurve/tests/line_constant_coordinates.rs",
+        "../tests/archive_structure.rs",
+        "../tests/archive_limits.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "cost_evidence": "No speedup or whole-operation resource-bound claim. The selected inverse uses the existing affine-form field authority; open-chain adjacency reuses proved original pcurve contacts, and member receipts share one Arc rather than duplicate the complete chain result. These structural choices are not measured performance guarantees. Native admission accounts for selected-point records and logical dependency depth, not total solver work, coefficient growth, heap, stack or cancellation. Completed-scope timings and failed full-target timings stay distinct.",
+      "limits": "The original nonlinear transverse recut remains an executed failure, not a conformance pass. It advances through face partition and selection, then selected_edge_endpoints requests stored coordinates during Boolean stitching and returns Geometry(UnrepresentablePoint). Preserve the original hard fixture and its independent cap interval/quartic/winding/replay checks. Next retain GeometricPoint3 and Parameter in atomic endpoint census, exact preimage/atomization and edge transfer; preserve canonical source relations, all preimages, domain/chart correspondences and complete whole-image proofs. Subsequent copy_or_match_selected_edge and remapped_edge also require scalar domains and must not be bypassed. General spatial inverses, branch/ambiguous chain selection, unrelated nonlinear charts, arbitrary algebraic surface closure, offsets, blends/chamfers, total-resource/cancellation guarantees, runtime fuzz/sanitizer/coverage, actual WASM execution and release/pre-push gates remain open. All 28 work packages remain open or in progress. No push.",
+      "validation": "Final scope: 132 Hypercurve integration tests, 8 selected-evaluation unit tests and 1 polynomial source-chart unit test pass on 480 unchanged Hypercurve/Hypersolve source/test fingerprints. All 820 BRep tests including doctests, and all 127 downstream IO tests including doctests, pass on the final fixed source (1088 successful tests total; 1 ordinary ignored target(s), reported separately from completion). Strict all-target/all-feature Clippy for hypercurve/hyperbrep/hyperbrep-io, warning-denied rustdoc, production-feature WASM compilation, all three native BRep fuzz-consumer bin checks and repository formatting pass. The selected endpoint acceptance verifies independent quintic definitions, original/reversed/reordered charts, two-sided material ownership, shared edge uses and atomic receipts, wrong target/UV frame failures, invalid selected references/off-support selectors, small admission budgets with retry, cold/fresh-process replay and another edge split. Boundary-junction and prior-cut-junction regressions preserve three/four separately witnessed material descendants and native replay; the corresponding prior scheduling controls pass. The unchanged original nonlinear_tensor_caps_support_transverse_recuts is explicitly executed on final source and still fails graph: Geometry(UnrepresentablePoint), after partition and selection; this is not a conformance pass. All 816 final Rust-source/test/JSON-fixture fingerprints remain unchanged around every final3 command. Earlier broader campaigns are retained as superseded; final2 also lost a pending executable during concurrent rebuilding and did not execute that test. The lower-layer curve scope remains byte-identical and its raw broader source_unchanged=false is preserved, not relabeled. The archived patch reconstructs all 66 changed/new affected source/test/fixture files from the recorded base, including untracked files. Cone fixture payload hashes prove only the version discriminator changes. Commands, statuses, timings, backtraces, failed candidates, scheduling controls and source checks remain in the local unpublished evidence archive. Post-record JSON/link/index/budget/diff checks pass.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "849886ac0638b8cb8df08f80c580dde61c521577",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-endpoint-chains",
+        "sha256": "ba19fb40594be5cea73c1ce7aa9936e447812f4871ff3bc741be01cb8cce7799",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-stitching-replay-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for exact selected-point atomization, boundary reconstruction and native replay of the original nonlinear transverse recut; general operation and resource closure remain open",
+      "change": "Retain GeometricPoint3, Parameter and ParameterRange through Boolean endpoint census, exact atomization, shared vertices and edge reconstruction. Merge exact point incidence recipes with typed error propagation. Unify authored and retained Curve3 inverse queries; selected native-line inverses check all spatial support equations and finite domains, planar images retain joint affine projections, and affine images transport the original point through the inverse transform. Selected edge transfers preserve their original support and chart. Whole-image affine parameter proofs and exact active-domain endpoint transport authorize cross-operand edge matching; compose that proof through edge-use correspondences and share immutable source storage by allocation identity only as an optimization. Discard irrelevant noncoplanar native-line supports only after exact retained-point plane exclusion. Cold native replay compares complete native-line world coefficient laws across intersecting plane frames. Tensor-on-plane validation pulls the plane equation through the original selected polynomial branch and rational maps, proves exact divisibility, and compares the complete projected image and chart. Hypercurve supplies the mapped polynomial relation proof and a sufficient single-branch injectivity proof when a nonconstant affine image coordinate identifies the graph abscissa; mapped self-incidence reuses that proof. Original denominator guards remain authoritative. Enable the original nonlinear transverse recut in the ordinary suite and extend it with independent material/boundary expectations, exact near-roof distinctions, cold/fresh-process replay, a further Boolean cut, independent rectangular-prism equality, replay and empty-result recovery. Native format remains 17. Flat non-native faces with selected trims retain their original surface chart and supporting curves; a canonical support plane does not authorize reusing the old UV pcurves. A degree-elevated affine tensor regression reproduces the wrong-image transfer and verifies complete tensor-definition retention, cold replay and another selected split. Global reconstruction keeps these source charts together rather than mixing canonicalized neighboring edge definitions.",
+      "source": [
+        "../src/boolean_kernel.rs",
+        "../src/geometry.rs",
+        "../src/geometry/point_queries.rs",
+        "../src/geometry/planar_image.rs",
+        "../src/geometry/affine_image.rs",
+        "../src/topology/correspondence.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/topology/validation/image.rs",
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/curve_support.rs",
+        "../../hypercurve/src/curve_support_intersection.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#booleans",
+      "regressions": [
+        "../tests/tensor_graph_solids.rs",
+        "../tests/retained_parameters.rs",
+        "../src/geometry/point_queries.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/boolean_kernel.rs",
+        "../../hypercurve/tests/polynomial_curve_pairs.rs"
+      ],
+      "cost_evidence": "No speedup, uniform practical completion bound or total-resource claim. Completed fixture runtimes are observations under the recorded default policies, distinct from failed attempts. Tensor-to-plane proof reuses the retained polynomial maps and exact divisibility; native lines compare coefficient laws rather than sampled endpoints. Reconstructed selected trims keep the original support and immutable source allocation, avoiding mandatory endpoint/coefficient materialization. General work accounting, coefficient growth, retained/temporary heap and cancellation remain open; no new total bound is inferred from existing solver counters. Existing injectivity certificates run before the new coordinate-composition fallback, retaining their prior fast paths; this ordering alone is not a measured speedup.",
+      "limits": "This exact recut/replay/further-operation chain closes no whole work package. Selected inverse queries outside the completed native-line/planar/affine paths can still return UnsupportedParameterLocation; shared source metadata is sufficient only when its complete parameter relation is proved. Actually coplanar native-line support collectors with unavailable selected coordinates, general solid reconstruction, independent TensorImage/rational/NURBS selected preimages, continuous pullbacks, distinct nonlinear charts and broader implicit geometry remain implementation gaps. Single-branch coordinate injectivity is not a common invertible plane chart. General offsets, shelling, blends/chamfers, arbitrary algebraic all-operation closure, total work/heap/cancellation accounting, runtime fuzz/sanitizer/coverage, actual WASM execution and release/pre-push gates remain open. All 28 work packages remain open or in progress. No push.",
+      "validation": "Final fixed-source campaign passes 134 affected Hypercurve integration tests, 8 selected-evaluation units, 1 polynomial source-chart unit and 46 support/self-incidence units; all 828 HyperBRep tests and doctests; and all 127 downstream IO tests and doctests. 1144 successful harness-reported tests total; 0 ordinary ignored cases, reported separately. The original nonlinear_tensor_caps_support_transverse_recuts is enabled in the ordinary suite and passes from original construction through independent material/boundary expectations, exact near-roof distinctions, cold and fresh-process replay, a further Boolean cut, equality to an independently specified rectangular prism, replay and canonical empty recovery. New regressions independently check whole world-function/chart laws and reject wrong interior images despite matching endpoints, wrong planes, wrong parameter laws and falsely empty retracing-map self-incidence. Strict all-target/all-feature Clippy for hypercurve/hyperbrep/hyperbrep-io, formatting, warning-denied rustdoc, production WASM compilation and all three native BRep fuzz-consumer bin checks pass. All 1173 source/manifest/fixture fingerprints remain unchanged around each of the 7 final BRep/downstream commands. The four lower-layer curve commands pass against 787 unchanged Hypercurve/Hypersolve source/manifest/fixture fingerprints, independently of the later BRep-only chart-retention fix. The earlier BRep campaign is explicitly interrupted after source changes; its status -2/source_unchanged=false is not counted as a full-suite pass. The archived patch reconstructs all 91 changed/new affected source/caller/fixture files from the recorded base, including untracked files and bench callers. The degree-elevated affine tensor face keeps its complete original tensor definition through transfer, cold replay and another selected split. A separately rerun full graph-stitching probe on that same valid cube still reports Geometry(UnsupportedParameterLocation) during atomization; its original operation and geometry remain archived alongside the minimized chart regression, and it is not counted as exact completion. Raw earlier failures, superseded probes, exact captured model, commands, statuses and measured timings remain archived separately. No full Hypercurve library, runtime fuzz/sanitizer/coverage, WASM execution, release or full pre-push qualification is inferred. Post-record JSON/link/index/source/budget/diff checks pass.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "89755f99e8a4b2ba1449d7aa51cc9df29496553d",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-stitching-replay",
+        "sha256": "0e329baef68286d9b1074ecf8c0e699ed6b1516b2aeba48c44cb07e82c04cc8e",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-rational-preimages-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for complete finite native rational/spline preimages of admitted selected queries and source-chart preservation; general operation closure remains open",
+      "change": "Hypercurve native rational spans retain the query's joint selected coefficient field while isolating roots of an original homogeneous coordinate equation. Validate every candidate against the other original coordinate, original denominator and exact active domain. Preserve selected trim endpoint identity, all distinct visits, authored NURBS knot maps and exact seam deduplication. Entire constant spans require a nonzero-denominator proof; mixed continuous/discrete and punctured constant preimages remain explicit gaps. HyperBRep native rational Bezier/NURBS inverses accept GeometricPoint3 without coordinate materialization and validate all three original spatial coordinates at the same candidate parameter. Preserve authored-point fast paths. Recovered roots use existing selected-root native definitions; archive remains version 17. Consume the inverse result in a tensor-edge split, cold and fresh-process replay, inverse location after reload and another split. The original degree-elevated affine tensor cube with quintic selected native spline trims now completes full graph stitching, cold replay, a further half-space cut and exact comparison to an independently specified half cube. Strengthen non-native flat-face chart retention beyond selected parameter domains: scalar domains can still carry selected points and non-projectable retained spatial images. Reproduce a valid quintic lens whose transfer previously changed its exact world image and failed cold replay, then preserve its full tensor definition through reconstruction, replay and a further split.",
+      "source": [
+        "../../hypercurve/src/curve_rational_location.rs",
+        "../../hypercurve/src/curve_intersection.rs",
+        "../src/geometry.rs",
+        "../src/geometry/location.rs",
+        "../src/boolean_kernel.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "regressions": [
+        "../../hypercurve/tests/selected_rational_locations.rs",
+        "../tests/retained_parameters.rs",
+        "../tests/tensor_face_splits.rs",
+        "../src/boolean_kernel.rs"
+      ],
+      "cost_evidence": "No speedup, uniform completion bound or total-resource claim. Reuse the selected coefficient field and original rational span instead of materializing independent coordinates or constructing a global eliminant. Timings are observations of completed debug fixtures; compilation and failed probes are separate. Existing selected-field refinement/work counters are not bounds on coefficient growth, total expression size, temporary/retained memory or cancellation. All-source validation fingerprints and an exact reconstructed source patch support the scoped claims.",
+      "limits": "No whole work package is complete. General selected TensorImage inverses, selected angular/rotation queries, mixed interval/discrete preimage results, punctured constant rational spans, arbitrary algebraic coefficient carriers, distinct nonlinear charts and general reconstruction remain open. Actually coplanar selected-line support collectors can still require unavailable coordinate views. General solid offsets, shelling, blends/chamfers, arbitrary algebraic all-operation closure, total work/heap/cancellation accounting, runtime fuzz/sanitizer/coverage, WASM execution and release/pre-push gates remain open. All 28 work packages remain open or in progress. No push. A separate public-API probe on the final BRep library reproduces UnsupportedParameterLocation for an independently selected point on a generated regular paraboloid TensorImage section; its native rational positive control returns exactly one matching selected preimage. This blocker is not completed geometry.",
+      "validation": "Final serial fixed-source campaign passes 140 affected Hypercurve integration tests, 8 evaluation units, 47 incidence units, 1 source-chart unit and 46 support units; all 831 BRep tests/doctests and 127 downstream IO tests/doctests. The incidence/support filters overlap: 1200 successful harness reports represent 1162 distinct tests, with 38 repeated unit reports and 0 ordinary ignored cases. Strict all-target/all-feature Clippy, formatting, warning-denied docs, production WASM compilation and all three native fuzz-consumer bin checks pass. All 1175 source/manifest/fixture fingerprints remain unchanged around all 12 commands. The original nonlinear transverse recut remains enabled and passes its full continuation chain. New rational inverse cases cover independent selected queries, rational targets, selected trims, exact nearby distinctions, all visits, constant coordinates, original poles, knots/seams, native point definition replay and budget/policy retry. Spatial negative controls reject matching XY but unequal Z. Recovered selected roots split a tensor edge, survive cold/fresh-process replay and support inverse location plus another split. The original elevated-tensor cube now completes full graph stitching, replay, a further cut and independent half-cube set equality in both directed differences. A separately cold-valid lens with scalar parameter domains reproduces the wrong UV frame/world image; source-chart preservation restores cold replay and another split. Raw failed/unsupported probes and candidate compilation mistakes remain archived separately from completed final checks. The archived patch reconstructs 94 changed/new affected files, including untracked sources, fixtures and bench callers; eight source/test files differ from the preceding qualified increment. No full Hypercurve library, runtime fuzz/sanitizer/coverage, WASM execution, release or pre-push qualification is inferred. Post-record JSON/link/index/source/budget/diff checks pass.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "6b94ce6870fa0af85f497694dce8384ce3bed4fc",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-rational-preimages",
+        "sha256": "ded6f164fa07d1826343616410b3c0854d2e2465e8a036db25afa4f1740f7fa4",
+        "published": false
+      }
+    },
+    {
+      "id": "selected-tensor-preimages-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for selected TensorImage finite preimages, complete rational-map visits, original guards and reflected whole-image replay; universal operation closure remains open",
+      "change": "Add Curve2::rational_image_point_locations as a query over the retained source and map, without publishing a fitted or replacement image curve. Native rational/spline/circular spans use exact homogeneous substitution and the existing selected coefficient-field root solver; selected polynomial branches pull coordinate equations through original maps and replay resultant candidates on the original selected fiber, active domain and both coordinates. Ordinary mapped-branch point location now reports every finite visit; private unique-location consumers preserve their explicit multiple-visit blocker. Zero tangent derivatives can prove a whole constant image only with nonzero-denominator coverage. Preserve source and map poles after cancellation; reject a globally zero denominator as invalid. Equal authored spline parameters merge only after source UV equality; discontinuous chart germs remain distinct even when their mapped image agrees. TensorImage inverses project the joint query, transport source parameters and check all three spatial coordinates. Constant projections try another pair; an entire spatial domain needs three complete projection proofs. Preserve represented-coordinate fast paths, treating an identically zero coordinate pullback as containment. Exact reflected tensor controls/weights plus UV source reflection and certified reversal transport re-establish the whole world function on cold replay. Wrong parameter laws and changed interiors remain rejected even when endpoints agree. The original paraboloid section consumes an independent quintic query, splits both incident face uses, replays cold and in a fresh process, splits again and survives reflected nonuniform affine replay. Native archive remains version 17.",
+      "source": [
+        "../../hypercurve/src/curve_rational_map_location.rs",
+        "../../hypercurve/src/curve_rational_location.rs",
+        "../../hypercurve/src/curve_intersection.rs",
+        "../../hypercurve/src/polynomial_curve.rs",
+        "../../hypercurve/src/polynomial_curve_mapped_chord.rs",
+        "../src/geometry.rs",
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry/tensor_image_location.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "regressions": [
+        "../../hypercurve/tests/rational_image_locations.rs",
+        "../tests/tensor_image_selected_locations.rs",
+        "../src/geometry/tensor_image_location.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "cost_evidence": "No speedup, uniform practical completion envelope or aggregate resource-bound claim. Query-time homogeneous substitution avoids replacing retained geometry; coefficient-field equations retain the original joint query rather than materializing independent coordinates. Ordinary affine inverse paths remain available. Resultants retain their existing coefficient-call and matrix-entry limits; checked composition can reach platform storage limits. These are not total coefficient-growth, expression-size, heap or cancellation bounds. Timings distinguish completed debug fixtures, compilation and failed attempts. Source fingerprints and an exactly reconstructed full patch support the scoped implementation claims.",
+      "limits": "No whole work package is complete. Mixed interval/discrete preimages, punctured constant domains, unresolved shared components, geometric point-ordered/procedural UV sources without complete inverse authority, arbitrary algebraic coefficient carriers and general chart/arrangement/solid reconstruction remain open. At discontinuous knots, distinct planar chart locations are retained; consumers requiring one ordinary parameter value still need a side-selection contract. General Boolean/offset/shelling/fillet/chamfer closure, total work/heap/cancellation, runtime fuzz/sanitizer/coverage, WASM execution and release/pre-push gates remain open. The next public query probe has independent exact preimage [0,1] union {5/2} on an authored native degree-one spline; its typed Unsupported outcome is a result-contract gap, not geometric completion. All 28 work packages remain open or in progress. No push. A second admitted TensorImage probe has exact finite spatial preimage {0,1/3,2/3,1}, while every planar projection includes a whole source interval. It also returns Unsupported; complete parameter-component intersection is required even for that finite spatial query.",
+      "validation": "Final serial fixed-source campaign passes 148 affected Hypercurve integration tests, 8 evaluation units, 47 incidence units, 8 polynomial/source-chart units and 46 support units; all 838 BRep tests/doctests and 127 downstream IO tests/doctests. Overlapping unit filters produce 1222 successful harness reports covering 1184 distinct tests, with 38 repeated reports and 0 ordinary ignored cases. Strict all-target/all-feature Clippy, formatting, warning-denied docs, production WASM compilation and all three native fuzz-consumer bin checks pass. All 1179 source/manifest/fixture fingerprints remain unchanged around all 12 final commands. The original nonlinear tensor transverse recut and selected elevated-tensor stitching chains remain ordinary passing cases. New expectations cover all visits of folded maps, independent selected fields, nonrational branch ranks, rational denominators, removable source/map poles, zero-map invalidity, circular charts and shared seams, discontinuous one-sided knot charts, entire constant images, constant projections, exact third-coordinate rejection, original knot/spatial chart transport, reversed/restricted domains, budget refusal/retry, both incident face uses, cold/fresh native replay, another selected split and reflected nonuniform affine replay. Independent negatives reject changed tensor interiors despite matching endpoints and reject wrong parameter laws. The superseded curve attempt has status zero for its compiled tests but source_unchanged=false after the knot-germ fix; it stopped before BRep and is not qualified as final completion. The archived source patch reconstructs 99 changed/new affected files, including all untracked sources, fixtures and bench callers; ten source/test paths differ from the preceding qualified increment. Raw failures and the next mixed-component Unsupported probe remain distinct from exact completions. No full Hypercurve library, runtime fuzz/sanitizer/coverage, WASM execution, release or pre-push qualification is inferred. Post-record JSON/link/index/source/budget/diff checks pass.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "fcb5fab5b62636c697b3982fca288e0cf4fdc77f",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-selected-tensor-preimages",
+        "sha256": "6939d34d9e779a068735f48f8a39feda5601e56060def6f37fbeaed20a0348a4",
+        "published": false
+      }
+    },
+    {
+      "id": "parameter-preimage-components-2026-11-04",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17"
+      ],
+      "properties": [
+        "P6",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "decision": "kept for native rational parameter components, original denominator punctures and finite TensorImage inverses requiring projection-component intersection; general operation closure remains open",
+      "change": "Extend the existing CurvePointLocations2 result with Components and export CurveLocationComponent2, reusing CurveParameterSet2 for component closures and retaining original span/chart, selected endpoints and explicit endpoint inclusion. Do not introduce a second inverse interface or persistent geometry carrier. Native homogeneous span equations distinguish isolated roots, constant spans and empty defined domains; complete roots of the original source/map denominator guards split constant loci at all punctures, including removable factors and algebraic roots. Ordinary selected point queries consume the same span result; represented-coordinate Unsupported/Boundary incidence falls back to that authority. Retain finite/entire fast-result roles and normalize isolated visits without identifying distinct discontinuous source germs. Curve2::intersect_point_locations intersects complete loci in the same unchanged source atlas with exact ordering, open-end rules and source UV agreement at shared knots. TensorImage inverses intersect complete projection loci until a finite candidate superset is available, then transport the authored source chart and validate all original spatial coordinates. Exhaustive finite-only consumers explicitly block continuous results; existence-only consumers use nonempty membership. The preserved native spline gives [0,1] union {5/2}, and the preserved quadratic tensor/spline gives exactly {0,1/3,2/3,1} although every projection has an interval component. Consume the latter through restriction, reversal and reflected nonuniform affine image queries. Native archive remains version 17.",
+      "source": [
+        "../../hypercurve/src/curve_intersection.rs",
+        "../../hypercurve/src/curve_point_components.rs",
+        "../../hypercurve/src/curve_rational_location.rs",
+        "../../hypercurve/src/curve_rational_map_location.rs",
+        "../../hypercurve/src/lib.rs",
+        "../src/geometry/tensor_image_location.rs",
+        "../src/geometry/location.rs",
+        "../src/geometry/line_tensor.rs",
+        "../src/geometry/planar_image.rs",
+        "../src/geometry/tensor_image.rs",
+        "../src/geometry/curve_curve.rs",
+        "../src/geometry/curve_plane.rs",
+        "../src/geometry/curve_implicit.rs",
+        "../src/geometry/curve_tensor_image.rs",
+        "../src/geometry/curve_revolution.rs",
+        "../src/geometry/curve_extrusion.rs",
+        "../src/geometry.rs"
+      ],
+      "evidence": "SUPPORT_MATRIX.md#spatial-curve-carriers",
+      "regressions": [
+        "../../hypercurve/tests/rational_image_locations.rs",
+        "../tests/tensor_image_selected_locations.rs",
+        "../../hypercurve/tests/hypercurve_curve_intersection.rs",
+        "../../hypercurve/tests/hypercurve_rational_bezier.rs",
+        "../../hypercurve/tests/selected_rational_locations.rs",
+        "../tests/tensor_graph_solids.rs"
+      ],
+      "cost_evidence": "No speedup, uniform ordinary completion envelope or aggregate resource-bound claim. Constant domains retain finite interval components rather than sampling an arbitrary parameter. Denominator holes use the existing exact selected coefficient-field root solver; component intersection compares exact endpoints and original chart germs without global geometric elimination or coordinate materialization. The implementation currently uses component-pair intersection, exact insertion ordering and repeated source-chart preparation at cross-span comparisons; these costs are not claimed optimal. Existing refinement, selected-field and local resultant limits remain distinct from total work, coefficient growth, retained heap and cancellation. Qualification timings separate completed debug fixtures, compilation and failed attempts.",
+      "limits": "No whole work package is complete. Proper continuous/mixed spatial inverses still exceed CurveParameterLocation and explicitly block; the next admitted TensorImage witness requires [0,1/3] union {1}. Punctured constant selected implicit-branch maps still block despite an exact interval census, as preserved by the nonrational y=sqrt(x) witness with the original exclusion at 1/2. Unresolved shared-component sections, arbitrary algebraic coefficient carriers, geometric point-ordered/procedural UV inverses, continuous curve/surface overlap assembly, general chart arrangements, reconstruction and solid Boolean/offset/shelling/fillet/chamfer closure remain open. Parameter-locus intersection requires results from the same unchanged source atlas; it is not an interchange admission boundary for foreign or forged location records. Native replay continues to reconstruct original geometric definitions. Total work/heap/cancellation, runtime fuzz/sanitizer/coverage, WASM execution and release/pre-push qualification remain open. Typed blockers do not count as geometric completion. All 28 work packages remain open or in progress. No push.",
+      "validation": "Final serial fixed-source campaign passes 343 affected Hypercurve integration tests, 8 evaluation units, 47 incidence units, 8 polynomial/source-chart units, 46 support units and 26 rational evaluator units; all 839 BRep tests/doctests and 127 downstream IO tests/doctests. Overlapping unit filters produce 1444 successful harness reports covering 1406 distinct tests, with 38 repeated reports and 0 ordinary ignored cases. Strict all-target/all-feature Clippy, formatting, warning-denied docs, production WASM compilation and all three native fuzz-consumer bin checks pass. All 1180 source/manifest/fixture fingerprints remain unchanged around all 13 final commands. Expanded coverage includes selected SVG, circle, chord, point-fiber and curve-intersection consumers of the public result enum. Original generated tensor transverse recut and selected native-spline graph-stitching chains remain ordinary passing cases, alongside both incident face uses, cold/fresh-process replay and further reflected edits. New expectations certify the original mixed planar and finite spatial probes, original/canceled source-map punctures, a quintic hole and selected restriction endpoint, open authored ends, reversal, repeated component intersection, empty defined domains and distinct discontinuous source germs. Mixed-projection output is consumed by restriction, reversal and nonuniform reflected affine queries. An expanded old test still expected Unsupported for the now-supported selected parabola point; preserve its failed first-campaign receipt and strengthen the assertion to the unique independently specified t=sqrt(1/2), certified certainty and original point equality. No test is weakened. The first serial campaign failed that stale blocker expectation before BRep. The second failed a preserved partial-constant spline Unsupported expectation; retain its near-distinct-root checks and strengthen the final assertion to the exact closed [0,1], original span chart and endpoint inclusion. Both incomplete campaigns remain failed evidence, separate from final qualification. The archived source patch reconstructs 112 changed/new affected source, manifest and fixture files, including all untracked sources; 24 source/test/bench paths differ from record 8. The next proper spatial and punctured implicit-branch probes remain typed blockers and do not count as geometric completions. No full Hypercurve library, runtime fuzz/sanitizer/coverage, WASM execution, release or pre-push qualification is inferred.",
+      "evidence_archive": {
+        "local_repository": "/tmp/hyperbrep-nonlinear-evidence",
+        "commit": "516a2731ff1597dc5a7cf41f3d2c86ec579f3aee",
+        "record": "crates/hyperbrep/docs/evidence/2026-11-04-parameter-preimage-components",
+        "sha256": "d106935d5e2e866668b455e7d0e855ddbb95927f29d1f0a39c134d50a6ed342e",
+        "published": false
+      }
     }
   ],
   "work_packages": [
@@ -5029,7 +5481,8 @@
     }
   ],
   "next_actions": [
-    "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof, certified rational endpoint recovery and tensor-image point location now let open splits consume sections with rational boundary endpoints; irrational endpoints still need GeometricPoint3 stitching), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
+    "Continue WP02/WP03/WP04/WP05a/WP06 from complete native rational parameter components and their source-germ-preserving intersection. Preserve the original [0,1] union {5/2} spline and {0,1/3,2/3,1} quadratic tensor/spline exact-success witnesses, all selected tensor inverse/replay chains, nonlinear cap/hole/quartic cases and native-spline graph stitching. Extend CurveParameterLocation and spatial consumers to proper continuous/mixed inverse loci: the admitted planar-tensor/native-spline probe requires [0,1/3] union {1} and still blocks. Complete punctured constant selected implicit-branch queries: the preserved nonrational y=sqrt(x) probe requires [0,1/2) union (1/2,1] and still blocks. Reuse original guards, selected source/fiber identities, open endpoints and parameter charts without treating missing proofs as inequality or exclusion. Complete unresolved shared components, procedural/point-ordered inverses, continuous overlap assembly, coplanar selected-line support collection, general chart arrangements and reconstruction. Consume all authored/generated families through further Booleans, offsets, shelling, fillets/chamfers, transforms and native replay. Total work/heap/cancellation and release packages remain open; no whole work package is complete.",
+    "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof, certified rational endpoint recovery and tensor-image point location now let open splits consume sections with rational boundary endpoints; the original nonlinear transverse recut now stitches selected endpoints, but general independent selected preimages and atlas/chart reconstruction remain open), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
     "Continue WP02/WP03/WP05a/WP05b/WP06 from evidence/2026-10-19-surface-differentials/next-domains.md. Preserve the full old corpus and all eight new differential workflows while extending singular branch germs/event limits, complete dual-chart differential proofs, retained-profile selected positions and trim arrangements. Selected partials/unit normals and common-source vector products are now admitted on the recorded domains; independent-field/radical joins remain typed. All modeling, resource and delivery work packages and prior adverse cost observations remain active.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-section-differentials/next-domains.md. Regular implicit section jets and smooth-event directions now remain exact through selected spatial queries and replay. Preserve the full prior section corpus and seven new differential workflows while extending singular branch germs, same-source vector products, selected surface partials/normals, dual-chart differential proofs and trim arrangements. All modeling, resource and delivery work packages remain active.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-plane-tensor-sections/next-domains.md. The original full interior-loop plane/tensor target now succeeds with both pcurves and whole-image validation through affine replay. Preserve that success corpus while extending implicit differential/event queries, complete dual-chart trim arrangements and spatial image certificates. General curved solid Booleans and total-resource/release gates remain open.",

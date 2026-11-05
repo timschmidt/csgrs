@@ -173,6 +173,14 @@ pub enum TopologyEditError {
         /// Curve endpoint that could not be attached to the boundary.
         endpoint: Endpoint,
     },
+    /// A retained endpoint pcurve does not lift to the supplied spatial point
+    /// on the target face. This is an invalid chart/image relation.
+    SurfaceCurveEndpointImageMismatch {
+        /// Face whose chart is being consumed.
+        face: FaceId,
+        /// Endpoint with the mismatched image.
+        endpoint: Endpoint,
+    },
     /// One curve endpoint has more than one strict outer-edge location.
     FaceSplitEndpointAmbiguous {
         /// Face being split.
@@ -267,6 +275,10 @@ impl fmt::Display for TopologyEditError {
                     "{endpoint:?} endpoint is not on face {face:?}'s outer boundary"
                 )
             }
+            Self::SurfaceCurveEndpointImageMismatch { face, endpoint } => write!(
+                formatter,
+                "{endpoint:?} pcurve endpoint does not lift to the spatial endpoint on face {face:?}",
+            ),
             Self::FaceSplitEndpointAmbiguous { face, endpoint } => {
                 write!(
                     formatter,

@@ -436,17 +436,30 @@ impl TensorCurve3 {
         })
     }
 
-    /// Definition equality in the same spatial chart: equal tensors (control
-    /// points and weights) and equal UV sources under equal parameter maps.
+    /// Complete coefficient/source identity, including a proved unit-U chart
+    /// reflection and the source's own reversal parameter transport.
     pub(crate) fn parameterization_equals(&self, other: &Self) -> GeometryResult<bool> {
         let equal = |a: &Real, b: &Real| -> GeometryResult<bool> {
             Ok(decided_order(compare_reals(a, b, crate::STRICT_PREDICATES))? == Ordering::Equal)
         };
         if !equal(&self.source_scale, &other.source_scale)?
             || !equal(&self.source_offset, &other.source_offset)?
-            || !self.surface.has_same_tensor_definition(&other.surface)?
         {
-            return Ok(false);
+            let (scale, offset) = other.source.reversal_parameter_affine_map()?;
+            let source_scale = &scale * &other.source_scale;
+            let source_offset = scale * &other.source_offset + offset;
+            return if equal(&self.source_scale, &source_scale)?
+                && equal(&self.source_offset, &source_offset)?
+            {
+                self.parameterization_equals(&Self {
+                    source: other.source.reversed()?,
+                    source_scale,
+                    source_offset,
+                    surface: other.surface.clone(),
+                })
+            } else {
+                Ok(false)
+            };
         }
         let a = self
             .source
@@ -456,9 +469,32 @@ impl TensorCurve3 {
             .source
             .source_restriction()
             .map_or(&other.source, |(source, _, _)| source);
-        Ok(a == b
-            || matches!((a.polynomial_branch(), b.polynomial_branch()),
-                (Some(a), Some(b)) if a.has_same_parameterization(b)))
+        let same = |a: &Curve2, b: &Curve2| {
+            a == b
+                || matches!((a.polynomial_branch(),b.polynomial_branch()),
+                (Some(a),Some(b)) if a.has_same_parameterization(b))
+        };
+        if self.surface.has_same_tensor_definition(&other.surface)? && same(a, b) {
+            return Ok(true);
+        }
+        if !self
+            .surface
+            .tensor_definition_matches(&other.surface, true)?
+        {
+            return Ok(false);
+        }
+        // B_i^n(1-u)=B_(n-i)^n(u). Reversing every tensor control/weight
+        // row is the exact chart law S_other(u,v)=S_self(1-u,v).
+        let reflection = hypercurve::Similarity2::try_from_real_affine(
+            -Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::one(),
+            Real::zero(),
+        )?;
+        let aligned = b.transform_similarity(&reflection)?;
+        Ok(same(a, &aligned))
     }
 }
 
@@ -468,6 +504,10 @@ impl Surface {
         if Arc::ptr_eq(&self.data, &other.data) {
             return Ok(true);
         }
+        self.tensor_definition_matches(other, false)
+    }
+
+    fn tensor_definition_matches(&self, other: &Self, reflect_u: bool) -> GeometryResult<bool> {
         let (SurfaceGeometry::RationalBezier(a), SurfaceGeometry::RationalBezier(b)) =
             (&self.data.geometry, &other.data.geometry)
         else {
@@ -482,14 +522,16 @@ impl Surface {
             Ok(decided_order(compare_reals(x, y, crate::STRICT_PREDICATES))? == Ordering::Equal)
         };
         for (row_a, row_b) in a.control_points.iter().zip(&b.control_points) {
-            for (p, q) in row_a.iter().zip(row_b) {
+            for (i, p) in row_a.iter().enumerate() {
+                let q = &row_b[if reflect_u { row_b.len() - 1 - i } else { i }];
                 if !equal(&p.x, &q.x)? || !equal(&p.y, &q.y)? || !equal(&p.z, &q.z)? {
                     return Ok(false);
                 }
             }
         }
         for (row_a, row_b) in a.weights.iter().zip(&b.weights) {
-            for (p, q) in row_a.iter().zip(row_b) {
+            for (i, p) in row_a.iter().enumerate() {
+                let q = &row_b[if reflect_u { row_b.len() - 1 - i } else { i }];
                 if !equal(p, q)? {
                     return Ok(false);
                 }
@@ -991,10 +1033,12 @@ impl TensorCurve3 {
         'primary: for primary in 0..3 {
             let zeros = match super::implicit_tensor::unit_square_zeros(&pullbacks[primary]) {
                 Ok(zeros) => zeros,
-                // A radical coordinate value gives coefficients the topology
-                // does not decompose; another coordinate may be rational.
+                // A zero pullback contains the whole patch, rather than being
+                // an invalid inverse query. Radical coefficients can also need
+                // another coordinate whose topology the owner can decompose.
                 Err(GeometryError::PolynomialTopology(
-                    hypersolve::bivariate_topology::BivariateTopologyError::UnsupportedCoefficient,
+                    hypersolve::bivariate_topology::BivariateTopologyError::UnsupportedCoefficient
+                    | hypersolve::bivariate_topology::BivariateTopologyError::ZeroPolynomial,
                 )) => continue 'primary,
                 Err(error) => return Err(error),
             };
@@ -1049,6 +1093,9 @@ impl TensorCurve3 {
                     && vanishes(isolated, &pullbacks[others[1]])?
                 {
                     match self.source.point_locations(isolated)? {
+                        hypercurve::CurvePointLocations2::Components(_) => {
+                            return Err(GeometryError::UnsupportedParameterLocation);
+                        }
                         hypercurve::CurvePointLocations2::EntireCurve => {
                             return Ok(CurveParameterLocation::EntireDomain);
                         }

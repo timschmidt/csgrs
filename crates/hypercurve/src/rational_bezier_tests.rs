@@ -48,6 +48,9 @@ fn point_parameters(
         .value
     {
         crate::CurvePointLocations2::EntireCurve => None,
+        crate::CurvePointLocations2::Components(_) => {
+            panic!("expected isolated visits or the entire curve")
+        }
         crate::CurvePointLocations2::Locations(locations) => Some(
             locations
                 .iter()

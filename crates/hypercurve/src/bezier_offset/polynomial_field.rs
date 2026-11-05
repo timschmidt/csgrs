@@ -147,6 +147,21 @@ pub(crate) fn selected_field_query(
     if let CurvePointData2::Polynomial(point) = &pulled.source.0 {
         return point.field_query(&pulled.numerator, &pulled.denominator, policy);
     }
+    if let CurvePointData2::AlgebraicChordPair(point) = &pulled.source.0
+        && point.uses_selected_field()
+    {
+        match recursive_field_query(&pulled, policy) {
+            Ok(value) => return Ok(value),
+            Err(field::FieldError::Uncertain(reason))
+                if reason != UncertaintyReason::BudgetExhausted => {}
+            Err(error) => return Err(error),
+        }
+        return field::query(
+            [&pulled.numerator, &pulled.denominator],
+            &point.selected_field_values(policy)?,
+            policy,
+        );
+    }
     if let CurvePointData2::AlgebraicChordParallel(point) = &pulled.source.0
         && point.uses_selected_field()
     {
@@ -156,6 +171,10 @@ pub(crate) fn selected_field_query(
             policy,
         );
     }
+    recursive_field_query(&pulled, policy)
+}
+
+fn recursive_field_query(pulled: &PointFormSource2, policy: &CurveContext) -> field::Result<Value> {
     let value = field::available(field::curve(
         super::rational_form::recursive_rational_value(
             &pulled.source,

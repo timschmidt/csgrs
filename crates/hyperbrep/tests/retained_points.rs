@@ -21,7 +21,7 @@ fn quintic_controls() -> Vec<Point3> {
 
 fn parameters(curve: &Curve3) -> Vec<Parameter> {
     let CurveParameterLocation::Parameters(parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("expected finite selected parameters");
     };

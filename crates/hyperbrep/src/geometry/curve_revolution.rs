@@ -208,7 +208,8 @@ fn intersect_spans(
                 for profile in &profiles {
                     match profile.point_locations(&point.clone().into())? {
                         CurvePointLocations2::Locations(locations) if locations.is_empty() => {}
-                        CurvePointLocations2::Locations(_) => on_surface = true,
+                        CurvePointLocations2::Locations(_)
+                        | CurvePointLocations2::Components(_) => on_surface = true,
                         CurvePointLocations2::EntireCurve => {
                             unreachable!("a noncollapsed profile image is not one point")
                         }

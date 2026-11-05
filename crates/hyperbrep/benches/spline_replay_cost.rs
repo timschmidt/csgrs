@@ -25,7 +25,7 @@ fn selected(start: Real, end: Real) -> Parameter {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut parameters) =
-        source.parameters_of(&Point3::origin()).unwrap()
+        source.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("finite selected root");
     };

@@ -181,6 +181,9 @@ fn intersect(
         // G keeps one sign around an isolated real zero, so its derivative
         // along any curve through that point vanishes.
         match source.point_locations(isolated)? {
+            CurvePointLocations2::Components(_) => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
             CurvePointLocations2::EntireCurve => {
                 unreachable!("a noncollapsed source is not one point")
             }

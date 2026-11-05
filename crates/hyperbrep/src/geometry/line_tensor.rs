@@ -148,10 +148,13 @@ pub(super) fn intersect_line_tensor(
             }
         }
         for isolated in &second_set.points {
-            if let CurvePointLocations2::Locations(locations) = branch.point_locations(isolated)?
-                && !locations.is_empty()
-            {
-                push(isolated)?;
+            // Only existence is consumed here: every nonempty preimage locus
+            // proves that this selected UV point belongs to the first set.
+            match branch.point_locations(isolated)? {
+                CurvePointLocations2::Locations(locations) if locations.is_empty() => {}
+                CurvePointLocations2::Locations(_)
+                | CurvePointLocations2::EntireCurve
+                | CurvePointLocations2::Components(_) => push(isolated)?,
             }
         }
     }

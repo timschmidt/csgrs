@@ -89,6 +89,15 @@ crates/hyperbrep/docs/evidence/2026-10-19-selected-fiber-images	32	1485276	34221
 crates/hyperbrep/docs/evidence/2026-10-19-selected-pcurve-maps	22	1178189	2995ace545675096548228d881f1a6de163cf861bffd4e081b962b21796cdf33
 crates/hyperbrep/docs/evidence/2026-10-19-surface-differentials	30	5419093	f8ed54641bb87a90492746cdcf2632126eb3d71d0c82d7513318d58107727339
 crates/hyperbrep/docs/evidence/2026-10-19-surface-evaluation	24	2246277	8b2b113a12303597879efdbaa8b85c8cb393d146000fbe968d557f4e84c4409f
+crates/hyperbrep/docs/evidence/2026-11-04-nonlinear-chart-closure	41	609385	7561a34e81f05b0818c68f1518dda22e6c304828a77de386db25f2479ae1d01f
+crates/hyperbrep/docs/evidence/2026-11-04-parameter-preimage-components	84	2339406	d106935d5e2e866668b455e7d0e855ddbb95927f29d1f0a39c134d50a6ed342e
+crates/hyperbrep/docs/evidence/2026-11-04-retained-boundary-bridges	56	1820636	82e865a4adb6f47e95ee51ab7e6eb5bf249c4e17a1f8db46391e2937f4bce3b9
+crates/hyperbrep/docs/evidence/2026-11-04-selected-coefficient-incidence	81	932290	9f560b00b5388168a6920f19d1b3b56a84137e6977777a7a9c9186d02fa133e9
+crates/hyperbrep/docs/evidence/2026-11-04-selected-endpoint-chains	90	1645082	ba19fb40594be5cea73c1ce7aa9936e447812f4871ff3bc741be01cb8cce7799
+crates/hyperbrep/docs/evidence/2026-11-04-selected-rational-preimages	56	1257715	ded6f164fa07d1826343616410b3c0854d2e2465e8a036db25afa4f1740f7fa4
+crates/hyperbrep/docs/evidence/2026-11-04-selected-stitching-replay	90	1934809	0e329baef68286d9b1074ecf8c0e699ed6b1516b2aeba48c44cb07e82c04cc8e
+crates/hyperbrep/docs/evidence/2026-11-04-selected-tensor-preimages	89	1621618	6939d34d9e779a068735f48f8a39feda5601e56060def6f37fbeaed20a0348a4
+crates/hyperbrep/docs/evidence/2026-11-04-selected-trim-carriers	60	870355	923243a258d49996363d30810abf57382e703ebfaf2c28946bd81da65de28715
 crates/hyperreal/benchmarks/checkpoints	126	110147092	fdc5cf8597d0640ce69a7b41048fea51a2c0a39f30496cdcffd03b31664a2fb7
 crates/hyperspatial/verification/2026-10-18-e1-coverage.json	1	5624	b577dcc0eabf64953066af1498ada83cf864bdfcf3fd3840032510da062a6192
 crates/hyperspatial/verification/2026-10-18-e1-directed	16	258922	a5576efef169bf1bcf920233e4896bb88a6c7c35f37889d1c395ed832459e856

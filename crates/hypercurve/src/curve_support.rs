@@ -532,8 +532,12 @@ impl CurveSupport2 {
             // A selected graph is injective in its source abscissa. Its
             // admitted similarities, including retained rational maps certified
             // as exact similarities, are invertible; a general image map needs
-            // its own injectivity proof before suppressing self events.
-            return (branch.similarity_view().is_some() || branch.has_injective_affine_view())
+            // its own injectivity proof on the source domain rectangle, which
+            // contains every source point, before suppressing self events.
+            return (branch.similarity_view().is_some()
+                || branch.has_injective_affine_view()
+                || branch.injective_image_orientation().is_some()
+                || branch.has_injective_parameter_coordinate())
                 && matches!(
                     CurveParameterDomain2::new(branch.parameter_range(), None)
                         .contains_finite_range(range, &policy.strict_counterpart()),

@@ -272,7 +272,7 @@ fn selected_parameter() -> Parameter {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("one selected cubic root")
     };

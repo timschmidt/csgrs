@@ -13,14 +13,17 @@ use hypercurve::{
 use hyperlattice::{Aabb, Matrix4, Point2, Point3, Real, Vector3};
 use hyperlimit::{PredicateOutcome, compare_point3_lexicographic, compare_reals, point3_equal};
 
+#[cfg(test)]
+use crate::ParameterDomain;
+
 use crate::error::GeometryError;
 use crate::geometry::{
-    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData,
-    ParameterDomain, Pcurve, Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact,
-    SurfaceIntersectionCurve, SurfaceIntersectionOperand, SurfaceIntersectionPcurve,
-    SurfaceIsoAxis, SurfaceKind, SurfaceParameterDomain, SurfacePcurveCorrespondence,
-    affine_transform_orientation, materialize_nurbs_parameter_graph,
-    rational_bilinear_parameter_curve, resolve_planar_classification,
+    Curve3, Curve3ExactData, Curve3Kind, CurveParameterLocation, EllipseArcExactData, Pcurve,
+    Surface, SurfaceExactData, SurfaceIntersectionBoundaryContact, SurfaceIntersectionCurve,
+    SurfaceIntersectionOperand, SurfaceIntersectionPcurve, SurfaceIsoAxis, SurfaceKind,
+    SurfaceParameterDomain, SurfacePcurveCorrespondence, affine_transform_orientation,
+    materialize_nurbs_parameter_graph, rational_bilinear_parameter_curve,
+    resolve_planar_classification,
 };
 use crate::{GeometricPoint3, Parameter, ParameterRange};
 
@@ -59,7 +62,7 @@ enum FaceSplitEndpointLocation {
     Vertex(VertexId),
     Edge {
         edge: EdgeId,
-        parameter: Real,
+        parameter: Parameter,
         pcurve_split: Option<Box<(EdgeUseId, SurfaceIntersectionBoundaryContact)>>,
     },
 }

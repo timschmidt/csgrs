@@ -1002,7 +1002,7 @@ fn retain_planar_surface_trace_boundary_contacts(
         .map(
             |interval| -> Result<SurfaceIntersectionCurve, BooleanError> {
                 Ok(trace
-                    .subcurve(&interval.start, &interval.end)?
+                    .trimmed_interval(&interval.start, &interval.end)?
                     .with_boundary_contacts(
                         operand,
                         interval.start_contacts,
@@ -1370,16 +1370,23 @@ fn add_opposite_planar_edge_supports(
             let start = opposite_model
                 .vertex(edge.start())
                 .expect("validated opposite vertex")
-                .represented_point()?;
+                .point();
             let end = opposite_model
                 .vertex(edge.end())
                 .expect("validated opposite vertex")
-                .represented_point()?;
-            if exact_order(&normal.dot(&(start - origin)), &Real::zero())? != Ordering::Equal
-                || exact_order(&normal.dot(&(end - origin)), &Real::zero())? != Ordering::Equal
+                .point();
+            let plane_value = normal.dot(&crate::Vector3::from(origin.clone()));
+            if start.compare_linear_form(&normal, &plane_value)? != Ordering::Equal
+                || end.compare_linear_form(&normal, &plane_value)? != Ordering::Equal
             {
                 continue;
             }
+            let start = start
+                .try_coordinates()
+                .ok_or(GeometryError::UnrepresentablePoint)?;
+            let end = end
+                .try_coordinates()
+                .ok_or(GeometryError::UnrepresentablePoint)?;
             let relevant = match trim_segment_to_planar_face(source_model, face_id, start, end)? {
                 Classification::Decided(fragments) => {
                     let mut crosses_interior = false;
@@ -2079,12 +2086,23 @@ fn average_planar_points(
 #[derive(Clone)]
 struct StitchedEdge {
     id: crate::EdgeId,
-    start: Point3,
-    end: Point3,
+    curve_id: crate::Curve3Id,
+    start: crate::GeometricPoint3,
+    end: crate::GeometricPoint3,
     curve: Curve3,
-    domain: crate::ParameterDomain,
+    domain: crate::ParameterRange,
     is_first: bool,
     cross_matchable: bool,
+}
+
+/// Exact parameter transport from one validated source edge to its copy.
+#[derive(Clone)]
+struct StitchedEdgeTransfer {
+    id: crate::EdgeId,
+    reversed: bool,
+    domain: crate::ParameterRange,
+    scale: Real,
+    offset: Real,
 }
 
 struct StitchedFace {
@@ -2101,7 +2119,7 @@ fn stitch_graph_faces(
     let mut second = graph.select_second_faces(operation)?;
     let mut atomic_points = selected_edge_endpoints(&first)?;
     for point in selected_edge_endpoints(&second)? {
-        push_atomic_point(&mut atomic_points, point);
+        push_atomic_point(&mut atomic_points, point)?;
     }
     atomize_selected_edges(&mut first, &atomic_points)?;
     atomize_selected_edges(&mut second, &atomic_points)?;
@@ -2117,13 +2135,12 @@ fn stitch_graph_faces(
         }
     }
     let regularize_to_planar =
-        selection_is_exactly_planar(&first)? && selection_is_exactly_planar(&second)?;
+        selection_can_use_plane_charts(&first)? && selection_can_use_plane_charts(&second)?;
 
     let mut builder = ArenaModelBuilder::new();
-    let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
+    let mut vertices = Vec::<(crate::GeometricPoint3, crate::VertexId)>::new();
     let mut edges = Vec::<StitchedEdge>::new();
-    let mut source_edges =
-        BTreeMap::<(bool, crate::EdgeId), (crate::EdgeId, bool, crate::ParameterDomain)>::new();
+    let mut source_edges = BTreeMap::<(bool, crate::EdgeId), StitchedEdgeTransfer>::new();
     let mut source_surfaces = BTreeMap::<(bool, crate::SurfaceId), crate::SurfaceId>::new();
     let mut faces = Vec::<StitchedFace>::new();
     for (is_first, selection) in [(true, &first), (false, &second)] {
@@ -2270,7 +2287,7 @@ fn stitch_graph_faces(
     })
 }
 
-fn selection_is_exactly_planar(selection: &ArenaFaceSelection) -> Result<bool, BooleanError> {
+fn selection_can_use_plane_charts(selection: &ArenaFaceSelection) -> Result<bool, BooleanError> {
     for classified in &selection.faces {
         if matches!(
             classified.action,
@@ -2282,6 +2299,9 @@ fn selection_is_exactly_planar(selection: &ArenaFaceSelection) -> Result<bool, B
             .model
             .face(classified.face)
             .expect("validated selected face");
+        if face_requires_retained_surface_chart(&selection.model, classified.face) {
+            return Ok(false);
+        }
         if selection
             .model
             .surface(face.surface())
@@ -2293,6 +2313,44 @@ fn selection_is_exactly_planar(selection: &ArenaFaceSelection) -> Result<bool, B
         }
     }
     Ok(true)
+}
+
+fn face_requires_retained_surface_chart(model: &ArenaModel, face: FaceId) -> bool {
+    let face = model.face(face).expect("validated selected face");
+    if model
+        .surface(face.surface())
+        .expect("validated surface")
+        .kind()
+        == crate::SurfaceKind::Plane
+    {
+        return false;
+    }
+    face.outer()
+        .into_iter()
+        .chain(face.inner().iter().copied())
+        .any(|wire| {
+            model
+                .wire(wire)
+                .expect("validated selected wire")
+                .edge_uses()
+                .iter()
+                .any(|usage| {
+                    let edge = model
+                        .edge_use(*usage)
+                        .expect("validated selected use")
+                        .edge();
+                    let edge = model.edge(edge).expect("validated selected edge");
+                    // Scalar parameter endpoints do not imply represented
+                    // point coordinates or a projectable curve image. Native
+                    // controls have a complete plane projection; other retained
+                    // images must keep their original surface/pcurve chart.
+                    edge.domain().try_real_endpoints().is_none()
+                        || !matches!(
+                            model.curve(edge.curve()).expect("validated curve").kind(),
+                            Curve3Kind::Line | Curve3Kind::RationalBezier | Curve3Kind::Nurbs
+                        )
+                })
+        })
 }
 
 fn selected_edge_use_counts(
@@ -2332,8 +2390,8 @@ fn selected_edge_use_counts(
 
 #[derive(Clone)]
 struct AtomicPoint {
-    point: Point3,
-    curve_parameters: Vec<(Curve3, Real)>,
+    point: crate::GeometricPoint3,
+    curve_parameters: Vec<(Curve3, crate::Parameter)>,
 }
 
 fn selected_edge_endpoints(
@@ -2383,17 +2441,11 @@ fn selected_edge_endpoints(
                                 .model
                                 .vertex(vertex)
                                 .expect("validated selected vertex")
-                                .represented_point()?
+                                .point()
                                 .clone(),
-                            curve_parameters: vec![(
-                                curve.clone(),
-                                parameter
-                                    .try_real()
-                                    .ok_or(GeometryError::UnrepresentableParameter)?
-                                    .clone(),
-                            )],
+                            curve_parameters: vec![(curve.clone(), parameter.clone())],
                         },
-                    );
+                    )?;
                 }
             }
         }
@@ -2401,17 +2453,20 @@ fn selected_edge_endpoints(
     Ok(points)
 }
 
-fn push_atomic_point(points: &mut Vec<AtomicPoint>, mut candidate: AtomicPoint) {
-    if let Some(index) = points.iter().position(|point| {
-        point3_equal(&point.point, &candidate.point, crate::STRICT_PREDICATES).value() == Some(true)
-    }) {
-        let point = &mut points[index];
-        point
-            .curve_parameters
-            .append(&mut candidate.curve_parameters);
-        return;
+fn push_atomic_point(
+    points: &mut Vec<AtomicPoint>,
+    mut candidate: AtomicPoint,
+) -> Result<(), GeometryError> {
+    for point in points.iter_mut() {
+        if point.point.coincides_with(&candidate.point)? {
+            point
+                .curve_parameters
+                .append(&mut candidate.curve_parameters);
+            return Ok(());
+        }
     }
     points.push(candidate);
+    Ok(())
 }
 
 fn atomize_selected_edges(
@@ -2476,14 +2531,6 @@ fn atomize_selected_edges(
                     continue;
                 };
                 parameters
-                    .into_iter()
-                    .map(|parameter| {
-                        parameter
-                            .try_real()
-                            .cloned()
-                            .ok_or(GeometryError::UnrepresentableParameter)
-                    })
-                    .collect::<Result<Vec<_>, _>>()?
             } else {
                 parameters
             };
@@ -2499,46 +2546,42 @@ fn atomize_selected_edges(
                     .into_iter()
                     .map(|parameter| {
                         crate::geometry::angular_parameter_lifts(
-                            &parameter,
+                            parameter
+                                .try_real()
+                                .ok_or(GeometryError::UnrepresentableParameter)?,
                             &edge.domain().represented_domain()?,
                         )
                     })
                     .collect::<Result<Vec<_>, GeometryError>>()?
                     .into_iter()
                     .flatten()
+                    .map(crate::Parameter::from_real)
                     .collect()
             } else {
                 parameters
             };
             for parameter in parameters {
-                if exact_order(
-                    &parameter,
-                    (edge.domain().start())
-                        .try_real()
-                        .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                )? == Ordering::Greater
-                    && exact_order(
-                        &parameter,
-                        (edge.domain().end())
-                            .try_real()
-                            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-                    )? == Ordering::Less
+                if parameter.compare(edge.domain().start())? == Ordering::Greater
+                    && parameter.compare(edge.domain().end())? == Ordering::Less
                 {
-                    insert_descending_real(&mut cuts, parameter)?;
+                    insert_descending_parameter(&mut cuts, parameter)?;
                 }
             }
         }
         for cut in cuts {
-            let (model, _) = selection.model.split_edge(edge_id, (cut).into())?;
+            let (model, _) = selection.model.split_edge(edge_id, cut)?;
             selection.model = model;
         }
     }
     Ok(())
 }
 
-fn insert_descending_real(values: &mut Vec<Real>, candidate: Real) -> Result<(), GeometryError> {
+fn insert_descending_parameter(
+    values: &mut Vec<crate::Parameter>,
+    candidate: crate::Parameter,
+) -> Result<(), GeometryError> {
     for (index, value) in values.iter().enumerate() {
-        match exact_order(&candidate, value)? {
+        match candidate.compare(value)? {
             Ordering::Equal => return Ok(()),
             Ordering::Greater => {
                 values.insert(index, candidate);
@@ -2558,16 +2601,19 @@ fn copy_selected_face(
     is_first: bool,
     reversed: bool,
     builder: &mut ArenaModelBuilder,
-    vertices: &mut Vec<(Point3, crate::VertexId)>,
+    vertices: &mut Vec<(crate::GeometricPoint3, crate::VertexId)>,
     edges: &mut Vec<StitchedEdge>,
-    source_edges: &mut BTreeMap<
-        (bool, crate::EdgeId),
-        (crate::EdgeId, bool, crate::ParameterDomain),
-    >,
+    source_edges: &mut BTreeMap<(bool, crate::EdgeId), StitchedEdgeTransfer>,
     source_surfaces: &mut BTreeMap<(bool, crate::SurfaceId), crate::SurfaceId>,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
     regularize_to_planar: bool,
 ) -> Result<StitchedFace, BooleanError> {
+    // Selected trims keep their pcurves without scalar reprojection. A flat
+    // support alone does not prove that a replacement plane has the same UV
+    // chart. Retain the surface and supporting curves together until that
+    // complete chart transport is available.
+    let regularize_to_planar =
+        regularize_to_planar && !face_requires_retained_surface_chart(model, face_id);
     let face = model.face(face_id).expect("validated selected face");
     let surface = model
         .surface(face.surface())
@@ -2678,12 +2724,9 @@ fn copy_selected_wire(
     is_first: bool,
     reversed: bool,
     builder: &mut ArenaModelBuilder,
-    vertices: &mut Vec<(Point3, crate::VertexId)>,
+    vertices: &mut Vec<(crate::GeometricPoint3, crate::VertexId)>,
     stitched_edges: &mut Vec<StitchedEdge>,
-    source_edges: &mut BTreeMap<
-        (bool, crate::EdgeId),
-        (crate::EdgeId, bool, crate::ParameterDomain),
-    >,
+    source_edges: &mut BTreeMap<(bool, crate::EdgeId), StitchedEdgeTransfer>,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
     projected_plane: Option<&Surface>,
     regularize_to_planar: bool,
@@ -2698,10 +2741,7 @@ fn copy_selected_wire(
     let mut copied_edges = Vec::with_capacity(uses.len());
     for use_id in uses {
         let edge_use = model.edge_use(use_id).expect("validated selected edge use");
-        let edge = model
-            .edge(edge_use.edge())
-            .expect("validated selected edge");
-        let (mapped_edge, edge_reversed, mapped_domain) = copy_or_match_selected_edge(
+        let transfer = copy_or_match_selected_edge(
             model,
             edge_use.edge(),
             is_first,
@@ -2712,6 +2752,9 @@ fn copy_selected_wire(
             selected_edge_uses,
             regularize_to_planar,
         )?;
+        let mapped_edge = transfer.id;
+        let edge_reversed = transfer.reversed;
+        let mapped_domain = &transfer.domain;
         let source_pcurve = model
             .pcurve(edge_use.pcurve())
             .expect("validated selected pcurve");
@@ -2723,7 +2766,9 @@ fn copy_selected_wire(
         if edge_reversed {
             direction = direction.reversed();
         }
-        let projected_curve = if let Some(plane) = projected_plane {
+        let projected_curve = if let Some(plane) =
+            projected_plane.filter(|_| mapped_domain.try_real_endpoints().is_some())
+        {
             let mapped_curve = &stitched_edges
                 .iter()
                 .find(|edge| edge.id == mapped_edge)
@@ -2756,9 +2801,10 @@ fn copy_selected_wire(
             } else {
                 let pcurve_start = pcurve.represented_start()?;
                 let pcurve_end = pcurve.represented_end()?;
+                let represented = mapped_domain.represented_domain()?;
                 let (edge_start, edge_end) = match direction {
-                    crate::Direction::Forward => (mapped_domain.start(), mapped_domain.end()),
-                    crate::Direction::Reversed => (mapped_domain.end(), mapped_domain.start()),
+                    crate::Direction::Forward => (represented.start(), represented.end()),
+                    crate::Direction::Reversed => (represented.end(), represented.start()),
                 };
                 let scale = ((edge_end - edge_start) / (pcurve_end - pcurve_start))
                     .map_err(GeometryError::Numeric)?;
@@ -2780,11 +2826,7 @@ fn copy_selected_wire(
             } else {
                 edge_use.parameter_correspondence().clone()
             }
-            .remapped_edge(
-                &(edge.domain()).represented_domain()?,
-                &mapped_domain,
-                edge_reversed,
-            )?;
+            .remapped_edge(&transfer.scale, &transfer.offset)?;
             (pcurve, correspondence)
         };
         let pcurve = builder.pcurve(pcurve).map_err(ConstructionError::from)?;
@@ -2818,15 +2860,12 @@ fn copy_or_match_selected_edge(
     source_edge_id: crate::EdgeId,
     is_first: bool,
     builder: &mut ArenaModelBuilder,
-    vertices: &mut Vec<(Point3, crate::VertexId)>,
+    vertices: &mut Vec<(crate::GeometricPoint3, crate::VertexId)>,
     stitched_edges: &mut Vec<StitchedEdge>,
-    source_edges: &mut BTreeMap<
-        (bool, crate::EdgeId),
-        (crate::EdgeId, bool, crate::ParameterDomain),
-    >,
+    source_edges: &mut BTreeMap<(bool, crate::EdgeId), StitchedEdgeTransfer>,
     selected_edge_uses: &BTreeMap<(bool, crate::EdgeId), usize>,
     regularize_to_planar: bool,
-) -> Result<(crate::EdgeId, bool, crate::ParameterDomain), BooleanError> {
+) -> Result<StitchedEdgeTransfer, BooleanError> {
     if let Some(mapped) = source_edges.get(&(is_first, source_edge_id)) {
         return Ok(mapped.clone());
     }
@@ -2836,28 +2875,49 @@ fn copy_or_match_selected_edge(
     let start = model
         .vertex(edge.start())
         .expect("validated selected start")
-        .represented_point()?;
+        .point();
     let end = model
         .vertex(edge.end())
         .expect("validated selected end")
-        .represented_point()?;
+        .point();
     let curve = model.curve(edge.curve()).expect("validated selected curve");
-    let restricted_curve = curve.subcurve(
-        (edge.domain().start())
-            .try_real()
-            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-        (edge.domain().end())
-            .try_real()
-            .ok_or(crate::GeometryError::UnrepresentableParameter)?,
-    )?;
-    let restricted_curve = if regularize_to_planar {
-        restricted_curve
-            .canonical_line()?
-            .unwrap_or(restricted_curve)
-    } else {
-        restricted_curve
-    };
-    let restricted_domain = restricted_curve.domain().represented_domain()?;
+    // Keep a selected trim in its original canonical chart. The edge domain
+    // is already the authoritative restriction; no coefficients or endpoints
+    // need to be independently materialized to copy that exact edge.
+    let (mut restricted_curve, mut restricted_domain, mut scale, mut offset) =
+        if let Some((start, end)) = edge.domain().try_real_endpoints() {
+            let restricted = curve.subcurve(start, end)?;
+            let domain = restricted.domain().clone();
+            let (a, b) = domain
+                .try_real_endpoints()
+                .ok_or(GeometryError::UnrepresentableParameter)?;
+            let scale = ((b - a) / (end - start)).map_err(GeometryError::Numeric)?;
+            let offset = a - &scale * start;
+            (restricted, domain, scale, offset)
+        } else {
+            (
+                curve.clone(),
+                edge.domain().clone(),
+                Real::one(),
+                Real::zero(),
+            )
+        };
+    if regularize_to_planar
+        && restricted_domain.try_real_endpoints().is_some()
+        && let Some(line) = restricted_curve.canonical_line()?
+    {
+        restricted_curve = line;
+        restricted_domain = restricted_curve.domain().clone();
+        let (start, end) = edge
+            .domain()
+            .try_real_endpoints()
+            .expect("represented source above");
+        let (a, b) = restricted_domain
+            .try_real_endpoints()
+            .ok_or(GeometryError::UnrepresentableParameter)?;
+        scale = ((b - a) / (end - start)).map_err(GeometryError::Numeric)?;
+        offset = a - &scale * start;
+    }
     let cross_matchable = selected_edge_uses
         .get(&(is_first, source_edge_id))
         .is_some_and(|uses| *uses == 1);
@@ -2868,34 +2928,91 @@ fn copy_or_match_selected_edge(
             }
             if curve_domains_certify_same_parameterization(
                 &restricted_curve,
-                &(&restricted_domain).into(),
+                &restricted_domain,
                 &candidate.curve,
-                &(&candidate.domain).into(),
+                &candidate.domain,
             ) {
-                let mapped = (candidate.id, false, candidate.domain.clone());
+                let mapped = StitchedEdgeTransfer {
+                    id: candidate.id,
+                    reversed: false,
+                    domain: candidate.domain.clone(),
+                    scale: scale.clone(),
+                    offset: offset.clone(),
+                };
                 source_edges.insert((is_first, source_edge_id), mapped.clone());
                 return Ok(mapped);
             }
             let reversed_curve = restricted_curve.reversed()?;
+            let reversed_domain = restricted_domain
+                .affine_image(&-Real::one(), &restricted_curve.reversal_pivot())?;
             if curve_domains_certify_same_parameterization(
                 &reversed_curve,
-                &(&restricted_domain).into(),
+                &reversed_domain,
                 &candidate.curve,
-                &(&candidate.domain).into(),
+                &candidate.domain,
             ) {
-                let mapped = (candidate.id, true, candidate.domain.clone());
+                let mapped = StitchedEdgeTransfer {
+                    id: candidate.id,
+                    reversed: true,
+                    domain: candidate.domain.clone(),
+                    scale: -&scale,
+                    offset: restricted_curve.reversal_pivot() - &offset,
+                };
                 source_edges.insert((is_first, source_edge_id), mapped.clone());
                 return Ok(mapped);
             }
-            let same = points_certifiably_equal(start, &candidate.start)
-                && points_certifiably_equal(end, &candidate.end);
-            let reversed = points_certifiably_equal(start, &candidate.end)
-                && points_certifiably_equal(end, &candidate.start);
+            let same =
+                start.coincides_with(&candidate.start)? && end.coincides_with(&candidate.end)?;
+            let reversed =
+                start.coincides_with(&candidate.end)? && end.coincides_with(&candidate.start)?;
+            if (same || reversed)
+                && let Some((factor, translation)) =
+                    restricted_curve.affine_parameter_map_to(&candidate.curve)?
+            {
+                let mapped_domain = restricted_domain.affine_image(&factor, &translation)?;
+                if mapped_domain.start().compare(candidate.domain.start())? == Ordering::Equal
+                    && mapped_domain.end().compare(candidate.domain.end())? == Ordering::Equal
+                {
+                    let reverse = exact_order(&factor, &Real::zero())? == Ordering::Less;
+                    if if reverse { reversed } else { same } {
+                        let mapped = StitchedEdgeTransfer {
+                            id: candidate.id,
+                            reversed: reverse,
+                            domain: candidate.domain.clone(),
+                            scale: &factor * &scale,
+                            offset: &factor * &offset + translation,
+                        };
+                        source_edges.insert((is_first, source_edge_id), mapped.clone());
+                        return Ok(mapped);
+                    }
+                }
+            }
             for reverse in [false, true] {
-                if (if reverse { reversed } else { same })
+                if restricted_domain.try_real_endpoints().is_some()
+                    && candidate.domain.try_real_endpoints().is_some()
+                    && (if reverse { reversed } else { same })
                     && exact_edge_curve_equal(&restricted_curve, &candidate.curve, reverse)?
                 {
-                    let mapped = (candidate.id, reverse, candidate.domain.clone());
+                    let (a, b) = restricted_domain
+                        .try_real_endpoints()
+                        .expect("represented above");
+                    let (c, d) = candidate
+                        .domain
+                        .try_real_endpoints()
+                        .expect("represented above");
+                    let factor = ((d - c) / (b - a)).map_err(GeometryError::Numeric)?;
+                    let (new_scale, new_offset) = if reverse {
+                        (-&factor * &scale, d - &factor * (&offset - a))
+                    } else {
+                        (&factor * &scale, c + &factor * (&offset - a))
+                    };
+                    let mapped = StitchedEdgeTransfer {
+                        id: candidate.id,
+                        reversed: reverse,
+                        domain: candidate.domain.clone(),
+                        scale: new_scale,
+                        offset: new_offset,
+                    };
                     source_edges.insert((is_first, source_edge_id), mapped.clone());
                     return Ok(mapped);
                 }
@@ -2904,20 +3021,22 @@ fn copy_or_match_selected_edge(
     }
     let start_id = copy_or_match_vertex(start, builder, vertices)?;
     let end_id = copy_or_match_vertex(end, builder, vertices)?;
-    let curve_id = builder
-        .curve(restricted_curve.clone())
-        .map_err(ConstructionError::from)?;
+    let curve_id = if let Some(source) = stitched_edges
+        .iter()
+        .find(|source| source.curve.shares_identity(&restricted_curve))
+    {
+        source.curve_id
+    } else {
+        builder
+            .curve(restricted_curve.clone())
+            .map_err(ConstructionError::from)?
+    };
     let id = builder
-        .edge_with_endpoint_certificate(
-            start_id,
-            end_id,
-            curve_id,
-            (restricted_domain.clone()).into(),
-            true,
-        )
+        .edge_with_endpoint_certificate(start_id, end_id, curve_id, restricted_domain.clone(), true)
         .map_err(ConstructionError::from)?;
     stitched_edges.push(StitchedEdge {
         id,
+        curve_id,
         start: start.clone(),
         end: end.clone(),
         curve: restricted_curve,
@@ -2925,7 +3044,13 @@ fn copy_or_match_selected_edge(
         is_first,
         cross_matchable,
     });
-    let mapped = (id, false, restricted_domain);
+    let mapped = StitchedEdgeTransfer {
+        id,
+        reversed: false,
+        domain: restricted_domain,
+        scale,
+        offset,
+    };
     source_edges.insert((is_first, source_edge_id), mapped.clone());
     Ok(mapped)
 }
@@ -3013,17 +3138,17 @@ fn exact_edge_curve_equal(
 }
 
 fn copy_or_match_vertex(
-    point: &Point3,
+    point: &crate::GeometricPoint3,
     builder: &mut ArenaModelBuilder,
-    vertices: &mut Vec<(Point3, crate::VertexId)>,
+    vertices: &mut Vec<(crate::GeometricPoint3, crate::VertexId)>,
 ) -> Result<crate::VertexId, BooleanError> {
     for (candidate, id) in vertices.iter() {
-        if points_exactly_equal(point, candidate)? {
+        if point.coincides_with(candidate)? {
             return Ok(*id);
         }
     }
     let id = builder
-        .vertex((point.clone()).into())
+        .vertex(point.clone())
         .map_err(ConstructionError::from)?;
     vertices.push((point.clone(), id));
     Ok(id)
@@ -3567,28 +3692,68 @@ fn trim_face_pair_intersection(
         Classification::Decided(None) => return Ok(FacePairTrim::NoCurveInterior),
         Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
     };
-    let first_fragments =
-        match trim_segment_to_planar_face(first_model, first_face, &span_start, &span_end)? {
-            Classification::Decided(fragments) => fragments,
-            Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
-        };
-    if first_fragments.is_empty() {
-        return Ok(FacePairTrim::NoCurveInterior);
-    }
-    let mut common_fragments = Vec::new();
-    for fragment in first_fragments {
-        let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
-        let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
-        match trim_segment_to_planar_face(second_model, second_face, &start, &end)? {
-            Classification::Decided(fragments) => common_fragments.extend(fragments),
-            Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+    let native = (|| -> Result<FacePairTrim, GeometryError> {
+        let first_fragments =
+            match trim_segment_to_planar_face(first_model, first_face, &span_start, &span_end)? {
+                Classification::Decided(fragments) => fragments,
+                Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+            };
+        if first_fragments.is_empty() {
+            return Ok(FacePairTrim::NoCurveInterior);
         }
+        let mut common_fragments = Vec::new();
+        for fragment in first_fragments {
+            let start = fragment.evaluate_real(fragment.domain().represented_start()?)?;
+            let end = fragment.evaluate_real(fragment.domain().represented_end()?)?;
+            match trim_segment_to_planar_face(second_model, second_face, &start, &end)? {
+                Classification::Decided(fragments) => common_fragments.extend(fragments),
+                Classification::Uncertain(reason) => return Ok(FacePairTrim::Unresolved(reason)),
+            }
+        }
+        Ok(if common_fragments.is_empty() {
+            FacePairTrim::NoCurveInterior
+        } else {
+            FacePairTrim::CurveFragments(common_fragments)
+        })
+    })();
+    match native {
+        Err(GeometryError::UnsupportedPcurveContour | GeometryError::UnrepresentableParameter) => {
+            let first_source = Curve2::from(LineSeg2::try_new(
+                project_to_plane(first_surface, &span_start)?,
+                project_to_plane(first_surface, &span_end)?,
+            )?);
+            let second_source = Curve2::from(LineSeg2::try_new(
+                project_to_plane(second_surface, &span_start)?,
+                project_to_plane(second_surface, &span_end)?,
+            )?);
+            let (u, v) = first_surface.plane_directions().expect("planar line pair");
+            let curve = Curve3::planar_image(
+                first_source.clone(),
+                first_surface
+                    .plane_origin()
+                    .expect("planar line pair")
+                    .clone(),
+                u.clone(),
+                v.clone(),
+            )?;
+            // The exact plane-plane intersection supplies the common line.
+            // Both plane charts and this line are affine in the same unit
+            // parameter, so their endpoint projections prove the whole image.
+            let retained = SurfaceIntersectionCurve::from_certified_exact_pcurves(
+                curve,
+                first_source,
+                second_source,
+            )?;
+            trim_retained_surface_curve(
+                first_model,
+                first_face,
+                second_model,
+                second_face,
+                &retained,
+            )
+        }
+        other => other,
     }
-    Ok(if common_fragments.is_empty() {
-        FacePairTrim::NoCurveInterior
-    } else {
-        FacePairTrim::CurveFragments(common_fragments)
-    })
 }
 
 fn trim_contained_surface_region(
@@ -4084,7 +4249,7 @@ fn push_contained_face_curve_fragments(
     };
     for interval in intervals {
         let fragment = candidate
-            .subcurve(&interval.start, &interval.end)?
+            .trimmed_interval(&interval.start, &interval.end)?
             .with_boundary_contacts(
                 SurfaceIntersectionOperand::First,
                 interval.start_contacts,
@@ -4320,9 +4485,17 @@ fn trim_surface_curve_in_authored_charts(
     let mut common = Vec::new();
     for first_interval in &first {
         for second_interval in &second {
-            let start = exact_max(&first_interval.start, &second_interval.start)?;
-            let end = exact_min(&first_interval.end, &second_interval.end)?;
-            if exact_order(&start, &end)? == Ordering::Less {
+            let start = if first_interval.start.compare(&second_interval.start)? == Ordering::Less {
+                second_interval.start.clone()
+            } else {
+                first_interval.start.clone()
+            };
+            let end = if first_interval.end.compare(&second_interval.end)? == Ordering::Greater {
+                second_interval.end.clone()
+            } else {
+                first_interval.end.clone()
+            };
+            if start.compare(&end)? == Ordering::Less {
                 common.push(CommonRetainedParameterInterval {
                     first_start_contacts: contacts_at_interval_start(first_interval, &start)?,
                     first_end_contacts: contacts_at_interval_end(first_interval, &end)?,
@@ -4339,7 +4512,7 @@ fn trim_surface_curve_in_authored_charts(
         .map(
             |interval| -> Result<SurfaceIntersectionCurve, GeometryError> {
                 Ok(intersection
-                    .subcurve(&interval.start, &interval.end)?
+                    .trimmed_interval(&interval.start, &interval.end)?
                     .with_boundary_contacts(
                         SurfaceIntersectionOperand::First,
                         interval.first_start_contacts,
@@ -4362,16 +4535,16 @@ fn trim_surface_curve_in_authored_charts(
 
 #[derive(Clone, Debug)]
 struct FaceRetainedParameterInterval {
-    start: Real,
-    end: Real,
+    start: crate::Parameter,
+    end: crate::Parameter,
     start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
     end_contacts: Vec<SurfaceIntersectionBoundaryContact>,
 }
 
 #[derive(Clone, Debug)]
 struct CommonRetainedParameterInterval {
-    start: Real,
-    end: Real,
+    start: crate::Parameter,
+    end: crate::Parameter,
     first_start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
     first_end_contacts: Vec<SurfaceIntersectionBoundaryContact>,
     second_start_contacts: Vec<SurfaceIntersectionBoundaryContact>,
@@ -4391,8 +4564,8 @@ fn retained_curve_face_intervals(
     if face_is_boundaryless(model, face) {
         return Ok(Classification::Decided(Some(vec![
             FaceRetainedParameterInterval {
-                start: spatial_domain.represented_start()?.clone(),
-                end: spatial_domain.represented_end()?.clone(),
+                start: spatial_domain.start().clone(),
+                end: spatial_domain.end().clone(),
                 start_contacts: Vec::new(),
                 end_contacts: Vec::new(),
             },
@@ -4420,7 +4593,7 @@ fn retained_curve_face_intervals(
             Err(error) => return Err(GeometryError::from(error)),
         };
         for fragment in trimmed {
-            let Some((pcurve_start, pcurve_end)) = (match fragment.represented_parameter_range() {
+            let represented = match fragment.represented_parameter_range() {
                 Some(range) => Some(range),
                 // A native polynomial branch's parameter is its abscissa: a
                 // selected end is certified from the branch's defining
@@ -4455,8 +4628,18 @@ fn retained_curve_face_intervals(
                     }
                     None => None,
                 },
-            }) else {
-                return Ok(Classification::Uncertain(UncertaintyReason::Unsupported));
+            };
+            let (pcurve_start, pcurve_end) = if let Some((start, end)) = represented {
+                (
+                    crate::Parameter::from_real(start),
+                    crate::Parameter::from_real(end),
+                )
+            } else {
+                let range = fragment.parameter_range()?;
+                (
+                    crate::Parameter::from_curve(range.start())?,
+                    crate::Parameter::from_curve(range.end())?,
+                )
             };
             // Hypercurve's closed-set trim proves the complete retained
             // interval, including positive-length boundary overlaps. A trace
@@ -4492,11 +4675,11 @@ fn retained_curve_face_intervals(
             )?;
             let mut end =
                 retained_spatial_parameter(&carrier, &pcurve_end, &end_contacts, spatial_curve)?;
-            if exact_order(&start, &end)? == Ordering::Greater {
+            if start.compare(&end)? == Ordering::Greater {
                 std::mem::swap(&mut start, &mut end);
                 std::mem::swap(&mut start_contacts, &mut end_contacts);
             }
-            if exact_order(&start, &end)? == Ordering::Less {
+            if start.compare(&end)? == Ordering::Less {
                 intervals.push(FaceRetainedParameterInterval {
                     start,
                     end,
@@ -4513,10 +4696,10 @@ fn retained_curve_face_intervals(
 
 fn retained_spatial_parameter(
     carrier: &crate::MaterializedSurfacePcurve,
-    parameter: &Real,
+    parameter: &crate::Parameter,
     contacts: &[SurfaceIntersectionBoundaryContact],
     spatial_curve: &Curve3,
-) -> Result<Real, GeometryError> {
+) -> Result<crate::Parameter, GeometryError> {
     if matches!(
         carrier.correspondence(),
         crate::SurfacePcurveCorrespondence::AngularSweep { .. }
@@ -4532,8 +4715,8 @@ fn retained_spatial_parameter(
         // the same complete native parameterization already carry their exact
         // spatial preimage; recovering it from independently expanded curve
         // coordinates discards that evidence and can needlessly fail.
-        if exact_order(parameter, start)? != Ordering::Equal
-            && exact_order(parameter, end)? != Ordering::Equal
+        if parameter.compare(&start.clone().into())? != Ordering::Equal
+            && parameter.compare(&end.clone().into())? != Ordering::Equal
         {
             for contact in contacts {
                 if contact
@@ -4541,21 +4724,20 @@ fn retained_spatial_parameter(
                     .has_certified_same_parameterization(spatial_curve)
                 {
                     let lifts = crate::geometry::angular_parameter_lifts(
-                        contact.parameter(),
+                        contact
+                            .parameter()
+                            .try_real()
+                            .ok_or(GeometryError::UnrepresentableParameter)?,
                         &spatial_curve.domain().represented_domain()?,
                     )?;
                     if let [lift] = lifts.as_slice() {
-                        return Ok(lift.clone());
+                        return Ok(lift.clone().into());
                     }
                 }
             }
         }
     }
-    carrier
-        .spatial_parameter_at(&parameter.clone().into())?
-        .try_real()
-        .cloned()
-        .ok_or(GeometryError::UnrepresentableParameter)
+    carrier.spatial_parameter_at(&parameter.curve_parameter())
 }
 
 fn model_boundary_contacts(
@@ -4569,32 +4751,8 @@ fn model_boundary_contacts(
     let face = model.face(face_id).expect("validated trim face");
     let mut translated = Vec::with_capacity(contacts.len());
     for contact in contacts {
-        // A selected contact on a polynomial carrier is certified as an exact
-        // scalar point from the carrier's defining polynomial.
-        let certified;
-        let pcurve_point = match contact.point().and_then(|point| point.coordinates()) {
-            Some(point) => point,
-            None => {
-                let Some(selected) = contact.point() else {
-                    return Ok(None);
-                };
-                // A mapped branch's selected contact is certified in its
-                // source chart and carried through its exact view.
-                let point = match (defining, mapped) {
-                    (Some(defining), _) => {
-                        crate::geometry::certified_scalar_point(selected, defining)?
-                    }
-                    (None, Some(branch)) => {
-                        crate::geometry::certified_branch_point(selected, branch)?
-                    }
-                    (None, None) => None,
-                };
-                let Some(point) = point else {
-                    return Ok(None);
-                };
-                certified = point;
-                &certified
-            }
+        let Some(selected) = contact.point() else {
+            return Ok(None);
         };
         let canonical_coordinate = |coordinate: &Real| {
             coordinate
@@ -4602,23 +4760,38 @@ fn model_boundary_contacts(
                 .map(Real::new)
                 .unwrap_or_else(|| coordinate.clone())
         };
-        let pcurve_point = hypercurve::Point2::new(
-            canonical_coordinate(pcurve_point.x()),
-            canonical_coordinate(pcurve_point.y()),
-        );
-        let point = crate::Point2::new(pcurve_point.x().clone(), pcurve_point.y().clone());
+        // A useful native view is retained when it can be proved. Otherwise
+        // carry the complete selected UV point; materialization is optional.
+        let represented = if let Some(point) = selected.coordinates() {
+            Some(point.clone())
+        } else {
+            match (defining, mapped) {
+                (Some(defining), _) => crate::geometry::certified_scalar_point(selected, defining)?,
+                (None, Some(branch)) => crate::geometry::certified_branch_point(selected, branch)?,
+                (None, None) => None,
+            }
+        };
+        let pcurve_point: hypercurve::CurvePoint2 = match represented {
+            Some(point) => hypercurve::Point2::new(
+                canonical_coordinate(point.x()),
+                canonical_coordinate(point.y()),
+            )
+            .into(),
+            None => selected.clone(),
+        };
         let surface = model
             .surface(face.surface())
             .expect("validated trim face surface");
-        let spatial_point = surface.evaluate_real(&crate::Point2::new(
-            pcurve_point.x().clone(),
-            pcurve_point.y().clone(),
-        ))?;
-        let spatial_point = Point3::new(
-            canonical_coordinate(&spatial_point.x),
-            canonical_coordinate(&spatial_point.y),
-            canonical_coordinate(&spatial_point.z),
-        );
+        let spatial_point = surface.point_at(&pcurve_point)?;
+        let spatial_point = match spatial_point.try_coordinates() {
+            Some(point) => Point3::new(
+                canonical_coordinate(&point.x),
+                canonical_coordinate(&point.y),
+                canonical_coordinate(&point.z),
+            )
+            .into(),
+            None => spatial_point,
+        };
         // Native region preparation may reverse, subdivide, coalesce or
         // reorder authored boundaries. Its fragment/contour indices identify
         // that prepared region, never the original BREP edge-use arena.
@@ -4637,7 +4810,7 @@ fn model_boundary_contacts(
                 let pcurve = model
                     .pcurve(edge_use.pcurve())
                     .expect("validated boundary pcurve");
-                for parameter in pcurve.parameters_at_point(&point)? {
+                for parameter in pcurve.parameters_at_point(&pcurve_point)? {
                     let observed_parameter = model
                         .edge_parameter_at(edge_use_id, &parameter)
                         .map_err(|error| match error {
@@ -4653,10 +4826,6 @@ fn model_boundary_contacts(
                         .curve(edge.curve())
                         .expect("validated boundary curve")
                         .clone();
-                    let observed_parameter = observed_parameter
-                        .try_real()
-                        .ok_or(GeometryError::UnrepresentableParameter)?
-                        .clone();
                     let affine_parameter = edge_use
                         .parameter_correspondence()
                         .affine_coefficients()
@@ -4668,12 +4837,16 @@ fn model_boundary_contacts(
                                 .is_some_and(|surface| surface.kind() == crate::SurfaceKind::Plane)
                         })
                         .map(|_| observed_parameter.clone());
-                    let edge_parameter = match canonical_surface {
-                        Some(surface) => {
-                            canonical_surface_edge_parameter(surface, &curve, &observed_parameter)?
+                    let edge_parameter = match (canonical_surface, observed_parameter.try_real()) {
+                        (Some(surface), Some(value)) => {
+                            canonical_surface_edge_parameter(surface, &curve, value)?
+                                .map(crate::Parameter::from_real)
                                 .unwrap_or(observed_parameter)
                         }
-                        None => observed_parameter,
+                        // The original boundary inverse and edge correspondence
+                        // already identify this contact. Both pcurve images of
+                        // the intersection carry the canonical-surface proof.
+                        _ => observed_parameter,
                     };
                     translated.push(SurfaceIntersectionBoundaryContact::new(
                         curve,
@@ -4801,28 +4974,24 @@ mod retained_plane_contact_tests {
 
 fn contacts_at_interval_start(
     interval: &FaceRetainedParameterInterval,
-    parameter: &Real,
+    parameter: &crate::Parameter,
 ) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
-    Ok(
-        if exact_order(parameter, &interval.start)? == Ordering::Equal {
-            interval.start_contacts.clone()
-        } else {
-            Vec::new()
-        },
-    )
+    Ok(if parameter.compare(&interval.start)? == Ordering::Equal {
+        interval.start_contacts.clone()
+    } else {
+        Vec::new()
+    })
 }
 
 fn contacts_at_interval_end(
     interval: &FaceRetainedParameterInterval,
-    parameter: &Real,
+    parameter: &crate::Parameter,
 ) -> Result<Vec<SurfaceIntersectionBoundaryContact>, GeometryError> {
-    Ok(
-        if exact_order(parameter, &interval.end)? == Ordering::Equal {
-            interval.end_contacts.clone()
-        } else {
-            Vec::new()
-        },
-    )
+    Ok(if parameter.compare(&interval.end)? == Ordering::Equal {
+        interval.end_contacts.clone()
+    } else {
+        Vec::new()
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -5261,7 +5430,7 @@ fn coalesce_face_parameter_intervals(
     for interval in intervals {
         let mut insertion = ordered.len();
         while insertion > 0
-            && exact_order(&interval.start, &ordered[insertion - 1].start)? == Ordering::Less
+            && interval.start.compare(&ordered[insertion - 1].start)? == Ordering::Less
         {
             insertion -= 1;
         }
@@ -5273,17 +5442,17 @@ fn coalesce_face_parameter_intervals(
             coalesced.push(interval);
             continue;
         };
-        let start_order = exact_order(&interval.start, &previous.end)?;
+        let start_order = interval.start.compare(&previous.end)?;
         if start_order == Ordering::Greater {
             coalesced.push(interval);
             continue;
         }
-        if exact_order(&interval.start, &previous.start)? == Ordering::Equal {
+        if interval.start.compare(&previous.start)? == Ordering::Equal {
             previous
                 .start_contacts
                 .extend(interval.start_contacts.clone());
         }
-        match exact_order(&interval.end, &previous.end)? {
+        match interval.end.compare(&previous.end)? {
             Ordering::Greater => {
                 previous.end = interval.end;
                 previous.end_contacts = interval.end_contacts;
@@ -5302,7 +5471,7 @@ fn coalesce_common_parameter_intervals(
     for interval in intervals {
         let mut insertion = ordered.len();
         while insertion > 0
-            && exact_order(&interval.start, &ordered[insertion - 1].start)? == Ordering::Less
+            && interval.start.compare(&ordered[insertion - 1].start)? == Ordering::Less
         {
             insertion -= 1;
         }
@@ -5314,11 +5483,11 @@ fn coalesce_common_parameter_intervals(
             coalesced.push(interval);
             continue;
         };
-        if exact_order(&interval.start, &previous.end)? == Ordering::Greater {
+        if interval.start.compare(&previous.end)? == Ordering::Greater {
             coalesced.push(interval);
             continue;
         }
-        if exact_order(&interval.start, &previous.start)? == Ordering::Equal {
+        if interval.start.compare(&previous.start)? == Ordering::Equal {
             previous
                 .first_start_contacts
                 .extend(interval.first_start_contacts.clone());
@@ -5326,7 +5495,7 @@ fn coalesce_common_parameter_intervals(
                 .second_start_contacts
                 .extend(interval.second_start_contacts.clone());
         }
-        match exact_order(&interval.end, &previous.end)? {
+        match interval.end.compare(&previous.end)? {
             Ordering::Greater => {
                 previous.end = interval.end;
                 previous.first_end_contacts = interval.first_end_contacts;
@@ -5451,7 +5620,7 @@ fn coplanar_boundary_split_traces(
                         for interval in intervals {
                             traces.push(
                                 retained
-                                    .subcurve(&interval.start, &interval.end)?
+                                    .trimmed_interval(&interval.start, &interval.end)?
                                     .with_boundary_contacts(
                                         target_operand,
                                         interval.start_contacts,
@@ -6485,10 +6654,9 @@ fn contained_solid_difference(
     inner_solid: SolidId,
 ) -> Result<ArenaBooleanResult, BooleanError> {
     let mut builder = ArenaModelBuilder::new();
-    let mut vertices = Vec::<(Point3, crate::VertexId)>::new();
+    let mut vertices = Vec::<(crate::GeometricPoint3, crate::VertexId)>::new();
     let mut edges = Vec::<StitchedEdge>::new();
-    let mut source_edges =
-        BTreeMap::<(bool, crate::EdgeId), (crate::EdgeId, bool, crate::ParameterDomain)>::new();
+    let mut source_edges = BTreeMap::<(bool, crate::EdgeId), StitchedEdgeTransfer>::new();
     let mut source_surfaces = BTreeMap::<(bool, crate::SurfaceId), crate::SurfaceId>::new();
     let selected_edge_uses = BTreeMap::new();
     let mut outer_faces = Vec::new();
@@ -7722,6 +7890,539 @@ mod tests {
     }
 
     #[test]
+    fn scalar_trim_parameters_do_not_authorize_a_different_surface_chart() {
+        use hypersolve::bivariate_topology::{
+            BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
+        };
+        let polynomial = |rows: Vec<Vec<i32>>| {
+            hypersolve::BivariatePolynomial::new(
+                rows.into_iter()
+                    .map(|row| row.into_iter().map(Real::from).collect())
+                    .collect(),
+            )
+        };
+        let branch = |equation| {
+            let topology = decompose_bivariate_curve(
+                &equation,
+                &BivariateCurveDomain {
+                    first: [0.into(), 1.into()],
+                    second: [0.into(), 1.into()],
+                },
+                BivariateTopologyConfig::default(),
+            )
+            .unwrap();
+            hypercurve::PolynomialCurveSet2::from_topology(
+                topology,
+                hypersolve::AlgebraicFiberRootIsolationConfig::default(),
+            )
+            .unwrap()
+            .curves()[0]
+                .clone()
+        };
+        // Two regular graph arcs enclose a lens. Their endpoints have rational
+        // abscissas and nonradical ordinates, while both parameter domains are
+        // the represented interval [0,1].
+        let lower = branch(polynomial(vec![vec![-1, 10, 0, 0, 0, 10], vec![-1]]));
+        let upper = branch(polynomial(vec![
+            vec![-1, 10, 0, 0, 0, 10],
+            vec![-2],
+            vec![1],
+        ]));
+        let lower3 = Curve3::planar_image(
+            lower.clone(),
+            Point3::origin(),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let upper3 = Curve3::planar_image(
+            upper.clone(),
+            Point3::origin(),
+            crate::Vector3::x(),
+            crate::Vector3::y(),
+        )
+        .unwrap();
+        let mut builder = ArenaModelBuilder::new();
+        let start = builder
+            .vertex(lower3.point_at(lower3.domain().start()).unwrap())
+            .unwrap();
+        let end = builder
+            .vertex(lower3.point_at(lower3.domain().end()).unwrap())
+            .unwrap();
+        let mut uses = Vec::new();
+        for (curve, pcurve, direction) in [
+            (lower3, lower, crate::Direction::Forward),
+            (
+                upper3,
+                upper.reversed().unwrap(),
+                crate::Direction::Reversed,
+            ),
+        ] {
+            let domain = curve.domain().clone();
+            let curve = builder.curve(curve).unwrap();
+            let edge = builder.edge(start, end, curve, domain).unwrap();
+            let pcurve = builder.pcurve(crate::Pcurve::new(pcurve)).unwrap();
+            uses.push(
+                builder
+                    .edge_use(
+                        edge,
+                        direction,
+                        pcurve,
+                        crate::ParameterCorrespondence::identity(),
+                    )
+                    .unwrap(),
+            );
+        }
+        let wire = builder.wire(uses).unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        let surface = Surface::rational_bezier(
+            (0..3)
+                .map(|j| {
+                    (0..3)
+                        .map(|i| {
+                            Point3::new(Real::from(i) * &half, Real::from(j) * &half, 0.into())
+                        })
+                        .collect()
+                })
+                .collect(),
+            vec![vec![Real::one(); 3]; 3],
+        )
+        .unwrap();
+        let surface_id = builder.surface(surface.clone()).unwrap();
+        let face = builder
+            .face(surface_id, crate::Orientation::Forward, wire, Vec::new())
+            .unwrap();
+        builder.shell(vec![face]).unwrap();
+        let source = builder.finish().unwrap();
+        crate::ImportedModel::from_json(
+            &source.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+        assert!(
+            source
+                .edges()
+                .all(|(_, edge)| edge.domain().try_real_endpoints().is_some())
+        );
+        assert!(
+            source
+                .vertices()
+                .all(|(_, vertex)| vertex.point().try_coordinates().is_none())
+        );
+        let preserve = face_requires_retained_surface_chart(&source, face);
+        let target = if preserve {
+            surface.clone()
+        } else {
+            surface.canonical_plane().unwrap().unwrap()
+        };
+        let mut builder = ArenaModelBuilder::new();
+        let (copied, _) = copy_selected_wire(
+            &source,
+            wire,
+            true,
+            false,
+            &mut builder,
+            &mut Vec::new(),
+            &mut Vec::new(),
+            &mut BTreeMap::new(),
+            &BTreeMap::new(),
+            (target.kind() == crate::SurfaceKind::Plane).then_some(&target),
+            !preserve,
+        )
+        .unwrap();
+        let target_id = builder.surface(target).unwrap();
+        let face = builder
+            .face(target_id, crate::Orientation::Forward, copied, Vec::new())
+            .unwrap();
+        builder.shell(vec![face]).unwrap();
+        let result = builder.finish().unwrap();
+        let usage = result.edge_uses().next().unwrap().1;
+        let edge = result.edge(usage.edge()).unwrap();
+        let parameter = crate::Parameter::from_real(half.clone());
+        let spatial = result
+            .curve(edge.curve())
+            .unwrap()
+            .point_at(&parameter)
+            .unwrap();
+        assert_eq!(
+            spatial
+                .compare_linear_form(&crate::Vector3::x(), &half)
+                .unwrap(),
+            Ordering::Equal
+        );
+        let uv = result
+            .pcurve(usage.pcurve())
+            .unwrap()
+            .point_at(&parameter)
+            .unwrap();
+        let lifted = result.surface(target_id).unwrap().point_at(&uv).unwrap();
+        assert!(
+            spatial.coincides_with(&lifted).unwrap(),
+            "a different UV frame changed the exact world image"
+        );
+        let encoded = result.to_json().unwrap();
+        crate::ImportedModel::from_json(&encoded, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert!(
+            result
+                .surface(target_id)
+                .unwrap()
+                .has_same_tensor_definition(&surface)
+                .unwrap()
+        );
+        let edge = result.edges().next().unwrap().0;
+        let (split, _) = result.split_edge(edge, half.into()).unwrap();
+        crate::ImportedModel::from_json(
+            &split.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+    }
+
+    #[test]
+    fn selected_flat_tensor_trims_keep_their_surface_parameterization() {
+        let (model, _) = crate::construction::cuboid(p(0, 0, 0), p(1, 1, 1)).unwrap();
+        let (face, surface_id, plane) = model
+            .faces()
+            .find_map(|(id, face)| {
+                let surface = model.surface(face.surface()).unwrap();
+                (surface.plane_origin() == Some(&p(0, 0, 1))).then_some((
+                    id,
+                    face.surface(),
+                    surface.clone(),
+                ))
+            })
+            .unwrap();
+        let origin = plane.plane_origin().unwrap();
+        let (u, v) = plane.plane_directions().unwrap();
+        // Degree elevation preserves S(u,v), but the canonical support-plane
+        // frame uses the first control spacing, half the original u direction.
+        let controls: Vec<Vec<[Real; 3]>> = (0..3)
+            .map(|j| {
+                (0..3)
+                    .map(|i| {
+                        let point = origin.clone()
+                            + u.clone() * (Real::from(i) / Real::from(2)).unwrap()
+                            + v.clone() * (Real::from(j) / Real::from(2)).unwrap();
+                        [point.x, point.y, point.z]
+                    })
+                    .collect()
+            })
+            .collect();
+        let mut raw: serde_json::Value = serde_json::from_str(&model.to_json().unwrap()).unwrap();
+        raw["surfaces"][surface_id.index()] = serde_json::json!({"RationalBezier": {
+            "control_points":controls, "weights":vec![vec![Real::one();3];3]
+        }});
+        // Preserve the elevated native iso-curve definitions at all four
+        // sides; adjacent planar faces carry the same affine quadratic law.
+        for usage in model
+            .wire(model.face(face).unwrap().outer().unwrap())
+            .unwrap()
+            .edge_uses()
+        {
+            let edge = model.edge(model.edge_use(*usage).unwrap().edge()).unwrap();
+            let source = model.curve(edge.curve()).unwrap();
+            let [a, b] = [Real::zero(), Real::one()].map(|t| source.evaluate_real(&t).unwrap());
+            let middle = a.clone() + (&b - &a) * (Real::one() / Real::from(2)).unwrap();
+            raw["curves"][edge.curve().index()] = serde_json::json!({"RationalBezier": {
+                "control_points":[[a.x,a.y,a.z],[middle.x,middle.y,middle.z],[b.x,b.y,b.z]],
+                "weights":vec![Real::one();3]
+            }});
+            for (id, other) in model
+                .edge_uses()
+                .filter(|(_, other)| other.edge() == model.edge_use(*usage).unwrap().edge())
+            {
+                if id == *usage {
+                    continue;
+                }
+                let line = model
+                    .pcurve(other.pcurve())
+                    .unwrap()
+                    .line_segment()
+                    .unwrap();
+                let a = line.start();
+                let b = line.end();
+                let middle = hypercurve::Point2::new(
+                    ((a.x() + b.x()) / Real::from(2)).unwrap(),
+                    ((a.y() + b.y()) / Real::from(2)).unwrap(),
+                );
+                raw["pcurves"][other.pcurve().index()] = serde_json::json!({"RationalBezier": {
+                    "homogeneous_controls":[[a.x(),a.y(),&Real::one()],
+                        [middle.x(),middle.y(),&Real::one()],[b.x(),b.y(),&Real::one()]]
+                }});
+            }
+        }
+        let model =
+            crate::ImportedModel::from_json(&raw.to_string(), &crate::ArchiveLimits::default())
+                .unwrap()
+                .validate()
+                .unwrap();
+        let edge = model
+            .edge_use(
+                model
+                    .wire(model.face(face).unwrap().outer().unwrap())
+                    .unwrap()
+                    .edge_uses()[0],
+            )
+            .unwrap()
+            .edge();
+        let roots = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+            [-1, 1, 0, 0, 0, 1].into_iter().map(Real::from).collect(),
+        )
+        .unwrap()
+        .isolate_unit_interval_roots()
+        .unwrap();
+        let alpha = crate::Parameter::from_curve(&roots[0].clone().into()).unwrap();
+        let (model, _) = model.split_edge(edge, alpha.clone()).unwrap();
+        let mut builder = ArenaModelBuilder::new();
+        let copied = copy_selected_face(
+            &model,
+            face,
+            true,
+            false,
+            &mut builder,
+            &mut Vec::new(),
+            &mut Vec::new(),
+            &mut BTreeMap::new(),
+            &mut BTreeMap::new(),
+            &BTreeMap::new(),
+            true,
+        )
+        .unwrap();
+        builder.shell(vec![copied.id]).unwrap();
+        let output = builder.finish().unwrap();
+        let target = output
+            .surface(output.face(copied.id).unwrap().surface())
+            .unwrap();
+        let original = model.surface(model.face(face).unwrap().surface()).unwrap();
+        assert!(target.has_same_tensor_definition(original).unwrap());
+        let parameter: hypercurve::CurvePoint2 =
+            hypercurve::Point2::new((Real::one() / Real::from(2)).unwrap(), Real::zero()).into();
+        assert!(
+            target
+                .point_at(&parameter)
+                .unwrap()
+                .coincides_with(&original.point_at(&parameter).unwrap())
+                .unwrap(),
+            "an inherited pcurve requires the original surface parameterization"
+        );
+        let cold = crate::ImportedModel::from_json(
+            &output.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+        let next = alpha
+            .affine_image(&(Real::one() / Real::from(2)).unwrap(), &Real::zero())
+            .unwrap();
+        let selected = cold
+            .edges()
+            .find(|(_, edge)| {
+                edge.domain().start().compare(&Real::zero().into()).unwrap() == Ordering::Equal
+                    && edge.domain().end().compare(&alpha).unwrap() == Ordering::Equal
+            })
+            .unwrap()
+            .0;
+        let (again, _) = cold.split_edge(selected, next).unwrap();
+        crate::ImportedModel::from_json(
+            &again.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+        // The full reconstruction target previously stopped at selected native
+        // rational inverses during atomization. Keep it beside the face-level
+        // frame regression, then consume its cold-replayed result again.
+        let (container, container_solid) =
+            crate::construction::cuboid(p(-1, -1, -1), p(2, 2, 2)).unwrap();
+        let source_solid = model.solids().next().unwrap().0;
+        let graph = intersection_graph(&model, source_solid, &container, container_solid).unwrap();
+        let ArenaBooleanResult::Solid {
+            model: reconstructed,
+            solid,
+        } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("one exact cube");
+        };
+        let half = (Real::one() / Real::from(2)).unwrap();
+        assert_eq!(
+            reconstructed
+                .classify_point(
+                    solid,
+                    &Point3::new(half.clone(), half.clone(), half.clone())
+                )
+                .unwrap(),
+            SolidPointLocation::Inside
+        );
+        assert_eq!(
+            reconstructed.classify_point(solid, &p(-1, 0, 0)).unwrap(),
+            SolidPointLocation::Outside
+        );
+        assert_eq!(
+            reconstructed.classify_point(solid, &p(0, 0, 1)).unwrap(),
+            SolidPointLocation::Boundary
+        );
+        for (edge, _) in reconstructed.edges() {
+            assert_eq!(
+                reconstructed
+                    .edge_uses()
+                    .filter(|(_, usage)| usage.edge() == edge)
+                    .count(),
+                2
+            );
+        }
+        let reconstructed = crate::ImportedModel::from_json(
+            &reconstructed.to_json().unwrap(),
+            &crate::ArchiveLimits::default(),
+        )
+        .unwrap()
+        .validate()
+        .unwrap();
+        let (slab, slab_solid) = crate::construction::cuboid(
+            p(-1, -1, -1),
+            Point3::new(half.clone(), 2.into(), 2.into()),
+        )
+        .unwrap();
+        let ArenaBooleanResult::Solid {
+            model: cut,
+            solid: cut_solid,
+        } = intersection(&reconstructed, solid, &slab, slab_solid).unwrap()
+        else {
+            panic!("one exact half cube");
+        };
+        let (expected, expected_solid) =
+            crate::construction::cuboid(p(0, 0, 0), Point3::new(half, 1.into(), 1.into())).unwrap();
+        assert!(matches!(
+            difference(&cut, cut_solid, &expected, expected_solid).unwrap(),
+            ArenaBooleanResult::Empty
+        ));
+        assert!(matches!(
+            difference(&expected, expected_solid, &cut, cut_solid).unwrap(),
+            ArenaBooleanResult::Empty
+        ));
+        crate::ImportedModel::from_json(&cut.to_json().unwrap(), &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+
+    #[test]
+    fn stitching_consumes_selected_points_and_trim_domains_after_replay() {
+        let (model, solid) = crate::construction::cuboid(p(0, 0, 0), p(2, 2, 2)).unwrap();
+        let (face, surface) = model
+            .faces()
+            .find_map(|(id, face)| {
+                let surface = model.surface(face.surface()).unwrap();
+                (surface.plane_origin() == Some(&p(0, 0, 2))).then_some((id, surface))
+            })
+            .unwrap();
+        let roots = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+            [-1, 1, 0, 0, 0, 1].into_iter().map(Real::from).collect(),
+        )
+        .unwrap()
+        .isolate_unit_interval_roots()
+        .unwrap();
+        let alpha: hypercurve::CurveParameter2 = roots[0].clone().into();
+        let uv = |y| {
+            Curve2::from(
+                LineSeg2::try_new(
+                    hypercurve::Point2::from_values(0, y),
+                    hypercurve::Point2::from_values(2, y),
+                )
+                .unwrap(),
+            )
+            .point_at(&alpha)
+            .unwrap()
+        };
+        let planar = Curve2::try_line(uv(0), uv(2)).unwrap();
+        let (u, v) = surface.plane_directions().unwrap();
+        let curve = Curve3::planar_image(
+            planar.clone(),
+            surface.plane_origin().unwrap().clone(),
+            u.clone(),
+            v.clone(),
+        )
+        .unwrap();
+        let expected = [
+            curve.point_at(curve.domain().start()).unwrap(),
+            curve.point_at(curve.domain().end()).unwrap(),
+        ];
+        let trace =
+            SurfaceIntersectionCurve::from_exact_pcurves(curve, planar.clone(), planar).unwrap();
+        let (split, _) = model
+            .split_face_by_surface_curve(face, &trace, SurfaceIntersectionOperand::First)
+            .unwrap();
+        let text = split.to_json().unwrap();
+        let cold = crate::ImportedModel::from_json(&text, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        let (container, container_solid) =
+            crate::construction::cuboid(p(-1, -1, -1), p(3, 3, 3)).unwrap();
+        let graph = intersection_graph(&cold, solid, &container, container_solid).unwrap();
+        let selection = graph
+            .select_first_faces(BooleanOperation::Intersection)
+            .unwrap();
+        let atoms = selected_edge_endpoints(&selection).unwrap();
+        assert!(!atoms.is_empty());
+        assert!(
+            selection
+                .model
+                .vertices()
+                .any(|(_, vertex)| vertex.point().try_coordinates().is_none())
+        );
+        let ArenaBooleanResult::Solid {
+            model: stitched,
+            solid,
+        } = graph
+            .stitch_selected_faces(BooleanOperation::Intersection)
+            .unwrap()
+        else {
+            panic!("one complete cube");
+        };
+        for point in &expected {
+            assert!(
+                stitched
+                    .vertices()
+                    .any(|(_, vertex)| vertex.point().coincides_with(point).unwrap())
+            );
+        }
+        for point in [p(1, 1, 1), p(1, 1, -1), p(3, 1, 1)] {
+            assert_eq!(
+                stitched.classify_point(solid, &point).unwrap(),
+                if point == p(1, 1, 1) {
+                    SolidPointLocation::Inside
+                } else {
+                    SolidPointLocation::Outside
+                }
+            );
+        }
+        let json = stitched.to_json().unwrap();
+        let replayed = crate::ImportedModel::from_json(&json, &crate::ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(replayed.to_json().unwrap(), json);
+        let graph = intersection_graph(&replayed, solid, &container, container_solid).unwrap();
+        assert!(matches!(
+            graph
+                .stitch_selected_faces(BooleanOperation::Intersection)
+                .unwrap(),
+            ArenaBooleanResult::Solid { .. }
+        ));
+    }
+
+    #[test]
     fn prism_frame_requires_exactly_parallel_axes() {
         let (model, solid) = crate::construction::cylinder(Real::from(1), Real::from(6)).unwrap();
         let rotation = |t: Real| {
@@ -7884,12 +8585,14 @@ mod tests {
                                 .unwrap();
                         assert!(!retained.is_empty());
                         for contact in retained {
-                            let replay =
-                                contact.curve().evaluate_real(contact.parameter()).unwrap();
+                            let replay = contact
+                                .curve()
+                                .evaluate_real(contact.parameter().try_real().unwrap())
+                                .unwrap();
                             assert_eq!(
                                 hyperlimit::point3_equal(
                                     &replay,
-                                    contact.spatial_point(),
+                                    contact.spatial_point().try_coordinates().unwrap(),
                                     crate::STRICT_PREDICATES
                                 )
                                 .value(),

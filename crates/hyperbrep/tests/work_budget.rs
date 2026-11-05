@@ -19,7 +19,7 @@ fn brep_parameter_location_retries_after_resource_exhaustion() {
     let curve = five_root_curve();
     let zero = OperationContext::strict(WorkBudget::ZERO);
     assert_eq!(zero.predicate_policy(), STRICT_PREDICATES);
-    let denied = zero.evaluate(|| curve.parameters_of(&Point3::origin()));
+    let denied = zero.evaluate(|| curve.parameters_of(Point3::origin()));
     assert_eq!(
         denied.result.unwrap_err(),
         BudgetExceeded {
@@ -34,7 +34,7 @@ fn brep_parameter_location_retries_after_resource_exhaustion() {
         refinements: 512,
         promotions: 0,
     });
-    let retry = enough.evaluate(|| curve.parameters_of(&Point3::origin()));
+    let retry = enough.evaluate(|| curve.parameters_of(Point3::origin()));
     assert!(retry.usage.refinements > 0);
     assert_eq!(retry.usage.promotions, 0);
     let CurveParameterLocation::Parameters(parameters) = retry.result.unwrap().unwrap() else {
@@ -56,7 +56,7 @@ fn nested_brep_queries_share_the_parent_allowance() {
         refinements: 512,
         promotions: 0,
     });
-    let single = enough.evaluate(|| curve.parameters_of(&Point3::origin()));
+    let single = enough.evaluate(|| curve.parameters_of(Point3::origin()));
     single.result.unwrap().unwrap();
     assert!(single.usage.refinements > 0);
     let parent = OperationContext::strict(WorkBudget {
@@ -64,10 +64,10 @@ fn nested_brep_queries_share_the_parent_allowance() {
         promotions: 0,
     });
     let attempted = parent.evaluate(|| {
-        let first = enough.evaluate(|| curve.parameters_of(&Point3::origin()));
+        let first = enough.evaluate(|| curve.parameters_of(Point3::origin()));
         first.result.unwrap().unwrap();
         assert_eq!(first.usage, single.usage);
-        let second = enough.evaluate(|| curve.parameters_of(&Point3::origin()));
+        let second = enough.evaluate(|| curve.parameters_of(Point3::origin()));
         assert!(second.result.is_err());
         // An ignored nested failure cannot publish success in the parent.
         42
@@ -89,9 +89,9 @@ fn a_smaller_child_can_fail_without_exhausting_its_parent() {
     });
     let attempted = parent.evaluate(|| {
         let child = OperationContext::strict(WorkBudget::ZERO)
-            .evaluate(|| curve.parameters_of(&Point3::origin()));
+            .evaluate(|| curve.parameters_of(Point3::origin()));
         assert!(child.result.is_err());
-        curve.parameters_of(&Point3::origin())
+        curve.parameters_of(Point3::origin())
     });
     assert!(attempted.usage.refinements > 0);
     assert!(matches!(

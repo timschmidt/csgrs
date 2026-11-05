@@ -4,7 +4,7 @@
 
 **Repository:** https://github.com/timschmidt/csgrs\
 **Inspected revision:** `3cca6a894858c8b98497a3cfe81cff5e17e1a7f2`, committed 24 October 2026\
-**Governing priority:** **exactness > completeness > performance > binary size > code size**
+**Governing priority:** **exactness > completeness > performance > memory use > binary size > code size**
 
 ## Read this first
 

@@ -265,6 +265,7 @@ fn main() {
                 .value;
         incidence_count = incidence_count.wrapping_add(black_box(match incidence {
             hypercurve::CurvePointLocations2::EntireCurve => 1,
+            hypercurve::CurvePointLocations2::Components(components) => components.len(),
             hypercurve::CurvePointLocations2::Locations(locations) => locations.len(),
         }));
     }

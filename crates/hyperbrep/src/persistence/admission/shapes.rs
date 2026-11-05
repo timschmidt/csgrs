@@ -412,6 +412,10 @@ impl Record for Surface {
 pub(super) enum Selection {
     PlanarPoint(Box<PlanarPoint>),
     Chord(Box<[PlanarPoint; 2]>),
+    PointOnChord {
+        chord: dependency_depth::Index,
+        point: Box<PlanarPoint>,
+    },
     RationalForm {
         point: Box<PlanarPoint>,
         numerator: Rows,
@@ -462,7 +466,7 @@ impl Record for Selection {
                     budget.geometry(polynomial.entries())?;
                 }
             }
-            Self::AffineForm { point } => {
+            Self::AffineForm { point } | Self::PointOnChord { point, .. } => {
                 budget.record()?;
                 point.admit(budget)?;
             }

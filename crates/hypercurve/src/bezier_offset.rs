@@ -4922,9 +4922,9 @@ pub(crate) struct BezierAlgebraicChordPairContact2 {
 /// Exact affine point defined by the unique nonparallel intersection of two
 /// retained algebraic chord supports.
 ///
-/// The point keeps the four endpoint fields separate.  Exact predicates use
-/// the certified side relations and refine only the coordinate boxes needed
-/// by a consumer; no primitive-element tower or rounded coordinate is stored.
+/// The point retains all four endpoint definitions. Exact predicates reuse
+/// certified sides, coordinate bounds and available joint selected fields.
+/// No primitive-element projection or rounded coordinate is required.
 #[derive(Clone, Debug)]
 pub(crate) struct BezierAlgebraicChordPairPoint2 {
     data: Arc<BezierAlgebraicChordPairPointData2>,
@@ -4942,6 +4942,8 @@ struct BezierAlgebraicChordPairPointData2 {
     /// cold three-support predicate actually needs them.
     recursive_support_lines: OnceLock<Arc<[BezierRecursiveQuadraticProjectivePoint2; 2]>>,
     recursive_point: OnceLock<BezierRecursiveQuadraticProjectivePoint2>,
+    selected_field_hint: OnceLock<bool>,
+    selected_point: OnceLock<Box<[crate::selected_field::Value; 2]>>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -8740,7 +8742,30 @@ pub(crate) fn affine_line_parameter_at_incident_point(
             return Ok(Classification::Decided(parameter));
         }
     }
-    recursive_line_parameter_at_incident_point(line, point, axis, direction, policy)
+    let recursive =
+        recursive_line_parameter_at_incident_point(line, point, axis, direction, policy)?;
+    if matches!(recursive, Classification::Uncertain(reason) if reason != UncertaintyReason::BudgetExhausted)
+        && point_retains_joint_field(point)
+    {
+        let (start, delta) = match axis {
+            Axis2::X => (line.start().x(), line.end().x() - line.start().x()),
+            Axis2::Y => (line.start().y(), line.end().y() - line.start().y()),
+        };
+        let scale = (Real::one() / delta)?;
+        let offset = -start * &scale;
+        let form = match axis {
+            Axis2::X => [scale, Real::zero(), offset],
+            Axis2::Y => [Real::zero(), scale, offset],
+        };
+        let selected = point_affine_form_parameter(point, &form, policy)?;
+        if !matches!(
+            selected,
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        ) {
+            return Ok(selected);
+        }
+    }
+    Ok(recursive)
 }
 
 /// The recursive projective form of an incident point's affine line

@@ -392,12 +392,13 @@ fn intersect_line_curve(
             )?,
         )
     };
-    let locations = match normal_image
-        .point_locations(&CurvePoint2::new(Real::zero(), Real::zero()).into())?
-    {
-        CurvePointLocations2::EntireCurve => return Err(GeometryError::UnsupportedIntersection),
-        CurvePointLocations2::Locations(locations) => locations,
-    };
+    let locations =
+        match normal_image.point_locations(&CurvePoint2::new(Real::zero(), Real::zero()).into())? {
+            CurvePointLocations2::EntireCurve | CurvePointLocations2::Components(_) => {
+                return Err(GeometryError::UnsupportedIntersection);
+            }
+            CurvePointLocations2::Locations(locations) => locations,
+        };
     let line_domain = line.domain();
     let curve_domain = curve.domain();
     let mut points = Vec::new();
@@ -760,7 +761,7 @@ fn intersect_planar_image_rational(
             None => {
                 let uv = projected.point_at(&contact.parameter.curve_parameter())?;
                 match materialized.curve.point_locations(&uv)? {
-                    CurvePointLocations2::EntireCurve => {
+                    CurvePointLocations2::EntireCurve | CurvePointLocations2::Components(_) => {
                         return Err(GeometryError::UnsupportedIntersection);
                     }
                     CurvePointLocations2::Locations(locations) => locations

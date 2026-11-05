@@ -95,6 +95,17 @@ pub enum ArenaSurfaceCurveFaceSplit {
     Closed(ArenaClosedSurfaceCurveFaceSplit),
     /// One piece of a closed chain of traces inside the source face.
     LoopMember(ArenaLoopMemberCurveSplit),
+    /// One piece of an open chain split atomically between boundary points.
+    ChainMember(ArenaChainMemberCurveSplit),
+}
+
+/// One piece of an open chain split as one face edit.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct ArenaChainMemberCurveSplit {
+    /// Position of this piece in the oriented chain.
+    pub chain_index: usize,
+    /// The complete atomic chain edit, shared by every member.
+    pub chain: Arc<ArenaSurfaceCurveChainFaceSplit>,
 }
 
 /// One piece of a closed chain of traces split as a single loop.
@@ -111,7 +122,7 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn open(&self) -> Option<&ArenaCurveFaceSplit> {
         match self {
             Self::Open(split) => Some(split),
-            Self::Bridge(_) | Self::Closed(_) | Self::LoopMember(_) => None,
+            Self::Bridge(_) | Self::Closed(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
         }
     }
 
@@ -119,35 +130,37 @@ impl ArenaSurfaceCurveFaceSplit {
     pub const fn bridge(&self) -> Option<&ArenaBoundaryBridgeCurveSplit> {
         match self {
             Self::Bridge(split) => Some(split),
-            Self::Open(_) | Self::Closed(_) | Self::LoopMember(_) => None,
+            Self::Open(_) | Self::Closed(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
         }
     }
 
     /// Returns the outer/inner-wire result when this trace is closed.
     pub const fn closed(&self) -> Option<&ArenaClosedSurfaceCurveFaceSplit> {
         match self {
-            Self::Open(_) | Self::Bridge(_) | Self::LoopMember(_) => None,
+            Self::Open(_) | Self::Bridge(_) | Self::LoopMember(_) | Self::ChainMember(_) => None,
             Self::Closed(split) => Some(split),
         }
     }
 
     /// Returns the source face retained by the first descendant.
-    pub const fn first_face(&self) -> FaceId {
+    pub fn first_face(&self) -> FaceId {
         match self {
             Self::Open(split) => split.face.first_face,
             Self::Bridge(split) => split.face.first_face,
             Self::Closed(split) => split.first_face,
             Self::LoopMember(split) => split.face.first_face,
+            Self::ChainMember(split) => split.chain.face.first_face,
         }
     }
 
     /// Returns the newly appended enclosed or second descendant.
-    pub const fn second_face(&self) -> FaceId {
+    pub fn second_face(&self) -> FaceId {
         match self {
             Self::Open(split) => split.face.second_face,
             Self::Bridge(split) => split.face.second_face,
             Self::Closed(split) => split.second_face,
             Self::LoopMember(split) => split.face.second_face,
+            Self::ChainMember(split) => split.chain.face.second_face,
         }
     }
 }

@@ -85,7 +85,7 @@ fn selected_root_incidence_replays_the_remaining_spatial_coordinate() {
                 // The x/y projection still has the same selected root. Its z
                 // image differs, including at a separation far below binary64.
                 assert!(matches!(
-                    curve.parameters_of(&Point3::origin()).unwrap(),
+                    curve.parameters_of(Point3::origin()).unwrap(),
                     CurveParameterLocation::None
                 ));
             }
@@ -161,7 +161,7 @@ fn partly_constant_nurbs_preimages_remain_a_typed_blocker() {
     )
     .unwrap();
     assert_eq!(
-        curve.parameters_of(&Point3::origin()).unwrap_err(),
+        curve.parameters_of(Point3::origin()).unwrap_err(),
         GeometryError::UnsupportedParameterLocation
     );
 }
@@ -177,7 +177,7 @@ fn retained_inverse_queries_retry_after_a_denied_refinement() {
     )
     .unwrap();
     let denied = OperationContext::strict(WorkBudget::ZERO)
-        .evaluate(|| curve.parameters_of(&Point3::origin()));
+        .evaluate(|| curve.parameters_of(Point3::origin()));
     assert_eq!(denied.result.unwrap_err().kind, WorkKind::RootRefinement);
     let retry = OperationContext::strict(WorkBudget {
         refinements: 512,
@@ -243,4 +243,200 @@ fn topology_transfer_reports_unmaterialized_cuts_without_changing_the_source() {
         TopologyEditError::Geometry(GeometryError::UnrepresentableParameter)
     );
     assert_eq!(sheet.model().counts(), source_counts);
+}
+
+#[test]
+fn selected_spatial_line_inverses_keep_joint_fields_and_all_coordinates() {
+    let controls = quintic_controls()
+        .into_iter()
+        .map(|x| Point3::new(x, Real::zero(), Real::zero()))
+        .collect();
+    let selector = Curve3::rational_bezier(controls, vec![Real::one(); 6]).unwrap();
+    let alpha = parameters(&selector, &Point3::origin())[0].clone();
+    let parameter = Parameter::from_real(Real::zero());
+    let source = Curve3::line(Point3::origin(), Point3::new(2.into(), 1.into(), 3.into())).unwrap();
+    let alpha_point = source.point_at(&alpha).unwrap();
+    assert!(alpha_point.try_coordinates().is_none());
+    let target = Curve3::line(
+        Point3::new((-2).into(), (-1).into(), (-3).into()),
+        Point3::new(4.into(), 2.into(), 6.into()),
+    )
+    .unwrap();
+    let expected = alpha
+        .curve_parameter()
+        .affine_image(&rational(1, 3), &rational(1, 3))
+        .unwrap();
+    for (target, expected) in [
+        (target.clone(), expected.clone()),
+        (
+            target.reversed().unwrap(),
+            expected.affine_image(&-Real::one(), &Real::one()).unwrap(),
+        ),
+    ] {
+        let CurveParameterLocation::Parameters(locations) =
+            target.parameters_of(&alpha_point).unwrap()
+        else {
+            panic!("one exact line preimage");
+        };
+        assert_eq!(locations.len(), 1);
+        assert_eq!(
+            locations[0].curve_parameter().compare(&expected).unwrap(),
+            Ordering::Equal
+        );
+        assert!(
+            target
+                .point_at(&locations[0])
+                .unwrap()
+                .coincides_with(&alpha_point)
+                .unwrap()
+        );
+    }
+    for height in [
+        Real::one(),
+        (Real::one() / Real::from(1_u64 << 60)).unwrap(),
+    ] {
+        let off = Curve3::line(
+            Point3::new(0.into(), 0.into(), height.clone()),
+            Point3::new(2.into(), 1.into(), Real::from(3) + height),
+        )
+        .unwrap()
+        .point_at(&alpha)
+        .unwrap();
+        assert!(matches!(
+            target.parameters_of(&off).unwrap(),
+            CurveParameterLocation::None
+        ));
+    }
+    let transform = hyperbrep::Matrix4::from_row_major(
+        [1, 1, 0, 2, 0, 2, 0, -1, 0, 0, -1, 3, 0, 0, 0, 1].map(Real::from),
+    );
+    let affine = Curve3::affine_image(target.clone(), transform.clone()).unwrap();
+    let projected = alpha_point.transformed(&transform).unwrap();
+    assert!(projected.try_coordinates().is_none());
+    let CurveParameterLocation::Parameters(locations) = affine.parameters_of(&projected).unwrap()
+    else {
+        panic!("affine inverse preserves selected fields");
+    };
+    assert_eq!(locations.len(), 1);
+    assert_eq!(
+        locations[0].curve_parameter().compare(&expected).unwrap(),
+        Ordering::Equal
+    );
+    assert!(
+        affine
+            .point_at(&locations[0])
+            .unwrap()
+            .coincides_with(&projected)
+            .unwrap()
+    );
+    let exterior = Curve3::line(
+        Point3::new((-4).into(), (-2).into(), (-6).into()),
+        Point3::new((-2).into(), (-1).into(), (-3).into()),
+    )
+    .unwrap();
+    assert!(matches!(
+        exterior.parameters_of(&alpha_point).unwrap(),
+        CurveParameterLocation::None
+    ));
+    assert!(
+        matches!(source.parameters_of(source.point_at(&parameter).unwrap()).unwrap(),CurveParameterLocation::Parameters(points) if points.len()==1)
+    );
+}
+
+#[test]
+fn native_spline_inverses_consume_joint_selected_spatial_queries() {
+    fn choose(n: usize, k: usize) -> i32 {
+        if k > n {
+            return 0;
+        }
+        (0..k).fold(1, |v, i| v * (n - i) as i32 / (i + 1) as i32)
+    }
+    fn monomials(degree: usize, powers: [usize; 3], shift: Real) -> Curve3 {
+        let controls = (0..=degree)
+            .map(|i| {
+                let [x, y, z] = powers.map(|k| rational(choose(i, k), choose(degree, k)));
+                Point3::new(x, y, z + &shift)
+            })
+            .collect();
+        Curve3::rational_bezier(controls, vec![Real::one(); degree + 1]).unwrap()
+    }
+    let selector = Curve3::rational_bezier(
+        quintic_controls()
+            .into_iter()
+            .map(|x| Point3::new(x, 0.into(), 0.into()))
+            .collect(),
+        vec![Real::one(); 6],
+    )
+    .unwrap();
+    let alpha = parameters(&selector, &Point3::origin()).remove(0);
+    let source = monomials(6, [4, 6, 2], Real::zero());
+    let query = source.point_at(&alpha).unwrap();
+    assert!(query.try_coordinates().is_none());
+    let target = monomials(3, [2, 3, 1], Real::zero());
+    let CurveParameterLocation::Parameters(found) = target.parameters_of(&query).unwrap() else {
+        panic!("one exact spatial preimage");
+    };
+    assert_eq!(found.len(), 1);
+    assert!(found[0].try_real().is_none());
+    assert!(
+        target
+            .point_at(&found[0])
+            .unwrap()
+            .coincides_with(&query)
+            .unwrap()
+    );
+    // XY alone is insufficient: the same selected query is off this support.
+    let shifted = monomials(3, [2, 3, 1], rational(1, 1 << 30) * rational(1, 1 << 30));
+    assert!(matches!(
+        shifted.parameters_of(&query).unwrap(),
+        CurveParameterLocation::None
+    ));
+    let reversed = target.reversed().unwrap();
+    let CurveParameterLocation::Parameters(back) = reversed.parameters_of(&query).unwrap() else {
+        panic!("reversed preimage");
+    };
+    assert_eq!(
+        back[0]
+            .compare(
+                &found[0]
+                    .affine_image(&(-Real::one()), &Real::one())
+                    .unwrap()
+            )
+            .unwrap(),
+        Ordering::Equal
+    );
+    let spline = Curve3::nurbs(
+        3,
+        (0..=3)
+            .map(|i| {
+                Point3::new(
+                    rational(choose(i, 2), choose(3, 2)),
+                    rational(choose(i, 3), choose(3, 3)),
+                    rational(i as i32, 3),
+                )
+            })
+            .collect(),
+        vec![Real::one(); 4],
+        [-2, -2, -2, -2, 4, 4, 4, 4]
+            .into_iter()
+            .map(Real::from)
+            .collect(),
+    )
+    .unwrap();
+    let CurveParameterLocation::Parameters(knots) = spline.parameters_of(&query).unwrap() else {
+        panic!("authored knot preimage");
+    };
+    assert_eq!(
+        knots[0]
+            .compare(&found[0].affine_image(&6.into(), &(-2).into()).unwrap())
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert!(
+        spline
+            .point_at(&knots[0])
+            .unwrap()
+            .coincides_with(&query)
+            .unwrap()
+    );
 }

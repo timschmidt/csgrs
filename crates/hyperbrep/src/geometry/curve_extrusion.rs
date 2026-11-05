@@ -158,7 +158,9 @@ fn intersect_projected(
                 CurvePointLocations2::Locations(locations) if locations.is_empty() => {
                     CurveSurfaceIntersection::None
                 }
-                CurvePointLocations2::Locations(_) => CurveSurfaceIntersection::Contained,
+                CurvePointLocations2::Locations(_) | CurvePointLocations2::Components(_) => {
+                    CurveSurfaceIntersection::Contained
+                }
             });
         }
         ProjectedCurve::Curve(projected) => projected,

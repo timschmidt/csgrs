@@ -35,6 +35,10 @@ pub(super) enum RawPointSource {
 pub(super) enum RawSelection {
     PlanarPoint(Box<RawPlanarPoint>),
     Chord(Box<[RawPlanarPoint; 2]>),
+    PointOnChord {
+        chord: usize,
+        point: Box<RawPlanarPoint>,
+    },
     RationalForm {
         point: Box<RawPlanarPoint>,
         numerator: Vec<Vec<Real>>,
@@ -100,6 +104,15 @@ impl GraphEncoder {
         &mut self,
         parameter: &hypercurve::CurveParameter2,
     ) -> Result<RawParameter, PersistenceError> {
+        if let Some((curve, point)) = parameter.point_ordered_line_definition() {
+            let RawPcurve::ChordReference(chord) = self.pcurve(&curve)? else {
+                return Err(GeometryError::UnsupportedPcurveContour.into());
+            };
+            let point = Box::new(self.planar_point(&point)?);
+            return Ok(RawParameter::Selected(
+                self.selection(RawSelection::PointOnChord { chord, point })?,
+            ));
+        }
         if let Some(form) = parameter.rational_form_source() {
             let point = Box::new(self.planar_point(form.source())?);
             return Ok(RawParameter::Selected(self.selection(
@@ -295,6 +308,19 @@ impl SelectionGraph {
                     graph.definitions.push(SelectedGeometry::Chord(chord));
                     roots.push(false);
                     continue;
+                }
+                RawSelection::PointOnChord { chord, point } => {
+                    let curve = graph.chord_reference(chord)?;
+                    let point = graph.planar_point(*point)?;
+                    let hypercurve::CurvePointLocations2::Locations(locations) =
+                        curve.point_locations(&point).map_err(GeometryError::from)?
+                    else {
+                        return Err(GeometryError::PointNotOnCurve.into());
+                    };
+                    if locations.len() != 1 {
+                        return Err(GeometryError::PointNotOnCurve.into());
+                    }
+                    locations[0].parameter().map_err(GeometryError::from)?
                 }
                 RawSelection::Root {
                     polynomial,

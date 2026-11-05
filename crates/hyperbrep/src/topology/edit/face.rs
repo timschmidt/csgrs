@@ -67,27 +67,8 @@ impl ArenaModel {
             FaceSplitEndpointLocation::Edge {
                 edge, parameter, ..
             } => {
-                let (staged, split) = self.split_edge(edge, (parameter).into())?;
+                let (staged, split) = self.split_edge(edge, parameter)?;
                 Ok((staged, split.vertex, Some(split)))
-            }
-        }
-    }
-
-    pub(in crate::topology) fn attach_face_boundary_split_endpoint(
-        &self,
-        face_id: FaceId,
-        endpoint: Endpoint,
-        point: &Point3,
-    ) -> Result<(Self, WireId, VertexId, Option<ArenaEdgeSplit>), TopologyEditError> {
-        let (wire, location) =
-            self.locate_face_boundary_split_endpoint(face_id, endpoint, point)?;
-        match location {
-            FaceSplitEndpointLocation::Vertex(vertex) => Ok((self.clone(), wire, vertex, None)),
-            FaceSplitEndpointLocation::Edge {
-                edge, parameter, ..
-            } => {
-                let (staged, split) = self.split_edge(edge, (parameter).into())?;
-                Ok((staged, wire, split.vertex, Some(split)))
             }
         }
     }
@@ -178,7 +159,7 @@ impl ArenaModel {
                         wire,
                         FaceSplitEndpointLocation::Edge {
                             edge: edge_id,
-                            parameter,
+                            parameter: parameter.into(),
                             pcurve_split: None,
                         },
                     ));
@@ -302,7 +283,7 @@ impl ArenaModel {
                 let (edge, parameter) = locations.pop().expect("one exact edge location");
                 Ok(FaceSplitEndpointLocation::Edge {
                     edge,
-                    parameter,
+                    parameter: parameter.into(),
                     pcurve_split: None,
                 })
             }
@@ -353,7 +334,7 @@ impl ArenaModel {
         start: VertexId,
         end: VertexId,
         authored: Option<Vec<(Curve3, Pcurve, ParameterCorrespondence, bool)>>,
-        junctions: Vec<Point3>,
+        junctions: Vec<GeometricPoint3>,
     ) -> Result<(Self, ArenaFaceSplit, Vec<EdgeId>), TopologyEditError> {
         if authored.as_ref().map_or(!junctions.is_empty(), |pieces| {
             pieces.is_empty() || pieces.len() != junctions.len() + 1
@@ -495,9 +476,7 @@ impl ArenaModel {
         for point in junctions {
             let vertex = VertexId::from_index(data.vertices.len())
                 .ok_or(BuildError::CapacityExceeded(EntityKind::Vertex))?;
-            data.vertices.push(Vertex {
-                point: point.into(),
-            });
+            data.vertices.push(Vertex { point });
             chain_vertices.push(vertex);
         }
         chain_vertices.push(end);

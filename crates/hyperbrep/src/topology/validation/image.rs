@@ -70,7 +70,10 @@ impl ArenaModelBuilder {
         // A tensor image on a rational tensor face has a direct whole-definition
         // proof; its selected restriction endpoints need no scalar view.
         let tensor_image = curve.kind() == Curve3Kind::TensorImage
-            && surface.kind() == SurfaceKind::RationalBezier;
+            && matches!(
+                surface.kind(),
+                SurfaceKind::RationalBezier | SurfaceKind::Plane
+            );
         if !edge_use.image_certificate
             && !finite_planar_image
             && !tensor_image
@@ -145,6 +148,10 @@ impl ArenaModelBuilder {
             ) | (
                 Curve3Kind::TensorImage,
                 SurfaceKind::RationalBezier,
+                ParameterCorrespondence::Affine { .. },
+            ) | (
+                Curve3Kind::TensorImage,
+                SurfaceKind::Plane,
                 ParameterCorrespondence::Affine { .. },
             )
         );
@@ -245,6 +252,17 @@ impl ArenaModelBuilder {
             ) => {
                 self.validate_tensor_curve_image(curve, edge_use, pcurve, surface)?;
             }
+            (
+                Curve3Kind::TensorImage,
+                _,
+                SurfaceKind::Plane,
+                ParameterCorrespondence::Affine { scale, offset },
+            ) if surface.certifies_tensor_section_image(
+                curve,
+                pcurve.curve(),
+                scale,
+                offset,
+            )? => {}
             (
                 Curve3Kind::TensorImage,
                 CurveFamily2::RationalQuadraticBezier | CurveFamily2::RationalBezier,

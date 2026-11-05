@@ -335,7 +335,7 @@ pub fn selected_parameters_survive_collection() {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut roots) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("five-degree root")
     };

@@ -19,14 +19,15 @@ fn uv(u: i64, v: i64) -> Uv {
     Uv::from_values(u, v)
 }
 
-/// One face covering a positive-weight biquadratic tensor patch, bounded by
+/// One face covering a positive-weight rectangular tensor patch, bounded by
 /// its four iso edges (u runs along control columns, v along rows).
 fn tensor_face(controls: Vec<Vec<Point3>>, weights: Vec<Vec<Real>>) -> (Model, Surface) {
     let patch = Surface::rational_bezier(controls.clone(), weights.clone()).unwrap();
     let mut builder = ModelBuilder::new();
     let surface = builder.surface(patch.clone()).unwrap();
-    let last = controls.len() - 1;
-    let corner = |u: usize, v: usize| controls[v * last][u * last].clone();
+    let last_u = controls[0].len() - 1;
+    let last_v = controls.len() - 1;
+    let corner = |u: usize, v: usize| controls[v * last_v][u * last_u].clone();
     let vertices = [(0, 0), (1, 0), (1, 1), (0, 1)]
         .iter()
         .map(|&(u, v)| builder.vertex(corner(u, v).into()).unwrap())
@@ -41,8 +42,8 @@ fn tensor_face(controls: Vec<Vec<Point3>>, weights: Vec<Vec<Real>>) -> (Model, S
     let row = |i: usize| Curve3::rational_bezier(controls[i].clone(), weights[i].clone()).unwrap();
     let edges = [
         (row(0), 0, 1, uv(0, 0), uv(1, 0), Direction::Forward),
-        (column(last), 1, 2, uv(1, 0), uv(1, 1), Direction::Forward),
-        (row(last), 3, 2, uv(0, 1), uv(1, 1), Direction::Reversed),
+        (column(last_u), 1, 2, uv(1, 0), uv(1, 1), Direction::Forward),
+        (row(last_v), 3, 2, uv(0, 1), uv(1, 1), Direction::Reversed),
         (column(0), 0, 3, uv(0, 0), uv(0, 1), Direction::Reversed),
     ];
     let mut uses = Vec::new();
@@ -305,13 +306,13 @@ fn tensor_image_point_location_is_exact() {
         }
         // (0, 0, 0) is on the paraboloid but not on the section.
         assert!(matches!(
-            curve.parameters_of(&Point3::origin()).unwrap(),
+            curve.parameters_of(Point3::origin()).unwrap(),
             CurveParameterLocation::None
         ));
         // (1/2, 0, 1/4) is off both the section and the patch's height there.
         assert!(matches!(
             curve
-                .parameters_of(&Point3::new(q(1, 2), 0.into(), 1.into()))
+                .parameters_of(Point3::new(q(1, 2), 0.into(), 1.into()))
                 .unwrap(),
             CurveParameterLocation::None
         ));
@@ -646,7 +647,7 @@ fn bridge_sections_cut_a_ring_with_a_generated_hole() {
     for y in [q(-1, 2), q(1, 2)] {
         let CurveParameterLocation::Parameters(found) = section
             .curve()
-            .parameters_of(&Point3::new(0.into(), y, q(1, 4)))
+            .parameters_of(Point3::new(0.into(), y, q(1, 4)))
             .unwrap()
         else {
             panic!("the section crosses each hole event");
@@ -820,4 +821,155 @@ fn surface_curve_partitions_split_closed_trace_chains_as_loops() {
     holes.sort_unstable();
     assert_eq!(holes, vec![0, 1]);
     assert_eq!(reload(partition.model()).faces().count(), 7);
+}
+
+#[test]
+fn native_spline_query_roots_split_tensor_edges_and_replay() {
+    const INPUT: &str = "HYPERBREP_NATIVE_SPLINE_QUERY_REPLAY";
+    fn verify(model: &Model) {
+        let vertex = model
+            .vertices()
+            .find(|v| v.point().try_coordinates().is_none())
+            .unwrap();
+        let point = vertex.point();
+        let edge = model
+            .edges()
+            .find(|edge| edge.domain().try_real_endpoints().is_none())
+            .unwrap();
+        let CurveParameterLocation::Parameters(roots) = edge.curve().parameters_of(point).unwrap()
+        else {
+            panic!("retained inverse");
+        };
+        assert_eq!(roots.len(), 1);
+        let end = if edge.domain().start().try_real().is_none() {
+            edge.domain().start()
+        } else {
+            edge.domain().end()
+        };
+        assert_eq!(roots[0].compare(end).unwrap(), std::cmp::Ordering::Equal);
+        assert!(
+            edge.curve()
+                .point_at(&roots[0])
+                .unwrap()
+                .coincides_with(point)
+                .unwrap()
+        );
+        let selected = model
+            .edges()
+            .find(|edge| {
+                edge.domain()
+                    .start()
+                    .compare(&Real::zero().into())
+                    .unwrap()
+                    .is_eq()
+                    && edge.domain().end().try_real().is_none()
+            })
+            .unwrap();
+        let halfway = selected
+            .domain()
+            .end()
+            .affine_image(&q(1, 2), &Real::zero())
+            .unwrap();
+        let edit = selected.split(halfway).unwrap();
+        RawModel::from_json(&edit.model().to_json().unwrap(), &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        let text = std::fs::read_to_string(path).unwrap();
+        let model = RawModel::from_json(&text, &ArchiveLimits::default())
+            .unwrap()
+            .validate()
+            .unwrap();
+        assert_eq!(model.to_json().unwrap(), text);
+        verify(&model);
+        return;
+    }
+    let controls = (0..2)
+        .map(|v| {
+            (0..=3)
+                .map(|i| {
+                    let x = if i < 2 {
+                        Real::zero()
+                    } else {
+                        q((i * (i - 1)) as i64, 6)
+                    };
+                    let y = if i == 3 { Real::one() } else { Real::zero() };
+                    Point3::new(x + Real::from(v), y, q(i as i64, 3))
+                })
+                .collect()
+        })
+        .collect();
+    // S(u,v)=(u^2+v,u^3,u) is injective and regular on the unit square.
+    let (model, _) = tensor_face(controls, vec![vec![Real::one(); 4]; 2]);
+    let selector = Curve3::rational_bezier(
+        [-5, -7, -9, -11, -13, 145]
+            .into_iter()
+            .map(|n| Point3::new(q(n, 5), 0.into(), 0.into()))
+            .collect(),
+        vec![Real::one(); 6],
+    )
+    .unwrap();
+    let CurveParameterLocation::Parameters(alpha) =
+        selector.parameters_of(Point3::origin()).unwrap()
+    else {
+        panic!("one unit root");
+    };
+    fn choose(n: usize, k: usize) -> i64 {
+        if k > n {
+            return 0;
+        }
+        (0..k).fold(1, |v, i| v * (n - i) as i64 / (i + 1) as i64)
+    }
+    let source = Curve3::rational_bezier(
+        (0..=6)
+            .map(|i| {
+                Point3::new(
+                    q(choose(i, 4), choose(6, 4)),
+                    q(choose(i, 6), choose(6, 6)),
+                    q(choose(i, 2), choose(6, 2)),
+                )
+            })
+            .collect(),
+        vec![Real::one(); 7],
+    )
+    .unwrap();
+    let query = source.point_at(&alpha[0]).unwrap();
+    let edge = model.edges().next().unwrap();
+    let CurveParameterLocation::Parameters(parameters) =
+        edge.curve().parameters_of(&query).unwrap()
+    else {
+        panic!("one native spline preimage");
+    };
+    assert_eq!(parameters.len(), 1);
+    assert!(parameters[0].try_real().is_none());
+    let edit = edge.split(parameters[0].clone()).unwrap();
+    let text = edit.model().to_json().unwrap();
+    let cold = RawModel::from_json(&text, &ArchiveLimits::default())
+        .unwrap()
+        .validate()
+        .unwrap();
+    verify(&cold);
+    let path = std::env::temp_dir().join(format!(
+        "hyperbrep-native-spline-query-{}.json",
+        std::process::id()
+    ));
+    std::fs::write(&path, &text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "native_spline_query_roots_split_tensor_edges_and_replay",
+            "--nocapture",
+        ])
+        .env(INPUT, &path)
+        .output()
+        .unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert!(
+        child.status.success(),
+        "{}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
 }

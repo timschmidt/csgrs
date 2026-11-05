@@ -29,6 +29,9 @@ mod selected_circle;
 #[path = "polynomial_curve_selected_chord.rs"]
 mod selected_chord;
 
+#[path = "polynomial_curve_mapped_chord.rs"]
+mod mapped_chord;
+
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
 /// This is a curve collection, not a filled region. Every solver graph arc is
@@ -70,8 +73,9 @@ struct PolynomialCurveSource2 {
 /// [`Curve2::point_locations`] consumes native and retained points in the
 /// original graph chart and its invertible similarities, preserving closed
 /// selected boundaries. Incidence validates the selected branch, so another
-/// root of the same equation is not an incident point. Rational image maps
-/// need a separate inverse/preimage contract for this query.
+/// root of the same equation is not an incident point. Rational image queries
+/// report every finite visit and proved whole constant images; mixed continuous
+/// components and unresolved shared components remain explicit blockers.
 /// Regular derivatives and smooth-event tangent directions retain that joint
 /// source. Source branches and their retained rational or algebraic similarities
 /// intersect authored native lines, including exact algebraic coordinates and selected
@@ -80,7 +84,14 @@ struct PolynomialCurveSource2 {
 /// succeed exactly; unresolved predicates retain their typed blockers.
 /// Native-line sections also consume rational map definitions proved to be
 /// rational-coefficient similarities. These query views keep the original
-/// maps and their denominator guards; they do not complete general image queries.
+/// maps and their denominator guards. Other retained rational map chains and
+/// final similarities section native lines through exact pullbacks, including
+/// isolated pullback points, when the pullback decomposition and selected-fiber
+/// predicates complete. Common components remain typed. Equal image chains
+/// share source incidence only after a joint-domain injectivity proof;
+/// distinct affine charts validate resultant candidates on both branches.
+/// Selected-point inverse queries reuse exact construction paths under the
+/// same injectivity requirement, or isolate and validate scalar-point sections.
 /// Generated chords keep point-based parameters when a retained native support
 /// or represented constant abscissa certifies the line in either chart.
 /// Equations independent of the source abscissa also certify constant selected
@@ -402,6 +413,23 @@ impl PolynomialCurveBranch2 {
         true
     }
 
+    /// Sufficient exact proof that a polynomial vanishes on the whole selected
+    /// image. Pulls through all retained maps and checks divisibility by the
+    /// source's geometric equation. Original denominator guards remain part of
+    /// the admitted branch. A false result means this proof did not succeed;
+    /// it is not a proof that the polynomial is nonzero everywhere.
+    pub fn certifies_polynomial_zero(&self, polynomial: &hypersolve::BivariatePolynomial) -> bool {
+        let one = hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let Some((numerator, _)) = self.pullback_form(polynomial.clone(), one) else {
+            return false;
+        };
+        hypersolve::divide_bivariate_polynomial_exact(
+            &numerator,
+            self.topology().geometric_equation(),
+        )
+        .is_some()
+    }
+
     fn coordinate_form(
         &self,
         axis: usize,
@@ -415,10 +443,21 @@ impl PolynomialCurveBranch2 {
         } else {
             vec![vec![Real::zero(), Real::one()]]
         };
-        let mut pair = (
+        self.pullback_form(
             BivariatePolynomial::new(numerator),
             BivariatePolynomial::new(vec![vec![Real::one()]]),
-        );
+        )
+    }
+
+    fn pullback_form(
+        &self,
+        numerator: hypersolve::BivariatePolynomial,
+        denominator: hypersolve::BivariatePolynomial,
+    ) -> Option<(
+        hypersolve::BivariatePolynomial,
+        hypersolve::BivariatePolynomial,
+    )> {
+        let mut pair = (numerator, denominator);
         if let Some(transform) = &self.transform {
             pair = crate::RationalMap2::from_similarity(transform).pullback(&pair.0, &pair.1)?;
         }
@@ -572,7 +611,9 @@ impl PolynomialCurveBranch2 {
             // Other exact nonsingular affine views pull the line's authored
             // endpoints back through the inverse map.
             let Some((inverse, reverses)) = self.inverse_affine_view() else {
-                return Ok(None);
+                // A nonlinear rational image: section the source branch
+                // with the line's exact pullback curve.
+                return self.pullback_line_sections(line, policy);
             };
             let pull = |point: &crate::Point2| {
                 let [a, b, d, e, x, y] = &inverse;
@@ -600,6 +641,313 @@ impl PolynomialCurveBranch2 {
         let source_line = line.transform_similarity(&inverse).map_err(invalid)?;
         self.image_source_line_sections(&source_line, &transform, policy)
             .map(Some)
+    }
+
+    /// Line sections of a branch carried by retained rational maps: the
+    /// line `L(X, Y) = 0` pulls back exactly to `G = L(N1, N2, D) = 0` in the
+    /// source chart; the source branch meets each branch of `G` through the
+    /// exact pair intersection, and every contact replays the authoritative
+    /// map. With `G = D L(F)`, the derivative of `G` along the branch toward
+    /// increasing abscissa is `D (t x d)` at a contact, so the tangent sign is
+    /// `sign(D) sign(F_y) sign(G_x F_y - G_y F_x)` at the source point; a
+    /// vertical source tangent or an undecided sign leaves it unclassified.
+    /// A common component, an incomplete relation or an undecomposable
+    /// pullback stays typed.
+    fn pullback_line_sections(
+        &self,
+        line: &crate::LineSeg2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<PolynomialLineSections2>> {
+        let (x0, y0) = (line.start().x(), line.start().y());
+        let (dx, dy) = (line.end().x() - x0, line.end().y() - y0);
+        // L(X, Y) = dy (X - x0) - dx (Y - y0).
+        let line_form = hypersolve::BivariatePolynomial::new(vec![
+            vec![&dx * y0 - &dy * x0, -dx.clone()],
+            vec![dy.clone()],
+        ]);
+        let one = hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]);
+        let mut pulled = (line_form, one.clone());
+        if let Some(transform) = &self.transform {
+            pulled = crate::RationalMap2::from_similarity(transform)
+                .pullback(&pulled.0, &pulled.1)
+                .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+        }
+        for map in self.maps.iter().rev() {
+            pulled = map
+                .pullback(&pulled.0, &pulled.1)
+                .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+        }
+        let (pullback, denominator) = pulled;
+        let source_branch = self.source_branch(policy)?;
+        let source_curve = Curve2::from_polynomial_branch(source_branch.clone());
+        let cross_at = |point: &CurvePoint2| -> ExactCurveResult<Option<RealSign>> {
+            use hypersolve::bivariate_arithmetic::{
+                bivariate_multiply, bivariate_parameter_derivative as derivative,
+                bivariate_subtract,
+            };
+            let sign = |polynomial: &hypersolve::BivariatePolynomial| {
+                match crate::bezier_offset::point_rational_form_sign(
+                    point, polynomial, &one, policy,
+                )
+                .map_err(invalid)?
+                {
+                    Classification::Decided(sign) => Ok(Some(sign)),
+                    Classification::Uncertain(UncertaintyReason::BudgetExhausted) => {
+                        Err(blocked(UncertaintyReason::BudgetExhausted))
+                    }
+                    Classification::Uncertain(_) => Ok(None),
+                }
+            };
+            let equation = self.topology().geometric_equation();
+            let fy = derivative(equation, CurveResultantParameter::Second);
+            let Some(fy_sign) = sign(&fy)?.filter(|sign| *sign != RealSign::Zero) else {
+                return Ok(None);
+            };
+            let Some(weight) = sign(&denominator)?.filter(|sign| *sign != RealSign::Zero) else {
+                return Ok(None);
+            };
+            let tangent = bivariate_subtract(
+                &bivariate_multiply(&derivative(&pullback, CurveResultantParameter::First), &fy),
+                &bivariate_multiply(
+                    &derivative(&pullback, CurveResultantParameter::Second),
+                    &derivative(equation, CurveResultantParameter::First),
+                ),
+            );
+            let flip = |sign: RealSign, by: RealSign| {
+                if by == RealSign::Negative {
+                    negate(sign)
+                } else {
+                    sign
+                }
+            };
+            Ok(sign(&tangent)?.map(|sign| flip(flip(sign, fy_sign), weight)))
+        };
+        // A pullback in the source abscissa alone fixes the branch parameter:
+        // its roots on the active range are the section abscissas of this
+        // graph branch. A zero pullback is a continuous section and stays
+        // typed; a nonzero constant one proves the line misses the image.
+        if pullback
+            .coefficients
+            .iter()
+            .all(|row| row.iter().skip(1).all(Real::definitely_zero))
+        {
+            let univariate = pullback
+                .coefficients
+                .iter()
+                .map(|row| row.first().cloned().unwrap_or_else(Real::zero))
+                .collect();
+            let mut sections = Vec::new();
+            for parameter in self.section_abscissas(univariate)? {
+                let low = decided(
+                    parameter
+                        .cmp_by_refinement(self.range.start(), policy)
+                        .map_err(invalid)?,
+                )?;
+                let high = decided(
+                    parameter
+                        .cmp_by_refinement(self.range.end(), policy)
+                        .map_err(invalid)?,
+                )?;
+                if low.is_lt() || high.is_gt() {
+                    continue;
+                }
+                let source = source_curve
+                    .point_at_with_policy(&parameter, policy)?
+                    .into_value();
+                let cross = cross_at(&source)?;
+                let point = if low.is_eq() {
+                    self.endpoints[0].clone()
+                } else if high.is_eq() {
+                    self.endpoints[1].clone()
+                } else {
+                    self.map_point(source, policy)?
+                };
+                sections.push(PolynomialLineSection2 {
+                    parameter,
+                    point,
+                    cross,
+                });
+            }
+            return Ok(Some(PolynomialLineSections2::Isolated(sections)));
+        }
+        let domain = self.topology().domain().clone();
+        let topology = hypersolve::bivariate_topology::decompose_bivariate_curve(
+            &pullback,
+            &domain,
+            Default::default(),
+        )
+        .map_err(|error| {
+            use hypersolve::bivariate_topology::BivariateTopologyError;
+            blocked(match error {
+                BivariateTopologyError::BudgetExhausted
+                | BivariateTopologyError::DegreeLimit
+                | BivariateTopologyError::RefinementLimit => UncertaintyReason::BudgetExhausted,
+                BivariateTopologyError::Undecided => UncertaintyReason::Predicate,
+                _ => UncertaintyReason::Unsupported,
+            })
+        })?;
+        let pieces = PolynomialCurveSet2::from_topology(topology, self.source.fiber_config)?;
+        let mut sections: Vec<PolynomialLineSection2> = Vec::new();
+        let already_seen = |sections: &[PolynomialLineSection2], parameter: &CurveParameter2| {
+            for known in sections {
+                if decided(
+                    known
+                        .parameter
+                        .cmp_by_refinement(parameter, policy)
+                        .map_err(invalid)?,
+                )?
+                .is_eq()
+                {
+                    return Ok(true);
+                }
+            }
+            Ok(false)
+        };
+        for piece in pieces.curves() {
+            let relation = source_curve.intersect_curve(piece)?;
+            if !relation.is_complete() || !relation.overlaps().is_empty() {
+                return Err(blocked(UncertaintyReason::Unsupported));
+            }
+            for contact in relation.contacts() {
+                let parameter = contact.first().parameter()?;
+                let point = if parameter == *self.range.start() {
+                    self.endpoints[0].clone()
+                } else if parameter == *self.range.end() {
+                    self.endpoints[1].clone()
+                } else {
+                    self.map_point(contact.point().clone(), policy)?
+                };
+                if already_seen(&sections, &parameter)? {
+                    continue;
+                }
+                sections.push(PolynomialLineSection2 {
+                    parameter,
+                    point,
+                    cross: cross_at(contact.point())?,
+                });
+            }
+        }
+        // A pullback zero set may contain isolated points without any arc.
+        // They are candidates too, subject to the original branch selection.
+        for source in pieces.isolated_points() {
+            let Some(parameter) = source_branch.point_parameter(source, policy)? else {
+                continue;
+            };
+            if already_seen(&sections, &parameter)? {
+                continue;
+            }
+            sections.push(PolynomialLineSection2 {
+                parameter,
+                point: self.map_point(source.clone(), policy)?,
+                cross: cross_at(source)?,
+            });
+        }
+        Ok(Some(PolynomialLineSections2::Isolated(sections)))
+    }
+
+    /// This branch in its authoritative source chart, with the same selected
+    /// range and traversal. Arrangement endpoints may use another exact world
+    /// definition, so their wrappers are not an inverse chart. Recover source
+    /// endpoints from the retained parameter and original branch incidence.
+    pub(crate) fn source_branch(&self, policy: &CurveContext) -> ExactCurveResult<Self> {
+        let mut source = self.clone();
+        source.maps.clear();
+        source.transform = None;
+        let arc = &self.topology().slabs()[self.slab].arcs()[self.root];
+        let endpoints = [source.range.start(), source.range.end()].map(|value| {
+            for (event, root) in [
+                (self.slab, arc.left_root()),
+                (self.slab + 1, arc.right_root()),
+            ] {
+                let fiber = &self.topology().events()[event];
+                let base = parameter(fiber.parameter())?;
+                if decided(
+                    value
+                        .cmp_by_refinement(&CurveParameter2::from(base.clone()), policy)
+                        .map_err(invalid)?,
+                )?
+                .is_eq()
+                {
+                    return PolynomialPoint2::from_fiber(
+                        self.topology().equation().clone(),
+                        base,
+                        &fiber.roots()[root..=root],
+                    )?
+                    .pop()
+                    .ok_or_else(|| invalid(CurveError::InvalidBezierAlgebraicParameter));
+                }
+            }
+            source.interior_point(value, policy)
+        });
+        let [start, end] = endpoints;
+        source.endpoints = [start?, end?];
+        Ok(source)
+    }
+
+    /// Whether the retained maps and final similarity reverse orientation,
+    /// after certifying each map injective on an enclosure of the complete
+    /// preceding image. A missing certificate does not assert
+    /// that the image self-intersects. The certificate is recomputed per call.
+    pub(crate) fn injective_image_orientation(&self) -> Option<bool> {
+        let domain = self.topology().domain();
+        let Classification::Decided(rectangle) = crate::Aabb2::from_points(&[
+            crate::Point2::new(domain.first[0].clone(), domain.second[0].clone()),
+            crate::Point2::new(domain.first[1].clone(), domain.second[1].clone()),
+        ]) else {
+            return None;
+        };
+        self.injective_image_orientation_on(&rectangle)
+    }
+
+    /// A nonconstant affine coordinate in the graph's source abscissa proves
+    /// injectivity of this one branch even if its surrounding plane map folds.
+    /// This does not certify a common chart for two different branches.
+    pub(crate) fn has_injective_parameter_coordinate(&self) -> bool {
+        (0..2).any(|axis| {
+            let Some((numerator, denominator)) = self.coordinate_form(axis) else {
+                return false;
+            };
+            let Some(quotient) =
+                hypersolve::divide_bivariate_polynomial_exact(&numerator, &denominator)
+            else {
+                return false;
+            };
+            for (i, row) in quotient.coefficients.iter().enumerate() {
+                for (j, coefficient) in row.iter().enumerate() {
+                    if (i > 1 || j > 0) && !coefficient.definitely_zero() {
+                        return false;
+                    }
+                }
+            }
+            quotient
+                .coefficients
+                .get(1)
+                .and_then(|row| row.first())
+                .and_then(Real::exact_rational_normal_form)
+                .is_some_and(|slope| !slope.is_zero())
+        })
+    }
+
+    /// One shared convex source enclosure is required for comparing images
+    /// of different branches; separate injectivity certificates do not suffice.
+    pub(crate) fn injective_image_orientation_on(&self, rectangle: &crate::Aabb2) -> Option<bool> {
+        let mut rectangle = rectangle.clone();
+        let mut reverses = false;
+        for map in &self.maps {
+            reverses ^= map.certify_injective_orientation_on(&rectangle).ok()?;
+            rectangle = map.bounds(&rectangle).ok()?;
+        }
+        Some(
+            reverses
+                ^ self
+                    .transform
+                    .as_ref()
+                    .is_some_and(Similarity2::reverses_orientation),
+        )
+    }
+
+    pub(crate) fn same_image_maps(&self, other: &Self) -> bool {
+        self.maps == other.maps && self.transform == other.transform
     }
 
     /// The inverse `[a, b, d, e, x, y]` of the exact affine view, and whether
@@ -1061,7 +1409,7 @@ impl PolynomialCurveBranch2 {
         let Some(view) = self.similarity_view() else {
             // Other exact nonsingular affine views invert the same way.
             let Some(([a, b, d, e, x, y], _)) = self.inverse_affine_view() else {
-                return Err(blocked(UncertaintyReason::Unsupported));
+                return self.nonlinear_point_parameter(point, policy);
             };
             return self.located_parameter(point, [a, b, x], [d, e, y], policy);
         };
@@ -1080,6 +1428,254 @@ impl PolynomialCurveBranch2 {
             ),
         };
         self.located_parameter(point, form, ordinate_form, policy)
+    }
+
+    /// Complete finite preimages; `None` denotes a constant image equal to
+    /// the query. The old single-location consumer keeps its uniqueness rule.
+    pub(crate) fn point_parameters(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<CurveParameter2>>> {
+        if self.similarity_view().is_some() || self.inverse_affine_view().is_some() {
+            return self
+                .point_parameter(point, policy)
+                .map(|p| Some(p.into_iter().collect()));
+        }
+        match self.nonlinear_point_parameters(point, policy) {
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported
+                    && self.certifies_constant_image(None) =>
+            {
+                Ok(if decided(self.endpoints[0].same_point(point, policy))? {
+                    None
+                } else {
+                    Some(Vec::new())
+                })
+            }
+            result => result.map(Some),
+        }
+    }
+
+    pub(crate) fn mapped_point_parameters(
+        &self,
+        point: &CurvePoint2,
+        map: &crate::RationalMap2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<Vec<CurveParameter2>>> {
+        // Affine maps have a constant, already checked denominator. Retain the
+        // existing inverse-chart fast paths when this temporary image is valid.
+        if hypersolve::bivariate_arithmetic::bivariate_active_total_degree(map.denominator())
+            == Some(0)
+            && map.rational_affine().is_some()
+        {
+            let mapped = Curve2::from_polynomial_branch(self.clone()).rational_image(map)?;
+            return mapped
+                .polynomial_branch()
+                .expect("a retained polynomial image")
+                .point_parameters(point, policy);
+        }
+        match self.nonlinear_point_parameters_in_map(point, policy, Some(map)) {
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported
+                    && self.certifies_constant_image(Some(map)) =>
+            {
+                // A constant value with a punctured domain cannot be reported
+                // as EntireCurve. This box proof is sufficient, not necessary.
+                if let Err(error) = map.bounds(&self.bounds()?) {
+                    return Err(match error {
+                        ExactCurveError::Blocked(ref b)
+                            if b.reason() == UncertaintyReason::BudgetExhausted =>
+                        {
+                            error
+                        }
+                        _ => blocked(UncertaintyReason::Unsupported),
+                    });
+                }
+                let image = self.endpoints[0].rational_image_with_policy(map, policy)?;
+                Ok(if decided(image.same_point(point, policy))? {
+                    None
+                } else {
+                    Some(Vec::new())
+                })
+            }
+            result => result.map(Some),
+        }
+    }
+
+    fn mapped_coordinate_form(
+        &self,
+        axis: usize,
+        map: Option<&crate::RationalMap2>,
+    ) -> Option<(
+        hypersolve::BivariatePolynomial,
+        hypersolve::BivariatePolynomial,
+    )> {
+        match map {
+            None => self.coordinate_form(axis),
+            Some(map) => {
+                self.pullback_form(map.numerators()[axis].clone(), map.denominator().clone())
+            }
+        }
+    }
+
+    // A rational coordinate with zero tangent derivative on the source graph
+    // is constant on its connected slab. Retained maps already have nonzero
+    // denominator proofs; a query-only extra map needs a separate domain proof
+    // before this derivative identity can establish an entire constant image.
+    fn certifies_constant_image(&self, map: Option<&crate::RationalMap2>) -> bool {
+        use hypersolve::bivariate_arithmetic::{
+            bivariate_multiply as mul, bivariate_parameter_derivative as derivative,
+            bivariate_subtract as sub,
+        };
+        let equation = self.topology().geometric_equation();
+        let fx = derivative(equation, CurveResultantParameter::First);
+        let fy = derivative(equation, CurveResultantParameter::Second);
+        (0..2).all(|axis| {
+            let Some((n, w)) = self.mapped_coordinate_form(axis, map) else {
+                return false;
+            };
+            let d = |variable| {
+                sub(
+                    &mul(&derivative(&n, variable), &w),
+                    &mul(&n, &derivative(&w, variable)),
+                )
+            };
+            let along = sub(
+                &mul(&d(CurveResultantParameter::First), &fy),
+                &mul(&d(CurveResultantParameter::Second), &fx),
+            );
+            hypersolve::divide_bivariate_polynomial_exact(&along, equation).is_some()
+        })
+    }
+
+    fn nonlinear_point_parameter(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveParameter2>> {
+        let mut parameters = self.nonlinear_point_parameters(point, policy)?;
+        if parameters.len() > 1 {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        }
+        Ok(parameters.pop())
+    }
+
+    /// Locates a point on a retained rational image. Under a certified
+    /// injective map chain, a point with that exact construction is located
+    /// on the source branch. Otherwise the pulled-back vertical (or, for a
+    /// vertical image, horizontal) coordinate level supplies candidates.
+    /// Authored coordinates keep the native section path; selected coordinates
+    /// use the caller-field resultant. Only sections proved equal to the full
+    /// original point are kept. Every distinct finite preimage is retained;
+    /// continuous sections require a separate constant-image proof.
+    fn nonlinear_point_parameters(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Vec<CurveParameter2>> {
+        self.nonlinear_point_parameters_in_map(point, policy, None)
+    }
+
+    fn nonlinear_point_parameters_in_map(
+        &self,
+        point: &CurvePoint2,
+        policy: &CurveContext,
+        map: Option<&crate::RationalMap2>,
+    ) -> ExactCurveResult<Vec<CurveParameter2>> {
+        if map.is_none() && self.injective_image_orientation().is_some() {
+            let mut source = Some(point.clone());
+            if let Some(transform) = &self.transform {
+                source = match point.definition() {
+                    Ok(crate::CurvePointDefinition2::Similarity {
+                        source,
+                        transform: image,
+                    }) if image == *transform => Some(source),
+                    _ => None,
+                };
+            }
+            for map in self.maps.iter().rev() {
+                source = source.and_then(|point| match point.definition() {
+                    Ok(crate::CurvePointDefinition2::RationalImage { source, map: image })
+                        if image == *map =>
+                    {
+                        Some(source)
+                    }
+                    _ => None,
+                });
+            }
+            if let Some(source) = source
+                && let Some(parameter) = self
+                    .source_branch(policy)?
+                    .point_parameter(&source, policy)?
+            {
+                return Ok(vec![parameter]);
+            }
+        }
+        let sections = if let Some(coordinates) = point.coordinates().filter(|_| map.is_none()) {
+            let (x, y) = (coordinates.x().clone(), coordinates.y().clone());
+            let vertical = crate::LineSeg2::try_new(
+                crate::Point2::new(x.clone(), Real::zero()),
+                crate::Point2::new(x, Real::one()),
+            )
+            .map_err(invalid)?;
+            match self.pullback_line_sections(&vertical, policy) {
+                Ok(sections) => sections,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Unsupported =>
+                {
+                    let horizontal = crate::LineSeg2::try_new(
+                        crate::Point2::new(Real::zero(), y.clone()),
+                        crate::Point2::new(Real::one(), y),
+                    )
+                    .map_err(invalid)?;
+                    self.pullback_line_sections(&horizontal, policy)?
+                }
+                Err(error) => return Err(error),
+            }
+        } else {
+            let selected = match self.mapped_selected_axis_sections(point, 0, map, policy) {
+                Ok(sections) => sections,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Unsupported =>
+                {
+                    self.mapped_selected_axis_sections(point, 1, map, policy)?
+                }
+                Err(error) => return Err(error),
+            };
+            Some(PolynomialLineSections2::Isolated(selected))
+        };
+        let Some(PolynomialLineSections2::Isolated(sections)) = sections else {
+            return Err(blocked(UncertaintyReason::Unsupported));
+        };
+        let mut found: Vec<CurveParameter2> = Vec::new();
+        for section in sections {
+            if !decided(section.point.same_point(point, policy))? {
+                continue;
+            }
+            let mut index = 0;
+            while index < found.len()
+                && decided(
+                    found[index]
+                        .cmp_by_refinement(&section.parameter, policy)
+                        .map_err(invalid)?,
+                )?
+                .is_lt()
+            {
+                index += 1;
+            }
+            if index == found.len()
+                || !decided(
+                    found[index]
+                        .cmp_by_refinement(&section.parameter, policy)
+                        .map_err(invalid)?,
+                )?
+                .is_eq()
+            {
+                found.insert(index, section.parameter);
+            }
+        }
+        Ok(found)
     }
 
     /// The parameter of `point` through the source-chart inverse forms
@@ -1115,32 +1711,69 @@ impl PolynomialCurveBranch2 {
             parameter = self.range.end().clone();
             self.endpoints[1].clone()
         } else if parameter.as_polynomial_query().is_some() {
-            let ordinate = crate::bezier_offset::PointFormSource2::new(
-                point.clone(),
-                hypersolve::BivariatePolynomial::new(vec![
-                    vec![ordinate_form[2].clone(), ordinate_form[1].clone()],
-                    vec![ordinate_form[0].clone()],
-                ]),
-                hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
-            );
-            let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
-                self.topology().equation(),
-                &parameter,
-                &ordinate,
-                &self.topology().domain().second,
-                policy,
-            )?
-            else {
-                return Ok(None);
-            };
-            if count != self.topology().slabs()[self.slab].arcs().len() {
-                return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
-            }
-            return Ok((rank == self.root).then_some(parameter));
+            return self.known_fiber_parameter(point, &ordinate_form, parameter, policy);
         } else {
-            self.map_point(self.interior_point(&parameter, policy)?, policy)?
+            match self.interior_point(&parameter, policy) {
+                Ok(source) => self.map_point(source, policy)?,
+                Err(ExactCurveError::Blocked(blocker))
+                    if blocker.reason() == UncertaintyReason::Unsupported =>
+                {
+                    // The abscissa may depend on a source ordinate. A rational
+                    // base-parameter pullback cannot express it, but the joint
+                    // selected query already retains the required field. Check
+                    // the supplied ordinate's exact rank instead of rebuilding
+                    // an unrelated coordinate field or projecting to a scalar.
+                    let query = crate::bezier_offset::PointFormSource2::new(
+                        point.clone(),
+                        hypersolve::BivariatePolynomial::new(vec![
+                            vec![form[2].clone(), form[1].clone()],
+                            vec![form[0].clone()],
+                        ]),
+                        hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+                    );
+                    let parameter = CurveParameter2::from_polynomial_query(decided(
+                        crate::selected_query_scalar::SelectedQueryScalar2::replay(query, policy)
+                            .map_err(invalid)?,
+                    )?);
+                    return self.known_fiber_parameter(point, &ordinate_form, parameter, policy);
+                }
+                Err(error) => return Err(error),
+            }
         };
         Ok(decided(expected.same_point(point, policy))?.then_some(parameter))
+    }
+
+    /// Reuses a supplied ordinate only after checking the equation, selected
+    /// root rank and the complete distinct-root census in the original chart.
+    fn known_fiber_parameter(
+        &self,
+        point: &CurvePoint2,
+        ordinate_form: &[Real; 3],
+        parameter: CurveParameter2,
+        policy: &CurveContext,
+    ) -> ExactCurveResult<Option<CurveParameter2>> {
+        let ordinate = crate::bezier_offset::PointFormSource2::new(
+            point.clone(),
+            hypersolve::BivariatePolynomial::new(vec![
+                vec![ordinate_form[2].clone(), ordinate_form[1].clone()],
+                vec![ordinate_form[0].clone()],
+            ]),
+            hypersolve::BivariatePolynomial::new(vec![vec![Real::one()]]),
+        );
+        let Some((rank, count)) = PolynomialPoint2::query_fiber_rank(
+            self.topology().equation(),
+            &parameter,
+            &ordinate,
+            &self.topology().domain().second,
+            policy,
+        )?
+        else {
+            return Ok(None);
+        };
+        if count != self.topology().slabs()[self.slab].arcs().len() {
+            return Err(invalid(CurveError::InvalidBezierAlgebraicParameter));
+        }
+        Ok((rank == self.root).then_some(parameter))
     }
 
     pub(super) fn point_at(
@@ -1540,5 +2173,59 @@ mod policy_tests {
             aggregate.certainty(),
             crate::CurveCertainty::Approximate512Consumed
         );
+    }
+}
+
+#[cfg(test)]
+mod source_chart_tests {
+    use super::*;
+
+    #[test]
+    fn source_chart_rebuilds_endpoints_certified_in_another_definition() {
+        let p = |rows: Vec<Vec<i32>>| {
+            hypersolve::BivariatePolynomial::new(
+                rows.into_iter()
+                    .map(|r| r.into_iter().map(Real::from).collect())
+                    .collect(),
+            )
+        };
+        let topology = hypersolve::bivariate_topology::decompose_bivariate_curve(
+            &p(vec![vec![0, 1], vec![0], vec![-1]]),
+            &hypersolve::bivariate_topology::BivariateCurveDomain {
+                first: [(-1).into(), 1.into()],
+                second: [(-1).into(), 2.into()],
+            },
+            Default::default(),
+        )
+        .unwrap();
+        let set = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+        let image = set.curves()[0]
+            .rational_image(&crate::RationalMap2::new(
+                [p(vec![vec![0], vec![4], vec![1]]), p(vec![vec![0, 4]])],
+                p(vec![vec![4]]),
+            ))
+            .unwrap();
+        let branch = image.polynomial_branch().unwrap();
+        let q = |n| (Real::from(n) / Real::from(4)).unwrap();
+        let branch = branch.restricted_with_certified_endpoints(
+            branch.parameter_range().clone(),
+            [
+                crate::Point2::new(q(-3), Real::one()).into(),
+                crate::Point2::new(q(5), Real::one()).into(),
+            ],
+        );
+        let source = branch.source_branch(&CurveContext::STRICT).unwrap();
+        for (t, x) in [(-1, -1), (1, 1)] {
+            let point = source
+                .point_at(&Real::from(t).into(), &CurveContext::STRICT)
+                .unwrap();
+            assert_eq!(
+                point.same_point(
+                    &crate::Point2::from_values(x, 1).into(),
+                    &CurveContext::STRICT
+                ),
+                Classification::Decided(true)
+            );
+        }
     }
 }

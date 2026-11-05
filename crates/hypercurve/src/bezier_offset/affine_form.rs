@@ -214,6 +214,32 @@ pub(crate) fn point_affine_form_parameter(
         }
         _ => {}
     }
+    let recursive = recursive_affine_form_parameter(source, coefficients, policy)?;
+    if matches!(recursive, Classification::Uncertain(reason) if reason != UncertaintyReason::BudgetExhausted)
+        && matches!(&source.0, CurvePointData2::AlgebraicChordPair(point) if point.uses_selected_field())
+    {
+        let selected = point_rational_form_parameter(
+            source,
+            &BivariatePolynomial::new(vec![vec![c.clone(), b.clone()], vec![a.clone()]]),
+            &BivariatePolynomial::new(vec![vec![Real::one()]]),
+            policy,
+        )?;
+        if !matches!(
+            selected,
+            Classification::Uncertain(UncertaintyReason::Unsupported)
+        ) {
+            return Ok(selected);
+        }
+    }
+    Ok(recursive)
+}
+
+fn recursive_affine_form_parameter(
+    source: &CurvePoint2,
+    coefficients: &[Real; 3],
+    policy: &CurveContext,
+) -> CurveResult<Classification<CurveParameter2>> {
+    let [a, b, c] = coefficients;
     let points = match recursive_projective_evidence_points(&[source], policy)? {
         Classification::Decided(Some(points)) => points,
         Classification::Decided(None) => {

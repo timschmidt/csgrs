@@ -2173,8 +2173,11 @@ fn span_self_intersections(
     };
     let mut result = Evidence::default();
     let incidence = match &span.support {
-        CurveSupport2::Polynomial(branch) => {
-            if branch.rational_maps().is_empty() {
+        CurveSupport2::Polynomial(_) => {
+            if span
+                .support
+                .has_certified_injective_image(&span.range, policy)
+            {
                 return Ok(());
             }
             Err(ExactCurveError::blocked(

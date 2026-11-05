@@ -22,7 +22,7 @@ fn root() -> Parameter {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(mut parameters) =
-        curve.parameters_of(&Point3::origin()).unwrap()
+        curve.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("selected quintic root");
     };

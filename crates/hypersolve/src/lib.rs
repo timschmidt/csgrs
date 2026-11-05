@@ -39,6 +39,7 @@ pub mod jacobian;
 pub mod linalg;
 pub mod model;
 pub mod modular_gcd;
+pub mod ordered_field_resultant;
 pub mod ordered_field_roots;
 mod policy_division;
 pub mod polynomial;

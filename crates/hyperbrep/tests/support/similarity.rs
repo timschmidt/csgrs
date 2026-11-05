@@ -402,7 +402,7 @@ pub fn selected_and_repeated() {
     )
     .unwrap();
     let CurveParameterLocation::Parameters(parameters) =
-        selector.parameters_of(&Point3::origin()).unwrap()
+        selector.parameters_of(Point3::origin()).unwrap()
     else {
         panic!("selected root")
     };

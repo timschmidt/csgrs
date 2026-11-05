@@ -97,7 +97,10 @@ impl AffineCurve3 {
         exact_point_bounds(&corners)
     }
 
-    pub(super) fn parameters_of(&self, point: &Point3) -> GeometryResult<CurveParameterLocation> {
+    pub(super) fn parameters_of(
+        &self,
+        point: &GeometricPoint3,
+    ) -> GeometryResult<CurveParameterLocation> {
         // Construction already proves nonsingularity. Inversion is exact
         // arithmetic, not an independent tolerance-based decision.
         let inverse = self
@@ -105,7 +108,6 @@ impl AffineCurve3 {
             .clone()
             .inverse()
             .map_err(GeometryError::Numeric)?;
-        self.source
-            .parameters_of(&transform_point(&inverse, point)?)
+        self.source.parameters_of(point.transformed(&inverse)?)
     }
 }

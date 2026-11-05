@@ -154,19 +154,34 @@ pub(super) fn intersect(
             curves.push(section);
             continue;
         }
-        if !plane_injective {
+        if !plane_injective && uv.polynomial_branch().is_none() {
             unmapped.push(uv.clone());
             continue;
         }
         let projected = uv.rational_image(&map)?;
-        let curve = Curve3::from_planar_image(PlanarCurve3 {
-            source: projected.clone(),
-            origin: plane.origin.clone(),
-            u: plane.u.clone(),
-            v: plane.v.clone(),
-            source_scale: Real::one(),
-            source_offset: Real::zero(),
-        })?;
+        let curve = if plane_injective {
+            Curve3::from_planar_image(PlanarCurve3 {
+                source: projected.clone(),
+                origin: plane.origin.clone(),
+                u: plane.u.clone(),
+                v: plane.v.clone(),
+                source_scale: Real::one(),
+                source_offset: Real::zero(),
+            })?
+        } else {
+            // Injectivity of the tensor has already been certified. Its
+            // restriction to the selected pullback zero set lies in this
+            // plane, so projection and plane lift agree on the whole curve.
+            // The plane map may fold elsewhere in the UV rectangle; retain
+            // the tensor as spatial authority without claiming that this
+            // rational map is an injective two-dimensional chart.
+            Curve3::from_tensor_image(TensorCurve3 {
+                surface: tensor.clone(),
+                source: uv.clone(),
+                source_scale: Real::one(),
+                source_offset: Real::zero(),
+            })?
+        };
         let mut section =
             SurfaceIntersectionCurve::from_certified_exact_pcurves(curve, projected, uv.clone())?;
         section.polynomial_contact_exponent = uv
@@ -175,8 +190,9 @@ pub(super) fn intersect(
         curves.push(section);
     }
     if !unmapped.is_empty() {
-        // Branches of a folding plane projection: tensor images whose plane
-        // pcurves are unavailable rather than fitted.
+        // Other source families whose rational plane images are not yet
+        // admitted retain their tensor definitions and explicit unavailable
+        // plane pcurves rather than fitted substitutes.
         let zeros = super::implicit_tensor::UnitSquareZeros {
             curves: unmapped,
             points: Vec::new(),
@@ -248,6 +264,50 @@ pub(super) fn pullback(
 }
 
 impl Surface {
+    /// Re-establishes a retained tensor section's complete image on a plane.
+    /// The selected UV branch must divide the plane pullback; projecting that
+    /// same branch and lifting it then agrees with the tensor throughout it.
+    pub(crate) fn certifies_tensor_section_image(
+        &self,
+        curve: &Curve3,
+        pcurve: &Curve2,
+        scale: &Real,
+        offset: &Real,
+    ) -> GeometryResult<bool> {
+        let SurfaceGeometry::Plane(plane) = &self.data.geometry else {
+            return Ok(false);
+        };
+        let CurveGeometry3::TensorImage(image) = &curve.data.geometry else {
+            return Ok(false);
+        };
+        let SurfaceGeometry::RationalBezier(tensor) = &image.surface.data.geometry else {
+            return Ok(false);
+        };
+        let Some(branch) = image.source.polynomial_branch() else {
+            return Ok(false);
+        };
+        let (equation, map) = pullback(plane, tensor)?;
+        if !branch.certifies_polynomial_zero(&equation) {
+            return Ok(false);
+        }
+        let actual = PlanarCurve3 {
+            source: image.source.rational_image(&map)?,
+            origin: plane.origin.clone(),
+            u: plane.u.clone(),
+            v: plane.v.clone(),
+            source_scale: image.source_scale.clone(),
+            source_offset: image.source_offset.clone(),
+        };
+        let inverse = (Real::one() / scale).map_err(GeometryError::Numeric)?;
+        let expected = PlanarCurve3 {
+            source: pcurve.clone(),
+            source_scale: inverse.clone(),
+            source_offset: -offset * inverse,
+            ..actual.clone()
+        };
+        actual.parameterization_equals(&expected)
+    }
+
     /// Checks the entire retained polynomial branch, not a finite set of samples.
     pub(crate) fn certifies_polynomial_section_image(
         &self,
@@ -379,4 +439,109 @@ pub(super) fn iso_line_with_range(
         return Ok(None);
     };
     Ok(Some((SurfaceIsoAxis::U, constant)))
+}
+
+#[cfg(test)]
+mod replay_proof_tests {
+    use super::*;
+
+    fn polynomial(rows: &[&[i32]]) -> BivariatePolynomial {
+        BivariatePolynomial::new(
+            rows.iter()
+                .map(|row| row.iter().copied().map(Real::from).collect())
+                .collect(),
+        )
+    }
+
+    #[test]
+    fn tensor_plane_agreement_checks_mapped_branches_and_complete_images() {
+        use hypersolve::bivariate_topology::{
+            BivariateCurveDomain, BivariateTopologyConfig, decompose_bivariate_curve,
+        };
+        let topology = decompose_bivariate_curve(
+            &polynomial(&[&[0, 1], &[], &[-1]]),
+            &BivariateCurveDomain {
+                first: [0.into(), 1.into()],
+                second: [0.into(), 1.into()],
+            },
+            BivariateTopologyConfig::default(),
+        )
+        .unwrap();
+        let set = hypercurve::PolynomialCurveSet2::from_topology(
+            topology,
+            hypersolve::AlgebraicFiberRootIsolationConfig::default(),
+        )
+        .unwrap();
+        // The retained swap sends (t,t^2) to UV=(t^2,t).
+        let source = set.curves()[0]
+            .rational_image(&RationalMap2::new(
+                [polynomial(&[&[0, 1]]), polynomial(&[&[], &[1]])],
+                polynomial(&[&[1]]),
+            ))
+            .unwrap();
+        let half = (Real::one() / Real::from(2)).unwrap();
+        // S(u,v)=(u,v,u-v^2): every mapped source point lies in z=0.
+        // Tensor control rows are v, with u across each row.
+        let tensor = Surface::rational_bezier(
+            vec![
+                vec![Point3::origin(), Point3::new(1.into(), 0.into(), 1.into())],
+                vec![
+                    Point3::new(0.into(), half.clone(), 0.into()),
+                    Point3::new(1.into(), half.clone(), 1.into()),
+                ],
+                vec![
+                    Point3::new(0.into(), 1.into(), (-1).into()),
+                    Point3::new(1.into(), 1.into(), 0.into()),
+                ],
+            ],
+            vec![vec![Real::one(); 2]; 3],
+        )
+        .unwrap();
+        let curve = Curve3::from_tensor_image(TensorCurve3 {
+            surface: tensor,
+            source: source.clone(),
+            source_scale: half.clone(),
+            source_offset: half,
+        })
+        .unwrap();
+        let plane = Surface::plane(Point3::origin(), Vector3::x(), Vector3::y()).unwrap();
+        assert!(
+            plane
+                .certifies_tensor_section_image(&curve, &source, &2.into(), &(-1).into())
+                .unwrap()
+        );
+        assert!(
+            !plane
+                .certifies_tensor_section_image(&curve, &source, &1.into(), &0.into())
+                .unwrap()
+        );
+        let displaced = Surface::plane(
+            Point3::new(0.into(), 0.into(), 1.into()),
+            Vector3::x(),
+            Vector3::y(),
+        )
+        .unwrap();
+        assert!(
+            !displaced
+                .certifies_tensor_section_image(&curve, &source, &2.into(), &(-1).into())
+                .unwrap()
+        );
+        // Endpoint agreement does not prove the interior: (X,Y+X-X^2).
+        let wrong = source
+            .rational_image(&RationalMap2::new(
+                [
+                    polynomial(&[&[], &[1]]),
+                    polynomial(&[&[0, 1], &[1], &[-1]]),
+                ],
+                polynomial(&[&[1]]),
+            ))
+            .unwrap();
+        assert!(source.start().coincides_with(&wrong.start()).unwrap());
+        assert!(source.end().coincides_with(&wrong.end()).unwrap());
+        assert!(
+            !plane
+                .certifies_tensor_section_image(&curve, &wrong, &2.into(), &(-1).into())
+                .unwrap()
+        );
+    }
 }

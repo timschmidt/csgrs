@@ -67,7 +67,16 @@ impl CurveSourceSpan2 {
                 if branch.similarity_view().is_some() || branch.has_injective_affine_view() {
                     Classification::Decided(None)
                 } else {
-                    Classification::Uncertain(UncertaintyReason::Unsupported)
+                    // A continuous image whose two endpoints are certified
+                    // distinct is not one point; coincident or undecided
+                    // endpoints never establish a point image.
+                    let curve = self.curve();
+                    match policy
+                        .strict_predicate_pass(|| curve.start().same_point(&curve.end(), policy))
+                    {
+                        Classification::Decided(false) => Classification::Decided(None),
+                        _ => Classification::Uncertain(UncertaintyReason::Unsupported),
+                    }
                 }
             }
             CurveSupport2::Bezier(curve) => curve

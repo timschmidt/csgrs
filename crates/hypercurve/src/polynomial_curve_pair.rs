@@ -192,6 +192,10 @@ enum SharedChart {
     /// An exact nonsingular affine view that is not a similarity: its
     /// inverse map and whether it reverses orientation.
     Affine(crate::RationalMap2, bool),
+    /// Equal retained maps certified injective on one rectangle containing
+    /// both source domains, and whether their composition reverses
+    /// orientation. Image contacts are exactly images of source contacts.
+    Injective(bool),
 }
 
 fn shared_chart(
@@ -204,7 +208,28 @@ fn shared_chart(
     }
     // Equal exact nonsingular affine views also share one source chart.
     let (Some(a), Some(b)) = (first.affine_view(), second.affine_view()) else {
-        return Ok(None);
+        // A shared nonlinear map must be injective on one convex rectangle
+        // containing BOTH domains. Separate certificates do not exclude two
+        // disjoint source pieces having intersecting images.
+        if !first.same_image_maps(second) {
+            return Ok(None);
+        }
+        let corners = [first, second]
+            .into_iter()
+            .flat_map(|branch| {
+                let domain = branch.topology().domain();
+                [
+                    crate::Point2::new(domain.first[0].clone(), domain.second[0].clone()),
+                    crate::Point2::new(domain.first[1].clone(), domain.second[1].clone()),
+                ]
+            })
+            .collect::<Vec<_>>();
+        return Ok(match crate::Aabb2::from_points(&corners) {
+            Classification::Decided(rectangle) => first
+                .injective_image_orientation_on(&rectangle)
+                .map(SharedChart::Injective),
+            Classification::Uncertain(_) => None,
+        });
     };
     let same = policy.strict_predicate_pass(|| -> ExactCurveResult<bool> {
         for (a, b) in a.iter().zip(&b) {
@@ -279,6 +304,104 @@ fn shared_similarity(
     Ok(Some(first_view.or(second_view)))
 }
 
+/// Two branches with different exact nonsingular affine views of one image
+/// plane. Each branch's equation is composed exactly into the other's source
+/// chart through `T_other^-1 T_self`; resultant roots there are complete
+/// abscissa candidates on each branch, evaluated through its own selected
+/// fibers. A contact is a pair of candidate points proved equal. Tangent
+/// signs are left unclassified. A common component (zero resultant) keeps
+/// the existing dispatch.
+fn cross_chart_intersect(
+    first: &Curve2,
+    second: &Curve2,
+    a: &PolynomialCurveBranch2,
+    b: &PolynomialCurveBranch2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<CurveIntersectionResult2>> {
+    let policy = &policy.strict_counterpart();
+    let Some(first_points) = cross_chart_candidates(first, a, b, policy)? else {
+        return Ok(None);
+    };
+    let Some(second_points) = cross_chart_candidates(second, b, a, policy)? else {
+        return Ok(None);
+    };
+    let location = |parameter| CurveLocation2 {
+        span_index: 0,
+        span_range: CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+        local_parameter: parameter,
+    };
+    let mut contacts = Vec::new();
+    for (first_parameter, point) in first_points {
+        for (second_parameter, other) in &second_points {
+            if decided(point.same_point(other, policy))? {
+                contacts.push(CurveIntersectionContact2 {
+                    first: location(first_parameter),
+                    second: location(second_parameter.clone()),
+                    point,
+                    certified_transverse: false,
+                    tangent_cross_sign: None,
+                });
+                break;
+            }
+        }
+    }
+    Ok(Some(publish(contacts, Vec::new())))
+}
+
+/// Candidate parameters and points of `curve` (carried by `own`) that can
+/// lie on `other`'s image: roots of the resultant of `own`'s equation and
+/// `other`'s equation composed into `own`'s source chart, on `curve`'s domain.
+fn cross_chart_candidates(
+    curve: &Curve2,
+    own: &PolynomialCurveBranch2,
+    other: &PolynomialCurveBranch2,
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<Vec<(CurveParameter2, CurvePoint2)>>> {
+    let (Some(view), Some((inverse, _))) = (own.affine_view(), other.inverse_affine_view()) else {
+        return Ok(None);
+    };
+    // T_other^-1 after T_own, in the `[a, b, d, e, x, y]` affine convention.
+    let [a1, b1, d1, e1, x1, y1] = &view;
+    let [a2, b2, d2, e2, x2, y2] = &inverse;
+    let composed = [
+        a2 * a1 + b2 * d1,
+        a2 * b1 + b2 * e1,
+        d2 * a1 + e2 * d1,
+        d2 * b1 + e2 * e1,
+        a2 * x1 + b2 * y1 + x2,
+        d2 * x1 + e2 * y1 + y2,
+    ];
+    let one = BivariatePolynomial::new(vec![vec![Real::one()]]);
+    let Some((transported, _)) = crate::RationalMap2::from_affine(&composed)
+        .pullback(other.topology().geometric_equation(), &one)
+    else {
+        return Ok(None);
+    };
+    let candidates = resultant(&[own.topology().geometric_equation().clone(), transported])?;
+    if polynomial_is_zero(&candidates, policy)? {
+        // A common component keeps the existing dispatch.
+        return Ok(None);
+    }
+    let [low, high] = decided(
+        curve
+            .parameter_domain()
+            .ordered_endpoints(policy)
+            .map_err(invalid)?,
+    )?;
+    let mut points = Vec::new();
+    for value in own.section_abscissas(candidates)? {
+        if order(&value, low, policy)? == Ordering::Less
+            || order(&value, high, policy)? == Ordering::Greater
+        {
+            continue;
+        }
+        let parameter = local_parameter(curve, &value, policy)?;
+        let point = curve.point_at_with_policy(&parameter, policy)?.into_value();
+        points.push((parameter, point));
+    }
+    Ok(Some(points))
+}
+
 pub(super) fn intersect(
     first: &Curve2,
     second: &Curve2,
@@ -288,7 +411,7 @@ pub(super) fn intersect(
         return Ok(None);
     };
     let Some(chart) = shared_chart(a, b, policy)? else {
-        return Ok(None);
+        return cross_chart_intersect(first, second, a, b, policy);
     };
     let (inverse, affine_inverse, reflected) = match &chart {
         SharedChart::Similarity(image) => (
@@ -303,6 +426,14 @@ pub(super) fn intersect(
                 .is_some_and(Similarity2::reverses_orientation),
         ),
         SharedChart::Affine(map, reverses) => (None, Some(map), *reverses),
+        SharedChart::Injective(reverses) => (None, None, *reverses),
+    };
+    // A nonlinear chart has no inverse map: tangent forms read the first
+    // branch's own source point at the contact abscissa.
+    let source_curve = if matches!(chart, SharedChart::Injective(_)) {
+        Some(Curve2::from_polynomial_branch(a.source_branch(policy)?))
+    } else {
+        None
     };
     let policy = &policy.strict_counterpart();
     let [a_low, a_high] = decided(
@@ -468,9 +599,12 @@ pub(super) fn intersect(
                 shared_selected_support,
             )
         });
-        let source_point = match affine_inverse {
-            Some(map) => point.rational_image(map)?,
-            None => inverse.as_ref().map_or_else(
+        let source_point = match (affine_inverse, &source_curve) {
+            (_, Some(source)) => source
+                .point_at_with_policy(&local_parameter(source, &value, policy)?, policy)?
+                .into_value(),
+            (Some(map), None) => point.rational_image(map)?,
+            (None, None) => inverse.as_ref().map_or_else(
                 || point.clone(),
                 |inverse| {
                     CurvePoint2::from(crate::bezier_offset::BezierSimilarityPoint2::new(

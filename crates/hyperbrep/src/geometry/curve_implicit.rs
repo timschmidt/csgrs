@@ -255,6 +255,7 @@ pub(super) fn roots(
     )?);
     let mut roots = Vec::new();
     match projected.point_locations(&CurvePoint2::new(Real::zero(), Real::zero()).into())? {
+        CurvePointLocations2::Components(_) => return Err(GeometryError::UnsupportedIntersection),
         CurvePointLocations2::EntireCurve => {
             unreachable!("a nonzero Bernstein coefficient excludes an identically zero polynomial")
         }

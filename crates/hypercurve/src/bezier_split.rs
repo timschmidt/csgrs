@@ -34,7 +34,7 @@ use crate::selected_scalar::SelectedScalar2;
 use crate::{
     Axis2, BezierAlgebraicChord2, BezierAlgebraicCuspSemicircleFragment2,
     BezierAlgebraicEndpointImage2, BezierAlgebraicParameter2, BezierEndpoint, BezierParallel2,
-    BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, CurveContext,
+    BezierParameter2, BezierParameterRange2, Classification, CubicBezier2, Curve2, CurveContext,
     CurveError, CurveResult, HomogeneousControl2, LineSeg2, Point2, QuadraticBezier2,
     RationalBezier2, RationalQuadraticBezier2, Similarity2, UncertaintyReason,
 };
@@ -322,6 +322,19 @@ impl CurveParameter2 {
         }
     }
 
+    /// Returns the selected point and oriented finite line defining a
+    /// point-ordered parameter. Replay must re-establish incidence and domain
+    /// membership; the returned definition is not a scalar coordinate.
+    pub fn point_ordered_line_definition(&self) -> Option<(Curve2, CurvePoint2)> {
+        let parameter = self.as_algebraic_chord()?;
+        Some((
+            Curve2::from_retained_fragment(BezierSplitFragment2::AlgebraicChord(
+                parameter.chord().clone(),
+            )),
+            parameter.point().clone(),
+        ))
+    }
+
     pub(crate) fn as_algebraic_chord(&self) -> Option<&BezierAlgebraicChordParameter2> {
         match &self.data {
             CurveParameterData2::AlgebraicChord(parameter) => Some(parameter),
@@ -399,7 +412,9 @@ impl CurveParameter2 {
     ///
     /// This does not promote a selected fiber or recursive field value into an
     /// independent scalar root. Point-ordered geometric parameters admit the
-    /// identity map; other maps require a scalar chart from their owning curve.
+    /// identity map. A point-ordered chord also admits negation with zero
+    /// offset, which transports its point into the opposite order chart on the
+    /// same support. Other maps require a scalar chart from the owning curve.
     pub fn affine_image(&self, scale: &Real, offset: &Real) -> crate::ExactCurveResult<Self> {
         if scale == &Real::one() && offset.zero_status() == hyperreal::ZeroKnowledge::Zero {
             return Ok(self.clone());
@@ -484,6 +499,18 @@ impl CurveParameter2 {
             CurveParameterData2::Scalar(scalar) => Ok(scalar
                 .affine_image_unbounded(scale, offset, policy)?
                 .map(Self::from_selected_scalar)),
+            CurveParameterData2::AlgebraicChord(parameter)
+                if crate::classify::is_zero(&(scale + Real::one()), policy) == Some(true)
+                    && crate::classify::is_zero(offset, policy) == Some(true) =>
+            {
+                // Negation is the order-dual chart on the identical selected
+                // support point, not an independently materialized coordinate.
+                let reversed = parameter.chord().reversed();
+                Ok(Classification::Decided(Self::from_algebraic_chord(
+                    reversed
+                        .parameter_at_certified_support_point(parameter.point().clone(), policy)?,
+                )))
+            }
             CurveParameterData2::AlgebraicChord(_) | CurveParameterData2::AlgebraicCusp { .. } => {
                 Ok(Classification::Uncertain(UncertaintyReason::Unsupported))
             }

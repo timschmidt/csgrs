@@ -343,3 +343,171 @@ fn polynomial_locations_retry_after_counted_exhaustion() {
         outcome.certified().unwrap();
     }
 }
+
+#[test]
+fn selected_ordinate_remains_an_abscissa_in_another_polynomial_chart() {
+    // The root a of a^5+a=1/2 is not materialized. Swapping the coordinates
+    // of its defining fiber (1/2,a) gives (a,1/2) on y=x^5+x.
+    let source = curves(polynomial(&[&[0, 1, 0, 0, 0, 1], &[-1]]));
+    let selected = source.curves()[0].point_at(&q(1, 2).into()).unwrap();
+    let swap = hypercurve::Similarity2::try_from_real_affine(
+        0.into(),
+        1.into(),
+        1.into(),
+        0.into(),
+        0.into(),
+        0.into(),
+    )
+    .unwrap();
+    let point = hypercurve::CurvePointDefinition2::Similarity {
+        source: selected,
+        transform: swap,
+    }
+    .into_point()
+    .unwrap();
+    let target = curves(polynomial(&[&[0, -1], &[1], &[], &[], &[], &[1]]));
+    assert_eq!(target.curves().len(), 1);
+    let expected = point
+        .affine_form(1.into(), 0.into(), 0.into())
+        .parameter()
+        .unwrap();
+    located(&target.curves()[0], &point, &expected);
+    located(&target.curves()[0].reversed().unwrap(), &point, &expected);
+    let replay = point.definition().unwrap().into_point().unwrap();
+    located(&target.curves()[0], &replay, &expected);
+    let wrong = curves(polynomial(&[&[1, -1], &[1], &[], &[], &[], &[1]]));
+    for curve in wrong.curves() {
+        absent(curve, &point);
+    }
+}
+
+#[test]
+fn nonlinear_images_locate_foreign_selected_points_in_the_original_chart() {
+    let polynomial = |rows: Vec<Vec<i32>>| {
+        BivariatePolynomial::new(
+            rows.into_iter()
+                .map(|r| r.into_iter().map(Real::from).collect())
+                .collect(),
+        )
+    };
+    let alpha = hypercurve::CurvePointDefinition2::PolynomialFiber {
+        equation: polynomial(vec![vec![-1, 1, 0, 0, 0, 1]]),
+        parameter: Real::zero().into(),
+        root: hypersolve::IsolatedRootInterval {
+            lower: 0.into(),
+            upper: 1.into(),
+            exact_root: None,
+            distinct_root_count: 1,
+        },
+    }
+    .into_point()
+    .unwrap();
+    let expected = alpha
+        .affine_form(0.into(), 1.into(), 0.into())
+        .parameter()
+        .unwrap();
+    // Independent construction (0,a) -> (a+a²,a²), rather than a point whose
+    // graph already contains the curve's (x,y)->(x+x²,y) map.
+    let target = alpha
+        .rational_image(&hypercurve::RationalMap2::new(
+            [
+                polynomial(vec![vec![0, 1, 1]]),
+                polynomial(vec![vec![0, 0, 1]]),
+            ],
+            polynomial(vec![vec![1]]),
+        ))
+        .unwrap();
+    let topology = decompose_bivariate_curve(
+        &polynomial(vec![vec![0, 1], vec![0], vec![-1]]),
+        &BivariateCurveDomain {
+            first: [0.into(), 1.into()],
+            second: [(-1).into(), 2.into()],
+        },
+        Default::default(),
+    )
+    .unwrap();
+    let set = PolynomialCurveSet2::from_topology(topology, Default::default()).unwrap();
+    let image = set.curves()[0]
+        .rational_image(&hypercurve::RationalMap2::new(
+            [
+                polynomial(vec![vec![0], vec![1], vec![1]]),
+                polynomial(vec![vec![0, 1]]),
+            ],
+            polynomial(vec![vec![1]]),
+        ))
+        .unwrap();
+    for curve in [image.clone(), image.reversed().unwrap()] {
+        let hypercurve::CurvePointLocations2::Locations(locations) =
+            curve.point_locations(&target).unwrap()
+        else {
+            panic!("finite inverse");
+        };
+        assert_eq!(locations.len(), 1);
+        let parameter = locations[0].parameter().unwrap();
+        assert_eq!(
+            parameter.compare(&expected).unwrap(),
+            std::cmp::Ordering::Equal
+        );
+        assert!(
+            curve
+                .point_at(&parameter)
+                .unwrap()
+                .coincides_with(&target)
+                .unwrap()
+        );
+    }
+    let short = image
+        .subcurve(
+            Real::zero().into(),
+            (Real::one() / Real::from(4)).unwrap().into(),
+        )
+        .unwrap();
+    let hypercurve::CurvePointLocations2::Locations(locations) =
+        short.point_locations(&target).unwrap()
+    else {
+        panic!("finite inverse");
+    };
+    assert!(locations.is_empty());
+    // The first coordinate level contains this entire vertical image. The
+    // second level must supply the finite inverse, rather than returning a
+    // false empty result from the zero first resultant.
+    let vertical_source = curves(polynomial(vec![vec![0, 1]]));
+    let vertical = vertical_source.curves()[0]
+        .subcurve(Real::zero().into(), Real::one().into())
+        .unwrap()
+        .rational_image(&hypercurve::RationalMap2::new(
+            [
+                polynomial(vec![vec![0, 1]]),
+                polynomial(vec![vec![0], vec![1], vec![1]]),
+            ],
+            polynomial(vec![vec![1]]),
+        ))
+        .unwrap();
+    let vertical_target = alpha
+        .rational_image(&hypercurve::RationalMap2::new(
+            [polynomial(vec![vec![0]]), polynomial(vec![vec![0, 1, 1]])],
+            polynomial(vec![vec![1]]),
+        ))
+        .unwrap();
+    let CurvePointLocations2::Locations(locations) =
+        vertical.point_locations(&vertical_target).unwrap()
+    else {
+        panic!("finite vertical inverse");
+    };
+    assert_eq!(locations.len(), 1);
+    assert_eq!(
+        locations[0]
+            .parameter()
+            .unwrap()
+            .compare(&expected)
+            .unwrap(),
+        Ordering::Equal
+    );
+    assert!(
+        vertical
+            .point_at(&locations[0].parameter().unwrap())
+            .unwrap()
+            .coincides_with(&vertical_target)
+            .unwrap()
+    );
+}

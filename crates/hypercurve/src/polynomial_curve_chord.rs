@@ -119,14 +119,13 @@ enum PolynomialChordSupport {
     Source(LineSeg2),
 }
 
-/// A native support view does not replace this chord's selected endpoints.
-fn supporting_line(
+/// An exact world line supporting the whole chord: its retained exact line,
+/// or a vertical support certified by equal represented abscissas, oriented
+/// along the chord's traversal.
+fn world_support(
     chord: &BezierAlgebraicChord2,
-    branch: &crate::PolynomialCurveBranch2,
-    source_x: &[Real; 3],
-    source_y: &[Real; 3],
     policy: &CurveContext,
-) -> ExactCurveResult<Option<PolynomialChordSupport>> {
+) -> ExactCurveResult<Option<LineSeg2>> {
     chord.validate_policy(policy).map_err(invalid)?;
     if let Some(mut line) = chord
         .exact_line()
@@ -144,7 +143,7 @@ fn supporting_line(
         if positive != (sign == hyperreal::RealSign::Positive) {
             line = line.reversed();
         }
-        return Ok(Some(PolynomialChordSupport::World(line)));
+        return Ok(Some(line));
     }
     // A represented source abscissa can certify an entire vertical support
     // while both ordinates remain selected fibers. No ordinate is projected.
@@ -163,8 +162,22 @@ fn supporting_line(
             Point2::new(value.clone(), Real::zero()),
             Point2::new(value.clone(), dy),
         )
-        .map(|line| Some(PolynomialChordSupport::World(line)))
+        .map(Some)
         .map_err(invalid);
+    }
+    Ok(None)
+}
+
+/// A native support view does not replace this chord's selected endpoints.
+fn supporting_line(
+    chord: &BezierAlgebraicChord2,
+    branch: &crate::PolynomialCurveBranch2,
+    source_x: &[Real; 3],
+    source_y: &[Real; 3],
+    policy: &CurveContext,
+) -> ExactCurveResult<Option<PolynomialChordSupport>> {
+    if let Some(line) = world_support(chord, policy)? {
+        return Ok(Some(PolynomialChordSupport::World(line)));
     }
     if branch.image_transform().is_none() {
         return Ok(None);
@@ -346,7 +359,20 @@ fn intersect_certified(
         .polynomial_branch()
         .expect("polynomial section dispatch");
     let Some([source_x, source_y]) = source_forms(branch)? else {
-        return Ok(None);
+        // A nonlinear image has no source coordinate forms. Its chord still
+        // meets it through the branch's pullback of an exact world support.
+        let Some(line) = world_support(chord, policy)? else {
+            let points = branch.mapped_selected_chord_sections(chord, policy)?;
+            return chord_contacts(branch, chord, line_curve, points, branch_first, policy)
+                .map(Some);
+        };
+        let Some(sections) = branch.line_sections(&line, policy)? else {
+            return Ok(None);
+        };
+        let PolynomialLineSections2::Isolated(points) = sections else {
+            return Ok(None);
+        };
+        return chord_contacts(branch, chord, line_curve, points, branch_first, policy).map(Some);
     };
     let sections = if let Some(line) = supporting_line(chord, branch, &source_x, &source_y, policy)?
     {
@@ -414,6 +440,18 @@ fn intersect_certified(
         }
         PolynomialLineSections2::Isolated(points) => points,
     };
+    chord_contacts(branch, chord, line_curve, points, branch_first, policy).map(Some)
+}
+
+/// Publishes isolated branch sections that lie on the chord's active domain.
+fn chord_contacts(
+    branch: &crate::PolynomialCurveBranch2,
+    chord: &BezierAlgebraicChord2,
+    line_curve: &Curve2,
+    points: Vec<crate::curve::PolynomialLineSection2>,
+    branch_first: bool,
+    policy: &CurveContext,
+) -> ExactCurveResult<CurveIntersectionResult2> {
     let flip = (branch.is_reversed() != line_curve.source_traversal_is_reversed()) == branch_first;
     let mut contacts = Vec::new();
     for section in points {
@@ -437,5 +475,5 @@ fn intersect_certified(
             branch_first,
         ));
     }
-    Ok(Some(publish(contacts, Vec::new())))
+    Ok(publish(contacts, Vec::new()))
 }
