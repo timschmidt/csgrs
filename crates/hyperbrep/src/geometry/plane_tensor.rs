@@ -94,11 +94,8 @@ pub(super) fn intersect(
     let mut curves = Vec::with_capacity(set.curves.len());
     let mut unmapped = Vec::new();
     for uv in &set.curves {
-        let iso = iso_line(uv)?;
         let chord = matches!(uv.geometry(), Some(hypercurve::CurveGeometry2::Line(_)));
-        if let Some((axis, constant)) = iso.clone()
-            && (chord || !plane_injective)
-        {
+        if chord && let Some((axis, constant)) = iso_line(uv)? {
             // An iso-line component whose plane image the projection map
             // cannot give: the tensor's exact iso-curve projects to an exact
             // plane pcurve with the iso-line's parameter.
@@ -123,34 +120,15 @@ pub(super) fn intersect(
                 projected_points,
                 weights,
             )?);
-            let section = if chord {
-                // A chord has no polynomial branch: the native iso-curve and
-                // its iso segment replay as an iso image.
-                SurfaceIntersectionCurve::from_certified_exact_pcurves(
-                    iso_curve,
-                    projected,
-                    uv.clone(),
-                )?
-            } else {
-                // A branch keeps its selected graph and repeated-factor
-                // multiplicity as the tensor pcurve; the spatial curve is its
-                // tensor image, the same parameterization as the iso-curve.
-                let curve = Curve3::from_tensor_image(TensorCurve3 {
-                    surface: tensor.clone(),
-                    source: uv.clone(),
-                    source_scale: Real::one(),
-                    source_offset: Real::zero(),
-                })?;
-                let mut section = SurfaceIntersectionCurve::from_certified_exact_pcurves(
-                    curve,
-                    projected,
-                    uv.clone(),
-                )?;
-                section.polynomial_contact_exponent = uv
-                    .polynomial_branch()
-                    .map(|branch| branch.defining_exponent());
-                section
-            };
+            // Authored native chords keep the cheap iso-curve. Selected
+            // polynomial branches instead use the source-preserving rational
+            // projection below, retaining the coefficient/selector relations
+            // needed to re-establish their whole image after native replay.
+            let section = SurfaceIntersectionCurve::from_certified_exact_pcurves(
+                iso_curve,
+                projected,
+                uv.clone(),
+            )?;
             curves.push(section);
             continue;
         }
