@@ -10,6 +10,10 @@ use crate::bezier_offset::{
 use crate::curve_support::CurveSupport2;
 use crate::{BezierSplitFragment2, BezierSubcurve2, CurveFamily2};
 
+#[cfg(test)]
+#[path = "curve_support_intersection/endpoint_admission_tests.rs"]
+mod endpoint_admission_tests;
+
 #[derive(Default)]
 struct Evidence {
     contacts: Vec<CurveIntersectionContact2>,
@@ -403,19 +407,9 @@ impl Pair<'_> {
         parameter: &mut CurveParameter2,
         point: &CurvePoint2,
     ) -> ExactCurveResult<bool> {
-        let outcome = crate::bezier_split::CurveParameterDomain2::new(&span.range, None)
-            .contains_finite_parameter(parameter, self.policy)
-            .map_err(|cause| {
-                ExactCurveError::invalid(
-                    CurveOperation2::Intersection,
-                    span.support.family(),
-                    cause,
-                )
-            })?;
-        let reason = match outcome {
-            Classification::Decided(inside) => return Ok(inside),
-            Classification::Uncertain(reason) => reason,
-        };
+        // A retained endpoint identity can settle equality without any new
+        // scalar refinement. Check its injective chart before falling back to
+        // the complete domain predicate.
         if let Some(points) = &span.endpoint_points {
             let strict = self.policy.strict_counterpart();
             let endpoint = strict.bounded_exact_predicate_pass(|| {
@@ -423,39 +417,49 @@ impl Pair<'_> {
                 let domain = crate::bezier_split::CurveParameterDomain2::new(&unit, None);
                 // Point equality identifies a parameter only in an injective
                 // chart containing both the contact and retained endpoints.
-                if !span.support.has_certified_injective_image(&unit, &strict)
-                    || !matches!(
-                        domain.contains_finite_range(&span.range, &strict),
-                        Ok(Classification::Decided(true))
-                    )
-                    || !matches!(
-                        domain.contains_finite_parameter(parameter, &strict),
-                        Ok(Classification::Decided(true))
-                    )
-                {
-                    return None;
+                if !span.support.has_certified_injective_image(&unit, &strict) {
+                    return Ok(Classification::Decided(None));
                 }
-                [span.range.start(), span.range.end()]
+                match domain.contains_finite_range(&span.range, &strict)? {
+                    Classification::Decided(true) => {}
+                    Classification::Uncertain(reason) if reason.is_resource_failure() => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                    _ => return Ok(Classification::Decided(None)),
+                }
+                match domain.contains_finite_parameter(parameter, &strict)? {
+                    Classification::Decided(true) => {}
+                    Classification::Uncertain(reason) if reason.is_resource_failure() => {
+                        return Ok(Classification::Uncertain(reason));
+                    }
+                    _ => return Ok(Classification::Decided(None)),
+                }
+                for (boundary, endpoint) in [span.range.start(), span.range.end()]
                     .into_iter()
                     .zip(points)
-                    .find_map(|(boundary, endpoint)| {
-                        matches!(
-                            point.same_point(endpoint, &strict),
-                            Classification::Decided(true)
-                        )
-                        .then(|| boundary.clone())
-                    })
+                {
+                    match point.same_point(endpoint, &strict) {
+                        Classification::Decided(true) => {
+                            return Ok(Classification::Decided(Some(boundary.clone())));
+                        }
+                        Classification::Uncertain(reason) if reason.is_resource_failure() => {
+                            return Ok(Classification::Uncertain(reason));
+                        }
+                        _ => {}
+                    }
+                }
+                Ok(Classification::Decided(None))
             });
-            if let Some(endpoint) = endpoint {
+            if let Some(endpoint) = decided(endpoint, span.support.family())? {
                 *parameter = endpoint;
                 return Ok(true);
             }
         }
-        Err(ExactCurveError::blocked(
-            CurveOperation2::Intersection,
+        let domain = crate::bezier_split::CurveParameterDomain2::new(&span.range, None);
+        decided(
+            domain.contains_finite_parameter(parameter, self.policy),
             span.support.family(),
-            reason,
-        ))
+        )
     }
 
     fn admit_contact(
