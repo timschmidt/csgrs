@@ -17,6 +17,37 @@ The [integration record](https://github.com/timschmidt/csgrs-evidence/blob/b2000
 retains current checks and open composition/delivery gates; no whole-stack or
 released-package qualification is inferred from the carrier inventory.
 
+## Integrated continuation qualification (2026-11-05)
+
+The [integration admission](../../../docs/research/brep-continuation-2026-11-05.md)
+qualifies code `0136c20c9ec1237f84362f49b35a6db2811a0db5` on the maintained
+finite corpus. Default/all-feature BRep records 847/856 successful test/doctest
+harness reports, including replay subprocesses;
+MSRV downstream IO passes 127. All 280 local workflow/Clippy commands qualify
+with actual revisions and complete unchanged owner/dependency source proofs.
+The existing 18-package stable/MSRV consumer pipeline passes; BRep/IO remain
+outside that release set. This supersedes earlier open pre-push notes for this
+checkpoint without changing their historical validation scopes.
+
+General selected tensor sections retain their original source projection;
+rational native iso sections retain their specialized pcurves and multiplicity.
+Planar face splits retain supplied exact chords after the original topology
+preconditions, so selected boundary vertices need no scalar coordinate view.
+The original nonlinear recut checks material, exact 2^-60 roof separations,
+cold/fresh native replay, another cut, independent prism set differences,
+volume one and empty recovery. The same fixture executes on zero-import WASM
+with the default stack and reciprocal native replay; it does not qualify a
+public ABI or every WASM workflow.
+
+The rejected sign-index experiment is removed. Fifteen exact ordinary cost
+workloads retain matching receipts, independent assertions and adverse
+measurements. Shared-target source-attribution failures remain explicit;
+final owner builds use private targets. No statistical speedup, universal
+closure or total work/heap/cancellation bound is established. Proper mixed
+spatial inverse loci and punctured selected implicit branches still block;
+general modeling, runtime fuzz/coverage and release remain open. See the
+existing [implementation ledger](IMPLEMENTATION_STATUS.json) for the increment.
+
 ## Exchange
 
 [HyperBRep IO](../../hyperbrep-io/README.md) parses/writes the bounded Part 21

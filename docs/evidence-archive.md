@@ -15,8 +15,8 @@ This repository keeps a digest for each archived record in
 | Research branch | [`research-2026-10-25`](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25) |
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
-| Current manifest commit | `f9373479078afb36b85094ee23402696d83bf191` |
-| Current records | 435 |
+| Current manifest commit | `a5623e1bcc778d462080cdeb1b746e5b3be8d09a` |
+| Current records | 436 |
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
@@ -1372,4 +1372,31 @@ compressed digests; no failed attempt is credited as geometric completion.
 ```sh
 python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
   f9373479078afb36b85094ee23402696d83bf191
+```
+
+## BRep continuation qualification (2026-11-05)
+
+Commit `a5623e1bcc778d462080cdeb1b746e5b3be8d09a` adds only
+`docs/evidence/2026-11-05-brep-continuation-qualification` to the previous
+`f9373479078afb36b85094ee23402696d83bf191` archive. Its 1,249 files and
+44,935,928 bytes have SHA-256 `8f2fbf9e23521eb3688db272cea76fda831e514b44c1020f1b3722c20d8f59e4`. All 436 records verify;
+every earlier record and all four historical excluded-package digest rows remain.
+The [admission](research/brep-continuation-2026-11-05.md) and existing BRep
+capability/implementation records distinguish finite completion from open gaps.
+
+The record retains the integrated code patch, original failed full suites,
+source-preserving repairs, rejected sign-index experiment, private-build
+attribution controls, all 280 qualified local workflow/Clippy commands with
+actual revisions and complete source-scope proofs, stable/MSRV package and
+site inventories, native capability outputs, final ordinary cost samples,
+and reciprocal native/WASM replay of the original nonlinear recut fixture.
+Fresh public probes still reproduce the proper mixed spatial and punctured
+selected implicit-branch blockers. Those are open capabilities, not completions.
+Compiled binaries and third-party package bytes are excluded; source, locks,
+full logs, selected native models and digests remain. Hosted deployment and
+secret-dependent publication were inspected rather than executed locally.
+
+```sh
+python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
+  a5623e1bcc778d462080cdeb1b746e5b3be8d09a
 ```

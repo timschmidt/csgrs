@@ -90,3 +90,7 @@ default and all-feature runs pass in 6,693.4 and 7,117.4 seconds respectively;
 the native curve run passes 3,127 tests with 37 existing ignores. Hosted
 deployments and secret-dependent publication were inspected, not executed.
 No geometry-wide completeness or uniform performance claim follows.
+
+The later [BRep continuation admission](brep-continuation-2026-11-05.md)
+qualifies the subsequent integration. The separate/unqualified BRep findings
+above describe this earlier publication checkpoint and remain historical evidence.

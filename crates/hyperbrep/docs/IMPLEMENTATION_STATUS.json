@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-11-04",
+  "updated_on": "2026-11-05",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -5420,6 +5420,53 @@
         "sha256": "d106935d5e2e866668b455e7d0e855ddbb95927f29d1f0a39c134d50a6ed342e",
         "published": false
       }
+    },
+    {
+      "id": "integrated-source-continuation-2026-11-05",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17",
+        "WP18",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P26",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "kept for the named exact continuation corpus after final code qualification; rational-sign-index experiment discarded",
+      "source_revision": "0136c20c9ec1237f84362f49b35a6db2811a0db5",
+      "change": "Integrate retained external BRep/Hypercurve research with published main. Hypercurve consumes proved endpoint identity before scalar refinement and preserves complete native rational contact authority when scalar trim representation is unsupported. BRep retains selected section source projections, native rational iso specialization/multiplicity and supplied exact split chords through original face topology preconditions. No sampled replacement, coordinate materialization prerequisite or duplicate kernel.",
+      "source": [
+        "../../hypercurve/src/curve_support_intersection/endpoint_admission_tests.rs",
+        "../../hypercurve/src/curve_support_intersection.rs",
+        "../src/geometry/plane_tensor.rs",
+        "../src/topology/edit/face.rs",
+        "../src/topology/edit/surface_loop.rs"
+      ],
+      "regressions": [
+        "../tests/tensor_face_splits.rs",
+        "../tests/tensor_graph_solids.rs",
+        "../tests/plane_tensor_sections.rs"
+      ],
+      "validation": "Final default BRep has 847 successful test/doctest harness reports, including replay subprocesses; all features 856; MSRV downstream IO 127; full Hypercurve 3174 with 37 existing ignores. Original nonlinear recut and native rational-iso/chained-Boolean/whole-image/negative-boundary controls remain unchanged and pass. All 280 required local workflow/Clippy commands qualify, preserving actual execution revisions with complete unchanged owner/dependency/fixture/manifest/CI proofs where reused. Stable/MSRV strict workspace Clippy, affected docs, WASM compile, fuzz-target checks and fresh existing 18-package consumers pass. Hosted deployment/publication not executed. One original recut fixture executes in zero-import default-stack WASM, replays in a fresh module and native test, and native-created output replays with further Boolean operations in WASM; both construction archives have the same 100319-byte digest.",
+      "cost_evidence": "Three fresh alternating process samples per variant/bench cover all 15 unchanged ordinary exact geometry/material/replay workloads, matching receipts and allocation instruments. Descriptive median candidate/baseline times range 0.9835 to 1.0237. Cone continuation adds 538-1072 allocation calls and 13648-29440 requested bytes per iteration; the similarity matrix removes 1040265 calls and 58987056 requested bytes. These are cumulative requested bytes, not retained or peak heap. All adverse results remain; concurrent host validation precludes statistical speedup/nonregression or uniform bounds. First shared-target cost evidence is unqualified for final source attribution; fresh private targets and timestamp-only controls identify reused Cargo worktree-relative artifacts. Rejected sign-index, full-suite failures, original hard cases and diagnostics are retained.",
+      "evidence": "../../../docs/research/brep-continuation-2026-11-05.md",
+      "evidence_record": "docs/evidence/2026-11-05-brep-continuation-qualification",
+      "limits": "Finite corpus admission only; all work packages remain open/in progress. Proper continuous/mixed spatial inverse loci and punctured selected implicit branch queries still block. General algebraic modeling closure and total work/heap/cancellation, full WASM corpus/public ABI, runtime fuzz/coverage and BRep release remain open. The existing 18-package release verification excludes BRep/IO. Earlier failed suites, historical source/probe scopes and adverse costs remain distinct from final success."
     }
   ],
   "work_packages": [
@@ -5594,6 +5641,7 @@
     }
   ],
   "next_actions": [
+    "Preserve the integrated-source-continuation-2026-11-05 corpus, original hard cases and negative controls. Final local workflow admission and one reciprocal native/WASM recut fixture are qualified; do not infer universal operation closure, full WASM/runtime-fuzz coverage, total resource bounds or BRep release. Continue the proper mixed spatial inverse and punctured implicit-branch gaps under the existing owners and contracts; retain rejected sign-index and adverse cost/source-attribution controls.",
     "Continue WP02/WP03/WP04/WP05a/WP06 from complete native rational parameter components and their source-germ-preserving intersection. Preserve the original [0,1] union {5/2} spline and {0,1/3,2/3,1} quadratic tensor/spline exact-success witnesses, all selected tensor inverse/replay chains, nonlinear cap/hole/quartic cases and native-spline graph stitching. Extend CurveParameterLocation and spatial consumers to proper continuous/mixed inverse loci: the admitted planar-tensor/native-spline probe requires [0,1/3] union {1} and still blocks. Complete punctured constant selected implicit-branch queries: the preserved nonrational y=sqrt(x) probe requires [0,1/2) union (1/2,1] and still blocks. Reuse original guards, selected source/fiber identities, open endpoints and parameter charts without treating missing proofs as inequality or exclusion. Complete unresolved shared components, procedural/point-ordered inverses, continuous overlap assembly, coplanar selected-line support collection, general chart arrangements and reconstruction. Consume all authored/generated families through further Booleans, offsets, shelling, fillets/chamfers, transforms and native replay. Total work/heap/cancellation and release packages remain open; no whole work package is complete.",
     "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof, certified rational endpoint recovery and tensor-image point location now let open splits consume sections with rational boundary endpoints; the original nonlinear transverse recut now stitches selected endpoints, but general independent selected preimages and atlas/chart reconstruction remain open), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
     "Continue WP02/WP03/WP05a/WP05b/WP06 from evidence/2026-10-19-surface-differentials/next-domains.md. Preserve the full old corpus and all eight new differential workflows while extending singular branch germs/event limits, complete dual-chart differential proofs, retained-profile selected positions and trim arrangements. Selected partials/unit normals and common-source vector products are now admitted on the recorded domains; independent-field/radical joins remain typed. All modeling, resource and delivery work packages and prior adverse cost observations remain active.",
