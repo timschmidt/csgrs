@@ -8,9 +8,9 @@ impl ArenaModel {
     /// Each fragment endpoint is attached by mathematical identity: an
     /// existing outer-boundary vertex is reused, otherwise the unique
     /// containing canonical edge is split at its exact represented parameter.
-    /// The resulting boundary vertices are then passed through
-    /// [`ArenaModel::split_face`], so the chord is shared by identity and the
-    /// complete model is revalidated before publication.
+    /// The resulting boundary vertices share the supplied line and its exact
+    /// plane projection. The chord preconditions of [`ArenaModel::split_face`]
+    /// and complete model validation still apply before publication.
     pub fn split_face_by_curve(
         &self,
         face_id: FaceId,
@@ -44,7 +44,14 @@ impl ArenaModel {
                 self.attach_face_split_endpoint(face_id, Endpoint::Start, &start)?;
             let (staged, end_vertex, end_edge) =
                 staged.attach_face_split_endpoint(face_id, Endpoint::End, &end)?;
-            let (staged, face) = staged.split_face(face_id, start_vertex, end_vertex)?;
+            let (staged, face, _) = staged.split_face_with_chain(
+                face_id,
+                start_vertex,
+                end_vertex,
+                None,
+                Vec::new(),
+                Some(curve.clone()),
+            )?;
             Ok((
                 staged,
                 ArenaCurveFaceSplit {
@@ -318,8 +325,14 @@ impl ArenaModel {
         end: VertexId,
         authored: Option<(Curve3, Pcurve, ParameterCorrespondence, bool)>,
     ) -> Result<(Self, ArenaFaceSplit), TopologyEditError> {
-        let (model, split, _) =
-            self.split_face_with_chain(face_id, start, end, authored.map(|a| vec![a]), Vec::new())?;
+        let (model, split, _) = self.split_face_with_chain(
+            face_id,
+            start,
+            end,
+            authored.map(|a| vec![a]),
+            Vec::new(),
+            None,
+        )?;
         Ok((model, split))
     }
 
@@ -335,10 +348,13 @@ impl ArenaModel {
         end: VertexId,
         authored: Option<Vec<(Curve3, Pcurve, ParameterCorrespondence, bool)>>,
         junctions: Vec<GeometricPoint3>,
+        retained_chord: Option<Curve3>,
     ) -> Result<(Self, ArenaFaceSplit, Vec<EdgeId>), TopologyEditError> {
-        if authored.as_ref().map_or(!junctions.is_empty(), |pieces| {
-            pieces.is_empty() || pieces.len() != junctions.len() + 1
-        }) {
+        if (retained_chord.is_some() && authored.is_some())
+            || authored.as_ref().map_or(!junctions.is_empty(), |pieces| {
+                pieces.is_empty() || pieces.len() != junctions.len() + 1
+            })
+        {
             return Err(TopologyEditError::DegenerateFaceSplit);
         }
         let face = self
@@ -366,6 +382,10 @@ impl ArenaModel {
             .surface(face.surface)
             .expect("validated face surface ID");
         let authored_curve = authored.is_some();
+        // Endpoint attachment already proved incidence with the supplied
+        // native line. Retaining that source preserves the proof even when
+        // the shared boundary vertices have no independent coordinate view.
+        let endpoint_certificate = authored_curve || retained_chord.is_some();
         if authored.is_none() && surface.kind() != SurfaceKind::Plane {
             return Err(TopologyEditError::UnsupportedFaceSplitSurface(
                 surface.kind(),
@@ -427,9 +447,27 @@ impl ArenaModel {
         let mut first_path = cyclic_path(start_index, end_index);
         let mut second_path = cyclic_path(end_index, start_index);
 
-        let pieces = match authored {
-            Some(pieces) => pieces,
-            None => vec![{
+        let pieces = match (authored, retained_chord) {
+            (Some(pieces), None) => pieces,
+            (None, Some(curve)) => {
+                let projected = SurfaceIntersectionCurve::on_plane(curve.clone(), surface)?;
+                let projected = projected.first_pcurve().materialize()?;
+                let (scale, offset) = projected
+                    .correspondence()
+                    .affine_coefficients()
+                    .ok_or(GeometryError::UnsupportedPcurveContour)?;
+                vec![(
+                    curve,
+                    Pcurve::new(projected.curve().clone()),
+                    ParameterCorrespondence::affine(scale.clone(), offset.clone())?,
+                    // Both attached endpoints lie on the validated plane.
+                    // The supplied line is affine, and its exact projection
+                    // therefore certifies the whole image on that plane.
+                    true,
+                )]
+            }
+            (Some(_), Some(_)) => unreachable!("mixed split sources rejected above"),
+            (None, None) => vec![{
                 let pcurve_start = |edge_use_id: EdgeUseId| -> Result<CurvePoint2, GeometryError> {
                     let edge_use = self
                         .edge_use(edge_use_id)
@@ -520,7 +558,7 @@ impl ArenaModel {
                 end: chain_vertices[index + 1],
                 curve,
                 domain: edge_domain,
-                endpoint_certificate: authored_curve,
+                endpoint_certificate,
             });
             chain_edges.push(edge);
 

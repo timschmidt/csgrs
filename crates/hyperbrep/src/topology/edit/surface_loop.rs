@@ -422,6 +422,7 @@ impl ArenaModel {
                 end_vertex,
                 Some(pieces),
                 junctions,
+                None,
             )?;
             Ok((
                 staged,
