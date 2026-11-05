@@ -109,6 +109,12 @@ Run these after the last change, in addition to the
    docs.rs configuration and `-D warnings`. Add `--toolchain 1.95.0` to repeat
    everything on the minimum supported compiler. The `release` job of
    `.github/workflows/rust.yml` runs it on stable and on 1.95.0.
+
+   Package verification uses a fresh temporary Cargo home while sharing
+   ordinary crates.io caches. Its two-package regression fixture demonstrates
+   stale synthetic-registry source after compiler outputs are cleared, then
+   requires the changed dependency's new API with the isolated home. This runs
+   on the selected compiler; the temporary home is removed when the check exits.
 2. `cargo semver-checks check-release -p <crate>` for each crate already on
    crates.io. It needs a release that reads rustdoc JSON v60 or newer
    (0.51.0 or later).
