@@ -1,5 +1,18 @@
 # Migrations
 
+## Exact decimal SVG path ingress (2026-11-08)
+
+Standard SVG path-data numbers now enter as exact decimal/scientific values,
+instead of first rounding through binary64. For example, `.1` denotes `1/10`.
+Adjacent large integers and underflowing nonzero values no longer collapse.
+Previously merged unequal ellipse radii now retain the existing typed
+unsupported-ellipse result. This intentionally corrects imported geometry;
+callers depending on rounded coordinates must supply their intended model
+explicitly. Public signatures and native metadata versions are unchanged.
+Existing native exact metadata remains authoritative. Numeric SVG attributes,
+transform strings, and the grammar validator's finite-number range are separate
+limits; this change does not establish complete SVG or D03 support.
+
 ## Selected graph common sections (2026-11-08)
 
 Finite point-location queries can now complete despite unselected common

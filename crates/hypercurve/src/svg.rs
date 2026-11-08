@@ -42,7 +42,9 @@
 //! render the finite standard-SVG projection in `d`.
 
 mod exact;
+mod path_numbers;
 pub use exact::NativeParallelFidelityShape2;
+use path_numbers::PathNumbers;
 
 use crate::{
     Aabb2, BezierSubcurve2, BooleanOp, CircularArc2, Classification, CubicBezier2, Curve2,
@@ -329,6 +331,11 @@ fn real(value: f64, name: &'static str) -> SvgResult<Real> {
 
 /// Parses all SVG path commands into exact Hypercurve subpaths.
 ///
+/// Accepted decimal and scientific number tokens retain their exact rational
+/// values, including values that binary64 would round or underflow. The
+/// underlying SVG grammar validator still rejects tokens outside its finite
+/// numeric range. Numeric attributes and transform strings use separate ingress.
+///
 /// Lines, circular arcs, quadratic Beziers, and cubic Beziers remain native
 /// curves. SVG elliptical arcs are accepted only when `rx == ry`; a genuine
 /// ellipse has no single native circular-arc representation and is rejected.
@@ -341,54 +348,48 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
     let mut start = None::<Point2>;
     let mut previous_cubic_control = None::<Point2>;
     let mut previous_quadratic_control = None::<Point2>;
+    let mut numbers = PathNumbers::new(data);
 
     for segment in svgtypes::PathParser::from(data) {
         let segment = segment
             .map_err(|error| SvgError::MalformedInput(format!("invalid path data: {error}")))?;
+        numbers.begin_segment();
         match segment {
-            PathSegment::MoveTo { abs, x, y } => {
+            PathSegment::MoveTo { abs, .. } => {
                 finish_svg_subpath(&mut output, &mut curves, false)?;
-                let point = svg_path_point(abs, x, y, current.as_ref())?;
+                let point = numbers.point(abs, current.as_ref())?;
                 current = Some(point.clone());
                 start = Some(point);
                 previous_cubic_control = None;
                 previous_quadratic_control = None;
             }
-            PathSegment::LineTo { abs, x, y } => {
-                let end = svg_path_point(abs, x, y, current.as_ref())?;
+            PathSegment::LineTo { abs, .. } => {
+                let end = numbers.point(abs, current.as_ref())?;
                 push_svg_line(&mut curves, &mut current, end)?;
                 previous_cubic_control = None;
                 previous_quadratic_control = None;
             }
-            PathSegment::HorizontalLineTo { abs, x } => {
+            PathSegment::HorizontalLineTo { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let x = real(x, "path x")?;
+                let x = numbers.number()?;
                 let end = Point2::new(if abs { x } else { from.x() + x }, from.y().clone());
                 push_svg_line(&mut curves, &mut current, end)?;
                 previous_cubic_control = None;
                 previous_quadratic_control = None;
             }
-            PathSegment::VerticalLineTo { abs, y } => {
+            PathSegment::VerticalLineTo { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let y = real(y, "path y")?;
+                let y = numbers.number()?;
                 let end = Point2::new(from.x().clone(), if abs { y } else { from.y() + y });
                 push_svg_line(&mut curves, &mut current, end)?;
                 previous_cubic_control = None;
                 previous_quadratic_control = None;
             }
-            PathSegment::CurveTo {
-                abs,
-                x1,
-                y1,
-                x2,
-                y2,
-                x,
-                y,
-            } => {
+            PathSegment::CurveTo { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control1 = svg_path_point(abs, x1, y1, Some(from))?;
-                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
+                let control1 = numbers.point(abs, Some(from))?;
+                let control2 = numbers.point(abs, Some(from))?;
+                let end = numbers.point(abs, Some(from))?;
                 curves.push(Curve2::from(CubicBezier2::new(
                     from.clone(),
                     control1,
@@ -399,7 +400,7 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                 previous_cubic_control = Some(control2);
                 previous_quadratic_control = None;
             }
-            PathSegment::SmoothCurveTo { abs, x2, y2, x, y } => {
+            PathSegment::SmoothCurveTo { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
                 let control1 = previous_cubic_control
                     .as_ref()
@@ -410,8 +411,8 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                         )
                     })
                     .unwrap_or_else(|| from.clone());
-                let control2 = svg_path_point(abs, x2, y2, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
+                let control2 = numbers.point(abs, Some(from))?;
+                let end = numbers.point(abs, Some(from))?;
                 curves.push(Curve2::from(CubicBezier2::new(
                     from.clone(),
                     control1,
@@ -422,10 +423,10 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                 previous_cubic_control = Some(control2);
                 previous_quadratic_control = None;
             }
-            PathSegment::Quadratic { abs, x1, y1, x, y } => {
+            PathSegment::Quadratic { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let control = svg_path_point(abs, x1, y1, Some(from))?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
+                let control = numbers.point(abs, Some(from))?;
+                let end = numbers.point(abs, Some(from))?;
                 curves.push(Curve2::from(QuadraticBezier2::new(
                     from.clone(),
                     control.clone(),
@@ -435,7 +436,7 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                 previous_cubic_control = None;
                 previous_quadratic_control = Some(control);
             }
-            PathSegment::SmoothQuadratic { abs, x, y } => {
+            PathSegment::SmoothQuadratic { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
                 let control = previous_quadratic_control
                     .as_ref()
@@ -446,7 +447,7 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                         )
                     })
                     .unwrap_or_else(|| from.clone());
-                let end = svg_path_point(abs, x, y, Some(from))?;
+                let end = numbers.point(abs, Some(from))?;
                 curves.push(Curve2::from(QuadraticBezier2::new(
                     from.clone(),
                     control.clone(),
@@ -456,21 +457,14 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
                 previous_cubic_control = None;
                 previous_quadratic_control = Some(control);
             }
-            PathSegment::EllipticalArc {
-                abs,
-                rx,
-                ry,
-                x_axis_rotation,
-                large_arc,
-                sweep,
-                x,
-                y,
-            } => {
+            PathSegment::EllipticalArc { abs, .. } => {
                 let from = current.as_ref().ok_or_else(svg_path_requires_move)?;
-                let end = svg_path_point(abs, x, y, Some(from))?;
-                let rx = real(rx.abs(), "path rx")?;
-                let ry = real(ry.abs(), "path ry")?;
-                let rotation = real(x_axis_rotation, "path rotation")?;
+                let rx = numbers.magnitude()?;
+                let ry = numbers.magnitude()?;
+                let rotation = numbers.number()?;
+                let large_arc = numbers.flag()?;
+                let sweep = numbers.flag()?;
+                let end = numbers.point(abs, Some(from))?;
                 if svg_real_sign(&rx) == Some(RealSign::Zero)
                     || svg_real_sign(&ry) == Some(RealSign::Zero)
                 {
@@ -511,18 +505,6 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
         ));
     }
     Ok(output)
-}
-
-fn svg_path_point(absolute: bool, x: f64, y: f64, current: Option<&Point2>) -> SvgResult<Point2> {
-    let x = real(x, "path x")?;
-    let y = real(y, "path y")?;
-    if absolute {
-        Ok(Point2::new(x, y))
-    } else if let Some(current) = current {
-        Ok(Point2::new(current.x() + x, current.y() + y))
-    } else {
-        Ok(Point2::new(x, y))
-    }
 }
 
 fn push_svg_line(

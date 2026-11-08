@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Preserve the exact decimal values of standard SVG path-data coordinates,
+  Bézier controls and circular radii. Relative commands, scientific notation,
+  compact arc flags and distinct coordinates retain their authored values
+  through filled-region operations and checked native replay. Numeric SVG
+  attributes and transform strings remain separate work.
+
 - Complete finite point preimages on checked selected polynomial graph branches
   despite unselected common supports. Preserve original source equations, map
   guards, algebraic endpoints and selected query fields through trimming,

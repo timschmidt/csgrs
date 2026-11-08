@@ -18442,6 +18442,227 @@
         }
       ],
       "oracle": "Independent defining relations and exact source parameter 1/2 after cold replay; deterministic SVG bytes checked separately."
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve standard SVG path numeric ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_decimal_path_coordinates",
+      "test": "svg_path_decimal_coordinates_remain_exact",
+      "families": [
+        "Line"
+      ],
+      "domain": "Decimal absolute and relative M/L/H/V path coordinates.",
+      "semantics": "Relative additions and endpoints use exact decimal rationals.",
+      "oracle": "Independent ratios 1/10, 3/10, 2/5 and 1/5 at each native line endpoint.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Every line retains the independently specified exact endpoints."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve standard SVG path numeric ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_scientific_distinct_coordinates",
+      "test": "svg_path_scientific_tokens_and_distinct_coordinates_are_not_rounded",
+      "families": [
+        "Line"
+      ],
+      "domain": "Scientific notation, adjacent integers 2^53 and 2^53+1, and a nonzero 10^-400 line.",
+      "semantics": "Original token values remain authoritative despite binary64 rounding or underflow.",
+      "oracle": "Independent integer endpoints and reciprocal exact integer power 10^400.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "All three paths retain distinct exact endpoints and a drawable line."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve standard SVG path numeric ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_decimal_bezier_controls",
+      "test": "svg_bezier_controls_and_reflections_retain_decimal_values",
+      "families": [
+        "QuadraticBezier",
+        "CubicBezier"
+      ],
+      "domain": "Authored decimal C/S/Q/T controls with reflected smooth controls.",
+      "semantics": "Native polynomial curves retain exact controls and reflected controls.",
+      "oracle": "Structural Curve2 equality against independently constructed rational control polygons.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Each cubic/quadratic curve equals its independent exact control construction."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve standard SVG path numeric ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_decimal_arc_radius_and_flags",
+      "test": "svg_compact_arc_flags_preserve_exact_radii_and_ellipse_rejection",
+      "families": [
+        "CircularArc"
+      ],
+      "domain": "Decimal semicircle, compact flags, distinct near-equal ellipse radii and malformed numeric/flag tokens.",
+      "semantics": "Exact circular radius, existing typed ellipse rejection, and malformed syntax remain separate outcomes.",
+      "oracle": "Exact semicircle midpoint ordinate magnitude 1/10, zero abscissa, typed unsupported ellipse and malformed-input assertions.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The semicircle midpoint satisfies its exact radius relation."
+        },
+        {
+          "stage": "classification",
+          "outcome": "unsupported",
+          "assertion": "Unequal exact radii retain the existing unsupported-ellipse outcome."
+        },
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Malformed flags and numbers return malformed-input errors."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve standard SVG path numeric ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_decimal_region_continuation",
+      "test": "svg_decimal_filled_region_survives_boolean_and_native_replay",
+      "families": [
+        "Line"
+      ],
+      "domain": "Decimal rectangle, regularized set equality, reflection/scaling/translation, native metadata and fresh-process replay, empty recovery.",
+      "semantics": "The retained exact decimal region is consumed by further region operations; native metadata remains authoritative.",
+      "oracle": "Independent rectangle from exact rational vertices; complete XOR and difference emptiness, exact similarity, two fresh replay processes per invocation.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The imported filled rectangle equals its independent exact boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Complete XOR and difference return canonical empty regions; union recovers the original set."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "A reflected scaled translated region equals the independently transformed boundary."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Same-process and fresh-process native replay retain exact filled-set equality and further operation consumption."
+        }
+      ]
     }
   ]
 }

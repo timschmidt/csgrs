@@ -28,6 +28,12 @@ historical trace-recording claim. It preserves existing measured dispatch while
 retaining adverse costs of the new quintic chain. General operation closure and
 total resource control remain open; this is not a source-size refactor.
 
+The D03 continuation review reproduced binary64 rounding in standard SVG path
+ingress. The [decimal-ingress follow-up](svg-decimal-ingress-2026-11-08.md)
+retains original decimal tokens in Hypercurve before any comparison adapter.
+This corrects a comparison prerequisite; the full 524-file native comparison
+and numeric attribute/transform ingress remain open.
+
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with
 evidence. Two packages are higher-priority correctness work and are marked as

@@ -439,8 +439,10 @@ docs/evidence/2026-11-07-native-nurbs-components	477	24644143	946785094fa4067d8d
 docs/evidence/2026-11-07-spatial-parameter-components	295	17228892	afad0fd0fc91abf2f60fcd796f4fa5d01ae4d48ff5520ed1498abd3e89f9e341
 docs/evidence/2026-11-08-implicit-guard-components	848	23553657	6405472723356308a0cd40b94fb7bc170299190bd2fe11b05144b91ed1e6ec1c
 docs/evidence/2026-11-08-implicit-quintic-degree-correction	616	7882237	fc7b576deb796a4f185288a42ef358975082e33ec324da13d80342f611efbb04
+docs/evidence/2026-11-08-implicit-shared-main-qualification	10583	24245741	02c82f880fd43a3795c10bfc385e480a16229c029c596d386e5b19eac1766fe3
 docs/evidence/2026-11-08-implicit-shared-sections	591	27237941	bb42263a24201da787b2e8c9b8a3e1bbd7f6effe08741b115ecb18cfc13a1c2d
 docs/evidence/2026-11-08-published-main-qualification	12403	56233764	7deebd6a412147895d6050c151ded1f0b8777800f9ba0710793a43d462001ddd
+docs/evidence/2026-11-08-svg-decimal-ingress	241	11007475	cf2ec6041b0c4f1389fdc85142d8fdd64a16b1c6df80d484cef88fb133acecea
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

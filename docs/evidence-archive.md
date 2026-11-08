@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `53e6b3f32b5d36911d9264b5c7c725f5091ae621` (442 records) |
-| Local research branch | `research-implicit-shared-sections-20261108` |
+| Local manifest commit | `0a50ee763bf6265c07f7b6b5d9d74ca8c059e588` (444 records) |
+| Local research branch | `research-svg-decimal-ingress-20261108` |
 
-The local manifest includes seven unpublished descendants. The existing
+The local manifest includes nine unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -49,7 +49,20 @@ native/WASM assertions and corrected nonempty dispatch comparisons. Historical
 empty trace vectors remain archived and are explicitly withdrawn as dispatch
 invariance evidence. See the
 [admission](research/implicit-shared-sections-2026-11-08.md).
-The original pending payload branch remains unchanged.
+The next qualification record adds 10,583 files and 24,245,741 bytes, SHA-256
+`02c82f880fd43a3795c10bfc385e480a16229c029c596d386e5b19eac1766fe3`.
+It retains the actual 280-command qualification and main publication of
+`157c29e060`, all original fuzz corpora and the unchanged cancellation-test
+failure, matched controls and full-command retry. The original pending payload
+branch remains unchanged.
+
+The exact decimal SVG ingress record adds 241 files and
+11,007,475 bytes, SHA-256 `cf2ec6041b0c4f1389fdc85142d8fdd64a16b1c6df80d484cef88fb133acecea`. It retains the published-parent
+failure, final native/MSRV/WASM assertions, completed BRep/IO checks, the catalog
+validator's original nested-summary rejection, corrected harness and complete
+cost/dispatch samples. Its source snapshot predates the final documentation
+correction of the binary-size deltas; the raw final build records remain
+unchanged. See the [admission](research/svg-decimal-ingress-2026-11-08.md).
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
