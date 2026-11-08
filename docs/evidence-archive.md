@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `682551f48eaf6ce880e4f2b762c771f99b7267b1` (439 records) |
-| Local research branch | `research-implicit-guard-components-20261108` |
+| Local manifest commit | `5e076576f6e00d1a64ef5af24b320e9e59ec52a0` (440 records) |
+| Local research branch | `research-implicit-quintic-correction-20261108` |
 
-The local manifest includes four unpublished descendants. The existing
+The local manifest includes five unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -33,6 +33,10 @@ on a separate local descendant of `c2698dec9aae12a133731a761bc6430d441b0bee`.
 The selected polynomial guard record adds 848 files and 23,553,657 bytes,
 SHA-256 `6405472723356308a0cd40b94fb7bc170299190bd2fe11b05144b91ed1e6ec1c`,
 on a separate local descendant of `70daed6650e35274bbdec2b86ae286fa2a22f343`.
+The degree attribution correction adds 616 files and 7,882,237 bytes, SHA-256
+`fc7b576deb796a4f185288a42ef358975082e33ec324da13d80342f611efbb04`.
+It preserves the original guard record and adds an irreducible quintic witness;
+the earlier degree-five selector has a cubic real value.
 The original pending payload branch remains unchanged.
 
 The archived commit keeps the original paths and the history of every archived

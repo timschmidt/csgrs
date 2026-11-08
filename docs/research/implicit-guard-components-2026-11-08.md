@@ -43,8 +43,22 @@ The maintained witnesses distinguish the following cases:
 | Ordinate, mixed-coordinate and repeated guards | Punctures at `1/4`, the selected unit root of `t^2-3t+1`, both original endpoints, and one repeated zero at `1/2` |
 | `(y^2-x)(y-2)`, selected positive square-root branch | Unselected common factor, a proper puncture, empty selected guard domain and invalid global zero denominator remain distinct |
 | Degree-nine graph `y^9=x` | Guard `2y-1` excludes exactly `x=1/512`; actual zero work allowance fails and a larger retry succeeds |
-| Constant selected ordinate `alpha^5+alpha=1` | Independent irrational queries need no stored scalar coordinates; generated source points feed another exact location query; the negative ordinate is absent |
+| Constant selected ordinates from cubic and quintic fields | Independent irrational queries need no stored scalar coordinates; generated source points feed another exact location query; the negative ordinate is absent |
 | Guarded identity, shear, reversal and exact trim | Fresh-process native SVG replay recomputes the locus, consumes a selected component point and performs another location/intersection; deterministic bytes are checked separately |
+
+The original selector satisfies
+`t^5+t-1 = (t^2-t+1)(t^3+t^2-1)`. Its quadratic factor has no real roots;
+the cubic has no rational root, so the selected real value has field degree
+three. Wording in the initial local evidence that described a degree-five
+constant overstated this degree; the degree-five polynomial selection and all
+geometric results remain valid. That record is preserved unchanged.
+
+The regression retains the original case and adds
+`f(t)=-1+2(t+t^2+t^3+t^4+t^5)`. Its reciprocal
+`2+2s+2s^2+2s^3+2s^4-s^5` is Eisenstein at two, proving irreducibility and
+field degree five. Its positive derivative and opposite endpoint signs give
+one root in `[0,1]`. Both independent selections and the consuming chain are
+tested without materializing that root as a scalar coordinate.
 
 The functional source freeze contains 3,810 inputs and patch SHA-256
 `b89ff705b269328ecd713f3334457141a0f99b4aa870a48bea538ec88a6c7606`.
@@ -66,7 +80,7 @@ Hypercurve features (`svg`, `triangulation`, `hershey`, `dispatch-trace`) and
 the BRep/IO all-features WASM combination pass on Rust 1.99.1 and 1.95.0.
 Native MSRV tests and strict linting also pass.
 
-The final actual WASM probe executes five maintained pure acceptance
+The initial five-function actual WASM probe executes the maintained pure acceptance
 functions in three fresh module memories, with the default stack and no host
 imports. All original assertions pass, including exact selected points,
 component endpoints, shared factors, degree-nine input, budget/retry and the
@@ -74,6 +88,14 @@ independent irrational-value chain. The 12,017,011-byte module has SHA-256
 `b634ca42e96b6b3e6dca6d1654863c641a48b363f56f96239de10b28477b5ff1`.
 The native process-spawning SVG witness is exercised separately. This private
 transport does not qualify a public ABI or universal native/WASM interchange.
+
+After the degree correction, the same fifth pure function retains the cubic
+case and also exercises the irreducible quintic and its consuming chain.
+Native and Rust 1.95 location tests, strict linting, all 423 reviewed witnesses
+and the actual WASM run pass with both selectors. The expanded 12,018,430-byte
+module has SHA-256
+`3b2d3a6482bbaf4498a1082fa0a4f5b1bfae9c32383f2927fb76b8d7e6d3dfcb`.
+Production code, manifests and CI are unchanged from `2fd417079b`.
 
 Fourteen unchanged rational-map acceptance functions complete on both
 revisions under both policies. All 28 per-path dispatch vectors match, and
@@ -107,3 +129,12 @@ All 439 local records and four historical excluded-package digests verify;
 the original pending payload is unchanged. The [archive index](../evidence-archive.md)
 distinguishes local and published availability. Publication to the separate
 evidence repository remains pending explicit authorization.
+
+The degree correction is retained separately at
+`docs/evidence/2026-11-08-implicit-quintic-degree-correction`, local commit
+`5e076576f6e00d1a64ef5af24b320e9e59ec52a0`, branch
+`research-implicit-quintic-correction-20261108`: 616 files, 7,882,237 bytes,
+SHA-256 `fc7b576deb796a4f185288a42ef358975082e33ec324da13d80342f611efbb04`.
+All 440 local records and four historical excluded-package digests verify.
+The original 439 records, their raw degree wording and the pending publication
+payload remain unchanged. This follow-up changes tests and attribution only.

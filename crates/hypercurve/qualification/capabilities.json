@@ -18082,7 +18082,7 @@
       "timeout_seconds": 300,
       "id": "implicit_guard_irrational_constant",
       "test": "implicit_map_components::implicit_constant_images_keep_independent_irrational_values",
-      "domain": "Selected graph y^5+y=1, x in [0,1], map [2D,yD]/D with D=2x-1, and unrelated selected line queries (2,alpha) and (2,-alpha), alpha^5+alpha=1.",
+      "domain": "Selected constant graph f(y)=0, x in [0,1], with original selector f(t)=t^5+t-1 (cubic real field) and irreducible f(t)=-1+2(t+t^2+t^3+t^4+t^5) (degree-five real field). Map [2D,yD]/D, D=2x-1; independent line queries (2,alpha) and (2,-alpha).",
       "policies": [
         "STRICT",
         "APPROXIMATE_512"
@@ -18091,7 +18091,7 @@
         {
           "stage": "incidence_order",
           "outcome": "exact_success",
-          "assertion": "An independent degree-five irrational constant query has the exact locus [0,1/2) union (1/2,1] without any stored Real coordinate."
+          "assertion": "Both original cubic and irreducible quintic irrational constant queries have exactly [0,1/2) union (1/2,1] without stored Real coordinates."
         },
         {
           "stage": "evaluation",
@@ -18104,7 +18104,7 @@
           "assertion": "An independently selected negative ordinate is absent from the constant image."
         }
       ],
-      "oracle": "Independent selection of the unique real root of t^5+t-1; explicit puncture at1/2, original selected source point atx=1/4 and an independent line parameterization. The entire query/consumption chain is certified under both policies."
+      "oracle": "Independent unit-root selections; original selector=(t^2-t+1)(t^3+t^2-1), with no real quadratic roots and irreducible cubic. New selector has an Eisenstein-at-two reciprocal, proving field degree five. Explicit pole1/2, source pointx=1/4, independent line point and certified whole-chain receipts on both policies."
     }
   ]
 }

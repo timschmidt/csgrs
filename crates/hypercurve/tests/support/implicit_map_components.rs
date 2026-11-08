@@ -251,38 +251,50 @@ fn implicit_constant_guard_census_admits_degree_nine_and_recovers_from_budgets()
 #[test]
 fn implicit_constant_images_keep_independent_irrational_values() {
     use support::IntoCertified;
-    // The source's ordinate and the unrelated line query independently select
-    // alpha^5+alpha=1. Neither selected point needs a stored Real coordinate.
-    let source = branches(
-        p(vec![vec![-1, 1, 0, 0, 0, 1]]),
-        [Real::zero(), Real::one()],
-        [Real::zero(), Real::one()],
-    )
-    .remove(0);
-    let independent = |x: Real, sign: i32| {
-        Curve2::from(
-            LineSeg2::try_new(
-                Point2::new(x.clone(), Real::zero()),
-                Point2::new(x, sign.into()),
-            )
-            .unwrap(),
+    // Keep the original reducible degree-five selector and its cubic real
+    // root. The second selector has an Eisenstein-at-two reciprocal, so its
+    // selected ordinate has field degree five. Source and line-query roots
+    // are selected independently without stored Real coordinates.
+    for coefficients in [[-1, 1, 0, 0, 0, 1], [-1, 2, 2, 2, 2, 2]] {
+        let source = branches(
+            p(vec![coefficients.to_vec()]),
+            [Real::zero(), Real::one()],
+            [Real::zero(), Real::one()],
         )
-        .point_at(&alpha())
-        .unwrap()
-    };
-    let query = independent(2.into(), 1);
-    let absent = independent(2.into(), -1);
-    assert!(query.coordinates().is_none());
-    assert!(absent.coordinates().is_none());
-    let map = RationalMap2::new(
-        [p(vec![vec![-2], vec![4]]), p(vec![vec![0, -1], vec![0, 2]])],
-        p(vec![vec![-1], vec![2]]),
-    );
-    for policy in [
-        hypercurve::PredicatePolicy::STRICT,
-        hypercurve::PredicatePolicy::APPROXIMATE_512,
-    ] {
-        let locus = support::under(&policy, || -> hypercurve::ExactCurveResult<_> {
+        .remove(0);
+        let parameter: CurveParameter2 =
+            hypercurve::BezierParameterPolynomial::try_new_power_basis(
+                coefficients.map(Real::from).to_vec(),
+            )
+            .unwrap()
+            .isolate_unit_interval_roots()
+            .unwrap()[0]
+                .clone()
+                .into();
+        let independent = |x: Real, sign: i32| {
+            Curve2::from(
+                LineSeg2::try_new(
+                    Point2::new(x.clone(), Real::zero()),
+                    Point2::new(x, sign.into()),
+                )
+                .unwrap(),
+            )
+            .point_at(&parameter)
+            .unwrap()
+        };
+        let query = independent(2.into(), 1);
+        let absent = independent(2.into(), -1);
+        assert!(query.coordinates().is_none());
+        assert!(absent.coordinates().is_none());
+        let map = RationalMap2::new(
+            [p(vec![vec![-2], vec![4]]), p(vec![vec![0, -1], vec![0, 2]])],
+            p(vec![vec![-1], vec![2]]),
+        );
+        for policy in [
+            hypercurve::PredicatePolicy::STRICT,
+            hypercurve::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            let locus = support::under(&policy, || -> hypercurve::ExactCurveResult<_> {
             let locus = source.rational_image_point_locations(&map, &query)?;
             let CurvePointLocations2::Components(parts) = &locus else { panic!("two punctured intervals") };
             assert_eq!(parts.len(), 2);
@@ -296,13 +308,14 @@ fn implicit_constant_images_keep_independent_irrational_values() {
             assert!(matches!(source.rational_image_point_locations(&map, &absent)?, CurvePointLocations2::Locations(points) if points.is_empty()));
             Ok(locus)
         }).unwrap().into_certified();
-        assert_components(
-            locus,
-            &[
-                (Real::zero().into(), q(1, 2).into(), [true, false]),
-                (q(1, 2).into(), Real::one().into(), [false, true]),
-            ],
-        );
+            assert_components(
+                locus,
+                &[
+                    (Real::zero().into(), q(1, 2).into(), [true, false]),
+                    (q(1, 2).into(), Real::one().into(), [false, true]),
+                ],
+            );
+        }
     }
 }
 
