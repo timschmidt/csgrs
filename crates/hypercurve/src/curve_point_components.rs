@@ -15,6 +15,77 @@ fn compare(
     })?)
 }
 impl CurveLocationComponent2 {
+    /// Transports the parameter chart by `scale * t + offset` and intersects
+    /// its image with a closed parameter range. The scale must be nonzero.
+    ///
+    /// Original local selections, source span identity and excluded endpoints
+    /// survive. A singleton intersection retains its source germ. This changes
+    /// parameter coordinates; it does not transform or certify a curve image.
+    pub fn affine_image_restricted(
+        &self,
+        scale: &Real,
+        offset: &Real,
+        domain: &CurveParameterRange2,
+    ) -> ExactCurveResult<Option<Self>> {
+        resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            if compare(&scale.clone().into(), &Real::zero().into(), policy)?.is_eq() {
+                return Err(ExactCurveError::invalid_unattributed(
+                    CurveOperation2::Intersection,
+                    CurveError::InvalidBezierRange,
+                ));
+            }
+            let (start, end) = self.span_range.endpoints();
+            let mapped = Self::new(
+                self.span_index,
+                CurveSpanRange2::from_affine_chart(
+                    &(scale * (end - start)),
+                    &(scale * start + offset),
+                ),
+                self.parameters.clone(),
+                self.endpoint_inclusion,
+            );
+            let ([a, b], [ia, ib]) = mapped.global_bounds(policy)?;
+            let [lower, upper] = decided(domain.ordered_endpoints(policy).map_err(|cause| {
+                ExactCurveError::invalid_unattributed(CurveOperation2::Intersection, cause)
+            })?)?;
+            let (lo, li) = if compare(&a, lower, policy)?.is_lt() {
+                (lower.clone(), true)
+            } else {
+                (a, ia)
+            };
+            let (hi, hi_included) = if compare(&b, upper, policy)?.is_gt() {
+                (upper.clone(), true)
+            } else {
+                (b, ib)
+            };
+            let parameters = match compare(&lo, &hi, policy)? {
+                Ordering::Greater => return Ok(None),
+                Ordering::Equal if !li || !hi_included => return Ok(None),
+                Ordering::Equal => CurveParameterSet2::Single(mapped.local_at(&lo, policy)?),
+                Ordering::Less => CurveParameterSet2::Range(CurveParameterRange2::new_validated(
+                    mapped.local_at(&lo, policy)?,
+                    mapped.local_at(&hi, policy)?,
+                )),
+            };
+            Ok(Some(Self::new(
+                mapped.span_index,
+                mapped.span_range,
+                parameters,
+                [li, hi_included],
+            )))
+        })
+        .map(CurveOutcome::into_value)
+    }
+
+    /// Decides membership in this parameter component, including its original
+    /// endpoint exclusions, without materializing selected endpoints.
+    pub fn contains_parameter(&self, parameter: &CurveParameter2) -> ExactCurveResult<bool> {
+        resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            self.contains(parameter, policy)
+        })
+        .map(CurveOutcome::into_value)
+    }
+
     pub(super) fn new(
         span_index: usize,
         span_range: CurveSpanRange2,
@@ -134,6 +205,47 @@ impl CurvePointLocations2 {
     }
 }
 impl Curve2 {
+    /// Evaluates a selected parameter in an explicit source-span component.
+    ///
+    /// The component chart must use this curve's current authored parameters.
+    /// Span index, chart and component membership are checked before evaluating
+    /// the current source germ. This selects a one-sided value at a discontinuous
+    /// knot; it does not change ordinary parameter-only evaluation or certify
+    /// incidence with a separately supplied query point.
+    pub fn point_at_component(
+        &self,
+        component: &CurveLocationComponent2,
+        parameter: &CurveParameter2,
+    ) -> ExactCurveResult<CurvePoint2> {
+        resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            let invalid = || {
+                ExactCurveError::invalid(
+                    CurveOperation2::Evaluation,
+                    self.family(),
+                    CurveError::InvalidCurveParameter,
+                )
+            };
+            if !component.contains(parameter, policy)? {
+                return Err(invalid());
+            }
+            let spans = self.source_spans(policy, CurveOperation2::Evaluation)?;
+            let span = spans.get(component.span_index).ok_or_else(invalid)?;
+            let chart = span.chart();
+            let (actual_start, actual_end) = component.span_range.endpoints();
+            let (expected_start, expected_end) = chart.endpoints();
+            for (actual, expected) in [(actual_start, expected_start), (actual_end, expected_end)] {
+                if !compare(&actual.clone().into(), &expected.clone().into(), policy)?.is_eq() {
+                    return Err(invalid());
+                }
+            }
+            Ok(span
+                .curve()
+                .point_at_with_policy(&component.local_at(parameter, policy)?, policy)?
+                .into_value())
+        })
+        .map(CurveOutcome::into_value)
+    }
+
     fn same_component_source(
         &self,
         a: &CurveLocationComponent2,

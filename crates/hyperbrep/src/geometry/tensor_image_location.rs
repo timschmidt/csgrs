@@ -17,6 +17,7 @@ impl TensorCurve3 {
         let offset = -&self.source_offset * &inverse;
         let mut accumulated = hypercurve::CurvePointLocations2::EntireCurve;
         let mut blocker = None;
+        let mut covered_axes = 0u8;
         for (first, second) in [(0, 1), (0, 2), (1, 2)] {
             let query =
                 point.projected_to_plane_frame(&Point3::origin(), &axes[first], &axes[second])?;
@@ -36,6 +37,7 @@ impl TensorCurve3 {
                 }
                 Err(error) => return Err(error.into()),
             };
+            covered_axes |= (1 << first) | (1 << second);
             accumulated = self
                 .source
                 .intersect_point_locations(&accumulated, &locations)?;
@@ -64,6 +66,18 @@ impl TensorCurve3 {
             } else {
                 CurveParameterLocation::Parameters(found)
             });
+        }
+        if covered_axes == 0b111
+            && let hypercurve::CurvePointLocations2::Components(components) = &accumulated
+        {
+            // Complete preimages for projections covering all three coordinates
+            // prove the whole component, rather than selected endpoint samples.
+            return parameter_components::spatial_components(
+                components,
+                &inverse,
+                &offset,
+                curve.domain(),
+            );
         }
         if blocker.is_none() && matches!(accumulated, hypercurve::CurvePointLocations2::EntireCurve)
         {

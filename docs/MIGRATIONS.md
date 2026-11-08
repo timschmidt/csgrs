@@ -15,6 +15,23 @@ component's source span chart and endpoint inclusion; a range closure alone
 does not represent excluded denominator roots. Isolated visits remain explicit.
 The existing `EntireCurve` and finite `Locations` outcomes remain distinct.
 
+Spatial inverse queries add `CurveParameterLocation::Components`, reusing
+Hypercurve's exact component records. Update exhaustive matches; interval
+closures need endpoint inclusion and original source span identity. Component
+charts map into the spatial curve's parameter domain. `contains(parameter,
+curve.domain())` tests membership without replacing a continuum by its ends.
+`Parameter::from(CurveParameter2)` retains a selected parameter losslessly.
+
+Use `Curve3::point_at_component` to evaluate a returned source germ at a
+discontinuous retained planar/tensor knot. The planar owner validates the source
+span/chart and computes the actual point; ordinary parameter-only evaluation
+keeps its typed ambiguity. A component record alone does not certify incidence
+with a separate query point or a changed source. Finite-contact consumers that
+cannot assemble a continuum fail explicitly rather than report no incidence.
+These query results are recomputed after native model validation; archive
+version 17 and the existing selected-source grammar are unchanged. Direct
+native NURBS mixed loci and punctured selected implicit branches remain open.
+
 Point-ordered generated chords reverse their order chart with `t -> -t`.
 Use `Curve2::reversal_parameter_affine_map()` when transporting parameters:
 native intervals reflect about their endpoint sum, while other retained source

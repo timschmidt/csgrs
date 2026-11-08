@@ -2528,10 +2528,13 @@ fn atomize_selected_edges(
                 .collect::<Vec<_>>();
             let parameters = if parameters.is_empty() {
                 let location = curve.parameters_of(&point.point)?;
-                let crate::CurveParameterLocation::Parameters(parameters) = location else {
-                    continue;
-                };
-                parameters
+                match location {
+                    crate::CurveParameterLocation::Parameters(parameters) => parameters,
+                    crate::CurveParameterLocation::Components(_) => {
+                        return Err(GeometryError::UnsupportedIntersection.into());
+                    }
+                    _ => continue,
+                }
             } else {
                 parameters
             };
@@ -5345,6 +5348,9 @@ fn surface_parameter_lines(
     }
     let parameters = match profile.parameters_of(&line.point)? {
         CurveParameterLocation::None | CurveParameterLocation::EntireDomain => return Ok(None),
+        CurveParameterLocation::Components(_) => {
+            return Err(GeometryError::UnsupportedIntersection);
+        }
         CurveParameterLocation::Parameters(parameters) => parameters,
     };
     Ok(Some(

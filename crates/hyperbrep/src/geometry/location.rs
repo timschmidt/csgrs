@@ -213,7 +213,7 @@ pub(super) fn locate_nurbs_parameters(
                     }
                 }
             }
-            CurveParameterLocation::EntireDomain => {
+            CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                 return Err(GeometryError::UnsupportedParameterLocation);
             }
         }

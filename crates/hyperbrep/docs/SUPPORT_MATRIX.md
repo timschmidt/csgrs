@@ -43,10 +43,31 @@ The rejected sign-index experiment is removed. Fifteen exact ordinary cost
 workloads retain matching receipts, independent assertions and adverse
 measurements. Shared-target source-attribution failures remain explicit;
 final owner builds use private targets. No statistical speedup, universal
-closure or total work/heap/cancellation bound is established. Proper mixed
-spatial inverse loci and punctured selected implicit branches still block;
-general modeling, runtime fuzz/coverage and release remain open. See the
+closure or total work/heap/cancellation bound is established. At that checkpoint,
+proper mixed spatial inverse loci and punctured selected implicit branches
+still block; the spatial extension below supersedes the former for retained
+planar/tensor images. General modeling, runtime fuzz/coverage and release remain open. See the
 existing [implementation ledger](IMPLEMENTATION_STATUS.json) for the increment.
+
+## Spatial parameter components (2026-11-07)
+
+The [scoped admission](../../../docs/research/spatial-parameter-components-2026-11-07.md)
+extends retained planar/tensor images and their affine images to proper
+continuous and mixed point preimages. `CurveParameterLocation::Components`
+reuses Hypercurve's source-span components, exact charts and endpoint inclusion.
+Its `contains` query preserves complete membership. `Curve3::point_at_component`
+consumes an explicit source germ through the original Hypercurve source and
+surface evaluator; it recomputes the current image after validating the chart.
+Ordinary parameter-only evaluation retains its ambiguous-knot error.
+
+The original selected-point fixture now returns exactly `[0,1/3] union {1}`.
+Restriction, reversal, selected parameters, reflected nonuniform affine maps,
+discontinuous one-sided germs and native replay consume these results. Finite
+contact/topology consumers that cannot assemble continuous components return
+a typed blocker. Native direct spatial NURBS mixed loci and punctured selected
+implicit branches remain open. No general algebraic inverse or solid-operation
+closure is inferred. Scoped owner/downstream checks pass; a new full pre-push
+qualification is still required before this increment is published.
 
 ## Exchange
 
@@ -256,12 +277,15 @@ punctures, algebraic restriction endpoints and discontinuous germ intersection
 have independent exact expectations. These are scoped completion claims,
 subject to the linked increment's fixed-source validation receipts.
 
-Proper continuous/mixed *spatial* inverse results still exceed the current
-`CurveParameterLocation` carrier and return an explicit blocker. Punctured
-constant images of selected implicit branches, unresolved shared components,
-other procedural UV sources and general arrangement/solid reconstruction
-remain open. No general algebraic inverse or total work/heap/cancellation bound
-is claimed.
+Proper continuous/mixed spatial inverse results on retained planar/tensor
+images now use `CurveParameterLocation::Components`, with exact affine chart
+transport, source germs and endpoint inclusion. Complete tensor projection loci
+must cover all three coordinates before publishing a continuous component.
+Direct spatial NURBS queries with partially constant spans still return an
+explicit blocker. Punctured constant images of selected implicit branches,
+unresolved shared components, other procedural UV sources and general
+arrangement/solid reconstruction remain open. No general algebraic inverse or
+total work/heap/cancellation bound is claimed.
 
 `Curve3::point_at(&Parameter)` returns `GeometricPoint3`, retaining selected
 images for lines, rational Béziers, finite NURBS and planar images. It supports strict

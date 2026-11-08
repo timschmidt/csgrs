@@ -73,7 +73,9 @@ reproducible source, locks, raw failures, samples and binary/package/site digest
 remain.
 
 The evidence record is `docs/evidence/2026-11-05-brep-continuation-qualification`
-at [a5623e1bcc](https://github.com/timschmidt/csgrs-evidence/tree/a5623e1bcc778d462080cdeb1b746e5b3be8d09a/docs/evidence/2026-11-05-brep-continuation-qualification).
+at local commit `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`. Publication to
+the separate evidence repository remains pending explicit authorization; this
+commit is not yet remotely available.
 The [manifest](../evidence-archive.tsv) and [archive index](../evidence-archive.md)
 identify its immutable commit, file count and digest. Earlier records remain
 unchanged. Evidence integrity and finite-corpus correctness are separate claims.

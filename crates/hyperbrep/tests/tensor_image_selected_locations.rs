@@ -72,7 +72,9 @@ fn params(curve: &Curve3, point: &GeometricPoint3) -> Vec<Parameter> {
             }
             found
         }
-        CurveParameterLocation::EntireDomain => panic!("finite locations"),
+        CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
+            panic!("finite locations")
+        }
     }
 }
 #[track_caller]

@@ -136,8 +136,12 @@ impl ArenaModel {
         for (wire, edge_id) in boundary_edges {
             let edge = self.edge(edge_id).expect("validated canonical edge");
             let curve = self.curve(edge.curve).expect("validated edge curve");
-            let CurveParameterLocation::Parameters(parameters) = curve.parameters_of(point)? else {
-                continue;
+            let parameters = match curve.parameters_of(point)? {
+                CurveParameterLocation::Parameters(parameters) => parameters,
+                CurveParameterLocation::Components(_) => {
+                    return Err(GeometryError::UnsupportedParameterLocation.into());
+                }
+                _ => continue,
             };
             for parameter in parameters {
                 let parameter = parameter
@@ -242,6 +246,9 @@ impl ArenaModel {
             let curve = self.curve(edge.curve).expect("validated edge curve");
             let parameters = match curve.parameters_of(point) {
                 Ok(CurveParameterLocation::Parameters(parameters)) => parameters,
+                Ok(CurveParameterLocation::Components(_)) => {
+                    return Err(GeometryError::UnsupportedParameterLocation.into());
+                }
                 Ok(_) | Err(GeometryError::PredicateUnresolved { .. }) => continue,
                 Err(error) => return Err(error.into()),
             };

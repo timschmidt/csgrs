@@ -15,8 +15,18 @@ This repository keeps a digest for each archived record in
 | Research branch | [`research-2026-10-25`](https://github.com/timschmidt/csgrs-evidence/tree/research-2026-10-25) |
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
-| Current manifest commit | `a5623e1bcc778d462080cdeb1b746e5b3be8d09a` |
-| Current records | 436 |
+| Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
+| Local manifest commit | `c2698dec9aae12a133731a761bc6430d441b0bee` (437 records) |
+| Local research branch | `research-spatial-components-20261107` |
+
+The local manifest includes two unpublished descendants. The existing
+`integration-closeout-20261105` payload remains at
+`a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
+separate local descendant. Publishing to the separate evidence repository is
+pending explicit authorization. These commit IDs currently identify local Git
+objects, not remotely available records. The spatial record contains 295 files,
+17,228,892 bytes, SHA-256
+`afad0fd0fc91abf2f60fcd796f4fa5d01ae4d48ff5520ed1498abd3e89f9e341`.
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,

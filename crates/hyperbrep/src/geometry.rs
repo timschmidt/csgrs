@@ -28,6 +28,7 @@ mod cylinder_atlas;
 mod implicit_tensor;
 mod line_tensor;
 mod location;
+mod parameter_components;
 mod pcurve;
 mod periodic_charts;
 mod planar_image;
@@ -189,6 +190,11 @@ pub enum CurveParameterLocation {
     /// All certified exact parameters whose images equal the point.
     /// Selected algebraic roots need not have a stored `Real` view.
     Parameters(Vec<Parameter>),
+    /// Complete preimages preserving continuous components or distinct source
+    /// germs, with exact chart maps and endpoint inclusion.
+    /// Component charts map local parameters into this spatial curve's domain.
+    /// Adjacent source charts need not be merged; isolated visits remain explicit.
+    Components(Vec<hypercurve::CurveLocationComponent2>),
     /// Every parameter in the curve domain maps to the point.
     EntireDomain,
 }
@@ -1743,6 +1749,9 @@ impl Curve3 {
                 if let Some(coordinates) = point.try_coordinates() {
                     match image.parameters_of(coordinates) {
                         Err(GeometryError::UnsupportedParameterLocation) => {}
+                        Err(GeometryError::PlanarCurve(hypercurve::ExactCurveError::Blocked(
+                            cause,
+                        ))) if cause.reason() == hypercurve::UncertaintyReason::Unsupported => {}
                         result => return result,
                     }
                 }

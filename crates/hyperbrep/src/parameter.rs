@@ -102,6 +102,12 @@ impl From<Real> for Parameter {
     }
 }
 
+impl From<CurveParameter2> for Parameter {
+    fn from(value: CurveParameter2) -> Self {
+        Self { value }
+    }
+}
+
 /// A strictly increasing closed trim range in a curve's retained parameter chart.
 ///
 /// Unlike an authored [`crate::ParameterDomain`], a trim may end at a selected

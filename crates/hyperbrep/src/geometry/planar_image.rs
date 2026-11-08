@@ -580,8 +580,15 @@ impl PlanarCurve3 {
         let uv = point.projected_to_plane_frame(&self.origin, &self.u, &self.v)?;
         let locations = self.source.point_locations(&uv)?;
         let locations = match locations {
-            hypercurve::CurvePointLocations2::Components(_) => {
-                return Err(GeometryError::UnsupportedParameterLocation);
+            hypercurve::CurvePointLocations2::Components(components) => {
+                let inverse = (Real::one() / &self.source_scale).map_err(GeometryError::Numeric)?;
+                let offset = -&self.source_offset * &inverse;
+                return parameter_components::spatial_components(
+                    &components,
+                    &inverse,
+                    &offset,
+                    &self.spatial_domain()?,
+                );
             }
             hypercurve::CurvePointLocations2::EntireCurve => {
                 return Ok(CurveParameterLocation::EntireDomain);

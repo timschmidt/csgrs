@@ -1960,6 +1960,13 @@ pub(super) fn require_curve_point_at_parameter(
     match curve.parameters_of(coordinates)? {
         CurveParameterLocation::EntireDomain => Ok(()),
         CurveParameterLocation::None => Err(mismatch),
+        location @ CurveParameterLocation::Components(_) => {
+            if location.contains(parameter, curve.domain())? {
+                Ok(())
+            } else {
+                Err(mismatch)
+            }
+        }
         CurveParameterLocation::Parameters(parameters) => {
             let mut unresolved = None;
             for candidate in parameters {

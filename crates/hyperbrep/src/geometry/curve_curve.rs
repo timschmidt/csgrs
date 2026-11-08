@@ -583,7 +583,7 @@ fn intersect_line_planar_image(
     let parameters = match curve.parameters_of(point)? {
         CurveParameterLocation::None => return Ok(CurveCurveIntersection::None),
         CurveParameterLocation::Parameters(parameters) => parameters,
-        CurveParameterLocation::EntireDomain => {
+        CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
             return Err(GeometryError::UnsupportedIntersection);
         }
     };
@@ -838,7 +838,7 @@ fn intersect_line_conic(
         let visits = match curve.parameters_of(&point)? {
             CurveParameterLocation::None => continue,
             CurveParameterLocation::Parameters(parameters) => parameters,
-            CurveParameterLocation::EntireDomain => {
+            CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                 return Err(GeometryError::UnsupportedIntersection);
             }
         };
@@ -930,7 +930,7 @@ fn intersect_circles(
             Ok(match curve.parameters_of(&point)? {
                 CurveParameterLocation::None => Vec::new(),
                 CurveParameterLocation::Parameters(parameters) => parameters,
-                CurveParameterLocation::EntireDomain => {
+                CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                     return Err(GeometryError::UnsupportedIntersection);
                 }
             })
@@ -968,7 +968,7 @@ fn intersect_coincident_arcs(
         Ok(match curve.parameters_of(point)? {
             CurveParameterLocation::None => Vec::new(),
             CurveParameterLocation::Parameters(parameters) => parameters,
-            CurveParameterLocation::EntireDomain => {
+            CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                 return Err(GeometryError::UnsupportedIntersection);
             }
         })
@@ -1337,7 +1337,7 @@ fn intersect_conic_rational(
         let visits = match location {
             CurveParameterLocation::None => continue,
             CurveParameterLocation::Parameters(visits) => visits,
-            CurveParameterLocation::EntireDomain => {
+            CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                 return Err(GeometryError::UnsupportedIntersection);
             }
         };
@@ -1402,7 +1402,7 @@ fn intersect_conic_pair(
             let visits = match first_curve.parameters_of(coordinates)? {
                 CurveParameterLocation::None => continue,
                 CurveParameterLocation::Parameters(visits) => visits,
-                CurveParameterLocation::EntireDomain => {
+                CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
                     return Err(GeometryError::UnsupportedIntersection);
                 }
             };
