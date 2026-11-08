@@ -64,10 +64,33 @@ The original selected-point fixture now returns exactly `[0,1/3] union {1}`.
 Restriction, reversal, selected parameters, reflected nonuniform affine maps,
 discontinuous one-sided germs and native replay consume these results. Finite
 contact/topology consumers that cannot assemble continuous components return
-a typed blocker. Native direct spatial NURBS mixed loci and punctured selected
-implicit branches remain open. No general algebraic inverse or solid-operation
+a typed blocker. That checkpoint leaves direct spatial NURBS mixed loci open;
+the native increment below extends them. Punctured selected implicit branches
+remain open. No general algebraic inverse or solid-operation
 closure is inferred. Scoped owner/downstream checks pass; a new full pre-push
 qualification is still required before this increment is published.
+
+## Native NURBS components and selected point sources (2026-11-07)
+
+The [native admission](../../../docs/research/native-nurbs-components-2026-11-07.md)
+extends positive-weight native spatial NURBS to complete interval/finite point
+loci within the existing finite Bézier inverse authority. Exact native charts
+retain constant intervals, isolated selected roots and both knot germs.
+`point_at_component` validates the chart and retains the original NURBS/global
+parameter for selected points. Checked component construction is parameter
+metadata; it grants no independent incidence certificate.
+
+Independent degree-one, weighted quadratic and degree-six witnesses consume
+restriction, reversal, reflected affine transport and cold native replay.
+All seven maintained functions execute on zero-import/default-stack WASM;
+reciprocal native/WASM and fresh-process replay also validate the generated
+point's original source/global parameter. Final Hypercurve records 3,180
+successful harness reports and 37 existing ignores; BRep 869, IO 127 and MSRV
+BRep/IO 996. Stable/MSRV strict Clippy, docs, WASM/fuzz checks pass. The final
+15-case ordinary campaign completes with matching receipts and retains an
+adverse 1.1683 descriptive timing ratio; concurrent validation prevents a
+statistical performance admission. Full new pre-push and release qualification
+remain separate. All work packages stay open or in progress.
 
 ## Exchange
 
@@ -281,8 +304,9 @@ Proper continuous/mixed spatial inverse results on retained planar/tensor
 images now use `CurveParameterLocation::Components`, with exact affine chart
 transport, source germs and endpoint inclusion. Complete tensor projection loci
 must cover all three coordinates before publishing a continuous component.
-Direct spatial NURBS queries with partially constant spans still return an
-explicit blocker. Punctured constant images of selected implicit branches,
+Positive-weight native spatial NURBS now assemble partially constant spans and
+finite visits through their existing exact span inverse authority. Lower-level
+unsupported incidence still propagates. Punctured constant images of selected implicit branches,
 unresolved shared components, other procedural UV sources and general
 arrangement/solid reconstruction remain open. No general algebraic inverse or
 total work/heap/cancellation bound is claimed.

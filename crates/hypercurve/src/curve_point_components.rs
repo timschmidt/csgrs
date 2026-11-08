@@ -15,6 +15,53 @@ fn compare(
     })?)
 }
 impl CurveLocationComponent2 {
+    /// Constructs a nonempty parameter component in an explicit source chart.
+    ///
+    /// The chart maps local zero/one to `start`/`end`, which must differ.
+    /// Local parameters must lie in `[0, 1]`; a singleton must be included.
+    /// This validates parameter metadata, not incidence with any curve or point.
+    /// Consumers must validate the current source chart and recompute its image.
+    pub fn from_span_parameters(
+        span_index: usize,
+        start: Real,
+        end: Real,
+        parameters: CurveParameterSet2,
+        endpoint_inclusion: [bool; 2],
+    ) -> ExactCurveResult<Self> {
+        resolve_certified_operation(&crate::policy::principal_context(), |policy| {
+            let invalid = || {
+                ExactCurveError::invalid_unattributed(
+                    CurveOperation2::Intersection,
+                    CurveError::InvalidCurveParameter,
+                )
+            };
+            if compare(&start.clone().into(), &end.clone().into(), policy)?.is_eq() {
+                return Err(invalid());
+            }
+            let (a, b) = match &parameters {
+                CurveParameterSet2::Single(p) => (p, p),
+                CurveParameterSet2::Range(r) => (r.start(), r.end()),
+            };
+            for p in [a, b] {
+                if compare(p, &Real::zero().into(), policy)?.is_lt()
+                    || compare(p, &Real::one().into(), policy)?.is_gt()
+                {
+                    return Err(invalid());
+                }
+            }
+            if compare(a, b, policy)?.is_eq() && endpoint_inclusion != [true, true] {
+                return Err(invalid());
+            }
+            Ok(Self::new(
+                span_index,
+                CurveSpanRange2::from_affine_chart(&(&end - &start), &start),
+                parameters.clone(),
+                endpoint_inclusion,
+            ))
+        })
+        .map(CurveOutcome::into_value)
+    }
+
     /// Transports the parameter chart by `scale * t + offset` and intersects
     /// its image with a closed parameter range. The scale must be nonzero.
     ///

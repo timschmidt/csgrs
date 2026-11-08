@@ -5517,6 +5517,55 @@
       "evidence_record": "docs/evidence/2026-11-07-spatial-parameter-components",
       "local_evidence_commit": "c2698dec9aae12a133731a761bc6430d441b0bee",
       "evidence_published": false
+    },
+    {
+      "id": "native-nurbs-parameter-components-2026-11-07",
+      "work_packages": [
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05a",
+        "WP06",
+        "WP17",
+        "WP18",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P25",
+        "P35",
+        "P36",
+        "P37",
+        "P39"
+      ],
+      "decision": "retained capability extension with final source/germ/replay acceptance; adverse cost observations and full new pre-push/release gates remain explicit",
+      "source_base_revision": "827574f9aaaf538c9468ace5328d87b5334e9f39",
+      "qualified_patch_sha256": "830594e0d6b8d2263d0b8273a865816cbc1b4e01368ebe951c9ee9adc9c91de0",
+      "change": "Hypercurve checks pure parameter-component metadata. HyperBRep assembles exact native positive-weight NURBS constant intervals and finite selected visits from existing span inverse authority, preserving incident knot germs. Native component evaluation validates the chart and retains original NURBS/global selected parameter through the existing evaluator. Native multiplicity/weight rules, finite-only downstream blockers and archive17 remain.",
+      "source": [
+        "../../hypercurve/src/curve_point_components.rs",
+        "../src/geometry/location.rs",
+        "../src/geometry/parameter_components.rs"
+      ],
+      "regressions": [
+        "../../hypercurve/tests/parameter_component_construction.rs",
+        "../tests/native_nurbs_components.rs",
+        "../tests/retained_parameters.rs"
+      ],
+      "validation": "18 final commands match all3806 source inputs and verified log hashes. Hypercurve3180 successful test/doctest harness reports with37 existing ignores; BRep869, IO127, MSRV1.95.0 BRep/IO996. Counts include subprocess reports. Stable/MSRV strict owner/downstream Clippy, strict docs, WASM/fuzz checks, benchmark builds, final format/budget/spelling pass. Seven maintained functions include independent degree6/q=s(s^5+s-1) isolated quintic parameter, nonunit/weighted charts, negative controls and actual budget/retry. Actual zero-import/default-stack WASM, native reciprocal and fresh native process replay validate the generated point itself, its original NURBS/global parameter and further operations. Semantic assertions precede deterministic bytes.",
+      "cost_evidence": "Final15-case ordinary campaign completes all original exact geometry/material/replay assertions with matching receipts, three alternating fresh processes/variant. Concurrent-host descriptive median ratios0.7718..1.1683; adverse covering_bores1.1683 retained, no statistical performance admission. Twelve allocation medians match; same_height+5calls/+472requestedB, covering_cylinders-5/-760, covering_bores+3/+120. Cumulative requests are not retained/peak heap. Four unchanged finite inverse benchmark rows also complete with equal checksums. Final prism/coplanar binaries+33408B, retained inverse+26552B; capability extension, no size optimization. Final binaries differed from prototype, so the full campaign reran. Quiet-host complete-cohort cost qualification remains open.",
+      "evidence": "../../../docs/research/native-nurbs-components-2026-11-07.md",
+      "local_evidence": "target/brep-native-components-20261107 and target/brep-admission-20261105/native-components-*",
+      "evidence_published": false,
+      "limits": "Scoped owner/downstream admission, not the separate827 main280-command matrix or a new native pre-push/release qualification. First prototype source identity failure, failed test-copy compiles and canceled prototype MSRV remain distinct. Original punctured sqrt image and shared/unselected component denominator census still block. General algebraic operation/continuous assembly, total work/heap/cancellation, runtime fuzz/coverage and BRep shipped consumers remain open. All work package statuses unchanged.",
+      "evidence_record": "docs/evidence/2026-11-07-native-nurbs-components",
+      "local_evidence_commit": "70daed6650e35274bbdec2b86ae286fa2a22f343"
     }
   ],
   "work_packages": [
@@ -5691,8 +5740,8 @@
     }
   ],
   "next_actions": [
-    "Preserve spatial-parameter-components-2026-11-07 and integrated-source-continuation-2026-11-05, original hard cases, negative controls and adverse costs. The new mixed interval/point and explicit source-germ corpus has scoped owner/downstream and reciprocal native/WASM qualification; finish the new full workflow/Clippy pre-push qualification before publishing. Keep pending evidence destinations local until explicitly authorized. Do not infer universal closure, total resource bounds, full runtime fuzz/coverage or BRep release.",
-    "Continue WP02/WP03/WP04/WP05a/WP06 from complete native rational components, source-germ-preserving intersection and retained planar/tensor spatial Components. Preserve [0,1] union {5/2}, finite {0,1/3,2/3,1}, and the now-completed spatial [0,1/3] union {1} witnesses, discontinuous one-sided evaluation, selected/affine/restriction/replay chains, nonlinear cap/hole/quartic cases and native-spline graph stitching. Extend direct spatial NURBS partially constant preimages through the lower owner; first reproduce actual native knot/domain semantics. Complete punctured constant selected implicit-branch queries: the preserved nonrational y=sqrt(x) probe requires [0,1/2) union (1/2,1] and remains open. Reuse original guards, selected source/fiber identities, open endpoints and parameter charts; missing proofs are not inequality or exclusion. Complete unresolved shared components, procedural/point-ordered inverses, continuous overlap assembly, coplanar selected-line support collection, general arrangements and reconstruction, then further Booleans, offsets, shelling, corner edits, transforms and native replay. Total resources and release remain open; no whole work package is complete.",
+    "Preserve native-nurbs-parameter-components-2026-11-07, spatial-parameter-components-2026-11-07 and all historical hard/negative cases. Final native owner/downstream and original-source/global-parameter reciprocal replay pass; preserve prototype failures and every adverse cost. Complete the appropriate full pre-push source qualification before publishing. The827 matrix is a different source. Evidence destinations remain local pending explicit authorization. Quiet-host complete-cohort performance, total resources, runtime fuzz/coverage and BRep delivery remain open.",
+    "Continue WP02/WP03/WP04/WP05a/WP06 from complete native rational components and retained/native spatial Components through the recorded finite span authority. Preserve [0,1] union {5/2}, finite {0,1/3,2/3,1}, retained spatial [0,1/3] union {1}, native [0,1] union {3}, and degree6 [2,5] union {5+3alpha}, with selected parameters and original native point source/global parameter after replay. Complete punctured selected implicit queries: original y=sqrt(x) requires [0,1/2) union (1/2,1]. Existing selected sections complete four general denominator censuses; F=(y^2-x)(y-2),D=y-2 on the positive sqrt branch exposes an unselected shared-component blocker despite the correct empty census. Reuse Hypersolve owning gcd/component authority and CurveParameter2 strict_scalar_between helpers; verify original regular-branch premises and selected fibers rather than treating zero resultant as whole/empty. Preserve original denominators, open ends and source identities. Further continuous overlap assembly, general arrangements/Booleans/offsets/shelling/corners/reconstruction, total resources and release remain open. No work package is complete.",
     "Continue from the 2026-11-01/02 contact and section increments (implicit-carrier, extrusion, revolution and line/tensor curve contacts; TensorImage carrier; implicit/tensor sections; tensor-image contacts; cylinder, torus and cone atlases). Open frontiers, each with its typed blocker: operand pcurves and maximal seam-free components for atlas pieces (a native-chart relation or certified chart transport), Boolean/face consumption of TensorImage and atlas pieces (the tensor-face image proof, certified rational endpoint recovery and tensor-image point location now let open splits consume sections with rational boundary endpoints; the original nonlinear transverse recut now stitches selected endpoints, but general independent selected preimages and atlas/chart reconstruction remain open), vertical/repeated/boundary pullback components in Hypersolve topology (they block axis-aligned cuts of generated curves), non-coaxial torus pairs (about 250 s for a measured overlapping pair), spheres through cone apexes and unbounded cone/cylinder pairs, curve/tensor incidence beyond lines, and exact seam-point equality between adjacent atlas patches (about 7.5 s per proof). Preserve every new witness, the migrated former blocker witnesses and the Boolean off-axis containment workflow.",
     "Continue WP02/WP03/WP05a/WP05b/WP06 from evidence/2026-10-19-surface-differentials/next-domains.md. Preserve the full old corpus and all eight new differential workflows while extending singular branch germs/event limits, complete dual-chart differential proofs, retained-profile selected positions and trim arrangements. Selected partials/unit normals and common-source vector products are now admitted on the recorded domains; independent-field/radical joins remain typed. All modeling, resource and delivery work packages and prior adverse cost observations remain active.",
     "Continue WP05a/WP05b/WP06 from evidence/2026-10-19-section-differentials/next-domains.md. Regular implicit section jets and smooth-event directions now remain exact through selected spatial queries and replay. Preserve the full prior section corpus and seven new differential workflows while extending singular branch germs, same-source vector products, selected surface partials/normals, dual-chart differential proofs and trim arrangements. All modeling, resource and delivery work packages remain active.",

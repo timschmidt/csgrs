@@ -4,7 +4,7 @@ use super::*;
 impl Curve3 {
     /// Evaluates a returned inverse component's explicit source germ.
     ///
-    /// Retained planar/tensor sources and their affine images accept component
+    /// Native NURBS, retained planar/tensor sources and their affine images accept component
     /// parameters without losing one-sided knot identity. The current source
     /// chart and parameter membership are checked; the result is recomputed,
     /// rather than trusted as incidence with an earlier query point. Ordinary
@@ -25,6 +25,29 @@ impl Curve3 {
                     .source
                     .point_at_component(component, parameter)?
                     .transformed(&image.transform),
+                CurveGeometry3::Nurbs(nurbs) => {
+                    let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
+                    let (_, domain) = segments
+                        .get(component.span_index())
+                        .ok_or(GeometryError::ParameterOutsideDomain)?;
+                    let (start, end) = component.span_range().endpoints();
+                    for (actual, expected) in [(start, domain.start()), (end, domain.end())] {
+                        if !decided_order(compare_reals(
+                            actual,
+                            expected,
+                            crate::STRICT_PREDICATES,
+                        ))?
+                        .is_eq()
+                        {
+                            return Err(GeometryError::ParameterOutsideDomain);
+                        }
+                    }
+                    // Native knot multiplicities are at most the degree, so
+                    // both incident germs have the same point value. Retain
+                    // the original NURBS and its authored parameter rather
+                    // than replacing their identity with a temporary span.
+                    self.point_at(parameter)
+                }
                 CurveGeometry3::TensorImage(image) => {
                     image.surface.point_at(&source_component_point(
                         &image.source,

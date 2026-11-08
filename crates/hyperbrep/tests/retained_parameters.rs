@@ -148,7 +148,7 @@ fn nurbs_queries_preserve_nonunit_charts_and_deduplicate_seams() {
 }
 
 #[test]
-fn partly_constant_nurbs_preimages_remain_a_typed_blocker() {
+fn partly_constant_nurbs_preimages_retain_the_complete_interval() {
     let curve = Curve3::nurbs(
         1,
         vec![
@@ -160,10 +160,14 @@ fn partly_constant_nurbs_preimages_remain_a_typed_blocker() {
         [0, 0, 1, 2, 2].map(Real::from).to_vec(),
     )
     .unwrap();
-    assert_eq!(
-        curve.parameters_of(Point3::origin()).unwrap_err(),
-        GeometryError::UnsupportedParameterLocation
-    );
+    let locus = curve.parameters_of(Point3::origin()).unwrap();
+    assert!(matches!(&locus, CurveParameterLocation::Components(_)));
+    for value in [Real::zero(), rational(1, 2), Real::one()] {
+        assert!(locus.contains(&value.into(), curve.domain()).unwrap());
+    }
+    for value in [rational(-1, 2), rational(3, 2), Real::from(2)] {
+        assert!(!locus.contains(&value.into(), curve.domain()).unwrap());
+    }
 }
 
 #[test]

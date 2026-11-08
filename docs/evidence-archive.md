@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `c2698dec9aae12a133731a761bc6430d441b0bee` (437 records) |
-| Local research branch | `research-spatial-components-20261107` |
+| Local manifest commit | `70daed6650e35274bbdec2b86ae286fa2a22f343` (438 records) |
+| Local research branch | `research-native-components-20261107` |
 
-The local manifest includes two unpublished descendants. The existing
+The local manifest includes three unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -27,6 +27,10 @@ pending explicit authorization. These commit IDs currently identify local Git
 objects, not remotely available records. The spatial record contains 295 files,
 17,228,892 bytes, SHA-256
 `afad0fd0fc91abf2f60fcd796f4fa5d01ae4d48ff5520ed1498abd3e89f9e341`.
+The native NURBS record adds 477 files and 24,644,143 bytes, SHA-256
+`946785094fa4067d8d1f5ce139f795a158f3e176159926ba6465691b576ec3cf`,
+on a separate local descendant of `c2698dec9aae12a133731a761bc6430d441b0bee`.
+The original pending payload branch remains unchanged.
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,

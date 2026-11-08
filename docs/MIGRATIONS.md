@@ -1,5 +1,24 @@
 # Migrations
 
+## Native NURBS parameter components (2026-11-07)
+
+Partially constant native spatial NURBS point queries now return complete
+`CurveParameterLocation::Components` results through the existing finite span
+incidence authority. Keep interval interiors and every source chart; native
+knot visits can belong to both incident germs. The native positive-weight and
+knot-multiplicity validation rules are unchanged.
+
+`Curve3::point_at_component` also accepts native NURBS components. After checking
+the current chart, it uses the original NURBS evaluator. Selected points retain
+that source and the authored global parameter through native replay. Scalar
+parameters keep the existing coordinate-view behavior.
+
+`CurveLocationComponent2::from_span_parameters` constructs checked, nonempty
+parameter metadata with a nonzero chart and local closure inside `[0,1]`.
+It does not certify incidence with a curve or query point. Consumers validate
+the current source chart and recompute its image. Native archive 17 is unchanged;
+query components are recomputed after decoding.
+
 ## BRep integration and resource refusal (2026-11-05)
 
 HyperBRep's native archive is now version 17. The incoming tensor-image and

@@ -194,7 +194,8 @@ pub(super) fn locate_nurbs_parameters(
     }
     let segments = decompose_nurbs_into_bezier_segments(nurbs)?;
     let mut parameters: Vec<Parameter> = Vec::new();
-    for (segment, domain) in segments {
+    let mut constant_spans = Vec::new();
+    for (index, (segment, domain)) in segments.iter().enumerate() {
         match segment.parameters_of(point)? {
             CurveParameterLocation::None => {}
             CurveParameterLocation::Parameters(local_parameters) => {
@@ -213,10 +214,44 @@ pub(super) fn locate_nurbs_parameters(
                     }
                 }
             }
-            CurveParameterLocation::EntireDomain | CurveParameterLocation::Components(_) => {
+            CurveParameterLocation::EntireDomain => constant_spans.push(index),
+            CurveParameterLocation::Components(_) => {
                 return Err(GeometryError::UnsupportedParameterLocation);
             }
         }
+    }
+    if !constant_spans.is_empty() {
+        let mut components = Vec::new();
+        for (index, (_, domain)) in segments.iter().enumerate() {
+            let mut append = |local| -> GeometryResult<()> {
+                components.push(hypercurve::CurveLocationComponent2::from_span_parameters(
+                    index,
+                    domain.start().clone(),
+                    domain.end().clone(),
+                    local,
+                    [true, true],
+                )?);
+                Ok(())
+            };
+            if constant_spans.contains(&index) {
+                append(hypercurve::CurveParameterSet2::Range(
+                    hypercurve::CurveParameterRange2::unit(),
+                ))?;
+                continue;
+            }
+            let inverse =
+                (Real::one() / (domain.end() - domain.start())).map_err(GeometryError::Numeric)?;
+            let offset = -domain.start() * &inverse;
+            let range = crate::ParameterRange::from(domain.clone());
+            for parameter in &parameters {
+                if range.contains(parameter)? {
+                    append(hypercurve::CurveParameterSet2::Single(
+                        parameter.affine_image(&inverse, &offset)?.curve_parameter(),
+                    ))?;
+                }
+            }
+        }
+        return Ok(CurveParameterLocation::Components(components));
     }
     if parameters.is_empty() {
         Ok(CurveParameterLocation::None)
