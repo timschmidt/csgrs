@@ -36,7 +36,12 @@ impl<'a> PathNumbers<'a> {
             self.advance();
             self.skip_digits();
         }
-        if matches!(self.peek(), Some(b'e' | b'E')) {
+        // svgtypes leaves CSS unit prefixes `em`/`ex` outside the number.
+        // They are invalid in path data; leave them for its path validator,
+        // rather than converting a different token and reporting BadDecimal.
+        if matches!(self.peek(), Some(b'e' | b'E'))
+            && !matches!(self.0.as_bytes().get(1).copied(), Some(b'm' | b'x'))
+        {
             self.advance();
             if matches!(self.peek(), Some(b'+' | b'-')) {
                 self.advance();

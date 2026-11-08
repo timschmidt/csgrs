@@ -26,7 +26,12 @@ Arc flags consume one character; radii remove the authored sign before scalar
 conversion, preserving the existing magnitude convention without adding scalar
 sign decisions before geometry predicates. There is no replacement path-command
 parser, arrangement or geometry kernel. The existing order of geometric
-predicates is retained.
+predicates is retained. A later review reproduced a diagnostic regression in
+unpublished `8d0a6d9caf`: malformed `em`/`ex` suffixes became scalar decimal
+errors. The published parent reports malformed SVG syntax. The strengthened
+existing malformed-input table fails before the repair. The cursor now mirrors
+the validator's numeric boundary before these unit prefixes, leaving invalid
+suffixes for its normal syntax error. Valid exponents retain their exact values.
 
 The admitted extension covers the existing path command grammar and number
 tokens accepted by its finite-number validator. The validator's overflow range,
@@ -75,7 +80,8 @@ unchanged SVG functions. Allocation calls and cumulative requested bytes match;
 incremental live-request peaks also match. Absolute live baselines and peaks
 differ by one byte, consistent with the candidate executable's one-byte-longer
 path; raw counters are retained without adjustment. Descriptive median time
-ratios are 0.844–1.186, including the adverse sample. Concurrent host activity
+ratios are 0.965–0.992 on the corrected source. Earlier `8d0a6d9caf` samples
+include the adverse 1.186 ratio and remain in record 444. Concurrent host activity
 prevents a statistical speedup or nonregression claim. Full nonempty dispatch
 vectors change in scalar parsing/construction/reduction. Recorded Hyperlimit
 counts match in all three controls; the third also emits matching Hypercurve counts.
@@ -83,23 +89,24 @@ The first two have no Hypercurve-layer labels. This is not a full-vector
 refactor gate.
 
 All five complete new native functions also run in three fresh processes.
-Their median times range from 0.043 to 4.914 milliseconds in the derived driver.
-The filled/replayed chain takes 2,998 parent allocation requests and 439,520
-cumulative requested bytes, with an observed 73,528-byte live-request peak.
+Their median times range from 0.040 to 4.487 milliseconds in the derived driver.
+The filled/replayed chain takes 2,993 parent allocation requests and 439,066
+cumulative requested bytes, with an observed 73,537-byte live-request peak.
 Parent counters exclude child heaps and allocator overhead. The derived native
 driver executes the requested complete child acceptance function before emitting
 its successful completion summary; that custom driver is not libtest. The
-native binary grows 27,176 bytes and its trace build grows 29,424 bytes relative
+native binary grows 26,984 bytes and its trace build grows 29,952 bytes relative
 to the parent probe. The incomplete parent's new decimal workload is not a
 same-completed-contract speed comparison. An earlier draft quoted the
-pre-harness-fix size differences; the values above use the retained final build
-records. The local feature record preserves that draft without rewriting it.
+earlier-stage size differences; the values above use the corrected source
+with its strengthened invalid-input workload. Original stage records remain
+immutable. Different cache warming from added cases is not an optimization claim.
 
 A derived WASM module executes all five pure maintained functions in three
 fresh instances, with the default compiled stack and zero host imports. Native
 child spawning is excluded by the maintained cfg gate; pure native replay and
-further region operations run. The module is 14,869,576 bytes with SHA-256
-`ba61946af9f6e29427cb3dd5bf8924cde7bed44fc4741abf072aa574ba30286f`.
+further region operations run. The module is 14,869,916 bytes with SHA-256
+`819347609a80188cc709a7092e53de147b11c4e8262c95aef9995c7dfd5ed3ac`.
 The largest observed linear memory is 1,572,864 bytes. Linear memory is not
 live heap, a resource limit or public ABI qualification.
 
@@ -111,13 +118,29 @@ cost-probe resolution selected newer registry packages and was stopped without
 qualification. The final probes use the workspace's admitted package versions and preserve
 their complete locks.
 
-Local evidence is record 444, `docs/evidence/2026-11-08-svg-decimal-ingress`, commit
+The first full pre-push attempt on `8d0a6d9caf` is retired after the diagnostic
+regression was reproduced. Its completed and partial commands remain historical,
+not qualification of the corrected source. Two inverse-isometric seeded inputs
+hit the original ten-second watchdog while other validation ran. Both original
+six-byte cases, `0909e00e0700` and `0b094adf6101`, are now mandatory maintained
+seeds even if future lexicase rankings change. Every original seed, target,
+precision, RSS limit, timeout and campaign duration remains. Fixed-file replay
+bypasses that watchdog and does not qualify bounded or mutating completion.
+The fresh final gate schedules the unchanged thirteen campaigns after the other
+checks and requires actual post-seed mutation. This is scheduling and failure
+promotion, not a numerical algorithm or resource-limit change.
+
+The original feature is local record 444, commit
 `0a50ee763bf6265c07f7b6b5d9d74ca8c059e588`, SHA-256
-`cf2ec6041b0c4f1389fdc85142d8fdd64a16b1c6df80d484cef88fb133acecea`. All 444 records and four historical excluded digests
-verify.
-The snapshot preserves the earlier size-delta draft; the final build records
-and the corrected values above remain explicit. No separate evidence remote
-was written. Final committed-source pre-push qualification remains required.
-No performance improvement, total-work/memory bound, complete SVG domain or completed 524-file comparison is claimed. All 120 original
-modified/new external BRep files and 3,736 tracked inputs recheck unchanged;
-this increment edits no historical control worktree.
+`cf2ec6041b0c4f1389fdc85142d8fdd64a16b1c6df80d484cef88fb133acecea`.
+The corrected Rust implementation, preserved retired validation, permanent
+failure fixtures and current measurements are local record 445,
+`docs/evidence/2026-11-08-svg-path-diagnostic-correction`, commit
+`5078d920e0fade0f177299879a761e5194dcec8d`, SHA-256
+`09e7ccef5d13f4bb6cfad6535d3c35c6838a95e6adacf7b88adc71dbef22f7ca`. All 445 records and four historical excluded digests verify.
+No separate evidence remote was written. The complete fresh 280-command
+qualification remains required on the final committed source. No performance
+improvement, total-work/memory bound, complete SVG domain or completed 524-file
+comparison is claimed. All 120 original modified/new external BRep files and
+3,736 tracked inputs rechecked unchanged; this increment edits no historical
+control worktree.

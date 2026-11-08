@@ -9,6 +9,7 @@ Previously merged unequal ellipse radii now retain the existing typed
 unsupported-ellipse result. This intentionally corrects imported geometry;
 callers depending on rounded coordinates must supply their intended model
 explicitly. Public signatures and native metadata versions are unchanged.
+Malformed numeric unit suffixes retain their SVG syntax-error classification.
 Existing native exact metadata remains authoritative. Numeric SVG attributes,
 transform strings, and the grammar validator's finite-number range are separate
 limits; this change does not establish complete SVG or D03 support.

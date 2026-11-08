@@ -113,7 +113,15 @@ fn svg_compact_arc_flags_preserve_exact_radii_and_ellipse_rejection() {
             }),
             Err(SvgError::Unsupported(_))
         ));
-        for malformed in ["M0 0A1 1 0 2 0 1 0", "M0 0L1e 2", "M0 0LNaN 1"] {
+        for malformed in [
+            "M0 0A1 1 0 2 0 1 0",
+            "M0 0L1e 2",
+            "M0 0LNaN 1",
+            "M0 0L1 2em",
+            "M0 0L1 2ex",
+            "M0 0L1 2Em",
+            "M0 0L1 2Ex",
+        ] {
             assert!(matches!(
                 parse_svg_path_data(malformed),
                 Err(SvgError::MalformedInput(_))

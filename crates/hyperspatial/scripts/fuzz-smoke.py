@@ -13,6 +13,12 @@ import sys
 ROOT = Path(__file__).resolve().parents[3]
 CRATE = ROOT / "crates/hyperspatial"
 
+# Original watchdog failures remain mandatory even if lexicase rankings change.
+INVERSE_ISOMETRIC_REGRESSIONS = (
+    bytes([9, 9, 224, 14, 7, 0]),
+    bytes([11, 9, 74, 223, 97, 1]),
+)
+
 
 def snapshot(directory):
     return {p.name: p.read_bytes().hex() for p in sorted(directory.iterdir()) if p.is_file()}
@@ -107,6 +113,8 @@ def main():
         else:
             seeds = [bytes([family, (family + 7) % 22, 0, 0, 0, flags])
                      for family in range(22) for flags in (0, 3)]
+            if target == "inverse_isometric":
+                seeds += INVERSE_ISOMETRIC_REGRESSIONS
             if target in ("transverse_mercator", "elliptic", "inverse_legendre", "jacobi", "complex_jacobi", "jacobi_epsilon", "complex_atanh", "parameter_encodings"):
                 seeds = [bytes([family, (family + 7) % 22, 127, 39, mode, flags])
                          for family in range(22) for mode in range(4) for flags in (0, 4)]

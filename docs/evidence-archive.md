@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `0a50ee763bf6265c07f7b6b5d9d74ca8c059e588` (444 records) |
-| Local research branch | `research-svg-decimal-ingress-20261108` |
+| Local manifest commit | `5078d920e0fade0f177299879a761e5194dcec8d` (445 records) |
+| Local research branch | `research-svg-path-diagnostic-correction-20261108` |
 
-The local manifest includes nine unpublished descendants. The existing
+The local manifest includes ten unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -63,6 +63,15 @@ validator's original nested-summary rejection, corrected harness and complete
 cost/dispatch samples. Its source snapshot predates the final documentation
 correction of the binary-size deltas; the raw final build records remain
 unchanged. See the [admission](research/svg-decimal-ingress-2026-11-08.md).
+
+The SVG diagnostic correction record adds 5,040 files and
+103,671,632 bytes, SHA-256 `09e7ccef5d13f4bb6cfad6535d3c35c6838a95e6adacf7b88adc71dbef22f7ca`. It preserves the failing maintained
+malformed-suffix witness, corrected native/MSRV/WASM acceptance and costs, and
+the retired `8d0a6d9caf` pre-push attempt with both original sanitizer timeout
+inputs and complete partial results. Those old-source results do not qualify
+the corrected commit. Both inputs are promoted to permanent seeds without
+weakening an original limit; fresh complete qualification remains required.
+The [admission](research/svg-decimal-ingress-2026-11-08.md) states the boundaries.
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
