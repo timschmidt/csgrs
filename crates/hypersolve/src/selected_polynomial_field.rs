@@ -719,6 +719,30 @@ impl SelectedPolynomialValue {
         &self,
         policy: &C,
     ) -> Result<RealSign, SelectedPolynomialError<C::Error>> {
+        let result = self.sign_strict_once(policy);
+        // This API promises an exact sign. Suppressing the approximate
+        // terminal alone still leaves native tensor replay at the caller's
+        // 512-step stopping point. Complete a declined whole-value proof in
+        // the strict counterpart; bounded speculative passes keep their
+        // original decline and every successful predicate keeps its order.
+        if matches!(
+            result,
+            Err(SelectedPolynomialError::Uncertain(
+                UncertaintyReason::Predicate
+            ))
+        ) && policy.selects_approximate_512()
+            && !policy.has_bounded_exact_predicate_budget()
+        {
+            self.sign_strict_once(&policy.strict_counterpart())
+        } else {
+            result
+        }
+    }
+
+    fn sign_strict_once<C: SelectedAlgebraContext>(
+        &self,
+        policy: &C,
+    ) -> Result<RealSign, SelectedPolynomialError<C::Error>> {
         if crate::work_budget::exhaustion().is_some() {
             return Err(SelectedPolynomialError::Uncertain(
                 UncertaintyReason::BudgetExhausted,

@@ -1571,7 +1571,10 @@ impl PolynomialCurveBranch2 {
                 .point_parameter(point, policy)
                 .map(|p| Some(p.into_iter().collect()));
         }
-        match self.nonlinear_point_parameters(point, policy) {
+        // Preserve the original ordinary-section and constant-image proofs
+        // before spending work on previously unsupported common components.
+        let mut common = [mapped_chord::CommonSectionAttempt2::default(); 2];
+        match self.nonlinear_point_parameters_in_map(point, policy, None, &mut common) {
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
                     && self.certifies_constant_image(None) =>
@@ -1581,6 +1584,15 @@ impl PolynomialCurveBranch2 {
                 } else {
                     Some(Vec::new())
                 })
+            }
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported =>
+            {
+                common
+                    .iter_mut()
+                    .for_each(mapped_chord::CommonSectionAttempt2::enable);
+                self.nonlinear_point_parameters_in_map(point, policy, None, &mut common)
+                    .map(Some)
             }
             result => result.map(Some),
         }
@@ -1620,7 +1632,8 @@ impl PolynomialCurveBranch2 {
                 .point_parameters(point, policy)
                 .map(locations);
         }
-        match self.nonlinear_point_parameters_in_map(point, policy, Some(map)) {
+        let mut common = [mapped_chord::CommonSectionAttempt2::default(); 2];
+        match self.nonlinear_point_parameters_in_map(point, policy, Some(map), &mut common) {
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
                     && self.certifies_constant_image(Some(map)) =>
@@ -1639,6 +1652,15 @@ impl PolynomialCurveBranch2 {
                 } else {
                     Some(Vec::new())
                 }))
+            }
+            Err(ExactCurveError::Blocked(blocker))
+                if blocker.reason() == UncertaintyReason::Unsupported =>
+            {
+                common
+                    .iter_mut()
+                    .for_each(mapped_chord::CommonSectionAttempt2::enable);
+                self.nonlinear_point_parameters_in_map(point, policy, Some(map), &mut common)
+                    .map(|parameters| locations(Some(parameters)))
             }
             result => result.map(|parameters| locations(Some(parameters))),
         }
@@ -1717,7 +1739,12 @@ impl PolynomialCurveBranch2 {
         point: &CurvePoint2,
         policy: &CurveContext,
     ) -> ExactCurveResult<Vec<CurveParameter2>> {
-        self.nonlinear_point_parameters_in_map(point, policy, None)
+        self.nonlinear_point_parameters_in_map(
+            point,
+            policy,
+            None,
+            &mut [mapped_chord::CommonSectionAttempt2::complete(); 2],
+        )
     }
 
     fn nonlinear_point_parameters_in_map(
@@ -1725,6 +1752,7 @@ impl PolynomialCurveBranch2 {
         point: &CurvePoint2,
         policy: &CurveContext,
         map: Option<&crate::RationalMap2>,
+        common: &mut [mapped_chord::CommonSectionAttempt2; 2],
     ) -> ExactCurveResult<Vec<CurveParameter2>> {
         if map.is_none() && self.injective_image_orientation().is_some() {
             let mut source = Some(point.clone());
@@ -1777,15 +1805,16 @@ impl PolynomialCurveBranch2 {
                 Err(error) => return Err(error),
             }
         } else {
-            let selected = match self.mapped_selected_axis_sections(point, 0, map, policy) {
-                Ok(sections) => sections,
-                Err(ExactCurveError::Blocked(blocker))
-                    if blocker.reason() == UncertaintyReason::Unsupported =>
-                {
-                    self.mapped_selected_axis_sections(point, 1, map, policy)?
-                }
-                Err(error) => return Err(error),
-            };
+            let selected =
+                match self.mapped_selected_axis_sections(point, 0, map, policy, &mut common[0]) {
+                    Ok(sections) => sections,
+                    Err(ExactCurveError::Blocked(blocker))
+                        if blocker.reason() == UncertaintyReason::Unsupported =>
+                    {
+                        self.mapped_selected_axis_sections(point, 1, map, policy, &mut common[1])?
+                    }
+                    Err(error) => return Err(error),
+                };
             Some(PolynomialLineSections2::Isolated(selected))
         };
         let Some(PolynomialLineSections2::Isolated(sections)) = sections else {

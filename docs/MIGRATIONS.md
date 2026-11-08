@@ -1,5 +1,21 @@
 # Migrations
 
+## Selected graph common sections (2026-11-08)
+
+Finite point-location queries can now complete despite unselected common
+components of the defining polynomial and pulled query equation. Previously
+unsupported cases may return exact finite or empty results. Continuous selected
+sections still require a correspondence and retain their typed blocker. Existing
+public signatures, native formats and certainty outcomes are unchanged.
+
+Hypersolve adds `resultant_bivariate_perturbation_ordered_field` and
+`OrderedFieldResultantPerturbation`. Its first nonzero formal coefficient retains
+candidate projections; it does not select a real branch. `None` denotes an
+identically zero formal resultant, never a proved empty intersection. The
+coefficient-call and matrix problem-size allowances do not bound total work,
+coefficient growth or memory. See the
+[admission](research/implicit-shared-sections-2026-11-08.md).
+
 ## Selected polynomial constant-image domains (2026-11-08)
 
 `Curve2::rational_image_point_locations` can now return

@@ -2,6 +2,14 @@
 
 ## [0.4.0] - Unreleased
 
+- Complete finite point preimages on checked selected polynomial graph branches
+  despite unselected common supports. Preserve original source equations, map
+  guards, algebraic endpoints and selected query fields through trimming,
+  reversal, affine maps and cold native replay. Existing ordinary sections and
+  constant-image proofs run first; continuous selected overlaps remain typed
+  blockers. See the [admission](../../docs/research/implicit-shared-sections-2026-11-08.md)
+  for the exact corpus, adverse resource costs and remaining closure gaps.
+
 - Retain punctured constant-image point preimages on selected polynomial
   branches when exact guard factoring and isolation complete. Keep original
   pole exclusions, selected points and source charts through restriction,

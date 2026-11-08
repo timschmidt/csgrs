@@ -63,10 +63,10 @@ pub struct OrderedFieldResultant<C> {
 
 type Error<E> = BoundedOrderedFieldResultantError<E>;
 
-struct Counted<'a, F> {
-    field: &'a mut F,
-    limit: usize,
-    calls: usize,
+pub(super) struct Counted<'a, F> {
+    pub(super) field: &'a mut F,
+    pub(super) limit: usize,
+    pub(super) calls: usize,
 }
 
 impl<F> Counted<'_, F> {

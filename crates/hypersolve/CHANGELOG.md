@@ -2,6 +2,17 @@
 
 ## [0.4.0] - Unreleased
 
+- Add `resultant_bivariate_perturbation_ordered_field` and
+  `OrderedFieldResultantPerturbation` to retain finite-contact projections beside
+  common supports. Reuse the existing ordered-field determinant authority and
+  count original coefficient-context calls across all lifted work. A zero
+  formal resultant remains explicit; candidate evidence still requires branch,
+  domain and denominator validation.
+- Complete an exact selected-field sign through the strict counterpart after
+  the approximate-selected whole-value attempt declines. Preserve successful
+  predicate order, shared work scopes and bounded speculative declines. See the
+  [admission](../../docs/research/implicit-shared-sections-2026-11-08.md).
+
 - Expose `bivariate_topology::bivariate_polynomial_gcd` through the checked
   rational-coefficient factor reducer used by curve topology. Hypercurve reuses
   it to distinguish selected and unselected denominator components. Projection

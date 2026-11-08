@@ -81,6 +81,67 @@ fn is_zero(value: &SelectedPolynomialValue) {
 }
 
 #[test]
+fn exact_selected_sign_completes_beyond_the_requested_approximate_terminal() {
+    use hypersolve::DenseTensorPolynomial;
+    use hypersolve::recursive_quadratic_field::recursive_quadratic_rational_value;
+    // a is irreducible of degree five (reciprocal Eisenstein at 2).
+    // b=a² is selected independently by E(b)²-b*O(b)²=0, where
+    // g(a)=E(a²)+a*O(a²). Both polynomials have one root in (0,1).
+    let sources = vec![
+        selected_root(
+            [-1, 2, 2, 2, 2, 2].map(Real::from).to_vec(),
+            real(0),
+            real(1),
+            101,
+        ),
+        selected_root(
+            [1, -8, -8, -4, -4, -4].map(Real::from).to_vec(),
+            real(0),
+            real(1),
+            102,
+        ),
+    ];
+    let native = RecursiveQuadraticField::base(
+        sources,
+        constant_tensor(2, real(1)),
+        constant_tensor(2, real(1)),
+    )
+    .unwrap();
+    let first =
+        DenseTensorPolynomial::from_axis_polynomial(2, 0, &[real(0), real(0), real(1)]).unwrap();
+    let second = DenseTensorPolynomial::from_axis_polynomial(2, 1, &[real(0), real(-1)]).unwrap();
+    let difference =
+        recursive_quadratic_rational_value(&base_arc(&native), first.add(&second).unwrap())
+            .unwrap();
+    let field = SelectedPolynomialField::from_recursive(native);
+    let zero = field.import_recursive(&difference).unwrap();
+    for policy in [TestContext::strict(), TestContext::approximate()] {
+        use hypersolve::SelectedAlgebraContext;
+        let bounded = policy.bounded_exact_predicate_pass(|| zero.sign(&policy));
+        assert!(matches!(
+            bounded,
+            Ok(Classification::Decided(RealSign::Zero))
+                | Ok(Classification::Uncertain(
+                    hypersolve::classification::UncertaintyReason::Predicate
+                ))
+        ));
+        assert_sign(zero.sign(&policy), RealSign::Zero);
+        // Independent nearby values must remain distinct; completion must
+        // prove the relation, rather than treat a small interval as zero.
+        let epsilon = field.constant(fraction(1, 1 << 40)).unwrap();
+        assert_sign(
+            zero.add(&epsilon).unwrap().sign(&policy),
+            RealSign::Positive,
+        );
+        assert_sign(
+            zero.subtract(&epsilon).unwrap().sign(&policy),
+            RealSign::Negative,
+        );
+        assert_eq!(policy.approximations(), 0);
+    }
+}
+
+#[test]
 fn dependent_nonradical_generators_preserve_joint_relations() {
     let q = base();
     let a_field = select(&q, coefficients(&q, &[-2, 0, 0, 1]), 1, 2);

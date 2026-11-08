@@ -388,3 +388,8 @@ pub use bounded::{
     BoundedOrderedFieldResultantError, OrderedFieldResultant, OrderedFieldResultantConfig,
     resultant_bivariate_ordered_field,
 };
+
+mod pencil;
+pub use pencil::{
+    OrderedFieldResultantPerturbation, resultant_bivariate_perturbation_ordered_field,
+};

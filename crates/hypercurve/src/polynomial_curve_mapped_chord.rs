@@ -5,14 +5,37 @@ use super::*;
 use crate::{BezierAlgebraicChord2, CurvePointRationalForm2};
 use hypersolve::BivariatePolynomial;
 use hypersolve::bivariate_arithmetic::{
-    bivariate_multiply, bivariate_parameter_derivative as derivative,
+    bivariate_first_active_degree, bivariate_multiply, bivariate_parameter_derivative as derivative,
 };
 use hypersolve::ordered_field_resultant::{
     BoundedOrderedFieldResultantError as OrderedFieldResultantError, OrderedFieldResultantConfig,
-    resultant_bivariate_ordered_field,
+    resultant_bivariate_ordered_field, resultant_bivariate_perturbation_ordered_field,
 };
 
 type Form = CurvePointRationalForm2;
+
+/// Proof state for one coordinate section of one immutable source/query/map
+/// request. Only a checked zero resultant sets `zero_resultant`; the caller
+/// may then enable component completion after its existing constant-image
+/// proof declines. Never retain this state across requests or native replay.
+#[derive(Clone, Copy, Default)]
+pub(super) struct CommonSectionAttempt2 {
+    enabled: bool,
+    zero_resultant: bool,
+}
+
+impl CommonSectionAttempt2 {
+    pub(super) const fn complete() -> Self {
+        Self {
+            enabled: true,
+            zero_resultant: false,
+        }
+    }
+
+    pub(super) fn enable(&mut self) {
+        self.enabled = true;
+    }
+}
 
 struct Coefficients<'a> {
     origin: &'a CurvePoint2,
@@ -91,8 +114,9 @@ fn evaluate(
 
 impl PolynomialCurveBranch2 {
     /// Complete isolated contacts with a selected chord, through the original
-    /// source branch. A zero resultant needs component correspondences and
-    /// remains unsupported. The local elimination budget counts coefficient
+    /// source branch. Unselected common components retain isolated projection
+    /// candidates; continuous selected contact still needs a correspondence.
+    /// The local elimination budget counts coefficient
     /// calls and matrix entries; it is not a total arithmetic or memory bound.
     pub(crate) fn mapped_selected_chord_sections(
         &self,
@@ -122,6 +146,7 @@ impl PolynomialCurveBranch2 {
         axis: usize,
         map: Option<&crate::RationalMap2>,
         policy: &CurveContext,
+        common: &mut CommonSectionAttempt2,
     ) -> ExactCurveResult<Vec<PolynomialLineSection2>> {
         let constant = |value| form(point, BivariatePolynomial::new(vec![vec![value]]));
         let mut coefficients = [
@@ -130,7 +155,7 @@ impl PolynomialCurveBranch2 {
             coordinates(point)?[axis].scaled(&Real::from(-1))?,
         ];
         coefficients[axis] = constant(Real::one())?;
-        self.mapped_selected_line_sections_with_map(point, coefficients, false, policy, map)
+        self.mapped_selected_line_sections_with_map(point, coefficients, false, policy, map, common)
     }
 
     fn mapped_selected_line_sections(
@@ -146,6 +171,7 @@ impl PolynomialCurveBranch2 {
             classify_tangents,
             policy,
             None,
+            &mut CommonSectionAttempt2::complete(),
         )
     }
 
@@ -156,6 +182,7 @@ impl PolynomialCurveBranch2 {
         classify_tangents: bool,
         policy: &CurveContext,
         map: Option<&crate::RationalMap2>,
+        common: &mut CommonSectionAttempt2,
     ) -> ExactCurveResult<Vec<PolynomialLineSection2>> {
         let (nx, wx) = self
             .mapped_coordinate_form(0, map)
@@ -184,13 +211,7 @@ impl PolynomialCurveBranch2 {
                     .collect()
             })
             .collect::<ExactCurveResult<Vec<Vec<Form>>>>()?;
-        let report = resultant_bivariate_ordered_field(
-            &original,
-            &pulled,
-            OrderedFieldResultantConfig::default(),
-            &mut Coefficients { origin },
-        )
-        .map_err(|error| match error {
+        let elimination_error = |error| match error {
             OrderedFieldResultantError::Coefficient(error) => error,
             OrderedFieldResultantError::OperationLimit { .. }
             | OrderedFieldResultantError::MatrixLimit { .. }
@@ -201,14 +222,100 @@ impl PolynomialCurveBranch2 {
             | OrderedFieldResultantError::SizeOverflow => {
                 blocked(UncertaintyReason::StorageUnavailable)
             }
-        })?;
-        let roots = PolynomialPoint2::selected_root_candidates(
-            report.coefficients,
-            self.topology().domain().first.clone(),
-            self.source.fiber_config,
-            policy,
-        )?
-        .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+        };
+        let roots = if common.zero_resultant {
+            // The same immutable request already proved this ordinary
+            // projection zero. Transport that proof instead of eliminating
+            // again after the caller's constant-image attempt.
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::record(
+                "hypercurve",
+                "polynomial-section",
+                "reuse-zero-projection",
+            );
+            None
+        } else {
+            let report = resultant_bivariate_ordered_field(
+                &original,
+                &pulled,
+                OrderedFieldResultantConfig::default(),
+                &mut Coefficients { origin },
+            )
+            .map_err(elimination_error)?;
+            let roots = PolynomialPoint2::selected_root_candidates(
+                report.coefficients,
+                self.topology().domain().first.clone(),
+                self.source.fiber_config,
+                policy,
+            )?;
+            common.zero_resultant = roots.is_none();
+            roots
+        };
+        let roots = match roots {
+            Some(roots) => roots,
+            None if !common.enabled => {
+                return Err(blocked(UncertaintyReason::Unsupported));
+            }
+            None => {
+                // A graph independent of its abscissa has constant ordinate.
+                // If its homogeneous image is independent too, there is no
+                // isolated section. Keep the existing constant-image outcome
+                // path without constructing an unnecessary perturbation.
+                if bivariate_first_active_degree(self.topology().geometric_equation()) == 0
+                    && [&x, &y, &w]
+                        .into_iter()
+                        .all(|p| bivariate_first_active_degree(p) == 0)
+                {
+                    return Err(blocked(UncertaintyReason::Unsupported));
+                }
+                let projection = resultant_bivariate_perturbation_ordered_field(
+                    &original,
+                    &pulled,
+                    OrderedFieldResultantConfig::default(),
+                    &mut Coefficients { origin },
+                )
+                .map_err(elimination_error)?
+                .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+                let roots = PolynomialPoint2::selected_root_candidates(
+                    projection.coefficients,
+                    self.topology().domain().first.clone(),
+                    self.source.fiber_config,
+                    policy,
+                )?
+                .ok_or_else(|| blocked(UncertaintyReason::Unsupported))?;
+                // Choose a strict interior abscissa outside ALL projection
+                // roots. At such a fiber a zero of the pulled equation can
+                // only belong to a common support. The checked simple-root
+                // connected slab prevents this selected graph from changing
+                // between common and residual factors. A sample alone, without
+                // the complete projection and slab certificate, would not
+                // establish either conclusion.
+                let mut end = self.range.end().clone();
+                for root in &roots {
+                    let parameter = coordinates(root)?[0].parameter()?;
+                    if decided(
+                        parameter
+                            .cmp_by_refinement(self.range.start(), policy)
+                            .map_err(invalid)?,
+                    )?
+                    .is_gt()
+                        && decided(parameter.cmp_by_refinement(&end, policy).map_err(invalid)?)?
+                            .is_lt()
+                    {
+                        end = parameter;
+                    }
+                }
+                let gap = CurveParameterRange2::new_validated(self.range.start().clone(), end);
+                let witness = decided(gap.strict_interior_scalar(policy).map_err(invalid)?)?;
+                let point = self.interior_point(&witness.into(), policy)?;
+                if evaluate(&point, [&x, &y, &w], &coefficients)?.compare_to_real(&Real::zero())?
+                    == Ordering::Equal
+                {
+                    return Err(blocked(UncertaintyReason::Unsupported));
+                }
+                roots
+            }
+        };
         let source = Curve2::from_polynomial_branch(self.source_branch(policy)?);
         let fx = derivative(
             self.topology().geometric_equation(),

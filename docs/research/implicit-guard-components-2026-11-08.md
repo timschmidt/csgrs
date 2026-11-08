@@ -98,13 +98,19 @@ module has SHA-256
 Production code, manifests and CI are unchanged from `2fd417079b`.
 
 Fourteen unchanged rational-map acceptance functions complete on both
-revisions under both policies. All 28 per-path dispatch vectors match, and
-median allocation calls and requested bytes match. Three alternating fresh
+revisions under both policies. Median allocation calls and requested bytes match.
+Three alternating fresh
 process samples per policy give descriptive time ratios from 0.9464 to 1.0146.
 Other validation runs concurrently, so no statistical speedup or performance
 nonregression is claimed. The normal executable grows 58,840 bytes; its trace
 build grows 33,792 bytes. This is a capability extension. Cumulative allocation
 requests do not measure peak or retained heap.
+
+**Trace erratum:** the historical report's 28 vectors were empty because
+`reset()` did not enable recording; their equality does not establish dispatch
+invariance. The original record remains immutable. The
+[common-section follow-up](implicit-shared-sections-2026-11-08.md) provides new,
+nonempty recorded comparisons against published main.
 
 The unchanged nonconstant `(D,D^2)/1` census still completes its first four
 cases and returns `Unsupported` for the unselected shared-component case.

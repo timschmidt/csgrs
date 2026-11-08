@@ -11,7 +11,7 @@
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure.",
     "Per-output parallel fidelity beyond the named curve/path and planar-image receipt pilots: general filled arrangements, other consumers, end-to-end cumulative error, machine quantization, and total work/memory bounds remain unqualified. See PERFORMANCE.md, R24.",
-    "General nonconstant rational-map sections with shared implicit components and algebraic guard coefficients remain unqualified. Named constant-image guard censuses do not establish general incidence, filled-region, offset or corner closure."
+    "General selected continuous-component correspondences, incidence outside the named regular-graph witnesses and algebraic guard coefficients remain unqualified. Named finite sections and constant-image guard censuses do not establish filled-region, offset or corner closure."
   ],
   "fixtures": [
     {
@@ -18105,6 +18105,343 @@
         }
       ],
       "oracle": "Independent unit-root selections; original selector=(t^2-t+1)(t^3+t^2-1), with no real quadratic roots and irreducible cubic. New selector has an Eisenstein-at-two reciprocal, proving field degree five. Explicit pole1/2, source pointx=1/4, independent line point and certified whole-chain receipts on both policies."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_original_census",
+      "test": "implicit_map_components::implicit_shared_sections_preserve_original_five_case_census",
+      "domain": "Original five-case nonlinear map (D,D\u00b2)/1 census on sqrt(x), x in [0,1], and the positive sqrt branch of (y\u00b2-x)(y-2).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Retain the original four complete root sets: 1/2, 1/4, {0,1}, and the independently selected unit root of t\u00b2-3t+1."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "D=y-2 has no preimages on the selected sqrt branch, despite a globally common unselected component."
+        }
+      ],
+      "oracle": "Independent equations and selected quadratic expectation; each returned source point maps exactly to the query, with exact sorted parameters."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_contacts_guards",
+      "test": "implicit_map_components::implicit_unselected_common_support_retains_isolated_contacts_and_original_guards",
+      "domain": "(y\u00b2-x)(y-2), selected positive sqrt branch; sections (y-2)*(2x-1), (y-2)*(y-x), and a repeated x=1/2 factor.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Retain the isolated interior, endpoint and repeated contacts on the original source, with one location for a double root."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Reversal retains the same exact source parameters."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "Original denominator zeros exclude every canceled contact in the paired guarded queries."
+        }
+      ],
+      "oracle": "Independent roots 1/2 and {0,1}, source-point map validation, exact sorting and original denominator exclusions."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_selected_quadratic",
+      "test": "implicit_map_components::implicit_shared_sections_accept_independent_algebraic_query_fields_and_retained_maps",
+      "domain": "Positive sqrt branch of (y\u00b2-x)(2y\u00b2-1), with independent a in (0,1), 2a\u00b2=1, queried through (y,y\u00b2).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The unselected y=a support does not hide the single endpoint contact x=1/2; query coordinates have no stored Real view."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "A retained nonlinear image consumes the selected query, evaluates the returned parameter and proves point equality."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "successful_empty",
+          "assertion": "The reversed trim [0,1/4] excludes the same selected contact."
+        }
+      ],
+      "oracle": "Independent selected quadratic a, exact source parameter 1/2, retained point equality and empty trimmed locus."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_selected_quintic",
+      "test": "implicit_map_components::implicit_shared_sections_keep_independent_quintic_endpoint_incidence",
+      "domain": "Positive sqrt branch of (y\u00b2-x)g(y), g(t)=-1+2(t+t\u00b2+t\u00b3+t\u2074+t\u2075), with an independent query (a,a\u00b2), g(a)=0 in (0,1).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Preserve a single endpoint x=a\u00b2 despite the unselected y=a support; query and endpoint selections have degree five."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Evaluate the selected source point, map it to the independent query, and locate that query on the retained nonlinear image."
+        }
+      ],
+      "oracle": "Reciprocal Eisenstein proof for g. Independent t=a\u00b2 polynomial 1-8t-8t\u00b2-4t\u00b3-4t\u2074-4t\u2075 has one unit root, derived from E(t)\u00b2-tO(t)\u00b2. Both whole chains retain certified receipts."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_resource_recovery",
+      "test": "implicit_map_components::implicit_shared_section_budgets_cancellation_and_retry_keep_empty_success_distinct",
+      "domain": "Unselected y=2 component in (y\u00b2-x)(y-2), map (y-2,(y-2)\u00b2), query (0,0); strict/approximate/strict transitions.",
+      "claims": [
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Actual zero work allowance and pre-cancellation fail typed; a larger retry completes with a certified empty locus."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "A completed retry proves no preimages."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "invalid",
+          "assertion": "A globally zero map denominator remains invalid."
+        }
+      ],
+      "oracle": "Observed request exceeding zero allowance, Cancellation work kind, explicit successful-empty carrier and typed invalid denominator."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_continuous_frontier",
+      "test": "implicit_map_components::implicit_selected_continuous_sections_require_a_correspondence",
+      "domain": "The selected y=2 branch of (y\u00b2-x)(y-2), map (y-2,(y-2)\u00b2), query (0,0).",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "unsupported",
+          "assertion": "A selected continuous section stays an explicit blocker; passing this assertion does not establish the mathematically required entire-curve capability."
+        }
+      ],
+      "oracle": "The selected support lies wholly in both query equations. Unsupported must not be replaced by an empty finite result."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve retained-field elimination and exact signs; Hypercurve selected graph incidence",
+      "properties": [
+        "P12",
+        "P14",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Finite selected regular graph sections retain original equations, trim endpoints, map guards and selected query fields. Common components require branch selection; a continuous selected section stays explicit until a correspondence is carried. No filled-set or general offset/corner closure claim.",
+      "timeout_seconds": 300,
+      "id": "implicit_shared_section_cold_replay",
+      "test": "implicit_map_components::implicit_shared_sections_replay_cold_after_affine_mapping_trimming_and_reversal",
+      "domain": "Selected sqrt branch with an unselected y=2 component, retained shear (X,Y)=(x+y,y), reversed trim [1/4,3/4], and a generated selected contact.",
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "The nonlinear section pulls back through the retained shear to the original source parameter x=1/2."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh-process native SVG replay reconstructs source, selected point and retained map definitions, then recomputes the section on both policies."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "The reconstructed generated point satisfies X-Y=1/2 and Y\u00b2=1/2, and another source query returns the original parameter."
+        }
+      ],
+      "oracle": "Independent defining relations and exact source parameter 1/2 after cold replay; deterministic SVG bytes checked separately."
     }
   ]
 }

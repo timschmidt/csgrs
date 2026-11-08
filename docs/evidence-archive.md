@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `5e076576f6e00d1a64ef5af24b320e9e59ec52a0` (440 records) |
-| Local research branch | `research-implicit-quintic-correction-20261108` |
+| Local manifest commit | `53e6b3f32b5d36911d9264b5c7c725f5091ae621` (442 records) |
+| Local research branch | `research-implicit-shared-sections-20261108` |
 
-The local manifest includes five unpublished descendants. The existing
+The local manifest includes seven unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -37,6 +37,18 @@ The degree attribution correction adds 616 files and 7,882,237 bytes, SHA-256
 `fc7b576deb796a4f185288a42ef358975082e33ec324da13d80342f611efbb04`.
 It preserves the original guard record and adds an irreducible quintic witness;
 the earlier degree-five selector has a cubic real value.
+The published-main qualification record adds 12,403 files and 56,233,764 bytes,
+SHA-256 `7deebd6a412147895d6050c151ded1f0b8777800f9ba0710793a43d462001ddd`.
+It preserves the actual 280-command parent qualification and main push receipt.
+The selected graph common-section record adds 591 files and
+27,237,941 bytes, SHA-256
+`bb42263a24201da787b2e8c9b8a3e1bbd7f6effe08741b115ecb18cfc13a1c2d`.
+It retains the
+original hard probe, baseline failures, rejected eager-completion costs, exact
+native/WASM assertions and corrected nonempty dispatch comparisons. Historical
+empty trace vectors remain archived and are explicitly withdrawn as dispatch
+invariance evidence. See the
+[admission](research/implicit-shared-sections-2026-11-08.md).
 The original pending payload branch remains unchanged.
 
 The archived commit keeps the original paths and the history of every archived

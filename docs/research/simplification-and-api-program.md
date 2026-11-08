@@ -22,6 +22,12 @@ The [5 November BRep continuation admission](brep-continuation-2026-11-05.md)
 qualifies the retained integration on its finite corpus. General closure and
 D03's full native comparison remain open; package outcomes below are unchanged.
 
+The [8 November selected graph follow-up](implicit-shared-sections-2026-11-08.md)
+extends exact finite incidence beside unselected common supports and corrects a
+historical trace-recording claim. It preserves existing measured dispatch while
+retaining adverse costs of the new quintic chain. General operation closure and
+total resource control remain open; this is not a source-size refactor.
+
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with
 evidence. Two packages are higher-priority correctness work and are marked as

@@ -35,6 +35,451 @@ fn sqrt_branch_with_components(extra: bool) -> Curve2 {
         })
         .unwrap()
 }
+
+#[test]
+fn implicit_shared_sections_preserve_original_five_case_census() {
+    use support::IntoCertified;
+    let alpha: CurveParameter2 = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+        [1, -3, 1].map(Real::from).to_vec(),
+    )
+    .unwrap()
+    .isolate_unit_interval_roots()
+    .unwrap()[0]
+        .clone()
+        .into();
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        support::under(&policy, || -> hypercurve::ExactCurveResult<()> {
+            #[cfg(feature = "dispatch-trace")]
+            let _recording = hyperreal::dispatch_trace::recording_scope();
+            #[cfg(feature = "dispatch-trace")]
+            hyperreal::dispatch_trace::reset();
+            let source = branches(
+                p(vec![vec![0, 0, 1], vec![-1]]),
+                [0.into(), 1.into()],
+                [0.into(), 1.into()],
+            )
+            .remove(0);
+            let shared = sqrt_branch_with_components(true);
+            for (curve, d, expected) in [
+                (&source, p(vec![vec![-1], vec![2]]), vec![q(1, 2).into()]),
+                (&source, p(vec![vec![-1, 2]]), vec![q(1, 4).into()]),
+                (
+                    &source,
+                    p(vec![vec![0, 1], vec![-1]]),
+                    vec![Real::zero().into(), Real::one().into()],
+                ),
+                (&source, p(vec![vec![-1, 1], vec![1]]), vec![alpha.clone()]),
+                (&shared, p(vec![vec![-2, 1]]), vec![]),
+            ] {
+                let squared = hypersolve::bivariate_arithmetic::bivariate_multiply(&d, &d);
+                let map = RationalMap2::new([d, squared], p(vec![vec![1]]));
+                let actual = locations(curve, &map, &Point2::from_values(0, 0).into());
+                assert_eq!(actual.len(), expected.len());
+                for (actual, expected) in actual.iter().zip(&expected) {
+                    assert_eq!(actual.compare(expected).unwrap(), Ordering::Equal);
+                }
+            }
+            #[cfg(feature = "dispatch-trace")]
+            assert_eq!(
+                hyperreal::dispatch_trace::take()
+                    .iter()
+                    .filter(|entry| {
+                        entry.layer == "hypercurve"
+                            && entry.operation == "polynomial-section"
+                            && entry.path == "reuse-zero-projection"
+                    })
+                    .map(|entry| entry.count)
+                    .sum::<u64>(),
+                1,
+                "the shared-component retry must reuse its checked ordinary projection"
+            );
+            Ok(())
+        })
+        .unwrap()
+        .into_certified();
+    }
+}
+
+#[test]
+fn implicit_unselected_common_support_retains_isolated_contacts_and_original_guards() {
+    use hypersolve::bivariate_arithmetic::bivariate_multiply;
+    use support::IntoCertified;
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        support::under(&policy, || -> hypercurve::ExactCurveResult<()> {
+            let source = sqrt_branch_with_components(true);
+            let query = Point2::from_values(0, 0).into();
+            let common = p(vec![vec![-2, 1]]);
+            for (section, expected) in [
+                (p(vec![vec![-1], vec![2]]), vec![q(1, 2).into()]),
+                (
+                    p(vec![vec![0, 1], vec![-1]]),
+                    vec![Real::zero().into(), Real::one().into()],
+                ),
+                // A double zero is still one location; it is not an overlap.
+                (p(vec![vec![1], vec![-4], vec![4]]), vec![q(1, 2).into()]),
+            ] {
+                let d = bivariate_multiply(&common, &section);
+                let square = bivariate_multiply(&d, &d);
+                let map = RationalMap2::new([d.clone(), square.clone()], p(vec![vec![1]]));
+                for curve in [source.clone(), source.reversed()?] {
+                    let actual = locations(&curve, &map, &query);
+                    assert_eq!(actual.len(), expected.len());
+                    for (actual, expected) in actual.iter().zip(&expected) {
+                        assert_eq!(actual.compare(expected).unwrap(), Ordering::Equal);
+                    }
+                }
+                // A zero of the original denominator remains excluded even
+                // when both image numerators vanish at the same parameter.
+                let guarded = RationalMap2::new([d, square], section);
+                assert!(locations(&source, &guarded, &query).is_empty());
+            }
+            Ok(())
+        })
+        .unwrap()
+        .into_certified();
+    }
+}
+
+#[test]
+fn implicit_shared_sections_accept_independent_algebraic_query_fields_and_retained_maps() {
+    use support::IntoCertified;
+    // a=1/sqrt(2) is selected independently of the source decomposition.
+    let alpha: CurveParameter2 = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+        [-1, 0, 2].map(Real::from).to_vec(),
+    )
+    .unwrap()
+    .isolate_unit_interval_roots()
+    .unwrap()[0]
+        .clone()
+        .into();
+    let query = monomials(2, 1, 2).point_at(&alpha).unwrap();
+    assert!(query.coordinates().is_none());
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        support::under(&policy, || -> hypercurve::ExactCurveResult<()> {
+            // F=(y²-x)(2y²-1), with an unselected y=a component.
+            let f = hypersolve::bivariate_arithmetic::bivariate_multiply(
+                &p(vec![vec![0, 0, 1], vec![-1]]),
+                &p(vec![vec![-1, 0, 2]]),
+            );
+            let source = branches(f, [0.into(), 1.into()], [0.into(), 1.into()])
+                .into_iter()
+                .find(|curve| {
+                    curve.point_at(&q(1, 4).into()).is_ok_and(|p| {
+                        p.coincides_with(&Point2::new(q(1, 4), q(1, 2)).into())
+                            .unwrap()
+                    })
+                })
+                .unwrap();
+            let map = RationalMap2::new(
+                [p(vec![vec![0, 1]]), p(vec![vec![0, 0, 1]])],
+                p(vec![vec![1]]),
+            );
+            let actual = locations(&source, &map, &query);
+            assert_eq!(actual.len(), 1);
+            assert_eq!(actual[0].compare(&q(1, 2).into()).unwrap(), Ordering::Equal);
+            let image = source.rational_image(&map)?;
+            let CurvePointLocations2::Locations(visits) = image.point_locations(&query)? else {
+                panic!("one selected endpoint contact")
+            };
+            assert_eq!(visits.len(), 1);
+            let parameter = visits[0].parameter()?;
+            assert_eq!(parameter.compare(&q(1, 2).into()).unwrap(), Ordering::Equal);
+            assert!(image.point_at(&parameter)?.coincides_with(&query)?);
+            let trim = source
+                .subcurve(Real::zero().into(), q(1, 4).into())?
+                .reversed()?;
+            assert!(locations(&trim, &map, &query).is_empty());
+            Ok(())
+        })
+        .unwrap()
+        .into_certified();
+    }
+}
+
+#[test]
+fn implicit_shared_sections_keep_independent_quintic_endpoint_incidence() {
+    use support::IntoCertified;
+    // g(a)=0 is irreducible: its reciprocal is Eisenstein at 2.
+    let coefficients = [-1, 2, 2, 2, 2, 2];
+    let alpha: CurveParameter2 = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+        coefficients.map(Real::from).to_vec(),
+    )
+    .unwrap()
+    .isolate_unit_interval_roots()
+    .unwrap()[0]
+        .clone()
+        .into();
+    let query = monomials(2, 1, 2).point_at(&alpha).unwrap();
+    assert!(query.coordinates().is_none());
+    // Writing g(a)=E(a²)+a*O(a²), E²-t*O² gives this independent
+    // polynomial for t=a². It is strictly decreasing on [0,1].
+    let expected: CurveParameter2 = hypercurve::BezierParameterPolynomial::try_new_power_basis(
+        [1, -8, -8, -4, -4, -4].map(Real::from).to_vec(),
+    )
+    .unwrap()
+    .isolate_unit_interval_roots()
+    .unwrap()[0]
+        .clone()
+        .into();
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        support::under(&policy, || -> hypercurve::ExactCurveResult<()> {
+            let f = hypersolve::bivariate_arithmetic::bivariate_multiply(
+                &p(vec![vec![0, 0, 1], vec![-1]]),
+                &p(vec![coefficients.to_vec()]),
+            );
+            let source = branches(f, [0.into(), 1.into()], [0.into(), 1.into()])
+                .into_iter()
+                .find(|curve| {
+                    curve.point_at(&q(1, 100).into()).is_ok_and(|p| {
+                        p.coincides_with(&Point2::new(q(1, 100), q(1, 10)).into())
+                            .unwrap()
+                    })
+                })
+                .unwrap();
+            let map = RationalMap2::new(
+                [p(vec![vec![0, 1]]), p(vec![vec![0, 0, 1]])],
+                p(vec![vec![1]]),
+            );
+            let actual = locations(&source, &map, &query);
+            assert_eq!(actual.len(), 1);
+            assert_eq!(actual[0].compare(&expected).unwrap(), Ordering::Equal);
+            let point = source.point_at(&actual[0])?;
+            assert!(point.coordinates().is_none());
+            assert!(point.rational_image(&map)?.coincides_with(&query)?);
+            let CurvePointLocations2::Locations(visits) =
+                source.rational_image(&map)?.point_locations(&query)?
+            else {
+                panic!("one selected quintic endpoint")
+            };
+            assert_eq!(visits.len(), 1);
+            assert_eq!(
+                visits[0].parameter()?.compare(&expected).unwrap(),
+                Ordering::Equal
+            );
+            Ok(())
+        })
+        .unwrap()
+        .into_certified();
+    }
+}
+
+#[test]
+fn implicit_shared_section_budgets_cancellation_and_retry_keep_empty_success_distinct() {
+    let source = sqrt_branch_with_components(true);
+    let d = p(vec![vec![-2, 1]]);
+    let map = RationalMap2::new(
+        [
+            d.clone(),
+            hypersolve::bivariate_arithmetic::bivariate_multiply(&d, &d),
+        ],
+        p(vec![vec![1]]),
+    );
+    let query = Point2::from_values(0, 0).into();
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+        hypercurve::PredicatePolicy::STRICT,
+    ] {
+        let refused =
+            hypercurve::evaluate_with_budget(policy, hypercurve::WorkBudget::ZERO, || {
+                source.rational_image_point_locations(&map, &query)
+            });
+        let exhausted = refused.result.unwrap_err();
+        assert_eq!(exhausted.limit, 0);
+        assert!(exhausted.requested > 0);
+        let token = hypercurve::CancellationToken::new();
+        token.cancel();
+        let cancelled = hypercurve::evaluate_with_cancellable_budget(
+            policy,
+            hypercurve::WorkBudget::UNLIMITED,
+            &token,
+            || source.rational_image_point_locations(&map, &query),
+        );
+        assert_eq!(
+            cancelled.result.unwrap_err().kind,
+            hypercurve::WorkKind::Cancellation
+        );
+        let retry = hypercurve::evaluate_with_budget(
+            policy,
+            hypercurve::WorkBudget {
+                promotions: 100_000,
+                refinements: 1_000_000,
+            },
+            || source.rational_image_point_locations(&map, &query),
+        );
+        let outcome = retry.result.unwrap();
+        assert!(
+            matches!(outcome.certified().unwrap().unwrap(), CurvePointLocations2::Locations(points) if points.is_empty())
+        );
+        assert!(matches!(
+            source.rational_image_point_locations(
+                &RationalMap2::new([d.clone(), d.clone()], p(vec![])),
+                &query
+            ),
+            Err(hypercurve::ExactCurveError::Invalid { .. })
+        ));
+    }
+}
+
+#[test]
+fn implicit_selected_continuous_sections_require_a_correspondence() {
+    // The new finite-candidate projection must never turn a selected common
+    // support into an empty finite section. General continuous sections remain
+    // an explicit implementation gap until a domain correspondence is carried.
+    let f = hypersolve::bivariate_arithmetic::bivariate_multiply(
+        &p(vec![vec![0, 0, 1], vec![-1]]),
+        &p(vec![vec![-2, 1]]),
+    );
+    let source = branches(f, [0.into(), 1.into()], [0.into(), 3.into()])
+        .into_iter()
+        .find(|curve| {
+            curve.point_at(&q(1, 4).into()).is_ok_and(|p| {
+                p.coincides_with(&Point2::new(q(1, 4), 2.into()).into())
+                    .unwrap()
+            })
+        })
+        .unwrap();
+    let d = p(vec![vec![-2, 1]]);
+    let map = RationalMap2::new(
+        [
+            d.clone(),
+            hypersolve::bivariate_arithmetic::bivariate_multiply(&d, &d),
+        ],
+        p(vec![vec![1]]),
+    );
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let result = support::under(&policy, || {
+            source.rational_image_point_locations(&map, &Point2::from_values(0, 0).into())
+        });
+        assert!(
+            matches!(result, Err(hypercurve::ExactCurveError::Blocked(blocker)) if blocker.reason() == hypercurve::UncertaintyReason::Unsupported)
+        );
+    }
+}
+
+#[cfg(feature = "svg")]
+#[test]
+fn implicit_shared_sections_replay_cold_after_affine_mapping_trimming_and_reversal() {
+    const INPUT: &str = "HYPERCURVE_IMPLICIT_SHARED_SECTION_REPLAY";
+    fn map() -> RationalMap2 {
+        // The retained shear is (X,Y)=(x+y,y). Thus the original
+        // (y-2)(2x-1) pulls forward to (Y-2)(2X-2Y-1).
+        let d = hypersolve::bivariate_arithmetic::bivariate_multiply(
+            &p(vec![vec![-2, 1]]),
+            &p(vec![vec![-1, -2], vec![2]]),
+        );
+        let square = hypersolve::bivariate_arithmetic::bivariate_multiply(&d, &d);
+        RationalMap2::new([d, square], p(vec![vec![1]]))
+    }
+    fn verify(text: &str) {
+        use support::IntoCertified;
+        let geometry = hypercurve::import_svg_document(text).unwrap();
+        let source = &geometry.paths()[0].curves()[0];
+        let retained = geometry.paths()[1].curves()[0].start();
+        for policy in [
+            hypercurve::PredicatePolicy::STRICT,
+            hypercurve::PredicatePolicy::APPROXIMATE_512,
+        ] {
+            support::under(&policy, || -> hypercurve::ExactCurveResult<()> {
+                let actual = locations(source, &map(), &Point2::from_values(0, 0).into());
+                assert_eq!(actual.len(), 1);
+                assert_eq!(actual[0].compare(&q(1, 2).into()).unwrap(), Ordering::Equal);
+                let point = source.point_at(&actual[0])?;
+                assert!(point.coincides_with(&retained)?);
+                // Independent defining relations certify the retained point.
+                let one = p(vec![vec![1]]);
+                assert_eq!(
+                    point
+                        .rational_form(p(vec![vec![0, -1], vec![1]]), one.clone())?
+                        .compare_to_real(&q(1, 2))?,
+                    Ordering::Equal
+                );
+                assert_eq!(
+                    point
+                        .rational_form(p(vec![vec![0, 0, 1]]), one)?
+                        .compare_to_real(&q(1, 2))?,
+                    Ordering::Equal
+                );
+                let CurvePointLocations2::Locations(visits) = source.point_locations(&retained)?
+                else {
+                    panic!("one retained source visit")
+                };
+                assert_eq!(visits.len(), 1);
+                assert_eq!(
+                    visits[0].parameter()?.compare(&actual[0]).unwrap(),
+                    Ordering::Equal
+                );
+                Ok(())
+            })
+            .unwrap()
+            .into_certified();
+        }
+        assert_eq!(hypercurve::export_svg_document(&geometry).unwrap(), text);
+    }
+    if let Some(path) = std::env::var_os(INPUT) {
+        verify(&std::fs::read_to_string(path).unwrap());
+        return;
+    }
+    let shear = RationalMap2::new(
+        [p(vec![vec![0, 1], vec![1]]), p(vec![vec![0, 1]])],
+        p(vec![vec![1]]),
+    );
+    let source = sqrt_branch_with_components(true)
+        .rational_image(&shear)
+        .unwrap()
+        .subcurve(q(1, 4).into(), q(3, 4).into())
+        .unwrap()
+        .reversed()
+        .unwrap();
+    let parameter = locations(&source, &map(), &Point2::from_values(0, 0).into()).remove(0);
+    let point = source.point_at(&parameter).unwrap();
+    let end = point
+        .rational_image(&RationalMap2::new(
+            [p(vec![vec![1], vec![1]]), p(vec![vec![0, 1]])],
+            p(vec![vec![1]]),
+        ))
+        .unwrap();
+    let geometry = hypercurve::SvgGeometry2::new(
+        hypercurve::CurveRegion2::empty(),
+        vec![],
+        vec![
+            hypercurve::CurvePath2::try_new(vec![source]).unwrap(),
+            hypercurve::CurvePath2::try_new(vec![Curve2::try_line(point, end).unwrap()]).unwrap(),
+        ],
+    );
+    let text = hypercurve::export_svg_document(&geometry).unwrap();
+    verify(&text);
+    let path = std::env::temp_dir().join(format!(
+        "hypercurve-implicit-shared-section-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&path, text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap()).args([
+        "--exact", "implicit_map_components::implicit_shared_sections_replay_cold_after_affine_mapping_trimming_and_reversal", "--nocapture",
+    ]).env(INPUT, &path).output().unwrap();
+    std::fs::remove_file(path).unwrap();
+    assert!(
+        child.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}
 #[test]
 fn implicit_constant_images_keep_canceled_poles_and_selected_source_points() {
     use support::IntoCertified;
