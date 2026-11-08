@@ -62,21 +62,7 @@ impl Curve2 {
             ));
         }
         if let Some(branch) = self.polynomial_branch() {
-            return Ok(match branch.mapped_point_parameters(point, map, policy)? {
-                None => CurvePointLocations2::EntireCurve,
-                Some(parameters) => CurvePointLocations2::Locations(
-                    parameters
-                        .into_iter()
-                        .map(|p| {
-                            CurveLocation2::new(
-                                0,
-                                CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
-                                p,
-                            )
-                        })
-                        .collect(),
-                ),
-            });
+            return branch.mapped_point_locations(point, map, policy);
         }
         let blocked = || {
             ExactCurveError::blocked(

@@ -5,6 +5,7 @@ use crate::UncertaintyReason;
 use crate::bezier_algebraic_image::parameter_representation;
 use crate::bezier_offset::BezierSimilarityPoint2;
 use crate::polynomial_point::PolynomialPoint2;
+use crate::{CurveLocation2, CurvePointLocations2, CurveSpanRange2};
 use hyperlimit::Certainty;
 use hypersolve::bivariate_topology::{
     BivariateCurveDomain, BivariateCurveTopology, BivariateTopologyError, decompose_bivariate_curve,
@@ -33,6 +34,9 @@ mod selected_chord;
 
 #[path = "polynomial_curve_mapped_chord.rs"]
 mod mapped_chord;
+
+#[path = "polynomial_curve_mapped_components.rs"]
+mod mapped_components;
 
 /// The complete zero set of one admitted polynomial in a closed rectangle.
 ///
@@ -91,8 +95,10 @@ impl PolynomialCurveSource2 {
 /// original graph chart and its invertible similarities, preserving closed
 /// selected boundaries. Incidence validates the selected branch, so another
 /// root of the same equation is not an incident point. Rational image queries
-/// report every finite visit and proved whole constant images; mixed continuous
-/// components and unresolved shared components remain explicit blockers.
+/// report every finite visit and proved whole constant images. Constant-image
+/// queries also retain complete punctured domains when exact guard factoring
+/// and root isolation complete. Other continuous sections and unresolved shared
+/// components remain explicit blockers.
 /// Regular derivatives and smooth-event tangent directions retain that joint
 /// source. Source branches and their retained rational or algebraic similarities
 /// intersect authored native lines, including exact algebraic coordinates and selected
@@ -1580,12 +1586,27 @@ impl PolynomialCurveBranch2 {
         }
     }
 
-    pub(crate) fn mapped_point_parameters(
+    pub(crate) fn mapped_point_locations(
         &self,
         point: &CurvePoint2,
         map: &crate::RationalMap2,
         policy: &CurveContext,
-    ) -> ExactCurveResult<Option<Vec<CurveParameter2>>> {
+    ) -> ExactCurveResult<CurvePointLocations2> {
+        let locations = |parameters: Option<Vec<CurveParameter2>>| match parameters {
+            None => CurvePointLocations2::EntireCurve,
+            Some(parameters) => CurvePointLocations2::Locations(
+                parameters
+                    .into_iter()
+                    .map(|p| {
+                        CurveLocation2::new(
+                            0,
+                            CurveSpanRange2::from_affine_chart(&Real::one(), &Real::zero()),
+                            p,
+                        )
+                    })
+                    .collect(),
+            ),
+        };
         // Affine maps have a constant, already checked denominator. Retain the
         // existing inverse-chart fast paths when this temporary image is valid.
         if hypersolve::bivariate_arithmetic::bivariate_active_total_degree(map.denominator())
@@ -1596,33 +1617,30 @@ impl PolynomialCurveBranch2 {
             return mapped
                 .polynomial_branch()
                 .expect("a retained polynomial image")
-                .point_parameters(point, policy);
+                .point_parameters(point, policy)
+                .map(locations);
         }
         match self.nonlinear_point_parameters_in_map(point, policy, Some(map)) {
             Err(ExactCurveError::Blocked(blocker))
                 if blocker.reason() == UncertaintyReason::Unsupported
                     && self.certifies_constant_image(Some(map)) =>
             {
-                // A constant value with a punctured domain cannot be reported
-                // as EntireCurve. This box proof is sufficient, not necessary.
                 if let Err(error) = map.bounds(&self.bounds()?) {
-                    return Err(match error {
-                        ExactCurveError::Blocked(ref b)
-                            if b.reason() == UncertaintyReason::BudgetExhausted =>
-                        {
-                            error
-                        }
-                        _ => blocked(UncertaintyReason::Unsupported),
-                    });
+                    if matches!(&error, ExactCurveError::Blocked(b)
+                        if b.reason() == UncertaintyReason::BudgetExhausted)
+                    {
+                        return Err(error);
+                    }
+                    return self.constant_mapped_point_locations(point, map, policy);
                 }
                 let image = self.endpoints[0].rational_image_with_policy(map, policy)?;
-                Ok(if decided(image.same_point(point, policy))? {
+                Ok(locations(if decided(image.same_point(point, policy))? {
                     None
                 } else {
                     Some(Vec::new())
-                })
+                }))
             }
-            result => result.map(Some),
+            result => result.map(|parameters| locations(Some(parameters))),
         }
     }
 
@@ -1642,10 +1660,12 @@ impl PolynomialCurveBranch2 {
         }
     }
 
-    // A rational coordinate with zero tangent derivative on the source graph
-    // is constant on its connected slab. Retained maps already have nonzero
-    // denominator proofs; a query-only extra map needs a separate domain proof
-    // before this derivative identity can establish an entire constant image.
+    // A rational coordinate with zero tangent derivative on this connected
+    // regular graph has one constant value wherever it is defined. Analytic
+    // continuation across isolated guard zeros cannot introduce a second
+    // constant, but does not admit those excluded parameters. Retained maps
+    // have nonzero denominator proofs; an extra map needs either a nonzero
+    // box proof or a complete guard census before publishing its domain.
     fn certifies_constant_image(&self, map: Option<&crate::RationalMap2>) -> bool {
         use hypersolve::bivariate_arithmetic::{
             bivariate_multiply as mul, bivariate_parameter_derivative as derivative,

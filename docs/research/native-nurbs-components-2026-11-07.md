@@ -97,8 +97,10 @@ the pending integration payload is unchanged. The [archive index](../evidence-ar
 distinguishes local and published availability. Publication to the separate
 evidence repository remains pending explicit authorization.
 
-The original punctured selected `y=sqrt(x)` image still requires
-`[0,1/2) union (1/2,1]` and returns unsupported. A new exact research probe
+At this increment, the original punctured selected `y=sqrt(x)` image still
+required `[0,1/2) union (1/2,1]` and returned unsupported. The
+[8 November follow-up](implicit-guard-components-2026-11-08.md) records its later
+constant-image completion. The original exact research probe
 completes four denominator censuses, including y-dependent, endpoint and
 independent algebraic roots. A fifth case, `F=(y^2-x)(y-2)` with `D=y-2` on
 the positive sqrt branch, should have no denominator roots but remains unsupported

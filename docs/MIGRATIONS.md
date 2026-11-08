@@ -1,5 +1,20 @@
 # Migrations
 
+## Selected polynomial constant-image domains (2026-11-08)
+
+`Curve2::rational_image_point_locations` can now return
+`CurvePointLocations2::Components` for a constant rational image of a selected
+polynomial branch whose query denominator has isolated zeros. Retain open
+endpoints even when numerator and denominator factors cancel. A nonzero guard
+polynomial vanishing on the selected branch gives an empty query domain; a
+globally zero denominator remains invalid.
+
+`Curve2::point_at_component` accepts these components in span zero with the
+identity source parameter chart. It checks current membership and the active
+source domain, then evaluates the original branch. Parameter metadata alone
+does not certify incidence with another query. Native formats are unchanged;
+replay reconstructs the source and recomputes its query components.
+
 ## Native NURBS parameter components (2026-11-07)
 
 Partially constant native spatial NURBS point queries now return complete

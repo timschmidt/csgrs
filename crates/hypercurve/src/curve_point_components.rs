@@ -133,7 +133,7 @@ impl CurveLocationComponent2 {
         .map(CurveOutcome::into_value)
     }
 
-    pub(super) fn new(
+    pub(crate) fn new(
         span_index: usize,
         span_range: CurveSpanRange2,
         parameters: CurveParameterSet2,
@@ -259,6 +259,8 @@ impl Curve2 {
     /// the current source germ. This selects a one-sided value at a discontinuous
     /// knot; it does not change ordinary parameter-only evaluation or certify
     /// incidence with a separately supplied query point.
+    /// Selected polynomial branches use span zero and the identity source
+    /// parameter chart, retaining their original active graph domain.
     pub fn point_at_component(
         &self,
         component: &CurveLocationComponent2,
@@ -274,6 +276,16 @@ impl Curve2 {
             };
             if !component.contains(parameter, policy)? {
                 return Err(invalid());
+            }
+            if self.polynomial_branch().is_some() {
+                let (start, end) = component.span_range.endpoints();
+                if component.span_index != 0
+                    || !compare(&start.clone().into(), &Real::zero().into(), policy)?.is_eq()
+                    || !compare(&end.clone().into(), &Real::one().into(), policy)?.is_eq()
+                {
+                    return Err(invalid());
+                }
+                return Ok(self.point_at_with_policy(parameter, policy)?.into_value());
             }
             let spans = self.source_spans(policy, CurveOperation2::Evaluation)?;
             let span = spans.get(component.span_index).ok_or_else(invalid)?;

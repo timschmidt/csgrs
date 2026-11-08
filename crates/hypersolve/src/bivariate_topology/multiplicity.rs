@@ -136,7 +136,7 @@ fn product(
     canonical(&bivariate_multiply(first, second))
 }
 
-fn gcd(
+pub(super) fn gcd(
     first: &BivariatePolynomial,
     second: &BivariatePolynomial,
     config: BivariateTopologyConfig,

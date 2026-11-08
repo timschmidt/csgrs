@@ -10,7 +10,8 @@
     "Total arithmetic, projected-system size and retained-memory limits. Coefficient-growth limits cover only Bareiss, pseudo-quotient and dense tensor constructions, and cooperative cancellation is observed only at instrumented work units; neither bounds uninstrumented arithmetic or elapsed time.",
     "Published package and actual binding consumers for the complete declared domain.",
     "Unrestricted repeated polynomial chord setbacks and other implicit replay/operation chains remain open. The named two-chamfer path, Boolean-generated algebraic-corner chamfer, boundary reconstruction, further Boolean and polynomial SVG replay have bounded acceptance witnesses; these finite chains do not establish unrestricted operation closure.",
-    "Per-output parallel fidelity beyond the named curve/path and planar-image receipt pilots: general filled arrangements, other consumers, end-to-end cumulative error, machine quantization, and total work/memory bounds remain unqualified. See PERFORMANCE.md, R24."
+    "Per-output parallel fidelity beyond the named curve/path and planar-image receipt pilots: general filled arrangements, other consumers, end-to-end cumulative error, machine quantization, and total work/memory bounds remain unqualified. See PERFORMANCE.md, R24.",
+    "General nonconstant rational-map sections with shared implicit components and algebraic guard coefficients remain unqualified. Named constant-image guard censuses do not establish general incidence, filled-region, offset or corner closure."
   ],
   "fixtures": [
     {
@@ -17805,6 +17806,305 @@
       ],
       "oracle": "Independent graph field counts, cubic derivative/speed formulas and degree-five rational offset structure; malformed CBOR deliberately remains unparsed during syntactic admission.",
       "timeout_seconds": 300
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_constant_punctures",
+      "test": "implicit_map_components::implicit_constant_images_keep_canceled_poles_and_selected_source_points",
+      "domain": "Positive selected graph y=sqrt(x), x in [0,1], map [2D,3D]/D with D=2x-1, independent degree-five selected query at (2,3).",
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Complete locus is exactly [0,1/2) union (1/2,1], with independent positive and negative membership and open pole endpoints."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "A retained component evaluates the original selected fiber at x=1/4 and rejects evaluation at its excluded pole."
+        },
+        {
+          "stage": "restriction_reconstruction",
+          "outcome": "exact_success",
+          "assertion": "Intersection with itself, reversal and exact restriction preserve the expected parameter sets and endpoint inclusion."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "An independent off-image query has no preimages."
+        }
+      ],
+      "oracle": "Independent rational interval endpoints and y=1/2 at x=1/4; explicit point membership, original selected point carrier and (2,3) constant value."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_guard_algebraic_punctures",
+      "test": "implicit_map_components::implicit_guard_census_handles_ordinates_algebraic_roots_and_endpoints",
+      "domain": "Positive y=sqrt(x) graph with y-dependent, mixed x/y, repeated and endpoint guard zeros.",
+      "policies": [
+        "STRICT"
+      ],
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Retain exact punctures at 1/4, independently selected unit root of t^2-3t+1, both original endpoints, and a repeated zero at 1/2 without duplicating it."
+        }
+      ],
+      "oracle": "Direct substitution into y^2=x, independent polynomial root selection, exact interval bounds and explicit endpoint inclusion."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_guard_component_selection",
+      "test": "implicit_map_components::implicit_guard_shared_factors_distinguish_selected_and_unselected_components",
+      "domain": "Selected positive sqrt branch of (y^2-x)(y-2), with selected, unselected, mixed and identically zero global query guard polynomials.",
+      "policies": [
+        "STRICT"
+      ],
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "An unselected shared factor leaves the entire source defined; its product with 2x-1 retains exactly the interior puncture."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "A nonzero guard polynomial vanishing on the selected source gives an empty defined query domain."
+        },
+        {
+          "stage": "representation",
+          "outcome": "invalid",
+          "assertion": "A globally zero map denominator remains typed invalid input."
+        }
+      ],
+      "oracle": "Independent selected sqrt relation and y!=2 on the active domain; exact puncture at x=1/2 and distinct empty versus invalid outcomes."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_guard_degree_nine_retry",
+      "test": "implicit_map_components::implicit_constant_guard_census_admits_degree_nine_and_recovers_from_budgets",
+      "domain": "Positive degree-nine graph y^9=x on [0,1]^2, map [2D,3D]/D with D=2y-1; explicit topology axis limit10 and projection limit512.",
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The exact locus excludes x=1/512 with the correct two open component endpoints."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "Actual zero work allowance fails typed, and a larger budget completes across strict/approximate/strict policy transitions."
+        }
+      ],
+      "oracle": "Independent identity (1/2)^9=1/512, complete interval bounds/inclusion and an observed resource request exceeding zero allowance."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_guard_cold_replay",
+      "test": "implicit_map_components::implicit_punctured_loci_replay_cold_and_consume_retained_map_domains",
+      "domain": "Selected sqrt graph with original guarded identity map, shear, selected source point and independent selected query; reversed exact trim [1/4,3/4].",
+      "policies": [
+        "STRICT"
+      ],
+      "claims": [
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Guard 2(X-Y)-1 pulls back through the retained map chain to the original source abscissa and retains the original map guards."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh native process reconstructs the original source and selected point definitions and recomputes the exact punctured locus."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Replay consumes a component, verifies its exact selected point and finds its retained parameter by a subsequent query/intersection."
+        }
+      ],
+      "oracle": "Independent source parameter x=3/8, original y^2=x relation and exact interval [1/4,1/2) union (1/2,3/4]; deterministic SVG bytes checked separately after semantic replay."
+    },
+    {
+      "target": "rational_image_locations",
+      "owner": "Hypersolve checked common factors and Hypercurve selected graph domains",
+      "properties": [
+        "P12",
+        "P14",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P39"
+      ],
+      "origins": [
+        "selected_implicit",
+        "generated"
+      ],
+      "families": [
+        "ImplicitPolynomial",
+        "RationalBezier",
+        "Line"
+      ],
+      "semantics": "Exact constant-image preimages keep the original selected graph chart and every extra map denominator exclusion. No generated support is fitted; no claim of general implicit-region or nonconstant shared-component closure.",
+      "timeout_seconds": 300,
+      "id": "implicit_guard_irrational_constant",
+      "test": "implicit_map_components::implicit_constant_images_keep_independent_irrational_values",
+      "domain": "Selected graph y^5+y=1, x in [0,1], map [2D,yD]/D with D=2x-1, and unrelated selected line queries (2,alpha) and (2,-alpha), alpha^5+alpha=1.",
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "An independent degree-five irrational constant query has the exact locus [0,1/2) union (1/2,1] without any stored Real coordinate."
+        },
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "A component-generated selected source point agrees with an independent point, maps to the query, and is consumed by another exact source point-location query."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "An independently selected negative ordinate is absent from the constant image."
+        }
+      ],
+      "oracle": "Independent selection of the unique real root of t^5+t-1; explicit puncture at1/2, original selected source point atx=1/4 and an independent line parameterization. The entire query/consumption chain is certified under both policies."
     }
   ]
 }

@@ -85,6 +85,21 @@ impl Default for BivariateTopologyConfig {
     }
 }
 
+/// Monic greatest common divisor over the exact rational coefficient field.
+///
+/// Reuses the checked factor authority used by curve multiplicity reduction.
+/// Zero inputs are admitted, including `gcd(0, 0) = 0`. Coefficients without
+/// a rational normal form or an unestablished factorization return `Undecided`.
+/// The projection degree limit and shared work budget apply; they do not bound
+/// total coefficient arithmetic or memory. No partial divisor is returned.
+pub fn bivariate_polynomial_gcd(
+    first: &BivariatePolynomial,
+    second: &BivariatePolynomial,
+    config: BivariateTopologyConfig,
+) -> Result<BivariatePolynomial, BivariateTopologyError> {
+    multiplicity::gcd(first, second, config)
+}
+
 /// A construction that did not publish a partial topology as a complete result.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum BivariateTopologyError {

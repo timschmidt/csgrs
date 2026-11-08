@@ -792,3 +792,7 @@ fn ordinary_constant_source_queries_keep_original_punctures() {
         );
     }
 }
+
+#[path = "support/implicit_map_components.rs"]
+mod implicit_map_components;
+mod support;

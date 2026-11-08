@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Retain punctured constant-image point preimages on selected polynomial
+  branches when exact guard factoring and isolation complete. Keep original
+  pole exclusions, selected points and source charts through restriction,
+  reversal, component evaluation and cold native SVG replay. Independent
+  irrational constant queries do not require scalar coordinates. General
+  shared-component incidence and algebraic guard coefficients remain open.
+
 - Retain per-output parallel fidelity through extraction, exact edits and checked
   native SVG replay. Distinguish exact images and same-parameter error bounds;
   preserve source selections and qualification. Native graph tags and annotated

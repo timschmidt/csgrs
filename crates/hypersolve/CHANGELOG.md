@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Expose `bivariate_topology::bivariate_polynomial_gcd` through the checked
+  rational-coefficient factor reducer used by curve topology. Hypercurve reuses
+  it to distinguish selected and unselected denominator components. Projection
+  limits and counted work remain separate from total arithmetic and memory.
+
 - Add `ordered_field_resultant_bivariate` over an existing exact ordered
   coefficient context, including correlated selected algebraic values. Share
   the pivot-free determinant recurrence, preserve original polynomial scale,
