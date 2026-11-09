@@ -622,9 +622,14 @@ fresh native replay and further operations, valid hidden empty selection,
 native sums beyond binary64, and valid hidden rounded descriptions without
 sampled materialization. Independent exact boundaries and full XOR expectations
 remain separate from deterministic serialization. The original six owner bodies
-are retained and a seventh closes valid-hidden empty selection. Initial owner
-checks pass; selected runner and broader final-source qualification remain
-pending in the [admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md#exact-unrounded-rectangle-attributes).
+are retained and a seventh closes valid-hidden empty selection. The bytes committed as `0963cec833` pass the affected owner/root run (132
+parent reports), seventeen selected capability rows, strict owner/root lint,
+MSRV (26 maintained bodies), pure WASM (78 executions in three fresh instances)
+and downstream checks (1,013 reports). The
+[admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md#exact-unrounded-rectangle-attributes)
+records source attribution and limits. This selected run does not qualify all
+456 catalog rows; archive/index and integrated-source publication checks remain
+pending.
 Visible rounded controls preserve sampled output and certainty with explicit
 new guard/parse dispatch costs. Their analytic source fidelity, other sampled
 families, general operation closure and total resource bounds remain open.
