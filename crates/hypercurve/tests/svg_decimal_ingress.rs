@@ -141,8 +141,11 @@ fn svg_decimal_filled_region_survives_boolean_and_native_replay() {
         Point2::new(ratio(1, 10), ratio(3, 5)),
     ];
     for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
-        let result =
-            support::under(&policy, || {
+        for document in [
+            "<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M.1 .2h.3v.4h-.3z\"/></svg>",
+            "<svg xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"translate(.1 .2)\"><path transform=\"scale(.3 .4)\" d=\"M0 0h1v1h-1z\"/></g></svg>",
+        ] {
+            let result = support::under(&policy, || {
                 let boundary = CurvePath2::try_new(
                     (0..4)
                         .map(|i| {
@@ -157,9 +160,7 @@ fn svg_decimal_filled_region_survives_boolean_and_native_replay() {
                 .unwrap();
                 let expected =
                     CurveRegion2::try_from_boundary_paths(&[boundary], FillRule::NonZero).unwrap();
-                let imported = import_svg_document(replay_input.as_deref().unwrap_or(
-                "<svg xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M.1 .2h.3v.4h-.3z\"/></svg>",
-            ))?;
+                let imported = import_svg_document(replay_input.as_deref().unwrap_or(document))?;
                 assert!(
                     imported
                         .region()
@@ -235,6 +236,210 @@ fn svg_decimal_filled_region_survives_boolean_and_native_replay() {
                 Ok::<_, SvgError>(SvgGeometry2::new(remainder, vec![], vec![]))
             })
             .unwrap();
-        assert_eq!(result.certainty, CurveCertainty::Certified);
+            assert_eq!(result.certainty, CurveCertainty::Certified);
+        }
+    }
+}
+
+#[test]
+fn svg_matrix_and_translation_tokens_remain_exact() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let tiny = (Real::one() / Real::from(10).powi(400.into()).unwrap()).unwrap();
+        let fine_scale =
+            Real::one() + (Real::one() / Real::from(10).powi(20.into()).unwrap()).unwrap();
+        for (transform, start, end) in [
+            (
+                "matrix(.1 .2 .3 .4 .5 .6)",
+                Point2::new(ratio(6, 5), ratio(8, 5)),
+                Point2::new(ratio(2, 1), ratio(14, 5)),
+            ),
+            (
+                "translate(1e-400)",
+                Point2::new(Real::one() + tiny.clone(), Real::from(2)),
+                Point2::new(Real::from(3) + tiny.clone(), Real::from(4)),
+            ),
+            (
+                "scale(1.00000000000000000001 1)",
+                Point2::new(fine_scale.clone(), Real::from(2)),
+                Point2::new(Real::from(3) * fine_scale, Real::from(4)),
+            ),
+        ] {
+            let document = format!(
+                r#"<svg><path fill="none" stroke="black" transform="{transform}" d="M1 2L3 4"/></svg>"#
+            );
+            let outcome = support::under(&policy, || import_svg_document(&document)).unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let [wire] = outcome.value.wires() else {
+                panic!("one native wire required");
+            };
+            let [hypercurve::Segment2::Line(line)] = wire.segments() else {
+                panic!("one native line required");
+            };
+            assert_eq!(line.start(), &start, "{transform}");
+            assert_eq!(line.end(), &end, "{transform}");
+        }
+    }
+}
+
+#[test]
+fn svg_nested_transforms_do_not_round_intermediate_composition() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let outcome = support::under(&policy, || import_svg_document(r#"<svg><g transform="translate(10000000000000000)"><g transform="translate(1)"><path fill="none" stroke="black" transform="translate(-10000000000000000)" d="M0 0L1 0"/></g></g></svg>"#)).unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        let [wire] = outcome.value.wires() else {
+            panic!("one native wire required");
+        };
+        let [hypercurve::Segment2::Line(line)] = wire.segments() else {
+            panic!("one native line required");
+        };
+        assert_eq!(line.start(), &Point2::new(Real::one(), Real::zero()));
+        assert_eq!(line.end(), &Point2::new(Real::from(2), Real::zero()));
+    }
+}
+
+#[test]
+fn svg_rotation_centers_and_skews_use_exact_trigonometry() {
+    const REPLAY: &str = "HYPERCURVE_SVG_ROTATION_REPLAY";
+    const CASE: &str = "HYPERCURVE_SVG_ROTATION_CASE";
+    let replay_input = std::env::var(REPLAY).ok();
+    let replay_case = std::env::var(CASE)
+        .ok()
+        .map(|value| value.parse::<usize>().unwrap());
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let half_root_two = ratio(1, 2) * Real::from(2).sqrt().unwrap();
+        let mut executed = 0;
+        for (index, (transform, data, start, end)) in [
+            (
+                "rotate(90 .1 .2)",
+                "M.1 .2L.2 .2",
+                Point2::new(ratio(1, 10), ratio(1, 5)),
+                Point2::new(ratio(1, 10), ratio(3, 10)),
+            ),
+            (
+                "rotate(30)",
+                "M0 0L2 0",
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(Real::from(3).sqrt().unwrap(), Real::one()),
+            ),
+            (
+                "rotate(45 .1 .2)",
+                "M.1 .2L1.1 .2",
+                Point2::new(ratio(1, 10), ratio(1, 5)),
+                Point2::new(
+                    ratio(1, 10) + half_root_two.clone(),
+                    ratio(1, 5) + half_root_two,
+                ),
+            ),
+            (
+                "skewX(45)",
+                "M0 1L1 1",
+                Point2::new(Real::one(), Real::one()),
+                Point2::new(Real::from(2), Real::one()),
+            ),
+            (
+                "skewY(-45)",
+                "M1 0L1 1",
+                Point2::new(Real::one(), -Real::one()),
+                Point2::new(Real::one(), Real::zero()),
+            ),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            if replay_case.is_some_and(|selected| selected != index) {
+                continue;
+            }
+            executed += 1;
+            let authored = format!(
+                r#"<svg><path fill="none" stroke="black" transform="{transform}" d="{data}"/></svg>"#
+            );
+            let document = replay_input.as_deref().unwrap_or(&authored);
+            let outcome = support::under(&policy, || import_svg_document(document)).unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            let [wire] = outcome.value.wires() else {
+                panic!("one native wire required");
+            };
+            let [hypercurve::Segment2::Line(line)] = wire.segments() else {
+                panic!("one native line required");
+            };
+            assert_eq!(line.start(), &start, "{transform}");
+            assert_eq!(line.end(), &end, "{transform}");
+            let encoded = export_svg_document(&outcome.value).unwrap();
+            let replayed = import_svg_document(&encoded).unwrap();
+            let [wire] = replayed.wires() else {
+                panic!("one replayed native wire required");
+            };
+            let [hypercurve::Segment2::Line(line)] = wire.segments() else {
+                panic!("one replayed native line required");
+            };
+            assert_eq!(line.start(), &start, "native replay of {transform}");
+            assert_eq!(line.end(), &end, "native replay of {transform}");
+            assert_eq!(export_svg_document(&replayed).unwrap(), encoded);
+            #[cfg(not(target_arch = "wasm32"))]
+            if replay_input.is_none() {
+                let child = std::process::Command::new(std::env::current_exe().unwrap())
+                    .args([
+                        "--exact",
+                        "svg_rotation_centers_and_skews_use_exact_trigonometry",
+                        "--nocapture",
+                    ])
+                    .env(REPLAY, &encoded)
+                    .env(CASE, index.to_string())
+                    .output()
+                    .unwrap();
+                let stdout = String::from_utf8_lossy(&child.stdout);
+                assert!(
+                    child.status.success(),
+                    "{stdout}\n{}",
+                    String::from_utf8_lossy(&child.stderr)
+                );
+                assert!(
+                    stdout
+                        .lines()
+                        .any(|line| line
+                            .starts_with("test result: ok. 1 passed; 0 failed; 0 ignored;")),
+                    "fresh rotation replay must execute one test: {stdout}"
+                );
+            }
+        }
+        assert!(executed > 0, "a selected replay case must execute");
+    }
+}
+
+#[test]
+fn svg_transform_invalid_grammar_and_undefined_skews_remain_typed() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for transform in [
+            "translate(NaN)",
+            "matrix(1 0 0)",
+            "rotate(1 2)",
+            "scale(1 2 3)",
+            "skewX(0 1)",
+            "rotate(1e)",
+            "matrix(1e400 0 0 1 0 0)",
+        ] {
+            let document = format!(
+                r#"<svg><path fill="none" stroke="black" transform="{transform}" d="M0 0L1 1"/></svg>"#
+            );
+            assert!(
+                matches!(
+                    support::under(&policy, || import_svg_document(&document)),
+                    Err(SvgError::MalformedInput(_))
+                ),
+                "{transform}"
+            );
+        }
+        for transform in ["skewX(90)", "skewY(-90)"] {
+            let document = format!(
+                r#"<svg><path fill="none" stroke="black" transform="{transform}" d="M0 0L1 1"/></svg>"#
+            );
+            assert!(
+                matches!(
+                    support::under(&policy, || import_svg_document(&document)),
+                    Err(SvgError::Scalar(_))
+                ),
+                "{transform}"
+            );
+        }
     }
 }

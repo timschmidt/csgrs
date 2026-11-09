@@ -37,6 +37,11 @@ are 198 emitted-model agreements and 188 differences; source conformance, causal
 classification, and numeric attribute/transform ingress remain open. The
 [indexed PWN follow-up](indexed-pwn-closure-2026-11-09.md) extends closure admission
 without geometric coincidence decisions when indexed edges already cancel.
+The [exact transform follow-up](svg-exact-transforms-2026-11-09.md) reproduces
+rounded SVG coefficients and intermediate affine composition in Hypercurve.
+Its candidate retains original transform tokens and exact trigonometry; primitive
+attributes and broader source conformance remain separate work.
+
 
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with

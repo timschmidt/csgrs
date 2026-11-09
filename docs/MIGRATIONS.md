@@ -1,5 +1,17 @@
 # Migrations
 
+## Exact SVG transform ingress (2026-11-09)
+
+Standard SVG matrix, translate, scale, rotate and skew transform arguments now
+retain exact decimal/scientific values. Affine compositions use exact scalars;
+rotation centers and rational-degree angles are retained symbolically. Geometry
+that previously depended on rounded coefficients or intermediate binary64 sums
+intentionally changes to the authored transform. Tangent poles produce typed
+scalar errors rather than a finite rounded skew. Existing signatures, native
+metadata versions and grammar-validation range are unchanged. Primitive numeric
+attributes, style dimensions and sampled shape conventions remain separate work.
+
+
 ## Exact decimal SVG path ingress (2026-11-08)
 
 Standard SVG path-data numbers now enter as exact decimal/scientific values,

@@ -616,42 +616,6 @@ fn svg_circular_arc(
     ))
 }
 
-#[derive(Clone, Copy, Debug)]
-struct Affine2([f64; 6]);
-
-impl Affine2 {
-    const IDENTITY: Self = Self([1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);
-
-    fn then(self, rhs: Self) -> Self {
-        let [a, b, c, d, e, f] = self.0;
-        let [g, h, i, j, k, l] = rhs.0;
-        Self([
-            a * g + c * h,
-            b * g + d * h,
-            a * i + c * j,
-            b * i + d * j,
-            a * k + c * l + e,
-            b * k + d * l + f,
-        ])
-    }
-
-    fn exact(self) -> SvgResult<ExactAffine2> {
-        let [a, b, c, d, e, f] = self.0;
-        Ok(ExactAffine2 {
-            m00: real(a, "transform a")?,
-            m01: real(c, "transform c")?,
-            m10: real(b, "transform b")?,
-            m11: real(d, "transform d")?,
-            tx: real(e, "transform e")?,
-            ty: real(f, "transform f")?,
-        })
-    }
-
-    fn is_identity(self) -> bool {
-        self.0 == Self::IDENTITY.0
-    }
-}
-
 #[derive(Clone, Debug)]
 struct ExactAffine2 {
     m00: Real,
@@ -663,6 +627,56 @@ struct ExactAffine2 {
 }
 
 impl ExactAffine2 {
+    fn identity() -> Self {
+        Self::from_coefficients([
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+            Real::one(),
+            Real::zero(),
+            Real::zero(),
+        ])
+    }
+
+    fn from_coefficients([a, b, c, d, e, f]: [Real; 6]) -> Self {
+        Self {
+            m00: a,
+            m01: c,
+            m10: b,
+            m11: d,
+            tx: e,
+            ty: f,
+        }
+    }
+
+    fn translation(tx: Real, ty: Real) -> Self {
+        Self {
+            tx,
+            ty,
+            ..Self::identity()
+        }
+    }
+
+    fn then(self, rhs: Self) -> Self {
+        Self {
+            m00: &self.m00 * &rhs.m00 + &self.m01 * &rhs.m10,
+            m01: &self.m00 * &rhs.m01 + &self.m01 * &rhs.m11,
+            m10: &self.m10 * &rhs.m00 + &self.m11 * &rhs.m10,
+            m11: &self.m10 * &rhs.m01 + &self.m11 * &rhs.m11,
+            tx: &self.m00 * &rhs.tx + &self.m01 * &rhs.ty + self.tx,
+            ty: &self.m10 * &rhs.tx + &self.m11 * &rhs.ty + self.ty,
+        }
+    }
+
+    fn is_identity(&self) -> bool {
+        self.m00.definitely_one()
+            && self.m10.definitely_zero()
+            && self.m01.definitely_zero()
+            && self.m11.definitely_one()
+            && self.tx.definitely_zero()
+            && self.ty.definitely_zero()
+    }
+
     fn transform_point(&self, point: &Point2) -> Point2 {
         Point2::new(
             &self.m00 * point.x() + &self.m01 * point.y() + self.tx.clone(),
@@ -683,9 +697,9 @@ impl ExactAffine2 {
     }
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug)]
 struct StyleContext {
-    transform: Affine2,
+    transform: Option<ExactAffine2>,
     fill: bool,
     stroke: bool,
     displayed: bool,
@@ -700,7 +714,7 @@ struct StyleContext {
 impl Default for StyleContext {
     fn default() -> Self {
         Self {
-            transform: Affine2::IDENTITY,
+            transform: None,
             fill: true,
             stroke: false,
             displayed: true,
@@ -715,15 +729,15 @@ impl Default for StyleContext {
 }
 
 impl StyleContext {
-    fn visible(self) -> bool {
+    fn visible(&self) -> bool {
         self.displayed && self.visibility && self.opacity > 0.0
     }
 
-    fn fills(self) -> bool {
+    fn fills(&self) -> bool {
         self.fill && self.fill_opacity > 0.0
     }
 
-    fn strokes(self) -> bool {
+    fn strokes(&self) -> bool {
         self.stroke && self.stroke_opacity > 0.0 && self.stroke_width > 0.0
     }
 }
@@ -745,38 +759,97 @@ fn parse_numbers(value: &str) -> SvgResult<Vec<f64>> {
         .collect()
 }
 
-fn parse_transform(value: &str) -> SvgResult<Affine2> {
-    let mut transform = Affine2::IDENTITY;
+fn parse_transform(value: &str) -> SvgResult<ExactAffine2> {
+    // Keep svgtypes as the grammar authority, including optional arguments,
+    // compact signed numbers and the existing finite-token input envelope.
     for token in svgtypes::TransformListParser::from(value) {
-        use svgtypes::TransformListToken;
-        let token = token.map_err(|error| {
+        token.map_err(|error| {
             SvgError::MalformedInput(format!("invalid transform {value:?}: {error}"))
         })?;
-        let next = match token {
-            TransformListToken::Matrix { a, b, c, d, e, f } => Affine2([a, b, c, d, e, f]),
-            TransformListToken::Translate { tx, ty } => Affine2([1.0, 0.0, 0.0, 1.0, tx, ty]),
-            TransformListToken::Scale { sx, sy } => Affine2([sx, 0.0, 0.0, sy, 0.0, 0.0]),
-            TransformListToken::Rotate { angle } => rotation(angle),
-            TransformListToken::SkewX { angle } => {
-                Affine2([1.0, 0.0, angle.to_radians().tan(), 1.0, 0.0, 0.0])
+    }
+    let mut transform = ExactAffine2::identity();
+    // Transform arguments cannot contain nested parentheses. Grammar validation
+    // above precedes extraction; only the original decimal spans supply values.
+    for definition in value.split(')') {
+        let definition = definition.trim_matches(|c: char| c.is_ascii_whitespace() || c == ',');
+        if definition.is_empty() {
+            continue;
+        }
+        let (name, arguments) = definition
+            .split_once('(')
+            .ok_or_else(|| SvgError::MalformedInput(format!("invalid transform {value:?}")))?;
+        let mut numbers = PathNumbers::new(arguments);
+        let arguments = svgtypes::NumberListParser::from(arguments)
+            .map(|number| {
+                number.map_err(|error| SvgError::MalformedInput(error.to_string()))?;
+                numbers.number()
+            })
+            .collect::<SvgResult<Vec<_>>>()?;
+        let next = match (name.trim(), arguments.as_slice()) {
+            ("matrix", [a, b, c, d, e, f]) => ExactAffine2::from_coefficients([
+                a.clone(),
+                b.clone(),
+                c.clone(),
+                d.clone(),
+                e.clone(),
+                f.clone(),
+            ]),
+            ("translate", [x]) => ExactAffine2::translation(x.clone(), Real::zero()),
+            ("translate", [x, y]) => ExactAffine2::translation(x.clone(), y.clone()),
+            ("scale", [x]) => ExactAffine2 {
+                m00: x.clone(),
+                m11: x.clone(),
+                ..ExactAffine2::identity()
+            },
+            ("scale", [x, y]) => ExactAffine2 {
+                m00: x.clone(),
+                m11: y.clone(),
+                ..ExactAffine2::identity()
+            },
+            ("rotate", [angle]) => rotation(angle.clone())?,
+            ("rotate", [angle, x, y]) => {
+                // Preserve SVG's translate/rotate/translate sequence, retaining
+                // the authored center rather than svgtypes' rounded token view.
+                transform = transform.then(ExactAffine2::translation(x.clone(), y.clone()));
+                transform = transform.then(rotation(angle.clone())?);
+                transform = transform.then(ExactAffine2::translation(-x, -y));
+                continue;
             }
-            TransformListToken::SkewY { angle } => {
-                Affine2([1.0, angle.to_radians().tan(), 0.0, 1.0, 0.0, 0.0])
+            ("skewX", [angle]) => ExactAffine2 {
+                m01: radians(angle.clone())?.tan().map_err(SvgError::Scalar)?,
+                ..ExactAffine2::identity()
+            },
+            ("skewY", [angle]) => ExactAffine2 {
+                m10: radians(angle.clone())?.tan().map_err(SvgError::Scalar)?,
+                ..ExactAffine2::identity()
+            },
+            _ => {
+                return Err(SvgError::MalformedInput(format!(
+                    "invalid transform {value:?}"
+                )));
             }
         };
-        if next.0.iter().any(|value| !value.is_finite()) {
-            return Err(SvgError::MalformedInput(
-                "transform contains a non-finite value".into(),
-            ));
-        }
         transform = transform.then(next);
     }
     Ok(transform)
 }
 
-fn rotation(degrees: f64) -> Affine2 {
-    let (sin, cos) = degrees.to_radians().sin_cos();
-    Affine2([cos, sin, -sin, cos, 0.0, 0.0])
+fn radians(degrees: Real) -> SvgResult<Real> {
+    (degrees * Real::pi() / Real::from(180)).map_err(SvgError::Scalar)
+}
+
+fn rotation(degrees: Real) -> SvgResult<ExactAffine2> {
+    let angle = radians(degrees)?;
+    let sin = angle.clone().sin();
+    let cos = angle.cos();
+    Ok(ExactAffine2::from_coefficients([
+        cos.clone(),
+        sin.clone(),
+        -sin,
+        cos,
+        Real::zero(),
+        Real::zero(),
+    ]))
 }
 
 fn apply_style(
@@ -859,7 +932,11 @@ fn apply_style(
     context.opacity *= local_opacity;
     context.displayed &= local_display;
     if let Some(value) = attrs.get("transform") {
-        context.transform = context.transform.then(parse_transform(value)?);
+        let local = parse_transform(value)?;
+        context.transform = Some(match context.transform {
+            Some(parent) => parent.then(local),
+            None => local,
+        });
     }
     Ok(context)
 }
@@ -1329,9 +1406,10 @@ fn geometry_from_paths_preserving_native_lines(
     if !context.fills() && !context.strokes() {
         return Ok(SvgGeometry2::empty());
     }
-    let transform = (!context.transform.is_identity())
-        .then(|| context.transform.exact())
-        .transpose()?;
+    let transform = context
+        .transform
+        .as_ref()
+        .filter(|transform| !transform.is_identity());
     let transformed_fill = if context.fills() {
         match &transform {
             Some(transform) => fill_paths
@@ -1444,7 +1522,7 @@ pub fn import_svg_document_with_options(
                             "nested SVG viewport transforms".into(),
                         ));
                     }
-                    let parent = *contexts.last().ok_or_else(|| {
+                    let parent = contexts.last().cloned().ok_or_else(|| {
                         SvgError::MalformedInput("style context stack is empty".into())
                     })?;
                     contexts.push(apply_style(parent, &attrs)?);
@@ -1461,8 +1539,9 @@ pub fn import_svg_document_with_options(
         if matches!(kind, End) || matches!(name, tag::Description | tag::Title) {
             continue;
         }
-        let parent = *contexts
+        let parent = contexts
             .last()
+            .cloned()
             .ok_or_else(|| SvgError::MalformedInput("style context stack is empty".into()))?;
         let context = apply_style(parent, &attrs)?;
         if !context.visible() {

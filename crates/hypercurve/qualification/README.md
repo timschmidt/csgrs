@@ -563,3 +563,18 @@ budget exhaustion permits a larger retry, and strict/provisional/strict queries
 remain certified when their exact proofs succeed. These named cases do not
 complete arbitrary circle/line roots, independent fields, general collapse
 events, total arithmetic/memory bounds or cooperative cancellation.
+
+
+The 9 November SVG transform witnesses extend decimal ingress to authored
+matrices, translations, scales, rotation centers and skew angles. Four new rows
+check independent exact endpoints, nested cancellation, rational-angle
+trigonometry and typed invalid-input/pole outcomes under both policies. The
+existing decimal-region witness retains its original input and additionally
+consumes inherited translate/scale input through fresh native replay, further
+Booleans and empty recovery. Primitive attributes and style dimensions remain
+outside this increment. Counts and transcripts are qualification evidence;
+these finite rows do not prove general transform/operation closure.
+
+The rotation witness includes 30 and 45 degree images with independently
+constructed square-root coordinates, separate deterministic re-export checks,
+and a verified fresh native test process for every rotation/skew case.

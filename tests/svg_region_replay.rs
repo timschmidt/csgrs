@@ -247,3 +247,69 @@ fn svg_adapter_replays_empty_results_and_preserves_qualification() {
         }) if reason.reason() == hypercurve::UncertaintyReason::Predicate
     ));
 }
+
+#[test]
+fn svg_adapter_retains_exact_authored_affine_composition_through_replay() {
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let document = r#"<svg><g transform="translate(10000000000000000)"><g transform="translate(1)"><path transform="translate(-10000000000000000) scale(.1 .2)" d="M0 0h1v1h-1z"/></g></g></svg>"#;
+            let (region, wires, paths) = import_svg(document)?;
+            assert!(wires.is_empty() && paths.is_empty());
+            // Independent exact rational boundary; no second import supplies the oracle.
+            let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+            let points = [
+                Point2::new(Real::one(), Real::zero()),
+                Point2::new(q(11, 10), Real::zero()),
+                Point2::new(q(11, 10), q(1, 5)),
+                Point2::new(Real::one(), q(1, 5)),
+            ];
+            let expected = CurveRegion2::try_from_boundary_paths(
+                &[CurvePath2::try_new(
+                    (0..4)
+                        .map(|i| {
+                            hypercurve::Curve2::try_line(
+                                points[i].clone().into(),
+                                points[(i + 1) % 4].clone().into(),
+                            )
+                            .unwrap()
+                        })
+                        .collect(),
+                )
+                .unwrap()],
+                FillRule::NonZero,
+            )
+            .unwrap();
+            assert!(
+                region
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+            let text = export_svg(&region, &wires, &paths)?;
+            let (replayed, wires, paths) = import_svg(&text)?;
+            assert!(
+                replayed
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+            assert_eq!(export_svg(&replayed, &wires, &paths)?, text);
+            assert!(
+                replayed
+                    .boolean_region(&expected, BooleanOp::Difference)
+                    .unwrap()
+                    .boolean_region(&expected, BooleanOp::Union)
+                    .unwrap()
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+            Ok::<_, csgrs::io::IoError>(())
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        outcome.into_unverified().unwrap();
+    }
+}

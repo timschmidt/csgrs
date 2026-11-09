@@ -18638,7 +18638,7 @@
       "families": [
         "Line"
       ],
-      "domain": "Decimal rectangle, regularized set equality, reflection/scaling/translation, native metadata and fresh-process replay, empty recovery.",
+      "domain": "Decimal rectangle, regularized set equality, reflection/scaling/translation, native metadata and fresh-process replay, empty recovery. Both original path coordinates and inherited exact translate/scale input are retained.",
       "semantics": "The retained exact decimal region is consumed by further region operations; native metadata remains authoritative.",
       "oracle": "Independent rectangle from exact rational vertices; complete XOR and difference emptiness, exact similarity, two fresh replay processes per invocation.",
       "claims": [
@@ -18661,6 +18661,167 @@
           "stage": "exact_replay",
           "outcome": "exact_success",
           "assertion": "Same-process and fresh-process native replay retain exact filled-set equality and further operation consumption."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact SVG transform ingress and composition",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_affine_tokens",
+      "test": "svg_matrix_and_translation_tokens_remain_exact",
+      "families": [
+        "Line"
+      ],
+      "domain": "Matrix and scale decimal coefficients and underflow-small translation in standard SVG transforms.",
+      "semantics": "Exact decimal tokens supply native transform coefficients.",
+      "oracle": "Independent rational transformed line endpoints.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Exact decimal tokens supply native transform coefficients."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact SVG transform ingress and composition",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_affine_composition",
+      "test": "svg_nested_transforms_do_not_round_intermediate_composition",
+      "families": [
+        "Line"
+      ],
+      "domain": "Nested translations 10000000000000000, 1, -10000000000000000.",
+      "semantics": "Affine composition retains the exact unit translation.",
+      "oracle": "Independent endpoints (1, 0), (2, 0).",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Affine composition retains the exact unit translation."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact SVG transform ingress and composition",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_rotation_skew",
+      "test": "svg_rotation_centers_and_skews_use_exact_trigonometry",
+      "families": [
+        "Line"
+      ],
+      "domain": "Quarter-turn and 45 degree rotation around a decimal center, 30 degree rotation with irrational coordinates, and positive/negative 45 degree skews.",
+      "semantics": "Exact rational multiples of pi supply trigonometry and preserve authored centers.",
+      "oracle": "Independent rational and square-root line endpoints; native fresh-process replay and deterministic re-export checked separately.",
+      "claims": [
+        {
+          "stage": "evaluation",
+          "outcome": "exact_success",
+          "assertion": "Native line endpoints match independent rational and algebraic coordinates under both policies."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "All five cases retain their exact endpoints in fresh native processes and deterministic re-export."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact SVG transform ingress and composition",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27",
+        "P35",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_transform_typed_failures",
+      "test": "svg_transform_invalid_grammar_and_undefined_skews_remain_typed",
+      "families": [
+        "Line"
+      ],
+      "domain": "Malformed transform grammar, overflowing numeric tokens and tangent poles.",
+      "semantics": "Malformed syntax and mathematically undefined skew remain distinct typed failures.",
+      "oracle": "SvgError::MalformedInput for grammar and SvgError::Scalar for poles.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Malformed syntax and mathematically undefined skew remain distinct typed failures."
         }
       ]
     }

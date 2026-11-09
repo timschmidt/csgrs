@@ -445,8 +445,10 @@ docs/evidence/2026-11-08-published-main-qualification	12403	56233764	7deebd6a412
 docs/evidence/2026-11-08-svg-decimal-final-main-qualification	12580	349092875	966854548257a876c4c634058043d95a90a347a9245b5bcd453696f7ece5b5f0
 docs/evidence/2026-11-08-svg-decimal-ingress	241	11007475	cf2ec6041b0c4f1389fdc85142d8fdd64a16b1c6df80d484cef88fb133acecea
 docs/evidence/2026-11-08-svg-path-diagnostic-correction	5040	103671632	09e7ccef5d13f4bb6cfad6535d3c35c6838a95e6adacf7b88adc71dbef22f7ca
+docs/evidence/2026-11-09-corpus-main-qualification	11849	14938154	de9ca57fcbc5f6da56afebb0843463fc8d72f9cc96288f2e47d84566f8ac5a46
 docs/evidence/2026-11-09-openscad-corpus-and-indexed-closure	7024	94487164	d15e3bab94c4d1322e29c722a5c99ca91a18e46b578f9df0ae2674547bbf382a
 docs/evidence/2026-11-09-reference-process-exit-correction	883	6128096	0af9fb6571c7619bb0a215d84723cac38da4837015849d30e97fa158913606e4
+docs/evidence/2026-11-09-svg-exact-transforms	188	12330149	ac2992879f38c5a74c1bff764e7527f15a143b8b23dc33fafe98ab0039c363f5
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

@@ -1,4 +1,4 @@
-//! Retain decimal values while svgtypes owns the path command grammar.
+//! Retain decimal spans after svgtypes validates their command grammar.
 
 use super::{Point2, Real, SvgError, SvgResult};
 

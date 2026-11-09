@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `798040cbe625a89458fe2c8ce110f4f8fe850bf9` (448 records) |
-| Local research branch | `research-reference-process-exit-correction-20261109` |
+| Local manifest commit | `503a0f35b48e046ce9661017e2569474c3b595b9` (450 records) |
+| Local research branch | `research-svg-exact-transforms-20261109` |
 
-The local manifest includes thirteen unpublished descendants. The existing
+The local manifest includes fifteen unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -1476,3 +1476,29 @@ secret-dependent publication were inspected rather than executed locally.
 python3 scripts/evidence_archive.py verify ../csgrs-evidence.git \
   a5623e1bcc778d462080cdeb1b746e5b3be8d09a
 ```
+
+
+The corpus-main qualification record retains all 280 successful required local
+commands and the verified three-commit fast-forward publication through
+`4de752ea16`, all 13 original sanitizer campaigns and their seeds, and the final
+996-report BRep/IO release replay. It adds 11,849 files and 14,938,154 bytes,
+SHA-256 `de9ca57fcbc5f6da56afebb0843463fc8d72f9cc96288f2e47d84566f8ac5a46`.
+Separate SynapsCAD research remains local with its B-text deadline failure.
+The independent archive staging failure and corrected regular-file-only seal
+are retained; copied test Git metadata was preserved outside the payload.
+No evidence repository upload was performed or authorized.
+
+
+The exact SVG transform record adds 188 files and 12,330,149 bytes,
+SHA-256 `ac2992879f38c5a74c1bff764e7527f15a143b8b23dc33fafe98ab0039c363f5`.
+It retains three reproduced rounding failures, exact transform construction and
+composition, all 17 affected SVG harnesses (122 successful reports), strengthened
+irrational-coordinate and fresh-process replay witnesses, MSRV and strict Clippy,
+three fresh WASM instances of all nine maintained functions, and six unchanged
+control cases with identical dispatch, rational counters, certainty and eight
+SVG artifacts per variant. Five selected capability rows pass; this is not a
+fresh run of all 439 rows or complete pre-push qualification. Production sources
+remain identical through the broad and strengthened runs. Compiler/build bytes
+and Git metadata are excluded. The separate B-text trace baseline is attribution
+only; its compile deadline remains unresolved. See the
+[admission](research/svg-exact-transforms-2026-11-09.md).

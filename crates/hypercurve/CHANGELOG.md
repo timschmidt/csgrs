@@ -2,12 +2,18 @@
 
 ## [0.4.0] - Unreleased
 
+- Retain exact SVG transform tokens and affine composition, including nested
+  groups, authored rotation centers and symbolic rotation/skew trigonometry.
+  Matrix coefficients and underflow-small translations no longer enter through
+  binary64. Undefined skew poles retain typed scalar failures. Existing SVG
+  geometry and native replay own the resulting paths and regions.
+
 - Preserve the exact decimal values of standard SVG path-data coordinates,
   Bézier controls and circular radii. Relative commands, scientific notation,
   compact arc flags and distinct coordinates retain their authored values
   through filled-region operations and checked native replay. Malformed numeric
   unit suffixes retain their syntax errors. Numeric SVG
-  attributes and transform strings remain separate work.
+  primitive attributes and style dimensions remain separate work.
 
 - Complete finite point preimages on checked selected polynomial graph branches
   despite unselected common supports. Preserve original source equations, map
