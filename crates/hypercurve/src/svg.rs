@@ -970,6 +970,21 @@ fn number(attrs: &svg::node::Attributes, name: &str, default: Option<f64>) -> Sv
     Ok(value)
 }
 
+fn exact_number(
+    attrs: &svg::node::Attributes,
+    name: &str,
+    default: Option<f64>,
+) -> SvgResult<Real> {
+    // Reuse the existing syntax, finite-range and missing-attribute checks.
+    // Only an internal default may supply a binary value; authored attributes
+    // retain the original decimal/scientific token through the shared cursor.
+    let validated = number(attrs, name, default)?;
+    match attrs.get(name) {
+        Some(value) => PathNumbers::new(value).number(),
+        None => real(validated, "default SVG attribute"),
+    }
+}
+
 fn points(value: &str) -> SvgResult<Vec<Point2>> {
     let numbers = parse_numbers(value)?;
     if numbers.len() < 4 || numbers.len() % 2 != 0 {
@@ -977,16 +992,14 @@ fn points(value: &str) -> SvgResult<Vec<Point2>> {
             "points require coordinate pairs".into(),
         ));
     }
+    // Complete grammar/finite and arity validation still precedes exact scalar
+    // conversion. The validator's rounded values supply only the token count.
+    let mut exact = PathNumbers::new(value);
     numbers
         .as_chunks::<2>()
         .0
         .iter()
-        .map(|pair| {
-            Ok(Point2::new(
-                real(pair[0], "point x")?,
-                real(pair[1], "point y")?,
-            ))
-        })
+        .map(|_| Ok(Point2::new(exact.number()?, exact.number()?)))
         .collect()
 }
 
@@ -1610,12 +1623,12 @@ pub fn import_svg_document_with_options(
                 tag::Line => {
                     let path = open_path(&[
                         Point2::new(
-                            real(number(&attrs, "x1", Some(0.0))?, "line x1")?,
-                            real(number(&attrs, "y1", Some(0.0))?, "line y1")?,
+                            exact_number(&attrs, "x1", Some(0.0))?,
+                            exact_number(&attrs, "y1", Some(0.0))?,
                         ),
                         Point2::new(
-                            real(number(&attrs, "x2", Some(0.0))?, "line x2")?,
-                            real(number(&attrs, "y2", Some(0.0))?, "line y2")?,
+                            exact_number(&attrs, "x2", Some(0.0))?,
+                            exact_number(&attrs, "y2", Some(0.0))?,
                         ),
                     ])?;
                     geometry_from_paths(&[], std::slice::from_ref(&path), context)?

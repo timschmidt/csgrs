@@ -42,6 +42,14 @@ rounded SVG coefficients and intermediate affine composition in Hypercurve.
 Its candidate retains original transform tokens and exact trigonometry; primitive
 attributes and broader source conformance remain separate work.
 
+The [native attribute follow-up](svg-exact-native-attributes-2026-11-09.md)
+separately reproduces rounded line attributes and polygon/polyline point lists.
+Its focused independent-coordinate and filled-set witnesses pass through native
+replay and later operations. Affected owner, strict lint, MSRV and WASM checks
+pass; combined/downstream and publication qualification remain pending.
+Rectangle attributes, sampled shape fidelity and general source conformance
+remain open.
+
 
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with

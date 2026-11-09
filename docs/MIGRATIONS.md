@@ -1,5 +1,21 @@
 # Migrations
 
+## Exact native SVG primitive coordinates (2026-11-09)
+
+Line `x1`/`y1`/`x2`/`y2` attributes and polygon/polyline `points` now retain
+their authored decimal/scientific values exactly. For example, `.1` denotes
+`1/10`; adjacent integers above `2^53` and underflow-small nonzero coordinates
+remain distinct. This intentionally changes previously rounded geometry and
+restores valid input that collapsed into a degenerate shape after rounding.
+
+The existing numeric syntax/finite-range, point-count and degeneracy checks
+remain. Omitted internal line coordinates still default to exact zero. Public
+signatures, native codec versions, paint selection and arrangement authority
+are unchanged. Native metadata remains authoritative when display coordinates
+round together. Rectangle attributes and sampled circle/ellipse/rounded-shape
+conventions remain separate work; no complete SVG source-conformance or total
+resource-bound claim is added.
+
 ## Exact SVG transform ingress (2026-11-09)
 
 Standard SVG matrix, translate, scale, rotate and skew transform arguments now

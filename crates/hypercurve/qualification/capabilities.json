@@ -18824,6 +18824,194 @@
           "assertion": "Malformed syntax and mathematically undefined skew remain distinct typed failures."
         }
       ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact native SVG attribute ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_native_line_attributes",
+      "test": "svg_native_line_attributes_retain_exact_coordinates",
+      "domain": "Decimal line attributes, adjacent integers above 2^53 and a 1e-400 endpoint with omitted zero defaults.",
+      "semantics": "Native lines retain exact authored coordinates and native metadata replay.",
+      "oracle": "Independent exact ratios, integer literals and reciprocal integer power; deterministic re-export checked separately.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Each authored native line retains its independent exact endpoints."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native replay retains exact endpoints even when display coordinates round together."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact native SVG attribute ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_point_list_coordinates",
+      "test": "svg_point_list_coordinates_retain_exact_values_and_native_replay",
+      "domain": "Polyline lists with decimal/scientific compact forms, adjacent large integers and a tiny nonzero endpoint.",
+      "semantics": "The existing list grammar and pair count precede exact point construction.",
+      "oracle": "Independent exact ratios, integer literals and reciprocal power endpoints before/after native replay.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Every named point list yields one native line with independent exact endpoints."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native replay and separate deterministic re-export retain the expected line."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact native SVG attribute ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_point_list_region_continuation",
+      "test": "svg_point_list_filled_region_survives_replay_and_further_operations",
+      "domain": "Polygon and implicitly filled polyline rectangles with decimal points, fresh native replay, reflection and further Booleans.",
+      "semantics": "Exact point-list ingress selects the independent regularized rectangle and preserves later consumption.",
+      "oracle": "Independent rational boundary and complete XOR, four verified fresh native child test processes, deterministic re-export checked separately.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Filled point lists have empty full XOR with the independent rational rectangle."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Fresh native processes execute the same exact region continuation witness."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Reflected replay has empty full XOR with the independently transformed exact boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Difference and union continue into the independently expected set."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Difference reaches empty geometry that remains a valid later union operand."
+        }
+      ]
+    },
+    {
+      "target": "svg_decimal_ingress",
+      "owner": "Hypercurve exact native SVG attribute ingress",
+      "properties": [
+        "P1",
+        "P6",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_native_attribute_typed_failures",
+      "test": "svg_native_attribute_grammar_and_degeneracy_remain_typed",
+      "domain": "Non-finite/overflowing and unsupported numeric tokens, invalid point counts and degenerate line/list input, including disabled paint.",
+      "semantics": "Invalid native primitive inputs remain typed errors; valid disabled paint returns canonical empty.",
+      "oracle": "SvgError::MalformedInput for each invalid case, certified successful empty for a valid unpainted line.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Invalid syntax, range, arity and degeneracy are never interpreted as successful empty geometry."
+        },
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "A valid nondegenerate unpainted line returns successful empty geometry."
+        }
+      ]
     }
   ]
 }

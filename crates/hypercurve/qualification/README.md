@@ -578,3 +578,16 @@ these finite rows do not prove general transform/operation closure.
 The rotation witness includes 30 and 45 degree images with independently
 constructed square-root coordinates, separate deterministic re-export checks,
 and a verified fresh native test process for every rotation/skew case.
+
+The native SVG attribute witnesses check exact line coordinates and
+polygon/polyline point lists, including large adjacent integers and tiny
+nonzero values. Independent rational endpoints and a complete rectangle XOR
+separate semantic equality from deterministic native re-export. A filled
+point-list witness replays in fresh processes before reflection, later Booleans
+and empty recovery. Invalid numeric syntax, pair counts and degenerate input
+remain distinct from valid empty selection. The four selected rows and affected
+owner, strict lint, MSRV and WASM checks pass as recorded in the
+[admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md).
+Combined/downstream and publication qualification remains pending.
+Rectangle attributes, sampled shape fidelity and general source conformance
+remain outside this increment.

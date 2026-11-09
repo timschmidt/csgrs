@@ -41,6 +41,10 @@ migrations, including changed serialized output, are listed in
   Hypercurve. Polynomial reconstruction failures retain their native cause in
   `ValidationError::PolynomialTopology`, including distinct invalid-input,
   unsupported-representation, undecided and exhausted-resource categories.
+- Native SVG line attributes and polygon/polyline point lists retain exact
+  decimal/scientific coordinates, including distinct large integers and tiny
+  nonzero values. Native replay preserves those coordinates independently of
+  the display path. See MIGRATIONS.
 - Planar membership validates inherited topology even for empty regions. Strict
   queries keep typed undecided errors; authorized approximate queries retain
   their consumed certainty through the CSGRS wrapper.
