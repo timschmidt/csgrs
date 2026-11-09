@@ -704,10 +704,13 @@ struct StyleContext {
     stroke: bool,
     displayed: bool,
     visibility: bool,
-    opacity: f64,
-    fill_opacity: f64,
-    stroke_opacity: f64,
-    stroke_width: f64,
+    // Paint values select geometry; this importer does not retain appearance
+    // or construct stroke thickness. After exact nonnegative range validation,
+    // positivity is the sufficient retained fact, including for tiny values.
+    opacity_positive: bool,
+    fill_opacity_positive: bool,
+    stroke_opacity_positive: bool,
+    stroke_width_positive: bool,
     fill_rule: FillRule,
 }
 
@@ -719,10 +722,10 @@ impl Default for StyleContext {
             stroke: false,
             displayed: true,
             visibility: true,
-            opacity: 1.0,
-            fill_opacity: 1.0,
-            stroke_opacity: 1.0,
-            stroke_width: 1.0,
+            opacity_positive: true,
+            fill_opacity_positive: true,
+            stroke_opacity_positive: true,
+            stroke_width_positive: true,
             fill_rule: FillRule::NonZero,
         }
     }
@@ -730,15 +733,15 @@ impl Default for StyleContext {
 
 impl StyleContext {
     fn visible(&self) -> bool {
-        self.displayed && self.visibility && self.opacity > 0.0
+        self.displayed && self.visibility && self.opacity_positive
     }
 
     fn fills(&self) -> bool {
-        self.fill && self.fill_opacity > 0.0
+        self.fill && self.fill_opacity_positive
     }
 
     fn strokes(&self) -> bool {
-        self.stroke && self.stroke_opacity > 0.0 && self.stroke_width > 0.0
+        self.stroke && self.stroke_opacity_positive && self.stroke_width_positive
     }
 }
 
@@ -891,7 +894,7 @@ fn apply_style(
             properties.push((name.trim(), value.trim()));
         }
     }
-    let mut local_opacity = 1.0;
+    let mut local_opacity_positive = true;
     let mut local_display = true;
     for (name, value) in properties {
         match name {
@@ -910,16 +913,19 @@ fn apply_style(
             }
             "display" => local_display = value != "none",
             "visibility" => context.visibility = !matches!(value, "hidden" | "collapse"),
-            "opacity" => local_opacity = unit_interval(value, "opacity")?,
-            "fill-opacity" => context.fill_opacity = unit_interval(value, "fill-opacity")?,
-            "stroke-opacity" => context.stroke_opacity = unit_interval(value, "stroke-opacity")?,
+            "opacity" => local_opacity_positive = unit_interval_positive(value, "opacity")?,
+            "fill-opacity" => {
+                context.fill_opacity_positive = unit_interval_positive(value, "fill-opacity")?;
+            }
+            "stroke-opacity" => {
+                context.stroke_opacity_positive = unit_interval_positive(value, "stroke-opacity")?;
+            }
             "stroke-width" => {
-                context.stroke_width = value.parse::<f64>()?;
-                if !context.stroke_width.is_finite() || context.stroke_width < 0.0 {
-                    return Err(SvgError::MalformedInput(
-                        "stroke-width must be finite and non-negative".into(),
-                    ));
-                }
+                context.stroke_width_positive = style_number_positive(
+                    value,
+                    None,
+                    "stroke-width must be finite and non-negative",
+                )?;
             }
             "clip-path" | "mask" | "stroke-dasharray" | "stroke-dashoffset" | "stroke-linecap"
             | "stroke-linejoin" | "stroke-miterlimit" | "vector-effect" | "marker-start"
@@ -929,7 +935,9 @@ fn apply_style(
             _ => {}
         }
     }
-    context.opacity *= local_opacity;
+    // Every factor is nonnegative: a finite product is positive exactly when
+    // every factor is positive. Retain that proof without product underflow.
+    context.opacity_positive &= local_opacity_positive;
     context.displayed &= local_display;
     if let Some(value) = attrs.get("transform") {
         let local = parse_transform(value)?;
@@ -941,18 +949,51 @@ fn apply_style(
     Ok(context)
 }
 
-fn unit_interval(value: &str, name: &str) -> SvgResult<f64> {
-    let value = if let Some(percent) = value.strip_suffix('%') {
-        percent.parse::<f64>()? / 100.0
+fn unit_interval_positive(value: &str, name: &str) -> SvgResult<bool> {
+    let (value, upper) = if let Some(percent) = value.strip_suffix('%') {
+        (percent, 100)
     } else {
-        value.parse::<f64>()?
+        (value, 1)
     };
-    if !value.is_finite() || !(0.0..=1.0).contains(&value) {
-        return Err(SvgError::MalformedInput(format!(
-            "{name} must be between zero and one"
-        )));
+    // The sign and interval are equivalent before dividing a percentage by
+    // 100. Avoid materializing a normalized value that selection never uses.
+    style_number_positive(
+        value,
+        Some(upper),
+        &format!("{name} must be between zero and one"),
+    )
+}
+
+fn style_number_positive(value: &str, upper: Option<u8>, invalid: &str) -> SvgResult<bool> {
+    // Preserve the previous finite numeric syntax envelope. The validator's
+    // rounded value never supplies a sign, range decision or retained scalar.
+    if !value.parse::<f64>()?.is_finite() {
+        return Err(SvgError::MalformedInput(invalid.into()));
     }
-    Ok(value)
+    let value: Real = value.parse().map_err(SvgError::Scalar)?;
+    let sign = svg_real_sign(&value).ok_or_else(|| {
+        SvgError::Exact(ExactCurveError::blocked_unattributed(
+            CurveOperation2::Classification,
+            crate::UncertaintyReason::RealSign,
+        ))
+    })?;
+    if sign == RealSign::Negative {
+        return Err(SvgError::MalformedInput(invalid.into()));
+    }
+    if let Some(upper) = upper {
+        let order =
+            crate::classify::compare_reals(&value, &Real::from(upper), &CurveContext::STRICT)
+                .ok_or_else(|| {
+                    SvgError::Exact(ExactCurveError::blocked_unattributed(
+                        CurveOperation2::Classification,
+                        crate::UncertaintyReason::Ordering,
+                    ))
+                })?;
+        if order == std::cmp::Ordering::Greater {
+            return Err(SvgError::MalformedInput(invalid.into()));
+        }
+    }
+    Ok(sign == RealSign::Positive)
 }
 
 fn number(attrs: &svg::node::Attributes, name: &str, default: Option<f64>) -> SvgResult<f64> {

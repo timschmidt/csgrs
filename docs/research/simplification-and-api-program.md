@@ -42,6 +42,13 @@ rounded SVG coefficients and intermediate affine composition in Hypercurve.
 Its candidate retains original transform tokens and exact trigonometry; primitive
 attributes and broader source conformance remain separate work.
 
+The [exact paint follow-up](svg-exact-paint-2026-11-09.md) separately reproduces
+lost positive paint factors and rounded range validation. Its focused witnesses
+cover exact sign selection, inheritance and native continuation; primitive
+coordinates, sampled shape conventions and general source conformance remain
+open. Its affected owner/downstream, strict lint, MSRV and WASM witnesses pass;
+a new complete publication gate and immutable evidence closeout remain pending.
+
 
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with

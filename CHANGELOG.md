@@ -41,6 +41,10 @@ migrations, including changed serialized output, are listed in
   Hypercurve. Polynomial reconstruction failures retain their native cause in
   `ValidationError::PolynomialTopology`, including distinct invalid-input,
   unsupported-representation, undecided and exhausted-resource categories.
+- SVG paint selection preserves exact positivity of opacity and stroke width,
+  including tiny scientific values and inherited opacity products. Negative
+  values and opacity above one retain typed validation errors even when
+  binary64 would round them onto a valid boundary. See MIGRATIONS.
 - Planar membership validates inherited topology even for empty regions. Strict
   queries keep typed undecided errors; authorized approximate queries retain
   their consumed certainty through the CSGRS wrapper.

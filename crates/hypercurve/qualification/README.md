@@ -578,3 +578,16 @@ these finite rows do not prove general transform/operation closure.
 The rotation witness includes 30 and 45 degree images with independently
 constructed square-root coordinates, separate deterministic re-export checks,
 and a verified fresh native test process for every rotation/skew case.
+
+The separate SVG paint witnesses check exact positivity and range validation
+for opacity, fill-opacity, stroke-opacity and stroke-width. They retain tiny
+scientific values, percentages, accumulated opacity, inherited overrides and
+signed zero under both policies. A 400-digit exponent witness exercises the
+scalar owner's lazy representation. A filled unit-square witness uses an
+independent exact boundary, fresh-process native replay, reflection, further
+Booleans and empty recovery. Invalid ranges remain distinct from valid empty
+geometry. These five focused rows and the affected owner/downstream, strict
+lint, MSRV and WASM checks pass as recorded in the
+[admission](../../../docs/research/svg-exact-paint-2026-11-09.md). A complete new
+publication gate remains pending. Primitive coordinates, sampled shape fidelity,
+general source conformance and total resource bounds remain open.

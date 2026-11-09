@@ -18824,6 +18824,247 @@
           "assertion": "Malformed syntax and mathematically undefined skew remain distinct typed failures."
         }
       ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_paint_positivity",
+      "test": "svg_positive_paint_factors_do_not_underflow",
+      "domain": "Tiny decimal/scientific positive opacity, fill/stroke opacity and stroke-width, including percentages, inline style overrides and lazy scientific scaling.",
+      "semantics": "Exact positivity selects the original filled region or centerline stroke without underflow.",
+      "oracle": "Independent exact unit-square boundary XOR and native line endpoints.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Positive paint factors retain the independently expected line or filled square."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Filled positive paint input has empty full XOR with the independent exact unit square."
+        }
+      ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_paint_invalid_ranges",
+      "test": "svg_invalid_paint_ranges_remain_typed_errors",
+      "domain": "Negative underflow-small values, opacity just above one/100 percent, non-finite/overflowing tokens and unsupported numeric syntax.",
+      "semantics": "Proved invalid paint ranges are typed errors rather than successful empty or nonempty geometry.",
+      "oracle": "SvgError::MalformedInput checked for every named attribute/inline-style case.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Every named invalid style retains SvgError::MalformedInput under both policies."
+        }
+      ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_paint_inheritance",
+      "test": "svg_paint_inheritance_zero_and_style_precedence_are_exact",
+      "domain": "Inherited tiny positive products, zero ancestor opacity, independently overridden fill/stroke properties, signed zero, display and visibility.",
+      "semantics": "Accumulated opacity combines exact positivity; individual properties retain their prior override and precedence rules.",
+      "oracle": "Independent expected empty/nonempty result for every named document.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Named inherited, overridden and style-precedence selection results match independent expectations."
+        },
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Actual zero factors and declared hidden cases produce successful empty geometry."
+        }
+      ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_paint_native_continuation",
+      "test": "svg_positive_paint_survives_native_replay_and_further_boolean",
+      "domain": "A filled unit square with nested tiny opacity and percentage fill-opacity, native replay, reflection and subsequent Booleans.",
+      "semantics": "Selection retains the intended exact region through native reconstruction and later operations.",
+      "oracle": "Independent exact unit-square boundary, full XOR, verified fresh native test processes and separate deterministic re-export.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Imported and replayed regions have empty full XOR with the independent boundary."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Two fresh native test processes execute the exact witness; deterministic re-export is checked separately."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Reflected replay retains the independently expected exact region."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Difference and union continue into the expected set and full XOR."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Difference reaches canonical empty, which remains a valid union operand."
+        }
+      ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_paint_extreme_scientific",
+      "test": "svg_extreme_scientific_paint_preserves_exact_sign",
+      "domain": "Positive, zero and negative scientific paint factors with a 400-digit exponent; percentages for the three opacity properties.",
+      "semantics": "Exact sign/range decisions preserve lazy scalar inputs rather than forcing rational coordinate materialization.",
+      "oracle": "Independent unit-square XOR/native line endpoints, exact zero emptiness and typed negative-range errors.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "exact_success",
+          "assertion": "Positive lazy factors retain the independently expected square or line."
+        },
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Zero scientific factors remain successful empty selection."
+        },
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Negative lazy factors remain SvgError::MalformedInput."
+        }
+      ]
     }
   ]
 }

@@ -313,3 +313,111 @@ fn svg_adapter_retains_exact_authored_affine_composition_through_replay() {
         outcome.into_unverified().unwrap();
     }
 }
+
+#[test]
+fn svg_adapter_retains_exact_paint_selection_and_typed_range_errors() {
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            let q = |n, d| (Real::from(n) / Real::from(d)).unwrap();
+            let points = [
+                Point2::new(q(1, 10), q(1, 5)),
+                Point2::new(q(2, 5), q(1, 5)),
+                Point2::new(q(2, 5), q(3, 5)),
+                Point2::new(q(1, 10), q(3, 5)),
+            ];
+            let expected = CurveRegion2::try_from_boundary_paths(
+                &[CurvePath2::try_new(
+                    (0..4)
+                        .map(|i| {
+                            hypercurve::Curve2::try_line(
+                                points[i].clone().into(),
+                                points[(i + 1) % 4].clone().into(),
+                            )
+                            .unwrap()
+                        })
+                        .collect(),
+                )
+                .unwrap()],
+                FillRule::NonZero,
+            )
+            .unwrap();
+            let document = r#"<svg opacity="1e-200"><g opacity="1e-200" transform="translate(.1 .2) scale(.3 .4)"><path fill-opacity="1e-400%" d="M0 0h1v1h-1z"/></g></svg>"#;
+            let (region, wires, paths) = import_svg(document)?;
+            assert!(!region.is_empty());
+            assert!(wires.is_empty() && paths.is_empty());
+            assert!(
+                region
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+            let text = export_svg(&region, &wires, &paths)?;
+            let (replayed, wires, paths) = import_svg(&text)?;
+            assert!(wires.is_empty() && paths.is_empty());
+            assert!(
+                replayed
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+            assert_eq!(export_svg(&replayed, &wires, &paths)?, text);
+            let removed = replayed
+                .boolean_region(&expected, BooleanOp::Difference)
+                .unwrap();
+            assert!(removed.is_empty());
+            assert!(
+                removed
+                    .boolean_region(&expected, BooleanOp::Union)
+                    .unwrap()
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+
+            let (empty, wires, paths) =
+                import_svg("<svg><path opacity=\"-0\" d=\"M0 0h1v1h-1z\"/></svg>")?;
+            assert!(empty.is_empty() && wires.is_empty() && paths.is_empty());
+            assert!(
+                empty
+                    .boolean_region(&expected, BooleanOp::Union)
+                    .unwrap()
+                    .boolean_region(&expected, BooleanOp::Xor)
+                    .unwrap()
+                    .is_empty()
+            );
+
+            let stroke = "<svg><path fill=\"none\" stroke=\"black\" stroke-opacity=\"1e-400\" stroke-width=\"1e-400\" d=\"M.1 .2L.3 .4\"/></svg>";
+            let (region, wires, paths) = import_svg(stroke)?;
+            assert!(region.is_empty() && paths.is_empty());
+            let text = export_svg(&region, &wires, &paths)?;
+            let (replayed_region, replayed_wires, replayed_paths) = import_svg(&text)?;
+            assert!(replayed_region.is_empty() && replayed_paths.is_empty());
+            for wires in [&wires, &replayed_wires] {
+                assert_eq!(wires.len(), 1);
+                let [hypercurve::Segment2::Line(line)] = wires[0].segments() else {
+                    panic!("positive paint must retain the authored line");
+                };
+                assert_eq!(line.start(), &Point2::new(q(1, 10), q(1, 5)));
+                assert_eq!(line.end(), &Point2::new(q(3, 10), q(2, 5)));
+            }
+            for attribute in [
+                "opacity=\"-1e-400\"",
+                "fill-opacity=\"1.00000000000000000001\"",
+                "stroke-opacity=\"100.000000000000000001%\"",
+                "stroke-width=\"-1e-400\"",
+            ] {
+                let document = format!("<svg><path {attribute} d=\"M0 0h1v1h-1z\"/></svg>");
+                assert!(
+                    matches!(import_svg(&document), Err(csgrs::io::IoError::MalformedInput(detail)) if !detail.is_empty()),
+                    "{attribute}"
+                );
+            }
+            Ok::<_, csgrs::io::IoError>(())
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        outcome.into_unverified().unwrap();
+    }
+}

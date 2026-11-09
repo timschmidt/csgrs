@@ -1,5 +1,23 @@
 # Migrations
 
+## Exact SVG paint selection (2026-11-09)
+
+Opacity, fill-opacity, stroke-opacity and stroke-width now retain their exact
+decimal/scientific sign and validated range for geometry selection. A positive
+value such as `1e-400`, including a percentage or a product of inherited
+opacity factors, no longer disappears through binary64 underflow. Negative
+values and opacity above one return `SvgError::MalformedInput` even when their
+floating conversion rounds to zero or one. Percentage bounds are checked
+exactly before normalization. Required undecided scalar decisions stay typed
+blockers rather than becoming invisible geometry.
+
+This intentionally corrects selection of the represented set. The existing
+centerline stroke model, property precedence, public signatures and native
+metadata versions are unchanged. Primitive coordinates and sampled shape
+conventions remain separate work. The finite numeric syntax envelope is
+unchanged; this does not establish complete SVG source conformance or a total
+arithmetic-work, memory or cancellation bound.
+
 ## Exact SVG transform ingress (2026-11-09)
 
 Standard SVG matrix, translate, scale, rotate and skew transform arguments now
