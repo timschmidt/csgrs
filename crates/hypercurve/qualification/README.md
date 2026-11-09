@@ -589,5 +589,25 @@ Booleans and empty recovery. Invalid ranges remain distinct from valid empty
 geometry. These five focused rows and the affected owner/downstream, strict
 lint, MSRV and WASM checks pass as recorded in the
 [admission](../../../docs/research/svg-exact-paint-2026-11-09.md). A complete new
-publication gate remains pending. Primitive coordinates, sampled shape fidelity,
+publication gate remains pending. Rectangle attributes, sampled shape fidelity,
 general source conformance and total resource bounds remain open.
+
+The native SVG attribute witnesses check exact line coordinates and
+polygon/polyline point lists, including large adjacent integers and tiny
+nonzero values. Independent rational endpoints and a complete rectangle XOR
+separate semantic equality from deterministic native re-export. A filled
+point-list witness replays in fresh processes before reflection, later Booleans
+and empty recovery. Invalid numeric syntax, pair counts and degenerate input
+remain distinct from valid empty selection. The four selected rows and affected
+owner, strict lint, MSRV and WASM checks pass as recorded in the
+[admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md).
+Combined/downstream and publication qualification remains pending.
+Rectangle attributes, sampled shape fidelity and general source conformance
+remain outside this increment.
+
+The combined numeric-ingress candidate retains all 448 rows and adds a CSGRS
+adapter witness mixing exact primitive coordinates, tiny positive paint and
+exact transforms. It checks independent rational sets/endpoints, native replay,
+subsequent Booleans, empty recovery and typed invalid input with hidden paint.
+Combined-source qualification remains pending; the separate parent results
+above do not establish completion on this candidate.

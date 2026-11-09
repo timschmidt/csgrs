@@ -44,10 +44,28 @@ attributes and broader source conformance remain separate work.
 
 The [exact paint follow-up](svg-exact-paint-2026-11-09.md) separately reproduces
 lost positive paint factors and rounded range validation. Its focused witnesses
-cover exact sign selection, inheritance and native continuation; primitive
-coordinates, sampled shape conventions and general source conformance remain
+cover exact sign selection, inheritance and native continuation; rectangle
+attributes, sampled shape conventions and general source conformance remain
 open. Its affected owner/downstream, strict lint, MSRV and WASM witnesses pass;
 a new complete publication gate and immutable evidence closeout remain pending.
+
+The [native attribute follow-up](svg-exact-native-attributes-2026-11-09.md)
+separately reproduces rounded line attributes and polygon/polyline point lists.
+Its focused independent-coordinate and filled-set witnesses pass through native
+replay and later operations. Affected owner, strict lint, MSRV and WASM checks
+pass; combined/downstream and publication qualification remain pending.
+Rectangle attributes, sampled shape fidelity and general source conformance
+remain open.
+
+
+The isolated numeric-ingress integration combines the two committed SVG
+follow-ups while retaining their original witnesses and all 448 capability
+rows. A new CSGRS adapter witness combines exact line/point-list coordinates,
+tiny positive paint, inherited opacity and exact transforms with independent
+rational geometry, native replay, later Booleans and empty recovery. Invalid
+coordinates remain errors even with hidden paint. Combined owner, portability,
+downstream and publication qualification is pending; parent-only checks are not
+credited as combined-source completion.
 
 
 Most packages below reduce source size, which is the lowest priority. Such a

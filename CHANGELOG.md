@@ -45,6 +45,11 @@ migrations, including changed serialized output, are listed in
   including tiny scientific values and inherited opacity products. Negative
   values and opacity above one retain typed validation errors even when
   binary64 would round them onto a valid boundary. See MIGRATIONS.
+
+- Native SVG line attributes and polygon/polyline point lists retain exact
+  decimal/scientific coordinates, including distinct large integers and tiny
+  nonzero values. Native replay preserves those coordinates independently of
+  the display path. See MIGRATIONS.
 - Planar membership validates inherited topology even for empty regions. Strict
   queries keep typed undecided errors; authorized approximate queries retain
   their consumed certainty through the CSGRS wrapper.

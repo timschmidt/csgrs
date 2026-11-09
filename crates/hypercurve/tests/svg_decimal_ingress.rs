@@ -443,3 +443,249 @@ fn svg_transform_invalid_grammar_and_undefined_skews_remain_typed() {
         }
     }
 }
+
+fn assert_native_attribute_line(geometry: &SvgGeometry2, start: &Point2, end: &Point2) {
+    assert!(geometry.region().is_empty());
+    assert!(geometry.paths().is_empty());
+    let [wire] = geometry.wires() else {
+        panic!("one native wire required");
+    };
+    let [hypercurve::Segment2::Line(line)] = wire.segments() else {
+        panic!("one native line required");
+    };
+    assert_eq!(line.start(), start);
+    assert_eq!(line.end(), end);
+}
+
+#[test]
+fn svg_native_line_attributes_retain_exact_coordinates() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (attributes, start, end) in [
+            (
+                "x1=\".1\" y1=\".2\" x2=\".3\" y2=\".4\"",
+                Point2::new(ratio(1, 10), ratio(1, 5)),
+                Point2::new(ratio(3, 10), ratio(2, 5)),
+            ),
+            (
+                "x1=\"9007199254740992\" x2=\"9007199254740993\"",
+                Point2::new(Real::from(9_007_199_254_740_992_i64), Real::zero()),
+                Point2::new(Real::from(9_007_199_254_740_993_i64), Real::zero()),
+            ),
+            (
+                "x2=\"1e-400\"",
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(
+                    (Real::one() / Real::from(10).powi(400.into()).unwrap()).unwrap(),
+                    Real::zero(),
+                ),
+            ),
+        ] {
+            let document = format!("<svg><line stroke=\"black\" {attributes}/></svg>");
+            let outcome = support::under(&policy, || {
+                let imported = import_svg_document(&document)?;
+                assert_native_attribute_line(&imported, &start, &end);
+                let text = export_svg_document(&imported)?;
+                assert!(text.contains("data-hypercurve-path=\""));
+                let replayed = import_svg_document(&text)?;
+                assert_native_attribute_line(&replayed, &start, &end);
+                assert_eq!(export_svg_document(&replayed)?, text);
+                Ok::<_, SvgError>(())
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+    }
+}
+
+#[test]
+fn svg_point_list_coordinates_retain_exact_values_and_native_replay() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (points, start, end) in [
+            (
+                ".1,.2 .3,.4",
+                Point2::new(ratio(1, 10), ratio(1, 5)),
+                Point2::new(ratio(3, 10), ratio(2, 5)),
+            ),
+            (
+                "+1.e-1-.2e+0.3e0-.4e0",
+                Point2::new(ratio(1, 10), ratio(-1, 5)),
+                Point2::new(ratio(3, 10), ratio(-2, 5)),
+            ),
+            (
+                "9007199254740992,0 9007199254740993,0",
+                Point2::new(Real::from(9_007_199_254_740_992_i64), Real::zero()),
+                Point2::new(Real::from(9_007_199_254_740_993_i64), Real::zero()),
+            ),
+            (
+                "0,0 1e-400,0",
+                Point2::new(Real::zero(), Real::zero()),
+                Point2::new(
+                    (Real::one() / Real::from(10).powi(400.into()).unwrap()).unwrap(),
+                    Real::zero(),
+                ),
+            ),
+        ] {
+            let document = format!(
+                "<svg><polyline fill=\"none\" stroke=\"black\" points=\"{points}\"/></svg>"
+            );
+            let outcome = support::under(&policy, || {
+                let imported = import_svg_document(&document)?;
+                assert_native_attribute_line(&imported, &start, &end);
+                let text = export_svg_document(&imported)?;
+                let replayed = import_svg_document(&text)?;
+                assert_native_attribute_line(&replayed, &start, &end);
+                assert_eq!(export_svg_document(&replayed)?, text);
+                Ok::<_, SvgError>(())
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+    }
+}
+
+#[test]
+fn svg_point_list_filled_region_survives_replay_and_further_operations() {
+    const REPLAY: &str = "HYPERCURVE_NATIVE_POINT_LIST_REPLAY";
+    let replay = std::env::var(REPLAY).ok();
+    let points = [
+        Point2::new(ratio(1, 10), ratio(1, 5)),
+        Point2::new(ratio(2, 5), ratio(1, 5)),
+        Point2::new(ratio(2, 5), ratio(3, 5)),
+        Point2::new(ratio(1, 10), ratio(3, 5)),
+    ];
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for tag in ["polygon", "polyline"] {
+            let document = format!("<svg><{tag} points=\".1 .2 .4 .2 .4 .6 .1 .6\"/></svg>");
+            let outcome = support::under(&policy, || {
+                let boundary = CurvePath2::try_new(
+                    (0..4)
+                        .map(|i| {
+                            Curve2::try_line(
+                                points[i].clone().into(),
+                                points[(i + 1) % 4].clone().into(),
+                            )
+                            .unwrap()
+                        })
+                        .collect(),
+                )
+                .unwrap();
+                let expected =
+                    CurveRegion2::try_from_boundary_paths(&[boundary], FillRule::NonZero).unwrap();
+                let imported = import_svg_document(replay.as_deref().unwrap_or(&document))?;
+                assert!(imported.wires().is_empty() && imported.paths().is_empty());
+                assert!(
+                    imported
+                        .region()
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty(),
+                    "{tag}"
+                );
+                let text = export_svg_document(&imported)?;
+                #[cfg(not(target_arch = "wasm32"))]
+                if replay.is_none() {
+                    let child = std::process::Command::new(std::env::current_exe().unwrap())
+                        .args([
+                            "--exact",
+                            "svg_point_list_filled_region_survives_replay_and_further_operations",
+                            "--nocapture",
+                        ])
+                        .env(REPLAY, &text)
+                        .output()
+                        .unwrap();
+                    let stdout = String::from_utf8(child.stdout).unwrap();
+                    assert!(
+                        child.status.success(),
+                        "{stdout}\n{}",
+                        String::from_utf8_lossy(&child.stderr)
+                    );
+                    assert!(
+                        stdout.lines().any(|line| line
+                            .starts_with("test result: ok. 1 passed; 0 failed; 0 ignored;")),
+                        "fresh replay must execute the maintained witness: {stdout}"
+                    );
+                    for line in stdout.lines() {
+                        println!("fresh point-list replay: {line}");
+                    }
+                }
+                let replayed = import_svg_document(&text)?;
+                assert!(
+                    replayed
+                        .region()
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+                assert_eq!(export_svg_document(&replayed)?, text);
+                let reflection = Similarity2::try_from_real_affine(
+                    2.into(),
+                    0.into(),
+                    0.into(),
+                    (-2).into(),
+                    ratio(1, 7),
+                    ratio(-2, 7),
+                )
+                .unwrap();
+                let moved = replayed.region().transform_similarity(&reflection).unwrap();
+                let moved_expected = expected.transform_similarity(&reflection).unwrap();
+                assert!(
+                    moved
+                        .boolean_region(&moved_expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+                let empty = moved
+                    .boolean_region(&moved_expected, BooleanOp::Difference)
+                    .unwrap();
+                assert!(empty.is_empty());
+                assert!(
+                    empty
+                        .boolean_region(&expected, BooleanOp::Union)
+                        .unwrap()
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+                Ok::<_, SvgError>(())
+            })
+            .unwrap();
+            assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        }
+    }
+}
+
+#[test]
+fn svg_native_attribute_grammar_and_degeneracy_remain_typed() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for element in [
+            "<line stroke=\"black\" x2=\"NaN\"/>",
+            "<line stroke=\"black\" x2=\"inf\"/>",
+            "<line stroke=\"black\" x2=\"1e400\"/>",
+            "<line stroke=\"black\" x2=\"1em\"/>",
+            "<line stroke=\"black\" x2=\"1/2\"/>",
+            "<line stroke=\"black\" x1=\".1\" x2=\".1\" y1=\".2\" y2=\".2\"/>",
+            "<line fill=\"none\" stroke=\"none\" x2=\"NaN\"/>",
+            "<polyline fill=\"none\" stroke=\"black\" points=\"0,0 1e400,0\"/>",
+            "<polyline fill=\"none\" stroke=\"black\" points=\"0,0 1em,0\"/>",
+            "<polyline fill=\"none\" stroke=\"black\" points=\"0,0 1/2,0\"/>",
+            "<polyline fill=\"none\" stroke=\"black\" points=\"0,0 0,0\"/>",
+            "<polyline fill=\"none\" stroke=\"none\" points=\"0,0 1\"/>",
+            "<polygon points=\"0,0 1,1\"/>",
+        ] {
+            let document = format!("<svg>{element}</svg>");
+            assert!(
+                matches!(
+                    support::under(&policy, || import_svg_document(&document)),
+                    Err(SvgError::MalformedInput(_))
+                ),
+                "{element}"
+            );
+        }
+        let outcome = support::under(&policy, || {
+            import_svg_document("<svg><line fill=\"none\" stroke=\"none\" x2=\"1\"/></svg>")
+        })
+        .unwrap();
+        assert_eq!(outcome.certainty, CurveCertainty::Certified);
+        assert!(outcome.value.is_empty());
+    }
+}
