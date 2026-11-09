@@ -467,8 +467,14 @@ they consume the stack's contracts.
 The integrated rectangle/README branch also reproduces two valid visible rounded
 sampler limits incorrectly classified as malformed. Its small owner correction
 returns typed unsupported representation and adds two blocker rows, preserving
-the previous 456 objects. Integrated-source qualification remains pending; this
-does not establish analytic rounded completion.
+the previous 456 objects. Integrated `fee45f7fed` passes 135 owner/root parent
+reports, nineteen selected witnesses, 28 MSRV bodies, 84 zero-import WASM
+executions and 1,014 downstream reports, with strict owner/root lint and format.
+The integrated README doctests, both examples and strict docs also pass; all
+3,841 source inputs remain unchanged. Eight ordinary rounded controls retain
+full artifact/certainty/dispatch/counter equality. Archive/index and the complete
+publication gate remain separate; this does not establish analytic rounded
+completion, source conformance or general closure/resource bounds.
 
 ## Suggested order
 

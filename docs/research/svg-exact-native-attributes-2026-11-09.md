@@ -160,6 +160,27 @@ rounded completion, invalid geometry or exhausted resources.
 
 Two additional catalog rows assert unsupported outcomes, preserving all 456
 previous objects. The seven qualified rectangle and seven root test bodies
-remain byte-identical prefixes. Integrated-source owner, portability, downstream
-and publication qualification are pending; the earlier committed receipts above
-retain their original source attribution.
+remain byte-identical prefixes. On integrated `fee45f7fed`, the affected owner
+run passes 135 parent reports across thirteen harnesses, nineteen selected rows,
+strict all-target/all-feature owner lint, formatting and whitespace checks. Eight
+ordinary rounded controls match the qualified parent in full: artifacts,
+certainty, dispatch vectors and rational counters. This is a typed-failure
+correction, not a speedup or general sampled-source fidelity claim.
+
+The same immutable commit passes 28 maintained bodies and strict SVG lint on
+Rust 1.95.0. Those bodies execute 84 times in three fresh zero-import WASM
+instances with the original compiled stack. The module has 15209048 bytes
+(SHA-256 `205259aa17c4dd3c780552cb891aba63a54a211dcd62f43e3b8736f97c17c995`). Seven root SVG and 110 BRep/IO
+harnesses pass 1,014 parent reports without failures or ignores; strict root
+all-target/all-feature lint passes. The integrated README run passes all four
+IO doctests and both root README tests, executes both native examples, and
+builds all-feature docs with warnings denied. Every command retains all 3,841
+source inputs unchanged. The earlier parent receipts above retain their
+original source attribution.
+
+Raw receipts, exact checked-source comparisons, preserved original cases and
+full rounded-control vectors are retained under the local rectangle admission's
+`integration-qualification` folder. Archive/index closeout and whole-source
+publication remain separately gated. These finite witnesses do not establish
+analytic rounded completion, broad source conformance, arbitrary algebraic
+operation closure or total work/heap/cancellation bounds.

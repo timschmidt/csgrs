@@ -645,4 +645,10 @@ The integrated continuation adds two explicitly unsupported rows for valid
 visible rounded descriptions beyond the legacy sampler's binary64 dimensions
 and bounds. The catalog now has 458 rows; these two blocker assertions are not
 geometric completion. The original 456 objects and seven rectangle bodies remain
-unchanged. New integrated-source qualification is pending.
+unchanged. Integrated `fee45f7fed` passes 135 owner/root parent reports,
+nineteen selected witnesses, strict owner/root lint and formatting, 28 MSRV
+bodies, 84 zero-import WASM executions, 1,014 downstream reports, and the README
+doctests/examples/strict docs. Eight ordinary rounded controls match their
+qualified parent in full, including dispatch and rational counters. These are
+actual immutable-source local receipts; archive/index and full publication
+qualification remain separate.
