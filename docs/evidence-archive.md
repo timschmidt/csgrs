@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `503a0f35b48e046ce9661017e2569474c3b595b9` (450 records) |
-| Local research branch | `research-svg-exact-transforms-20261109` |
+| Local manifest commit | `e386d4d2245f846e676772fd239eec697aa69efa` (453 records) |
+| Local research branch | `research-svg-rectangle-readme-20261109` |
 
-The local manifest includes fifteen unpublished descendants. The existing
+The local manifest includes eighteen unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -93,6 +93,26 @@ tests, three real-engine controls and the retired partial verification of
 `43b2dd6b0b`. A crashed reference cannot supply an adopted empty model. The
 corrected source requires fresh complete verification; the retired run is not
 credited as a pass. See the [corpus admission](research/openscad-corpus-2026-11-09.md).
+
+The SVG transform main qualification record adds 12,085 files and
+16,860,195 bytes, SHA-256
+`74a98897cd98f80f70f3b059508992749b97d9e6c54be4ab3dbba72847b6dbba`.
+
+The exact SVG paint/native numeric ingress record adds 444 files and
+30,671,348 bytes, SHA-256
+`31a05d6a86bf297d318323afdec5729d419d8c42e6006168e014d7ada23b6a38`.
+
+The integrated exact rectangles and BRep README qualification record adds 494 files and
+37,799,558 bytes, SHA-256
+`92ca78ab21f853dec29ab20532538348a18af78cf278584332548dd04851bd39`.
+The first retains the actual 280-command qualification and publication of
+`a8b2392180`. The latter records preserve their separate functional source
+attribution and passing finite owner, portability and downstream witnesses.
+The rectangle/README integration is qualified locally on `fee45f7fed`; final
+admission documentation is `502508fd9f`. Its two sampler-limit witnesses assert
+unsupported representation, not geometric completion. All 453 records verify
+from local Git objects. No evidence has been uploaded; a fresh complete source
+publication gate remains separate.
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
