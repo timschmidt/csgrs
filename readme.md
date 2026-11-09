@@ -11,9 +11,10 @@ CAD interchange without introducing another geometry kernel.
   solid Booleans, topology facts, and mesh queries.
 - [Hypertri](https://github.com/timschmidt/csgrs/tree/main/crates/hypertri) owns triangulation.
 - [Hyperphysics](https://github.com/timschmidt/csgrs/tree/main/crates/hyperphysics) owns physical-property analysis.
-- [HyperBRep](crates/hyperbrep/README.md) develops exact boundary-representation CAD;
-  [HyperBRep IO](crates/hyperbrep-io/README.md) provides bounded Part 21 syntax for its
-  planned STEP exchange layer.
+- [HyperBRep](crates/hyperbrep/README.md) owns retained spatial geometry and validated
+  boundary-representation topology. [HyperBRep IO](crates/hyperbrep-io/README.md)
+  provides bounded Part 21 syntax and exact STEP exchange within its
+  [declared mapping domain](crates/hyperbrep-io/docs/STEP_MAPPING.md).
 - CSGRS supplies the modeling language that composes those native types and
   connects them to file formats and application boundaries.
 
