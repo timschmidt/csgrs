@@ -53,7 +53,8 @@ The [native attribute follow-up](svg-exact-native-attributes-2026-11-09.md)
 separately reproduces rounded line attributes and polygon/polyline point lists.
 Its focused independent-coordinate and filled-set witnesses pass through native
 replay and later operations. Affected owner, strict lint, MSRV and WASM checks
-pass; combined/downstream and publication qualification remain pending.
+pass; combined/downstream checks subsequently pass as recorded below.
+Publication qualification remains pending.
 Rectangle attributes, sampled shape fidelity and general source conformance
 remain open.
 
@@ -67,9 +68,13 @@ combined run reproduced malformed hidden native coordinates becoming successful
 empty geometry: the original five root witnesses passed and the new sixth
 failed. A narrow owner correction now validates native lines and point lists
 before hidden selection; a sixth paint witness adds independent typed-error and
-valid-empty controls, with a 449th capability row. Combined owner, portability,
-downstream and publication qualification is pending; parent-only checks are not
-credited as combined-source completion.
+valid-empty controls, with a 449th capability row. Actual combined source
+`2639c68fee` passes 118 owner reports, six root region reports, ten selected rows,
+17 runner tests, unchanged dispatch controls, nineteen MSRV bodies and 57 WASM
+executions. Seven root SVG harnesses pass sixteen reports; full BRep/IO passes
+996. Strict owner/root lint passes. These results qualify the finite functional
+increment; a complete publication gate and immutable evidence closeout remain
+pending. Parent-only checks are not credited as combined-source completion.
 
 
 Most packages below reduce source size, which is the lowest priority. Such a

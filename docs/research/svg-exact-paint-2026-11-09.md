@@ -74,9 +74,58 @@ artifacts currently live under
 `target/d03-native-corpus-20261108/svg-paint-admission-20261109`. Evidence is
 local and unuploaded; immutable archive/index closeout remains pending.
 
-Public signatures and native metadata versions are unchanged. Primitive
-coordinates and point lists, sampled circles/ellipses/rounded rectangles,
+Public signatures and native metadata versions are unchanged. At this separate
+paint checkpoint, primitive coordinates and point lists remained outside its
+scope. Sampled circles/ellipses/rounded rectangles,
 general SVG/OpenSCAD source conformance and arbitrary algebraic operation
 closure remain open. No total arithmetic-work, retained-memory or cancellation
 bound is added. External diagnostic containment is not kernel exhaustion or a
 completion guarantee.
+
+## Combined native attribute and hidden-input qualification
+
+The independent paint (`0e840c6bf3`) and native-attribute (`16a4a8f65d`)
+commits combine at `599619c175`. The original five paint bodies, thirteen
+native decimal/transform bodies and five root region bodies are retained.
+A sixth CSGRS region witness combines exact line/polygon/polyline coordinates,
+tiny positive paint, inherited opacity and exact transforms. Independent
+rational endpoints and full rectangle XOR, native replay, deterministic
+re-export, later Booleans and empty recovery establish its expectations.
+
+The initial combined run passes the original suites but fails this new witness:
+an odd polygon point list under zero ancestor opacity becomes successful empty
+geometry. A separate owner witness reproduces malformed hidden line admission
+on unchanged production. Neither failure is a compiler error or containment
+limit. The correction at `2639c68fee` lets existing line/polygon/polyline
+constructors validate hidden native input before selection. Shared geometry
+conversion returns empty before transforming or arranging valid hidden input.
+Other SVG families retain their existing visibility handling. The new sixth
+paint body pairs malformed native coordinates, arity and degeneracy under
+zero opacity/display/visibility with valid-empty continuation controls. The
+committed failing CSGRS assertion is unchanged; no parent fixture is weakened.
+
+Actual qualification of committed `2639c68fee`, with all 3,838 tracked inputs
+unchanged through terminal completion:
+
+- Eleven owner SVG harnesses: 118 passing reports; root region replay: six.
+  There are no failures or ignored tests. All ten selected capability rows
+  and 17 capability-runner tests pass. This does not qualify all 449 rows.
+- Three unchanged controls under both policies: complete dispatch vectors,
+  rational counters, certainty and all eight SVG strings match actual `a8b2392180`.
+- Rust 1.95.0: all nineteen maintained owner bodies and strict owner SVG lint
+  pass. The same nineteen bodies execute 57 times in three fresh WASM
+  instances, with zero imports and the original compiled stack. Native-only
+  process guards are retained.
+- Seven root SVG harnesses: sixteen passing reports; full BRep/IO release
+  suites: 996 reports across 110 harnesses. Owner/root all-feature/all-target
+  strict Clippy, formatting and whitespace checks pass.
+
+Raw red/green receipts, exact source maps, unchanged-fixture proofs, complete
+control outputs, portability sources and downstream logs are retained locally
+under `target/d03-native-corpus-20261108/svg-numeric-integration-admission-20261109`
+and the named runs under `target/brep-admission-20261105`. The two independent
+parent sources are preserved from immutable Git blobs; the current integration
+worktree is not substituted for their previously qualified input. These are
+functional completion receipts, not performance or general closure evidence.
+Immutable evidence/index closeout and a complete new publication gate remain
+pending. The separate transform gate cannot qualify this combined source.

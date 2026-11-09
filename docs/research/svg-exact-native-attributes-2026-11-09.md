@@ -53,13 +53,18 @@ native child-process guards remain; WASM still executes full native metadata
 and region continuation. Module/memory observations do not establish a public
 ABI or a total resource bound.
 
-CSGRS/BRep downstream checks, mixed paint/native integration, immutable evidence
-closeout and a new complete publication gate remain pending. Focused raw logs,
-manifests and preserved original fixtures currently live locally under
+The separate parent branch's raw logs, manifests and preserved original
+fixtures remain local under
 `target/d03-native-corpus-20261108/svg-native-attributes-admission-20261109`.
-They have not been uploaded or counted as complete qualification. This branch
-is independent of the separately qualified paint correction; their combined
-source still needs mixed-input and final downstream verification.
+The [combined-source qualification](svg-exact-paint-2026-11-09.md#combined-native-attribute-and-hidden-input-qualification)
+subsequently adds an independent mixed CSGRS witness and a narrow hidden-native
+validation correction. Committed `2639c68fee` passes 118 owner reports, six root
+region reports, ten selected rows, matching dispatch controls, nineteen MSRV
+bodies and 57 WASM executions. Its seven root SVG harnesses pass sixteen reports,
+and full BRep/IO release suites pass 996. Strict owner/root lint passes. These
+are actual combined-source receipts, not attribution of parent-only checks.
+Immutable evidence closeout and a complete new publication gate remain pending;
+no evidence has been uploaded.
 
 Rectangle coordinates/dimensions, sampled circle/ellipse/rounded-rectangle
 fidelity, broader SVG/OpenSCAD source conformance, arbitrary algebraic operation

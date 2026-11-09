@@ -601,7 +601,8 @@ and empty recovery. Invalid numeric syntax, pair counts and degenerate input
 remain distinct from valid empty selection. The four selected rows and affected
 owner, strict lint, MSRV and WASM checks pass as recorded in the
 [admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md).
-Combined/downstream and publication qualification remains pending.
+Combined/downstream checks subsequently pass as recorded below; publication
+qualification remains pending.
 Rectangle attributes, sampled shape fidelity and general source conformance
 remain outside this increment.
 
@@ -612,6 +613,12 @@ subsequent Booleans, empty recovery and typed invalid input with hidden paint.
 The first combined run passed the original owner suites and five root witnesses
 but reproduced invalid hidden native coordinates becoming successful empty.
 A new sixth paint witness and 449th row cover native validation before hidden
-selection, paired with valid-empty continuation controls. Combined-source
-qualification remains pending; separate parent results do not establish
-completion on this corrected candidate.
+selection, paired with valid-empty continuation controls. Actual corrected
+combined source `2639c68fee` passes 118 owner reports, six root region reports,
+ten selected rows and 17 runner tests. Full dispatch vectors/counters/certainty
+and eight SVG strings match the original three controls under both policies.
+Nineteen bodies pass on MSRV; 57 WASM executions pass. The seven root SVG suites
+pass sixteen reports and BRep/IO passes 996. Strict owner/root lint passes.
+These actual combined-source receipts do not qualify all 449 rows, general
+source conformance or whole-operation resource closure. A new full publication
+gate and immutable evidence closeout remain pending.
