@@ -1346,7 +1346,66 @@ fn sampled_ellipse_path(
     closed_path(&points)
 }
 
-fn rectangle_path(attrs: &svg::node::Attributes, options: SvgOptions) -> SvgResult<CurvePath2> {
+fn rectangle_path(
+    attrs: &svg::node::Attributes,
+    options: SvgOptions,
+    materialize: bool,
+) -> SvgResult<Option<CurvePath2>> {
+    let x = exact_number(attrs, "x", Some(0.0))?;
+    let y = exact_number(attrs, "y", Some(0.0))?;
+    let width = exact_number(attrs, "width", None)?;
+    let height = exact_number(attrs, "height", None)?;
+    let rx_attr = attrs
+        .get("rx")
+        .map(|_| exact_number(attrs, "rx", None))
+        .transpose()?;
+    let ry_attr = attrs
+        .get("ry")
+        .map(|_| exact_number(attrs, "ry", None))
+        .transpose()?;
+    let (rx, ry) = match (rx_attr, ry_attr) {
+        (None, None) => (Real::zero(), Real::zero()),
+        (Some(rx), None) => (rx.clone(), rx),
+        (None, Some(ry)) => (ry.clone(), ry),
+        (Some(rx), Some(ry)) => (rx, ry),
+    };
+    let mut unrounded = false;
+    for (value, dimension) in [(&width, true), (&height, true), (&rx, false), (&ry, false)] {
+        let sign = svg_real_sign(value).ok_or_else(|| {
+            SvgError::Exact(ExactCurveError::blocked_unattributed(
+                CurveOperation2::Classification,
+                crate::UncertaintyReason::RealSign,
+            ))
+        })?;
+        if sign == RealSign::Negative || (dimension && sign == RealSign::Zero) {
+            return Err(SvgError::MalformedInput(
+                if dimension {
+                    "rectangle dimensions must be positive"
+                } else {
+                    "rectangle corner radii must be finite and non-negative"
+                }
+                .into(),
+            ));
+        }
+        unrounded |= !dimension && sign == RealSign::Zero;
+    }
+    if !materialize {
+        return Ok(None);
+    }
+    if unrounded {
+        let right = &x + &width;
+        let top = &y + &height;
+        return closed_path(&[
+            Point2::new(x.clone(), y.clone()),
+            Point2::new(right.clone(), y),
+            Point2::new(right, top.clone()),
+            Point2::new(x, top),
+        ])
+        .map(Some);
+    }
+
+    // Retain the existing sampled rounded-shape calculation. Its source
+    // fidelity is separate from the exact native unrounded boundary above.
     let x = number(attrs, "x", Some(0.0))?;
     let y = number(attrs, "y", Some(0.0))?;
     let width = number(attrs, "width", None)?;
@@ -1386,7 +1445,8 @@ fn rectangle_path(attrs: &svg::node::Attributes, options: SvgOptions) -> SvgResu
                 real(y + height, "rectangle y")?,
             ),
             Point2::new(real(x, "rectangle x")?, real(y + height, "rectangle y")?),
-        ]);
+        ])
+        .map(Some);
     }
 
     let segments = (options.segments_for_radius(rx.max(ry))? / 4).max(1);
@@ -1405,7 +1465,7 @@ fn rectangle_path(attrs: &svg::node::Attributes, options: SvgOptions) -> SvgResu
             ));
         }
     }
-    closed_path(&boundary)
+    closed_path(&boundary).map(Some)
 }
 
 fn path_as_native_wire(path: &CurvePath2) -> Option<CurveString2> {
@@ -1602,7 +1662,12 @@ pub fn import_svg_document_with_options(
         // selecting successful empty geometry. Their existing constructors
         // run below; geometry conversion skips transforms and arrangement
         // when hidden. Other primitive handling retains its existing scope.
-        if !context.visible() && !matches!(name, tag::Line | tag::Polygon | tag::Polyline) {
+        if !context.visible()
+            && !matches!(
+                name,
+                tag::Line | tag::Polygon | tag::Polyline | tag::Rectangle
+            )
+        {
             continue;
         }
 
@@ -1658,12 +1723,15 @@ pub fn import_svg_document_with_options(
                     )?
                 }
                 tag::Rectangle => {
-                    let path = rectangle_path(&attrs, options)?;
-                    geometry_from_paths(
-                        std::slice::from_ref(&path),
-                        std::slice::from_ref(&path),
-                        context,
-                    )?
+                    let materialize = context.visible() && (context.fills() || context.strokes());
+                    match rectangle_path(&attrs, options, materialize)? {
+                        Some(path) => geometry_from_paths(
+                            std::slice::from_ref(&path),
+                            std::slice::from_ref(&path),
+                            context,
+                        )?,
+                        None => SvgGeometry2::empty(),
+                    }
                 }
                 tag::Line => {
                     let path = open_path(&[

@@ -1,5 +1,9 @@
 #![cfg(feature = "svg-io")]
 
+#[macro_use]
+#[path = "../crates/hypercurve/src/test_macros.rs"]
+mod test_macros;
+
 use csgrs::io::svg::{export_svg, import_svg};
 use hypercurve::{
     BooleanOp, CircularArc2, CurvePath2, CurveRegion2, FillRule, OffsetCornerStyle2, Point2,
@@ -538,6 +542,110 @@ fn svg_adapter_combines_exact_primitive_coordinates_paint_and_transforms() {
                     .unwrap()
                     .is_empty()
             );
+            Ok::<_, csgrs::io::IoError>(())
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        outcome.into_unverified().unwrap();
+    }
+}
+
+#[test]
+fn svg_adapter_preserves_exact_rectangles_and_validated_empty_selection() {
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            // Independent bounds after scale(2, 3), then translate(.1, .2).
+            let points = [
+                Point2::new(r!(3 / 10), r!(4 / 5)),
+                Point2::new(r!(9 / 10), r!(4 / 5)),
+                Point2::new(r!(9 / 10), r!(2)),
+                Point2::new(r!(3 / 10), r!(2)),
+            ];
+            let expected = CurveRegion2::try_from_boundary_paths(
+                &[CurvePath2::try_new(
+                    (0..4)
+                        .map(|i| {
+                            hypercurve::Curve2::try_line(
+                                points[i].clone().into(),
+                                points[(i + 1) % 4].clone().into(),
+                            )
+                            .unwrap()
+                        })
+                        .collect(),
+                )
+                .unwrap()],
+                FillRule::NonZero,
+            )
+            .unwrap();
+            for corners in ["", r#"rx="-0" ry=".1""#, r#"rx="1e-400" ry="0""#] {
+                let document = format!(
+                    r#"<svg opacity="1e-200"><g opacity="1e-200" transform="translate(.1 .2)"><rect {corners} x=".1" y=".2" width=".3" height=".4" transform="scale(2 3)" fill-opacity="1e-400%"/></g></svg>"#
+                );
+                let (region, wires, paths) = import_svg(&document)?;
+                assert!(!region.is_empty(), "{corners}");
+                assert!(wires.is_empty() && paths.is_empty());
+                assert_eq!(region.loop_role_counts().unwrap(), (1, 0));
+                assert!(
+                    region
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+                let text = export_svg(&region, &wires, &paths)?;
+                let (replayed, wires, paths) = import_svg(&text)?;
+                assert!(wires.is_empty() && paths.is_empty());
+                assert_eq!(export_svg(&replayed, &wires, &paths)?, text);
+                assert!(
+                    replayed
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+                let removed = replayed
+                    .boolean_region(&expected, BooleanOp::Difference)
+                    .unwrap();
+                assert!(removed.is_empty());
+                assert!(
+                    removed
+                        .boolean_region(&expected, BooleanOp::Union)
+                        .unwrap()
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+            }
+            for document in [
+                r#"<svg opacity="0"><rect width="1e-400" height="1e-400" rx="1e-400" ry="1e-400"/></svg>"#,
+                r#"<svg><rect fill="none" stroke="none" x="1e308" width="1e308" height="1" rx="1" ry="1"/></svg>"#,
+            ] {
+                let (empty, wires, paths) = import_svg(document)?;
+                assert!(empty.is_empty() && wires.is_empty() && paths.is_empty());
+                let text = export_svg(&empty, &wires, &paths)?;
+                let (replayed, wires, paths) = import_svg(&text)?;
+                assert!(replayed.is_empty() && wires.is_empty() && paths.is_empty());
+                assert_eq!(export_svg(&replayed, &wires, &paths)?, text);
+                assert!(
+                    replayed
+                        .boolean_region(&expected, BooleanOp::Union)
+                        .unwrap()
+                        .boolean_region(&expected, BooleanOp::Xor)
+                        .unwrap()
+                        .is_empty()
+                );
+            }
+            for document in [
+                r#"<svg opacity="0"><rect width="1" height="1" rx="-1e-400"/></svg>"#,
+                r#"<svg><rect display="none" x="NaN" width="1" height="1"/></svg>"#,
+                r#"<svg><rect fill="none" stroke="none" width="-1e-400" height="1"/></svg>"#,
+            ] {
+                assert!(
+                    matches!(import_svg(document),
+                    Err(csgrs::io::IoError::MalformedInput(detail)) if !detail.is_empty()),
+                    "{document}"
+                );
+            }
             Ok::<_, csgrs::io::IoError>(())
         });
         assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);

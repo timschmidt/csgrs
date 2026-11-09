@@ -1,5 +1,29 @@
 # Migrations
 
+## Exact unrounded SVG rectangles and validated empty selection (2026-11-09)
+
+Rectangle `x`, `y`, `width` and `height` now retain exact decimal/scientific
+values and exact endpoint sums for unrounded boundaries. Missing or exactly
+zero nonnegative corner radii select four native lines, including when just
+one radius is zero. Positive dimensions such as `1e-400`, distinct extents
+above `2^53`, and finite source attributes whose exact sum exceeds binary64
+remain native geometric data. Native SVG export still requires its existing
+finite display projection; native construction does not impose that limit.
+
+Dimension positivity and corner-radius nonnegativity are checked exactly.
+Negative tiny radii that previously rounded to zero now return
+`SvgError::MalformedInput`. Hidden or unpainted rectangles validate all required
+attributes before successful empty selection. Valid hidden rounded rectangles
+remain empty without requiring sampled geometry to be materialized, including
+otherwise overflowing or underflowing intermediate floating calculations.
+
+This intentionally corrects previously rounded geometry and invalid-input
+admission. Public signatures, codec versions, fill rules and arrangement
+authority are unchanged. Visible nonzero-radius rounded rectangles retain their
+existing sampled calculation; analytic rounded/circle/ellipse fidelity, broad
+source conformance and total arithmetic-work/memory/cancellation bounds remain
+separate open work.
+
 ## Hidden native SVG input validation (2026-11-09)
 
 Native lines and polygon/polyline point lists now validate their coordinates,
@@ -40,8 +64,7 @@ The existing numeric syntax/finite-range, point-count and degeneracy checks
 remain. Omitted internal line coordinates still default to exact zero. Public
 signatures, native codec versions, paint selection and arrangement authority
 are unchanged. Native metadata remains authoritative when display coordinates
-round together. Rectangle attributes and sampled circle/ellipse/rounded-shape
-conventions remain separate work; no complete SVG source-conformance or total
+round together. Sampled circle/ellipse/rounded-shape conventions remain separate work; no complete SVG source-conformance or total
 resource-bound claim is added.
 
 ## Exact SVG transform ingress (2026-11-09)

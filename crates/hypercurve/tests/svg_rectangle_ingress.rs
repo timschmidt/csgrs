@@ -332,3 +332,45 @@ fn svg_rectangle_construction_does_not_require_finite_float_sums() {
         assert_eq!(outcome.certainty, CurveCertainty::Certified);
     }
 }
+
+#[test]
+fn svg_hidden_rounded_rectangles_do_not_require_sampled_materialization() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for selection in [
+            r#"opacity="0""#,
+            r#"display="none""#,
+            r#"visibility="hidden""#,
+            r#"fill="none" stroke="none""#,
+        ] {
+            for attributes in [
+                r#"width="1e-400" height="1e-400" rx="1e-400" ry="1e-400""#,
+                r#"x="1e308" width="1e308" height="1" rx="1" ry="1""#,
+            ] {
+                let outcome = support::under(&policy, || {
+                    let imported = import_svg_document(&format!(
+                        "<svg><rect {selection} {attributes}/></svg>"
+                    ))?;
+                    assert!(imported.is_empty(), "{selection} {attributes}");
+                    let text = export_svg_document(&imported)?;
+                    let replayed = import_svg_document(&text)?;
+                    assert!(replayed.is_empty());
+                    assert_eq!(export_svg_document(&replayed)?, text);
+                    let unit = expected_rectangle([r!(0), r!(0), r!(1), r!(1)]);
+                    let recovered = replayed
+                        .region()
+                        .boolean_region(&unit, BooleanOp::Union)
+                        .unwrap();
+                    assert!(
+                        recovered
+                            .boolean_region(&unit, BooleanOp::Xor)
+                            .unwrap()
+                            .is_empty()
+                    );
+                    Ok::<_, SvgError>(())
+                })
+                .unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            }
+        }
+    }
+}

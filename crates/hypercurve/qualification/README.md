@@ -615,3 +615,16 @@ A new sixth paint witness and 449th row cover native validation before hidden
 selection, paired with valid-empty continuation controls. Combined-source
 qualification remains pending; separate parent results do not establish
 completion on this corrected candidate.
+
+The rectangle continuation registers seven candidate rows: exact unrounded
+fields/sums, zero-radius conventions with exact paint/transforms, typed guards,
+fresh native replay and further operations, valid hidden empty selection,
+native sums beyond binary64, and valid hidden rounded descriptions without
+sampled materialization. Independent exact boundaries and full XOR expectations
+remain separate from deterministic serialization. The original six owner bodies
+are retained and a seventh closes valid-hidden empty selection. Initial owner
+checks pass; selected runner and broader final-source qualification remain
+pending in the [admission](../../../docs/research/svg-exact-native-attributes-2026-11-09.md#exact-unrounded-rectangle-attributes).
+Visible rounded controls preserve sampled output and certainty with explicit
+new guard/parse dispatch costs. Their analytic source fidelity, other sampled
+families, general operation closure and total resource bounds remain open.

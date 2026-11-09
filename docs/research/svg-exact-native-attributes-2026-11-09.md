@@ -66,3 +66,52 @@ fidelity, broader SVG/OpenSCAD source conformance, arbitrary algebraic operation
 closure and whole-operation work/heap/cancellation control remain open. The
 finite grammar envelope is preserved; no uniform practical completion bound is
 claimed for arbitrarily large scalar descriptions.
+
+## Exact unrounded rectangle attributes
+
+The rectangle continuation is local correctness work in Hypercurve, P1, P6,
+P8–P9, P12, P17–P19, P25, P27 and P39. Its domain is the existing finite numeric
+attribute syntax, positive exact dimensions and nonnegative corner radii. An
+absent or exactly zero effective radius selects an unrounded rectangle.
+`CurveRegion2` and its existing arrangement remain the filled-set authority.
+Public signatures and native codec versions do not change.
+
+On acceptance-only `7b4782d7bb`, the original six witnesses compile and execute:
+five fail assertions and one valid-hidden control passes. Failures reproduce
+rounded decimal sets, negative-underflow radii, replay/transform disagreement
+and overflow of a finite-source coordinate sum. The seven-case continuation
+retains those six bodies as a byte-identical prefix. A seventh witness failed
+on the first correction: valid hidden rounded input with positive `1e-400`
+dimensions was still rejected by sampled materialization. It now validates the
+exact fields and selects empty before that optional work.
+
+Authored fields reuse `exact_number` and the existing exact scalar sign owner.
+Native unrounded endpoints use exact addition. Rounded visible geometry keeps
+its existing sampled calculation. Valid hidden/unpainted geometry retains
+successful empty selection; invalid fields still fail typed before selection.
+No approximation, fitting or second arrangement replaces the exact lines.
+
+The seven owner tests pass under both explicit policies, with two verified
+fresh native child replays and independent rational-boundary XOR expectations.
+They cover decimal/scientific fields, adjacent large integers, tiny extents,
+zero-radius conventions, exact paint/transform composition, native replay,
+reflection, Boolean/empty recovery, typed invalid fields and valid hidden
+rounded attributes. The finite-source `1e308 + 1e308` witness qualifies native
+construction and Booleans only: native SVG export still has its finite display
+projection restriction.
+
+Eight visible rounded controls (four cases under both policies) retain identical
+serialized sampled boundaries and certainty against the unchanged baseline.
+Exact parsing and four new sign guards add measured dispatch/rational work;
+all complete vectors are retained. The second correction retains exactly the
+first correction's visible control vectors and rational counters. These are
+correctness changes, not a behavior-preserving refactor or a speedup claim.
+They do not establish analytic rounded-source fidelity.
+
+Seven rows are registered alongside the unchanged 449 original catalog objects.
+The root adapter has a new independent exact rectangle/paint/transform witness.
+Selected runner, complete affected owner/root/BRep checks, strict lint,
+MSRV/WASM, committed-source attribution, archive/index closeout and a fresh
+integrated-source publication gate remain pending. Initial raw evidence is
+local under `target/d03-native-corpus-20261108/svg-rectangle-admission-20261109`;
+its owner results do not qualify the whole catalog or a final integrated source.
