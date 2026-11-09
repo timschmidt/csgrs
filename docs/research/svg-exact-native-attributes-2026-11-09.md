@@ -145,3 +145,21 @@ Archive/index closeout and a fresh complete pre-push gate on the eventual
 integrated source remain pending. Local qualification does not establish broad
 SVG/OpenSCAD source conformance, analytic sampled-shape fidelity, arbitrary
 algebraic operation closure or total work/heap/cancellation control.
+
+### Integrated rounded sampler limit classification
+
+On integrated `7841be10b8`, two new owner assertions and one root assertion
+reproduce valid visible rounded input being reported as malformed. Positive
+`1e-400` dimensions underflow the sampler; finite `x = width = 1e308` overflow
+its computed bound. The owner is the existing Hypercurve sampled representation
+boundary (P6, P14, P16, P18, P25, P27, P39). Exact validation already establishes
+that these source descriptions are valid. The correction returns
+`SvgError::Unsupported` before sampled construction; the public root adapter
+preserves that category. This is a declared implementation gap, not exact
+rounded completion, invalid geometry or exhausted resources.
+
+Two additional catalog rows assert unsupported outcomes, preserving all 456
+previous objects. The seven qualified rectangle and seven root test bodies
+remain byte-identical prefixes. Integrated-source owner, portability, downstream
+and publication qualification are pending; the earlier committed receipts above
+retain their original source attribution.

@@ -19645,6 +19645,80 @@
           "assertion": "Subsequent union recovers the independent unit square."
         }
       ]
+    },
+    {
+      "id": "svg_rounded_dimension_underflow",
+      "target": "svg_rectangle_ingress",
+      "test": "svg_visible_rounded_sampling_limits_remain_unsupported",
+      "owner": "Hypercurve SVG sampled rounded representation boundary",
+      "properties": [
+        "P6",
+        "P14",
+        "P16",
+        "P18",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "domain": "Visible rounded rectangle with exact positive dimensions and radii 1e-400.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "CircularArc",
+        "RationalQuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "The finite exact source is valid; the legacy binary64 sampler cannot represent this case. Return a typed representation blocker before publishing geometry. No analytic rounded-curve completion is claimed.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "Both explicit policies return SvgError::Unsupported with a nonempty diagnostic, rather than malformed input, empty geometry or resource exhaustion."
+        }
+      ],
+      "oracle": "Direct typed error assertion on exact-positive finite source; root adapter separately verifies IoError::Unsupported for SVG.",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "svg_rounded_coordinate_overflow",
+      "target": "svg_rectangle_ingress",
+      "test": "svg_visible_rounded_coordinate_overflow_is_unsupported",
+      "owner": "Hypercurve SVG sampled rounded representation boundary",
+      "properties": [
+        "P6",
+        "P14",
+        "P16",
+        "P18",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "domain": "Visible rounded rectangle with individually finite x and width 1e308, height/radii 1; its exact right bound exceeds binary64.",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "CircularArc",
+        "RationalQuadraticBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "The finite exact source is valid; the legacy binary64 sampler cannot represent this case. Return a typed representation blocker before publishing geometry. No analytic rounded-curve completion is claimed.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "Both explicit policies return SvgError::Unsupported with a nonempty diagnostic, rather than malformed input, empty geometry or resource exhaustion."
+        }
+      ],
+      "oracle": "Direct typed error assertion on exact-positive finite source; root adapter separately verifies IoError::Unsupported for SVG.",
+      "timeout_seconds": 300
     }
   ]
 }

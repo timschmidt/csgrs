@@ -17,6 +17,12 @@ attributes before successful empty selection. Valid hidden rounded rectangles
 remain empty without requiring sampled geometry to be materialized, including
 otherwise overflowing or underflowing intermediate floating calculations.
 
+Valid visible rounded rectangles whose dimensions underflow or computed bounds
+overflow the legacy binary64 sampler now return `SvgError::Unsupported`, retained
+as SVG unsupported by the root adapter. They previously returned malformed-input
+errors. This records a representation gap; it does not complete analytic
+rounded-rectangle support or authorize source approximation.
+
 This intentionally corrects previously rounded geometry and invalid-input
 admission. Public signatures, codec versions, fill rules and arrangement
 authority are unchanged. Visible nonzero-radius rounded rectangles retain their

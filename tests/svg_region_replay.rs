@@ -652,3 +652,31 @@ fn svg_adapter_preserves_exact_rectangles_and_validated_empty_selection() {
         outcome.into_unverified().unwrap();
     }
 }
+
+#[test]
+fn svg_adapter_keeps_rounded_sampling_limits_unsupported() {
+    for policy in [
+        hypercurve::PredicatePolicy::STRICT,
+        hypercurve::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let outcome = hypercurve::evaluate_under(policy, || {
+            for attributes in [
+                r#"width="1e-400" height="1e-400" rx="1e-400" ry="1e-400""#,
+                r#"x="1e308" width="1e308" height="1" rx="1" ry="1""#,
+            ] {
+                let document = format!("<svg><rect {attributes}/></svg>");
+                let error = match import_svg(&document) {
+                    Err(error) => error,
+                    Ok(_) => panic!("sampler limit must be explicit for {document}"),
+                };
+                assert!(
+                    matches!(error, csgrs::io::IoError::Unsupported { format: "SVG", .. }),
+                    "valid source must preserve its unavailable representation"
+                );
+            }
+            Ok::<_, csgrs::io::IoError>(())
+        });
+        assert_eq!(outcome.certainty(), hypercurve::CurveCertainty::Certified);
+        outcome.into_unverified().unwrap();
+    }
+}

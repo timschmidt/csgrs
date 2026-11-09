@@ -374,3 +374,34 @@ fn svg_hidden_rounded_rectangles_do_not_require_sampled_materialization() {
         }
     }
 }
+
+#[test]
+fn svg_visible_rounded_sampling_limits_remain_unsupported() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let document =
+            r#"<svg><rect width="1e-400" height="1e-400" rx="1e-400" ry="1e-400"/></svg>"#;
+        let error = match support::under(&policy, || import_svg_document(document)) {
+            Err(error) => error,
+            Ok(_) => panic!("sampler limit must be explicit for {document}"),
+        };
+        assert!(
+            matches!(&error, SvgError::Unsupported(detail) if !detail.is_empty()),
+            "valid source must retain an unsupported-representation outcome: {error:?}"
+        );
+    }
+}
+
+#[test]
+fn svg_visible_rounded_coordinate_overflow_is_unsupported() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        let document = r#"<svg><rect x="1e308" width="1e308" height="1" rx="1" ry="1"/></svg>"#;
+        let error = match support::under(&policy, || import_svg_document(document)) {
+            Err(error) => error,
+            Ok(_) => panic!("sampler limit must be explicit for {document}"),
+        };
+        assert!(
+            matches!(&error, SvgError::Unsupported(detail) if !detail.is_empty()),
+            "valid source must retain an unsupported-representation outcome: {error:?}"
+        );
+    }
+}

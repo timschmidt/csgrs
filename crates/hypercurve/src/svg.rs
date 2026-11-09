@@ -1410,9 +1410,9 @@ fn rectangle_path(
     let y = number(attrs, "y", Some(0.0))?;
     let width = number(attrs, "width", None)?;
     let height = number(attrs, "height", None)?;
-    if width <= 0.0 || height <= 0.0 {
-        return Err(SvgError::MalformedInput(
-            "rectangle dimensions must be positive".into(),
+    if width <= 0.0 || height <= 0.0 || !(x + width).is_finite() || !(y + height).is_finite() {
+        return Err(SvgError::Unsupported(
+            "rounded rectangle cannot be sampled with binary64 dimensions and bounds".into(),
         ));
     }
     let rx_attr = attrs

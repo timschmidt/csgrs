@@ -640,3 +640,9 @@ pending.
 Visible rounded controls preserve sampled output and certainty with explicit
 new guard/parse dispatch costs. Their analytic source fidelity, other sampled
 families, general operation closure and total resource bounds remain open.
+
+The integrated continuation adds two explicitly unsupported rows for valid
+visible rounded descriptions beyond the legacy sampler's binary64 dimensions
+and bounds. The catalog now has 458 rows; these two blocker assertions are not
+geometric completion. The original 456 objects and seven rectangle bodies remain
+unchanged. New integrated-source qualification is pending.
