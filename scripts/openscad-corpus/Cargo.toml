@@ -1,0 +1,26 @@
+[package]
+name = "csgrs-openscad-corpus-worker"
+version = "0.0.0"
+edition = "2024"
+
+[workspace]
+
+[dependencies]
+synaps-cad = { path = "../../../synaps-cad" }
+csgrs = { path = "../.." }
+hypercurve = { path = "../../crates/hypercurve", features = ["svg"] }
+hypermesh = { path = "../../crates/hypermesh" }
+openscad-rs = { path = "../../../openscad-rs" }
+serde_json = "1"
+roxmltree = "0.20"
+
+[patch.crates-io]
+hypercurve = { path = "../../crates/hypercurve" }
+hyperlattice = { path = "../../crates/hyperlattice" }
+hyperlimit = { path = "../../crates/hyperlimit" }
+hypermesh = { path = "../../crates/hypermesh" }
+hyperphysics = { path = "../../crates/hyperphysics" }
+hyperreal = { path = "../../crates/hyperreal" }
+hypersdf = { path = "../../crates/hypersdf" }
+hypersolve = { path = "../../crates/hypersolve" }
+hypertri = { path = "../../crates/hypertri" }

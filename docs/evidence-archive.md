@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `5078d920e0fade0f177299879a761e5194dcec8d` (445 records) |
-| Local research branch | `research-svg-path-diagnostic-correction-20261108` |
+| Local manifest commit | `5ba8ed4da5aec2cf1db744aa0d3b7502e902ad05` (447 records) |
+| Local research branch | `research-openscad-corpus-indexed-closure-20261109` |
 
-The local manifest includes ten unpublished descendants. The existing
+The local manifest includes twelve unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -72,6 +72,19 @@ inputs and complete partial results. Those old-source results do not qualify
 the corrected commit. Both inputs are promoted to permanent seeds without
 weakening an original limit; fresh complete qualification remains required.
 The [admission](research/svg-decimal-ingress-2026-11-08.md) states the boundaries.
+
+The final SVG-main qualification record adds 12,580 files and 349,092,875 bytes,
+SHA-256 `966854548257a876c4c634058043d95a90a347a9245b5bcd453696f7ece5b5f0`.
+It retains all 280 successful required commands, original sanitizer campaigns,
+and the actual publication of `29d8b8ce69`. That pass does not qualify later edits.
+The corpus and indexed-closure record adds 7,024 files and 94,487,164 bytes,
+SHA-256 `d15e3bab94c4d1322e29c722a5c99ca91a18e46b578f9df0ae2674547bbf382a`.
+It retains all 524 original prototype outcomes, bounded maintained controls,
+the local caller-context repair and its B-text blocker, and the failing and
+passing indexed PWN witnesses. Extracted third-party runtimes and caches are
+excluded. Full qualification of the new source remains separate. See the
+[corpus admission](research/openscad-corpus-2026-11-09.md) and
+[closure admission](research/indexed-pwn-closure-2026-11-09.md).
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,
