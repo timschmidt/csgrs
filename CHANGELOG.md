@@ -46,6 +46,10 @@ migrations, including changed serialized output, are listed in
   values and opacity above one retain typed validation errors even when
   binary64 would round them onto a valid boundary. See MIGRATIONS.
 
+- Unrounded SVG rectangles retain exact decimal/scientific attributes and
+  endpoint sums. Exact dimension/radius validation precedes hidden or unpainted
+  selection; valid empty rectangles do not require sampled rounded geometry.
+  Visible rounded-shape conventions remain unchanged. See MIGRATIONS.
 - Hidden native SVG lines and point lists validate coordinates, arity and
   degeneracy before returning successful empty geometry.
 - Native SVG line attributes and polygon/polyline point lists retain exact

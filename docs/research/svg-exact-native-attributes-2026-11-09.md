@@ -66,8 +66,82 @@ are actual combined-source receipts, not attribution of parent-only checks.
 Immutable evidence closeout and a complete new publication gate remain pending;
 no evidence has been uploaded.
 
-Rectangle coordinates/dimensions, sampled circle/ellipse/rounded-rectangle
+The continuation below addresses unrounded rectangle coordinates/dimensions
+beyond that initial line/point-list increment. Sampled circle/ellipse/rounded
 fidelity, broader SVG/OpenSCAD source conformance, arbitrary algebraic operation
 closure and whole-operation work/heap/cancellation control remain open. The
 finite grammar envelope is preserved; no uniform practical completion bound is
 claimed for arbitrarily large scalar descriptions.
+
+## Exact unrounded rectangle attributes
+
+The rectangle continuation is local correctness work in Hypercurve, P1, P6,
+P8–P9, P12, P17–P19, P25, P27 and P39. Its domain is the existing finite numeric
+attribute syntax, positive exact dimensions and nonnegative corner radii. An
+absent or exactly zero effective radius selects an unrounded rectangle.
+`CurveRegion2` and its existing arrangement remain the filled-set authority.
+Public signatures and native codec versions do not change.
+
+On acceptance-only `7b4782d7bb`, the original six witnesses compile and execute:
+five fail assertions and one valid-hidden control passes. Failures reproduce
+rounded decimal sets, negative-underflow radii, replay/transform disagreement
+and overflow of a finite-source coordinate sum. The seven-case continuation
+retains those six bodies as a byte-identical prefix. A seventh witness failed
+on the first correction: valid hidden rounded input with positive `1e-400`
+dimensions was still rejected by sampled materialization. It now validates the
+exact fields and selects empty before that optional work.
+
+Authored fields reuse `exact_number` and the existing exact scalar sign owner.
+Native unrounded endpoints use exact addition. Rounded visible geometry keeps
+its existing sampled calculation. Valid hidden/unpainted geometry retains
+successful empty selection; invalid fields still fail typed before selection.
+No approximation, fitting or second arrangement replaces the exact lines.
+
+The seven owner tests pass under both explicit policies, with two verified
+fresh native child replays and independent rational-boundary XOR expectations.
+They cover decimal/scientific fields, adjacent large integers, tiny extents,
+zero-radius conventions, exact paint/transform composition, native replay,
+reflection, Boolean/empty recovery, typed invalid fields and valid hidden
+rounded attributes. The finite-source `1e308 + 1e308` witness qualifies native
+construction and Booleans only: native SVG export still has its finite display
+projection restriction.
+
+Eight visible rounded controls (four cases under both policies) retain identical
+serialized sampled boundaries and certainty against the unchanged baseline.
+Exact parsing and four new sign guards add measured dispatch/rational work;
+all complete vectors are retained. The second correction retains exactly the
+first correction's visible control vectors and rational counters. These are
+correctness changes, not a behavior-preserving refactor or a speedup claim.
+They do not establish analytic rounded-source fidelity.
+
+Seven rows are registered alongside the unchanged 449 original catalog objects.
+The root adapter adds an independent exact rectangle/paint/transform witness.
+On the bytes committed as `0963cec833`, the twelve owner SVG harnesses and root
+adapter harness pass 132 parent reports without failures or ignores. Seventeen
+selected capability rows pass; this does not qualify all 456 catalog rows.
+Strict owner all-target/all-feature Clippy, formatting and whitespace checks
+pass. An earlier whole-private-helper include failed the final formatter check;
+its raw attempt remains. The root shares the existing literal macros and uses
+the public policy/receipt API, leaving the owning helper unchanged, and the
+entire affected run was repeated successfully.
+
+Rust 1.95.0 passes all 26 maintained decimal, paint and rectangle bodies and
+strict owner SVG Clippy. Those exact bodies execute 78 times across three fresh
+pure Rust WASM instances, with zero host imports and the original compiled
+stack. Native child-process guards remain unchanged. The module is 15,197,186
+bytes (SHA-256 `fc571144e6c80808615e152867380c9362c0a3840ef7cb2d978785a2aeffbbbe`).
+These observations do not establish a public ABI or a total memory bound.
+
+The seven root SVG harnesses and 110 BRep/IO harnesses pass 1,013 parent reports
+without failures or ignores; strict root all-target/all-feature Clippy also
+passes. Portability and downstream commands execute on the immutable commit
+with all 3,839 source inputs unchanged. The initial owner run is tied to that
+commit by an exact checked-source byte comparison. Raw command/output digests,
+source/fixture proofs, full rounded-control vectors and the original red cases
+are retained locally under
+`target/d03-native-corpus-20261108/svg-rectangle-admission-20261109`.
+
+Archive/index closeout and a fresh complete pre-push gate on the eventual
+integrated source remain pending. Local qualification does not establish broad
+SVG/OpenSCAD source conformance, analytic sampled-shape fidelity, arbitrary
+algebraic operation closure or total work/heap/cancellation control.

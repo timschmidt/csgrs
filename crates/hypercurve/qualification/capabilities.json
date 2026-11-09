@@ -19298,6 +19298,353 @@
           "assertion": "Valid hidden native primitives remain certified empty and restore the independent unit square by union."
         }
       ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_exact_rectangle_values",
+      "test": "svg_unrounded_rectangles_retain_exact_values_and_distinct_extents",
+      "domain": "Unrounded decimal/scientific rectangles, adjacent integer extents above 2^53 and positive 1e-400 dimensions; finite numeric attribute grammar.",
+      "semantics": "Original tokens and exact sums define four native line supports, not rounded coordinates.",
+      "oracle": "Independent rational bounds, native-family/loop assertions, complete XOR, native replay and separate deterministic re-export.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Each named rectangle retains four native Line supports."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Complete XOR with the independent rational rectangle is empty."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Native replay preserves the exact expected set even when display endpoints round together."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_rectangle_zero_corners",
+      "test": "svg_zero_corner_rectangles_combine_exact_paint_and_transform",
+      "domain": "Absent, signed-zero and mixed zero/nonzero corner radii with tiny inherited paint and exact nested affine transforms.",
+      "semantics": "An exactly zero nonnegative corner disables rounding; exact rectangle data composes with exact selection and transforms.",
+      "oracle": "Independent transformed rational rectangle and full XOR under both policies.",
+      "claims": [
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "Every named zero-corner rectangle selects the independently expected regularized set."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "Inherited translation and local scale preserve exact endpoint sums and selected paint."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_rectangle_typed_guards",
+      "test": "svg_rectangle_dimensions_and_corner_guards_remain_typed",
+      "domain": "Nonpositive dimensions, negative-underflow radii, malformed/nonfinite/missing fields paired with ordinary, hidden or disabled paint.",
+      "semantics": "Exact positive dimensions and nonnegative corner guards are validated before empty selection.",
+      "oracle": "SvgError::MalformedInput with nonempty diagnostics for each invalid case.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Hidden or unpainted selection never conceals invalid rectangle attributes."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_rectangle_native_continuation",
+      "test": "svg_rectangle_native_replay_continues_through_transform_and_boolean",
+      "domain": "Exact decimal rectangle, native metadata replay, two fresh native children, reflected similarity and subsequent Boolean/empty recovery.",
+      "semantics": "Native interchange and generated results retain the independent exact region through further supported operations.",
+      "oracle": "Independent rational boundary, verified fresh child test completion, full XOR, separate deterministic re-export and transform/Boolean identities.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "Two fresh native child processes execute the same exact region witness."
+        },
+        {
+          "stage": "transforms",
+          "outcome": "exact_success",
+          "assertion": "A reflected similarity agrees with the independently transformed boundary."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Replay remains consumable by further difference and union."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "Difference reaches canonical empty geometry and union recovers the independent expected set."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_rectangle_empty",
+      "test": "svg_valid_hidden_rectangles_remain_empty_and_composable",
+      "domain": "Valid unrounded rectangles selected empty by zero opacity, display none, hidden visibility or absent paint.",
+      "semantics": "Validated invisible geometry is successful empty, preserving subsequent consumption.",
+      "oracle": "Native empty replay/deterministic re-export and exact union/XOR against an independent unit square.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Valid hidden and unpainted rectangles return canonical empty geometry."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "Native replay preserves selected empty geometry."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Union with the independent unit square recovers that exact set."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_rectangle_large_native_sums",
+      "test": "svg_rectangle_construction_does_not_require_finite_float_sums",
+      "domain": "Finite authored x/width 1e308 with exact right bound 2e308; native construction/Boolean domain only.",
+      "semantics": "Exact native rectangle construction does not require a finite binary64 intermediate sum. Native SVG finite-display export remains a separately restricted boundary.",
+      "oracle": "Independent arbitrary-size integer bounds, native line/fill assertions and complete XOR/Boolean/empty identities; no replay claim for out-of-display-range coordinates.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "The named finite-source rectangle has exact native line supports beyond binary64 sum range."
+        },
+        {
+          "stage": "region_admission",
+          "outcome": "exact_success",
+          "assertion": "The complete native set equals its independent exact-boundary oracle."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "successful_empty",
+          "assertion": "The result supports subsequent Boolean removal and empty recovery."
+        }
+      ]
+    },
+    {
+      "target": "svg_rectangle_ingress",
+      "owner": "Hypercurve exact SVG rectangle attributes and validated selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_rounded_rectangle_empty",
+      "test": "svg_hidden_rounded_rectangles_do_not_require_sampled_materialization",
+      "domain": "Valid hidden/unpainted rounded attribute descriptions with positive 1e-400 dimensions/radii or finite 1e308 arguments whose sum exceeds binary64.",
+      "semantics": "Exact attribute validation precedes empty selection; a valid selected-empty result does not require sampled rounded geometry materialization.",
+      "oracle": "Certified canonical empty, native empty replay/determinism and union/XOR with an independent native unit square; no visible-rounded source-fidelity claim.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Mathematically valid hidden rounded rectangles remain successful empty after validation."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "Selected empty geometry survives native interchange."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Subsequent union recovers the independent unit square."
+        }
+      ]
     }
   ]
 }
