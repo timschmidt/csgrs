@@ -2,6 +2,12 @@
 
 ## [0.1.0] - Unreleased
 
+- Certify PWN closure directly when directed indexed edges balance, after the
+  existing triangle validation. This admits closed components whose mutual
+  coordinate equality is undecided. Geometric closure remains the fallback for
+  separately indexed faces. See the
+  [admission](../../docs/research/indexed-pwn-closure-2026-11-09.md).
+
 - Make convex-hull eye scheduling independent of symbolic approximation caches.
   Equal rational scheduling scores use the least retained input index; symbolic
   inputs use input order. Exact visibility, source coordinates and typed failures

@@ -1815,10 +1815,27 @@ fn classify_indexed_edge_balance(
     decisions: &DecisionContext,
     mesh: &TriangleMeshRef<'_>,
 ) -> HypermeshResult<EdgeBalance> {
+    // A vanishing indexed boundary stays zero under the index-to-point map,
+    // even when distinct indices represent coincident points. Nondegeneracy
+    // and index validity are checked by validate_source_triangles first.
+    // This proves PWN closure, not embeddedness or manifoldness.
+    let indexed = edge_balance(mesh.triangles.iter().map(|triangle| triangle.indices()));
+    if indexed == EdgeBalance::default() {
+        crate::trace_dispatch!("pwn-closure", "indexed");
+        return Ok(indexed);
+    }
+    // An unbalanced indexed boundary may still close geometrically, as with
+    // separately indexed copies of the vertices of adjacent faces.
+    crate::trace_dispatch!("pwn-closure", "geometric");
     let canonical_indices = canonical_position_indices(decisions, mesh.positions)?;
+    Ok(edge_balance(mesh.triangles.iter().map(|triangle| {
+        triangle.indices().map(|index| canonical_indices[index])
+    })))
+}
+
+fn edge_balance(triangles: impl Iterator<Item = [usize; 3]>) -> EdgeBalance {
     let mut edge_uses: StorageHashMap<[usize; 2], [usize; 2]> = StorageHashMap::default();
-    for triangle in mesh.triangles {
-        let [a, b, c] = triangle.indices().map(|index| canonical_indices[index]);
+    for [a, b, c] in triangles {
         for [start, end] in [[a, b], [b, c], [c, a]] {
             let (key, direction) = if start < end {
                 ([start, end], 0)
@@ -1829,7 +1846,7 @@ fn classify_indexed_edge_balance(
         }
     }
 
-    Ok(edge_uses
+    edge_uses
         .values()
         .fold(EdgeBalance::default(), |mut balance, uses| {
             if uses[0] + uses[1] == 1 {
@@ -1839,7 +1856,7 @@ fn classify_indexed_edge_balance(
                 balance.unbalanced_edges += 1;
             }
             balance
-        }))
+        })
 }
 
 fn validate_non_empty_mesh_views(meshes: &[TriangleMeshRef<'_>]) -> HypermeshResult<()> {

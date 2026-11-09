@@ -297,3 +297,120 @@ fn cache_guards_preserve_unchanged_facts_without_owning_source_buffers() {
         std::mem::size_of::<Weak<[Triangle]>>()
     );
 }
+
+#[test]
+fn indexed_closed_components_do_not_require_deciding_geometric_coincidence() {
+    let sine = Real::e().sin();
+    let cosine = Real::e().cos();
+    let translation =
+        crate::test_uncertainty::terminal_zero(&sine * &sine + &cosine * &cosine - Real::one());
+    let first = cube();
+    let mut positions = first.positions.to_vec();
+    positions.extend(
+        first
+            .positions
+            .iter()
+            .map(|point| Point3::new(&point.x + &translation, point.y.clone(), point.z.clone())),
+    );
+    let mut triangles = first.triangles.to_vec();
+    triangles.extend(first.triangles.iter().map(|triangle| {
+        let [a, b, c] = triangle.indices();
+        Triangle::new(a + 8, b + 8, c + 8)
+    }));
+    for context in [STRICT, crate::test_support::APPROXIMATE_CONTEXT] {
+        let mesh = TriangleMesh::new(positions.clone(), triangles.clone());
+        assert!(mesh.is_closed_manifold(), "indexed closure witness");
+        let result = mesh
+            .validate_closed_pwn(&context)
+            .expect("closed indexed boundary needs no coincidence decision");
+        assert_eq!(result.certainty, MeshCertainty::Certified);
+    }
+}
+
+#[test]
+fn indexed_closure_keeps_triangle_validation_and_pwn_multiplicity() {
+    for context in [STRICT, crate::test_support::APPROXIMATE_CONTEXT] {
+        let mesh = cube();
+        let twice = TriangleMesh::new(
+            mesh.positions.to_vec(),
+            mesh.triangles.iter().copied().cycle().take(24).collect(),
+        );
+        assert!(!twice.is_closed_manifold());
+        assert_eq!(
+            twice.validate_closed_pwn(&context).unwrap().certainty,
+            MeshCertainty::Certified
+        );
+
+        let mut invalid = fresh(&mesh);
+        invalid.triangles = vec![Triangle::new(0, 1, 8), Triangle::new(0, 8, 1)].into();
+        assert!(matches!(
+            invalid.validate_closed_pwn(&context),
+            Err(HypermeshError::VertexIndexOutOfBounds {
+                index: 8,
+                vertex_count: 8
+            })
+        ));
+
+        let mut degenerate = fresh(&mesh);
+        degenerate.positions =
+            vec![Point3::new(Real::zero(), Real::zero(), Real::zero()); 8].into();
+        assert!(degenerate.is_closed_manifold());
+        assert!(matches!(
+            degenerate.validate_closed_pwn(&context),
+            Err(HypermeshError::DegenerateTriangle { .. })
+        ));
+
+        let mut reversed_face = fresh(&mesh);
+        Arc::make_mut(&mut reversed_face.triangles)[0] = Triangle::new(0, 2, 3);
+        assert!(matches!(
+            reversed_face.validate_closed_pwn(&context),
+            Err(HypermeshError::NonPwnInput { .. })
+        ));
+    }
+}
+
+#[cfg(feature = "dispatch-trace")]
+#[test]
+fn indexed_closure_and_geometric_fallback_have_explicit_dispatch_counts() {
+    use hyperreal::dispatch_trace::{reset, take_trace, with_recording};
+    for context in [STRICT, crate::test_support::APPROXIMATE_CONTEXT] {
+        for separately_indexed in [false, true] {
+            let mesh = cube();
+            let mesh = if separately_indexed {
+                let positions = mesh
+                    .triangles
+                    .iter()
+                    .flat_map(|triangle| {
+                        triangle
+                            .indices()
+                            .map(|index| mesh.positions[index].clone())
+                    })
+                    .collect();
+                let triangles = (0..12)
+                    .map(|i| Triangle::new(3 * i, 3 * i + 1, 3 * i + 2))
+                    .collect();
+                TriangleMesh::new(positions, triangles)
+            } else {
+                mesh
+            };
+            reset();
+            with_recording(|| {
+                assert_eq!(
+                    mesh.validate_closed_pwn(&context).unwrap().certainty,
+                    MeshCertainty::Certified
+                );
+                // The second validation consumes the retained proof.
+                mesh.validate_closed_pwn(&context).unwrap();
+            });
+            let trace = take_trace();
+            assert_eq!(
+                trace.path_count("hypermesh", "pwn-closure", "indexed"),
+                u64::from(!separately_indexed)
+            );
+            assert_eq!(
+                trace.path_count("hypermesh", "pwn-closure", "geometric"),
+                u64::from(separately_indexed)
+            );
+        }
+    }
+}
