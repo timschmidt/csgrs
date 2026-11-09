@@ -34,6 +34,9 @@ address-space limit independently; it is not an aggregate RSS or heap bound.
 Process failures and external timeouts remain separate from typed kernel
 exhaustion. Cancellation terminates owned process groups and retains partial
 observations. A completed collection can contain differences and failures.
+Reference empty/dimension diagnostics are accepted only after ordinary exit 0
+or 1. Unexpected exits produce `reference_process_failed`; a diagnostic printed
+before a crash cannot become an empty reference model.
 
 The output retains source and executable hashes, commands, diagnostics, raw
 receipts, comparison certainty, continuation identities, and per-case status.

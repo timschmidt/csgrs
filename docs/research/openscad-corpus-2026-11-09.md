@@ -26,8 +26,10 @@ internal floating geometry. No bound between those objects and the adopted
 exports has been established.
 
 An explicit producer-empty marker is distinct from missing, malformed, or
-pathless geometry. Process crashes, nonzero exits and wall timeouts override
-any partial receipt. Missing certainty or continuation evidence cannot produce
+pathless geometry. Native process failures and wall timeouts override partial
+receipts. Reference empty/dimension markers require a completed ordinary exit
+of 0 or 1; other exits are `reference_process_failed`, even after a marker.
+Missing certainty or continuation evidence cannot produce
 a successful comparison. The owning contracts are P6, P8–P9, P17–P19, P25–P30
 and P39. The original prototype's negative protocol witnesses preceded the
 maintained implementation; strengthened tests reproduce missing-receipt,
@@ -73,14 +75,23 @@ not evidence of typed exhaustion. The maintained collector now adds a default
 Descendants inherit it independently. Aggregate RSS, heap and total work remain
 unbounded by this mechanism. Signals alone do not prove that a limit was hit.
 
-Twenty-two Python protocol/inventory tests pass, including native and reference
+Twenty-six Python protocol/inventory tests pass, including native and reference
 workers that observe the imposed limit and fail a larger allocation. Nine Rust
 worker tests, strict all-target Clippy and formatting passed for the maintained
 worker. Eight geometry controls pass under the address-space limit, including
 holes, empty results, different tessellation, invalid input, and an unequal set.
-Paired real-engine cube and square controls also agree under that limit.
+Paired real-engine cube, square and producer-empty controls also agree under that limit.
 These controls qualify the maintained adapter; the original full-corpus counts
 belong to the frozen prototype, not a fresh bounded campaign.
+
+Before publication, a reference worker that printed the exact empty diagnostic
+and then killed itself reproduced a false empty on `43b2dd6b0b` (exit 137).
+Three maintained regressions failed for OBJ empty, SVG empty, and a dimension
+marker before a crash. Exit validation now precedes those marker decisions.
+Positive controls preserve ordinary exit 0/1 behavior in both export stages.
+The partial pre-push run for `43b2dd6b0b` was stopped and retained; it does not
+qualify the corrected source. The correction evidence is retained locally as
+`docs/evidence/2026-11-09-reference-process-exit-correction`.
 
 ## Follow-up and limits
 

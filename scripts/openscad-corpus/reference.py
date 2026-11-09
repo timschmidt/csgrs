@@ -112,6 +112,10 @@ def case(item):
         row["attempts"].append(obj)
         if obj["external_containment_reached"]:
             row["status"] = "reference_external_containment"
+        elif obj["exit_code"] not in (0, 1):
+            # The producer uses ordinary exit 1 for empty/dimension diagnostics.
+            # A crash or other unexpected exit cannot authenticate that marker.
+            row["status"] = "reference_process_failed"
         elif obj["exit_code"] == 0 and obj["output"]:
             row.update(status="reference_emitted_model", reference=obj["output"], dimension=3)
         elif "Current top level object is not a 3D object." in text.splitlines():
@@ -119,6 +123,8 @@ def case(item):
             row["attempts"].append(svg)
             if svg["external_containment_reached"]:
                 row["status"] = "reference_external_containment"
+            elif svg["exit_code"] not in (0, 1):
+                row["status"] = "reference_process_failed"
             elif svg["exit_code"] == 0 and svg["output"]:
                 row.update(status="reference_emitted_model", reference=svg["output"], dimension=2)
             elif "Current top level object is empty." in text.splitlines():

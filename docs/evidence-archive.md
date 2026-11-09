@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `5ba8ed4da5aec2cf1db744aa0d3b7502e902ad05` (447 records) |
-| Local research branch | `research-openscad-corpus-indexed-closure-20261109` |
+| Local manifest commit | `798040cbe625a89458fe2c8ce110f4f8fe850bf9` (448 records) |
+| Local research branch | `research-reference-process-exit-correction-20261109` |
 
-The local manifest includes twelve unpublished descendants. The existing
+The local manifest includes thirteen unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -85,6 +85,14 @@ passing indexed PWN witnesses. Extracted third-party runtimes and caches are
 excluded. Full qualification of the new source remains separate. See the
 [corpus admission](research/openscad-corpus-2026-11-09.md) and
 [closure admission](research/indexed-pwn-closure-2026-11-09.md).
+
+The reference-process correction record adds 883 files and 6,128,096 bytes,
+SHA-256 `0af9fb6571c7619bb0a215d84723cac38da4837015849d30e97fa158913606e4`.
+It retains the crash-after-empty failures, all 26 passing protocol/inventory
+tests, three real-engine controls and the retired partial verification of
+`43b2dd6b0b`. A crashed reference cannot supply an adopted empty model. The
+corrected source requires fresh complete verification; the retired run is not
+credited as a pass. See the [corpus admission](research/openscad-corpus-2026-11-09.md).
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,

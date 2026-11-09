@@ -88,6 +88,61 @@ class ProtocolTests(unittest.TestCase):
         worker.chmod(0o700)
         return worker
 
+    def reference_case(self, body, name):
+        collector = NATIVE.COLLECTOR
+        previous = collector.MANIFEST, collector.OUT, collector.BACKEND
+        try:
+            collector.MANIFEST = {"root": str(self.folder)}
+            collector.OUT = self.folder / name
+            collector.BACKEND = self.fake(body)
+            return collector.case({"path": self.source.name,
+                                   "sha256": collector.digest(self.source)})
+        finally:
+            collector.MANIFEST, collector.OUT, collector.BACKEND = previous
+
+    def test_reference_crash_overrides_obj_empty_marker(self):
+        result = self.reference_case(
+            'import os, signal\nprint("Current top level object is empty.", flush=True)\n'
+            'os.kill(os.getpid(), signal.SIGKILL)\n', "obj-crash")
+        self.assertEqual(result["status"], "reference_process_failed")
+        self.assertEqual(len(result["attempts"]), 1)
+        self.assertEqual(result["attempts"][0]["exit_code"], 137)
+
+    def test_reference_crash_overrides_svg_empty_marker(self):
+        result = self.reference_case(
+            'import os, signal, sys\nfrom pathlib import Path\n'
+            'if Path(sys.argv[sys.argv.index("-o") + 1]).suffix == ".obj":\n'
+            '    print("Current top level object is not a 3D object.", flush=True)\n'
+            '    raise SystemExit(1)\n'
+            'print("Current top level object is empty.", flush=True)\n'
+            'os.kill(os.getpid(), signal.SIGKILL)\n', "svg-crash")
+        self.assertEqual(result["status"], "reference_process_failed")
+        self.assertEqual([x["exit_code"] for x in result["attempts"]], [1, 137])
+
+    def test_reference_crash_does_not_retry_dimension_marker(self):
+        result = self.reference_case(
+            'import os, signal\n'
+            'print("Current top level object is not a 3D object.", flush=True)\n'
+            'os.kill(os.getpid(), signal.SIGKILL)\n', "dimension-crash")
+        self.assertEqual(result["status"], "reference_process_failed")
+        self.assertEqual(len(result["attempts"]), 1)
+
+    def test_reference_normal_empty_markers_still_work(self):
+        for stage in ["obj", "svg"]:
+            for code in [0, 1]:
+                with self.subTest(stage=stage, exit_code=code):
+                    body = 'import sys\nfrom pathlib import Path\n'
+                    if stage == "svg":
+                        body += (
+                            'if Path(sys.argv[sys.argv.index("-o") + 1]).suffix == ".obj":\n'
+                            '    print("Current top level object is not a 3D object.")\n'
+                            '    raise SystemExit(1)\n')
+                    body += ('print("Current top level object is empty.")\n'
+                             f'raise SystemExit({code})\n')
+                    result = self.reference_case(body, f"normal-{stage}-{code}")
+                    self.assertEqual(result["status"], "reference_reported_empty")
+                    self.assertEqual(len(result["attempts"]), 1 if stage == "obj" else 2)
+
     def test_native_address_space_limit_is_enforced_before_evaluation(self):
         self.check_address_space_limit(reference=False)
 
