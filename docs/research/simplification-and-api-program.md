@@ -62,8 +62,12 @@ The isolated numeric-ingress integration combines the two committed SVG
 follow-ups while retaining their original witnesses and all 448 capability
 rows. A new CSGRS adapter witness combines exact line/point-list coordinates,
 tiny positive paint, inherited opacity and exact transforms with independent
-rational geometry, native replay, later Booleans and empty recovery. Invalid
-coordinates remain errors even with hidden paint. Combined owner, portability,
+rational geometry, native replay, later Booleans and empty recovery. Its first
+combined run reproduced malformed hidden native coordinates becoming successful
+empty geometry: the original five root witnesses passed and the new sixth
+failed. A narrow owner correction now validates native lines and point lists
+before hidden selection; a sixth paint witness adds independent typed-error and
+valid-empty controls, with a 449th capability row. Combined owner, portability,
 downstream and publication qualification is pending; parent-only checks are not
 credited as combined-source completion.
 

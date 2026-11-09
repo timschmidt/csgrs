@@ -1,5 +1,15 @@
 # Migrations
 
+## Hidden native SVG input validation (2026-11-09)
+
+Native lines and polygon/polyline point lists now validate their coordinates,
+point counts and degeneracy before selecting empty geometry for zero opacity,
+`display="none"` or hidden visibility. Malformed native primitives previously
+concealed by that visibility shortcut now return `SvgError::MalformedInput`
+(and the CSGRS SVG adapter preserves the typed error). Valid hidden primitives
+still produce canonical empty geometry. This corrects invalid-input admission;
+other SVG families retain their existing visibility handling.
+
 ## Exact SVG paint selection (2026-11-09)
 
 Opacity, fill-opacity, stroke-opacity and stroke-width now retain their exact

@@ -609,5 +609,9 @@ The combined numeric-ingress candidate retains all 448 rows and adds a CSGRS
 adapter witness mixing exact primitive coordinates, tiny positive paint and
 exact transforms. It checks independent rational sets/endpoints, native replay,
 subsequent Booleans, empty recovery and typed invalid input with hidden paint.
-Combined-source qualification remains pending; the separate parent results
-above do not establish completion on this candidate.
+The first combined run passed the original owner suites and five root witnesses
+but reproduced invalid hidden native coordinates becoming successful empty.
+A new sixth paint witness and 449th row cover native validation before hidden
+selection, paired with valid-empty continuation controls. Combined-source
+qualification remains pending; separate parent results do not establish
+completion on this corrected candidate.

@@ -46,6 +46,8 @@ migrations, including changed serialized output, are listed in
   values and opacity above one retain typed validation errors even when
   binary64 would round them onto a valid boundary. See MIGRATIONS.
 
+- Hidden native SVG lines and point lists validate coordinates, arity and
+  degeneracy before returning successful empty geometry.
 - Native SVG line attributes and polygon/polyline point lists retain exact
   decimal/scientific coordinates, including distinct large integers and tiny
   nonzero values. Native replay preserves those coordinates independently of

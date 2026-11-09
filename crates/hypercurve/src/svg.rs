@@ -1457,7 +1457,7 @@ fn geometry_from_paths_preserving_native_lines(
     context: StyleContext,
     preserve_native_lines: bool,
 ) -> SvgResult<SvgGeometry2> {
-    if !context.fills() && !context.strokes() {
+    if !context.visible() || (!context.fills() && !context.strokes()) {
         return Ok(SvgGeometry2::empty());
     }
     let transform = context
@@ -1598,7 +1598,11 @@ pub fn import_svg_document_with_options(
             .cloned()
             .ok_or_else(|| SvgError::MalformedInput("style context stack is empty".into()))?;
         let context = apply_style(parent, &attrs)?;
-        if !context.visible() {
+        // Native primitive coordinates and arity must be validated before
+        // selecting successful empty geometry. Their existing constructors
+        // run below; geometry conversion skips transforms and arrangement
+        // when hidden. Other primitive handling retains its existing scope.
+        if !context.visible() && !matches!(name, tag::Line | tag::Polygon | tag::Polyline) {
             continue;
         }
 

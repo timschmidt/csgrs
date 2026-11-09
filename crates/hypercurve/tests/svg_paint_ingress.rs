@@ -351,3 +351,58 @@ fn svg_extreme_scientific_paint_preserves_exact_sign() {
         }
     }
 }
+
+#[test]
+fn svg_hidden_native_primitives_validate_before_empty_selection() {
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for hidden in ["opacity=\"0\"", "display=\"none\"", "visibility=\"hidden\""] {
+            for primitive in [
+                "<line x2=\"NaN\"/>",
+                "<line x2=\"1e400\"/>",
+                "<line x1=\".1\" x2=\".1\"/>",
+                "<polygon points=\".1 .2 .4\"/>",
+                "<polygon points=\"0,0 1,1\"/>",
+                "<polyline points=\"0,0 1e400,0\"/>",
+                "<polyline points=\"0,0 1\"/>",
+                "<polyline points=\"0,0 0,0\"/>",
+            ] {
+                for document in [
+                    format!("<svg {hidden}>{primitive}</svg>"),
+                    format!("<svg><g {hidden}>{primitive}</g></svg>"),
+                ] {
+                    assert!(
+                        matches!(
+                            support::under(&policy, || import_svg_document(&document)),
+                            Err(SvgError::MalformedInput(detail)) if !detail.is_empty()
+                        ),
+                        "{document}"
+                    );
+                }
+            }
+            for primitive in [
+                "<line x1=\".1\" y1=\".2\" x2=\".3\" y2=\".4\"/>",
+                "<polygon points=\".1,.2 .4,.2 .4,.6 .1,.6\"/>",
+                "<polyline points=\".1,.2 .3,.4\"/>",
+            ] {
+                let document = format!("<svg {hidden}>{primitive}</svg>");
+                let outcome = support::under(&policy, || {
+                    let imported = import_svg_document(&document)?;
+                    assert!(imported.is_empty());
+                    assert!(imported.wires().is_empty() && imported.paths().is_empty());
+                    assert!(
+                        imported
+                            .region()
+                            .boolean_region(&unit_square(), BooleanOp::Union)
+                            .unwrap()
+                            .boolean_region(&unit_square(), BooleanOp::Xor)
+                            .unwrap()
+                            .is_empty()
+                    );
+                    Ok::<_, SvgError>(())
+                })
+                .unwrap();
+                assert_eq!(outcome.certainty, CurveCertainty::Certified);
+            }
+        }
+    }
+}

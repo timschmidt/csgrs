@@ -19253,6 +19253,51 @@
           "assertion": "A valid nondegenerate unpainted line returns successful empty geometry."
         }
       ]
+    },
+    {
+      "target": "svg_paint_ingress",
+      "owner": "Hypercurve exact SVG paint ingress and selection",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P27",
+        "P39"
+      ],
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_native_validation",
+      "test": "svg_hidden_native_primitives_validate_before_empty_selection",
+      "domain": "Native line and polygon/polyline coordinates, arity and degeneracy under zero opacity, display none or hidden visibility, including nested groups.",
+      "semantics": "Existing native validation precedes empty selection; valid hidden native primitives remain canonical empty and compose further.",
+      "oracle": "Independent typed malformed-input expectations and successful-empty union/XOR identity against an exact unit square.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Malformed native coordinates, counts and degenerate shapes remain SvgError::MalformedInput even when hidden."
+        },
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Valid hidden native primitives remain certified empty and restore the independent unit square by union."
+        }
+      ]
     }
   ]
 }
