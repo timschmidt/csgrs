@@ -450,8 +450,12 @@ docs/evidence/2026-11-09-openscad-corpus-and-indexed-closure	7024	94487164	d15e3
 docs/evidence/2026-11-09-reference-process-exit-correction	883	6128096	0af9fb6571c7619bb0a215d84723cac38da4837015849d30e97fa158913606e4
 docs/evidence/2026-11-09-svg-exact-transforms	188	12330149	ac2992879f38c5a74c1bff764e7527f15a143b8b23dc33fafe98ab0039c363f5
 docs/evidence/2026-11-09-svg-numeric-ingress	444	30671348	31a05d6a86bf297d318323afdec5729d419d8c42e6006168e014d7ada23b6a38
+docs/evidence/2026-11-09-svg-rectangle-main-qualification	14060	539842471	d2e297c2098f065a2a5ad478f266f5b4e0d9d07286b700de8c8a4aef186f343c
 docs/evidence/2026-11-09-svg-rectangle-readme-integration	494	37799558	92ca78ab21f853dec29ab20532538348a18af78cf278584332548dd04851bd39
 docs/evidence/2026-11-09-svg-transform-main-qualification	12085	16860195	74a98897cd98f80f70f3b059508992749b97d9e6c54be4ab3dbba72847b6dbba
+docs/evidence/2026-11-10-parser-and-fragment-count-followup	5314	32322380	b5c99fefb4413790bb5c1c5d4776f0d0ae4f432e4baa5de8b50d7d90cb75dae6
+docs/evidence/2026-11-10-svg-circle-ellipse-validation	190	25139407	fe4bc4367d46392901541bea2607e676a1c58d856f7c0e7db12b5e49dc9e6c35
+docs/evidence/2026-11-10-unicode-parser-consumer-cohort	285	20667651	632e3adcd8ec6b2ac97f4a92d3103331982fcff660af6f5340e7d909aa9cce7b
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775

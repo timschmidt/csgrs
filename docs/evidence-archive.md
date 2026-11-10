@@ -16,10 +16,10 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `e386d4d2245f846e676772fd239eec697aa69efa` (453 records) |
-| Local research branch | `research-svg-rectangle-readme-20261109` |
+| Local manifest commit | `0a1da64a17b4ff0912b58183d4bc42149511cf10` (457 records) |
+| Local research branch | `research-svg-circle-ellipse-validation-20261110` |
 
-The local manifest includes eighteen unpublished descendants. The existing
+The local manifest includes twenty-two unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
@@ -110,9 +110,36 @@ The first retains the actual 280-command qualification and publication of
 attribution and passing finite owner, portability and downstream witnesses.
 The rectangle/README integration is qualified locally on `fee45f7fed`; final
 admission documentation is `502508fd9f`. Its two sampler-limit witnesses assert
-unsupported representation, not geometric completion. All 453 records verify
-from local Git objects. No evidence has been uploaded; a fresh complete source
-publication gate remains separate.
+unsupported representation, not geometric completion. The rectangle/README
+source was subsequently published as `9490c8bb0d`; its separate qualification
+record retains all 280 required commands and the actual push receipt.
+
+Four later local records preserve that publication and continued research:
+
+| Record under `docs/evidence/` | Files / bytes | Record SHA-256 |
+| --- | --- | --- |
+| `2026-11-09-svg-rectangle-main-qualification` | 14,060 / 539,842,471 | `d2e297c2098f065a2a5ad478f266f5b4e0d9d07286b700de8c8a4aef186f343c` |
+| `2026-11-10-parser-and-fragment-count-followup` | 5,314 / 32,322,380 | `b5c99fefb4413790bb5c1c5d4776f0d0ae4f432e4baa5de8b50d7d90cb75dae6` |
+| `2026-11-10-unicode-parser-consumer-cohort` | 285 / 20,667,651 | `632e3adcd8ec6b2ac97f4a92d3103331982fcff660af6f5340e7d909aa9cce7b` |
+| `2026-11-10-svg-circle-ellipse-validation` | 190 / 25,139,407 | `fe4bc4367d46392901541bea2607e676a1c58d856f7c0e7db12b5e49dc9e6c35` |
+
+The first retains the complete rectangle publication gate, original sanitizer
+campaigns, failures and unchanged retries. The parser/fragment record preserves
+qualified local code, source-specific sanitizer attribution, actual paired
+images, the B-text blocker and the NURBS external noncompletion. The consumer
+cohort passes five exact/native tests and eight locked fuzz-bin checks with
+strict lint after minimal lock updates; its native CI still reports one B-text
+timeout and its hosted dependency pins differ. No downstream application or
+parser publication is claimed.
+
+The [circle/ellipse admission](research/svg-circle-ellipse-validation-2026-11-10.md)
+qualifies 164 affected native reports, 34 selected records, 35 MSRV reports,
+99 zero-import WASM executions, 996 BRep/IO reports and strict lint. It preserves
+all eight ordinary sampled artifacts, explicit new validation costs, original
+failed environment attempts and an unchanged-parent VM-reservation control.
+These are finite local results; full qualification of the new source and its
+publication remain separate. All 457 records verify from local Git objects.
+No evidence has been uploaded.
 
 The archived commit keeps the original paths and the history of every archived
 root. A link such as `docs/evidence/<record>/README.md` in older commits,

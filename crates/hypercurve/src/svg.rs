@@ -1346,6 +1346,54 @@ fn sampled_ellipse_path(
     closed_path(&points)
 }
 
+fn ellipse_path(
+    attrs: &svg::node::Attributes,
+    radius_attributes: (&str, Option<&str>),
+    options: SvgOptions,
+    materialize: bool,
+) -> SvgResult<Option<CurvePath2>> {
+    let mut zero_radius = false;
+    for attribute in [Some(radius_attributes.0), radius_attributes.1]
+        .into_iter()
+        .flatten()
+    {
+        let value = attrs
+            .get(attribute)
+            .ok_or_else(|| SvgError::MalformedInput(format!("missing attribute {attribute}")))?;
+        zero_radius |=
+            !style_number_positive(value, None, "ellipse radii must be finite and non-negative")?;
+    }
+    let cx = number(attrs, "cx", Some(0.0))?;
+    let cy = number(attrs, "cy", Some(0.0))?;
+    if !materialize {
+        return Ok(None);
+    }
+    // Preserve existing hidden zero-radius empty selection and the visible
+    // sampler's positive-radius requirement. Visible zero semantics are not
+    // extended here.
+    if zero_radius {
+        return Err(SvgError::MalformedInput(
+            "ellipse radii must be positive".into(),
+        ));
+    }
+    // Keep the existing visible sampled model. Exact source validation above
+    // distinguishes a positive value lost at this binary64 boundary from an
+    // invalid authored radius; unused geometry never needs this conversion.
+    let rx = number(attrs, radius_attributes.0, None)?;
+    let ry = radius_attributes
+        .1
+        .map(|attribute| number(attrs, attribute, None))
+        .transpose()?
+        .unwrap_or(rx);
+    if rx <= 0.0 || ry <= 0.0 {
+        return Err(SvgError::Unsupported(
+            "ellipse cannot be sampled with binary64 radii".into(),
+        ));
+    }
+    let segments = options.segments_for_radius(rx.max(ry))?;
+    sampled_ellipse_path(cx, cy, rx, ry, segments).map(Some)
+}
+
 fn rectangle_path(
     attrs: &svg::node::Attributes,
     options: SvgOptions,
@@ -1658,14 +1706,19 @@ pub fn import_svg_document_with_options(
             .cloned()
             .ok_or_else(|| SvgError::MalformedInput("style context stack is empty".into()))?;
         let context = apply_style(parent, &attrs)?;
-        // Native primitive coordinates and arity must be validated before
+        // Primitive coordinates and arity must be validated before
         // selecting successful empty geometry. Their existing constructors
         // run below; geometry conversion skips transforms and arrangement
         // when hidden. Other primitive handling retains its existing scope.
         if !context.visible()
             && !matches!(
                 name,
-                tag::Line | tag::Polygon | tag::Polyline | tag::Rectangle
+                tag::Line
+                    | tag::Polygon
+                    | tag::Polyline
+                    | tag::Rectangle
+                    | tag::Circle
+                    | tag::Ellipse
             )
         {
             continue;
@@ -1685,42 +1738,26 @@ pub fn import_svg_document_with_options(
                     )?
                 }
                 tag::Circle => {
-                    let radius = number(&attrs, "r", None)?;
-                    let segments = options.segments_for_radius(radius)?;
-                    let path = sampled_ellipse_path(
-                        number(&attrs, "cx", Some(0.0))?,
-                        number(&attrs, "cy", Some(0.0))?,
-                        radius,
-                        radius,
-                        segments,
-                    )?;
-                    geometry_from_paths(
-                        std::slice::from_ref(&path),
-                        std::slice::from_ref(&path),
-                        context,
-                    )?
+                    let materialize = context.visible() && (context.fills() || context.strokes());
+                    match ellipse_path(&attrs, ("r", None), options, materialize)? {
+                        Some(path) => geometry_from_paths(
+                            std::slice::from_ref(&path),
+                            std::slice::from_ref(&path),
+                            context,
+                        )?,
+                        None => SvgGeometry2::empty(),
+                    }
                 }
                 tag::Ellipse => {
-                    let rx = number(&attrs, "rx", None)?;
-                    let ry = number(&attrs, "ry", None)?;
-                    if rx <= 0.0 || ry <= 0.0 {
-                        return Err(SvgError::MalformedInput(
-                            "ellipse radii must be positive".into(),
-                        ));
+                    let materialize = context.visible() && (context.fills() || context.strokes());
+                    match ellipse_path(&attrs, ("rx", Some("ry")), options, materialize)? {
+                        Some(path) => geometry_from_paths(
+                            std::slice::from_ref(&path),
+                            std::slice::from_ref(&path),
+                            context,
+                        )?,
+                        None => SvgGeometry2::empty(),
                     }
-                    let segments = options.segments_for_radius(rx.max(ry))?;
-                    let path = sampled_ellipse_path(
-                        number(&attrs, "cx", Some(0.0))?,
-                        number(&attrs, "cy", Some(0.0))?,
-                        rx,
-                        ry,
-                        segments,
-                    )?;
-                    geometry_from_paths(
-                        std::slice::from_ref(&path),
-                        std::slice::from_ref(&path),
-                        context,
-                    )?
                 }
                 tag::Rectangle => {
                     let materialize = context.visible() && (context.fills() || context.strokes());

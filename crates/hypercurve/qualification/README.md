@@ -652,3 +652,18 @@ doctests/examples/strict docs. Eight ordinary rounded controls match their
 qualified parent in full, including dispatch and rational counters. These are
 actual immutable-source local receipts; archive/index and full publication
 qualification remain separate.
+
+The 10 November circle/ellipse correction adds five rows for validation before
+hidden selection, valid unpainted empty continuation, preservation of existing
+hidden zero-radius empty results, positive sampler underflow, and large
+scientific-exponent selection. The original 458 catalog objects remain
+unchanged. These declarations distinguish successful empty, invalid and
+unsupported outcomes; they do not qualify analytic circle/ellipse fidelity,
+visible zero-radius semantics or general resource bounds. The shared-validator
+source passes 164 affected native reports, 34 selected records, strict lint,
+35 MSRV reports, 99 zero-import WASM executions and 996 BRep/IO reports. All
+eight ordinary sampled artifacts and certainty receipts match; the exact added
+parse/sign costs are retained separately. These finite results do not qualify
+all 463 catalog rows or a new main publication. Reproduction and evidence are
+recorded in the
+[admission](../../../docs/research/svg-circle-ellipse-validation-2026-11-10.md).

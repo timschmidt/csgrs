@@ -77,6 +77,18 @@ increment; a complete publication gate and immutable evidence closeout remain
 pending. Parent-only checks are not credited as combined-source completion.
 
 
+The [10 November circle/ellipse admission](svg-circle-ellipse-validation-2026-11-10.md)
+reproduces hidden invalid fields becoming successful empty, unnecessary sampling
+of unpainted geometry, and a lost distinction between invalid input and positive
+sampler underflow. The shared-validator implementation passes 164 affected
+native reports, 34 selected capability records, strict lint, 35 MSRV reports,
+99 zero-import WASM executions and 996 BRep/IO reports. All eight ordinary
+sampled artifacts and certainty receipts match, with explicit new validation
+costs. Its immutable local archive and source index close out the evidence;
+publication qualification remains pending. The
+ordinary sampled-model baseline and existing hidden zero-radius behavior are
+retained; analytic source fidelity and visible zero-radius semantics stay open.
+
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with
 evidence. Two packages are higher-priority correctness work and are marked as

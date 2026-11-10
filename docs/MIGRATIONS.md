@@ -1029,6 +1029,19 @@ invalid or unproved children are still checked before cancellation. Distinct
 nodes, conflicting handles and oversized audit graphs keep the existing path.
 See the [R19 evidence and cost disclosure](../crates/hyperreal/PERFORMANCE.md#cold-domain-continuation-and-resource-audit-r19-2026-10-25).
 
+## SVG circle and ellipse validation (10 November 2026)
+
+Circle and ellipse fields are validated before hidden or unpainted selection.
+Negative/nonfinite fields and missing required radii report malformed input
+instead of becoming successful empty geometry. Valid selected-empty inputs do
+not require sampled geometry, including positive radii below binary64 range.
+Visible exact-positive radii lost at the sampling boundary report
+`SvgError::Unsupported` (and CSGRS `IoError::Unsupported`), rather than malformed
+input. Existing hidden zero-radius empty results are preserved; visible
+zero-radius semantics remain unchanged. Ordinary visible geometry retains the
+existing sampled model; this change does not introduce analytic ellipse/circle
+source-fidelity guarantees.
+
 ## Cargo features
 
 - **No dependency-named features.** Optional dependencies no longer create

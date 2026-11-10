@@ -19719,6 +19719,207 @@
       ],
       "oracle": "Direct typed error assertion on exact-positive finite source; root adapter separately verifies IoError::Unsupported for SVG.",
       "timeout_seconds": 300
+    },
+    {
+      "target": "svg_sampled_primitive_admission",
+      "owner": "Hypercurve SVG primitive validation, shared exact numeric sign checks and legacy sampled ellipse construction",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_circle_ellipse_validation",
+      "test": "svg_hidden_circles_and_ellipses_validate_their_authored_fields",
+      "properties": [
+        "P1",
+        "P6",
+        "P14",
+        "P25",
+        "P39"
+      ],
+      "domain": "Circle/ellipse numeric fields with negative or nonfinite radii/centers, missing fields and invalid legacy numeric syntax, under visible, unpainted, zero-opacity, display-none and hidden selections.",
+      "semantics": "Validate admitted authored fields before selecting empty geometry. This preserves the legacy finite numeric syntax envelope, not general SVG units or zero-radius semantics.",
+      "oracle": "Direct SvgError::MalformedInput assertions with nonempty diagnostics; original failing hidden negative circle retained.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Every named malformed primitive remains invalid before hidden or unpainted selection."
+        }
+      ]
+    },
+    {
+      "target": "svg_sampled_primitive_admission",
+      "owner": "Hypercurve SVG primitive validation, shared exact numeric sign checks and legacy sampled ellipse construction",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_unpainted_circle_ellipse_empty",
+      "test": "svg_unpainted_positive_circles_and_ellipses_do_not_require_sampling",
+      "properties": [
+        "P1",
+        "P6",
+        "P8",
+        "P9",
+        "P12",
+        "P17",
+        "P18",
+        "P19",
+        "P25",
+        "P26",
+        "P39"
+      ],
+      "domain": "Valid hidden/unpainted circle/ellipse descriptions with exact positive 1e-400 radii or individually finite 1e308 centers/radii, under four selection conventions.",
+      "semantics": "Validate first, then select canonical empty without materializing unused sampled geometry. The subsequent independent unit-square boundary remains native lines.",
+      "oracle": "Certified empty document/region/path/wire assertions, native empty export/reload and union/XOR against four independently authored unit-square supports.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Valid selected-empty inputs do not require representable binary64 samples."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "The selected empty set remains empty after native export and reload."
+        },
+        {
+          "stage": "booleans",
+          "outcome": "exact_success",
+          "assertion": "Union of replayed empty with the independent unit square has empty symmetric difference from that square."
+        }
+      ]
+    },
+    {
+      "target": "svg_sampled_primitive_admission",
+      "owner": "Hypercurve SVG primitive validation, shared exact numeric sign checks and legacy sampled ellipse construction",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_zero_circle_ellipse_empty",
+      "test": "svg_hidden_zero_radius_primitives_preserve_existing_empty_selection",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P25",
+        "P39"
+      ],
+      "domain": "Existing successful hidden zero-radius circles and ellipses with either or both zero radii, under zero opacity, display-none and hidden visibility.",
+      "semantics": "Preserve baseline successful empty selection for valid hidden zero-radius inputs; visible zero-radius behavior is not extended by this witness.",
+      "oracle": "This positive control passed before the correction; direct canonical-empty and Certified assertions under both policies.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Previously supported hidden zero-radius empty results remain successful."
+        }
+      ]
+    },
+    {
+      "target": "svg_sampled_primitive_admission",
+      "owner": "Hypercurve SVG primitive validation, shared exact numeric sign checks and legacy sampled ellipse construction",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_positive_circle_ellipse_sampler_underflow",
+      "test": "svg_visible_positive_circle_sampler_underflow_is_unsupported",
+      "properties": [
+        "P6",
+        "P14",
+        "P16",
+        "P25",
+        "P39"
+      ],
+      "domain": "Visible exact-positive circle/ellipse radii 1e-400 that become zero at the existing binary64 sampling boundary.",
+      "semantics": "A valid positive source with an unavailable sampled representation is Unsupported. This is not analytic circle/ellipse completion, malformed input, successful empty or resource exhaustion.",
+      "oracle": "Direct SvgError::Unsupported with nonempty diagnostics; CSGRS separately checks IoError::Unsupported for SVG.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "Each named valid positive source retains an explicit representation blocker before geometry is published."
+        }
+      ]
+    },
+    {
+      "target": "svg_sampled_primitive_admission",
+      "owner": "Hypercurve SVG primitive validation, shared exact numeric sign checks and legacy sampled ellipse construction",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_lazy_scientific_radius_selection",
+      "test": "svg_scientific_radius_selection_does_not_materialize_large_scales",
+      "properties": [
+        "P1",
+        "P5",
+        "P6",
+        "P8",
+        "P9",
+        "P10",
+        "P20",
+        "P25",
+        "P39"
+      ],
+      "domain": "Circle/ellipse radii +/-1e-1000000000: unpainted positive sources, visible positive sampler underflow, and hidden negative sources.",
+      "semantics": "Reuse the scalar owner's bounded scientific parser and exact lazy sign facts instead of requiring an expanded denominator for selection. Fixture completion is not a total arithmetic, memory or cancellation bound.",
+      "oracle": "Separate successful-empty/Certified, typed malformed-negative and typed unsupported-positive assertions; the original large-exponent source is retained.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "Unpainted positive descriptions complete as certified empty."
+        },
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Hidden negative descriptions remain malformed despite binary64 underflow."
+        },
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "Visible positive descriptions retain the unavailable-sampler distinction."
+        }
+      ]
     }
   ]
 }
