@@ -1,5 +1,18 @@
 # Migrations
 
+## Hidden SVG path validation (2026-11-10)
+
+SVG paths hidden by display, visibility or opacity now require a `d` attribute.
+For a standard path, the importer checks the complete command grammar before
+selecting empty geometry. For a native path, it checks the declared extension
+version, decoding limits and exact definitions. Invalid syntax and metadata
+now surface as typed errors through both Hypercurve and the CSGRS SVG adapter.
+
+A valid hidden standard path selects empty geometry, including an authored
+noncircular elliptical arc. Native metadata remains authoritative when the
+document supplies it. The hidden path is excluded from fill and stroke
+construction after validation.
+
 ## Exact unrounded SVG rectangles and validated empty selection (2026-11-09)
 
 Rectangle `x`, `y`, `width` and `height` now retain exact decimal/scientific

@@ -89,6 +89,13 @@ publication qualification remains pending. The
 ordinary sampled-model baseline and existing hidden zero-radius behavior are
 retained; analytic source fidelity and visible zero-radius semantics stay open.
 
+The hidden-path continuation found 24 invalid-as-empty results on `30ea60023a`.
+The Hypercurve correction checks the standard command grammar or the exact
+metadata before selecting empty. CSGRS uses the same typed outcomes and can
+replay and consume the selected empty result. Three executable catalog rows
+cover grammar, valid empty selection and exact metadata limits. See the
+[hidden-path admission](svg-hidden-path-validation-2026-11-10.md).
+
 Most packages below reduce source size, which is the lowest priority. Such a
 package is retained only when every higher priority is preserved, with
 evidence. Two packages are higher-priority correctness work and are marked as

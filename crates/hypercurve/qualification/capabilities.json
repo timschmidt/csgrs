@@ -19920,6 +19920,132 @@
           "assertion": "Visible positive descriptions retain the unavailable-sampler distinction."
         }
       ]
+    },
+    {
+      "target": "svg_hidden_path_admission",
+      "owner": "Hypercurve SVG path admission",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P25",
+        "P39"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_path_grammar",
+      "test": "hidden_path_checks_authored_grammar_before_returning_empty",
+      "domain": "Six missing or malformed standard path descriptions under inherited zero opacity, display none and hidden visibility.",
+      "semantics": "Validate the complete authored command grammar before hidden selection.",
+      "oracle": "Direct typed malformed errors include the trailing syntax error after a valid noncircular arc.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "invalid",
+          "assertion": "Malformed hidden path input returns MalformedInput before a geometry result is published."
+        }
+      ]
+    },
+    {
+      "target": "svg_hidden_path_admission",
+      "owner": "Hypercurve SVG path admission",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P25",
+        "P39"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_path_valid_empty",
+      "test": "hidden_path_keeps_valid_unselected_commands_empty",
+      "domain": "Empty, move-only, closed square and noncircular ellipse-arc path commands with zero opacity. The visible ellipse arc is a representation control.",
+      "semantics": "Hidden standard path validation checks the same grammar as the visible parser. Geometry selection yields canonical empty.",
+      "oracle": "Exact empty and Certified assertions under both policies. The corresponding visible noncircular arc retains a typed representation blocker.",
+      "claims": [
+        {
+          "stage": "classification",
+          "outcome": "successful_empty",
+          "assertion": "The four hidden standard paths return certified empty."
+        },
+        {
+          "stage": "representation",
+          "outcome": "unsupported",
+          "assertion": "The visible noncircular arc returns Unsupported."
+        }
+      ]
+    },
+    {
+      "target": "svg_hidden_path_admission",
+      "owner": "Hypercurve SVG path admission",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "Line"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P18",
+        "P25",
+        "P39",
+        "P19"
+      ],
+      "timeout_seconds": 300,
+      "id": "svg_hidden_path_native_metadata",
+      "test": "hidden_path_validates_native_metadata_and_uses_its_authority",
+      "domain": "Hidden version 5 unit-square metadata, a configured 64-byte limit, odd hexadecimal payload and unknown version. The rendering path is deliberately invalid.",
+      "semantics": "Validate native path definitions and limits before visibility selection. The native extension supplies the authoritative path.",
+      "oracle": "Successful certified empty for valid metadata and separate typed malformed, unsupported and configured-byte-limit outcomes.",
+      "claims": [
+        {
+          "stage": "exact_replay",
+          "outcome": "successful_empty",
+          "assertion": "A valid hidden native definition selects the empty set."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "invalid",
+          "assertion": "Odd hexadecimal metadata is malformed."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "unsupported",
+          "assertion": "An unknown native metadata version is explicitly unsupported."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exhausted",
+          "assertion": "The valid definition exceeds the configured 64-byte limit and returns SizeOverflow."
+        }
+      ]
     }
   ]
 }

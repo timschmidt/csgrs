@@ -329,6 +329,12 @@ fn real(value: f64, name: &'static str) -> SvgResult<Real> {
         .map_err(|error| SvgError::MalformedInput(format!("{name} is invalid: {error}")))
 }
 
+fn svg_path_segments(data: &str) -> impl Iterator<Item = SvgResult<svgtypes::PathSegment>> + '_ {
+    svgtypes::PathParser::from(data).map(|segment| {
+        segment.map_err(|error| SvgError::MalformedInput(format!("invalid path data: {error}")))
+    })
+}
+
 /// Parses all SVG path commands into exact Hypercurve subpaths.
 ///
 /// Accepted decimal and scientific number tokens retain their exact rational
@@ -350,9 +356,8 @@ pub fn parse_svg_path_data(data: &str) -> SvgResult<Vec<SvgSubpath2>> {
     let mut previous_quadratic_control = None::<Point2>;
     let mut numbers = PathNumbers::new(data);
 
-    for segment in svgtypes::PathParser::from(data) {
-        let segment = segment
-            .map_err(|error| SvgError::MalformedInput(format!("invalid path data: {error}")))?;
+    for segment in svg_path_segments(data) {
+        let segment = segment?;
         numbers.begin_segment();
         match segment {
             PathSegment::MoveTo { abs, .. } => {
@@ -1620,7 +1625,7 @@ fn path_geometry(
             options.max_point_definition_depth,
             options.max_parallel_verification_depth,
         )?;
-        if context.fills() {
+        if context.visible() && context.fills() {
             for path in &paths {
                 let connected = crate::curve::validate_closed_curve_path_connectivity(
                     path,
@@ -1632,6 +1637,16 @@ fn path_geometry(
             }
         }
         return geometry_from_paths_preserving_native_lines(&paths, &paths, context, true);
+    }
+
+    if !context.visible() {
+        // Hidden standard paths still have to satisfy the command grammar.
+        // Constructing their geometry would impose visible carrier limits on
+        // unselected curves, including valid noncircular elliptical arcs.
+        for segment in svg_path_segments(data) {
+            segment?;
+        }
+        return Ok(SvgGeometry2::empty());
     }
 
     let subpaths = parse_svg_path_data(data)?;
@@ -1706,14 +1721,13 @@ pub fn import_svg_document_with_options(
             .cloned()
             .ok_or_else(|| SvgError::MalformedInput("style context stack is empty".into()))?;
         let context = apply_style(parent, &attrs)?;
-        // Primitive coordinates and arity must be validated before
-        // selecting successful empty geometry. Their existing constructors
-        // run below; geometry conversion skips transforms and arrangement
-        // when hidden. Other primitive handling retains its existing scope.
+        // Validate paths and primitive attributes before selecting empty
+        // geometry. The handlers skip transforms and arrangement when hidden.
         if !context.visible()
             && !matches!(
                 name,
-                tag::Line
+                tag::Path
+                    | tag::Line
                     | tag::Polygon
                     | tag::Polyline
                     | tag::Rectangle
