@@ -20248,6 +20248,118 @@
       ],
       "oracle": "Exact endpoint/source identities, the original independently established contact parameter enclosures and forward point equations. Deterministic bytes are asserted separately.",
       "timeout_seconds": 900
+    },
+    {
+      "id": "nurbs_full_fillet_native_replay",
+      "target": "hypercurve_open_path_compositions",
+      "test": "generated_nurbs_fillet_replays_before_exact_inverse_location",
+      "owner": "Hypercurve selected parallel-normal circle replay and original rational-span inverse incidence",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27"
+      ],
+      "domain": "The original weight-six two-span NURBS corner at (-3,4), its unique radius-1/2 trim-only fillet, and the complete authored and generated paths including the retained normal-frame circle.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Nurbs",
+        "RationalBezier",
+        "AnalyticParallel",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "semantics": "Construction and fresh-process import request STRICT. Both original authored inverse queries subsequently run under STRICT and APPROXIMATE_512 with 64 refinements and zero promotions. Native definitions are validated before hidden empty selection.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The original full construction returns a unique trim-only fillet with certified certainty."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process imports both complete native paths, retains their generated circular arc, and re-exports identical authoritative bytes."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The original independent parameter enclosures, unique authored inverses, forward point equations and certified query receipts survive native replay."
+        },
+        {
+          "stage": "representation",
+          "outcome": "successful_empty",
+          "assertion": "Both hidden native paths validate their complete exact definitions before selecting canonical empty geometry."
+        }
+      ],
+      "oracle": "The unchanged full construction and its independent rational contact parameter bounds, unique authored inverse and exact forward point equations; byte equality is checked separately. Small owner controls separately verify signed circular images, angular selection, component correspondences and closed-set composition.",
+      "timeout_seconds": 900
+    },
+    {
+      "id": "nurbs_full_fillet_native_replay_requested_approximate",
+      "target": "hypercurve_open_path_compositions",
+      "test": "generated_nurbs_fillet_replays_under_requested_approximate_policy",
+      "owner": "Hypercurve selected parallel-normal circle replay and original rational-span inverse incidence",
+      "properties": [
+        "P6",
+        "P8",
+        "P9",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27"
+      ],
+      "domain": "The original weight-six two-span NURBS corner at (-3,4), its unique radius-1/2 trim-only fillet, and the complete authored and generated paths including the retained normal-frame circle.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Nurbs",
+        "RationalBezier",
+        "AnalyticParallel",
+        "CircularArc"
+      ],
+      "policies": [
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Construction and fresh-process import request APPROXIMATE_512. Both original authored inverse queries subsequently run under STRICT and APPROXIMATE_512 with 64 refinements and zero promotions. Native definitions are validated before hidden empty selection.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The original full construction returns a unique trim-only fillet with certified certainty."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process imports both complete native paths, retains their generated circular arc, and re-exports identical authoritative bytes."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The original independent parameter enclosures, unique authored inverses, forward point equations and certified query receipts survive native replay."
+        },
+        {
+          "stage": "representation",
+          "outcome": "successful_empty",
+          "assertion": "Both hidden native paths validate their complete exact definitions before selecting canonical empty geometry."
+        }
+      ],
+      "oracle": "The unchanged full construction and its independent rational contact parameter bounds, unique authored inverse and exact forward point equations; byte equality is checked separately. Small owner controls separately verify signed circular images, angular selection, component correspondences and closed-set composition.",
+      "timeout_seconds": 900
     }
   ]
 }

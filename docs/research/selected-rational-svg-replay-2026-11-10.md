@@ -48,11 +48,13 @@ the source-hashed admission receipts.
 
 ## Remaining closure and resource work
 
-The full generated fillet still requires native replay for its retained normal
-circle frame. Independently comparing two reconstructed candidate center views
-exhausted the declared 1,024-refinement limit. The wrong normal side was proved
-distinct without refinement. A portable joint contact relation requires its
-own checked replay.
+At that checkpoint, the full generated fillet required native replay for its
+retained normal circle frame. The [11 November selected-circle extension](parallel-normal-svg-replay-2026-11-11.md)
+now completes the original full-fillet replay witnesses under both requested
+policies. That finite extension retains separate source-bound qualification. The earlier independent comparison of two reconstructed candidate center views
+exhausted the declared 1,024-refinement limit; the wrong normal side was proved
+distinct without refinement. Those observations motivated the checked joint
+contact relation in the later extension.
 
 The original round-stroke chain remains open. The exact range addition
 provides the demonstrated rational trim replay and subsequent authored inverse

@@ -20,8 +20,10 @@ workflows. They do not qualify the entire catalog or the later documentation
 edits, and this integration has not been published to main.
 
 The original full generated NURBS fillet and round-stroke witnesses remain
-distinct from rational-trim replay. The full fillet has a separate retained
-normal-circle/contact replay extension under qualification. The original
+distinct from rational-trim replay. The full fillet now completes the named retained normal-circle/contact
+replay witnesses under both requested policies at `1c5b507139`, with all twelve
+local stages passing; the [replay admission](parallel-normal-svg-replay-2026-11-11.md)
+records that finite scope. The original
 round stroke remains incomplete; none of the successful inverse or replay
 witnesses substitutes for it.
 
@@ -57,15 +59,28 @@ historical test sources and complete dirty patches remain archived. The
 unrelated contributor worktree is untouched. This cleanup does not establish
 geometry completion.
 
+Two clean M4 aliases were subsequently retired after verifying exact ancestry
+in main. Their 7,435 source files and both indexes are unchanged. A fresh
+read-only external BRep reconciliation checks all 120 pending source files
+against snapshot `83065ad7ed`, already an ancestor of main; no new source
+payload remains to import. The external worktree and its unrelated metadata
+remain untouched.
+
+The evaluated dense-product and native-importer aliases are also withdrawn
+from active admission. Their 7,694 source files, indexes and pending merge
+state remain unchanged, and their tips and complete candidate payloads remain
+available. Future algorithmic work can reopen a new hypothesis without treating
+these unadmitted variants as production support.
+
 ## Immutable local evidence
 
-The source manifest now indexes all 466 actual records at local evidence commit
-`7c10597ee8591cc86bda15c59394000e8b674e9b`, preserving all prior record digests
+The source manifest now indexes all 468 actual records at local evidence commit
+`00bedad0ad295181cbde735e13f3328fa6d4d492`, preserving all prior record digests
 and four excluded-package rows. The full manifest SHA-256 is
-`a1170e688b9ef9fd661104e033827f4b47c243a91d4c86a1ac42f4ed27a57f91`.
-The nine added record rows in [the index](../evidence-archive.tsv) cover the
+`54a87f3d1091b83fcce90591d1f40f8345c8df75db4adff9ebe09adf77bc4237`.
+The eleven added record rows in [the index](../evidence-archive.tsv) cover the
 four individual SVG/NURBS/solver changes, two combined qualifications,
-circle/ellipse main publication, cost dispositions and historical retirement.
+circle/ellipse main publication, cost dispositions, historical retirement, maintenance closeout and selected-circle replay.
 The corresponding source-hashed commands, raw logs, original failures and
 receipts live in those records. No evidence upload occurred.
 

@@ -18,6 +18,8 @@ use std::collections::HashMap;
 mod circle_certificate_tests;
 mod circles;
 mod fidelity;
+#[cfg(test)]
+mod parallel_circle_tests;
 mod points;
 mod polynomial;
 #[cfg(test)]
@@ -653,6 +655,8 @@ fn read_definitions(
                 definition
             }
             tag @ (circles::CHORD_NORMAL_CIRCLE
+            | circles::PARALLEL_NORMAL_CIRCLE
+            | circles::PARALLEL_NORMAL_CONTACT
             | circles::SCALAR_CIRCLE_PARAMETER
             | circles::CHORD_NORMAL_CONTACT
             | circles::CIRCLE_RANGE

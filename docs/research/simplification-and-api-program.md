@@ -17,6 +17,12 @@ source, adverse arithmetic/native-importer costs and source-preserving
 retirement of seven historical aliases. Original package outcomes below remain
 historical; later capability and publication claims retain separate evidence.
 
+The [selected normal-circle replay admission](parallel-normal-svg-replay-2026-11-11.md)
+locally qualifies both original full NURBS fillet replay witnesses and their
+further exact inverse queries. It preserves the earlier rational-trim witness;
+the full round stroke, general closure and final combined publication remain
+separate.
+
 Integration follow-up (4 November): `closure-integration` fast-forwarded to
 `a08c698757`, bringing the implementation here. The
 [integration record](consolidation-2026-11-04.md) distinguishes historical

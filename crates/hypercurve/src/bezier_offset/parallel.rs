@@ -6260,6 +6260,76 @@ impl BezierParallel2 {
         )
     }
 
+    /// A finite regular neighborhood of a selected source point, including
+    /// parameters outside the unit chart. Only the source frame is required;
+    /// a cusp or collapse of this normal parallel does not remove that frame.
+    #[cfg(feature = "svg")]
+    pub(super) fn regular_source_envelope_at(
+        &self,
+        parameter: &CurveParameter2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<CurveParameterRange2>> {
+        let strict = policy.strict_counterpart();
+        decided!(self.certify_source_frame_at(parameter, &strict)?, Ok);
+        let increasing = decided!(
+            self.incident_domain_from_parameter(
+                parameter,
+                BezierParameterRayDirection2::Increasing,
+                &strict,
+            )?,
+            Ok
+        );
+        if let Some(bridge) = increasing.bridge() {
+            match compare_reals(bridge.start(), bridge.end(), &strict) {
+                Some(std::cmp::Ordering::Less) => {
+                    return Ok(Classification::Decided(
+                        CurveParameterRange2::new_validated(
+                            bridge.start().clone().into(),
+                            bridge.end().clone().into(),
+                        ),
+                    ));
+                }
+                Some(std::cmp::Ordering::Equal) => {}
+                Some(std::cmp::Ordering::Greater) => {
+                    return Err(CurveError::InvalidBezierRange);
+                }
+                None => return Ok(Classification::Uncertain(UncertaintyReason::Ordering)),
+            }
+        }
+        // An exact endpoint has no nonempty isolating bridge. The existing
+        // ray owner proves the first barrier on either side; select interior
+        // points of those rays rather than crossing an arbitrary +/-1 window.
+        let decreasing = decided!(
+            self.incident_domain_from_parameter(
+                parameter,
+                BezierParameterRayDirection2::Decreasing,
+                &strict,
+            )?,
+            Ok
+        );
+        let lower = match decreasing.barrier() {
+            Some(barrier) => decided!(
+                barrier.strict_scalar_between(
+                    &BezierParameter2::Exact(decreasing.anchor().clone()),
+                    &strict,
+                )?,
+                Ok
+            ),
+            None => decreasing.anchor() - Real::one(),
+        };
+        let upper = match increasing.barrier() {
+            Some(barrier) => decided!(
+                BezierParameter2::Exact(increasing.anchor().clone())
+                    .strict_scalar_between(barrier, &strict)?,
+                Ok
+            ),
+            None => increasing.anchor() + Real::one(),
+        };
+        Ok(Classification::Decided(
+            CurveParameterRange2::new_validated(lower.into(), upper.into()),
+        ))
+    }
+
     /// Certifies only the source and normal frame consumed by this query.
     /// Incident rays are open at their pole or speed barrier. A zero offset
     /// needs source finiteness but carries no unit-normal premise.

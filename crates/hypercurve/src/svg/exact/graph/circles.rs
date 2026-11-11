@@ -2,9 +2,9 @@
 
 use super::*;
 use crate::bezier_offset::{
-    BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicircleFragment2,
-    BezierAlgebraicCuspSemicircleParameter2, CircleChordNormalDefinition2,
-    CircleParameterDefinition2,
+    BezierAlgebraicCuspSemicircle2, BezierAlgebraicCuspSemicircleContactLocation2,
+    BezierAlgebraicCuspSemicircleFragment2, BezierAlgebraicCuspSemicircleParameter2,
+    CircleChordNormalDefinition2, CircleParallelNormalDefinition2, CircleParameterDefinition2,
 };
 
 pub(super) const CHORD_NORMAL_CIRCLE: u8 = 20;
@@ -12,18 +12,34 @@ pub(super) const SCALAR_CIRCLE_PARAMETER: u8 = 21;
 pub(super) const CHORD_NORMAL_CONTACT: u8 = 22;
 pub(super) const CIRCLE_RANGE: u8 = 23;
 pub(super) const INCIDENT_CIRCLE_POINT: u8 = 24;
+pub(super) const PARALLEL_NORMAL_CIRCLE: u8 = 41;
+pub(super) const PARALLEL_NORMAL_CONTACT: u8 = 42;
 
 impl GraphWriter {
-    fn circle(&mut self, circle: &BezierAlgebraicCuspSemicircle2) -> SvgResult<u32> {
+    pub(super) fn circle(&mut self, circle: &BezierAlgebraicCuspSemicircle2) -> SvgResult<u32> {
         let key = circle.replay_storage_key();
         if let Some((_, index)) = self.circles.get(&key) {
             return Ok(*index);
         }
-        let definition = circle.native_chord_normal_definition().ok_or_else(|| {
-            SvgError::Unsupported(
-                "exact circle replay requires a retained chord-normal frame".into(),
-            )
-        })?;
+        let Some(definition) = circle.native_chord_normal_definition() else {
+            let definition = circle.native_parallel_normal_definition().ok_or_else(|| {
+                SvgError::Unsupported("exact circle replay requires a retained normal frame".into())
+            })?;
+            let support = self.parallel(&definition.center_support)?;
+            let parameter = self.scalar_parameter(&definition.center_parameter)?;
+            let depth = points::next_depth(
+                self.point_depths[support as usize].max(self.point_depths[parameter as usize]),
+                self.max_point_depth,
+            )?;
+            let index = self.begin(PARALLEL_NORMAL_CIRCLE)?;
+            self.writer.write_u32(support)?;
+            self.writer.write_u32(parameter)?;
+            self.writer.write_real(&definition.radial_distance)?;
+            self.writer.write_bool(definition.clockwise)?;
+            self.point_depths[index as usize] = depth;
+            self.circles.insert(key, (circle.clone(), index));
+            return Ok(index);
+        };
         let center = self.point(&definition.center)?;
         let anchor = self.curve(&definition.anchor.into())?;
         let depth = points::next_depth(
@@ -91,6 +107,30 @@ impl GraphWriter {
                 self.writer.write_real(&radial_distance)?;
                 index
             }
+            CircleParameterDefinition2::ParallelNormal {
+                parallel,
+                parameter,
+                radial_distance,
+                location,
+            } => {
+                let parallel = self.parallel(&parallel)?;
+                let parameter = self.scalar_parameter(&parameter)?;
+                depth = depth
+                    .max(self.point_depths[parallel as usize])
+                    .max(self.point_depths[parameter as usize]);
+                points::check_depth(depth, self.max_point_depth)?;
+                let index = self.begin(PARALLEL_NORMAL_CONTACT)?;
+                for reference in [support, parallel, parameter] {
+                    self.writer.write_u32(reference)?;
+                }
+                self.writer.write_real(&radial_distance)?;
+                self.writer.write_u8(match location {
+                    BezierAlgebraicCuspSemicircleContactLocation2::Start => 0,
+                    BezierAlgebraicCuspSemicircleContactLocation2::Interior => 1,
+                    BezierAlgebraicCuspSemicircleContactLocation2::End => 2,
+                })?;
+                index
+            }
         };
         self.point_depths[index as usize] = depth;
         if let Some(key) = key {
@@ -136,6 +176,13 @@ fn circle_reference(
     }
 }
 
+fn parallel_reference(definitions: &[Definition], index: usize) -> SvgResult<&BezierParallel2> {
+    match definitions.get(index) {
+        Some(Definition::Parallel(parallel)) => Ok(parallel),
+        _ => Err(malformed("exact circle has an invalid parallel reference")),
+    }
+}
+
 fn chord_reference(
     definitions: &[Definition],
     index: usize,
@@ -169,6 +216,28 @@ pub(super) fn read_definition(
     max_point_depth: usize,
 ) -> SvgResult<(Definition, usize)> {
     match tag {
+        PARALLEL_NORMAL_CIRCLE => {
+            let support_index = reader.read_len()?;
+            let support = parallel_reference(definitions, support_index)?.clone();
+            let parameter_index = reader.read_len()?;
+            let parameter = scalar_parameter_reference(definitions, parameter_index)?;
+            let depth = points::next_depth(
+                point_depths[support_index].max(point_depths[parameter_index]),
+                max_point_depth,
+            )?;
+            certified(
+                BezierAlgebraicCuspSemicircle2::replay_parallel_normal_definition(
+                    CircleParallelNormalDefinition2 {
+                        center_support: support,
+                        center_parameter: parameter,
+                        radial_distance: reader.read_real()?,
+                        clockwise: reader.read_bool()?,
+                    },
+                    &CurveContext::STRICT,
+                ),
+            )
+            .map(|circle| (Definition::Circle(circle), depth))
+        }
         CHORD_NORMAL_CIRCLE => {
             let center_index = reader.read_len()?;
             let center = points::point_reference(definitions, center_index)?.clone();
@@ -192,11 +261,35 @@ pub(super) fn read_definition(
             )
             .map(|circle| (Definition::Circle(circle), depth))
         }
-        SCALAR_CIRCLE_PARAMETER | CHORD_NORMAL_CONTACT | INCIDENT_CIRCLE_POINT => {
+        SCALAR_CIRCLE_PARAMETER
+        | CHORD_NORMAL_CONTACT
+        | INCIDENT_CIRCLE_POINT
+        | PARALLEL_NORMAL_CONTACT => {
             let support = reader.read_len()?;
             let circle = circle_reference(definitions, support)?;
             let mut depth = point_depths[support];
-            let definition = if tag == INCIDENT_CIRCLE_POINT {
+            let definition = if tag == PARALLEL_NORMAL_CONTACT {
+                let parallel_index = reader.read_len()?;
+                let parallel = parallel_reference(definitions, parallel_index)?.clone();
+                let parameter_index = reader.read_len()?;
+                let parameter = scalar_parameter_reference(definitions, parameter_index)?;
+                depth = depth
+                    .max(point_depths[parallel_index])
+                    .max(point_depths[parameter_index]);
+                let radial_distance = reader.read_real()?;
+                let location = match reader.read_u8()? {
+                    0 => BezierAlgebraicCuspSemicircleContactLocation2::Start,
+                    1 => BezierAlgebraicCuspSemicircleContactLocation2::Interior,
+                    2 => BezierAlgebraicCuspSemicircleContactLocation2::End,
+                    _ => return Err(malformed("exact circle has an invalid contact location")),
+                };
+                CircleParameterDefinition2::ParallelNormal {
+                    parallel,
+                    parameter,
+                    radial_distance,
+                    location,
+                }
+            } else if tag == INCIDENT_CIRCLE_POINT {
                 let point_index = reader.read_len()?;
                 let point = points::point_reference(definitions, point_index)?.clone();
                 depth = depth.max(point_depths[point_index]);
