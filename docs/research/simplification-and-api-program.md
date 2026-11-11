@@ -11,6 +11,12 @@ and the repository [agent rules](../../AGENTS.md), with the governing order:
 
 **exactness > completeness > performance > memory > binary size > source size**
 
+The [11 November integration and disposition review](integration-and-dispositions-2026-11-11.md)
+records current main publication, the locally qualified combined SVG/NURBS
+source, adverse arithmetic/native-importer costs and source-preserving
+retirement of seven historical aliases. Original package outcomes below remain
+historical; later capability and publication claims retain separate evidence.
+
 Integration follow-up (4 November): `closure-integration` fast-forwarded to
 `a08c698757`, bringing the implementation here. The
 [integration record](consolidation-2026-11-04.md) distinguishes historical

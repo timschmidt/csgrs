@@ -16,10 +16,17 @@ This repository keeps a digest for each archived record in
 | Research closeout commit | `cd8bf060aa577231f84fffd7cf21e15127c028b0` |
 | Integration closeout branch | [`integration-closeout-20261105`](https://github.com/timschmidt/csgrs-evidence/tree/integration-closeout-20261105) |
 | Last verified published commit | `f9373479078afb36b85094ee23402696d83bf191` (435 records) |
-| Local manifest commit | `0a1da64a17b4ff0912b58183d4bc42149511cf10` (457 records) |
-| Local research branch | `research-svg-circle-ellipse-validation-20261110` |
+| Local manifest commit | `7c10597ee8591cc86bda15c59394000e8b674e9b` (466 records) |
+| Local research branch | `research-historical-branch-retirement-20261111` |
 
-The local manifest includes twenty-two unpublished descendants. The existing
+The [11 November integration and disposition record](research/integration-and-dispositions-2026-11-11.md)
+accounts for the nine later local records, the published circle/ellipse source,
+the separately committed SVG/NURBS integration, adverse arithmetic experiments
+and seven retired historical aliases. All 466 actual local records verify;
+prior record bytes and all four excluded-package rows are preserved. This
+source index does not upload the evidence repository.
+
+The local manifest includes thirty-one unpublished descendants. The existing
 `integration-closeout-20261105` payload remains at
 `a5623e1bcc778d462080cdeb1b746e5b3be8d09a`; the spatial component record is a
 separate local descendant. Publishing to the separate evidence repository is
