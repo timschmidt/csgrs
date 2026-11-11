@@ -7,6 +7,7 @@
 use std::cmp::Ordering;
 
 use hyperreal::{Rational as HyperRational, Real, RealSign, ZeroKnowledge};
+use num::bigint::Sign;
 
 use crate::curve_resultant::BivariatePolynomial;
 
@@ -334,20 +335,48 @@ impl RealInterval {
 pub fn rational_interval_bernstein_strict_sign(
     controls: Vec<[HyperRational; 2]>,
 ) -> Option<RealSign> {
-    let zero = HyperRational::zero();
-    let mut pending = vec![(controls, 0_u8)];
+    use crate::root_isolation::midpoint_subdivide_integer_bernstein;
+
+    // Preserve the cheap convex-hull certificate before clearing denominators.
+    if strict_bernstein_bound(controls.iter().map(|control| control[0].sign()), Sign::Plus) {
+        return Some(RealSign::Positive);
+    }
+    if strict_bernstein_bound(
+        controls.iter().map(|control| control[1].sign()),
+        Sign::Minus,
+    ) {
+        return Some(RealSign::Negative);
+    }
+    let first = controls.first()?;
+    let last = controls.last()?;
+    let positive_endpoints = first[0].sign() == Sign::Plus && last[0].sign() == Sign::Plus;
+    let negative_endpoints = first[1].sign() == Sign::Minus && last[1].sign() == Sign::Minus;
+    // Subdivision preserves both outer endpoint intervals. A uniform strict
+    // sign needs both of those intervals to certify it.
+    if !positive_endpoints && !negative_endpoints {
+        return None;
+    }
+
+    // Midpoint subdivision is linear and the tests compare each bound with
+    // zero. Clear each bound's denominators once. The integer midpoint helper
+    // keeps every child vector under one positive scale, so lower and upper
+    // signs are the same as in the rational interval tableau.
+    let integer_bounds = [0, 1].map(|bound| {
+        let values = controls
+            .iter()
+            .map(|control| &control[bound])
+            .collect::<Vec<_>>();
+        HyperRational::primitive_bigint_ratio(&values)
+    });
+    let mut pending = vec![(integer_bounds, 0_u8)];
     let mut certified_sign = None;
     let mut visited = 0_usize;
-    while let Some((controls, depth)) = pending.pop() {
+    while let Some(([lower, upper], depth)) = pending.pop() {
         visited += 1;
-        let first = controls.first()?;
-        let last = controls.last()?;
-        let endpoints_positive = first[0] > zero && last[0] > zero;
-        let endpoints_negative = first[1] < zero && last[1] < zero;
         let segment_sign =
-            if endpoints_positive && controls.iter().all(|control| control[0] >= zero) {
+            if strict_bernstein_bound(lower.iter().map(|value| value.sign()), Sign::Plus) {
                 Some(RealSign::Positive)
-            } else if endpoints_negative && controls.iter().all(|control| control[1] <= zero) {
+            } else if strict_bernstein_bound(upper.iter().map(|value| value.sign()), Sign::Minus) {
                 Some(RealSign::Negative)
             } else {
                 None
@@ -364,27 +393,21 @@ pub fn rational_interval_bernstein_strict_sign(
             return None;
         }
 
-        let mut work = controls;
-        let degree = work.len().saturating_sub(1);
-        let mut left = Vec::with_capacity(work.len());
-        let mut right = Vec::with_capacity(work.len());
-        left.push(work[0].clone());
-        right.push(work[degree].clone());
-        for level in 1..=degree {
-            for index in 0..=degree - level {
-                work[index] = [
-                    HyperRational::average_pair(&work[index][0], &work[index + 1][0]),
-                    HyperRational::average_pair(&work[index][1], &work[index + 1][1]),
-                ];
-            }
-            left.push(work[0].clone());
-            right.push(work[degree - level].clone());
-        }
-        right.reverse();
-        pending.push((right, depth + 1));
-        pending.push((left, depth + 1));
+        let (lower_left, lower_right) = midpoint_subdivide_integer_bernstein(lower)?;
+        let (upper_left, upper_right) = midpoint_subdivide_integer_bernstein(upper)?;
+        pending.push(([lower_right, upper_right], depth + 1));
+        pending.push(([lower_left, upper_left], depth + 1));
     }
     certified_sign
+}
+
+fn strict_bernstein_bound(
+    mut signs: impl DoubleEndedIterator<Item = Sign>,
+    required: Sign,
+) -> bool {
+    signs.next() == Some(required)
+        && signs.next_back().is_none_or(|last| last == required)
+        && signs.all(|sign| sign == required || sign == Sign::NoSign)
 }
 
 /// Whether two certified signs are strictly positive and strictly negative.

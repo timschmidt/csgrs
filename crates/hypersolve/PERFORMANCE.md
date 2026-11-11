@@ -5,6 +5,50 @@ This document records how every source in the README reference list maps to
 deliberately bounded or architecture-inapplicable. Solver proposals may cross a named lossy
 boundary, but no optimization may turn such a proposal into proof.
 
+## Rational interval Bernstein subdivision (2026-11-10)
+
+Hypersolve owns the strict sign filter for finite rational Bernstein control
+intervals under P5 and P20. A stack sample of the generated NURBS fillet's
+round stroke on the retained-contact candidate reached repeated rational
+fraction reduction in its midpoint tableau. The filter returns a uniform
+certified sign or an inconclusive result to the existing exact fallback.
+
+After the initial convex-hull check, the filter clears the lower and upper
+vectors independently with positive scales. The shared integer de Casteljau
+routine preserves a positive scale for each child. This preserves each bound
+sign and the depth-first traversal. Both outer endpoint intervals must certify
+the same sign, so an impossible endpoint pair can return immediately. Interior
+zero controls, a zero endpoint, and a true tangency retain their separate
+effects on certification. The existing depth and visit checks still apply.
+
+Feature-matched Rust 1.99.1 release probes evaluate the same independently
+constructed shifted-square intervals, with eight signed odd-denominator
+cases and thirteen dyadic, heterogeneous or endpoint cases. All expected
+outcomes agree. Three alternating process runs give descriptive medians on
+the shared host.
+
+| Exact control | Parent | Candidate |
+| --- | ---: | ---: |
+| Degree 64 with a 32,768-bit odd denominator, positive | 109.88 ms | 4.48 ms |
+| Degree 64 on the 1,024-bit dyadic grid, positive | 3.54 ms | 0.15 ms |
+| Degree 64 on the same grid, tangency | 33.87 ms | 1.33 ms |
+| Indeterminate outer endpoint | 3.57 µs | 0.05 µs |
+
+The first integer candidate had higher medians on one wide positive case and
+the indeterminate endpoint case. The endpoint guard and the repeat campaign
+retain the same input and expected outcomes. The odd-denominator executable's
+reported text grows 8,876 bytes, and its median process peak RSS is 8,364 KiB
+on the parent and 8,368 KiB on the candidate. The dyadic executable's reported
+text grows 8,860 bytes, and its median process peak RSS is 3,248 KiB and
+3,428 KiB respectively. These are complete filter probes with process-level
+resource observations on the stated inputs.
+
+Workspace formatting, 10 interval tests, 14 Bernstein owner tests, and
+all-target all-feature Hypersolve Clippy with `-D warnings` pass. The three
+affected Hypercurve harnesses pass 26 tests with 13 existing ignores. The
+original NURBS round stroke and total work, coefficient growth and memory
+bounds remain open.
+
 ## R06 selected-coefficient bivariate resultants (2026-11-04)
 
 At `5442eee1af553b1196c00dc4f211774948762414`, the native bivariate
