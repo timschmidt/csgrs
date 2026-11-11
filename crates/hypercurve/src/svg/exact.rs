@@ -23,10 +23,14 @@ pub(super) fn encode_path(
             || curve.polynomial_branch().is_some()
             || curve.source_restriction().is_some()
             || curve.analytic_parallel().is_some()
+            || matches!(curve.retained_fragment(),
+                Some(crate::BezierSplitFragment2::SelectedFiber(fragment))
+                    if fragment.rational_curve().is_some())
             || matches!(
                 curve.retained_fragment(),
                 Some(
-                    crate::BezierSplitFragment2::AlgebraicChord(_)
+                    crate::BezierSplitFragment2::RetainedBezier { .. }
+                        | crate::BezierSplitFragment2::AlgebraicChord(_)
                         | crate::BezierSplitFragment2::AlgebraicCuspSemicircle(_)
                 )
             )

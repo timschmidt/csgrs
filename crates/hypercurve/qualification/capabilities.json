@@ -20073,6 +20073,55 @@
           "assertion": "The exterior inverse is reported and validated on its original chart."
         }
       ]
+    },
+    {
+      "id": "nurbs_selected_rational_trim_replay",
+      "target": "hypercurve_open_path_compositions",
+      "test": "generated_nurbs_rational_trims_replay_before_exact_inverse_location",
+      "owner": "Hypercurve native rational range replay and authored inverse incidence",
+      "properties": [
+        "P12",
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20",
+        "P27"
+      ],
+      "domain": "The weight-six two-span NURBS corner at (-3,4), with the independently selected radius-1/2 trim-only fillet. The archive contains the authored path and its two generated rational trims, including one reversed trim.",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Nurbs",
+        "RationalBezier",
+        "AnalyticParallel"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "semantics": "Fresh-process exact native replay preserves the original contact recipes and source charts. Each subsequent authored inverse query has 64 refinements and zero promotions.",
+      "claims": [
+        {
+          "stage": "representation",
+          "outcome": "exact_success",
+          "assertion": "Both generated rational trims export with retained source ranges and original contact point definitions."
+        },
+        {
+          "stage": "exact_replay",
+          "outcome": "exact_success",
+          "assertion": "A fresh process imports all three paths and re-exports identical authoritative bytes."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both policies return exactly one authored inverse per contact within the declared query budget, with exact forward point equality and independent rational parameter bounds."
+        }
+      ],
+      "oracle": "Exact endpoint/source identities, the original independently established contact parameter enclosures and forward point equations. Deterministic bytes are asserted separately.",
+      "timeout_seconds": 900
     }
   ]
 }

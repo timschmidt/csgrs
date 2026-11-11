@@ -22,6 +22,7 @@ mod points;
 mod polynomial;
 #[cfg(test)]
 mod retained_bezier_tests;
+mod selected_rational;
 
 pub(super) const PREFIX: &str = "4:";
 const MAGIC: &[u8; 4] = b"HCP4";
@@ -178,6 +179,12 @@ impl GraphWriter {
             self.writer.write_u32(end)?;
             self.writer.write_bool(*reversed)?;
             return Ok(index);
+        }
+        if let Some(crate::BezierSplitFragment2::SelectedFiber(fragment)) =
+            curve.retained_fragment()
+            && let Some(source) = fragment.rational_curve()
+        {
+            return self.selected_rational_range(fragment, source);
         }
         if let Some(view) = curve.analytic_parallel() {
             let Some((start, end)) = view.range().as_bezier_parameters() else {
@@ -607,6 +614,16 @@ fn read_definitions(
                 } else {
                     curve
                 })
+            }
+            selected_rational::RANGE => {
+                let (curve, depth) = selected_rational::read_range(
+                    reader,
+                    &definitions,
+                    &point_depths,
+                    max_point_depth,
+                )?;
+                point_depth = depth;
+                Definition::Curve(curve)
             }
             tag @ (points::COORDINATES
             | points::RATIONAL_POINT
