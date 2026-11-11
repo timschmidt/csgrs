@@ -1680,3 +1680,139 @@ fn generated_nurbs_rational_trims_replay_before_exact_inverse_location() {
         String::from_utf8_lossy(&child.stderr)
     );
 }
+
+#[cfg(feature = "svg")]
+#[test]
+fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
+    use hypercurve::{
+        CurveCertainty, CurveCornerSolutions2, CurveFamily2, CurvePointLocations2, SvgGeometry2,
+        WorkBudget, evaluate_with_budget, export_svg_document, import_svg_document,
+    };
+    use std::cmp::Ordering;
+    use std::path::PathBuf;
+
+    let file = PathBuf::from(std::env::var_os("CSGRS_NATIVE_NURBS_REPLAY_FILE").unwrap());
+    if std::env::var_os("CSGRS_NATIVE_NURBS_REPLAY_CHILD").is_some() {
+        let text = std::fs::read_to_string(&file).unwrap();
+        let imported = support::under(&STRICT, || import_svg_document(&text))
+            .expect("replay the retained authored and generated paths");
+        assert_eq!(imported.certainty, CurveCertainty::Certified);
+        let replayed = imported.into_value();
+        let [path, fillet] = replayed.paths() else {
+            panic!("replay authored path and generated fillet");
+        };
+        let mut arcs = fillet
+            .curves()
+            .iter()
+            .filter(|arc| arc.family() == CurveFamily2::CircularArc);
+        let first = arcs.next().expect("the replayed fillet retains a circle");
+        let last = arcs.next_back().unwrap_or(first);
+        let contacts = [first.start(), last.end()];
+        eprintln!("REPLAYED_PATHS");
+        let bounds = [[987_178_i64, 987_181_i64], [16_792, 16_795]];
+        for ((source, contact), [lower, upper]) in path.curves().iter().zip(contacts).zip(bounds) {
+            for policy in [STRICT, PredicatePolicy::APPROXIMATE_512] {
+                let result = evaluate_with_budget(
+                    policy,
+                    WorkBudget {
+                        refinements: 64,
+                        promotions: 0,
+                    },
+                    || source.point_locations(&contact),
+                );
+                assert_eq!(result.usage.promotions, 0);
+                let value = result.result.expect("replayed retained contact inverse");
+                assert_eq!(value.certainty(), CurveCertainty::Certified);
+                let CurvePointLocations2::Locations(locations) =
+                    value.certified().unwrap().unwrap()
+                else {
+                    panic!("an injective authored source has a finite replayed contact");
+                };
+                let [location] = locations.as_slice() else {
+                    panic!("exactly one authored inverse");
+                };
+                let parameter = location.parameter().unwrap();
+                for (bound, order) in [(lower, Ordering::Greater), (upper, Ordering::Less)] {
+                    let bound = (Real::from(bound) / Real::from(1_000_000)).unwrap();
+                    assert_eq!(parameter.compare(&bound.into()).unwrap(), order);
+                }
+                assert!(
+                    source
+                        .point_at(&parameter)
+                        .unwrap()
+                        .coincides_with(&contact)
+                        .unwrap()
+                );
+            }
+        }
+        eprintln!("REPLAYED_INVERSES");
+        assert_eq!(export_svg_document(&replayed).unwrap(), text);
+        eprintln!("REPLAYED_BYTES");
+        let mut native_count = 0;
+        for suffix in text.split(" data-hypercurve-path=\"").skip(1) {
+            let extension = suffix.split('"').next().unwrap();
+            let hidden = format!(
+                r#"<svg><path visibility="hidden" data-hypercurve-path="{extension}" d="X"/></svg>"#
+            );
+            let selected = support::under(&STRICT, || import_svg_document(&hidden))
+                .expect("validate generated native path before hidden selection");
+            assert_eq!(selected.certainty, CurveCertainty::Certified);
+            assert!(selected.into_value().is_empty());
+            native_count += 1;
+        }
+        assert_eq!(native_count, 2);
+        eprintln!("VALIDATED_HIDDEN_NATIVE_PATHS");
+        return;
+    }
+
+    let seed = Seed {
+        x: -3,
+        y: 4,
+        edges: vec![
+            Edge {
+                family: 7,
+                dx: 5,
+                dy: 3,
+                outward: -2,
+            },
+            Edge {
+                family: 7,
+                dx: 8,
+                dy: -2,
+                outward: 1,
+            },
+        ],
+        weight: 6,
+    };
+    let constructed = support::under(&STRICT, || {
+        let path = seed_path(&seed);
+        let CurveCornerSolutions2::Unique(fillet) = path.fillet_vertex(
+            1,
+            &CurveFillet2::new(fraction(1, 2)),
+            CurveCornerMode2::TrimOnly,
+        )?
+        else {
+            panic!("one independently proved exact fillet");
+        };
+        Ok::<_, hypercurve::ExactCurveError>((path, fillet))
+    })
+    .unwrap();
+    assert_eq!(constructed.certainty, CurveCertainty::Certified);
+    let (path, fillet) = constructed.into_value();
+    eprintln!("GENERATED_FILLET");
+    let geometry = SvgGeometry2::new(CurveRegion2::empty(), Vec::new(), vec![path, fillet]);
+    let text = export_svg_document(&geometry).expect("native export of exact NURBS fillet");
+    std::fs::write(&file, text).unwrap();
+    eprintln!("EXPORTED_PATHS");
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "generated_nurbs_fillet_replays_before_exact_inverse_location",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .env("CSGRS_NATIVE_NURBS_REPLAY_CHILD", "1")
+        .status()
+        .unwrap();
+    assert!(child.success());
+}

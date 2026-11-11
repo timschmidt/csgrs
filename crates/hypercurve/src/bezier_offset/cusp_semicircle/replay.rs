@@ -9,6 +9,13 @@ pub(crate) struct CircleChordNormalDefinition2 {
     pub(crate) clockwise: bool,
 }
 
+pub(crate) struct CircleParallelNormalDefinition2 {
+    pub(crate) center_support: BezierParallel2,
+    pub(crate) center_parameter: CurveParameter2,
+    pub(crate) radial_distance: Real,
+    pub(crate) clockwise: bool,
+}
+
 pub(crate) enum CircleParameterDefinition2 {
     Exact(Real),
     IncidentPoint(CurvePoint2),
@@ -34,6 +41,39 @@ impl BezierAlgebraicCuspSemicircle2 {
                 radial_distance: self.data.radial_distance.clone(),
                 clockwise: self.data.clockwise,
             })
+    }
+
+    pub(crate) fn native_parallel_normal_definition(
+        &self,
+    ) -> Option<CircleParallelNormalDefinition2> {
+        let frame = self.data.frame.parallel_normal()?;
+        CurveContext::STRICT
+            .accepts_retained_policy(frame.policy)
+            .then(|| CircleParallelNormalDefinition2 {
+                center_support: frame.center_support.clone(),
+                center_parameter: frame.center_parameter.clone(),
+                radial_distance: self.data.radial_distance.clone(),
+                clockwise: self.data.clockwise,
+            })
+    }
+
+    pub(crate) fn replay_parallel_normal_definition(
+        definition: CircleParallelNormalDefinition2,
+        policy: &CurveContext,
+    ) -> CurveResult<Classification<Self>> {
+        // Serialized selectors are inputs to the regular source-frame owner,
+        // never evidence that its denominator and tangent are nonzero.
+        match Self::from_selected_parallel_normal(
+            definition.center_support,
+            definition.center_parameter,
+            definition.radial_distance,
+            definition.clockwise,
+            policy,
+        )? {
+            Classification::Decided(Some(circle)) => Ok(Classification::Decided(circle)),
+            Classification::Decided(None) => Err(CurveError::InvalidCurveParameter),
+            Classification::Uncertain(reason) => Ok(Classification::Uncertain(reason)),
+        }
     }
 
     pub(crate) fn replay_chord_normal_definition(

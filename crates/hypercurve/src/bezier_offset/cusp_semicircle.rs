@@ -17,7 +17,9 @@ mod rational_kernel;
 mod replay;
 
 #[cfg(feature = "svg")]
-pub(crate) use replay::{CircleChordNormalDefinition2, CircleParameterDefinition2};
+pub(crate) use replay::{
+    CircleChordNormalDefinition2, CircleParallelNormalDefinition2, CircleParameterDefinition2,
+};
 
 impl BezierAlgebraicCuspSemicircle2 {
     #[inline]
