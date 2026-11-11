@@ -1156,6 +1156,100 @@ fn round_stroke_of_a_filleted_nurbs_pair_completes() {
     run_sequence(&seed, &[Step::Fillet(1, 2), Step::Stroke(1, 0)]).unwrap();
 }
 
+/// The two source spans of the original hard stroke fixture are strictly
+/// x-increasing. Their generated fillet retains the authored contact chart.
+#[test]
+fn nurbs_fillet_contacts_reuse_the_exact_authored_inverse() {
+    use hypercurve::{
+        CurveCertainty, CurveCornerSolutions2, CurveFamily2, CurvePointLocations2, WorkBudget,
+        evaluate_with_budget,
+    };
+    use std::cmp::Ordering;
+
+    let seed = Seed {
+        x: -3,
+        y: 4,
+        edges: vec![
+            Edge {
+                family: 7,
+                dx: 5,
+                dy: 3,
+                outward: -2,
+            },
+            Edge {
+                family: 7,
+                dx: 8,
+                dy: -2,
+                outward: 1,
+            },
+        ],
+        weight: 6,
+    };
+    let generated = support::under(&STRICT, || {
+        let path = seed_path(&seed);
+        let solutions = path.fillet_vertex(
+            1,
+            &CurveFillet2::new(fraction(1, 2)),
+            CurveCornerMode2::TrimOnly,
+        )?;
+        let CurveCornerSolutions2::Unique(filleted) = solutions else {
+            panic!("expected the unique independently established trim-only fillet");
+        };
+        let mut arcs = filleted
+            .curves()
+            .iter()
+            .filter(|curve| curve.family() == CurveFamily2::CircularArc);
+        let first = arcs.next().expect("the generated fillet has a circle");
+        let last = arcs.next_back().unwrap_or(first);
+        Ok::<_, hypercurve::ExactCurveError>((path, [first.start(), last.end()]))
+    })
+    .unwrap();
+    assert_eq!(generated.certainty, CurveCertainty::Certified);
+    let (path, contacts) = generated.into_value();
+
+    // Independent rational enclosures of the original selected parameters.
+    let bounds = [[987_178_i64, 987_181_i64], [16_792, 16_795]];
+    for ((source, contact), [lower, upper]) in path.curves().iter().zip(contacts).zip(bounds) {
+        let [span] = source.native_bezier_fragments().unwrap() else {
+            panic!("this authored NURBS curve has one span");
+        };
+        assert!(span.has_certified_injective_axis().unwrap());
+        for policy in [STRICT, PredicatePolicy::APPROXIMATE_512] {
+            let result = evaluate_with_budget(
+                policy,
+                WorkBudget {
+                    refinements: 64,
+                    promotions: 0,
+                },
+                || source.point_locations(&contact),
+            );
+            assert_eq!(result.usage.promotions, 0);
+            let provisional = result.result.expect("reuse the retained inverse proof");
+            assert_eq!(provisional.certainty(), CurveCertainty::Certified);
+            let CurvePointLocations2::Locations(locations) =
+                provisional.certified().unwrap().unwrap()
+            else {
+                panic!("the contact has a finite inverse on its original span");
+            };
+            let [location] = locations.as_slice() else {
+                panic!("the injective original span has one visit");
+            };
+            let parameter = location.parameter().unwrap();
+            for (bound, order) in [(lower, Ordering::Greater), (upper, Ordering::Less)] {
+                let bound = (Real::from(bound) / Real::from(1_000_000)).unwrap();
+                assert_eq!(parameter.compare(&bound.into()).unwrap(), order);
+            }
+            assert!(
+                source
+                    .point_at(&parameter)
+                    .unwrap()
+                    .coincides_with(&contact)
+                    .unwrap()
+            );
+        }
+    }
+}
+
 /// Fillets a vertex, round-strokes the path wider than the fillet radius,
 /// rebuilds the stroke from its exported boundary, reverses that boundary,
 /// fillets the inner corner left where the inner offsets meet, and erodes

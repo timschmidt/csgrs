@@ -201,6 +201,150 @@ fn selected_inverse_keeps_all_visits_constant_coordinates_and_trim_domains() {
 }
 
 #[test]
+fn retained_native_points_keep_all_visits_on_folded_and_multispan_curves() {
+    // (x,y)=((t-1/2)^2,(t-1/2)^4). The selected source image has two
+    // independent visits given by the two roots of 8t^2-8t+1.
+    let folded = Curve2::from(
+        RationalBezier2::try_new(
+            [q(1, 4), Real::zero(), q(-1, 12), Real::zero(), q(1, 4)]
+                .into_iter()
+                .enumerate()
+                .map(|(i, x)| Point2::new(x, q(if i % 2 == 0 { 1 } else { -1 }, 16)))
+                .collect(),
+            vec![Real::one(); 5],
+        )
+        .unwrap(),
+    );
+    let roots: Vec<CurveParameter2> = BezierParameterPolynomial::try_new_power_basis(
+        [1, -8, 8].into_iter().map(Real::from).collect(),
+    )
+    .unwrap()
+    .isolate_unit_interval_roots()
+    .unwrap()
+    .into_iter()
+    .map(Into::into)
+    .collect();
+    assert_eq!(roots.len(), 2);
+    let query = zero_distance_source_point(&folded, &roots[0]);
+    assert!(query.coordinates().is_none());
+    let visits = agrees(&folded, &query, 2);
+    for (actual, expected) in visits.iter().zip(&roots) {
+        assert_eq!(actual.compare(expected).unwrap(), Ordering::Equal);
+    }
+
+    // The second span traces the first in reverse. Recognizing the selected
+    // point on the first chart must still enumerate the second span.
+    let p = Point2::from_values;
+    let retraced = Curve2::try_nurbs(
+        2,
+        vec![p(0, 0), p(1, 2), p(2, 0), p(1, 2), p(0, 0)],
+        vec![Real::one(); 5],
+        [0, 0, 0, 1, 1, 2, 2, 2]
+            .into_iter()
+            .map(Real::from)
+            .collect(),
+    )
+    .unwrap();
+    let parameter = alpha();
+    let query = zero_distance_source_point(&retraced, &parameter);
+    assert!(query.coordinates().is_none());
+    let visits = agrees(&retraced, &query, 2);
+    assert_eq!(visits[0].compare(&parameter).unwrap(), Ordering::Equal);
+    assert_eq!(
+        visits[1].compare(&Real::one().into()).unwrap(),
+        Ordering::Greater
+    );
+}
+
+#[test]
+fn retained_native_point_does_not_exclude_an_exterior_preimage() {
+    // The source (t²,t⁴) is injective on [0,1], but evaluating it at -t
+    // in an explicitly admitted exterior chart gives the same image.
+    let source = monomials(4, 2, 4);
+    let query = zero_distance_source_point(&source, &alpha());
+    assert!(query.coordinates().is_none());
+    let exterior = Curve2::try_from_bezier_range(
+        source.geometry().unwrap().clone(),
+        hypercurve::CurveParameterRange2::try_new(Real::from(-1).into(), Real::zero().into())
+            .unwrap(),
+    )
+    .unwrap();
+    let visits = agrees(&exterior, &query, 1);
+    assert_eq!(
+        visits[0].compare(&Real::zero().into()).unwrap(),
+        Ordering::Less
+    );
+}
+
+fn zero_distance_source_point(curve: &Curve2, parameter: &CurveParameter2) -> CurvePoint2 {
+    let span = &curve.native_bezier_fragments().unwrap()[0];
+    let source = match span.curve() {
+        hypercurve::CurveGeometry2::RationalBezier(source) => source,
+        hypercurve::CurveGeometry2::QuadraticBezier(source) => RationalBezier2::try_new(
+            source.control_points().into_iter().cloned().collect(),
+            vec![Real::one(); 3],
+        )
+        .unwrap(),
+        hypercurve::CurveGeometry2::RationalQuadraticBezier(source) => source.into(),
+        other => panic!("unexpected source span: {:?}", other.family()),
+    };
+    let source = source.parallel_left(Real::zero()).unwrap();
+    hypercurve::CurvePointDefinition2::Parallel {
+        source,
+        parameter: parameter.clone(),
+    }
+    .into_point()
+    .unwrap()
+}
+
+#[test]
+fn retained_native_inverse_respects_trimmed_and_reversed_domains() {
+    use hypercurve::{CurveParameterRange2, PredicatePolicy, WorkBudget, evaluate_with_budget};
+
+    let source = monomials(4, 2, 4);
+    let parameter = alpha();
+    let query = zero_distance_source_point(&source, &parameter);
+    let retained = source
+        .restrict_source(
+            CurveParameterRange2::try_new(parameter.clone(), Real::one().into()).unwrap(),
+        )
+        .unwrap();
+    let omitted = source
+        .restrict_source(
+            CurveParameterRange2::try_new(Real::zero().into(), q(1, 4).into()).unwrap(),
+        )
+        .unwrap();
+
+    for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+        for (curve, count) in [
+            (&retained, 1),
+            (&retained.reversed().unwrap(), 1),
+            (&omitted, 0),
+        ] {
+            let result = evaluate_with_budget(
+                policy,
+                WorkBudget {
+                    refinements: 64,
+                    promotions: 0,
+                },
+                || curve.point_locations(&query),
+            );
+            let CurvePointLocations2::Locations(locations) =
+                result.result.unwrap().certified().unwrap().unwrap()
+            else {
+                panic!("expected finite retained preimages");
+            };
+            assert_eq!(locations.len(), count);
+            for location in locations {
+                let t = location.parameter().unwrap();
+                assert_eq!(t.compare(&parameter).unwrap(), Ordering::Equal);
+                assert!(curve.point_at(&t).unwrap().coincides_with(&query).unwrap());
+            }
+        }
+    }
+}
+
+#[test]
 fn selected_queries_keep_original_poles_and_entire_span_outcomes() {
     let a = alpha();
     let point = Curve2::from(

@@ -1,8 +1,9 @@
 //! Native rational preimages retain the query's selected coefficient field.
 use super::*;
 use crate::bezier_split::CurveParameterDomain2;
+use crate::curve_point::CurvePointData2;
 use crate::polynomial_point::PolynomialPoint2;
-use crate::{CurveFamily2, CurveParameterRange2, CurveParameterSet2};
+use crate::{BezierParallelSource2, CurveFamily2, CurveParameterRange2, CurveParameterSet2};
 
 pub(super) type SpanPreimages = Vec<(CurveParameterSet2, [bool; 2])>;
 use hyperreal::RealSign;
@@ -10,6 +11,67 @@ use hypersolve::BivariatePolynomial;
 
 fn decide<T>(value: Classification<T>) -> ExactCurveResult<T> {
     ExactCurveError::decided(CurveOperation2::Intersection, value)
+}
+
+fn retained_zero_distance_parameter(
+    source: &RationalBezier2,
+    point: &CurvePoint2,
+) -> Option<CurveParameter2> {
+    let resolved;
+    let point = if let CurvePointData2::Endpoint(endpoint) = &point.0 {
+        let Classification::Decided(Some(image)) = endpoint.resolve(&CurveContext::STRICT).ok()?
+        else {
+            return None;
+        };
+        resolved = image;
+        &resolved
+    } else {
+        point
+    };
+    let CurvePointData2::AnalyticParallel(image) = &point.0 else {
+        return None;
+    };
+    let (parallel, parameter) = image.native_parallel_evaluation()?;
+    let BezierParallelSource2::Rational(original) = parallel.source() else {
+        return None;
+    };
+    (parallel.distance().definitely_zero() && source == original).then_some(parameter)
+}
+
+fn retained_injective_preimages(
+    source: &RationalBezier2,
+    range: &CurveParameterRange2,
+    point: &CurvePoint2,
+) -> Option<SpanPreimages> {
+    let parameter = retained_zero_distance_parameter(source, point)?;
+    let strict = &CurveContext::STRICT;
+    let unit = CurveParameterRange2::unit();
+    let unit_domain = CurveParameterDomain2::new(&unit, None);
+    // The injectivity certificate covers the native unit chart. Both the
+    // known image and the requested range must lie in it to exclude other visits.
+    if unit_domain.contains_finite_range(range, strict).ok()? != Classification::Decided(true)
+        || unit_domain
+            .contains_finite_parameter(&parameter, strict)
+            .ok()?
+            != Classification::Decided(true)
+        || !matches!(
+            source.denominator_sign(&unit),
+            Classification::Decided(RealSign::Positive | RealSign::Negative)
+        )
+        || !source.has_certified_injective_axis(strict)
+    {
+        return None;
+    }
+    match CurveParameterDomain2::new(range, None)
+        .contains_finite_parameter(&parameter, strict)
+        .ok()?
+    {
+        Classification::Decided(true) => {
+            Some(vec![(CurveParameterSet2::Single(parameter), [true; 2])])
+        }
+        Classification::Decided(false) => Some(Vec::new()),
+        Classification::Uncertain(_) => None,
+    }
 }
 
 /// Complete local preimages, with open ends at original denominator zeros.
@@ -22,6 +84,15 @@ pub(super) fn parameters(
     family: CurveFamily2,
     policy: &CurveContext,
 ) -> ExactCurveResult<SpanPreimages> {
+    if let Some(preimages) = retained_injective_preimages(source, range, point) {
+        #[cfg(feature = "dispatch-trace")]
+        hyperreal::dispatch_trace::record(
+            "hypercurve",
+            "rational-span-inverse",
+            "retained-injective-source",
+        );
+        return Ok(preimages);
+    }
     parameters_with_map(source, range, point, family, policy, None)
 }
 

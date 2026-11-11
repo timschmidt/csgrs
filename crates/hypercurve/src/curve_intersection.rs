@@ -2740,9 +2740,10 @@ impl Curve2 {
     /// Selected polynomial graph branches and their invertible similarities
     /// recover the original source abscissa and validate the selected fiber,
     /// including closed algebraic trims and retained point inputs. Native
-    /// rational and spline spans solve their original homogeneous equations
-    /// over the retained query's selected coefficient field, then check both
-    /// coordinates, original denominator guards and exact active domains.
+    /// rational and spline spans can reuse a certified zero-distance parallel
+    /// contact on the same injective source within its unit chart. Other
+    /// queries solve their original homogeneous equations over the retained
+    /// selected field and check both coordinates, guards and active domains.
     /// Spline results retain authored knots and deduplicate shared seams.
     /// Partly constant spans and punctured constant domains retain continuous
     /// components and exact endpoint inclusion.
