@@ -19920,6 +19920,159 @@
           "assertion": "Visible positive descriptions retain the unavailable-sampler distinction."
         }
       ]
+    },
+    {
+      "owner": "Hypercurve rational-span inverse incidence",
+      "origins": [
+        "authored",
+        "generated"
+      ],
+      "families": [
+        "Nurbs",
+        "RationalBezier",
+        "CircularArc"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "target": "hypercurve_open_path_compositions",
+      "timeout_seconds": 300,
+      "id": "nurbs_fillet_retained_contact_inverse",
+      "test": "nurbs_fillet_contacts_reuse_the_exact_authored_inverse",
+      "domain": "The original hard cubic NURBS pair, exact trim-only radius 1/2 fillet, and its two generated circle endpoints.",
+      "semantics": "Use the retained strict source and parameter on each certified injective span. Inverse queries run under both policies with 64 refinements and no promotions.",
+      "oracle": "The independent rational isolating bounds, unique authored preimages, source evaluations and certified budget receipts.",
+      "claims": [
+        {
+          "stage": "corner_edits",
+          "outcome": "exact_success",
+          "assertion": "The exact construction returns one trim-only circular fillet."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both fillet endpoints locate once on the original NURBS span and replay as exact source evaluations."
+        },
+        {
+          "stage": "resource_recovery",
+          "outcome": "exact_success",
+          "assertion": "The two named queries complete within the stated instrumented allowance."
+        }
+      ]
+    },
+    {
+      "owner": "Hypercurve rational-span inverse incidence",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT",
+        "APPROXIMATE_512"
+      ],
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "target": "selected_rational_locations",
+      "timeout_seconds": 300,
+      "id": "retained_zero_distance_preimage_domains",
+      "test": "retained_native_inverse_respects_trimmed_and_reversed_domains",
+      "domain": "A selected zero-distance point on (t²,t⁴), used on the selected trim endpoint, its reversed traversal and a disjoint unit subrange.",
+      "semantics": "Respect active chart clipping and closed endpoint inclusion under the bounded inverse query.",
+      "oracle": "One exact parameter equal to the selected endpoint in both traversals, and zero visits on the excluded range.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The trim endpoint is included and retains its original parameter after reversal."
+        },
+        {
+          "stage": "incidence_order",
+          "outcome": "successful_empty",
+          "assertion": "The smaller disjoint unit subrange contains no visit."
+        }
+      ]
+    },
+    {
+      "owner": "Hypercurve rational-span inverse incidence",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "RationalBezier",
+        "Nurbs"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "target": "selected_rational_locations",
+      "timeout_seconds": 300,
+      "id": "retained_zero_distance_other_visits",
+      "test": "retained_native_points_keep_all_visits_on_folded_and_multispan_curves",
+      "domain": "A folded quartic source with two independently selected parameters and a quadratic NURBS spline with one reversed retrace.",
+      "semantics": "A retained parameter supplies an incidence. Complete inversion still counts all valid visits.",
+      "oracle": "Two exact roots for the folded rational curve and two verified source evaluations in distinct authored knot spans.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "Both distinct inverse locations survive each retained point query."
+        }
+      ]
+    },
+    {
+      "owner": "Hypercurve rational-span inverse incidence",
+      "origins": [
+        "authored"
+      ],
+      "families": [
+        "RationalBezier"
+      ],
+      "policies": [
+        "STRICT"
+      ],
+      "properties": [
+        "P15",
+        "P17",
+        "P18",
+        "P19",
+        "P20"
+      ],
+      "target": "selected_rational_locations",
+      "timeout_seconds": 300,
+      "id": "retained_zero_distance_exterior_preimage",
+      "test": "retained_native_point_does_not_exclude_an_exterior_preimage",
+      "domain": "A retained point of (t²,t⁴) in the original unit chart, queried on the same support in the admitted exterior chart [-1,0].",
+      "semantics": "The native injectivity certificate covers the unit chart. The exterior visit follows the general exact solver.",
+      "oracle": "The unique negative parameter evaluates exactly to the retained point.",
+      "claims": [
+        {
+          "stage": "incidence_order",
+          "outcome": "exact_success",
+          "assertion": "The exterior inverse is reported and validated on its original chart."
+        }
+      ]
     }
   ]
 }
