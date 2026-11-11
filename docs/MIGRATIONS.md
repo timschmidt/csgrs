@@ -1,5 +1,27 @@
 # Migrations
 
+## Selected rational SVG range replay (2026-11-10)
+
+Version 4 graph metadata adds tag 40 for a retained rational source range.
+The record references the exact native rational source, ordered parameter
+endpoints, both original endpoint point definitions and traversal. Import
+validates every reference, proves an ascending nonempty domain, excludes
+source poles and checks each endpoint against the source at its parameter.
+The range contributes one dependency level to the existing point-definition
+depth limit. Older readers reject the added tag. Existing graph records remain
+readable.
+
+Standalone retained Bezier pieces now select the graph codec and its existing
+tag 32. Their native source chart and algebraic trim parameters survive replay.
+Newly supported standalone paths therefore use version 4 metadata. Applications
+that compare deterministic bytes should also validate the exact geometry.
+
+The named generated NURBS trims replay in a fresh process before exact inverse
+queries on their authored spans. Generated circles using retained normal
+frames still require additional replay support. Extension bytes and dependency
+depth have explicit limits. Total arithmetic work, memory and cancellation
+remain separate open resource contracts.
+
 ## Hidden SVG path validation (2026-11-10)
 
 SVG paths hidden by display, visibility or opacity now require a `d` attribute.

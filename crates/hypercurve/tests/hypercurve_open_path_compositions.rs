@@ -1539,3 +1539,144 @@ fn coefficient_bit_limit_stops_the_stalled_filleted_hyperbola_bevel_stroke() {
     assert_eq!(exceeded.limit, 1024);
     assert!(exceeded.requested > 1024);
 }
+
+/// Replays both generated NURBS trims, including a reversed source chart,
+/// before recovering their contacts on the authored spans in a fresh process.
+#[cfg(feature = "svg")]
+#[test]
+fn generated_nurbs_rational_trims_replay_before_exact_inverse_location() {
+    use hypercurve::{
+        CurveCertainty, CurveCornerSolutions2, CurvePointLocations2, SvgGeometry2, WorkBudget,
+        evaluate_with_budget, export_svg_document, import_svg_document,
+    };
+    use std::cmp::Ordering;
+    use std::path::PathBuf;
+
+    const INPUT: &str = "HYPERCURVE_SELECTED_RATIONAL_NURBS_REPLAY_INPUT";
+    if let Some(file) = std::env::var_os(INPUT) {
+        let file = PathBuf::from(file);
+        let text = std::fs::read_to_string(&file).unwrap();
+        let imported = support::under(&STRICT, || import_svg_document(&text))
+            .expect("replay the retained authored and generated paths");
+        assert_eq!(imported.certainty, CurveCertainty::Certified);
+        let replayed = imported.into_value();
+        let [path, previous, next_reversed] = replayed.paths() else {
+            panic!("replay the original path and both generated trims");
+        };
+        let [previous] = previous.curves() else {
+            panic!("one previous trim");
+        };
+        let [next_reversed] = next_reversed.curves() else {
+            panic!("one reversed next trim");
+        };
+        assert!(previous.start().coincides_with(&path.start()).unwrap());
+        assert!(next_reversed.start().coincides_with(&path.end()).unwrap());
+        let contacts = [previous.end(), next_reversed.end()];
+        let bounds = [[987_178_i64, 987_181_i64], [16_792, 16_795]];
+        for ((source, contact), [lower, upper]) in path.curves().iter().zip(contacts).zip(bounds) {
+            for policy in [STRICT, PredicatePolicy::APPROXIMATE_512] {
+                let result = evaluate_with_budget(
+                    policy,
+                    WorkBudget {
+                        refinements: 64,
+                        promotions: 0,
+                    },
+                    || source.point_locations(&contact),
+                );
+                assert_eq!(result.usage.promotions, 0);
+                let value = result.result.expect("replayed retained contact inverse");
+                assert_eq!(value.certainty(), CurveCertainty::Certified);
+                let CurvePointLocations2::Locations(locations) =
+                    value.certified().unwrap().unwrap()
+                else {
+                    panic!("an injective authored source has a finite replayed contact");
+                };
+                let [location] = locations.as_slice() else {
+                    panic!("exactly one authored inverse");
+                };
+                let parameter = location.parameter().unwrap();
+                for (bound, order) in [(lower, Ordering::Greater), (upper, Ordering::Less)] {
+                    let bound = (Real::from(bound) / Real::from(1_000_000)).unwrap();
+                    assert_eq!(parameter.compare(&bound.into()).unwrap(), order);
+                }
+                assert!(
+                    source
+                        .point_at(&parameter)
+                        .unwrap()
+                        .coincides_with(&contact)
+                        .unwrap()
+                );
+            }
+        }
+        assert_eq!(export_svg_document(&replayed).unwrap(), text);
+        return;
+    }
+
+    let seed = Seed {
+        x: -3,
+        y: 4,
+        edges: vec![
+            Edge {
+                family: 7,
+                dx: 5,
+                dy: 3,
+                outward: -2,
+            },
+            Edge {
+                family: 7,
+                dx: 8,
+                dy: -2,
+                outward: 1,
+            },
+        ],
+        weight: 6,
+    };
+    let constructed = support::under(&STRICT, || {
+        let path = seed_path(&seed);
+        let CurveCornerSolutions2::Unique(fillet) = path.fillet_vertex(
+            1,
+            &CurveFillet2::new(fraction(1, 2)),
+            CurveCornerMode2::TrimOnly,
+        )?
+        else {
+            panic!("one independently proved exact fillet");
+        };
+        Ok::<_, hypercurve::ExactCurveError>((path, fillet))
+    })
+    .unwrap();
+    assert_eq!(constructed.certainty, CurveCertainty::Certified);
+    let (path, fillet) = constructed.into_value();
+    let first = fillet.curves().first().unwrap().clone();
+    let last = fillet.curves().last().unwrap().reversed().unwrap();
+    let previous = CurvePath2::try_new(vec![first]).unwrap();
+    let next_reversed = CurvePath2::try_new(vec![last]).unwrap();
+    let geometry = SvgGeometry2::new(
+        CurveRegion2::empty(),
+        Vec::new(),
+        vec![path, previous, next_reversed],
+    );
+    let text = export_svg_document(&geometry)
+        .expect("native export of the exact generated rational trims");
+    let file = std::env::temp_dir().join(format!(
+        "hypercurve-selected-rational-nurbs-{}.svg",
+        std::process::id()
+    ));
+    std::fs::write(&file, text).unwrap();
+    let child = std::process::Command::new(std::env::current_exe().unwrap())
+        .args([
+            "--exact",
+            "generated_nurbs_rational_trims_replay_before_exact_inverse_location",
+            "--nocapture",
+            "--test-threads=1",
+        ])
+        .env(INPUT, &file)
+        .output()
+        .unwrap();
+    std::fs::remove_file(file).unwrap();
+    assert!(
+        child.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
+}

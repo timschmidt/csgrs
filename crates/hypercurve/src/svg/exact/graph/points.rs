@@ -45,7 +45,7 @@ enum PointTask {
 }
 
 impl GraphWriter {
-    fn point_source(&mut self, source: &RationalBezier2) -> SvgResult<u32> {
+    pub(super) fn point_source(&mut self, source: &RationalBezier2) -> SvgResult<u32> {
         let key = source.homogeneous_controls().as_ptr();
         if let Some((_, index)) = self.point_sources.get(&key) {
             return Ok(*index);

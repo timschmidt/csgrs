@@ -110,6 +110,24 @@ fn replay_rebuilds_retained_bezier_ranges_in_their_source_chart() {
         );
         assert!(coincide(&restored.start(), &piece.start()));
         assert!(coincide(&restored.end(), &piece.end()));
+        let path = CurvePath2::try_new(vec![piece]).unwrap();
+        let encoded = super::super::encode_path(&path, 1_048_576, 64).unwrap();
+        let restored = super::super::decode_path(&encoded, 1_048_576, 64, 256).unwrap();
+        assert!(coincide(&restored.start(), &path.start()));
+        assert!(coincide(&restored.end(), &path.end()));
+        assert_eq!(
+            super::super::encode_path(&restored, 1_048_576, 64).unwrap(),
+            encoded
+        );
+        let geometry =
+            crate::SvgGeometry2::new(crate::CurveRegion2::empty(), Vec::new(), vec![path.clone()]);
+        let document = crate::export_svg_document(&geometry).unwrap();
+        let imported = crate::import_svg_document(&document).unwrap();
+        let [restored] = imported.paths() else {
+            panic!("one standalone retained Bezier path");
+        };
+        assert!(coincide(&restored.start(), &path.start()));
+        assert!(coincide(&restored.end(), &path.end()));
     }
 }
 
@@ -147,4 +165,176 @@ fn replay_rejects_invalid_retained_bezier_ranges() {
     ));
     // A valid record over the same source decodes.
     assert!(record(quarter, ratio(1, 4), ratio(3, 4)).is_ok());
+}
+
+#[test]
+fn replay_preserves_selected_rational_endpoint_authority() {
+    use crate::bezier_split::{BezierSelectedFiberFragment2, BezierSelectedFiberSource2};
+    use crate::{CurvePointDefinition2, RationalBezier2};
+
+    let strict = &CurveContext::STRICT;
+    let source = RationalBezier2::try_new(
+        vec![point(0, 0), point(1, 2), point(3, 1)],
+        vec![Real::one(), ratio(2, 3), Real::one()],
+    )
+    .unwrap();
+    let end = root().into();
+    let contact = source
+        .parallel_left(Real::zero())
+        .unwrap()
+        .checked_native_point(&end, strict)
+        .unwrap();
+    let piece: Curve2 = BezierSelectedFiberFragment2::new(
+        BezierSelectedFiberSource2::Rational(source),
+        CurveParameterRange2::new_validated(Real::zero().into(), end),
+        point(0, 0).into(),
+        contact.clone(),
+    )
+    .into();
+    for piece in [piece.clone(), piece.reversed().unwrap()] {
+        let restored = replay(&piece).unwrap();
+        let Some(crate::BezierSplitFragment2::SelectedFiber(fragment)) =
+            restored.retained_fragment()
+        else {
+            panic!("the replayed piece retains its selected rational carrier");
+        };
+        assert!(fragment.rational_curve().is_some());
+        assert_eq!(fragment.is_reversed(), piece.source_traversal_is_reversed());
+        assert!(coincide(&restored.start(), &piece.start()));
+        assert!(coincide(&restored.end(), &piece.end()));
+        let endpoint = if fragment.is_reversed() {
+            restored.start()
+        } else {
+            restored.end()
+        };
+        let CurvePointDefinition2::Parallel { source, parameter } = endpoint.definition().unwrap()
+        else {
+            panic!("the selected contact retains its original point definition");
+        };
+        assert!(source.distance().definitely_zero());
+        assert_eq!(
+            parameter.compare(&root().into()).unwrap(),
+            std::cmp::Ordering::Equal
+        );
+        let path = CurvePath2::try_new(vec![piece]).unwrap();
+        assert!(matches!(
+            super::super::encode_path(&path, 1, 64),
+            Err(SvgError::SizeOverflow { .. })
+        ));
+        assert!(matches!(
+            super::super::encode_path(&path, 1_048_576, 0),
+            Err(SvgError::SizeOverflow { .. })
+        ));
+        let encoded = super::super::encode_path(&path, 1_048_576, 64).unwrap();
+        assert!(matches!(
+            super::super::decode_path(&encoded, 1_048_576, 0, 256),
+            Err(SvgError::SizeOverflow { .. })
+        ));
+        let restored = super::super::decode_path(&encoded, 1_048_576, 64, 256).unwrap();
+        assert!(coincide(&restored.start(), &path.start()));
+        assert!(coincide(&restored.end(), &path.end()));
+        assert_eq!(
+            super::super::encode_path(&restored, 1_048_576, 64).unwrap(),
+            encoded
+        );
+        let chord = certified(crate::BezierAlgebraicChord2::try_new(
+            path.end(),
+            path.start(),
+            strict,
+        ))
+        .unwrap();
+        let boundary = CurvePath2::try_new(vec![path.curves()[0].clone(), chord.into()]).unwrap();
+        let outcome = crate::CurveRegion2::try_from_boundary_paths_with_policy(
+            &[boundary],
+            crate::FillRule::NonZero,
+            strict,
+        )
+        .unwrap();
+        assert_eq!(outcome.certainty, crate::CurveCertainty::Certified);
+        let region = outcome.into_value();
+        let geometry = crate::SvgGeometry2::new(region.clone(), Vec::new(), Vec::new());
+        let document = crate::export_svg_document(&geometry).unwrap();
+        let imported = crate::import_svg_document(&document).unwrap();
+        // At t=1/4 the source is (1/2,9/14). Its endpoint chord has
+        // slope below one because sqrt(1/2)>1/2>2/5.
+        for (point, expected) in [
+            (
+                Point2::new(ratio(1, 2), ratio(1, 2)),
+                crate::RegionPointLocation::Inside,
+            ),
+            (
+                Point2::new(ratio(1, 2), Real::one()),
+                crate::RegionPointLocation::Outside,
+            ),
+        ] {
+            let point = point.into();
+            for candidate in [&region, imported.region()] {
+                let location = candidate
+                    .classify_point_with_policy(&point, strict)
+                    .unwrap();
+                assert_eq!(location.certainty, crate::CurveCertainty::Certified);
+                assert_eq!(location.into_value(), Classification::Decided(expected));
+            }
+        }
+        let difference = region
+            .boolean_region_with_policy(imported.region(), crate::BooleanOp::Xor, strict)
+            .unwrap();
+        assert_eq!(difference.certainty, crate::CurveCertainty::Certified);
+        assert!(difference.value.is_empty());
+    }
+}
+
+#[test]
+fn replay_rejects_forged_selected_rational_ranges() {
+    use crate::{HomogeneousControl2, RationalBezier2};
+
+    let record = |source: Curve2, start: i32, end: i32, upper: Point2, wrong_reference: bool| {
+        let mut writer = GraphWriter::new(1_048_576, 256);
+        let source = writer.native_curve(&source).unwrap();
+        let start = writer
+            .parameter(&BezierParameter2::Exact(Real::from(start)))
+            .unwrap();
+        let end = writer
+            .parameter(&BezierParameter2::Exact(Real::from(end)))
+            .unwrap();
+        let lower = writer.point(&point(0, 0).into()).unwrap();
+        let upper = writer.point(&upper.into()).unwrap();
+        let index = writer.begin(selected_rational::RANGE).unwrap();
+        for reference in [
+            source,
+            start,
+            end,
+            lower,
+            if wrong_reference { index } else { upper },
+        ] {
+            writer.writer.write_u32(reference).unwrap();
+        }
+        writer.writer.write_bool(false).unwrap();
+        decode(writer, index)
+    };
+    let rational = Curve2::from(
+        RationalBezier2::try_new(vec![point(0, 0), point(1, 0)], vec![Real::one(); 2]).unwrap(),
+    );
+    let pole = Curve2::from(
+        RationalBezier2::from_homogeneous_controls(vec![
+            HomogeneousControl2::new(Real::zero(), Real::zero(), Real::one()),
+            HomogeneousControl2::new(Real::from(-1), Real::zero(), Real::from(-1)),
+        ])
+        .unwrap(),
+    );
+    assert!(record(rational.clone(), 0, 1, point(1, 0), false).is_ok());
+    for (result, reason) in [
+        (
+            record(rational.clone(), 0, 1, point(2, 0), false),
+            "disagrees",
+        ),
+        (
+            record(rational.clone(), 0, 1, point(1, 0), true),
+            "point reference",
+        ),
+        (record(rational, 1, 0, point(0, 0), false), "ascending"),
+        (record(pole, 0, 1, point(1, 0), false), "source pole"),
+    ] {
+        assert!(matches!(result, Err(SvgError::MalformedInput(detail)) if detail.contains(reason)));
+    }
 }

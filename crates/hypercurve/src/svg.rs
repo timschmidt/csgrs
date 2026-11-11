@@ -16,7 +16,10 @@
 //! quadratic, cubic and rational Bezier parallels also preserve selected
 //! algebraic parameters, source charts and traversal. Parallel definitions retain
 //! their shared sources and signed distances; replay rechecks each finite range's
-//! regularity. Selected straight chords retain their support, coordinate chart
+//! regularity. Selected rational ranges retain their native source, finite domain,
+//! original exact endpoint definitions and traversal. Replay proves a nonempty
+//! ascending range, excludes source poles and checks both endpoint relations.
+//! Selected straight chords retain their support, coordinate chart
 //! and directed endpoints. Those endpoints may be exact coordinates, rational
 //! source images, rational expressions or native parallel evaluations at retained
 //! Bezier parameters; shared curve-endpoint references preserve incidence.
