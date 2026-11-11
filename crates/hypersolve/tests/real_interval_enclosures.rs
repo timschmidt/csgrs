@@ -10,6 +10,7 @@ use hypersolve::real_interval::{
     rational_interval_bernstein_strict_sign, strict_signs_are_opposite,
 };
 use hypersolve::{BivariatePolynomial, RealInterval};
+use num::bigint::{BigInt, BigUint};
 
 fn r(value: i64) -> Real {
     Real::from(value)
@@ -512,6 +513,53 @@ fn bernstein_interval_signs_are_certified_or_withheld() {
         None
     );
     assert_eq!(rational_interval_bernstein_strict_sign(Vec::new()), None);
+}
+
+#[test]
+fn bernstein_interval_subdivision_preserves_independent_wide_bound_scales() {
+    let scale = Rational::from_bigint_fraction(
+        BigInt::from(1),
+        (BigUint::from(1_u8) << 4096_usize) - BigUint::from(159_u8),
+    )
+    .unwrap();
+    let width = &scale / h(3, 1);
+    // The lower polynomial is scale * ((t - 1/2)^2 + 1/16). The upper
+    // polynomial adds a constant width with a different denominator.
+    let bounds = [5, -3, 5].map(|numerator| {
+        let lower = &scale * h(numerator, 16);
+        let upper = &lower + &width;
+        [lower, upper]
+    });
+    assert_eq!(
+        rational_interval_bernstein_strict_sign(bounds.to_vec()),
+        Some(RealSign::Positive)
+    );
+    assert_eq!(
+        rational_interval_bernstein_strict_sign(
+            bounds
+                .into_iter()
+                .map(|[lower, upper]| [-upper, -lower])
+                .collect(),
+        ),
+        Some(RealSign::Negative)
+    );
+
+    // The lower bound now touches zero at the midpoint.
+    let tangent_bounds = [1, -1, 1].map(|numerator| {
+        let lower = &scale * h(numerator, 4);
+        let upper = &lower + &width;
+        [lower, upper]
+    });
+    assert_eq!(
+        rational_interval_bernstein_strict_sign(tangent_bounds.to_vec()),
+        None
+    );
+
+    let endpoint_bounds = [[-scale.clone(), scale], [h(1, 7), h(1, 5)]];
+    assert_eq!(
+        rational_interval_bernstein_strict_sign(endpoint_bounds.to_vec()),
+        None
+    );
 }
 
 #[test]

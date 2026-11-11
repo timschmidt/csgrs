@@ -3335,7 +3335,7 @@ impl BernsteinControls {
     }
 }
 
-fn midpoint_subdivide_integer_bernstein(
+pub(crate) fn midpoint_subdivide_integer_bernstein(
     mut work: Vec<BigInt>,
 ) -> Option<(Vec<BigInt>, Vec<BigInt>)> {
     let degree = work.len().checked_sub(1)?;
