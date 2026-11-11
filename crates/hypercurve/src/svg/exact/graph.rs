@@ -656,6 +656,7 @@ fn read_definitions(
             }
             tag @ (circles::CHORD_NORMAL_CIRCLE
             | circles::PARALLEL_NORMAL_CIRCLE
+            | circles::PARALLEL_NORMAL_CONTACT
             | circles::SCALAR_CIRCLE_PARAMETER
             | circles::CHORD_NORMAL_CONTACT
             | circles::CIRCLE_RANGE

@@ -1,5 +1,29 @@
 # Migrations
 
+## Parallel-normal circle and contact SVG replay (2026-11-11)
+
+Version 4 and 5 graph metadata adds tags 41 and 42 for a selected
+parallel-normal circle frame and its selected normal contact. The circle
+retains the exact source parallel, selected center parameter, signed radius
+and traversal convention. Its regular source frame is rechecked, including
+denominator and tangent guards; the center locus may have a cusp or collapse.
+
+A contact retains the other exact source parallel, its original selected
+parameter, signed radial distance and angular location. Import re-establishes
+the joint center relation through the existing parallel-pair and component
+authorities, including continuous and point-image correspondences. Strict
+source-tangent signs establish the retained semicircle and angular location.
+Serialized selectors and endpoint labels are inputs to those proofs. They are
+never accepted as proof by themselves. Original source and parameter identities
+are retained after validation.
+
+Older readers reject the added tags; existing graph records remain readable.
+Byte and dependency-depth limits remain explicit. General circle-frame replay,
+arbitrary operation closure, total arithmetic work, memory and cancellation
+remain separate qualification targets. The maintained original full NURBS
+fillet witness and its requested-approximate companion exercise the finite
+extension; per-source execution results live in the admission receipts.
+
 ## Selected rational SVG range replay (2026-11-10)
 
 Version 4 graph metadata adds tag 40 for a retained rational source range.
@@ -17,8 +41,9 @@ Newly supported standalone paths therefore use version 4 metadata. Applications
 that compare deterministic bytes should also validate the exact geometry.
 
 The named generated NURBS trims replay in a fresh process before exact inverse
-queries on their authored spans. Generated circles using retained normal
-frames still require additional replay support. Extension bytes and dependency
+queries on their authored spans. At that checkpoint, generated circles using
+retained normal frames required the additional replay support described above.
+Extension bytes and dependency
 depth have explicit limits. Total arithmetic work, memory and cancellation
 remain separate open resource contracts.
 

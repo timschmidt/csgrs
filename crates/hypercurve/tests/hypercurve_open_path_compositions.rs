@@ -1684,6 +1684,32 @@ fn generated_nurbs_rational_trims_replay_before_exact_inverse_location() {
 #[cfg(feature = "svg")]
 #[test]
 fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
+    generated_nurbs_fillet_replay_under(
+        STRICT,
+        "generated_nurbs_fillet_replays_before_exact_inverse_location",
+        "CSGRS_NATIVE_NURBS_REPLAY_FILE",
+        "CSGRS_NATIVE_NURBS_REPLAY_CHILD",
+    );
+}
+
+#[cfg(feature = "svg")]
+#[test]
+fn generated_nurbs_fillet_replays_under_requested_approximate_policy() {
+    generated_nurbs_fillet_replay_under(
+        PredicatePolicy::APPROXIMATE_512,
+        "generated_nurbs_fillet_replays_under_requested_approximate_policy",
+        "CSGRS_APPROXIMATE_NURBS_REPLAY_FILE",
+        "CSGRS_APPROXIMATE_NURBS_REPLAY_CHILD",
+    );
+}
+
+#[cfg(feature = "svg")]
+fn generated_nurbs_fillet_replay_under(
+    requested_policy: PredicatePolicy,
+    replay_test: &str,
+    file_key: &str,
+    child_key: &str,
+) {
     use hypercurve::{
         CurveCertainty, CurveCornerSolutions2, CurveFamily2, CurvePointLocations2, SvgGeometry2,
         WorkBudget, evaluate_with_budget, export_svg_document, import_svg_document,
@@ -1691,10 +1717,16 @@ fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
     use std::cmp::Ordering;
     use std::path::PathBuf;
 
-    let file = PathBuf::from(std::env::var_os("CSGRS_NATIVE_NURBS_REPLAY_FILE").unwrap());
-    if std::env::var_os("CSGRS_NATIVE_NURBS_REPLAY_CHILD").is_some() {
+    let supplied_file = std::env::var_os(file_key);
+    let file = supplied_file.clone().map(PathBuf::from).unwrap_or_else(|| {
+        std::env::temp_dir().join(format!(
+            "hypercurve-{replay_test}-{}.svg",
+            std::process::id()
+        ))
+    });
+    if std::env::var_os(child_key).is_some() {
         let text = std::fs::read_to_string(&file).unwrap();
-        let imported = support::under(&STRICT, || import_svg_document(&text))
+        let imported = support::under(&requested_policy, || import_svg_document(&text))
             .expect("replay the retained authored and generated paths");
         assert_eq!(imported.certainty, CurveCertainty::Certified);
         let replayed = imported.into_value();
@@ -1754,7 +1786,7 @@ fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
             let hidden = format!(
                 r#"<svg><path visibility="hidden" data-hypercurve-path="{extension}" d="X"/></svg>"#
             );
-            let selected = support::under(&STRICT, || import_svg_document(&hidden))
+            let selected = support::under(&requested_policy, || import_svg_document(&hidden))
                 .expect("validate generated native path before hidden selection");
             assert_eq!(selected.certainty, CurveCertainty::Certified);
             assert!(selected.into_value().is_empty());
@@ -1784,7 +1816,7 @@ fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
         ],
         weight: 6,
     };
-    let constructed = support::under(&STRICT, || {
+    let constructed = support::under(&requested_policy, || {
         let path = seed_path(&seed);
         let CurveCornerSolutions2::Unique(fillet) = path.fillet_vertex(
             1,
@@ -1805,14 +1837,19 @@ fn generated_nurbs_fillet_replays_before_exact_inverse_location() {
     std::fs::write(&file, text).unwrap();
     eprintln!("EXPORTED_PATHS");
     let child = std::process::Command::new(std::env::current_exe().unwrap())
-        .args([
-            "--exact",
-            "generated_nurbs_fillet_replays_before_exact_inverse_location",
-            "--nocapture",
-            "--test-threads=1",
-        ])
-        .env("CSGRS_NATIVE_NURBS_REPLAY_CHILD", "1")
-        .status()
+        .args(["--exact", replay_test, "--nocapture", "--test-threads=1"])
+        .env(child_key, "1")
+        .env(file_key, &file)
+        .output()
         .unwrap();
-    assert!(child.success());
+    if supplied_file.is_none() {
+        std::fs::remove_file(file).unwrap();
+    }
+    eprint!("{}", String::from_utf8_lossy(&child.stderr));
+    assert!(
+        child.status.success(),
+        "fresh replay failed: {}{}",
+        String::from_utf8_lossy(&child.stdout),
+        String::from_utf8_lossy(&child.stderr)
+    );
 }

@@ -22,6 +22,97 @@ fn decoded_circle(bytes: &[u8], depth: usize) -> SvgResult<BezierAlgebraicCuspSe
 }
 
 #[test]
+fn replay_parallel_contact_checks_untrusted_graph_records_before_publishing() {
+    let record = |bad_reference: Option<(usize, u8)>, radius: Real, location: u8, value: Real| {
+        let policy = CurveContext::STRICT;
+        let source = QuadraticBezier2::new(pt!(-1, 0), pt!(0, 0), pt!(1, 0));
+        let circle = decided_ok(
+            BezierAlgebraicCuspSemicircle2::from_selected_parallel_normal(
+                source.parallel_left(r!(0)).unwrap(),
+                r!(1 / 2).into(),
+                r!(1),
+                false,
+                &policy,
+            ),
+        )
+        .unwrap();
+        let other = QuadraticBezier2::new(pt!(-1, -1), pt!(-1, 0), pt!(-1, 1))
+            .parallel_left(r!(0))
+            .unwrap();
+        let mut writer = GraphWriter::new(1_048_576, 256);
+        let support = writer.circle(&circle).unwrap();
+        let parallel = writer.parallel(&other).unwrap();
+        let parameter = writer.scalar_parameter(&value.into()).unwrap();
+        let mut references = [support, parallel, parameter];
+        let index = writer.begin(circles::PARALLEL_NORMAL_CONTACT).unwrap();
+        if let Some((slot, kind)) = bad_reference {
+            references[slot] = match kind {
+                0 => u32::MAX,
+                1 => index,
+                2 => references[(slot + 1) % references.len()],
+                _ => unreachable!(),
+            };
+        }
+        for reference in references {
+            writer.writer.write_u32(reference).unwrap();
+        }
+        writer.writer.write_real(&radius).unwrap();
+        writer.writer.write_u8(location).unwrap();
+        graph_bytes(writer)
+    };
+    let decode = |bytes: &[u8], depth| {
+        let mut reader = ExactReader::new(bytes, 1_048_576);
+        read_definitions(&mut reader, depth, 64)
+    };
+    for slot in 0..3 {
+        for kind in 0..3 {
+            assert!(matches!(
+                decode(&record(Some((slot, kind)), r!(1), 1, r!(1 / 2)), 256),
+                Err(SvgError::MalformedInput(_))
+            ));
+        }
+    }
+    for location in [3, u8::MAX] {
+        assert!(matches!(
+            decode(&record(None, r!(1), location, r!(1 / 2)), 256),
+            Err(SvgError::MalformedInput(_))
+        ));
+    }
+    for (radius, location, value) in [
+        (r!(1), 0, r!(1 / 2)),
+        (r!(1), 2, r!(1 / 2)),
+        (r!(0), 1, r!(1 / 2)),
+        (r!(-1), 1, r!(1 / 2)),
+        (r!(2), 1, r!(1 / 2)),
+        (r!(1), 1, r!(1 / 4)),
+    ] {
+        assert!(matches!(
+            decode(&record(None, radius, location, value), 256),
+            Err(SvgError::Exact(ExactCurveError::Invalid {
+                cause: crate::CurveError::InvalidCurveParameter,
+                ..
+            }))
+        ));
+    }
+    let valid = record(None, r!(1), 1, r!(1 / 2));
+    assert!(matches!(
+        decode(&valid, 0),
+        Err(SvgError::SizeOverflow { .. })
+    ));
+    for removed in [1, 2] {
+        assert!(decode(&valid[..valid.len() - removed], 256).is_err());
+    }
+    let definitions = decode(&valid, 1).unwrap();
+    let Some(Definition::CircleParameter { parameter, .. }) = definitions.last() else {
+        panic!("a checked angular contact is published only after complete replay");
+    };
+    assert_eq!(
+        decided_ok(parameter.order_to_real(&r!(1 / 2), &CurveContext::STRICT)),
+        std::cmp::Ordering::Equal
+    );
+}
+
+#[test]
 fn replay_parallel_normal_frame_preserves_selected_center_and_oriented_image() {
     let parameter = BezierParameter2::Algebraic(
         BezierAlgebraicParameter2::try_isolate(
