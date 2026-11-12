@@ -1952,8 +1952,13 @@ kernels, measured client adoption, full legacy benchmarks/successive_operations/
 monomorphized-size gates and the remaining plan phases stay open. General
 cancellation and arbitrary rational heap/time bounds remain unimplemented;
 dimension and dyadic scalar budgets are not mislabeled as those bounds.
-No phase is complete and no push was attempted. Source/evidence registration
-pending for the norms checkpoint.
+No phase is complete and no push was attempted. Source commit:
+`a5b7a4963fa98e765ccbcc32999a7327534ccec4`. Immutable evidence commit:
+`fdd4e1c0691546d52c0735a4fc5b8352416642b4`, record
+`docs/evidence/2026-11-12-interval-lattice-norms`, 122 files,
+27,524,231 bytes, SHA-256
+`6f9d27889d8f0115360e0f052fc31d645d932e0b85ef63b2b3d22c86a85e1a2e`. The committed record was regenerated
+and verified before registration; all prior archive rows are preserved.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
