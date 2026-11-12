@@ -320,6 +320,10 @@ passes all 627 tests. The final 702-case assertion and dispatch differentials
 pass, as does `cargo clippy --locked -p hypersolve --all-features --all-targets
 -- -D warnings`. No production solver migration is accepted.
 
+Raw evidence: `docs/evidence/2026-11-12-interval-horner`, evidence commit `90cb9af26b9fcc14f869b330a34ae500ff1ad322`; 280 files, 6333332 bytes,
+record SHA-256 `eb13db0fbfcad7f4a7b192e861d5df66bd85bbf53d47a8a307309af21993919a`. Retained implementation/test source
+is commit `d70c037b8`. The archive includes rejected patches and adverse samples.
+
 ## Implementation and open gates
 
 - [API/feature proposal](docs/research/interval-api-design.md) preceded the

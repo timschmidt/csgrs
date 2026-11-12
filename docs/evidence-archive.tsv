@@ -469,6 +469,7 @@ docs/evidence/2026-11-11-svg-circle-ellipse-publication	20785	282888639	586990bb
 docs/evidence/2026-11-11-svg-nurbs-selected-replay-integration	57	2701201	e1890c15fedf881356ccc66abe67ceb94b50b05f97c6642f36a1cd2753f1a02f
 docs/evidence/2026-11-12-interval-fixed	275	8102925	6545215bd945264a9e8c9cd01966f87ecdd0a805f94b40474bb4bda0585cc328
 docs/evidence/2026-11-12-interval-foundation	206	756992	f408b880769a135e8247970f6b116548a4995f7592680f98eeb9c1f711eeb425
+docs/evidence/2026-11-12-interval-horner	280	6333332	eb13db0fbfcad7f4a7b192e861d5df66bd85bbf53d47a8a307309af21993919a
 docs/evidence/2026-11-12-interval-host	502	21558032	1c159f57964f1805b30df2310135cb66c775e9ab12f97a405de4c2d9afb6a1ca
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
