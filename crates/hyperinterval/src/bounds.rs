@@ -96,6 +96,38 @@ impl<T: Copy + PartialOrd> Bounds<T> {
         self.lower == self.upper
     }
 
+    // Monotonicity in each argument gives the exact image of min/max over
+    // independent closed intervals. These are images, not intersection/hull.
+    pub(crate) fn min_image(self, other: Self) -> Self {
+        Self {
+            lower: if self.lower <= other.lower {
+                self.lower
+            } else {
+                other.lower
+            },
+            upper: if self.upper <= other.upper {
+                self.upper
+            } else {
+                other.upper
+            },
+        }
+    }
+
+    pub(crate) fn max_image(self, other: Self) -> Self {
+        Self {
+            lower: if self.lower >= other.lower {
+                self.lower
+            } else {
+                other.lower
+            },
+            upper: if self.upper >= other.upper {
+                self.upper
+            } else {
+                other.upper
+            },
+        }
+    }
+
     pub(crate) fn contains(self, value: T) -> bool {
         self.lower <= value && value <= self.upper
     }
@@ -241,6 +273,28 @@ macro_rules! set_relations {
                 bounds: match (self.bounds, other.bounds) {
                     (Some(a), Some(b)) => Some(a.hull(b)),
                     (a, b) => a.or(b),
+                },
+            }
+        }
+
+        /// Exact image of `min(x, y)` for independently chosen members.
+        /// Either empty operand gives empty; no domain points are discarded.
+        pub fn min_image(&self, other: &Self) -> Self {
+            Self {
+                bounds: match (self.bounds, other.bounds) {
+                    (Some(a), Some(b)) => Some(a.min_image(b)),
+                    _ => None,
+                },
+            }
+        }
+
+        /// Exact image of `max(x, y)` for independently chosen members.
+        /// Either empty operand gives empty; this differs from hull.
+        pub fn max_image(&self, other: &Self) -> Self {
+            Self {
+                bounds: match (self.bounds, other.bounds) {
+                    (Some(a), Some(b)) => Some(a.max_image(b)),
+                    _ => None,
                 },
             }
         }

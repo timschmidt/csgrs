@@ -495,7 +495,22 @@ macro_rules! cases {
                         for (a, b) in cases {
                             let x = Rational::$from(a).unwrap();
                             let y = Rational::$from(b).unwrap();
+                            let ax = x.clone().abs();
+                            let ay = y.clone().abs();
+                            let absolute_lower = if (&x).min(&y) <= &0 && (&x).max(&y) >= &0 {
+                                Rational::from(0)
+                            } else {
+                                (&ax).min(&ay).clone()
+                            };
+                            let absolute_upper = (&ax).max(&ay);
                             wanted.extend([
+                                Ok((
+                                    expected(&absolute_lower).unwrap().0,
+                                    expected(absolute_upper).unwrap().1,
+                                )),
+                                expected(&x.clone().abs()),
+                                expected((&x).min(&y)),
+                                expected((&x).max(&y)),
                                 expected(&Rational::from(&x + &y)),
                                 expected(&Rational::from(&x - &y)),
                                 expected(&Rational::from(&x * &y)),
@@ -544,6 +559,10 @@ macro_rules! cases {
                                 let x = $interval::point(a).unwrap();
                                 let y = $interval::point(b).unwrap();
                                 got.extend([
+                                    actual(Ok(x.hull(&y).abs())),
+                                    actual(Ok(x.abs())),
+                                    actual(Ok(x.min_image(&y))),
+                                    actual(Ok(x.max_image(&y))),
                                     actual(x.add(&y)),
                                     actual(x.sub(&y)),
                                     actual(x.mul(&y)),

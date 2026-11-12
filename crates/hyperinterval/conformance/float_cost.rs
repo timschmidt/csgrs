@@ -37,6 +37,11 @@ macro_rules! inspect {
                 .intersection(&wider)
                 .hull(&x);
             black_box((
+                image.abs(),
+                image.min_image(&wider),
+                image.max_image(&wider),
+            ));
+            black_box((
                 image.signs(),
                 image.is_empty(),
                 image.is_singleton(),

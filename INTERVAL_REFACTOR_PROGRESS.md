@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
+| 5 elementary functions | exact abs/min/max images implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -609,6 +609,94 @@ plan: direct negative powers,
 remaining common measurements/conversions, full coverage, further targets,
 consumer migrations and distribution qualification remain open. Existing
 solver migration remains rejected under its unchanged size gate.
+
+## Elementary absolute value and order images: admission
+
+Owner: Hyperinterval; plan §3.5/§3.13, P1/P3/P5/P6/P19/P35/P36. At
+`ab528b090`, no finite carrier exposes `abs`, `min_image` or `max_image`.
+The domain is canonical empty or valid finite integer/fixed/rational/dyadic/
+qualified-IEEE intervals. Absolute value is a unary point image; min/max are
+binary images over independent operand sets, so either empty operand yields
+empty (unlike hull). These functions are total on real scalar values and
+require no domain clipping. Overflow remains explicit when a signed primitive
+minimum's absolute value cannot fit. Dyadic alignment and retained results
+must share the caller's existing budget, with no partial output on exhaustion.
+
+Reuse private Bounds ordering and the existing checked primitive reflection,
+IEEE sign/ordering, and dyadic alignment/accounting. Add missing independent
+enumeration and exact-rational image witnesses, extreme endpoints, unequal
+dyadic grids, budget exhaustion/retry, output-as-input/replay and altered-mode
+IEEE checks. Do not reinterpret uncertain symbolic balls or proposals as exact
+intervals. Existing arithmetic dispatch and consumer kernels are unchanged.
+Rational/signed-power completion, square roots and the rest of phase 5 remain
+required; this is the first ordered elementary-function extension.
+
+### Implemented images and evidence
+
+All finite carriers now expose these three operations. For nonempty
+`[a,b]` and `[c,d]`, monotonicity gives
+`min_image = [min(a,c),min(b,d)]` and
+`max_image = [max(a,c),max(b,d)]`. Continuity over the real rectangle establishes
+attainment of the intermediate values; discrete integer ranges also attain
+every integer between these endpoints. Absolute value reflects a negative
+interval, retains a nonnegative interval, and maps a zero-crossing interval to
+`[0,max(-a,b)]`. Fixed/IEEE endpoint reflection is exact when representable;
+dyadic common-grid alignment uses a positive power-of-two factor and does not
+round. Shared Bounds helpers own min/max endpoint selection. No existing
+arithmetic or predicate call sequence was edited.
+
+The new witness initially fails to compile against `ab528b090` because the
+methods are absent. The completed witness enumerates 46 interval states
+(including empty), 2,116 operand pairs per instantiated family, and every
+integer point pair in those small intervals. It tests all six instantiated
+families (integer, fixed, rational, dyadic, f32 and f64), generated results as
+operands, exact squares after absolute value, and deterministic serde replay.
+Additional cases cover all signed/unsigned primitive widths, fixed scale
+extremes, signed-minimum overflow, finite IEEE extremes/subnormals, 2,000
+mixed dyadic-grid cases, exponent extremes, reservation failure and fresh-budget
+retry. There is no clipping or approximate completion in this corpus.
+
+The final 32-command matrix passes: 77 unit/integration tests, 11 doctests,
+Rust 1.88/1.95/stable feature combinations, strict Clippy, docs, workspace
+formatting, fuzz builds, repository budget, zizmor, dependency isolation,
+ARM/WASM no_std builds, release float mode tests and the four unchanged
+Hypersolve value/dispatch witnesses. Three additional release order-image
+commands pass on the same compilers. The library stays unsafe-free. The
+existing isolated IEEE mode tests now include point and interval absolute
+images and min/max images; all rounding/FTZ/DAZ combinations pass, including
+fat LTO. The code scanner includes emitted Bounds functions as well as
+float/IEEE functions: 63, 64, 61 and 45 selected symbols on Rust 1.88, 1.95,
+stable 1.99 and fat LTO, respectively, with no native float arithmetic or
+comparison found in that scope. Other runtime targets remain unqualified.
+
+Fixed, dyadic and strict-float ASan campaigns each complete 100,000 runs with
+no failure. Seeds are 20261112/20261112/20261114, input caps 16/14/24 bytes,
+30-second limits, actual durations 1/13/14 seconds. Existing assertions and
+prior corpora are preserved; the strict-float campaign starts from its prior
+corpus. Production coverage is 2,052/2,097 lines (97.85%) and 3,891/4,054
+regions (95.98%). Dependencies, tests and cost probes are excluded; LLVM has
+no branch denominator. Its excluded Rug profile mismatch remains identified
+in the diagnostic dump. Rust 1.99's normal report/export succeeded, but its
+optional `llvm-cov --dump` diagnostic hit an internal memory-corruption error
+and was terminated after emitting the failure. A separately instrumented Rust
+1.95 build passes report, export and diagnostic dump, reproducing exactly the
+same production line/region counts and identifying only excluded
+`Rug::OptRational::parts` as the mismatch. Both tool outputs are retained;
+the LLVM diagnostic defect is not reported as a successful check. The 100%
+target remains open.
+
+The completed `abs → min_image → max_image` probe uses preconstructed inputs,
+4,096 warmup calls, 30 samples of 16,384 chains per family, and owns/drops the
+materialized result in the timed region. Median ns/chain are 8.666 (integer
+i64), 6.384 (fixed i64/16), 153.348 (rational), 676.350 (dyadic), 27.993 (f32)
+and 21.078 (f64). Family grids/layouts differ; these host observations are not
+a cross-family speedup, baseline-regression or firmware timing claim. Raw
+samples, compiler/hardware/build flags and executable identity are retained.
+Source distribution, broader consumer migrations, rational/signed powers and
+all subsequent elementary functions remain unfinished.
+
+Raw evidence staging: `/tmp/interval-refactor/elementary-order`; archive record
+`2026-11-12-interval-elementary-order` is pending registration. No push occurred.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

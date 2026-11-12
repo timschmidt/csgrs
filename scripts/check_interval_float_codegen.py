@@ -63,6 +63,7 @@ def main():
     selected = {
         name: lines for name, lines in blocks.items()
         if "hyperinterval::float::" in name or "hyperinterval::ieee::" in name
+        or "hyperinterval::bounds::" in name
         or name.startswith("hyperinterval_strict_")
         or name.startswith(("__udiv", "__umod"))
     }
@@ -90,7 +91,7 @@ def main():
         ]},
         "binary": str(binary), "sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
         "bytes": binary.stat().st_size, "symbols": sorted(selected), "findings": findings,
-        "scope": "Emitted Hyperinterval float/IEEE functions, four client entry points and unsigned wide-division helpers; bit moves permitted, runtime/panic code excluded.",
+        "scope": "Emitted Hyperinterval float/IEEE/Bounds functions, four client entry points and unsigned wide-division helpers; bit moves permitted, runtime/panic code excluded.",
     }
     (output / "report.json").write_text(json.dumps(report, indent=2) + "\n")
     if findings:

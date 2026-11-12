@@ -24,6 +24,24 @@ fn scaled_ratio(numerator: i128, denominator: i128, scale: i128) -> (i128, i128)
 macro_rules! arithmetic {
     ($endpoint:ty) => {
         impl<const FRAC: u32> FixedInterval<$endpoint, FRAC> {
+            /// Exact pointwise absolute-value image on the existing lattice.
+            /// Crossing zero gives lower bound zero. A signed minimum whose
+            /// positive reflection cannot fit returns Overflow, never saturation.
+            pub fn abs(&self) -> Result<Self, IntervalError> {
+                let Some((a, b)) = self.bounds() else {
+                    return Ok(*self);
+                };
+                if a >= 0 {
+                    return Ok(*self);
+                }
+                let upper = a.checked_neg().ok_or(IntervalError::Overflow)?;
+                if b >= 0 {
+                    Self::new(0, upper.max(b))
+                } else {
+                    Self::new(b.checked_neg().ok_or(IntervalError::Overflow)?, upper)
+                }
+            }
+
             fn scale() -> Result<i128, IntervalError> {
                 if FRAC >= <$endpoint>::BITS {
                     return Err(IntervalError::InvalidScale);

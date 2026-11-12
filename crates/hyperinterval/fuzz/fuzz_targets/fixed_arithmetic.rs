@@ -36,6 +36,21 @@ fuzz_target!(|values: [i32; 4]| {
     let x = I::new(a, b).unwrap();
     let y = I::new(c, d).unwrap();
     let (a, b, c, d) = (i128::from(a), i128::from(b), i128::from(c), i128::from(d));
+    assert_eq!(
+        x.min_image(&y).bounds(),
+        Some((a.min(c) as i32, b.min(d) as i32))
+    );
+    assert_eq!(
+        x.max_image(&y).bounds(),
+        Some((a.max(c) as i32, b.max(d) as i32))
+    );
+    check(x.abs(), &[(a.abs(), 1), (b.abs(), 1)]);
+    if a <= 0
+        && b >= 0
+        && let Ok(image) = x.abs()
+    {
+        assert_eq!(image.lower(), Some(0));
+    }
     check(
         x.checked_mul(&y),
         &[

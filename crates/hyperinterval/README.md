@@ -6,6 +6,13 @@ budgeted common-scale dyadic arithmetic, symbolic Real balls, and finite IEEE
 enclosures on x86_64. Empty sets, sign sets, and set relations are explicit.
 Elementary function enclosures remain under development.
 
+Finite integer, fixed, rational, dyadic and qualified IEEE carriers provide
+exact `abs`, `min_image` and `max_image`. Min/max are images over independently
+chosen operand members, so either empty operand gives empty. Absolute value
+retains zero when its input crosses zero; a signed primitive minimum that
+cannot be reflected returns Overflow. Dyadic methods use the existing shared
+size/work budget. These total real functions do not clip their input domain.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

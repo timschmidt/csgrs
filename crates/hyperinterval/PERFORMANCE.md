@@ -111,3 +111,26 @@ and text-size result is retained with the correctness fix; it is not a
 behavior-preserving simplification or a general performance claim. Commands,
 flags, hardware, binary digests, original failing release evidence and raw
 samples are in the strict-float archive linked by the root progress record.
+
+## Elementary order-image probe
+
+`conformance/order_cost.rs` measures completed `abs → min_image → max_image`
+chains on preconstructed inputs. It independently checks the expected result
+before timing, warms up with 4,096 calls, then takes 30 samples of 16,384 chains,
+owning and dropping each materialized result. On x86_64 Linux, Rust 1.99 release:
+
+| Family | Median ns/chain |
+| --- | ---: |
+| Integer i64 | 8.666 |
+| Fixed i64, FRAC=16 | 6.384 |
+| Rational | 153.348 |
+| Dyadic, with shared per-chain budget | 676.350 |
+| f32 | 27.993 |
+| f64 | 21.078 |
+
+These families use different grids and representations; the table describes
+individual completed workloads, not comparative backend speedups or firmware
+cycle counts. No prior implementation of these public operations was replaced.
+Inputs are small and fixed; allocation/large-coefficient behavior is not inferred
+from this timing probe. Raw samples, whole-executable size and toolchain/hardware
+identity are in the elementary-order archive referenced by the progress record.

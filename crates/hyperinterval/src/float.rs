@@ -205,6 +205,51 @@ let enclosure: F64Enclosure = proposal.into();
                     .map_or(SignSet::Empty, |b| b.signs($endpoint(0)))
             }
 
+            /// Exact absolute-value image, retaining zero as the minimum across
+            /// zero. Uses integer sign/order operations and preserves subnormals.
+            pub fn abs(&self) -> Self {
+                let Some((a, b)) = self.bits() else {
+                    return Self::empty();
+                };
+                if $format.compare(a, 0) != Ordering::Less {
+                    return *self;
+                }
+                if $format.compare(b, 0) == Ordering::Less {
+                    return self.neg();
+                }
+                let reflected = $format.negate(a);
+                let upper = if $format.compare(reflected, b) == Ordering::Greater {
+                    reflected
+                } else {
+                    b
+                };
+                Self {
+                    bounds: Some(Bounds::ordered($endpoint(0), $endpoint(upper as $bits))),
+                }
+            }
+
+            /// Exact image of `min(x, y)` over independent members, using
+            /// integer IEEE order. Either empty operand gives empty.
+            pub fn min_image(&self, other: &Self) -> Self {
+                Self {
+                    bounds: match (self.bounds, other.bounds) {
+                        (Some(a), Some(b)) => Some(a.min_image(b)),
+                        _ => None,
+                    },
+                }
+            }
+
+            /// Exact image of `max(x, y)` over independent members.
+            /// Either empty operand gives empty; this differs from hull.
+            pub fn max_image(&self, other: &Self) -> Self {
+                Self {
+                    bounds: match (self.bounds, other.bounds) {
+                        (Some(a), Some(b)) => Some(a.max_image(b)),
+                        _ => None,
+                    },
+                }
+            }
+
             /// Exact reflected set.
             pub fn neg(&self) -> Self {
                 Self {

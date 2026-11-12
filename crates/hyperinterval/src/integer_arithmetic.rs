@@ -3,6 +3,21 @@ use crate::{IntegerRange, IntervalError, MidpointRounding};
 macro_rules! arithmetic {
     ($($endpoint:ty),*) => { $(
         impl IntegerRange<$endpoint> {
+            /// Exact pointwise absolute-value image, with zero minimum across
+            /// zero. A signed minimum that cannot be reflected returns Overflow.
+            /// Unsigned ranges are unchanged, including their maximum endpoint.
+            pub fn abs(&self) -> Result<Self, IntervalError> {
+                let Some((a, b)) = self.bounds() else { return Ok(*self); };
+                let signs = self.signs();
+                if !signs.contains_negative() { return Ok(*self); }
+                let upper = a.checked_neg().ok_or(IntervalError::Overflow)?;
+                if signs.contains_zero() {
+                    Self::new(0, upper.max(b))
+                } else {
+                    Self::new(b.checked_neg().ok_or(IntervalError::Overflow)?, upper)
+                }
+            }
+
             /// Exact endpoint distance, widened to u128; empty returns `None`.
             ///
             /// This is the width, not the cardinality. The cardinality of the

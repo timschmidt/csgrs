@@ -28,6 +28,9 @@ macro_rules! exercise {
                 Err(IntervalError::NonFiniteEndpoint)
             };
             for (got, expected) in [
+                (Ok(x.abs()), oracle::$round(&aa.clone().abs())),
+                (Ok(x.min_image(&y)), oracle::$round((&aa).min(&bb))),
+                (Ok(x.max_image(&y)), oracle::$round((&aa).max(&bb))),
                 (x.affine(b, c), affine),
                 (x.add(&y), oracle::$round(&Rational::from(&aa + &bb))),
                 (x.sub(&y), oracle::$round(&Rational::from(&aa - &bb))),

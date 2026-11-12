@@ -333,6 +333,65 @@ impl DyadicInterval {
         }
     }
 
+    /// Exact absolute-value image, with zero minimum across zero. Reserves
+    /// space/work for retained mantissas before cloning or reflection.
+    pub fn abs(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let Some((a, b, e)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        budget.reserve(self.bits(), 2, false)?;
+        if a >= &BigInt::zero() {
+            Self::new(a.clone(), b.clone(), e)
+        } else if b < &BigInt::zero() {
+            Self::new(-b, -a, e)
+        } else {
+            Self::new(BigInt::zero(), (-a).max(b.clone()), e)
+        }
+    }
+
+    /// Exact image of `min(x, y)` over independent operand members.
+    /// Either empty operand gives empty without consuming budget. Alignment and
+    /// result storage share the caller's size/work accounting.
+    pub fn min_image(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        self.order_image(other, budget, false)
+    }
+
+    /// Exact image of `max(x, y)` over independent operand members.
+    /// Either empty operand gives empty; this differs from hull.
+    pub fn max_image(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        self.order_image(other, budget, true)
+    }
+
+    fn order_image(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+        maximum: bool,
+    ) -> Result<Self, IntervalError> {
+        if self.is_empty() || other.is_empty() {
+            return Ok(Self::empty());
+        }
+        let exponent = self.exponent.min(other.exponent);
+        let a = self.align(exponent, budget)?.expect("nonempty input");
+        let b = other.align(exponent, budget)?.expect("nonempty input");
+        let selected = if maximum {
+            a.as_refs().max_image(b.as_refs())
+        } else {
+            a.as_refs().min_image(b.as_refs())
+        };
+        let (lo, hi) = selected.endpoints();
+        budget.reserve(lo.bits().max(hi.bits()), 2, false)?;
+        Self::new(lo.clone(), hi.clone(), exponent)
+    }
+
     /// Exact reflected set.
     pub fn neg(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
         let Some((a, b, e)) = self.bounds() else {

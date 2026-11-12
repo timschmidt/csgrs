@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact absolute value and binary min/max images across integer, fixed,
+  rational, dyadic and qualified IEEE carriers. Preserve empty-image semantics,
+  checked signed overflow, dyadic accounting and IEEE subnormal endpoints.
+
 - Add independent `float-enclosure` finite f32/f64 carriers, initially qualified
   on x86_64, with integer directed arithmetic, fused affine evaluation, bounded
   nonnegative powers, validated bit replay and optional exact endpoint bridges.

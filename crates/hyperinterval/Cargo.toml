@@ -60,6 +60,11 @@ path = "conformance/proposal_cost.rs"
 required-features = ["float-proposal"]
 
 [[example]]
+name = "order_cost"
+path = "conformance/order_cost.rs"
+required-features = ["integer", "fixed", "rational", "dyadic", "float-enclosure"]
+
+[[example]]
 name = "float_cost"
 path = "conformance/float_cost.rs"
 required-features = ["float-enclosure"]

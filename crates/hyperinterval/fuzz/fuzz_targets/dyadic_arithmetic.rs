@@ -56,6 +56,29 @@ fuzz_target!(|data: [i16; 7]| {
         .unwrap()
     );
     let grid = e.min(f);
+    let (aa, bb, cc, dd) = (
+        a << (e - grid),
+        b << (e - grid),
+        c << (f - grid),
+        d << (f - grid),
+    );
+    assert_eq!(
+        x.min_image(&y, &mut budget).unwrap(),
+        DyadicInterval::new(aa.min(cc).into(), bb.min(dd).into(), grid).unwrap()
+    );
+    assert_eq!(
+        x.max_image(&y, &mut budget).unwrap(),
+        DyadicInterval::new(aa.max(cc).into(), bb.max(dd).into(), grid).unwrap()
+    );
+    let min_abs = if a <= 0 && b >= 0 {
+        0
+    } else {
+        a.abs().min(b.abs())
+    };
+    assert_eq!(
+        x.abs(&mut budget).unwrap(),
+        DyadicInterval::new(min_abs.into(), a.abs().max(b.abs()).into(), e).unwrap()
+    );
     let point_on_grid = c << (f - grid);
     assert_eq!(
         x.contains_point(&c.into(), f, &mut budget).unwrap(),

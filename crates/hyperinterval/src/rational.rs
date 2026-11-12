@@ -171,6 +171,44 @@ impl RationalInterval {
         self.width().map(|w| w / Rational::from(2))
     }
 
+    /// Exact pointwise absolute-value image, with zero minimum across zero.
+    pub fn abs(&self) -> Self {
+        match self.bounds() {
+            None => Self::empty(),
+            Some((a, _)) if !a.is_negative() => self.clone(),
+            Some((_, b)) if b.is_negative() => self.neg(),
+            Some((a, b)) => {
+                let upper = -a;
+                Self::ordered(
+                    Rational::zero(),
+                    if upper >= *b { upper } else { b.clone() },
+                )
+            }
+        }
+    }
+
+    /// Exact image of `min(x, y)` for independently chosen members.
+    /// Either empty operand gives empty; no real-domain points are excluded.
+    pub fn min_image(&self, other: &Self) -> Self {
+        Self {
+            bounds: match (self.view(), other.view()) {
+                (Some(a), Some(b)) => Some(a.min_image(b).cloned()),
+                _ => None,
+            },
+        }
+    }
+
+    /// Exact image of `max(x, y)` for independently chosen members.
+    /// Either empty operand gives empty; this differs from hull.
+    pub fn max_image(&self, other: &Self) -> Self {
+        Self {
+            bounds: match (self.view(), other.view()) {
+                (Some(a), Some(b)) => Some(a.max_image(b).cloned()),
+                _ => None,
+            },
+        }
+    }
+
     /// Exact Minkowski sum.
     pub fn add(&self, other: &Self) -> Self {
         match (self.bounds(), other.bounds()) {
