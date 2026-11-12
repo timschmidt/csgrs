@@ -10,6 +10,7 @@ macro_rules! ieee_root {
             }
             // Ingress is exact at 128 bits. Same-direction nested rounding
             // retains the tight target floor/ceiling after the MPFR root.
+            crate::mpfr_cache::cleanup_on_thread_exit();
             let mut lower = Float::with_val(128, value);
             let mut upper = lower.clone();
             lower.sqrt_round(Round::Down);

@@ -7,6 +7,7 @@ use rug::{Float, Rational, float::Round};
 macro_rules! oracle {
     ($name:ident, $bits:ty, $convert:ident) => {
         pub fn $name(value: &Rational) -> Result<($bits, $bits), IntervalError> {
+            crate::mpfr_cache::cleanup_on_thread_exit();
             let (lo, _) = Float::with_val_round(128, value, Round::Down);
             let (hi, _) = Float::with_val_round(128, value, Round::Up);
             let (lo, hi) = (lo.$convert(Round::Down), hi.$convert(Round::Up));

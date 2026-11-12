@@ -2077,6 +2077,81 @@ and verified before registration; all previous archive rows remain unchanged. Ph
 midpoint/radius forms, contraction/Jacobian/Krawczyk helpers, specialized consumer
 kernels and further qualification. No phase or full-plan completion is claimed.
 
+## Validation admission: MPFR oracle thread-cache lifecycle
+
+The preceding goal turn made progress: exact widths and evidence were committed.
+Current baseline is `1b62459197944b4ebd3356054a560d1e0af97f07`; all managed
+repositories are clean. States and new command logs are staged under
+`/tmp/interval-refactor/mpfr-cleanup`. No nested owning AGENTS instructions.
+The broader scalar ASan failure from the width checkpoint is being reproduced
+on this revision before any test code changes.
+
+Owner: Hyperinterval's independent MPFR test oracles; shared lifecycle authority
+already exists in `hyperreal/tests/support/mpfr.rs`. Properties P5–P6/P20 and
+plan §§14.4–14.5 require cleanup and executable sanitizer evidence. Domain:
+Rug/MPFR oracle use on non-MSVC test threads, normal return and unwinding,
+including concurrent threads and repeated registration. Reuse that existing
+thread-local cleanup helper once per oracle executable, registering it before
+each entry that starts MPFR work. Preserve cached work until thread exit; free
+only Local caches, never shared caches used by other running threads. No copied
+cache lifecycle implementation, unsafe code, suppression or disabled leak check.
+
+Acceptance failure reproduced: the current arctangent process reports 1,576 bytes leaked
+from MPFR thread caches; a lifecycle regression must exercise normal and panic
+exit and confirm that exact oracle outputs remain valid. Audit all Float call
+sites in the owner tests, retain original precision, rounding, calculations,
+assertions and oracle independence. Production source/manifests/dependency graph
+must remain identical. These support modules are also used by cost probes and
+fuzz targets. Each affected consumer root must import the same existing helper;
+oracle entry points register that owner. This avoids duplicate thread-local
+cleanup owners when an executable includes several oracle modules. Validate feature isolation, MSRV, ordinary tests/lints,
+ASan across both owner packages, and output/dispatch consumers. This test-only
+cleanup does not establish any new geometric or arithmetic capability, speedup,
+full-plan coverage, hosted CI or firmware qualification.
+
+## MPFR oracle lifecycle: local qualification
+
+Reproduced the width checkpoint's leak on `1b624591`: all five arctangent tests
+pass, then ASan exits 1 with 1,576 bytes leaked in three MPFR cache allocations.
+Reused `hyperreal/tests/support/mpfr.rs` at the roots of affected integration
+tests, cost probes and fuzz executables. Every MPFR oracle entry registers its
+single executable-local thread-cache owner before use. No production algorithm,
+manifest, dependency, precision, rounding mode or oracle assertion changed.
+Normal thread exit and unwinding release Local caches; shared caches are not
+cleared while other threads may be active. A new eight-worker regression tests
+repeated registration, normal/panic exit, exact oracle equality and returned
+rational values consumed after their producing threads have exited.
+
+The final full scalar/lattice ASan run passes 206 parent-suite tests across 36
+executables (154 Hyperinterval, 52 lattice), including fresh-process replay,
+with `ASAN_OPTIONS=detect_leaks=1`. This closes the reproducible MPFR lifecycle
+blocker reported above; it does not rewrite that adverse historical evidence.
+All 37 selected commands pass: Rust 1.88/1.95/stable feature isolation,
+all-target tests, doctests, Clippy/docs with warnings denied, optimized owner
+tests, full lattice tests, five main-facade tests, four unchanged Hypersolve
+migration/dispatch tests, primitive/rational fuzz checks, fuzz Clippy/format and
+workspace format. Rust 1.88 uses portable features; Hyperreal retains MSRV 1.95.
+
+All fuzz targets build with the address sanitizer. Nine affected targets each
+complete 128 executions from 32 deterministic valid-length seeds, with leak
+detection, ten-second input timeout, 2,048 MiB RSS cap and 180-second external
+process limit. These are bounded smoke tests, not exhaustive fuzz qualification.
+Raw inputs/corpora, commands, outputs and binary digests are retained.
+
+Two integration attempts failed and remain in the record: initial test-root
+wiring omitted cost/fuzz consumers, and per-oracle helper imports produced
+Clippy duplicate-module errors when several oracles shared an executable.
+The final one-owner-per-executable wiring fixes both without suppressions.
+Source preservation verifies 39 implementation/manifest/shared-helper files
+byte-identical and every original line of 37 changed oracle/consumer files
+retained in order. Production cost closures and predicate order remain intact;
+no performance or binary-size improvement is claimed. No new coverage report
+replaces the preceding width report's documented external Rug profile warning.
+Hosted OS checks, full pre-push workflows, full coverage/fuzz, firmware HIL and
+remaining arithmetic/resource/Phase 6/full-plan work remain open. No push.
+
+Source/evidence registration pending for the MPFR lifecycle checkpoint.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

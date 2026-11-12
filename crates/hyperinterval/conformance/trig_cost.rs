@@ -1,4 +1,7 @@
 //! Completed periodic images by width, scale, precision and source backend.
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DyadicBudget, DyadicInterval, ExtendedInterval};
 use std::{hint::black_box, time::Instant};
 #[cfg(not(target_env = "msvc"))]

@@ -134,6 +134,7 @@ pub fn verify(
 // are independently resolved by the GMP integer relation above.
 pub fn mpfr_point(result: &IntervalSet2<DyadicInterval>, source: &Rational, n: i32, d: u32) {
     use rug::{Float, float::Round};
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let mut lo = Float::with_val_round(4096, source.clone().abs(), Round::Down).0;
     let mut hi = Float::with_val_round(4096, source.clone().abs(), Round::Up).0;
     lo.root_round(d, Round::Down);

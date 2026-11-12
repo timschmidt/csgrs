@@ -1,5 +1,9 @@
 #![cfg(feature = "real-ball")]
 
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
+
 use hyperinterval::{
     BallRelation, DyadicBudget, DyadicInterval, IntervalError, RationalInterval, RealBall,
 };
@@ -110,6 +114,7 @@ mod mpfr {
 
     #[test]
     fn real_bridges_enclose_independently_directed_mpfr_bounds() {
+        crate::mpfr_cache::cleanup_on_thread_exit();
         let (pi_lo, _) = Float::with_val_round(512, Constant::Pi, Round::Down);
         let (pi_hi, _) = Float::with_val_round(512, Constant::Pi, Round::Up);
         let mut sqrt_lo = Float::with_val(512, 2);

@@ -25,6 +25,7 @@ pub fn verify(result: &DyadicInterval, a: Q, b: Q, precision: i32) {
     assert!((&hi / &step).complete().is_integer());
     // 4096 bits is greater than every exact input and chosen grid in this
     // corpus; perfect grid squares are represented exactly by MPFR.
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (mut down, _) = Float::with_val_round(4096, &a, Round::Down);
     let (mut up, _) = Float::with_val_round(4096, &b, Round::Up);
     down.sqrt_round(Round::Down);

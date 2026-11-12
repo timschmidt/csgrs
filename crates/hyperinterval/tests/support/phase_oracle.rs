@@ -4,6 +4,7 @@ use rug::{
     float::{Constant, Round},
 };
 pub fn half_pi() -> (Rational, Rational) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (a, _) = Float::with_val_round(4096, Constant::Pi, Round::Down);
     let (b, _) = Float::with_val_round(4096, Constant::Pi, Round::Up);
     (a.to_rational().unwrap() / 2, b.to_rational().unwrap() / 2)

@@ -9,6 +9,7 @@ mod phase_oracle;
 pub use phase_oracle::half_pi;
 use phase_oracle::index;
 fn point(x: &Rational, cosine: bool) -> (Rational, Rational) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let f = Float::with_val(4096, x);
     let error = (x.clone() - f.to_rational().unwrap()).abs();
     let mut lo = f.clone();

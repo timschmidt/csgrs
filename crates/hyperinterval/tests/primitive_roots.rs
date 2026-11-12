@@ -1,4 +1,11 @@
 #![cfg(any(feature = "fixed", feature = "float-enclosure"))]
+#[cfg(all(
+    feature = "float-enclosure",
+    not(target_env = "msvc"),
+    target_arch = "x86_64"
+))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 #[cfg(any(feature = "fixed", target_arch = "x86_64"))]
 use hyperinterval::{DomainCoverage, IntervalError};
 

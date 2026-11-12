@@ -14,6 +14,7 @@ pub fn finite(result: &DyadicInterval, lower: Rational, upper: Rational, precisi
     assert_eq!(q(b, e), hi);
 }
 pub fn verify(result: &DyadicInterval, a: &Rational, b: &Rational, precision: i32) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (mut lo, _) = Float::with_val_round(4096, a, Round::Down);
     let (mut hi, _) = Float::with_val_round(4096, b, Round::Up);
     lo.atan_round(Round::Down);
@@ -26,6 +27,7 @@ pub fn verify(result: &DyadicInterval, a: &Rational, b: &Rational, precision: i3
     );
 }
 pub fn half_pi() -> (Rational, Rational) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (lo, _) = Float::with_val_round(4096, Constant::Pi, Round::Down);
     let (hi, _) = Float::with_val_round(4096, Constant::Pi, Round::Up);
     (lo.to_rational().unwrap() / 2, hi.to_rational().unwrap() / 2)

@@ -1,4 +1,7 @@
 //! Materialized square-root enclosures by requested grid and source width.
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DyadicBudget, DyadicInterval, RationalInterval};
 use hyperreal::Rational;
 use std::{hint::black_box, time::Instant};

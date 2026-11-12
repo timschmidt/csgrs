@@ -1,4 +1,7 @@
 #![cfg(feature = "float-enclosure")]
+#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 #[cfg(target_arch = "x86_64")]
 use hyperinterval::SignSet;
 use hyperinterval::{F32Enclosure, F64Enclosure, IntervalError};

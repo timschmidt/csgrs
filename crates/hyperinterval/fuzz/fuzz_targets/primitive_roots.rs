@@ -1,4 +1,6 @@
 #![no_main]
+#[path = "../../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DomainCoverage, F32Enclosure, F64Enclosure, FixedInterval, IntervalError};
 use libfuzzer_sys::fuzz_target;
 #[path = "../../tests/support/fixed_sqrt_oracle.rs"]

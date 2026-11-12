@@ -6,6 +6,7 @@ mod grid_oracle;
 pub use grid_oracle::q;
 
 pub fn verify(result: &DyadicInterval, a: &Rational, b: &Rational, precision: i32) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (mut lower, _) = Float::with_val_round(4096, a, Round::Down);
     let (mut upper, _) = Float::with_val_round(4096, b, Round::Up);
     lower.exp_round(Round::Down);

@@ -1,4 +1,7 @@
 //! Completed finite and lower-unbounded logarithm enclosures.
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DyadicBudget, DyadicInterval, ExtendedInterval, RationalInterval};
 use hyperreal::Rational;
 use num_bigint::{BigInt, BigUint};

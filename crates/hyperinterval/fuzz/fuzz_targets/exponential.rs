@@ -1,4 +1,6 @@
 #![no_main]
+#[path = "../../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DomainCoverage, DyadicBudget, DyadicInterval, RationalInterval};
 use hyperreal::Rational;
 use libfuzzer_sys::fuzz_target;

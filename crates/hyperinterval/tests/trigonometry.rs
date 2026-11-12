@@ -1,4 +1,7 @@
 #![cfg(feature = "dyadic")]
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DyadicBudget, DyadicInterval};
 fn budget() -> DyadicBudget {
     DyadicBudget::new(32768, 10_000_000_000_000)

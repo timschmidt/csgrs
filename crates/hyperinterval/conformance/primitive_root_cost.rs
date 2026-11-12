@@ -1,4 +1,7 @@
 //! Owned primitive square-root outputs across widths and endpoint lattices.
+#[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{F32Enclosure, F64Enclosure, FixedInterval};
 use std::{hint::black_box, time::Instant};
 #[cfg(not(target_env = "msvc"))]

@@ -24,6 +24,7 @@ fn point(
         assert!(!cot);
         return (0.into(), 0.into());
     }
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (mut lo, _) = Float::with_val_round(4096, x, Round::Down);
     let (mut hi, _) = Float::with_val_round(4096, x, Round::Up);
     let expected = branch(x, cot, pi);

@@ -1,4 +1,6 @@
 #![no_main]
+#[path = "../../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
 use hyperinterval::{DyadicBudget, DyadicInterval, ExtendedInterval as E, IntervalSet2};
 use libfuzzer_sys::fuzz_target;
 #[path = "../../tests/support/power_oracle.rs"]

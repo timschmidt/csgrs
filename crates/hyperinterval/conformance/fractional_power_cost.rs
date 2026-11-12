@@ -1,5 +1,8 @@
 //! Completed rational-power images, including exact roots and pole branches.
 #[cfg(not(target_env = "msvc"))]
+#[path = "../../hyperreal/tests/support/mpfr.rs"]
+mod mpfr_cache;
+#[cfg(not(target_env = "msvc"))]
 use hyperinterval::IntervalSet2;
 use hyperinterval::{DyadicBudget, DyadicInterval, ExtendedInterval as E};
 use num_bigint::BigInt;

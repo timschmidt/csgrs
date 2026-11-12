@@ -10,6 +10,7 @@ pub fn verify(
     b: &Rational,
     precision: i32,
 ) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let (mut upper, _) = Float::with_val_round(4096, b, Round::Up);
     upper.ln_round(Round::Up);
     if a <= &0 {
@@ -44,6 +45,7 @@ fn finite(
     assert_eq!(q(b, e), hi);
 }
 pub fn log_two_multiple(result: &ExtendedInterval<DyadicInterval>, k: i64, precision: i32) {
+    crate::mpfr_cache::cleanup_on_thread_exit();
     let mut lo = Float::with_val(4096, 2);
     let mut hi = lo.clone();
     lo.ln_round(Round::Down);
