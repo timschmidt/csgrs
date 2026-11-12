@@ -2523,7 +2523,12 @@ size falls by 4,432/5,576 bytes relative to the baseline shared probes.
 | Additional inline hint on the private narrowing adapter | rejected | shared-probe and cost .text sections identical on both compilers |
 | Production transform migration | still rejected | Clarke and stable chain slower than native; matched shared binaries remain larger |
 
-Source/evidence registration pending for this checkpoint. Remaining Phase 6
+Source commit `f451d7629f71fcf009524f44d4466f1f8232ccf4`; evidence commit
+`1085b421abe31db731ec0c8decd22653342545a7`, record
+`docs/evidence/2026-11-12-interval-fixed-integer-div`: 191 files,
+4,734,853 bytes, SHA-256
+`f4fc094365089543658042879f12f099f4be2978ee2351654997596c59aa69c8`. The committed archive was regenerated and verified before
+registration; every previous archive row remains unchanged. Remaining Phase 6
 carriers/specializations, firmware and solver adoption gates, hardware evidence,
 and all later phases remain open. No full pre-push matrix or push was performed.
 
