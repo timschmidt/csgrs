@@ -1730,7 +1730,12 @@ Definitions currently use finite nesting in Rust types. Chains with lengths
 chosen at runtime, broader client qualification, width/midpoint/radius/norm and
 measure operations, specialized kernels and full legacy performance/size gates
 remain work toward the unchanged complete plan. No phase is complete and no
-push was attempted. Source and immutable affine evidence registration: pending.
+push was attempted. Source commit:
+`2d92066ae55632a99b298ff7c359b01728038b05`. Immutable evidence commit:
+`0aa57313971c2c49bb84930ad42b5267712ca763`, record `docs/evidence/2026-11-12-interval-affine-images`,
+115 files, 19,983,041 bytes, SHA-256
+`0671e133ed1c8a4a44d351962580d86ba825db7274ff7818c7398ca715b6a99f`. The committed record was regenerated and
+verified before registration; all prior archive rows are preserved.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
