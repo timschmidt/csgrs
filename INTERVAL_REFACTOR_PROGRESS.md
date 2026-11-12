@@ -233,6 +233,18 @@ dispatch tests while directed GMP/MPFR tests run on Unix. Hosted Windows/macOS
 jobs, firmware hardware timing and full downstream migration remain unexecuted.
 No repository has been pushed and the full 15-phase goal remains active.
 
+## Immutable phase-3 carrier evidence
+
+- Source checkpoint: `caa8adb9f`.
+- Evidence local commit: `58e3c747cfa0d9906bcdd39a80f633b93d8d50da`.
+- Manifest row: `docs/evidence/2026-11-12-interval-host	502	21558032	1c159f57964f1805b30df2310135cb66c775e9ab12f97a405de4c2d9afb6a1ca`.
+- Retains final and failed checks, final sanitizer corpora, instrumented coverage,
+  fixed/host cost samples, hardware/compiler metadata and reconstruction patches
+  for rejected production candidates. Build trees are excluded.
+- Verified all three interval records together with the existing scoped archive
+  implementation. Previously registered evidence rows remain unchanged. Local
+  archival does not claim hosted publication or full-plan completion.
+
 ## Implementation and open gates
 
 - [API/feature proposal](docs/research/interval-api-design.md) preceded the
