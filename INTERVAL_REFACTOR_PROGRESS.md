@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log/atan and extended-dyadic atan implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -1128,6 +1128,59 @@ The committed archive digest is verified and registered in
 `docs/evidence-archive.tsv`. Actual heap-byte limits, cancellation, remaining
 elementary backends/functions, consumer migrations, full coverage and release
 qualification remain open.
+
+## Arctangent admission (2026-11-12)
+
+Owner: Hyperinterval elementary enclosure layer, P1/P3/P5/P6/P19. Baseline
+`5d1e9e455`; the missing DyadicInterval::atan witness is reproduced before
+production edits in `/tmp/interval-refactor/arctangent/missing-witness.log`.
+Domain: finite rational/dyadic real intervals and explicit extended dyadic
+sets, including empty, with i32 output grids and shared DyadicBudget limits.
+Atan is monotone on all reals; extended ends use its +/-pi/2 limits in a closed
+enclosure. Coverage is locally Complete, preserving earlier Partial receipts.
+Acceptance requires independent directed MPFR bounds, exact zero and symmetry,
+range-reduction boundaries, huge/tiny inputs, resource refusal/retry, replay,
+and output-as-input operations. Hyperreal has a Machin/atan scalar evaluator,
+but it does not provide this cumulative DyadicBudget contract; its production
+code, caches and dispatch remain unchanged.
+
+The implementation maps sign by odd symmetry and maps large positive x through
+atan(x)=pi/2-atan(1/x). Around one it uses the exact quarter-circle identity
+with (1-y)/(1+y), reducing every series argument to [0,1/2]. Alternating odd
+powers decrease; the next term bounds the remainder with its known sign.
+Every power, sum and remainder is an outward dyadic interval. Machin's identity
+pi/4=4 atan(1/5)-atan(1/239) supplies budgeted constants without a cache. Exact
+zero and 0<atan(x)<min(x,2) provide structural shortcuts. Nonzero rational
+arctangents and pi/2 are not dyadic; convergent refinement separates their grid
+boundaries subject to resource/exponent storage limits. Only adjacent-grid
+endpoint enclosures are published. Unbounded ends use certified limits, never
+finite stand-ins. Assembly reuses the existing validated extended-bound layer.
+
+The 26-command local feature/release/lint/docs/fuzz-build/workflow-security/
+portable-build matrix passes. One copied test filter initially selected zero
+tests; `resource-contained.log` records the corrected explicit test passing
+under a 60-second external limit, and the reproduction script is corrected.
+All-feature tests pass 118 unit/integration tests and 12 doctests. Supplemental
+independent tests pass through 2048-bit output precision, 1024-bit rational
+coefficients near 1/2, 1 and 2, both i32 dyadic scale extremes, signed symmetry,
+refinement, serde and continued exp/atan/log use. The initial test-only missing
+type annotation and its correction are retained. No production regression was
+found by the independent corpus. Four unchanged Hypersolve value/dispatch tests
+pass; ARM/WASM no_std and primitive dependency closure remain qualified locally.
+
+ASan fuzzing completes 10,000 cases in 9 seconds (seed 20261120), retaining
+independent MPFR/GMP checks, extended limits, replay and continued operations.
+Instrumented Rust 1.95 all-feature coverage is 3000/3063 lines (97.94%) and
+5981/6364 regions (93.98%); LLVM supplies no branch denominator. Tests, probes,
+Hyperreal, dependencies and test-only IEEE code are excluded. All six profile
+mismatches are diagnosed as excluded Rug OptRational::parts. This is not full
+coverage. All 660 timing samples complete, including unbounded sources and
+huge/tiny finite inputs. The crate PERFORMANCE.md reports all group medians;
+raw work units, host/compiler metadata and whole-probe size remain in evidence.
+
+Source/archive registration is pending. Actual heap-byte bounds, cancellation,
+remaining elementary backends/functions, split images, consumer migrations,
+full coverage and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add budgeted rational, dyadic and extended-dyadic arctangent images using
+  exact reductions, alternating-series tails and certified unbounded limits.
+  Preserve exact zero, extreme-scale inputs, local domain receipts and retry.
+
 - Add sealed extended real enclosures with validated singleton ray bounds;
   dyadic set operations, replay and exponentiation consume unbounded results.
 - Add budgeted rational/dyadic logarithms with tight bounds and explicit

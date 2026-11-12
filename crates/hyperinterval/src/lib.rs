@@ -20,6 +20,8 @@
     feature = "float-proposal",
     feature = "float-enclosure"
 ))]
+#[cfg(feature = "dyadic")]
+mod arctangent;
 mod bounds;
 #[cfg(feature = "dyadic")]
 mod dyadic;

@@ -306,3 +306,42 @@ hardware metadata, executable hash and coverage diagnostics are in the
 logarithm evidence record linked by INTERVAL_REFACTOR_PROGRESS.md. These are
 shared-host completion measurements, not a matched speedup comparison, a
 consumer migration, or a bound on heap bytes, wall time or cancellation.
+
+
+## Budgeted arctangent completion probe
+
+`conformance/atan_cost.rs` computes tight grid images of point 3/2, narrow
+[3/2,3/2+2^-8], wide [-4,4], huge singleton 2^4096, tiny singleton 2^-1074,
+and the entire real line. All images are finite and have Complete local
+coverage. Independent directed MPFR/GMP bounds precede timing. Rust 1.99
+release, x86_64 Linux, rational+dyadic with no default features, 128 warmups
+and 20 samples of 128 completed images per group:
+
+| Backend / input | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| dyadic / point | 40947.449 | 104065.426 | 372543.457 |
+| dyadic / narrow | 147121.023 | 188525.699 | 748553.340 |
+| dyadic / wide | 77772.586 | 195476.242 | 772103.141 |
+| dyadic / huge | 24293.031 | 55517.117 | 212433.848 |
+| dyadic / tiny | 158.074 | 157.836 | 157.734 |
+| rational / point | 41377.621 | 103905.637 | 373147.750 |
+| rational / narrow | 147317.836 | 188380.363 | 747789.648 |
+| rational / wide | 78034.375 | 194400.645 | 770841.938 |
+| rational / huge | 24448.875 | 55619.367 | 212067.238 |
+| rational / tiny | 211.426 | 211.734 | 211.703 |
+| extended / entire | 22862.797 | 54400.172 | 210605.238 |
+
+Values are median ns/image; all 660 samples complete. Source construction and
+independent oracles are outside timing; budget creation, argument reduction,
+series/tail work, every refinement attempt, output, receipt and destruction
+are inside. Each call has a fresh 16384-bit, 10^12-work-unit budget. Raw samples
+retain deterministic work units; compiler/host metadata, whole-executable size
+and hash are in the arctangent evidence record. The executable includes
+GMP/MPFR oracles and its size is not the kernel size.
+
+The tiny case uses 0<atan(x)<x to avoid unnecessary evaluation below a grid
+unit. Large dyadic inputs use reciprocal reduction without expanding their
+scale; large rational input coefficients still have their own reservation
+cost. All finite and unbounded cases preserve the same outward-grid contract.
+These are new-capability costs, not baseline speedups or consumer benchmarks.
+No heap-byte, wall-time, cancellation or firmware-cycle bound is claimed.

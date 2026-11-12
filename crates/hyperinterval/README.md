@@ -47,6 +47,14 @@ have a lower-unbounded image and Partial coverage; wholly nonpositive inputs
 return EmptyDomain. Keep this receipt when applying later operations. Finite
 extraction of an unbounded result returns UnboundedImage.
 
+Rational, dyadic and extended dyadic `atan(precision, &mut budget)` returns a
+finite dyadic enclosure with Complete local coverage. It preserves exact zero,
+uses certified limits at unbounded ends, and supports extreme dyadic scales
+without requiring magnitude-sized integers. The same work budget covers all
+series and refinement attempts. Keep earlier domain receipts when chaining
+operations; for example, `log` followed by `atan` can still have inherited
+Partial coverage.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

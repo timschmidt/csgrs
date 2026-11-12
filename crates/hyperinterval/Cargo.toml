@@ -93,3 +93,8 @@ required-features = ["rational", "dyadic"]
 name = "log_cost"
 path = "conformance/log_cost.rs"
 required-features = ["rational", "dyadic"]
+
+[[example]]
+name = "atan_cost"
+path = "conformance/atan_cost.rs"
+required-features = ["rational", "dyadic"]
