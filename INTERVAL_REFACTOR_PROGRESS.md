@@ -871,8 +871,14 @@ Independent exact GMP adjacent-grid inequalities and directed MPFR bounds cover
 small rational/dyadic domains, large/near-square coefficients, subnormal-sized
 values, partial domains, full exponent tags, resource refusal/retry, refinement,
 validated serialization, repeated roots/powers and reciprocal composition.
-The separate `2026-11-12-interval-square-roots` evidence record is pending
-registration. Remaining elementary functions, primitive square-root backends, consumer
+Source commit: `0b9798d02c2df2591b13d055c599ff13d33d7c7d`. The separate
+`2026-11-12-interval-square-roots` evidence record is committed at
+`c068701b4f8f7bc02b7ed3f25ca1c33c2207cedd`: 718 files,
+52,639,790 bytes, SHA-256
+`25e0fcb80f98959c97140cf1ce97c51fde53fd95165bde892dfd66941f5994b6`.
+The scoped manifest was verified against that committed archive revision and
+registered in `docs/evidence-archive.tsv`; all prior records are preserved.
+Remaining elementary functions, primitive square-root backends, consumer
 migrations, full coverage and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
