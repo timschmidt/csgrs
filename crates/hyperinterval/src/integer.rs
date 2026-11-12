@@ -77,6 +77,22 @@ impl<I: IntegerEndpoint> IntegerRange<I> {
     }
 
     set_relations!();
+
+    /// Converts endpoints exactly to another primitive width or signedness.
+    ///
+    /// Widening is lossless. A narrowing or signedness change that cannot
+    /// represent either endpoint returns `Overflow`, never saturation.
+    pub fn convert<J: IntegerEndpoint + TryFrom<I>>(
+        &self,
+    ) -> Result<IntegerRange<J>, IntervalError> {
+        match self.bounds() {
+            Some((lower, upper)) => IntegerRange::new(
+                J::try_from(lower).map_err(|_| IntervalError::Overflow)?,
+                J::try_from(upper).map_err(|_| IntervalError::Overflow)?,
+            ),
+            None => Ok(IntegerRange::empty()),
+        }
+    }
 }
 
 #[cfg(feature = "serde")]

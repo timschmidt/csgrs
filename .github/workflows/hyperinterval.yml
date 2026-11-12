@@ -67,7 +67,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
         run: |
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins
-          rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/constructors.rs
+          rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/*.rs
 
   portable:
     name: no_std (${{ matrix.target }})
@@ -90,3 +90,25 @@ jobs:
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed,serde
+
+  sanitizer:
+    name: Bounded ASan interval campaigns
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: crates/hyperinterval
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install sanitizer toolchain and driver
+        run: |
+          rustup toolchain install nightly --profile minimal
+          cargo install cargo-fuzz --version 0.13.2 --locked
+      - name: Run constructor and arithmetic campaigns
+        run: |
+          mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic"
+          cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
+          cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112

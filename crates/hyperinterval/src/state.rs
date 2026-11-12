@@ -54,6 +54,17 @@ pub enum DomainCoverage {
     Partial,
 }
 
+/// Explicit rounding of a midpoint to an endpoint lattice.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum MidpointRounding {
+    /// Round toward negative infinity.
+    Floor,
+    /// Round toward positive infinity.
+    Ceiling,
+    /// Choose the nearest lattice point, breaking half-unit ties to even.
+    NearestTiesEven,
+}
+
 /// An image enclosure together with its source-domain qualification.
 ///
 /// This payload does not itself certify an arbitrary user-supplied enclosure.

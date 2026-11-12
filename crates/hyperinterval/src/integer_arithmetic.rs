@@ -1,0 +1,109 @@
+use crate::{IntegerRange, IntervalError, MidpointRounding};
+
+macro_rules! arithmetic {
+    ($($endpoint:ty),*) => { $(
+        impl IntegerRange<$endpoint> {
+            /// Exact endpoint distance, widened to u128; empty returns `None`.
+            ///
+            /// This is the width, not the cardinality. The cardinality of the
+            /// full u128 range would require 129 bits.
+            pub fn width(&self) -> Option<u128> {
+                self.bounds().map(|(lower, upper)| upper.abs_diff(lower) as u128)
+            }
+
+            /// Midpoint with explicit integer rounding; empty returns `None`.
+            pub fn midpoint(&self, rounding: MidpointRounding) -> Option<$endpoint> {
+                self.bounds().map(|(lower, upper)| {
+                    let width = upper.abs_diff(lower);
+                    // Half of the maximum unsigned distance fits the signed
+                    // endpoint, and the sum is between lower and upper.
+                    let floor = lower + (width / 2) as $endpoint;
+                    let increment = width % 2 != 0 && match rounding {
+                        MidpointRounding::Floor => false,
+                        MidpointRounding::Ceiling => true,
+                        MidpointRounding::NearestTiesEven => floor % 2 != 0,
+                    };
+                    floor + <$endpoint>::from(increment)
+                })
+            }
+
+            /// Outward integer radius around any supported rounded midpoint.
+            pub fn radius(&self) -> Option<u128> {
+                self.width().map(|width| width / 2 + width % 2)
+            }
+
+            /// Exact discrete Minkowski sum, with checked endpoint arithmetic.
+            pub fn checked_add(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => Self::new(
+                        a.checked_add(c).ok_or(IntervalError::Overflow)?,
+                        b.checked_add(d).ok_or(IntervalError::Overflow)?),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Exact discrete Minkowski difference, rejecting overflow/unsigned underflow.
+            pub fn checked_sub(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => Self::new(
+                        a.checked_sub(d).ok_or(IntervalError::Overflow)?,
+                        b.checked_sub(c).ok_or(IntervalError::Overflow)?),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Exact reflected set; unsigned nonzero values cannot be represented.
+            pub fn checked_neg(&self) -> Result<Self, IntervalError> {
+                match self.bounds() {
+                    Some((a, b)) => Self::new(b.checked_neg().ok_or(IntervalError::Overflow)?, a.checked_neg().ok_or(IntervalError::Overflow)?),
+                    None => Ok(Self::empty()),
+                }
+            }
+
+            /// Smallest integer range enclosing every pairwise product.
+            ///
+            /// Integer products can have gaps; the returned range is their
+            /// hull, not a claim that each integer in the hull is attained.
+            pub fn checked_mul(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => {
+                        let products = [a.checked_mul(c), a.checked_mul(d), b.checked_mul(c), b.checked_mul(d)];
+                        let [a, b, c, d] = products;
+                        let a = a.ok_or(IntervalError::Overflow)?;
+                        let b = b.ok_or(IntervalError::Overflow)?;
+                        let c = c.ok_or(IntervalError::Overflow)?;
+                        let d = d.ok_or(IntervalError::Overflow)?;
+                        Self::new(a.min(b).min(c).min(d), a.max(b).max(c).max(d))
+                    }
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Smallest integer hull of pointwise squares, with zero-aware bounds.
+            pub fn square(&self) -> Result<Self, IntervalError> {
+                self.checked_pow(2)
+            }
+
+            /// Smallest integer hull of a nonnegative integer power.
+            ///
+            /// Exponent zero maps every nonempty set to one, including zero.
+            /// Empty maps to empty. Primitive checked exponentiation is bounded
+            /// by the 32-bit exponent and never wraps.
+            pub fn checked_pow(&self, exponent: u32) -> Result<Self, IntervalError> {
+                match self.bounds() {
+                    Some((a, b)) => {
+                        let aa = a.checked_pow(exponent).ok_or(IntervalError::Overflow)?;
+                        let bb = b.checked_pow(exponent).ok_or(IntervalError::Overflow)?;
+                        let lower = if exponent != 0 && exponent % 2 == 0 && self.contains_point(0) { 0 } else { aa.min(bb) };
+                        Self::new(lower, aa.max(bb))
+                    }
+                    None => Ok(Self::empty()),
+                }
+            }
+        }
+    )* };
+}
+
+arithmetic!(
+    i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize
+);

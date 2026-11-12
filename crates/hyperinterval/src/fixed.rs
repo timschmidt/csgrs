@@ -78,6 +78,23 @@ impl<I: FixedEndpoint, const FRAC: u32> FixedInterval<I, FRAC> {
     }
 
     set_relations!();
+
+    /// Converts endpoint storage exactly, retaining the fixed-point scale.
+    ///
+    /// The destination scale is validated even for empty sets. An endpoint
+    /// outside the destination range returns `Overflow`.
+    pub fn convert<J: FixedEndpoint + TryFrom<I>>(
+        &self,
+    ) -> Result<FixedInterval<J, FRAC>, IntervalError> {
+        let empty = FixedInterval::<J, FRAC>::empty()?;
+        match self.bounds() {
+            Some((lower, upper)) => FixedInterval::new(
+                J::try_from(lower).map_err(|_| IntervalError::Overflow)?,
+                J::try_from(upper).map_err(|_| IntervalError::Overflow)?,
+            ),
+            None => Ok(empty),
+        }
+    }
 }
 
 #[cfg(feature = "serde")]

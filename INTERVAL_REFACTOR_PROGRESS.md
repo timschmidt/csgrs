@@ -21,9 +21,11 @@ Contract: [implementation plan](docs/INTERVAL_REFACTOR_PLAN.md). The full
 - `interval-assessment.md` was absent in the initial CSGRS and local sibling
   search. It is also absent in the two fresh clones; GitHub code search returned
   zero matches for that filename under timschmidt. This required reference
-  remains unavailable; arithmetic implementation has not started.
+  remains unavailable. Implementation follows the explicit plan and current
+  source; no unseen assessment claim is treated as reproduced evidence.
 - Raw local evidence staging: `/tmp/interval-refactor/baseline`. Archive and
-  digest registration remain pending; staging alone is not durable evidence.
+  digest registration for completed foundation checks is now recorded below;
+  still-running checks remain in staging and are not claimed complete.
 
 ## Admission before production edits
 
@@ -40,8 +42,8 @@ No existing arithmetic or predicate dispatch has been changed.
 | Phase | State | Evidence still required |
 | --- | --- | --- |
 | 0 inventory/baseline | in progress | audited source map, sibling states, tests, cost/size/coverage/fuzz, hashes |
-| 1 skeleton/laws | implemented; qualification in progress | fuzz, evidence archive, full API review |
-| 2 integer/fixed | not started | exact exhaustive and Alumina differential oracles |
+| 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
+| 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | not started | product differential, conversions, independent Real bounds |
 | 4 proposals/float | not started | environment qualification and rational oracle |
 | 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
@@ -77,8 +79,10 @@ No existing arithmetic or predicate dispatch has been changed.
   samples, 1 s warmup, 2 s measurement per row); raw samples retained. These
   are focused probes, not cross-library performance or regression claims.
 - Hypersolve four-iteration allocation profile passed; raw per-representation
-  rows retained. Full production coverage baseline is running under an external
-  1800-second containment deadline, not an internal work-bound claim.
+  rows retained. Full production coverage baseline passed: 49,022 / 55,093
+  executable lines (88.98%), above the unchanged 85% gate. The 1800-second
+  external containment deadline was not reached; this is not an internal
+  work-bound claim.
 - Hyperinterval: 22 stable/MSRV feature-matrix commands passed; nine conformance
   tests and three compile-fail authority tests passed. Six Rust 1.88 no_std
   builds passed (default, integer/fixed, integer/fixed/serde on WASM and
@@ -94,6 +98,61 @@ No existing arithmetic or predicate dispatch has been changed.
   status in baseline/features.txt. This records declared features, not a
   resolved dependency-cycle or firmware-closure proof.
 
+## Immutable foundation evidence
+
+- CSGRS inventory/API checkpoint: `6b72f0c7d`; phase-1 source: `8e151ca5c`.
+- Interface normalized baseline checkpoint: `ee6cdb1` (199 tests passed).
+- Evidence repository local commit: `ac24a78d847762b6ca63e9a16cd8fead30296b9d`.
+- Record: `docs/evidence/2026-11-12-interval-foundation`, 206 files,
+  756,992 bytes, SHA-256
+  `f408b880769a135e8247970f6b116548a4995f7592680f98eeb9c1f711eeb425`.
+- Generated and verified using the existing `scripts/evidence_archive.py`
+  manifest/verification functions scoped to this new record. Existing archive
+  rows were preserved; this is not a verification of unavailable later records.
+- Bounded ASan smoke passed: 10,000 runs, seed 20261112, max length 1024,
+  max time 30 s. Fuzz build and strict Clippy passed. Corpus retained in the
+  evidence record, outside the source tree. No repository has been pushed.
+
+## Phase 2 admission and current evidence
+
+Owner: Hyperinterval, P1/P3/P5/P6/P31/P35/P36. Input domains are primitive
+integer ranges and i32/i64 fixed intervals with valid scales. Integer products
+return the containing integer hull (gaps need not be attained); fixed products
+and quotients round outward. Integer reciprocal/division is not silently
+reinterpreted as truncated real arithmetic. Fixed strict division rejects a
+zero-containing denominator even for an empty numerator.
+
+Missing witnesses before implementation were exhaustive reduced grids,
+overflow edges, named midpoint rounding, exact widening/coarsening and Q30
+field/error equivalence. These tests now exist. Iterative power operations
+are bounded by a u32 exponent; no ambient precision or refinement loop exists.
+Q30 differential checks use the actual unchanged firmware kernel: 20,736
+boundary combinations, 100,000 deterministic random rows plus ratios and 81
+extreme ratios passed with no mismatch. This does not establish timing, HIL,
+firmware migration or all-phase completion.
+
+Final local evidence: 20 conformance/arithmetic tests and three compile-fail
+checks; stable and 1.88 feature matrices; WASM/ARM no_std builds; strict lint,
+rustdoc and actual example execution passed. Q31.32 extreme cross-product
+oracles and exact storage/rescale/discrete-to-continuous tests are included.
+ASan arithmetic smoke completed 100,000 runs, seed 20261112, max length 16,
+max time 30 s; constructor smoke completed 10,000 runs. Original harness-CWD,
+missing corpus-directory and sandbox LeakSanitizer failures are retained.
+A fuzz-only collapsible-if lint was fixed without changing evaluation order.
+
+The initial cost probe exposed a real constant-specialization regression and
+is retained as rejected. Inlining two private quotient helpers preserved exact
+outputs and improved the corrected paired probe; see
+[performance record](crates/hyperinterval/PERFORMANCE.md) for raw medians,
+code-size attribution and limits. No domain consumer has been migrated and no
+firmware cycle-time equivalence is claimed. The shared carrier's explicit empty
+state remains larger than the legacy nonempty wrapper.
+
+Final production Hyperinterval LLVM report: 470 / 496 lines (94.76%),
+900 / 959 regions (93.85%), 83 / 83 functions. Dependencies and tests excluded;
+no branch coverage was measured. The universal 100% coverage target remains
+open; these finite generators/fuzz campaigns are not a universal closure proof.
+
 ## Implementation and open gates
 
 - [API/feature proposal](docs/research/interval-api-design.md) preceded the
@@ -108,8 +167,9 @@ No existing arithmetic or predicate dispatch has been changed.
 - The explicit-empty fixed carrier is larger than Alumina's current nonempty
   wrapper (12 vs 8 bytes for i32 on this host). Preserve the domain layout when
   evaluating delegation; do not silently accept that cost in firmware.
-- Full source-map body/consumer audit, baseline coverage/fuzz, matched binary
-  and WASM/firmware size measurements, HIL and performance gates remain open.
+- Full source-map body/consumer audit, wider baseline fuzz, matched whole-stack
+  binary and WASM/firmware size measurements, HIL and downstream performance
+  gates remain open.
   No phase-0 completion or downstream migration is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)

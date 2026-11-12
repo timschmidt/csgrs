@@ -20,5 +20,12 @@ test = false
 doc = false
 bench = false
 
+[[bin]]
+name = "fixed_arithmetic"
+path = "fuzz_targets/fixed_arithmetic.rs"
+test = false
+doc = false
+bench = false
+
 [workspace]
 members = ["."]

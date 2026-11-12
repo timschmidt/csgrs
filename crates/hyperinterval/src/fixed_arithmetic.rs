@@ -1,0 +1,328 @@
+//! Widened arithmetic for the sealed i32/i64 fixed-point families.
+
+use crate::{FixedInterval, IntervalError, MidpointRounding};
+
+// Every caller supplies a positive denominator. Numerators here are products
+// of signed 64-bit values and a scale at most 2^63, so division cannot meet
+// i128::MIN / -1 and the ceiling increment cannot overflow.
+#[inline]
+fn quotient_bounds(numerator: i128, denominator: i128) -> (i128, i128) {
+    let lower = numerator.div_euclid(denominator);
+    let upper = lower + i128::from(numerator.rem_euclid(denominator) != 0);
+    (lower, upper)
+}
+
+#[inline]
+fn scaled_ratio(numerator: i128, denominator: i128, scale: i128) -> (i128, i128) {
+    if denominator < 0 {
+        quotient_bounds(-numerator * scale, -denominator)
+    } else {
+        quotient_bounds(numerator * scale, denominator)
+    }
+}
+
+macro_rules! arithmetic {
+    ($endpoint:ty) => {
+        impl<const FRAC: u32> FixedInterval<$endpoint, FRAC> {
+            fn scale() -> Result<i128, IntervalError> {
+                if FRAC >= <$endpoint>::BITS {
+                    return Err(IntervalError::InvalidScale);
+                }
+                Ok(1_i128 << FRAC)
+            }
+
+            fn from_wide(lower: i128, upper: i128) -> Result<Self, IntervalError> {
+                let lower = <$endpoint>::try_from(lower).map_err(|_| IntervalError::Overflow)?;
+                let upper = <$endpoint>::try_from(upper).map_err(|_| IntervalError::Overflow)?;
+                Self::new(lower, upper)
+            }
+
+            /// Smallest outward lattice enclosure of an exact i64 ratio.
+            ///
+            /// A zero denominator returns `ContainsZero`; unrepresentable
+            /// endpoints return `Overflow`. All intermediate products fit i128.
+            pub fn from_ratio(numerator: i64, denominator: i64) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                if denominator == 0 {
+                    return Err(IntervalError::ContainsZero);
+                }
+                let (lower, upper) =
+                    scaled_ratio(i128::from(numerator), i128::from(denominator), scale);
+                Self::from_wide(lower, upper)
+            }
+
+            /// Exact width in lattice units, including the full signed range.
+            /// Empty has no width and returns `None`.
+            pub fn width_ulps(&self) -> Option<u64> {
+                self.bounds()
+                    .map(|(lower, upper)| (i128::from(upper) - i128::from(lower)) as u64)
+            }
+
+            /// Changes scale with exact refinement or outward-rounded coarsening.
+            ///
+            /// No exact source point is lost. Refinement can overflow the
+            /// endpoint storage; invalid destination scales fail even for empty.
+            pub fn rescale<const DESTINATION: u32>(
+                &self,
+            ) -> Result<FixedInterval<$endpoint, DESTINATION>, IntervalError> {
+                FixedInterval::<$endpoint, DESTINATION>::scale()?;
+                match self.bounds() {
+                    Some((lower, upper)) => {
+                        let (lower, upper) = if DESTINATION >= FRAC {
+                            let factor = 1_i128 << (DESTINATION - FRAC);
+                            (i128::from(lower) * factor, i128::from(upper) * factor)
+                        } else {
+                            let divisor = 1_i128 << (FRAC - DESTINATION);
+                            (
+                                quotient_bounds(i128::from(lower), divisor).0,
+                                quotient_bounds(i128::from(upper), divisor).1,
+                            )
+                        };
+                        FixedInterval::<$endpoint, DESTINATION>::from_wide(lower, upper)
+                    }
+                    None => FixedInterval::empty(),
+                }
+            }
+
+            /// Continuous real hull of a discrete integer range, converted exactly.
+            ///
+            /// This explicit conversion fills the gaps between integers and may
+            /// overflow when scaled numerators cannot fit the endpoint storage.
+            #[cfg(feature = "integer")]
+            pub fn from_integer_range(
+                range: &crate::IntegerRange<$endpoint>,
+            ) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                match range.bounds() {
+                    Some((lower, upper)) => {
+                        Self::from_wide(i128::from(lower) * scale, i128::from(upper) * scale)
+                    }
+                    None => Self::empty(),
+                }
+            }
+
+            /// Exact discrete set of integers contained in this real interval.
+            #[cfg(feature = "integer")]
+            pub fn integer_points(&self) -> Result<crate::IntegerRange<$endpoint>, IntervalError> {
+                let scale = Self::scale()?;
+                match self.bounds() {
+                    Some((lower, upper)) => {
+                        let lower = quotient_bounds(i128::from(lower), scale).1;
+                        let upper = quotient_bounds(i128::from(upper), scale).0;
+                        if lower > upper {
+                            return Ok(crate::IntegerRange::empty());
+                        }
+                        // Dividing by scale >= 1 keeps every surviving integer
+                        // inside the original signed endpoint range.
+                        crate::IntegerRange::new(lower as $endpoint, upper as $endpoint)
+                    }
+                    None => Ok(crate::IntegerRange::empty()),
+                }
+            }
+
+            /// Midpoint lattice numerator with explicit rounding; empty returns `None`.
+            pub fn midpoint(&self, rounding: MidpointRounding) -> Option<$endpoint> {
+                self.bounds().map(|(lower, upper)| {
+                    let width = i128::from(upper) - i128::from(lower);
+                    let floor = i128::from(lower) + width / 2;
+                    let increment = width % 2 != 0
+                        && match rounding {
+                            MidpointRounding::Floor => false,
+                            MidpointRounding::Ceiling => true,
+                            MidpointRounding::NearestTiesEven => floor % 2 != 0,
+                        };
+                    // The rounded midpoint lies between representable endpoints.
+                    (floor + i128::from(increment)) as $endpoint
+                })
+            }
+
+            /// Outward radius in lattice units around any supported rounded midpoint.
+            /// Empty returns `None`; odd widths round the half-width upward.
+            pub fn radius_ulps(&self) -> Option<u64> {
+                self.width_ulps().map(|width| width / 2 + width % 2)
+            }
+
+            /// Exact Minkowski sum, or `Overflow` if an endpoint does not fit.
+            pub fn checked_add(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => Self::from_wide(
+                        i128::from(a) + i128::from(c),
+                        i128::from(b) + i128::from(d),
+                    ),
+                    _ => Self::empty(),
+                }
+            }
+
+            /// Exact Minkowski difference, with widened intermediates and no saturation.
+            pub fn checked_sub(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => Self::from_wide(
+                        i128::from(a) - i128::from(d),
+                        i128::from(b) - i128::from(c),
+                    ),
+                    _ => Self::empty(),
+                }
+            }
+
+            /// Exact reflected set, or `Overflow` at an unrepresentable negation.
+            pub fn checked_neg(&self) -> Result<Self, IntervalError> {
+                match self.bounds() {
+                    Some((lower, upper)) => Self::from_wide(-i128::from(upper), -i128::from(lower)),
+                    None => Self::empty(),
+                }
+            }
+
+            /// Tight outward-rounded product hull using i128 intermediates.
+            pub fn checked_mul(&self, other: &Self) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => {
+                        let products = [
+                            i128::from(a) * i128::from(c),
+                            i128::from(a) * i128::from(d),
+                            i128::from(b) * i128::from(c),
+                            i128::from(b) * i128::from(d),
+                        ];
+                        let lower = products[0]
+                            .min(products[1])
+                            .min(products[2])
+                            .min(products[3]);
+                        let upper = products[0]
+                            .max(products[1])
+                            .max(products[2])
+                            .max(products[3]);
+                        Self::from_wide(
+                            quotient_bounds(lower, scale).0,
+                            quotient_bounds(upper, scale).1,
+                        )
+                    }
+                    _ => Self::empty(),
+                }
+            }
+
+            /// Tight outward-rounded quotient hull when zero is excluded.
+            ///
+            /// A zero-containing denominator is rejected even if the numerator
+            /// is empty. Otherwise an empty operand produces an empty image.
+            pub fn checked_div(&self, other: &Self) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                if other.contains_point(0) {
+                    return Err(IntervalError::ContainsZero);
+                }
+                match (self.bounds(), other.bounds()) {
+                    (Some((a, b)), Some((c, d))) => {
+                        let ratios = [
+                            scaled_ratio(i128::from(a), i128::from(c), scale),
+                            scaled_ratio(i128::from(a), i128::from(d), scale),
+                            scaled_ratio(i128::from(b), i128::from(c), scale),
+                            scaled_ratio(i128::from(b), i128::from(d), scale),
+                        ];
+                        let lower = ratios[0]
+                            .0
+                            .min(ratios[1].0)
+                            .min(ratios[2].0)
+                            .min(ratios[3].0);
+                        let upper = ratios[0]
+                            .1
+                            .max(ratios[1].1)
+                            .max(ratios[2].1)
+                            .max(ratios[3].1);
+                        Self::from_wide(lower, upper)
+                    }
+                    _ => Self::empty(),
+                }
+            }
+
+            /// Tight reciprocal enclosure, without requiring 1 to fit this lattice.
+            pub fn reciprocal(&self) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                if self.contains_point(0) {
+                    return Err(IntervalError::ContainsZero);
+                }
+                match self.bounds() {
+                    Some((lower, upper)) => {
+                        let (image_lower, _) = scaled_ratio(scale, i128::from(upper), scale);
+                        let (_, image_upper) = scaled_ratio(scale, i128::from(lower), scale);
+                        Self::from_wide(image_lower, image_upper)
+                    }
+                    None => Self::empty(),
+                }
+            }
+
+            /// Tight zero-aware square enclosure.
+            pub fn square(&self) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                match self.bounds() {
+                    Some((a, b)) => {
+                        let aa = i128::from(a) * i128::from(a);
+                        let bb = i128::from(b) * i128::from(b);
+                        let lower = if a <= 0 && 0 <= b { 0 } else { aa.min(bb) };
+                        Self::from_wide(
+                            quotient_bounds(lower, scale).0,
+                            quotient_bounds(aa.max(bb), scale).1,
+                        )
+                    }
+                    None => Self::empty(),
+                }
+            }
+
+            /// Outward enclosure of a nonnegative integer power.
+            ///
+            /// Uses at most 32 squarings and 32 products, with outward rounding
+            /// at each step. This may be wider than the smallest lattice hull.
+            /// Intermediate overflow is reported explicitly. For exponent zero,
+            /// every nonempty input maps to one, including a zero singleton.
+            pub fn checked_pow(&self, mut exponent: u32) -> Result<Self, IntervalError> {
+                if self.is_empty() {
+                    return Self::empty();
+                }
+                if exponent == 0 {
+                    return Self::from_wide(Self::scale()?, Self::scale()?);
+                }
+                let mut base = *self;
+                let mut result: Option<Self> = None;
+                while exponent != 0 {
+                    if exponent & 1 != 0 {
+                        result = Some(match result {
+                            Some(value) => value.checked_mul(&base)?,
+                            None => base,
+                        });
+                    }
+                    exponent >>= 1;
+                    if exponent != 0 {
+                        base = base.square()?;
+                    }
+                }
+                // Nonzero initial exponent has at least one set bit.
+                Ok(result.expect("nonzero exponent has a set bit"))
+            }
+
+            /// Tight outward affine image `coefficient * self + offset`.
+            ///
+            /// The coefficient and offset are lattice numerators. Accumulation
+            /// happens before rounding/narrowing, preserving cancellation.
+            pub fn affine(
+                &self,
+                coefficient: $endpoint,
+                offset: $endpoint,
+            ) -> Result<Self, IntervalError> {
+                let scale = Self::scale()?;
+                match self.bounds() {
+                    Some((a, b)) => {
+                        let a = i128::from(a) * i128::from(coefficient);
+                        let b = i128::from(b) * i128::from(coefficient);
+                        let offset = i128::from(offset) * scale;
+                        Self::from_wide(
+                            quotient_bounds(a.min(b) + offset, scale).0,
+                            quotient_bounds(a.max(b) + offset, scale).1,
+                        )
+                    }
+                    None => Self::empty(),
+                }
+            }
+        }
+    };
+}
+
+arithmetic!(i32);
+arithmetic!(i64);

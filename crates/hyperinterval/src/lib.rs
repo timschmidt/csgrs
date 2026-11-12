@@ -16,12 +16,16 @@
 mod bounds;
 #[cfg(feature = "fixed")]
 mod fixed;
+#[cfg(feature = "fixed")]
+mod fixed_arithmetic;
 #[cfg(feature = "integer")]
 mod integer;
+#[cfg(feature = "integer")]
+mod integer_arithmetic;
 mod state;
 
 #[cfg(feature = "fixed")]
 pub use fixed::{FixedEndpoint, FixedInterval};
 #[cfg(feature = "integer")]
 pub use integer::{IntegerEndpoint, IntegerRange};
-pub use state::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
+pub use state::{DomainCoverage, IntervalError, MidpointRounding, RangeEnclosure, SignSet};
