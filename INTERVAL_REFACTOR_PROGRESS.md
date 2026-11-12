@@ -1621,7 +1621,12 @@ Krawczyk helpers, measured specializations/facts and full consumer acceptance.
 Legacy Real benchmark/monomorphized-size and successive-operation comparisons
 remain part of the full phase gate. No solver or firmware production migration
 has occurred in this checkpoint. No phase or overall goal is complete, and no
-push was attempted. Source and immutable evidence registration: pending.
+push was attempted. Source commit:
+`b03b3a4c98b0ee8731423816fa0666ecb7bbe50f`. Immutable evidence commit:
+`3f240cc3526422d0107381b9f655e1d02ecda1fe`, record `docs/evidence/2026-11-12-interval-lattice-core`,
+189 files, 42,314,675 bytes, SHA-256
+`d73ad3b7683a0f1fc42f4b9e4cce275d48b49a59881bdbad3f8cbfb5d1779a03`. The committed record was regenerated and
+verified before registration; all prior archive rows are preserved.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
