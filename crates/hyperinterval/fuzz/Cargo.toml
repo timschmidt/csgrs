@@ -71,3 +71,10 @@ required-features = ["rational"]
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "primitive_roots"
+path = "fuzz_targets/primitive_roots.rs"
+test = false
+doc = false
+bench = false

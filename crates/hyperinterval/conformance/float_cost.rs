@@ -24,6 +24,23 @@ pub fn hyperinterval_strict_chain32(a: f32, b: f32) -> Result<F32Enclosure, Inte
         .reciprocal()
 }
 
+#[unsafe(no_mangle)]
+#[inline(never)]
+pub fn hyperinterval_strict_sqrt32(
+    a: f32,
+    b: f32,
+) -> Result<hyperinterval::RangeEnclosure<F32Enclosure>, IntervalError> {
+    F32Enclosure::new(a, b)?.sqrt()
+}
+#[unsafe(no_mangle)]
+#[inline(never)]
+pub fn hyperinterval_strict_sqrt64(
+    a: f64,
+    b: f64,
+) -> Result<hyperinterval::RangeEnclosure<F64Enclosure>, IntervalError> {
+    F64Enclosure::new(a, b)?.sqrt()
+}
+
 macro_rules! inspect {
     ($name:ident, $interval:ident, $float:ty) => {
         #[unsafe(no_mangle)]
@@ -84,6 +101,8 @@ fn main() {
     black_box(
         hyperinterval_strict_surface64(black_box(0.75), black_box(1.25), black_box(3)).unwrap(),
     );
+    black_box(hyperinterval_strict_sqrt32(black_box(-1.0), black_box(2.0)).unwrap());
+    black_box(hyperinterval_strict_sqrt64(black_box(-1.0), black_box(2.0)).unwrap());
     println!("width,sample,elapsed_ns,completed_chains,checksum");
     macro_rules! measure {
         ($name:ident, $width:literal) => {

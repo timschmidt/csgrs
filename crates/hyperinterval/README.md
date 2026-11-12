@@ -13,6 +13,12 @@ retains zero when its input crosses zero; a signed primitive minimum that
 cannot be reflected returns Overflow. Dyadic methods use the existing shared
 size/work budget. These total real functions do not clip their input domain.
 
+Fixed-point and qualified IEEE intervals provide `sqrt()` with tight outward
+bounds and explicit domain coverage. They use bounded primitive integer
+arithmetic without allocation. Fixed-point upper rounding can return Overflow
+at maximal fractional scales. IEEE square roots include subnormal inputs and
+retain the existing x86_64 qualification gate.
+
 Rational and dyadic intervals provide `sqrt(precision, &mut budget)`, returning
 `RangeEnclosure<DyadicInterval>` with tight outward endpoints on the grid
 `2^precision`. Rational inputs require both features. Negative source points

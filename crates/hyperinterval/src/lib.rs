@@ -41,6 +41,8 @@ mod proposal;
 mod rational;
 #[cfg(feature = "real-ball")]
 mod real_ball;
+#[cfg(any(feature = "fixed", feature = "float-enclosure"))]
+mod sqrt;
 mod state;
 
 #[cfg(feature = "dyadic")]

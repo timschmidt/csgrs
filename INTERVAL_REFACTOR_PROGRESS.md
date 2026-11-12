@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic square roots implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -880,6 +880,78 @@ The scoped manifest was verified against that committed archive revision and
 registered in `docs/evidence-archive.tsv`; all prior records are preserved.
 Remaining elementary functions, primitive square-root backends, consumer
 migrations, full coverage and release qualification remain open.
+
+## Primitive square-root admission (2026-11-12)
+
+Owner: Hyperinterval primitive scalar-set layer, P1/P3/P5/P6/P19. Baseline
+`225daa5f4`; missing fixed/IEEE `sqrt` methods reproduced by compile failure.
+Domain: every valid i32/i64 fixed interval at each supported scale, and finite
+binary32/binary64 intervals under the existing x86_64 backend qualification;
+canonical empty is accepted. Principal root clips negative source members with
+Partial coverage, rejects strictly negative nonempty inputs with EmptyDomain,
+and maps empty to empty with Complete coverage. Returned carriers remain
+ordinary arithmetic, set-operation and validated replay operands. The domain
+receipt remains explicit even when two ranges happen to be identical.
+
+Both kernels share one primitive `u128::isqrt` floor/ceiling helper. For fixed
+m/2^F, output-grid mantissas enclose sqrt(m*2^F); the radicand has at most 126
+bits. A rounded upper mantissa can exceed signed storage at maximal F, which
+returns Overflow rather than saturation. For IEEE m*2^e, h=floor(log2(m)) and
+output-grid exponent g=floor((e+h)/2)-F, where F is the fraction width. The
+scaled radicand m*2^(e-2g) has at most 2F+2 <= 106 bits. Every nonzero IEEE
+root is normal, even for subnormal source values. Integer square testing
+selects the exact ceiling; existing encoding authority builds the endpoints.
+No new float comparison, arithmetic, allocation, arbitrary-precision
+production dependency or ambient-mode mutation is introduced.
+
+Work and storage are bounded by primitive widths and at most two integer root
+calls; no configurable precision budget is needed. This is not a measured
+firmware-cycle or stack-byte bound. Existing predicate order and consumer
+kernels are untouched. The existing opaque finite-validation boundary remains
+in place. Codegen qualification now requires six client symbols, including
+both root widths, and scans emitted integer-root helpers as well as the
+existing IEEE/Bounds and wide-division paths. No old exclusion or assertion
+was weakened.
+
+Qualification at `/tmp/interval-refactor/primitive-roots` passes the final
+33-command matrix: 96 all-feature unit/integration tests and 11 doctests;
+Rust 1.88/1.95/stable feature, release, strict lint and documentation checks;
+formatting, fuzz harnesses, whole-repository zizmor and retention budget;
+unchanged downstream solver value/dispatch witnesses; primitive dependency
+closure; and ARM/WASM compilation. No hosted OS, HIL or release-distribution
+claim follows. A final test-only cfg prevents unused imports on non-x86
+float-only builds.
+
+The acceptance corpus covers
+all 96 fixed endpoint/scale combinations, exact GMP adjacent-grid witnesses,
+all finite IEEE exponent classes, deterministic random images, directed MPFR
+and exact GMP endpoint checks, maximal scales, zero/partial/empty domains,
+replay and successive operation tests. Release MXCSR tests exercise all 16
+combinations before comparing to independent expectations prepared in the
+normal environment. The ASan campaign completed 100,000 cases in 12 seconds, seed 20261117,
+16-byte cap, 30-second wall limit, with no failure. It validates eight fixed
+endpoint/scale configurations, both IEEE widths, ingress failures, tightness,
+domain qualification, serialization and subsequent squaring. Expected
+fixed-scale Overflow and EmptyDomain are checked separately from completion.
+
+Codegen scans passed on Rust 1.88, 1.95 and stable and under stable fat LTO;
+the corresponding release mode tests pass for both IEEE widths and every
+MXCSR combination. Coverage reports 2,240/2,284 production lines (98.07%) and
+4,222/4,396 regions (96.04%). Tests, dependencies and probes are excluded;
+there is no reported branch denominator. Diagnostic dump identifies three
+excluded Rug OptRational::parts profile mismatches. Report/export/dump all
+complete; full coverage remains open.
+
+The cost probe completed all 960 samples across four source widths and eight
+endpoint configurations, each with 4,096 warmups then 30 samples of 8,192
+owned images. Independent exact checks precede timing. The crate performance
+ledger contains the complete median table. No comparative improvement or
+firmware cost is inferred. The `2026-11-12-interval-primitive-roots` evidence
+record is pending registration.
+
+Later elementary functions, remaining signed-power surfaces, symbolic-ball
+function adapters, consumer migrations, full coverage and release
+qualification remain open. No phase completion is inferred from this addition.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

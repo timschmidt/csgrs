@@ -1,6 +1,6 @@
 use crate::bounds::Bounds;
 use crate::ieee::{BINARY32, BINARY64};
-use crate::{IntervalError, SignSet};
+use crate::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
 use core::cmp::Ordering;
 
 fn qualify() -> Result<(), IntervalError> {
@@ -313,6 +313,38 @@ let enclosure: F64Enclosure = proposal.into();
                     return Ok(Self::empty());
                 }
                 Self::from_bits($format.one(), $format.one())?.div(self)
+            }
+
+            /// Tight finite outward principal square root, using integer
+            /// arithmetic independent of native rounding and FTZ/DAZ modes.
+            /// Negative source members are excluded with `Partial` coverage;
+            /// strictly negative nonempty input returns `EmptyDomain`. Empty
+            /// maps to empty with `Complete` coverage on every target.
+            pub fn sqrt(&self) -> Result<RangeEnclosure<Self>, IntervalError> {
+                let Some((a, b)) = self.bits() else {
+                    return Ok(RangeEnclosure {
+                        range: Self::empty(),
+                        domain: DomainCoverage::Complete,
+                    });
+                };
+                if $format.compare(b, 0).is_lt() {
+                    return Err(IntervalError::EmptyDomain);
+                }
+                let partial = $format.compare(a, 0).is_lt();
+                let (lower, lower_ceil) = $format.sqrt(if partial { 0 } else { a })?;
+                let upper = if a == b {
+                    lower_ceil
+                } else {
+                    $format.sqrt(b)?.1
+                };
+                Ok(RangeEnclosure {
+                    range: Self::from_bits(lower, upper)?,
+                    domain: if partial {
+                        DomainCoverage::Partial
+                    } else {
+                        DomainCoverage::Complete
+                    },
+                })
             }
 
             /// Tight outward pointwise square, with zero minimum across zero.

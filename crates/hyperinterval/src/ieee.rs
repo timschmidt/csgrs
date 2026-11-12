@@ -144,6 +144,24 @@ impl Format {
         Ok(((top + self.bias()) as u64) << f | ((significand as u64) & ((1u64 << f) - 1)))
     }
 
+    // Principal root of a nonnegative finite endpoint. For x=m*2^e with
+    // h=floor(log2(m)), sqrt(x) has top exponent floor((e+h)/2).
+    // Its target grid g=top-F yields a nonnegative shift e-2g=2F-h+parity.
+    // Thus m << (e-2g) has at most 2F+2 <= 106 bits. Every nonzero
+    // binary32/64 root is normal, including roots of subnormal inputs.
+    pub(crate) fn sqrt(self, bits: u64) -> Result<(u64, u64), IntervalError> {
+        let value = self.decode(bits);
+        debug_assert!(!value.negative);
+        if value.magnitude == 0 {
+            return Ok((0, 0));
+        }
+        let high = 127 - value.magnitude.leading_zeros() as i32;
+        let grid = (value.exponent + high).div_euclid(2) - self.fraction() as i32;
+        let shift = value.exponent - 2 * grid;
+        let (lower, upper) = crate::sqrt::integer_sqrt_bounds(value.magnitude << shift);
+        Ok((self.encode(lower, grid)?, self.encode(upper, grid)?))
+    }
+
     fn signed(self, lower: u64, upper: u64, negative: bool) -> (u64, u64) {
         if negative {
             (self.negate(upper), self.negate(lower))

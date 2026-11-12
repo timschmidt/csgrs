@@ -1,6 +1,6 @@
 //! Widened arithmetic for the sealed i32/i64 fixed-point families.
 
-use crate::{FixedInterval, IntervalError, MidpointRounding};
+use crate::{DomainCoverage, FixedInterval, IntervalError, MidpointRounding, RangeEnclosure};
 
 // Every caller supplies a positive denominator. Numerators here are products
 // of signed 64-bit values and a scale at most 2^63, so division cannot meet
@@ -265,6 +265,43 @@ macro_rules! arithmetic {
                     }
                     None => Self::empty(),
                 }
+            }
+
+            /// Tight outward principal square root on this fixed-point lattice.
+            /// Negative source members are excluded with `Partial` coverage;
+            /// strictly negative nonempty input returns `EmptyDomain`. Empty
+            /// maps to empty with `Complete` coverage. An unrepresentable upper
+            /// bound returns `Overflow`, including rounding to one at a maximal
+            /// fractional scale. Uses bounded integer arithmetic, no allocation.
+            pub fn sqrt(&self) -> Result<RangeEnclosure<Self>, IntervalError> {
+                Self::scale()?;
+                let Some((a, b)) = self.bounds() else {
+                    return Ok(RangeEnclosure {
+                        range: Self::empty()?,
+                        domain: DomainCoverage::Complete,
+                    });
+                };
+                if b < 0 {
+                    return Err(IntervalError::EmptyDomain);
+                }
+                let domain = if a < 0 {
+                    DomainCoverage::Partial
+                } else {
+                    DomainCoverage::Complete
+                };
+                // sqrt(m / 2^FRAC) * 2^FRAC = sqrt(m * 2^FRAC).
+                // At most 63 magnitude bits + 63 scale bits, fitting u128.
+                let (lower, lower_ceil) =
+                    crate::sqrt::integer_sqrt_bounds((a.max(0) as u128) << FRAC);
+                let upper = if a == b {
+                    lower_ceil
+                } else {
+                    crate::sqrt::integer_sqrt_bounds((b as u128) << FRAC).1
+                };
+                Ok(RangeEnclosure {
+                    range: Self::from_wide(lower as i128, upper as i128)?,
+                    domain,
+                })
             }
 
             /// Tight zero-aware square enclosure.

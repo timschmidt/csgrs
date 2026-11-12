@@ -78,3 +78,8 @@ required-features = ["float-enclosure"]
 name = "sqrt_cost"
 path = "conformance/sqrt_cost.rs"
 required-features = ["rational", "dyadic"]
+
+[[example]]
+name = "primitive_root_cost"
+path = "conformance/primitive_root_cost.rs"
+required-features = ["fixed", "float-enclosure"]

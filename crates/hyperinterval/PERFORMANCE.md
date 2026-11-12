@@ -192,3 +192,39 @@ scaled quotient bit length, plus existing scaling/division and rational
 cloning reservations. These are deterministic work/size units, not CPU cycles
 or peak retained/temporary bytes. Allocation accounting, cancellation, full
 coverage and consumer qualification remain separate work.
+
+## Primitive square-root completion probe
+
+`conformance/primitive_root_cost.rs` consumes preconstructed exact inputs:
+point 1/4, narrow [1/4,1/2], wide [0,3/4], and partial-domain [-1/4,1/2].
+Each run returns and consumes the complete range and domain receipt. Independent
+GMP/MPFR checks precede timing. Rust 1.99 release on x86_64 Linux, fixed and
+float-enclosure features, 4,096 warmups, 30 samples of 8,192 images per case:
+
+| Endpoint / scale | Point | Narrow | Wide | Partial domain |
+| --- | ---: | ---: | ---: | ---: |
+| i32/8 | 25.323 | 40.549 | 29.953 | 29.959 |
+| i32/16 | 36.830 | 62.811 | 41.528 | 41.526 |
+| i32/30 | 45.795 | 89.795 | 58.151 | 58.148 |
+| i64/16 | 34.853 | 62.886 | 40.892 | 40.952 |
+| i64/30 | 45.362 | 89.241 | 57.985 | 57.999 |
+| i64/62 | 67.633 | 155.899 | 101.671 | 101.671 |
+| f32 | 80.796 | 156.981 | 93.167 | 93.164 |
+| f64 | 100.867 | 218.976 | 136.015 | 129.738 |
+
+Values are median ns/image. All 960 samples completed. Fixed scale F means
+spacing 2^-F; IEEE uses its own magnitude-dependent grid. Thus cross-row times
+are costs of different endpoint contracts, not speedup comparisons. Source
+construction/oracle work is excluded; complete output materialization is
+included. Raw samples, environment, executable hash and whole-probe size are
+in the primitive-root evidence record. The executable includes GMP/MPFR test
+oracles, so its size is not the production-kernel size.
+
+Primitive implementations use at most two u128 integer root calls, with at
+most 126-bit fixed or 106-bit IEEE radicands. Their production dependency
+closure and source contain no allocation path. Firmware cycle/stack and HIL
+measurements remain open. Release tests cover all 16 native rounding/FTZ/DAZ
+combinations, and emitted code scans on Rust 1.88, 1.95 and stable, plus stable
+fat LTO, find no native floating arithmetic/comparison in the selected root
+and existing strict-float paths. This target/compiler evidence does not
+qualify a different platform or replace the exact mathematical argument.

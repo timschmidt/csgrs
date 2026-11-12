@@ -7,8 +7,12 @@ use hyperinterval::{F32Enclosure, F64Enclosure, IntervalError};
 #[path = "support/float_oracle.rs"]
 mod independent;
 
+#[cfg(all(not(target_env = "msvc"), target_arch = "x86_64"))]
+#[path = "support/primitive_sqrt_oracle.rs"]
+mod root_oracle;
+
 macro_rules! cases {
-    ($module:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident, $fraction:literal) => {
+    ($module:ident, $interval:ident, $float:ty, $bits:ty, $from:ident, $round:ident, $root:ident, $fraction:literal) => {
         mod $module {
             use super::*;
 
@@ -16,6 +20,9 @@ macro_rules! cases {
             fn target_gate_and_empty_are_explicit() {
                 assert_eq!($interval::backend_supported(), cfg!(target_arch = "x86_64"));
                 assert!($interval::empty().is_empty());
+                let root = $interval::empty().sqrt().unwrap();
+                assert!(root.range.is_empty());
+                assert_eq!(root.domain, hyperinterval::DomainCoverage::Complete);
                 if !$interval::backend_supported() {
                     assert_eq!(
                         $interval::point(1.0),
@@ -536,6 +543,18 @@ macro_rules! cases {
                                     + Rational::$from(c).unwrap()),
                             ));
                         }
+                        for (a, b) in cases {
+                            let lower = a.min(b);
+                            let upper = a.max(b);
+                            wanted.push(if upper < 0.0 {
+                                Err(IntervalError::EmptyDomain)
+                            } else {
+                                Ok((
+                                    crate::root_oracle::$root(lower.max(0.0)).unwrap().0,
+                                    crate::root_oracle::$root(upper).unwrap().1,
+                                ))
+                            });
+                        }
                         #[cfg(feature = "rational")]
                         let rational_points: Vec<_> = cases
                             .iter()
@@ -571,6 +590,15 @@ macro_rules! cases {
                             }
                             for (a, b, c) in affine_cases {
                                 got.push(actual($interval::point(a).unwrap().affine(b, c)));
+                            }
+                            for (a, b) in cases {
+                                got.push(actual(
+                                    $interval::point(a)
+                                        .unwrap()
+                                        .hull(&$interval::point(b).unwrap())
+                                        .sqrt()
+                                        .map(|x| x.range),
+                                ));
                             }
                             #[cfg(feature = "rational")]
                             for (&(a, _), expected) in cases.iter().zip(&rational_points) {
@@ -629,8 +657,26 @@ macro_rules! cases {
     };
 }
 
-cases!(binary32, F32Enclosure, f32, u32, from_f32, round_f32, 23);
-cases!(binary64, F64Enclosure, f64, u64, from_f64, round_f64, 52);
+cases!(
+    binary32,
+    F32Enclosure,
+    f32,
+    u32,
+    from_f32,
+    round_f32,
+    sqrt_f32,
+    23
+);
+cases!(
+    binary64,
+    F64Enclosure,
+    f64,
+    u64,
+    from_f64,
+    round_f64,
+    sqrt_f64,
+    52
+);
 
 #[cfg(all(target_arch = "x86_64", not(target_env = "msvc")))]
 fn with_mxcsr<T>(mode: u32, work: impl FnOnce() -> T) -> T {

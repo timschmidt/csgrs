@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add allocation-free fixed-point and qualified IEEE square roots with tight
+  endpoints and explicit domain coverage. Validate maximal-scale overflow,
+  subnormal inputs and independence from native rounding/FTZ/DAZ modes.
+
 - Add budgeted rational/dyadic square-root enclosures with tight grid bounds,
   explicit partial-domain coverage and typed empty-domain failures. Exact
   integer arithmetic establishes direction; generated bounds remain dyadic
