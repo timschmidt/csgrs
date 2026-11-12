@@ -2150,7 +2150,12 @@ replaces the preceding width report's documented external Rug profile warning.
 Hosted OS checks, full pre-push workflows, full coverage/fuzz, firmware HIL and
 remaining arithmetic/resource/Phase 6/full-plan work remain open. No push.
 
-Source/evidence registration pending for the MPFR lifecycle checkpoint.
+Source commit `2b435bb06dcc78fae754a3577747ea8e43c831ae`; immutable evidence
+commit `a8b1603d831c3f3e391d67a43ddd88a3cb0b9966`, record
+`docs/evidence/2026-11-12-interval-mpfr-cache-lifecycle`: 508 files,
+441,320 bytes, SHA-256
+`374c190ee40b95dac399fc108a0e1bbb8efa5be2b0b58ea03427c7dfed45e459`. The committed record was regenerated
+and verified before registration; all previous archive rows remain unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
