@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add tight fixed-point division by an exact signed integer, including divisors
+  outside the fixed-point value range and signed extremes, with allocation-free
+  arithmetic and checked replay into further operations.
+
 - Add explicit tight midpoint/radius enclosures for fixed, rational, dyadic and
   strict IEEE intervals, including half-grid and minimum-exponent cases.
 

@@ -21,7 +21,9 @@ FOC/protocol and Hyperinterval/Hyperlattice interval algebra. The library and Wa
 consumer are `no_std` and need no allocator; tests and native probes use `std`.
 
 `clarke` keeps wide Q30 numerators until division/scaling, including differences
-that exceed i32 but have representable outputs. Park and its inverse retain the
+that exceed i32 but have representable outputs. Its alpha path uses an exact
+integer affine image and subtractions, followed by `div_integer(3)`. Park and
+its inverse retain the
 current sequence of rounded products and sums/differences. For example, the
 current Park implementation can reject an intermediate `MIN * -1` even when the
 mathematical final result fits. A signed matrix rewrite must not silently change

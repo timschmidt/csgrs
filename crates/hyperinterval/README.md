@@ -124,6 +124,9 @@ overflow is an error, never saturation. Integer powers use a bounded sequence
 of outward-rounded products and may be wider than the tight hull. Storage
 conversion is exact or fails; scale coarsening rounds outward. Strict division
 rejects any zero-containing denominator, even with an empty numerator.
+`div_integer` divides by an exact signed integer without requiring that integer
+to fit as a fixed-point value. It retains the source grid, rounds outward, and
+rejects zero even for an empty numerator.
 
 No default feature enables allocation, `std`, Hyperreal or serialization.
 The `integer` and `fixed` builds are allocation-free `no_std` and target Rust

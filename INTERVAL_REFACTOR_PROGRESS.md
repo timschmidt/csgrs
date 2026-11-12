@@ -2447,6 +2447,86 @@ is evidence infrastructure, not an adopted optimization. Jacobian carriers,
 independent authored center/radius, remaining specializations and later phases
 stay open. No phase completion, full pre-push run or push is claimed.
 
+## Phase 2/6 admission: fixed exact-integer division and Clarke specialization
+
+Baseline `434b6e09a1b8edae9df7764254eb07442342dc0c`. Owner: Hyperinterval fixed
+arithmetic, consumed by the unpublished FOC conformance client. P1, P5–P7,
+P18–P20 and P31–P33. The missing-method witness fails on that revision and now
+passes: raw i64/F63 `[-5,7] / 3` has tight grid bounds `[-2,3]`, although the
+point integer three is not representable in that format.
+
+`div_integer(i64)` covers both fixed endpoint widths, every valid fractional
+scale and every signed i64 divisor. It retains the grid, normalizes negative
+order in i128, and reuses `quotient_bounds` and `from_wide`. Zero is rejected
+before empty propagation; nonzero division preserves empty. Signed extremes,
+including i64::MIN divisors, remain exact; MIN/-1 is typed overflow where the
+endpoint cannot fit. This constant-size operation allocates nothing. Existing
+fixed method bodies and their ordering are byte-identical after removing the
+new method and its reciprocal documentation link; 171 other previously audited
+production/support files remain byte-identical. No decision policy, certainty
+receipt, dispatch sequence, production dependency or firmware source changes.
+
+The FOC client reuses the existing affine image for `2*a`, then subtracts b and
+c before integer division by three. All integer linear intermediates fit i64
+for Q30 i32 inputs; no intermediate rounding or new failure occurs. The balance
+check remains first. Park and its original overflow/rounding witnesses remain
+unchanged. This extends the fixed domain and specializes an evidence client;
+it does not claim completion of firmware adoption or the general refactor gates.
+
+Independent cross-product inequalities prove tightness for 1,673,100 small
+interval/divisor cases across twelve scale instantiations, plus full endpoint/
+divisor extremes and 20,000 seeded full-width cases (seed 20261113). Tests cover
+point-denominator equivalence where representable, zero/empty priority, typed
+overflow, subsequent division, storage widening and fresh-process checked replay.
+A separate executable measures zero allocations for successful and failing
+arithmetic. An initial hand-computed replay expectation was wrong by one lower
+ulp; its failing log is retained. Exact inequalities corrected the expectation
+and added an explicit first-stage bound assertion; no implementation or existing
+fixture was weakened.
+
+All 38 final matrix commands pass: Rust 1.88/stable debug and release tests,
+Clippy with warnings denied, documentation with warnings denied, ARM/Wasm
+library checks and Clippy, formatting, the fixed-only lattice suite (23 tests/
+doctests), all 83 original FOC tests and dependency inspection. Scalar fixed+
+serde suites each pass 33 tests/doctests. Additional fixed-only targeted tests,
+the formerly failing witness, and ASan with leak detection pass. The unchanged
+399,950-outcome FOC corpus and repeated operation chains pass on both compilers.
+Focused scalar coverage exercises all 15 emitted div_integer instances and
+27/28 distinct source regions; the remaining region is scale-validation error
+propagation, unreachable through safe constructors of valid intervals. Client
+coverage is 168/170 lines, 364/385 regions and 16/16 functions; this is scoped
+coverage, not whole-crate completeness. No new fuzz, hosted-OS or HIL claim.
+
+The rebuilt allocator-free Wasm module has zero imports and passes the same
+independent Python integer oracle: 1,660 completed transform calls and 405
+full-range Park checks (335 successes, 70 range errors). It is 40,006 bytes,
+SHA-256 `28f5514ceb76f127a8dfedc8998a7b9d3798d368262d023a9bcdfbb12f0fc3e5`;
+maximum observed fuel is 19,081 under a one-million-per-call cap. This measures
+that artifact, not hardware cycles or a general resource bound.
+
+Six alternating baseline/final rounds per compiler contain 4,800 samples total,
+512 completed calls per sample, including materialized outputs and digest work.
+All full-output prechecks, checksums and five footprint-probe seeds agree, with
+zero measured allocations. Median shared/native ratios change from 3.048 to
+1.588 for Clarke and 1.642 to 0.859 for the chain on Rust 1.88; stable changes
+from 4.307 to 2.144 and 3.280 to 1.734. Final shared/baseline shared time is
+0.441/0.504 for Clarke and 0.519/0.532 for the chain (1.88/stable). These short,
+unpinned shared-host measurements do not establish universal speed or any
+firmware cycle/stack, monomorphized-size or whole-workload acceptance gate.
+Matched final native/shared executables are 444,776/446,168 bytes on 1.88 and
+460,656/465,072 on stable: shared still grows by 1,392/4,416 bytes. Shared probe
+size falls by 4,432/5,576 bytes relative to the baseline shared probes.
+
+| Candidate | Decision | Evidence |
+| --- | --- | --- |
+| Exact-integer division, affine/subtract Clarke numerator, ordinary inline hint on the new method | kept | expanded divisor domain, tight exact bounds, unchanged FOC outcomes, lower measured completed cost and footprint |
+| Additional inline hint on the private narrowing adapter | rejected | shared-probe and cost .text sections identical on both compilers |
+| Production transform migration | still rejected | Clarke and stable chain slower than native; matched shared binaries remain larger |
+
+Source/evidence registration pending for this checkpoint. Remaining Phase 6
+carriers/specializations, firmware and solver adoption gates, hardware evidence,
+and all later phases remain open. No full pre-push matrix or push was performed.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

@@ -288,6 +288,9 @@ macro_rules! arithmetic {
             }
 
             /// Tight reciprocal enclosure, without requiring 1 to fit this lattice.
+            ///
+            /// See also [`Self::div_integer`] for division by an exact integer
+            /// that need not be representable as a fixed-point denominator.
             pub fn reciprocal(&self) -> Result<Self, IntervalError> {
                 let scale = Self::scale()?;
                 if self.contains_point(0) {
@@ -301,6 +304,44 @@ macro_rules! arithmetic {
                     }
                     None => Self::empty(),
                 }
+            }
+
+            /// Tight outward enclosure of `self / divisor`, retaining this grid.
+            ///
+            /// `divisor` is an exact integer, not a lattice numerator. It need
+            /// not fit as a point of this fixed-point family. Zero is rejected
+            /// with [`IntervalError::ContainsZero`] even for an empty numerator;
+            /// otherwise empty maps to empty. Negative divisors reverse order.
+            /// An unrepresentable endpoint returns [`IntervalError::Overflow`],
+            /// including a signed minimum divided by -1. There is no saturation,
+            /// allocation, or implicit rescaling.
+            ///
+            /// ```
+            /// use hyperinterval::FixedInterval;
+            /// // This format cannot represent the point 3, but raw [-5,7]/3
+            /// // has tight outward bounds [-2,3] on the original 2^-63 grid.
+            /// let x = FixedInterval::<i64, 63>::new(-5, 7)?;
+            /// assert_eq!(x.div_integer(3)?.bounds(), Some((-2, 3)));
+            /// # Ok::<(), hyperinterval::IntervalError>(())
+            /// ```
+            #[inline]
+            pub fn div_integer(&self, divisor: i64) -> Result<Self, IntervalError> {
+                Self::scale()?;
+                if divisor == 0 {
+                    return Err(IntervalError::ContainsZero);
+                }
+                let Some((a, b)) = self.bounds() else {
+                    return Self::empty();
+                };
+                let (lower, upper, denominator) = if divisor < 0 {
+                    (-i128::from(b), -i128::from(a), -i128::from(divisor))
+                } else {
+                    (i128::from(a), i128::from(b), i128::from(divisor))
+                };
+                Self::from_wide(
+                    quotient_bounds(lower, denominator).0,
+                    quotient_bounds(upper, denominator).1,
+                )
             }
 
             /// Tight outward principal square root on this fixed-point lattice.

@@ -83,17 +83,14 @@ pub fn clarke(phases: Phase3, maximum_zero_sequence: Q30) -> Result<AlphaBeta, F
         return Err(FocError::UnbalancedPhases);
     }
     // All i32 source values and these integer linear combinations fit i64.
-    let coefficient = |n| Wide::point(n * SCALE).expect("small constant");
-    let matrix = IntervalMatrix::new([[coefficient(2), coefficient(-1), coefficient(-1)]])
-        .expect("valid scalar family");
-    let vector = IntervalVector::new([a, b, c]).expect("valid scalar family");
-    let numerator = matrix.mul_vector(&vector, &mut ()).map_err(lattice_error)?;
-    let numerator = numerator.into_lanes().expect("nonempty numerator")[0];
-    let alpha = narrow(
-        numerator
-            .checked_div(&coefficient(3))
-            .map_err(scalar_error)?,
-    )?;
+    let numerator = a
+        .affine(2 * SCALE, 0)
+        .map_err(scalar_error)?
+        .checked_sub(&b)
+        .map_err(scalar_error)?
+        .checked_sub(&c)
+        .map_err(scalar_error)?;
+    let alpha = narrow(numerator.div_integer(3).map_err(scalar_error)?)?;
     let difference = b.checked_sub(&c).map_err(scalar_error)?;
     let scale = input(alumina_foc::INV_SQRT_3)
         .convert::<i64>()
