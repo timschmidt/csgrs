@@ -1,0 +1,25 @@
+[package]
+name = "interval-foc-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperlattice-interval = { path = "../..", default-features = false, features = ["fixed"] }
+alumina-foc = { path = "../../../../../alumina-firmware/crates/alumina-foc" }
+
+[[bin]]
+name = "cost"
+path = "src/bin/cost.rs"
+
+[[bin]]
+name = "native-probe"
+path = "src/bin/native_probe.rs"
+
+[[bin]]
+name = "shared-probe"
+path = "src/bin/shared_probe.rs"

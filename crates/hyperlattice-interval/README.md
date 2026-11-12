@@ -74,3 +74,9 @@ still establish Jacobian validity, self-mapping and solver decisions. Empty
 inputs stay empty. Nonempty queries require representable scalar one, except
 zero-dimensional identity subtraction; fixed i32/F31 and i64/F63 therefore
 report typed overflow. Scalar operations share the caller's context.
+
+The standalone [Alumina FOC client](conformance/alumina-foc/README.md) exercises
+Clarke/Park transforms through the shared fixed kernels, retaining Alumina's
+rounding boundaries and typed errors. It includes independent exact corner
+checks, transform chains and matched cost probes against the firmware routines.
+Build it with its own manifest and the sibling `alumina-firmware` checkout.

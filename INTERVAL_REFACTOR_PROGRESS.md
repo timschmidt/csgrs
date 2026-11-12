@@ -47,10 +47,10 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian/affine carriers, widths, derived midpoint/radius, norms/measures/dominance and contraction evidence implemented | independent center/radius forms, Jacobian carriers, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian/affine carriers, widths, derived midpoint/radius, norm/contraction evidence and FOC/Krawczyk clients implemented | independent center/radius forms, Jacobian carriers, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
-| 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
+| 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | not started | domain-neutral extraction and exact field equivalence |
 | 12 ODE/reachability | not started | certified tubes, bounded refinement, analytic oracles |
@@ -2347,6 +2347,100 @@ verified before registration; all prior archive rows remain unchanged. Independe
 center/radius forms, Jacobian carriers, specialized kernels, the full consumer/
 resource/performance gates and later phases remain open. No phase completion
 or push is claimed.
+
+## Phase 6 admission: maintained Alumina FOC client
+
+Baseline CSGRS `a4560f1c9209396bc4409d0dc5d5f2fe92db2225`, firmware
+`bdee397d0b80841f16bf17e7bcd029b4feb2c212`. Initial state records all four
+managed repositories clean, their branches, heads and absent upstreams.
+Owner: standalone Hyperlattice interval conformance client; Alumina retains
+wrappers, rotation validation, balance policy and FocError semantics. P1, P5,
+P6, P18–P20, P31–P33. Missing acceptance: Phase 6's maintained Clarke/Park
+conformance and benchmark client. Existing fixed conversion, wide i64 storage,
+checked scalar operations and matrix products were found and reused. No scalar
+kernel or domain validator was copied into production. Raw staging:
+`/tmp/interval-refactor/foc-client`.
+
+The pre-edit witness reproduced two mismatches in naive substitutions. For
+alpha=MIN, beta=0 and sine=-1/cosine=0, native Park rejects an intermediate
+MIN*-1 while a signed dense matrix succeeds. For phases (1,0,-1), pre-rounded
+2/3 and -1/3 coefficients widen the alpha output by one ulp on both sides while
+native Clarke returns exact one. Both original witnesses remain deterministic
+tests. The new client retains rounded product order, subtraction boundaries and
+widened Clarke numerators until division/scaling. The public result/error types
+remain Alumina's, and every arithmetic operation delegates to the shared layer.
+
+## Phase 6 FOC client: correctness and cost qualification
+
+Implemented the unpublished `conformance/alumina-foc` standalone package with
+its own lockfile, no_std library, independent integer oracles, paired native/
+shared cost and footprint binaries, and an allocator-free Wasm consumer.
+The package uses four local dependencies and does not change any production
+dependency graph. The exact domain is valid nonempty Q2.30 input intervals,
+public validated Rotation values and all signed zero-sequence tolerances.
+Constant-size loops and i128 intermediates preserve the original typed range
+and balance failures. No implicit midpoint, floating demotion, policy or proof
+status is introduced. The wide Clarke linear numerators have magnitude below
+2^34 and fit i64; their fixed products and scaled divisions fit i128.
+
+The endpoint and seeded transform corpus checks 399,950 full outcomes: 95,848
+successful transforms, 26,366 Range outcomes and 277,736 balance rejections.
+Every result and typed error agrees with firmware; successful outputs also
+contain independently enumerated exact integer corners. The scalar corpus
+checks 12,025 interval pairs for products and divisions, both native i32 storage
+and shared narrow/widened paths, against exact rational extrema. Seed: 20261112.
+Tests preserve radical-constant enclosure inequalities, full i32 endpoints,
+continuous admitted rotations, balance rejection priority, original hard cases,
+and 64 successful five-transform chains with each intermediate compared.
+The allocation counter covers complete workloads and representative error paths;
+all measured native/shared paths allocate zero.
+
+All 24 final commands pass, including Rust 1.88/stable debug/release tests,
+Clippy with -D warnings, docs with warnings denied, ARM/Wasm checks and Clippy,
+both package format checks plus workspace formatting, the fixed-only companion
+suite (23 tests/doctests), and all 83 original FOC tests. Initial and final
+checks are retained; final repeat follows added allocation-error cases. ASan
+with leak detection passes all seven client tests. Source coverage for the
+client library and samples is 172/174 lines (98.85%), 382/401 regions (95.26%)
+and 17/17 functions; dependencies/tests/probe binaries are outside that report.
+No complete coverage, new fuzz campaign, hosted-OS or HIL claim.
+
+The actual no-allocator Wasm module has no imports and passes 1,660 completed
+transform calls across a 165-fixture period plus 405 full-range Park checks
+(335 successes, 70 typed overflows). A separate Python exact-integer oracle
+checks every output digest and expected overflow, in addition to native/shared
+full-value assertions inside Wasm. The one-million-fuel cap was not reached;
+maximum observed fuel is 28,172. Artifact: 43,086 bytes, SHA-256
+`67c36ef145e556a2b7930f747c7b560bcbea273b58d3cb9c5ef6726f5bf94c5e`.
+No firmware cycle, stack or additional float-target qualification is implied.
+
+Matched completed-work cost: 200 samples per compiler, five actions, two
+implementations, twenty samples per action/implementation, 512 completed calls
+per sample after 64 warmups. Inputs are prebuilt; timing includes full output
+materialization and digest work. All outputs/checksums match and allocations are
+zero. Rust 1.88 shared/native median ratios are 3.31 Clarke, 0.71 Park, 0.71
+inverse Park, 0.69 inverse Clarke, and 1.65 chain. Stable ratios are 4.26, 1.11,
+1.09, 1.09 and 3.14 respectively. These are unpinned shared-host probes, not
+universal speed claims. Raw samples, compiler/host metadata, executable digests
+and section sizes are retained. Matching footprint probes grow by 5,752 bytes
+on 1.88 and 9,928 bytes on stable; five runtime seeds yield identical checksums
+across both implementations and compilers. Final footprint probes were rebuilt
+after formatting the shared include file; timing binaries remain byte-identical.
+Production/shared-support preservation verifies 172
+byte-identical files, and the firmware checkout remains unchanged.
+
+| Candidate | Decision | Evidence |
+| --- | --- | --- |
+| Maintained shared FOC conformance/cost client | kept | required Phase 6 consumer, independent exact expectations, failures and measured costs |
+| Naive signed Park matrix | rejected | MIN*-1 intermediate failure changes |
+| Pre-rounded Clarke coefficient matrix | rejected | exact point output widens by two ulps |
+| Blanket production adoption of current shared transforms | rejected | Clarke/chain time and matched probe size regress on both measured compilers |
+
+Source/evidence registration pending for this checkpoint. Performance-specialized
+fixed kernels are still needed before firmware migration; the conformance client
+is evidence infrastructure, not an adopted optimization. Jacobian carriers,
+independent authored center/radius, remaining specializations and later phases
+stay open. No phase completion, full pre-push run or push is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

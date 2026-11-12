@@ -1,0 +1,19 @@
+[package]
+name = "interval-foc-wasm-consumer"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[workspace]
+
+[lib]
+path = "lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+interval-foc-conformance = { path = ".." }
+alumina-foc = { path = "../../../../../../alumina-firmware/crates/alumina-foc" }
+
+[profile.release]
+panic = "abort"
