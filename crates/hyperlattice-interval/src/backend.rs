@@ -23,6 +23,10 @@ pub trait IntervalArithmetic: sealed::Sealed + FiniteRealInterval + Clone {
         b: &Self::Width,
         context: &mut Self::Context,
     ) -> Result<core::cmp::Ordering, IntervalError>;
+    /// Outward enclosure of the exact midpoint; empty maps to empty.
+    fn midpoint_enclosure(&self, context: &mut Self::Context) -> Result<Self, IntervalError>;
+    /// Outward enclosure of the exact half-width; empty maps to empty.
+    fn radius_enclosure(&self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Validates type-level constraints even for zero-dimensional products.
     fn validate_family() -> Result<(), IntervalError> {
         Self::empty().map(|_| ())
@@ -100,6 +104,12 @@ macro_rules! fixed {
             ) -> Result<core::cmp::Ordering, IntervalError> {
                 Ok(a.cmp(b))
             }
+            fn midpoint_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Self::midpoint_enclosure(self)
+            }
+            fn radius_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Self::radius_enclosure(self)
+            }
             fn empty() -> Result<Self, IntervalError> {
                 Self::empty()
             }
@@ -153,6 +163,12 @@ impl IntervalArithmetic for hyperinterval::RationalInterval {
             .partial_cmp(b.bounds().expect("singleton").0)
             .expect("rational order is total"))
     }
+    fn midpoint_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+        Ok(Self::midpoint_enclosure(self))
+    }
+    fn radius_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+        Ok(Self::radius_enclosure(self))
+    }
     fn empty() -> Result<Self, IntervalError> {
         Ok(Self::empty())
     }
@@ -196,6 +212,12 @@ impl IntervalArithmetic for hyperinterval::DyadicInterval {
         context: &mut Self::Context,
     ) -> Result<core::cmp::Ordering, IntervalError> {
         a.compare_singleton(b, context)
+    }
+    fn midpoint_enclosure(&self, context: &mut Self::Context) -> Result<Self, IntervalError> {
+        Self::midpoint_enclosure(self, context)
+    }
+    fn radius_enclosure(&self, context: &mut Self::Context) -> Result<Self, IntervalError> {
+        Self::radius_enclosure(self, context)
     }
     fn empty() -> Result<Self, IntervalError> {
         Ok(Self::empty())
@@ -256,6 +278,12 @@ macro_rules! float {
                 _: &mut (),
             ) -> Result<core::cmp::Ordering, IntervalError> {
                 Ok(a.cmp(b))
+            }
+            fn midpoint_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Self::midpoint_enclosure(self)
+            }
+            fn radius_enclosure(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Self::radius_enclosure(self)
             }
             fn empty() -> Result<Self, IntervalError> {
                 Ok(Self::empty())

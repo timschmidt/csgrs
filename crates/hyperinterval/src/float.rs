@@ -192,6 +192,32 @@ let enclosure: F64Enclosure = proposal.into();
                 self.bounds.map(|bounds| $width { bounds })
             }
 
+            /// Tight outward enclosure of the exact midpoint `(lower+upper)/2`.
+            /// Halves are not rounded before addition; overflow of the unhalved
+            /// sum is avoided. Empty maps to empty. No point is chosen implicitly.
+            pub fn midpoint_enclosure(&self) -> Result<Self, IntervalError> {
+                match self.bits() {
+                    None => Ok(Self::empty()),
+                    Some((a, b)) => {
+                        let (lo, hi) = $format.half_sum(a, b)?;
+                        Self::from_bits(lo, hi)
+                    }
+                }
+            }
+
+            /// Tight outward enclosure of the exact radius `(upper-lower)/2`.
+            /// This can enclose half a subnormal without rounding it to zero.
+            /// It measures the source radius, not a radius about a rounded center.
+            pub fn radius_enclosure(&self) -> Result<Self, IntervalError> {
+                match self.bits() {
+                    None => Ok(Self::empty()),
+                    Some((a, b)) => {
+                        let (lo, hi) = $format.half_sum(b, $format.negate(a))?;
+                        Self::from_bits(lo, hi)
+                    }
+                }
+            }
+
             /// Exact lower endpoint, or None for empty.
             pub fn lower(&self) -> Option<$float> {
                 self.bounds().map(|v| v.0)

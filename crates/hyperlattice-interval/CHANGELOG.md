@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add retained midpoint/radius vector and matrix decompositions, exact ownership
+  reconstruction, explicit numerical enclosures and validated source replay.
+
 - Add exact box widths and deterministic widest-axis selection, preserving full
   fixed-point distances and retained IEEE differences with shared dyadic budgets.
 

@@ -286,6 +286,17 @@ impl Format {
         })
     }
 
+    // Divide the exact inputs before adding, without rounding either half.
+    // The existing wide adder retains the subnormal tail and handles large
+    // exponent gaps. This also avoids overflowing a sum whose mean is finite.
+    pub(crate) fn half_sum(self, a: u64, b: u64) -> Result<(u64, u64), IntervalError> {
+        let mut x = self.decode(a);
+        let mut y = self.decode(b);
+        x.exponent -= 1;
+        y.exponent -= 1;
+        self.add_wide(x, y)
+    }
+
     // Add two exact dyadics with at most 106 magnitude bits each. Choose a
     // common work grid giving the dominant operand bit 126, leaving one carry
     // bit. At most the smaller operand loses a fractional tail. A lost tail

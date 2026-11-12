@@ -55,3 +55,13 @@ widths; the zero-dimensional unit has an empty width array and no axis.
 Midpoint/radius forms, contraction helpers and measured specializations
 remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).
+
+Consuming a vector or matrix with `midpoint_radius()` creates a
+`MidpointRadiusVector<I, N>` or `MidpointRadiusMatrix<I, R, C>`. Each lane defines
+its exact center `(a+b)/2` and radius `(b-a)/2` from checked bounds stored once.
+`intervals()` borrows the source; `into_intervals()` reconstructs it exactly by
+ownership transfer, including half-steps and cases where a numerical projection
+overflows. `midpoint_enclosure` and `radius_enclosure` explicitly produce
+endpoint-family enclosures with a shared context. They can be nonsingletons
+and never replace the retained exact definition. Replay validates the source
+intervals through the existing serializer; empty and unit products stay distinct.

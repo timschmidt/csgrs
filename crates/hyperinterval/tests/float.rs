@@ -855,3 +855,54 @@ fn exact_widths_ignore_native_modes() {
         eprint!("{}", String::from_utf8_lossy(&output.stderr));
     }
 }
+
+#[cfg(all(target_arch = "x86_64", not(target_env = "msvc")))]
+#[test]
+fn midpoint_radius_enclosures_ignore_native_modes() {
+    const KEY: &str = "HYPERINTERVAL_HALF_MXCSR";
+    if let Ok(mode) = std::env::var(KEY) {
+        with_mxcsr(mode.parse().unwrap(), || {
+            macro_rules! check {
+                ($i:ty,$f:ty) => {{
+                    let tiny = std::hint::black_box(<$f>::from_bits(1));
+                    let max = std::hint::black_box(<$f>::MAX);
+                    let zero = <$i>::point(0.).unwrap();
+                    for (a, b) in [(0., tiny), (-tiny, 0.)] {
+                        let source = <$i>::new(a, b).unwrap();
+                        assert_eq!(source.midpoint_enclosure().unwrap(), source);
+                        assert_eq!(
+                            source.radius_enclosure().unwrap(),
+                            <$i>::new(0., tiny).unwrap()
+                        );
+                    }
+                    let full = <$i>::new(-max, max).unwrap();
+                    assert_eq!(full.midpoint_enclosure().unwrap(), zero);
+                    assert_eq!(full.radius_enclosure().unwrap(), <$i>::point(max).unwrap());
+                    let point = <$i>::point(max).unwrap();
+                    assert_eq!(point.midpoint_enclosure().unwrap(), point);
+                    assert_eq!(point.radius_enclosure().unwrap(), zero);
+                }};
+            }
+            check!(F32Enclosure, f32);
+            check!(F64Enclosure, f64);
+        });
+        return;
+    }
+    for mode in 0..16 {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "midpoint_radius_enclosures_ignore_native_modes",
+                "--nocapture",
+            ])
+            .env(KEY, mode.to_string())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "mode={mode}: {} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}

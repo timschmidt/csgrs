@@ -56,3 +56,8 @@ required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
 name = "width_cost"
 path = "conformance/width_cost.rs"
 required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
+
+[[example]]
+name = "midpoint_radius_cost"
+path = "conformance/midpoint_radius_cost.rs"
+required-features = ["fixed", "rational", "dyadic", "float-enclosure"]

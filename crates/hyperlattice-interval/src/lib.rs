@@ -19,6 +19,7 @@
 mod affine;
 mod backend;
 mod matrix;
+mod midpoint_radius;
 mod norms;
 #[cfg(feature = "serde")]
 mod serde;
@@ -29,6 +30,7 @@ pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource};
 pub use backend::IntervalArithmetic;
 pub use hyperinterval;
 pub use matrix::IntervalMatrix;
+pub use midpoint_radius::{MidpointRadiusMatrix, MidpointRadiusVector};
 pub use vector::IntervalVector;
 
 /// An axis-aligned box, with the same Cartesian semantics as an interval vector.

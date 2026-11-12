@@ -79,6 +79,14 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         assert_eq!(x.widest_axis(&mut ()).unwrap(), Some(0));
         assert!(widths.iter().all(|w| w.numerator() == 2 << 16));
         std::hint::black_box(widths);
+        let form = x.midpoint_radius();
+        std::hint::black_box(form.midpoint_enclosure(&mut ()).unwrap());
+        std::hint::black_box(form.radius_enclosure(&mut ()).unwrap());
+        assert_eq!(form.into_intervals(), x);
+        let form = m.midpoint_radius();
+        assert_eq!(form.midpoint_enclosure(&mut ()).unwrap(), m);
+        std::hint::black_box(form.radius_enclosure(&mut ()).unwrap());
+        assert_eq!(form.into_intervals(), m);
         #[cfg(feature = "float-enclosure")]
         {
             use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
@@ -89,6 +97,10 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
             .unwrap();
             assert_eq!(f.widest_axis(&mut ()).unwrap(), Some(1));
             std::hint::black_box(f.widths(&mut ()).unwrap());
+            let form = f.midpoint_radius();
+            std::hint::black_box(form.midpoint_enclosure(&mut ()).unwrap());
+            std::hint::black_box(form.radius_enclosure(&mut ()).unwrap());
+            assert_eq!(form.into_intervals(), f);
             let f = IntervalVector::new([
                 F32Enclosure::new(f32::from_bits(2), 1.).unwrap(),
                 F32Enclosure::new(f32::from_bits(1), 1.).unwrap(),
@@ -96,6 +108,10 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
             .unwrap();
             assert_eq!(f.widest_axis(&mut ()).unwrap(), Some(1));
             std::hint::black_box(f.widths(&mut ()).unwrap());
+            let form = f.midpoint_radius();
+            std::hint::black_box(form.midpoint_enclosure(&mut ()).unwrap());
+            std::hint::black_box(form.radius_enclosure(&mut ()).unwrap());
+            assert_eq!(form.into_intervals(), f);
         }
         (subset, interior)
     });

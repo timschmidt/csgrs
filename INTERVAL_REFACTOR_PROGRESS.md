@@ -2157,6 +2157,117 @@ commit `a8b1603d831c3f3e391d67a43ddd88a3cb0b9966`, record
 `374c190ee40b95dac399fc108a0e1bbb8efa5be2b0b58ea03427c7dfed45e459`. The committed record was regenerated
 and verified before registration; all previous archive rows remain unchanged.
 
+## Phase 6 admission: retained midpoint/radius decomposition
+
+The preceding goal turn made progress by fixing MPFR lifecycle and restoring the
+broad sanitizer suite. Baseline `9b1274ce8141d56764e3d6652540e0fe0833d68a`, all
+managed repositories clean; state and evidence at
+`/tmp/interval-refactor/midpoint-radius`. No nested owning AGENTS instructions.
+Reuse search found fixed quotient_bounds, rational midpoint/radius, dyadic
+measure/scaled_quotient and IEEE add_wide. A compile witness reproduces the
+missing lattice midpoint_radius method on this revision.
+
+Owners: Hyperinterval scalar projections; Hyperlattice retained Cartesian
+forms. Properties P1–P6, P17–P20, P25–P27, P35–P39; plan §§5.1–5.2. Domain: all
+admitted finite interval vectors/matrices in six backends, including empty and
+zero-dimensional unit products, full signed ranges, subnormals and dyadic
+minimum exponents. Each lane defines c=(a+b)/2 and r=(b-a)/2 exactly. Store the
+checked source bounds once; decomposition consumes ownership, never substitutes
+a rounded center/radius or expands into two independent arbitrary-precision
+copies. Borrowed source and owned reconstruction retain the exact original set,
+even when a numerical projection cannot fit the endpoint family. This refines
+the plan's illustrative C/R type parameters into a source-parameterized carrier.
+
+Expose midpoint_enclosure and radius_enclosure as explicit numerical projections.
+Fixed uses existing quotient floor/ceil on widened endpoint sum/difference;
+strict IEEE halves decoded exponents before existing add_wide, avoiding sum or
+width overflow and retaining underflow direction. Rational uses existing exact
+measurements. Dyadic uses exact native measurements except at i32::MIN, where
+existing scaled_quotient supplies outward bounds on the minimum stored grid.
+Every dyadic projection shares the caller budget; no provisional array escapes.
+Projection uncertainty describes the represented center/radius point, not a
+replacement for the exact retained form. Fixed radius projection may return
+Overflow while exact reconstruction remains valid. No approximate solver status.
+
+Missing acceptance: odd fixed widths, extreme IEEE sum/cancellation/subnormals,
+all ambient native modes, minimum-exponent dyadics, independent exact enclosure
+tightness, empty/unit and rectangular forms, exact reconstruction followed by
+operations, fresh-process replay, invalid replay, shared-budget exhaustion/retry,
+primitive no-allocation and portable consumers. Reuse existing array and serde
+authorities. Keep all old arithmetic/predicate bodies and order unchanged.
+This checkpoint supplies decomposition from bounds and explicit projections;
+independently authored center/radius forms, contraction/Krawczyk/Jacobian helpers,
+specialized consumers, full resource/coverage/performance gates and later plan
+phases remain open. Do not claim a whole phase complete.
+
+## Phase 6 midpoint/radius decomposition: local qualification
+
+Implemented retained `MidpointRadiusVector<I,N>` and
+`MidpointRadiusMatrix<I,R,C>` definitions for all six backends. Consuming
+`midpoint_radius()` and `into_intervals()` transfer ownership without scalar
+copies; borrowed `intervals()` exposes the exact checked source. Empty/unit
+semantics and source validation survive native replay. The form's exact center
+and radius are defined by its retained bounds; explicit midpoint_enclosure and
+radius_enclosure methods return numerical enclosures and never replace that
+source. Scalar projections reuse fixed directed quotients, native rational
+measurements, dyadic measured halves/minimum-grid quotient rounding, and the
+IEEE wide adder with exact exponent halving. Existing arithmetic bodies and
+call order remain unchanged. No implicit point or solver status is introduced.
+
+Acceptance passes: 3,375 vector and rectangular-matrix cases per backend with
+independent integer expectations and exact weighted products after reconstruction;
+fixed half-step tightness and full-range projection overflow; 10,081 source
+pairs per IEEE format (two projections each) against independent GMP/MPFR bounds;
+minimum/maximum dyadic exponents, shared matrix budgets and retry; empty/unit,
+33-lane replay, malformed shapes/scales/order, and fresh-process fixed/float/
+dyadic reconstruction followed by further operations. All 16 rounding/FTZ/DAZ
+combinations pass on debug and optimized Rust 1.88, 1.95 and stable builds.
+The original missing-method compile witness now passes unchanged.
+
+All 59 selected commands pass after correcting the new facade test's helper
+scope and rerunning its test, Clippy and formatting checks. Initial failed logs
+remain. The helper reuses the two existing identical test constructors without
+removing assertions. The matrix covers feature isolation, owner/downstream tests,
+Clippy/docs with warnings denied, six facade tests, four unchanged Hypersolve
+migration/dispatch tests, release tests, ARM/Wasm checks, package/dependency
+inspection and fuzz checks. Full ASan with leak detection passes 218 parent-suite
+tests across 39 executables (160 scalar, 58 lattice). Lattice has five passing
+doctests. The extended strict-float fuzz target completes 10,000 executions from
+52 preserved/new seeds, with timeout/RSS limits and sanitizer leak detection.
+These checks do not constitute the complete pre-push workflow or full fuzz gate.
+
+Owner coverage is 5,401/5,503 lines (98.15%), 9,967/10,615 regions (93.90%),
+690/692 functions. The new retained-form module has 83/84 lines, 90/93 regions
+and 21/21 functions. All 12 LLVM mismatches were individually traced to the same
+external Rug OptRational::parts hash-zero function outside the report scope.
+Warnings and per-object diagnostics are retained; no 100% or warning-free
+all-dependency report is claimed.
+
+The six-export allocator-free Wasm consumer passes 2,051 midpoint/radius calls
+with 513 effective inputs and every previous probe under one-million-fuel caps.
+Artifact: 61,716 bytes, SHA-256
+`e1a8be5cf6a989fdf551cd6c4ecd3a6ece7744e0a8bf4273a3afabe64323dd6d`.
+The extra export changes the workload; its 16,990-byte increase over the prior
+consumer is not a same-contract regression measurement. The first replay script
+had a tuple export-lookup typo; the corrected script passes and both records
+remain. No new float target qualification, firmware HIL or release claim.
+
+Completed cost probe: 480 samples, four backends, six vector/matrix actions,
+128 calls/sample after 64 warmups. Ownership retention/reconstruction allocates
+zero for all backends. Fixed Q16 and strict f64 projections also allocate zero;
+small rational fixtures allocate zero without implying a general rational bound.
+Dyadic projections allocate six times/48 bytes per four-lane measured call.
+Forms retain exactly source inline size: 48/96/72/288 bytes for Q16/f64/rational/
+dyadic, both length-four vectors and 2x2 matrices. These exclude retained heap
+and peak stack. No speedup or full legacy benchmark/monomorphized-size claim.
+Source preservation records 27 byte-identical implementation files and all
+original lines retained in order in seven edited owner implementation files.
+
+Source/evidence registration pending for the midpoint/radius checkpoint.
+Independent authored center/radius forms, contraction/Krawczyk/Jacobian helpers,
+specialized consumers, full resource/coverage/performance qualification and the
+remaining plan phases stay open. No phase completion or push is claimed.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

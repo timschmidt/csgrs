@@ -138,3 +138,47 @@ pub extern "C" fn interval_width_probe(input: i32) -> i32 {
     assert_eq!(axis, if s == 0 { 0 } else { 3 });
     axis as i32 * 1000 + s as i32
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn midpoint_radius_probe(input: i32) -> i32 {
+    type I = FixedInterval<i64, 63>;
+    let s = i64::from(input.clamp(-256, 256));
+    let a = I::new(s, s + 1).unwrap();
+    let b = I::new(-s - 1, -s).unwrap();
+    let c = I::new(-7, 9).unwrap();
+    let source = IntervalVector::new([a, b, c]).unwrap();
+    let form = source.midpoint_radius();
+    let midpoint = form.midpoint_enclosure(&mut ()).unwrap();
+    assert_eq!(midpoint.lanes().unwrap(), &[a, b, I::point(1).unwrap()]);
+    let radius = form.radius_enclosure(&mut ()).unwrap();
+    assert_eq!(
+        radius.lanes().unwrap(),
+        &[
+            I::new(0, 1).unwrap(),
+            I::new(0, 1).unwrap(),
+            I::point(8).unwrap()
+        ]
+    );
+    assert_eq!(radius.norm_one(&mut ()).unwrap().bounds(), Some((8, 10)));
+    assert_eq!(form.into_intervals(), source);
+    let matrix = IntervalMatrix::new([[a, b], [c, I::point(s).unwrap()]]).unwrap();
+    let form = matrix.midpoint_radius();
+    assert_eq!(
+        form.midpoint_enclosure(&mut ()).unwrap().rows().unwrap()[1],
+        [I::point(1).unwrap(), I::point(s).unwrap()]
+    );
+    assert_eq!(
+        form.radius_enclosure(&mut ()).unwrap().rows().unwrap()[1],
+        [I::point(8).unwrap(), I::point(0).unwrap()]
+    );
+    assert_eq!(form.into_intervals(), matrix);
+    let extreme = IntervalVector::new([I::new(i64::MIN, i64::MAX).unwrap()])
+        .unwrap()
+        .midpoint_radius();
+    assert!(extreme.radius_enclosure(&mut ()).is_err());
+    assert_eq!(
+        extreme.into_intervals().widths(&mut ()).unwrap().unwrap()[0].numerator(),
+        u64::MAX
+    );
+    (2 * s + 31) as i32
+}

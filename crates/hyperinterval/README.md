@@ -197,3 +197,11 @@ checked endpoint differences. Float width ordering is exact integer arithmetic;
 `enclosure` is an explicit, fallible projection. Rational and dyadic intervals
 retain their exact width operations. `DyadicInterval::compare_singleton` shares
 caller-owned work/size accounting and rejects non-singleton operands.
+
+`midpoint_enclosure` and `radius_enclosure` explicitly enclose the exact center
+and half-width. Rational results are exact singletons. Fixed and strict IEEE
+results use tight outward endpoint neighbors when a half-step is not representable;
+fixed radius storage can overflow. Dyadic results are exact except for outward
+projection at the minimum stored exponent. All dyadic work uses the caller's
+budget. A radius projection measures the original half-width, not a radius
+about a separately rounded midpoint. These APIs do not select a point implicitly.

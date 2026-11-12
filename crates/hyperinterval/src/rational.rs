@@ -171,6 +171,16 @@ impl RationalInterval {
         self.width().map(|w| w / Rational::from(2))
     }
 
+    /// Exact singleton midpoint, or empty for empty input.
+    pub fn midpoint_enclosure(&self) -> Self {
+        self.midpoint().map_or_else(Self::empty, Self::point)
+    }
+
+    /// Exact singleton half-width, or empty for empty input.
+    pub fn radius_enclosure(&self) -> Self {
+        self.radius().map_or_else(Self::empty, Self::point)
+    }
+
     /// Exact pointwise absolute-value image, with zero minimum across zero.
     pub fn abs(&self) -> Self {
         match self.bounds() {

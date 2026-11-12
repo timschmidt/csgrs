@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add explicit tight midpoint/radius enclosures for fixed, rational, dyadic and
+  strict IEEE intervals, including half-grid and minimum-exponent cases.
+
 - Add scale-tagged unsigned fixed widths and retained exact IEEE widths with
   bounded integer value ordering, checked replay and explicit projection.
 - Expose budgeted dyadic singleton comparison using existing exact point order.

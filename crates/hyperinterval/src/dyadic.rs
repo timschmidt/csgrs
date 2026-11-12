@@ -244,6 +244,37 @@ impl DyadicInterval {
         self.measure(true, true, budget)
     }
 
+    /// Exact singleton midpoint where representable. At the minimum stored
+    /// exponent, an unrepresentable half-step gets its tight outward neighbors
+    /// on that grid. Empty maps to empty; all work shares the caller's budget.
+    pub fn midpoint_enclosure(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.half_measure_enclosure(false, budget)
+    }
+
+    /// Exact singleton half-width where representable, otherwise tight outward
+    /// neighbors on the minimum stored grid. It measures the source radius,
+    /// not a radius about a separately rounded midpoint.
+    pub fn radius_enclosure(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.half_measure_enclosure(true, budget)
+    }
+
+    fn half_measure_enclosure(
+        &self,
+        difference: bool,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        let Some((a, b, exponent)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        if exponent != i32::MIN {
+            return self.measure(difference, true, budget);
+        }
+        budget.reserve(self.bits().saturating_add(1).max(2), 3, false)?;
+        let value = if difference { b - a } else { a + b };
+        let (lo, hi) = scaled_quotient(&value, &BigInt::from(2), 0, budget)?;
+        Self::new(lo, hi, exponent)
+    }
+
     fn measure(
         &self,
         difference: bool,

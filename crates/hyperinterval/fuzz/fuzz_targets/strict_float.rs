@@ -45,6 +45,14 @@ macro_rules! exercise {
                         oracle::$round(&Rational::from(&aa / &bb))
                     },
                 ),
+                (
+                    x.hull(&y).midpoint_enclosure(),
+                    oracle::$round(&((aa.clone() + &bb) / 2)),
+                ),
+                (
+                    x.hull(&y).radius_enclosure(),
+                    oracle::$round(&((aa.clone() - &bb).abs() / 2)),
+                ),
             ] {
                 let bits = got.map(|value| {
                     let (lo, hi) = value.bounds().unwrap();

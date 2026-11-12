@@ -167,6 +167,35 @@ macro_rules! arithmetic {
                 self.width_ulps().map(|width| width / 2 + width % 2)
             }
 
+            /// Tight outward enclosure of the exact midpoint on this lattice.
+            /// Unlike `midpoint`, this returns both neighbors when the exact
+            /// half-step is not representable. Empty maps to empty.
+            pub fn midpoint_enclosure(&self) -> Result<Self, IntervalError> {
+                self.half_measure_enclosure(false)
+            }
+
+            /// Tight outward enclosure of the exact half-width on this lattice.
+            /// A radius outside signed endpoint storage returns `Overflow`.
+            /// This measures the source radius, not one about a rounded center.
+            pub fn radius_enclosure(&self) -> Result<Self, IntervalError> {
+                self.half_measure_enclosure(true)
+            }
+
+            fn half_measure_enclosure(&self, difference: bool) -> Result<Self, IntervalError> {
+                match self.bounds() {
+                    None => Self::empty(),
+                    Some((a, b)) => {
+                        let numerator = if difference {
+                            i128::from(b) - i128::from(a)
+                        } else {
+                            i128::from(a) + i128::from(b)
+                        };
+                        let (lo, hi) = quotient_bounds(numerator, 2);
+                        Self::from_wide(lo, hi)
+                    }
+                }
+            }
+
             /// Exact Minkowski sum, or `Overflow` if an endpoint does not fit.
             pub fn checked_add(&self, other: &Self) -> Result<Self, IntervalError> {
                 match (self.bounds(), other.bounds()) {

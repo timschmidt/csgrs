@@ -2,9 +2,12 @@
 use hyperlattice::interval::hyperinterval::RationalInterval;
 use hyperlattice::{AffineBox, AffineMap, BoxN, IntervalMatrix, IntervalVector};
 
+fn interval(a: i32, b: i32) -> RationalInterval {
+    RationalInterval::new(a.into(), b.into()).unwrap()
+}
+
 #[test]
 fn shared_interval_types_are_consumable_through_hyperlattice() {
-    let interval = |a: i32, b: i32| RationalInterval::new(a.into(), b.into()).unwrap();
     let matrix = IntervalMatrix::new([[interval(2, 2), interval(-1, -1)]]).unwrap();
     let vector: BoxN<_, 2> = IntervalVector::new([interval(1, 3), interval(4, 5)]).unwrap();
     let output = matrix.mul_vector(&vector, &mut ()).unwrap();
@@ -61,7 +64,6 @@ fn runtime_chain_is_the_shared_reexport() {
 
 #[test]
 fn interval_norm_and_measure_evidence_is_shared() {
-    let interval = |a: i32, b: i32| RationalInterval::new(a.into(), b.into()).unwrap();
     let matrix = IntervalMatrix::new([
         [interval(-4, -4), interval(1, 2)],
         [interval(-1, 1), interval(-3, -3)],
@@ -92,4 +94,26 @@ fn exact_box_widths_survive_reduction_through_the_facade() {
         widths.norm_one(&mut ()).unwrap(),
         RationalInterval::point("24/11".parse().unwrap())
     );
+}
+
+#[test]
+fn midpoint_radius_forms_reconstruct_and_feed_further_operations() {
+    use hyperlattice::{MidpointRadiusMatrix, MidpointRadiusVector};
+    let source = IntervalVector::new([interval(-1, 3), interval(2, 4)]).unwrap();
+    let form: MidpointRadiusVector<_, 2> = source.clone().midpoint_radius();
+    assert_eq!(
+        form.midpoint_enclosure(&mut ()).unwrap(),
+        IntervalVector::new([interval(1, 1), interval(3, 3)]).unwrap()
+    );
+    assert_eq!(
+        form.radius_enclosure(&mut ()).unwrap(),
+        IntervalVector::new([interval(2, 2), interval(1, 1)]).unwrap()
+    );
+    assert_eq!(
+        form.into_intervals().norm_one(&mut ()).unwrap(),
+        interval(2, 7)
+    );
+    let matrix = IntervalMatrix::new([[interval(-1, 3), interval(2, 4)]]).unwrap();
+    let form: MidpointRadiusMatrix<_, 1, 2> = matrix.clone().midpoint_radius();
+    assert_eq!(form.into_intervals(), matrix);
 }
