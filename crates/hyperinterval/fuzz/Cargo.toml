@@ -8,11 +8,15 @@ rust-version = "1.88"
 [package.metadata]
 cargo-fuzz = true
 
+[features]
+rational = ["hyperinterval/rational", "dep:hyperreal"]
+
 [dependencies]
 libfuzzer-sys = "0.4"
 hyperinterval = { path = "..", features = ["integer", "fixed", "dyadic", "float-proposal", "float-enclosure", "serde"] }
 serde_json = "1.0"
 rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+hyperreal = { path = "../../hyperreal", default-features = false, optional = true }
 
 [[bin]]
 name = "constructors"
@@ -41,6 +45,14 @@ bench = false
 [[bin]]
 name = "primitive_proposals"
 path = "fuzz_targets/primitive_proposals.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "rational_powers"
+path = "fuzz_targets/rational_powers.rs"
+required-features = ["rational"]
 test = false
 doc = false
 bench = false

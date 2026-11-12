@@ -5,6 +5,10 @@ use hyperinterval::{
 };
 use hyperreal::{Rational, Real};
 
+#[cfg(not(target_env = "msvc"))]
+#[path = "support/rational_oracle.rs"]
+mod rational_oracle;
+
 fn budget() -> DyadicBudget {
     DyadicBudget::new(4096, 1_000_000_000)
 }
@@ -97,18 +101,7 @@ mod mpfr {
         float::{Constant, Round},
     };
 
-    fn mpq(value: &Rational) -> Mpq {
-        let numerator: rug::Integer = value.numerator().to_string().parse().unwrap();
-        let denominator: rug::Integer = value.denominator().to_string().parse().unwrap();
-        Mpq::from((
-            if value.is_negative() {
-                -numerator
-            } else {
-                numerator
-            },
-            denominator,
-        ))
-    }
+    use crate::rational_oracle::mpq;
     fn assert_encloses(range: &RationalInterval, lo: &Mpq, hi: &Mpq) {
         let (a, b) = range.bounds().unwrap();
         assert!(mpq(a) <= *lo, "lower {a} excludes {lo}");

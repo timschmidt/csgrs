@@ -4,6 +4,10 @@ use core::fmt;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 #[non_exhaustive]
 pub enum IntervalError {
+    /// The exact scalar kernel refused an operation. Its typed cause, including
+    /// resource exhaustion, is retained and available through `Error::source`.
+    #[cfg(feature = "rational")]
+    Scalar(hyperreal::Problem),
     /// A primitive floating-point input is NaN or infinite.
     #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
     NonFiniteEndpoint,
@@ -47,6 +51,8 @@ pub enum IntervalError {
 impl fmt::Display for IntervalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
+            #[cfg(feature = "rational")]
+            Self::Scalar(problem) => return write!(f, "exact scalar operation failed: {problem}"),
             #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
             Self::NonFiniteEndpoint => "interval endpoint is not finite",
             Self::ReversedEndpoints => "interval endpoints are reversed",
@@ -73,7 +79,15 @@ impl fmt::Display for IntervalError {
     }
 }
 
-impl core::error::Error for IntervalError {}
+impl core::error::Error for IntervalError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        #[cfg(feature = "rational")]
+        if let Self::Scalar(problem) = self {
+            return Some(problem);
+        }
+        None
+    }
+}
 
 /// Whether every source point belongs to the real domain of a function.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact signed-integer powers for rational intervals, preserving empty,
+  zero-domain, parity and monotonicity semantics. Retain scalar-kernel errors
+  and their source, including Hyperreal's existing eager-power growth refusal.
+
 - Add exact absolute value and binary min/max images across integer, fixed,
   rational, dyadic and qualified IEEE carriers. Preserve empty-image semantics,
   checked signed overflow, dyadic accounting and IEEE subnormal endpoints.

@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | exact abs/min/max images implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max and rational signed powers implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -701,6 +701,105 @@ Implementation: `435be1e85b2ffa884b08e50da6ac2d1f66edfd91`. Evidence record
 SHA-256 `a5b6b9d2b1acb8f209179afcf948f6ef38ecb7bc3df81bb7e79ef13c4fad896e`.
 Scoped verification passes and every prior manifest row is preserved. Both
 commits are local; no push occurred.
+
+## Rational integer powers: admission
+
+Owner: Hyperinterval set images over Hyperreal rational arithmetic; plan
+§3.5/§3.13, P1/P3/P5/P6/P19/P35/P36. At `d45d4358c`, RationalInterval lacks
+integer powers. Add `checked_pow(i64)` for exact signed-integer images: empty
+maps to empty, exponent zero maps nonempty input to one, positive even powers
+retain the zero critical point, and negative powers reject any zero-containing
+input. Other negative-power images use monotonicity on the admitted nonzero
+interval. No pointwise dependency is replaced by repeated interval products.
+
+Reuse Hyperreal's public Rational::powi kernel and existing interval square/
+reciprocal specializations. Preserve kernel errors in a rational-feature
+IntervalError variant with the original Problem available through source().
+Do not convert Exhausted into empty, approximate geometry, unsupported or
+undecided. Hyperreal's current eager-power guard is inherited: exponents up
+to magnitude 255 have bounded amplification relative to the input; larger
+nontrivial powers are admitted only when their estimated combined numerator/
+denominator size does not exceed 65,536 bits. This is a fixed scalar growth
+policy, not a new caller-selected work,
+heap-byte or cancellation budget. Existing input normalization and rational
+allocation contracts remain in force. Stress tests must be externally bounded.
+
+Missing witnesses: positive/negative parity and zero-domain images against
+independent exact expectations, i64 exponent extremes on zero/unit/empty sets,
+the actual native guard boundary and retry, preserved typed source errors,
+generated-output composition/replay, feature isolation and affected downstream
+value/dispatch checks. Do not change Hyperreal's guard or existing consumers.
+
+### Implemented signed powers and qualification
+
+`RationalInterval::checked_pow(i64)` now returns exact connected images or a
+typed failure. It reuses square/reciprocal for exponents 2/-1, handles 0/1
+directly, and evaluates a singleton only once. Positive odd powers increase;
+positive even powers decrease on the negative half-line and increase on the
+positive half-line. Negative odd powers decrease on either admitted half-line;
+negative even powers increase only on the negative half-line. These facts
+order the generated endpoints without an output comparison. Zero is the sole
+interior critical point for the admitted positive powers.
+
+Review reproduced an initial completion failure: `[-1/3,1]^(i64::MAX-1)` hit
+the scalar guard while powering an endpoint that cannot determine either
+output bound. The corrected positive-even zero-crossing path selects the
+largest absolute input endpoint before exponentiation, then returns zero as
+the minimum. Both mirrored unit-range cases now complete as [0,1]; cases
+requiring a nontrivial enormous upper bound still return the native exhaustion.
+The original failing test, source snapshot and patch are retained.
+
+`IntervalError::Scalar(Problem)` retains the original typed cause and exposes
+it through Error::source; no scalar failure is flattened into false or empty.
+The variant is gated by the existing rational feature, so it adds no Hyperreal
+dependency to primitive builds. The GMP conversion helper was moved unchanged
+from the Real-bridge test to shared test support; all original assertions remain.
+
+The final 26-command matrix passes, followed by the strengthened guard fixture's
+full tests, release tests and Clippy: 84 unit/integration tests and 11 doctests;
+Rust 1.95/stable rational combinations and release powers; Rust 1.88 primitive
+feature tests; strict lint, docs, formatting, fuzz harnesses, whole-repository
+zizmor, budget/dependency checks, ARM/WASM no_std compilation, and the four
+unchanged Hypersolve value/dispatch witnesses. The guard-boundary fixture also
+passes inside a 60-second external limit. No production Hyperreal or consumer
+kernel was changed, and no hosted OS or distribution claim follows.
+
+Independent GMP checks enumerate 364 small rational intervals and exponents
+-9 through 9, plus mixed denominators and coefficients beyond primitive width.
+They check exact endpoint extrema and domain failures, not floating estimates.
+Additional witnesses cover empty and i64 exponent extremes, generated chains,
+native replay, outward dyadic conversion followed by further powers, and retry
+after refusal. For exact 2, ±21,845 completes and ±21,846 reaches the native
+guard. A separate 2^400 seed raised to 255 completes a 102,001-bit numerator,
+confirming that the existing modest-exponent amplification rule is not falsely
+documented as a universal 65,536-bit output cap. Failed second endpoints publish
+no partial interval and do not poison a later successful operation.
+
+The final ASan campaign completes 100,000 runs in 14 seconds, seed 20261115,
+10-byte cap and 30-second limit. It retains the earlier 100,000-run campaign,
+its corpus, and directed seeds for large even exponents. Ordinary fuzz powers
+are limited to magnitude 32; huge-exponent oracle cases use exact zero/unit
+facts and the native guard instead of asking GMP to allocate enormous values.
+The host-only rational fuzz feature is separate from the primitive harness.
+
+Rust 1.95 instrumentation reports 2,101/2,145 production lines (97.95%) and
+3,981/4,142 regions (96.11%). Dependencies, tests and cost probes are excluded;
+LLVM reports no branch denominator. Report/export and diagnostic dump complete,
+identifying the known excluded Rug OptRational::parts mismatch. Full coverage
+and a cumulative rational work/heap/cancellation budget remain open.
+
+The exact `power(3) → power(-2)` cost probe uses preconstructed positive,
+negative and singleton inputs, 4,096 warmups, and 30 samples of 8,192 completed
+chains per case. It consumes owned exact endpoints and checks independently
+derived rational expectations before timing. Final median ns/chain are 561.891,
+548.480 and 316.054 respectively on Rust 1.99 x86_64 Linux. Initial samples,
+final samples, layouts, executable hashes and whole-executable sizes are
+retained. This is a host completion probe, not a speedup or firmware claim.
+
+Raw staging: `/tmp/interval-refactor/rational-powers`; the separate
+`2026-11-12-interval-rational-powers` archive is pending registration. Remaining
+signed-power surfaces, square root and subsequent elementary functions,
+consumer migrations, full coverage and release qualification are still required.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

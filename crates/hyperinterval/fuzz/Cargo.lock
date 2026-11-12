@@ -125,6 +125,7 @@ name = "hyperinterval-fuzz"
 version = "0.0.0"
 dependencies = [
  "hyperinterval",
+ "hyperreal",
  "libfuzzer-sys",
  "rug",
  "serde_json",

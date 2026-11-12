@@ -83,6 +83,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
         run: |
           cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins
+          cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins --features rational
           rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/*.rs
 
   portable:
@@ -129,8 +130,10 @@ jobs:
       - name: Run constructor and arithmetic campaigns
         run: |
           mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic" "$RUNNER_TEMP/interval-proposals" "$RUNNER_TEMP/interval-strict-float"
+          mkdir -p "$RUNNER_TEMP/interval-rational-powers"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run primitive_proposals "$RUNNER_TEMP/interval-proposals" -- -runs=100000 -max_len=32 -max_total_time=30 -seed=20261113
           cargo +nightly fuzz run strict_float "$RUNNER_TEMP/interval-strict-float" -- -runs=100000 -max_len=24 -max_total_time=30 -seed=20261114
+          cargo +nightly fuzz run rational_powers --features rational "$RUNNER_TEMP/interval-rational-powers" -- -runs=100000 -max_len=10 -max_total_time=30 -seed=20261115

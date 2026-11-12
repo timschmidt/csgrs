@@ -56,6 +56,10 @@ initial encoding, not a migration of any domain's canonical evidence.
 The `rational` feature adds `RationalInterval` over Hyperreal's exact rationals
 and requires Rust 1.95. It supplies exact sum, difference, product hull,
 square, strict quotient, affine images and positive arithmetic helpers. The
+`checked_pow(i64)` operation gives exact signed-integer images, rejecting zero
+in a negative-power domain. It inherits Hyperreal's eager-growth guard; scalar
+refusals retain the typed `Problem` in `IntervalError::Scalar` and `source()`.
+This guard is not a cumulative work, memory-byte or cancellation budget. The
 `dyadic` feature is allocation-enabled `no_std` on Rust 1.88: its BigInt
 mantissas share an exponent, with explicit budgets for arithmetic and scale
 changes. `hyperreal` enables both carriers and their certified Real bridge;

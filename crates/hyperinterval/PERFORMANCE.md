@@ -134,3 +134,24 @@ cycle counts. No prior implementation of these public operations was replaced.
 Inputs are small and fixed; allocation/large-coefficient behavior is not inferred
 from this timing probe. Raw samples, whole-executable size and toolchain/hardware
 identity are in the elementary-order archive referenced by the progress record.
+
+## Rational signed-power probe
+
+`conformance/rational_power_cost.rs` completes `checked_pow(3)` followed by
+`checked_pow(-2)` on positive, negative and singleton inputs. Preconstructed
+intervals are outside timing; 4,096 warmups precede 30 samples of 8,192 chains
+per case. Timed calls consume owned exact endpoints. Independent rational
+expectations are [4096/15625,4096/729] for the interval cases and 729/4096 for
+the point case. Rust 1.99 release on x86_64 Linux measured median 561.891,
+548.480 and 316.054 ns/chain, respectively. This is an ordinary completed-work
+probe, not a general speedup, large-exponent or firmware timing claim.
+
+The exact-power kernel keeps its existing eager-growth guard. Interval
+selection avoids powering unused endpoints in positive-even zero-crossing
+images; the reproduced initial failure and both timing rounds are retained.
+No caller-selected total-work, heap-byte or cancellation bound is added to
+Hyperreal by this adapter. The compiled host layouts are 1 byte for IntervalError,
+16 for RationalInterval and 24 for its Result; these are observations, not ABI
+promises. The complete probe executable has 666,956 text, 210,984 data and 1,818
+BSS bytes, including runtime and scalar dependencies. Raw evidence is linked
+from the root progress record.

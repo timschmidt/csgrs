@@ -261,6 +261,78 @@ impl RationalInterval {
         }
     }
 
+    /// Exact image of a signed integer power, preserving pointwise dependence.
+    ///
+    /// Empty maps to empty. Exponent zero maps nonempty input to one, including
+    /// zero. Negative powers reject every zero-containing interval. A connected
+    /// nonzero interval stays on one real half-line, so endpoint monotonicity
+    /// gives its exact image. Positive even powers include zero when needed.
+    ///
+    /// Reuses Hyperreal's exact eager-power kernel and growth guard. Refusals
+    /// retain the original `Problem` in `IntervalError::Scalar` and its source.
+    /// Currently nontrivial exponents above magnitude 255 require an estimated
+    /// combined numerator/denominator size of at most 65,536 bits. Smaller
+    /// exponents bound amplification relative to the input; this is not a total
+    /// work/heap-byte limit or cancellation contract. Zero/unit endpoints have
+    /// constant-size results even at i64 exponent extremes. No failure publishes
+    /// a partial image, and no approximate power replaces an exhausted result.
+    pub fn checked_pow(&self, exponent: i64) -> Result<Self, IntervalError> {
+        let Some((a, b)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        match exponent {
+            0 => return Ok(Self::point(Rational::one())),
+            1 => return Ok(self.clone()),
+            2 => return Ok(self.square()),
+            -1 => return self.reciprocal(),
+            _ => {}
+        }
+        if exponent < 0 && self.contains_point(&Rational::zero()) {
+            return Err(IntervalError::ContainsZero);
+        }
+        let even = exponent.unsigned_abs().is_multiple_of(2);
+        if exponent > 0 && even && self.contains_point(&Rational::zero()) {
+            // Zero is the minimum. Select the maximum magnitude before powering:
+            // an irrelevant endpoint can exceed the eager guard even when the
+            // complete image has small exact endpoints (e.g. [-1/3,1]^large_even).
+            let reflected = -a;
+            let maximum = if reflected >= *b {
+                reflected
+            } else {
+                b.clone()
+            };
+            let upper = maximum
+                .powi(exponent.into())
+                .map_err(IntervalError::Scalar)?;
+            return Ok(Self::ordered(Rational::zero(), upper));
+        }
+        let aa = a
+            .clone()
+            .powi(exponent.into())
+            .map_err(IntervalError::Scalar)?;
+        if a == b {
+            return Ok(Self::point(aa));
+        }
+        let bb = b
+            .clone()
+            .powi(exponent.into())
+            .map_err(IntervalError::Scalar)?;
+        // Positive odd powers increase everywhere. Positive even powers
+        // decrease on the negative half-line. Negative odd powers decrease on
+        // either admitted half-line; negative even powers increase only on the
+        // negative half-line. No output comparison is needed on these branches.
+        let increasing = if exponent > 0 {
+            !even || !a.is_negative()
+        } else {
+            even && a.is_negative()
+        };
+        Ok(if increasing {
+            Self::ordered(aa, bb)
+        } else {
+            Self::ordered(bb, aa)
+        })
+    }
+
     /// Exact reciprocal; a zero-containing input is rejected.
     pub fn reciprocal(&self) -> Result<Self, IntervalError> {
         if self.contains_point(&Rational::zero()) {
