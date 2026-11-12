@@ -379,6 +379,49 @@ impl DyadicInterval {
         Self::from_wide_exponent(lower, upper, i64::from(exponent) * 2, budget)
     }
 
+    /// Exact image of a nonnegative integer power.
+    ///
+    /// Exponent zero maps every nonempty set to one, including zero; empty maps
+    /// to empty. Odd powers preserve order and even powers retain a zero minimum
+    /// when the source contains zero. For negative powers, explicitly compose
+    /// with `reciprocal` at the caller's chosen output grid.
+    ///
+    /// Each nontrivial endpoint power reserves `input_bits * exponent` bits
+    /// and at most twice the exponent's bit length in quadratic work stages
+    /// before exponentiation. Zero and unit mantissas need only constant work.
+    /// Exponents one and two reuse the existing copy and square paths.
+    pub fn checked_pow(
+        &self,
+        exponent: u32,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        let Some((a, b, scale)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        match exponent {
+            0 => {
+                budget.reserve(1, 2, false)?;
+                return Self::point(BigInt::one(), 0);
+            }
+            1 => return self.regrid(scale, budget),
+            2 => return self.square(budget),
+            _ => {}
+        }
+        let aa = endpoint_power(a, exponent, budget)?;
+        let bb = endpoint_power(b, exponent, budget)?;
+        let (lower, upper) = if !exponent.is_multiple_of(2) {
+            (aa, bb)
+        } else if self.signs().contains_zero() {
+            (BigInt::zero(), aa.max(bb))
+        } else if a < &BigInt::zero() {
+            (bb, aa)
+        } else {
+            (aa, bb)
+        };
+        // i32 * u32 fits i64, including both endpoint exponent extremes.
+        Self::from_wide_exponent(lower, upper, i64::from(scale) * i64::from(exponent), budget)
+    }
+
     /// Outward reciprocal on grid `2^precision`, using exact integer division.
     /// Empty maps to empty; a zero-containing input returns `ContainsZero`.
     pub fn reciprocal(
@@ -526,6 +569,29 @@ impl DyadicInterval {
             a.as_refs().subset(b.as_refs())
         })
     }
+}
+
+// Nonnegative point powers use the integer backend, never interval products.
+fn endpoint_power(
+    value: &BigInt,
+    exponent: u32,
+    budget: &mut DyadicBudget,
+) -> Result<BigInt, IntervalError> {
+    if value.bits() <= 1 {
+        budget.reserve(1, 1, false)?;
+        return Ok(if exponent.is_multiple_of(2) && value < &BigInt::zero() {
+            BigInt::one()
+        } else {
+            value.clone()
+        });
+    }
+    let bits = value
+        .bits()
+        .checked_mul(u64::from(exponent))
+        .ok_or(IntervalError::SizeExhausted)?;
+    let stages = u64::from(u32::BITS - exponent.leading_zeros()) * 2;
+    budget.reserve(bits, stages, true)?;
+    Ok(value.pow(exponent))
 }
 
 // Exact floor/ceiling of (numerator / denominator) * 2^shift.

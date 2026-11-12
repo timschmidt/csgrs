@@ -10,6 +10,124 @@ fn budget() -> DyadicBudget {
 }
 
 #[test]
+fn nonnegative_powers_match_independent_integer_images() {
+    for a in -6i64..=6 {
+        for b in a..=6 {
+            for scale in -3..=3 {
+                for exponent in 0..=9 {
+                    let x = d(a, b, scale);
+                    // Integer endpoint and zero critical values give extrema.
+                    let values: Vec<_> = (a..=b).map(|n| n.pow(exponent)).collect();
+                    let expected = d(
+                        *values.iter().min().unwrap(),
+                        *values.iter().max().unwrap(),
+                        scale * exponent as i32,
+                    );
+                    let mut work = budget();
+                    let actual = x.checked_pow(exponent, &mut work).unwrap();
+                    assert_eq!(actual, expected);
+                    assert!(
+                        actual
+                            .subset_of(&actual.regrid(0, &mut work).unwrap(), &mut work)
+                            .unwrap()
+                    );
+                    if !actual.signs().contains_zero() {
+                        // Reciprocal composition contains the multiplicative
+                        // identity, without asserting that the interval is a point.
+                        let inverse = actual.reciprocal(-24, &mut work).unwrap();
+                        let product = actual.mul(&inverse, &mut work).unwrap();
+                        assert!(product.contains_point(&1.into(), 0, &mut work).unwrap());
+                    }
+                }
+            }
+        }
+    }
+    // Interval multiplication loses dependence for even powers across zero.
+    assert_eq!(
+        d(-2, 3, 0).checked_pow(4, &mut budget()).unwrap(),
+        d(0, 81, 0)
+    );
+}
+
+#[test]
+fn powers_bound_growth_and_preserve_zero_units_and_exponent_extremes() {
+    let mut no_budget = DyadicBudget::new(0, 0);
+    for exponent in [0, 1, 2, 3, u32::MAX] {
+        assert_eq!(
+            DyadicInterval::empty()
+                .checked_pow(exponent, &mut no_budget)
+                .unwrap(),
+            DyadicInterval::empty()
+        );
+    }
+    assert_eq!(
+        d(0, 0, 0).checked_pow(0, &mut budget()).unwrap(),
+        d(1, 1, 0)
+    );
+    for (input, exponent, expected) in [
+        (d(-1, 1, 0), u32::MAX, d(-1, 1, 0)),
+        (d(-1, 1, 0), u32::MAX - 1, d(0, 1, 0)),
+        (d(-1, -1, 0), u32::MAX - 1, d(1, 1, 0)),
+        (d(0, 0, 0), u32::MAX, d(0, 0, 0)),
+        (d(0, 1, 0), u32::MAX, d(0, 1, 0)),
+    ] {
+        assert_eq!(
+            input
+                .checked_pow(exponent, &mut DyadicBudget::new(1, 2))
+                .unwrap(),
+            expected
+        );
+    }
+    assert_eq!(
+        d(3, 4, 0).checked_pow(u32::MAX, &mut budget()),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert_eq!(
+        d(1, 1, i32::MAX).checked_pow(u32::MAX, &mut budget()),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert_eq!(
+        d(1, 1, i32::MIN).checked_pow(u32::MAX, &mut budget()),
+        Err(IntervalError::Overflow)
+    );
+    // [-1,2]^4 produces [0,16], allowing a four-bit exact scale correction.
+    assert_eq!(
+        d(-1, 2, -536_870_913)
+            .checked_pow(4, &mut budget())
+            .unwrap(),
+        d(0, 1, i32::MIN)
+    );
+    assert_eq!(
+        d(1, 2, 715_827_883).checked_pow(3, &mut budget()).unwrap(),
+        d(4, 32, i32::MAX)
+    );
+    let x = d(-3, 5, -2);
+    assert_eq!(
+        x.checked_pow(7, &mut DyadicBudget::new(4096, 0)),
+        Err(IntervalError::WorkExhausted)
+    );
+    // The first unit endpoint succeeds; the second endpoint exceeds size.
+    let mut small = DyadicBudget::new(10, 1000);
+    assert_eq!(
+        d(1, 3, 0).checked_pow(7, &mut small),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert_eq!(small.remaining_work(), 999);
+    assert_eq!(
+        x.checked_pow(7, &mut budget()).unwrap(),
+        d(-2187, 78125, -14)
+    );
+    assert_eq!(
+        x.checked_pow(0, &mut no_budget),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert_eq!(
+        x.checked_pow(1, &mut no_budget),
+        Err(IntervalError::SizeExhausted)
+    );
+}
+
+#[test]
 fn exact_measures_and_square_match_integer_oracles_and_reconstruct_input() {
     for a in -9i64..=9 {
         for b in a..=9 {
@@ -431,6 +549,7 @@ fn checked_dyadic_replay_normalizes_and_rejects_reversed_input() {
         d(-7, 8, -9).midpoint(&mut budget()).unwrap(),
         d(-7, 8, -9).radius(&mut budget()).unwrap(),
         d(3, 7, -9).reciprocal(-16, &mut budget()).unwrap(),
+        d(-3, 7, -9).checked_pow(7, &mut budget()).unwrap(),
     ] {
         let bytes = serde_json::to_vec(&value).unwrap();
         assert_eq!(

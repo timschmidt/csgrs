@@ -59,6 +59,9 @@ for an empty input. They never round an unrepresentable half. Pointwise square
 preserves dependence across zero, while multiplication treats its operands as
 independent sets. Reciprocal accepts an explicit output grid and rejects inputs
 containing zero. These operations share the caller's size and work budget.
+Nonnegative integer powers compute the exact image using bounded endpoint
+exponentiation and parity, with explicit size reservations before growth.
+Negative powers compose with reciprocal at a caller-selected grid.
 
 Dyadic precision means grid spacing `2^precision`, not a bound on interval
 width. Directed conversions preserve containment. `DyadicBudget` accounts for

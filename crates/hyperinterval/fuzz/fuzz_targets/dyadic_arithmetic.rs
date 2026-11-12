@@ -32,6 +32,19 @@ fuzz_target!(|data: [i16; 7]| {
         x.square(&mut budget).unwrap(),
         DyadicInterval::new(low_square.into(), (a * a).max(b * b).into(), 2 * e).unwrap()
     );
+    // i16 endpoint powers through seven fit i128, independent of BigInt.
+    let power = p.unsigned_abs() % 8;
+    let aa = a.pow(power);
+    let bb = b.pow(power);
+    let low_power = if power != 0 && power.is_multiple_of(2) && a <= 0 && b >= 0 {
+        0
+    } else {
+        aa.min(bb)
+    };
+    assert_eq!(
+        x.checked_pow(power, &mut budget).unwrap(),
+        DyadicInterval::new(low_power.into(), aa.max(bb).into(), e * power as i32).unwrap()
+    );
     let products = [a * c, a * d, b * c, b * d];
     assert_eq!(
         x.mul(&y, &mut budget).unwrap(),

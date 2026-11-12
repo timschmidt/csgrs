@@ -16,3 +16,5 @@
   Existing solver and domain consumers have not yet migrated.
 - Add budgeted dyadic width, exact midpoint/radius, point containment, square
   and directed reciprocal; normalize representable temporary exponent extremes.
+- Add exact nonnegative dyadic powers with parity-aware bounds and shared
+  size/work accounting, including constant-cost zero and unit endpoints.

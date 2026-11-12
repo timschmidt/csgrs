@@ -48,7 +48,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | not started | environment qualification and rational oracle |
 | 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
-| 7 solver | not started | unchanged statuses, certificates, dispatch and costs |
+| 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
@@ -400,6 +400,52 @@ and all later plan phases remain work to do.
 Raw dyadic acceptance evidence: `docs/evidence/2026-11-12-interval-dyadic-measures`, evidence commit
 `79ddc1c4c6f6a61f90e197b34ab831567bfe69af`; 136 files, 25363884 bytes,
 SHA-256 `67dd6f9fbaef47c17ea5a15a049854f00d95d8841c954c7689f62066e924db62`.
+
+## Dyadic nonnegative integer powers: admission
+
+Owner: Hyperinterval; plan §3.5/§3.9, P1/P3/P5/P6/P18–P20.
+At `054342332`, the dyadic carrier lacks integer powers beyond square. Add
+`checked_pow(u32, &mut DyadicBudget)` consistently with existing primitive
+carriers. Exponent zero maps every nonempty set to one (including zero);
+empty maps to empty. Odd powers are monotone, even powers have a zero minimum
+when the input contains zero. Negative powers remain explicit composition
+with caller-grid reciprocal. No new rational-power API is included: Hyperreal's
+existing eager power has its own size failure which must not be silently
+relabelled or bypassed by a future adapter.
+
+Before editing, missing witnesses are exact integer endpoint/critical-point
+images, extrema and unit/zero cases at u32::MAX, exhaustion before BigInt growth,
+minimum/maximum temporary exponents, and consuming powered output through
+regrid, reciprocal and exact replay. Existing square and product remain native
+specializations; no production consumer or predicate dispatch changes.
+
+## Dyadic nonnegative integer powers: local acceptance
+
+Implemented exact dyadic `checked_pow` with endpoint parity and zero-aware
+bounds, reusing square for exponent two. Nontrivial endpoint powers reserve
+`input_bits * exponent` bits and a conservative bounded number of quadratic
+stages before BigInt exponentiation. Unit/zero mantissas have an explicit
+constant-work path; the inspected BigInt primitive-power implementation does
+not supply that shortcut itself. The caller's budget also covers correction
+of temporary exponents. Exhaustion never publishes a partial interval.
+
+Independent integer expectations cover 6,370 images (91 endpoint pairs × 7
+scales × 10 exponents), followed by outward regridding and reciprocal/product
+consumption. Additional witnesses cover u32::MAX, exact unit and zero results,
+size/work exhaustion and fresh-budget retry, normalization across both exponent
+limits, and serialization of generated seventh powers. Full-feature tests pass
+38 cases plus 3 compile-fail examples. All 13 recorded compiler/feature/doc/lint/
+format/downstream/ARM/WASM checks pass after correcting the parity-style lint;
+the original failing Clippy logs are retained. A final ASan campaign completes
+100,000 runs with seed 20261113 and no failures. Dyadic line coverage is 522/526
+(99.24%); whole-crate line coverage is 1305/1347 (96.88%). Branch counters remain
+unavailable and the 100% coverage gate stays open.
+
+No performance speedup is claimed. This adds only nonnegative powers;
+negative-power composition requires the intermediate positive power to fit its
+representation/resource contract. A direct negative-power enclosure and the
+rational-power API are still missing. This does not complete phase 3 or any
+consumer migration.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
