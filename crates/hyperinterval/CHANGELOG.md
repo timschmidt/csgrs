@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Add sealed extended real enclosures with validated singleton ray bounds;
+  dyadic set operations, replay and exponentiation consume unbounded results.
+- Add budgeted rational/dyadic logarithms with tight bounds and explicit
+  partial-domain/lower-unbounded outcomes. Preserve known source-side signs
+  during range reconstruction, including near-one rational inputs.
+
 - Add tight rational/dyadic exponential images using budgeted interval Taylor
   tails, range reconstruction and endpoint refinement. Preserve explicit
   domain coverage, negative-tail shortcuts and retry after exhaustion.

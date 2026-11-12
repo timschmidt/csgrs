@@ -13,6 +13,10 @@ pub enum IntervalError {
     NonFiniteEndpoint,
     /// The proposed lower endpoint is greater than the upper endpoint.
     ReversedEndpoints,
+    /// An extended finite bound must contain exactly one real point.
+    NonSingletonEndpoint,
+    /// A requested finite carrier cannot represent an unbounded image.
+    UnboundedImage,
     /// A fixed-point scale is outside its endpoint family's supported range.
     InvalidScale,
     /// A radius or measurement uncertainty is negative.
@@ -56,6 +60,8 @@ impl fmt::Display for IntervalError {
             #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
             Self::NonFiniteEndpoint => "interval endpoint is not finite",
             Self::ReversedEndpoints => "interval endpoints are reversed",
+            Self::NonSingletonEndpoint => "extended bound is not a singleton",
+            Self::UnboundedImage => "image has an unbounded real end",
             Self::InvalidScale => "fixed-point scale is unsupported",
             #[cfg(feature = "rational")]
             Self::NegativeRadius => "interval radius is negative",

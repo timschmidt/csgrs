@@ -34,6 +34,19 @@ publishes no partial image; a new budget permits a fresh retry. This path
 provides deterministic work accounting, not cancellation or actual heap-byte
 limits.
 
+`ExtendedInterval<I>` adds explicit closed rays and the entire real line over
+sealed finite real backends. A ray requires a singleton finite bound; infinity
+is never a member or a floating endpoint. Dyadic extended carriers support
+exact hull, intersection, inclusion, membership, negation, validated replay,
+and outward exponentiation. Primitive-backed carriers remain allocation-free
+and Copy when their backend is Copy.
+
+Rational and dyadic `log(precision, &mut budget)` returns an extended dyadic
+image. Positive inputs have Complete coverage. Inputs reaching zero from above
+have a lower-unbounded image and Partial coverage; wholly nonpositive inputs
+return EmptyDomain. Keep this receipt when applying later operations. Finite
+extraction of an unbounded result returns UnboundedImage.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

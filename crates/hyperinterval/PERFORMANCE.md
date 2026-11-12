@@ -265,3 +265,44 @@ extreme scales and small budgets exercise typed refusal, not completion.
 Deterministic accounting is distinct from precision, actual heap bytes,
 wall-clock time and cancellation. A broad memory/cancellation contract and
 full consumer performance qualification remain open.
+
+
+## Budgeted logarithm and extended-carrier completion probe
+
+`conformance/log_cost.rs` computes tight grid images of preconstructed point
+3/2, narrow [3/2,3/2+2^-8], wide [1/4,4], partial [-1,4], and near-one
+singleton 1+2^-1024. Partial input produces a lower-unbounded image with
+Partial domain coverage; other cases produce finite images with Complete
+coverage. Independent directed MPFR/GMP checks precede timing. Rust 1.99
+release on x86_64 Linux, rational+dyadic with no default features, 128 warmups
+and 20 samples of 128 completed images per case:
+
+| Backend / input | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| dyadic / point | 16662.770 | 42848.203 | 175941.465 |
+| dyadic / narrow | 34742.832 | 86982.109 | 317726.281 |
+| dyadic / wide | 45389.445 | 111702.309 | 461992.891 |
+| dyadic / partial | 22422.578 | 55547.957 | 246855.066 |
+| dyadic / near_one | 3852.109 | 3859.133 | 3898.789 |
+| rational / point | 16714.676 | 42820.289 | 175344.684 |
+| rational / narrow | 34843.965 | 84980.727 | 316127.480 |
+| rational / wide | 45580.406 | 111499.133 | 460823.789 |
+| rational / partial | 22357.762 | 61424.336 | 229865.598 |
+| rational / near_one | 3895.039 | 3919.840 | 3929.492 |
+
+Values are median ns/image; all 600 samples completed. Timing includes budget
+creation, all series/refinement work, owned extended output, coverage receipt
+and destruction; it excludes input construction and oracle work. The near-one
+case benefits from retaining the exact source-side sign through logarithm
+monotonicity, without needing to resolve its sub-grid distance from zero.
+The original source remains exact. Every group uses a fresh 16384-bit,
+10^12-work-unit budget per image; raw samples retain actual deterministic
+work units alongside elapsed time.
+
+The measured dyadic/extended layouts are 72/80 bytes before heap allocations.
+The oracle-linked executable's text/data/bss sizes are 1090614/19304/3098 bytes;
+these are not production-kernel size measurements. Raw samples, compiler and
+hardware metadata, executable hash and coverage diagnostics are in the
+logarithm evidence record linked by INTERVAL_REFACTOR_PROGRESS.md. These are
+shared-host completion measurements, not a matched speedup comparison, a
+consumer migration, or a bound on heap bytes, wall time or cancellation.

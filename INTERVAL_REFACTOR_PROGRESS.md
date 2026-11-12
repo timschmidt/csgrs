@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exponentials implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -1045,6 +1045,83 @@ registered in `docs/evidence-archive.tsv`; all prior records are preserved.
 Later elementary functions, primitive exponential backends, symbolic-ball
 adapters, consumer migrations, actual memory/cancellation bounds, full coverage
 and release qualification remain open.
+
+## Logarithm and extended-carrier admission (2026-11-12)
+
+Owner: Hyperinterval real-set and interval-evaluation layer, P1/P3/P5/P6/P19.
+Baseline `23d0ac3d6`. Missing extended carrier and `log` methods were reproduced
+before edits. Domain: finite rational/dyadic source intervals, canonical empty,
+and signed i32 output grids. Positive sources have Complete coverage; a positive
+upper endpoint with nonpositive lower endpoint gives Partial coverage and an
+explicit lower-unbounded image. A nonempty source with no positive member
+returns EmptyDomain. Internal exponent-storage failure and size/work exhaustion
+remain typed. No source-domain clipping is silent.
+
+`ExtendedInterval<I>` stores empty, nonempty finite, below/above singleton, or
+entire states. Its backend trait is sealed to finite real interval families;
+discrete integer sets and proposal carriers cannot confer authority. Ray
+constructors reject non-singletons, including empty bounds. Replay rebuilds
+through those constructors, canonicalizing finite empty. Infinity is a bound
+direction, not a member. Copy is conditional on the finite backend being Copy.
+Dyadic consumers provide exact negation, hull, intersection, inclusion and point
+membership, checked finite extraction, and outward exponential images. Other
+extended arithmetic and IntervalSet2 remain open.
+
+A new bounded dyadic point-order helper first uses signs and top exponents,
+then aligns only equal-top mantissas. It charges size/work before arithmetic
+and avoids irrelevant enormous exponent gaps; existing finite-carrier predicate
+order is unchanged. Extended finite construction delegates to existing validated
+DyadicInterval constructors/arithmetic and retains canonical zero handling.
+
+For a positive exact source x=m*2^k with 1<=m<2, log(x)=log(m)+k*log(2).
+The positive atanh series uses t=(m-1)/(m+1)<=1/3; directed argument rounding
+keeps t<=1/2. Successive true term ratios are at most 1/4, so twice the next
+term bounds the omitted tail. All terms, sums and scale reconstruction are
+outward intervals with shared DyadicBudget accounting. The exact sign of x-1
+is transported through logarithm monotonicity to avoid rediscovering it after
+cancellation around one. Log(1) remains exact zero. Nonunit rational logarithms
+are not dyadic, so convergent refinement separates grid boundaries subject to
+resource/storage limits. Success requires adjacent output-grid endpoint bounds.
+No generic computable graph, hidden cache or new Hyperreal dispatch is added.
+
+The returned extended image is consumed by later exponentiation and set
+operations without clipping its unbounded end. Exponentiation of a lower ray
+includes zero as the infimum of its closed enclosure; it does not assert that
+zero was an exponential value. Domain coverage is operation-local, so the
+original Partial receipt remains necessary after a later Complete operation.
+
+The 34-command qualification matrix in `/tmp/interval-refactor/logarithm`
+passes after a cost-probe type annotation repair. All five initial compile/lint
+failures and their successful reruns are retained. All-feature tests pass 113
+unit/integration tests and 12 doctests. Independent endpoint-order laws,
+malformed ray replay, extreme scales, directed MPFR logarithm bounds,
+1024-bit near-one and large/small rational inputs, resource refusal/retry,
+log/exp composition and conditional primitive Copy are covered. The small
+resource fixture completes near-one cases with 4096 reserved bits and 10^9
+deterministic work units. ASan fuzzing completes 10,000 inputs in 13 seconds
+(seed 20261119), with independent MPFR/GMP checks, replay and continued use.
+
+The matrix also passes strict Clippy/docs/format, fuzz-target builds, all
+repository Zizmor checks, ARM/WASM no_std builds, primitive dependency closure,
+and four unchanged Hypersolve value/dispatch regressions. Shared-error changes
+are checked against all 16 native rounding/FTZ/DAZ modes and strict-IEEE emitted
+code scans under Rust 1.88, 1.95 and stable. Existing finite dispatch remains
+unchanged; this does not qualify a consumer migration or a hosted platform.
+
+Rust 1.95 instrumented all-feature coverage is 2811/2871 lines (97.91%) and
+5483/5791 regions (94.68%). LLVM reports no branch denominator; tests,
+conformance probes, Hyperreal, dependencies and test-only IEEE code are excluded.
+All five profile mismatches are diagnosed as excluded Rug OptRational::parts.
+The 600-sample cost probe completes all rational/dyadic, finite/partial and
+near-one cases, with independent bounds checked before timing. Output and
+receipts are materialized inside timing; raw work units and host metadata are
+retained. The measured dyadic carrier is 72 bytes and its extended carrier
+80 bytes, excluding heap storage. See the crate's PERFORMANCE.md for all
+latencies; no baseline speedup or full memory bound is claimed.
+
+Source and archive registration are pending. Actual heap-byte limits,
+cancellation, remaining elementary backends/functions, consumer migrations,
+full coverage and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

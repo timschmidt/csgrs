@@ -88,3 +88,8 @@ required-features = ["fixed", "float-enclosure"]
 name = "exp_cost"
 path = "conformance/exp_cost.rs"
 required-features = ["rational", "dyadic"]
+
+[[example]]
+name = "log_cost"
+path = "conformance/log_cost.rs"
+required-features = ["rational", "dyadic"]

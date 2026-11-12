@@ -86,3 +86,11 @@ required-features = ["rational"]
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "logarithm"
+path = "fuzz_targets/logarithm.rs"
+required-features = ["rational"]
+test = false
+doc = false
+bench = false

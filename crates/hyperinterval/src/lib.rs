@@ -24,7 +24,12 @@ mod bounds;
 #[cfg(feature = "dyadic")]
 mod dyadic;
 #[cfg(feature = "dyadic")]
+mod dyadic_order;
+#[cfg(feature = "dyadic")]
 mod exponential;
+mod extended;
+#[cfg(feature = "dyadic")]
+mod extended_dyadic;
 #[cfg(feature = "fixed")]
 mod fixed;
 #[cfg(feature = "fixed")]
@@ -37,6 +42,8 @@ mod ieee;
 mod integer;
 #[cfg(feature = "integer")]
 mod integer_arithmetic;
+#[cfg(feature = "dyadic")]
+mod logarithm;
 #[cfg(feature = "float-proposal")]
 mod proposal;
 #[cfg(feature = "rational")]
@@ -46,6 +53,7 @@ mod real_ball;
 #[cfg(any(feature = "fixed", feature = "float-enclosure"))]
 mod sqrt;
 mod state;
+pub use extended::{ExtendedInterval, ExtendedIntervalView, FiniteRealInterval};
 
 #[cfg(feature = "dyadic")]
 pub use dyadic::{DyadicBudget, DyadicInterval};
