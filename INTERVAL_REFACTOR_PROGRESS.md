@@ -2809,7 +2809,11 @@ specializations, broader coverage and full consumer/performance qualification
 remain open. Existing solver, Interface and firmware adoption blockers and the
 full 15-phase goal remain unchanged. No push was attempted.
 
-Source and evidence registration: pending.
+Source commit `87c0b59c4907fe9ac2403c6655b13cde45583647`; evidence commit
+`449b1f1e020cfc4b69305d1fe4f48eb2784c7a42`, record `docs/evidence/2026-11-12-interval-authored-center-radius`:
+77 files, 2,015,148 bytes, SHA-256
+`24b6af26d27693cd5555d2f829f8ca59f2e6ef54f5456e04898cd13a62476cd8`. The committed record was regenerated and verified;
+every previous archive row remains unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
