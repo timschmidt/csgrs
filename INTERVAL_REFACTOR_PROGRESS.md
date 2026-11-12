@@ -1838,7 +1838,12 @@ only adds the shared re-export. No numerical refactor or solver/firmware
 production migration occurred. Full legacy benchmarks, successive_operations,
 monomorphized-size gates and broader consumer qualification remain open with
 width/midpoint/radius/norm/measure work. No phase is complete; no push attempted.
-Source/evidence registration pending for this checkpoint.
+Source commit: `ba91b35d57278475d5b4e8f1960f371955d5dd69`.
+Immutable evidence commit: `8e82e99b277564f434d34d38b065720020731b6e`, record
+`docs/evidence/2026-11-12-interval-affine-chains`, 116 files,
+24,482,321 bytes, SHA-256
+`7567ad6632e2f40051e98822d916b49a083b19209f29fae6dbb2743a7c592643`. This committed record was regenerated
+and verified before registration; all prior archive rows are preserved.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
