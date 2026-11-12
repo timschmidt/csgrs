@@ -599,9 +599,13 @@ not a no-regression refactor. Raw samples, build flags and executable hashes
 are retained; these focused host measurements are not firmware or general
 performance guarantees. See the crate PERFORMANCE record for binary sizes.
 
-Raw evidence is staged at `/tmp/interval-refactor/strict-float`, destined for
-`2026-11-12-interval-strict-float` in the separate evidence repository. This
-checkpoint does not complete phase 4 or the plan: direct negative powers,
+Implementation commit: `8b5bddf7633820cac4302b2eaa2c87b019091a0b`. Raw evidence
+is archived as `2026-11-12-interval-strict-float` in evidence commit
+`3ca69e4a571a032b05dfb3a34dd608c015819ab1`: 601 files, 162,500,126 bytes,
+SHA-256 `42f82b7130db558e55076bf0b2d43a581134e3d4c85208feca6fc606a55ed8fd`.
+Scoped digest verification passes; all earlier manifest rows are preserved.
+Both commits remain local. This checkpoint does not complete phase 4 or the
+plan: direct negative powers,
 remaining common measurements/conversions, full coverage, further targets,
 consumer migrations and distribution qualification remain open. Existing
 solver migration remains rejected under its unchanged size gate.
