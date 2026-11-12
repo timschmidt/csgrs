@@ -2338,7 +2338,12 @@ all original lines retained in order in the two extended companion files.
 Full legacy benchmarks, successive_operations and monomorphized/binary-size
 comparison gates remain open; no production migration or behavior refactor.
 
-Source/evidence registration pending for this checkpoint. Independently authored
+Source commit `fb5806c4d156dd267d934b480d6f5a2aac364820`; evidence commit
+`583af02f69c59579ec8fa5e7b9f9549ce09db002`, record
+`docs/evidence/2026-11-12-interval-contraction-primitives`: 226 files,
+43,387,673 bytes, SHA-256
+`0a72167e0272dade29560b118f8d033516ca41ad905eb5ac23ccd8c006dc2914`. The committed archive was regenerated and
+verified before registration; all prior archive rows remain unchanged. Independently authored
 center/radius forms, Jacobian carriers, specialized kernels, the full consumer/
 resource/performance gates and later phases remain open. No phase completion
 or push is claimed.
