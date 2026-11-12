@@ -1420,7 +1420,12 @@ Initial and final profiles remain separate. ASan fuzzing completes the published
 samples, compiler/host metadata, executable hash and size are retained;
 PERFORMANCE.md records medians and methodological limits.
 
-Source and archive registration are pending. Tangent/pole functions, remaining
+Source commit `9093a43aba16b452ca8d6be3a658324c2b90815a`; evidence commit
+`3f61bdac98d1ff366169d18853729629f2f3a2eb`, record
+`docs/evidence/2026-11-12-interval-fractional-power`: 529 files, 142059988 bytes,
+SHA-256 `bb2419ef4ed44f53d213b188dfb6c6b2ae96c9a894e73fd050915ce8e969d62d`.
+The committed record was regenerated and independently verified before registration.
+Tangent/pole functions, remaining
 Phase 5 qualifications, broader consumer migrations, allocation/cancellation,
 coordinated release and the earlier incomplete plan phases remain open.
 
