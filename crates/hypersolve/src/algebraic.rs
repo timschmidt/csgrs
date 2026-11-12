@@ -7213,3 +7213,7 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "interval_migration/algebraic.rs"]
+mod interval_migration;

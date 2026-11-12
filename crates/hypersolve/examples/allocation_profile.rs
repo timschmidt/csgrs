@@ -243,6 +243,10 @@ fn main() {
         .map(|value| value.parse().expect("iteration count must be an integer"))
         .unwrap_or(DEFAULT_ITERATIONS);
     assert!(iterations > 0, "iteration count must be positive");
+    if std::env::var_os("HYPERSOLVE_INTERVAL_MIGRATION").is_some() {
+        interval_migration_profile(iterations);
+        return;
+    }
 
     let values = representation_values();
     assert_eq!(values.len(), 22, "update the Real allocation corpus");
@@ -309,5 +313,92 @@ fn main() {
                     .expect("identity-preserving sparse replay")
             }),
         );
+    }
+}
+
+// The same public client is compiled against both isolated revisions. Reuse
+// this example's counting epochs instead of introducing another allocator.
+fn interval_migration_profile(iterations: usize) {
+    use hypersolve::{
+        AlgebraicRootRepresentation, AlgebraicRootValidationReport, AlgebraicRootValidationStatus,
+        IsolatedRootInterval, evaluate_polynomial_at_algebraic_root,
+        polynomial_has_one_distinct_root_in_open_interval, validate_algebraic_root_representation,
+    };
+    for defining in [
+        vec![-2, 0, 0, 1],
+        vec![-2, 0, 0, 0, 0, 1],
+        vec![4, 0, 0, -4, 0, 0, 1],
+    ] {
+        let mut root = AlgebraicRootRepresentation {
+            constraint_index: 0,
+            symbol: SymbolId(0),
+            interval_index: 0,
+            polynomial_coefficients: defining.iter().copied().map(Real::from).collect(),
+            interval: IsolatedRootInterval {
+                lower: Real::one(),
+                upper: Real::from(2),
+                exact_root: None,
+                distinct_root_count: 1,
+            },
+            validation: AlgebraicRootValidationReport {
+                status: AlgebraicRootValidationStatus::Valid,
+                message: None,
+            },
+        };
+        root.validation = validate_algebraic_root_representation(&root, PredicatePolicy::STRICT);
+        assert!(root.is_valid(), "{:?}", root.validation);
+        for policy in [PredicatePolicy::STRICT, PredicatePolicy::APPROXIMATE_512] {
+            for degree in [0, 1, 3, 8, 16] {
+                let coefficients = (0..=degree)
+                    .map(|i| fraction((i * 7 % 17) - 3, (i % 5 + 1) as u64))
+                    .collect::<Vec<_>>();
+                let report = evaluate_polynomial_at_algebraic_root(&root, &coefficients, policy);
+                let encoded = serde_json::json!([
+                    defining,
+                    format!("{policy:?}"),
+                    degree,
+                    format!("{:?}", report.status),
+                    report.sign.map(|s| format!("{s:?}")),
+                    report.message,
+                    report.exact_value.as_ref().map(Real::to_json),
+                    report
+                        .interval_value
+                        .as_ref()
+                        .map(|v| [v.lower.to_json(), v.upper.to_json()]),
+                ]);
+                println!("REPORT {encoded}");
+                print_row(
+                    &format!(
+                        "root-degree-{} query-degree-{degree} {policy:?}",
+                        defining.len() - 1
+                    ),
+                    "interval Horner",
+                    iterations,
+                    measure(iterations, || {
+                        evaluate_polynomial_at_algebraic_root(&root, &coefficients, policy)
+                    }),
+                );
+            }
+            let proof = polynomial_has_one_distinct_root_in_open_interval(
+                &root.polynomial_coefficients,
+                &root.interval.lower,
+                &root.interval.upper,
+                policy,
+            );
+            assert_eq!(proof, Some(true));
+            print_row(
+                &format!("root-degree-{} {policy:?}", defining.len() - 1),
+                "root interval proof",
+                iterations,
+                measure(iterations, || {
+                    polynomial_has_one_distinct_root_in_open_interval(
+                        &root.polynomial_coefficients,
+                        &root.interval.lower,
+                        &root.interval.upper,
+                        policy,
+                    )
+                }),
+            );
+        }
     }
 }

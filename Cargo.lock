@@ -2733,6 +2733,7 @@ name = "hypersolve"
 version = "0.4.0"
 dependencies = [
  "criterion 0.5.1",
+ "hyperinterval",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",

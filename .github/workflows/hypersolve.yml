@@ -5,6 +5,7 @@ on:
     branches: ["**"]
     paths:
       - "crates/hypersolve/**"
+      - "crates/hyperinterval/**"
       - "crates/hyperlattice/**"
       - "crates/hyperlimit/**"
       - "crates/hyperreal/**"
@@ -14,6 +15,7 @@ on:
   pull_request:
     paths:
       - "crates/hypersolve/**"
+      - "crates/hyperinterval/**"
       - "crates/hyperlattice/**"
       - "crates/hyperlimit/**"
       - "crates/hyperreal/**"

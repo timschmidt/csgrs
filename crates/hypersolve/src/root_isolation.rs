@@ -5576,3 +5576,7 @@ mod primitive_root_evidence_regression {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "interval_migration/root_isolation.rs"]
+mod interval_migration;

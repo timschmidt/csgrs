@@ -245,6 +245,81 @@ No repository has been pushed and the full 15-phase goal remains active.
   implementation. Previously registered evidence rows remain unchanged. Local
   archival does not claim hosted publication or full-plan completion.
 
+## Rational Horner migration admission
+
+Owner: Hyperinterval arithmetic; Hypersolve retains polynomial/root proofs and
+policy/report ownership. Properties P1/P4/P6/P10/P19/P35/P36. Input domain:
+finite Real coefficient lists whose consumed coefficients have exact rational
+representations, over ordered rational endpoint pairs. Empty lists, reversed
+bounds and a nonrational coefficient preserve their existing `None` fallback.
+
+Targeted paths are algebraic rational polynomial enclosure and the polynomial/
+derivative zero-exclusion filters in root_isolation. Each already checks input
+order exactly once. That comparison can construct the shared carrier without
+adding a decision. The loop must keep coefficient extraction, product, addition,
+and final sign checks in their current order. Symbolic Real adapters and their
+policy-owned endpoint comparisons remain unchanged in this increment.
+
+Missing witnesses before edits: differential original/new Horner results and
+cold/warm dispatch for both successful and declined rational paths; identical
+public root reports under STRICT and APPROXIMATE_512; matched owner/downstream
+cost and allocation/size evidence. Baseline checkout is detached at `8f5c14723`
+in `/mnt/development/csgrs-interval-baseline`; raw staging is
+`/tmp/interval-refactor/horner`. No migration is accepted from source sharing
+alone; a failed gate requires a fix or rejection of the candidate.
+
+## Rational Horner migration experiment: rejected
+
+The three candidate paths reproduced the original results on 702 rational,
+signed, reversed, degenerate and symbolic-fallback inputs. Independent process
+runs matched 4,212 cold/warm dispatch windows, including rational reducer
+counters. The full 11-workload Hypersolve dispatch report was byte-identical
+(26,002 bytes). The public client matched report fields, native exact endpoint
+JSON and allocation measurements under STRICT and APPROXIMATE_512 (13,360
+output bytes). The first candidate's complete all-target/all-feature test run
+also passed; that does not qualify its cost.
+
+The migration failed the size gate. Experiments included general intervals,
+nonempty owned/borrowed forms, scalar translation, a shared Horner stream and
+inlining alternatives. A same-path, same-dependency, production-mode control
+still grew from 2,069,474 to 2,073,622 summed function bytes, and from 3,960,744
+to 3,969,944 executable bytes. Initial separate-checkout figures and all adverse
+variants are retained. Focused production timing was mixed: the degree-16 row
+was about 0.918x baseline, while the exact-rational-point row measured about
+1.154x. These finite samples do not justify a universal timing claim; the
+independent size failure is sufficient to reject retention.
+
+Restored the original production routines and Hyperinterval API. The nonempty
+variants and experimental shared Horner API are not shipped. Hyperinterval is
+only a Hypersolve dev-dependency for the retained candidate tests. Kept the
+shared generated corpus, frozen baseline, exact/dispatch candidate comparisons,
+and an optional public allocation/native-report probe reusing the existing
+allocator. Four inventory rows now have body/caller review and an evidence-
+based rejected disposition; the other lexical rows remain unaudited.
+
+No tests, dispatch counts, corpus resolution or gates were relaxed. The next
+kernel migration needs a wider cost-qualified boundary or a lower-overhead
+implementation; moving a loop through an owning interval object is not yet
+accepted. Phase 3 kernel relocation and phase 7 production migration remain
+open. The baseline successive-operations executable was built, but paired
+successive-operation timing was not run after rejection; no downstream
+performance gate is claimed passed for the rejected implementation.
+
+After restoration, the same-path production client again has exactly 2,069,474
+function bytes and 3,960,744 executable bytes, with identical report/allocation
+output. Executable SHA-256 differs, so byte-identical binaries are not claimed.
+The normal Hypersolve dependency tree contains no Hyperinterval edge; its new
+edge is test-only. Retained candidate tests pass with and without features and
+on Rust 1.95. Strict all-target Clippy, the existing fuzz-target build, default
+allocation probe, workspace formatting and whole-repository Zizmor pass. The
+production functions were also compared byte-for-byte with the starting source;
+only cfg(test) module declarations are appended to those files.
+
+Final retained revision: `cargo test --locked -p hypersolve --all-features --lib`
+passes all 627 tests. The final 702-case assertion and dispatch differentials
+pass, as does `cargo clippy --locked -p hypersolve --all-features --all-targets
+-- -D warnings`. No production solver migration is accepted.
+
 ## Implementation and open gates
 
 - [API/feature proposal](docs/research/interval-api-design.md) preceded the

@@ -25,6 +25,8 @@ hyperlattice = { version = "0.7.0", path = "../hyperlattice", default-features =
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 [dev-dependencies]
+# Test-only interval migration candidates; production remains gated by cost.
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["rational"] }
 # Fresh-process selected-field replay exercises validated exact scalar interchange.
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false, features = ["serde"] }
 criterion = "0.5"
