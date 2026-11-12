@@ -509,6 +509,10 @@ proposal.rs and 15/15 for ieee.rs; branch counters remain unavailable. The
 whole-crate coverage gate remains open. Strict finite float enclosures are not
 implemented or certified by this change.
 
+Raw proposal evidence: `docs/evidence/2026-11-12-interval-proposals`, evidence commit
+`102f91c01a32fe0123aa3571ed96efaad32a6251`; 158 files, 23812789 bytes,
+SHA-256 `a742c2dbb1ee6d0f977758fb768fe235c8acaa5eb6977f2b15cdf4790fe49669`.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
