@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add independently authored center/radius vector and matrix definitions,
+  retaining exact components through projection overflow and validated replay.
+
 - Add identity subtraction and one/infinity contraction margins, returning
   interval evidence with shared scalar accounting for Krawczyk arithmetic.
 

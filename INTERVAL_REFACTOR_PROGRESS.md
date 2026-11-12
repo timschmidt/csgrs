@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian/affine carriers, widths, derived midpoint/radius, norm/contraction evidence and FOC/Krawczyk clients implemented | independent center/radius forms, Jacobian carriers, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian/affine carriers, widths, derived and independently authored center/radius forms, norm/contraction evidence and FOC/Krawczyk clients implemented | broader authored-form composition, Jacobian carriers, facts/specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
@@ -2720,6 +2720,96 @@ Source commit `94e23534708352d6de05ec7262fa722cb301646d`; evidence commit
 79 files, 1,461,024 bytes, SHA-256
 `dc716354ecee5b1274cce31f6c75775ccf8773d9b07c2963bb89640282cbfed2`. The committed record was regenerated and verified;
 every previous archive row remains unchanged.
+
+## 2026-11-12: independently authored center/radius definitions
+
+The preceding turn made progress by committing the primitive layout experiment.
+Baseline `3f9679e5174f52f2e3457834fb6b7adb2652108d`; all managed repositories were
+clean. Admission and commands are staged at
+`/tmp/interval-refactor/authored-center-radius`. A detached checkout of this
+exact revision reproduces E0432 for `CenteredVector`; the same external witness
+passes against the implementation. Owner: Hyperlattice Cartesian definitions;
+scalar signs, subtraction, addition and hull remain Hyperinterval authority.
+Properties P1–P7, P18–P20, P25–P27, P35–P37; plan §§5.1–5.2 / Phase 6.
+
+Implemented `CenteredVector<I,N>` and `CenteredMatrix<I,R,C>`, re-exported by
+Hyperlattice, for all six `IntervalArithmetic` backends. Inputs are independently
+authored exact point centers and nonnegative point radii in the same backend.
+Construction validates point centers, point radii, then exact radius signs in
+lane/row-major order, without endpoint arithmetic or scalar copies. Empty,
+nonpoint and negative-radius components produce typed errors; an explicit empty
+constructor preserves empty/unit distinctions. Borrowed components and owned
+`into_parts()` retain the defining data. The existing `MidpointRadius*` bounds
+decompositions, storage and wire format are unchanged. No scalar algorithm or
+existing predicate body is changed; 56 existing source files across the scalar
+and lattice layers are byte-identical, excluding the two export/error modules.
+
+For each valid lane, nonnegative r proves c-r ≤ c+r. The new explicit enclosure
+computes existing vector/matrix subtraction, addition and hull in that order.
+Outward endpoint bounds therefore enclose the defined Cartesian set. The shared
+context accounts across all operations, and only a completed carrier escapes.
+An overflow or exhausted projection leaves the exact definition available for
+retry or wider-family projection. The new serde format stores components and
+revalidates their dimensions, scalar families, singleton status and radius
+signs. No serialized validity/cache flag is accepted as proof. Existing generic
+array visitors and allocation instrumentation are reused.
+
+Independent integer expectations cover 25,704 vector/rectangular-matrix fixture
+pairs across six backends, followed by affine images, intersections, products,
+transpose and the existing midpoint/radius decomposition. Additional cases
+cover 84 full signed-range/scale combinations, IEEE subnormal sums and outward
+rounding around one, overflow with intact components, zero-sized units, negative
+and nonpoint components, malformed replay and dimensions above 32. Fresh-process
+replay preserves a definition whose fixed bounds overflow; promoting its retained
+components to rational arithmetic recovers exact bounds and further operations.
+The dyadic test rejects every work limit below the cost of a successful query,
+retains the unchanged source, and succeeds at that cost and with a larger budget.
+
+All 18 selected commands pass, including the owning package, Hyperlattice with
+all features (248 tests/doctests), strict Clippy, docs, zero-feature and ARM
+no_std compilation, Wasm build/Clippy and root formatting. After adding explicit
+empty-matrix replay and diagnostic witnesses, seven final focused commands pass:
+eight new tests on Rust 1.88, nine on Rust 1.95 debug/release and stable, Clippy,
+ASan and instrumented coverage. The final complete owning suite passes 78
+tests/doctests; final stable Clippy passes. The initial unused-import warning
+was fixed without suppressions. LLVM reports 59/61 lines, 82/86 regions,
+10/10 functions and 300/329 compiled instantiations for centered.rs; branch
+instrumentation reports no denominator. This is not a 100% coverage claim.
+The coverage export retains all functions mapped to this source file; digests
+of the larger unfiltered exports are recorded separately.
+
+The zero-import Wasm consumer passes 7,992 independent integer-oracle cases:
+4,373 successful complete bounds, 2,455 negative-radius rejections and 1,164
+projection/product overflows. It makes 18,955 returned calls plus two invalid-
+selector traps, preserves zero-dimensional empty/unit semantics, and verifies
+that IEEE ingress remains unqualified there. Maximum returned-call fuel is
+4,688 of 1,000,000 allowed; fuel is not a timing or MCU-cycle metric. The module
+is 47,864 bytes, SHA-256
+`ca8965283a803506e186d5c9faa263abd7c75ee87c17f9895afff9e224c55de6`.
+
+The maintained native probe records 960 samples with 32 warmups and 128 completed
+operations/sample on allowed CPU 0, after downstream testing ended. It covers
+six backends, dimensions 4/64, ownership retention, vector projection, the same
+three-operation arithmetic control and rectangular matrix projection. Both
+projection paths are checked against full independent expected outputs before
+timing. Primitive operations allocate nothing. Retaining/reconstructing the
+prepared exact components also allocates nothing for all six measured fixtures;
+this is not an arbitrary-rational resource bound. At N=64, rational projection
+uses 240 allocations / 9,600 bytes and dyadic 792 / 6,336, matching the explicit
+arithmetic control. The form has the same inline size as its component pair
+on this host; temporary stack peaks and arbitrary-precision retained heaps are
+not measured. The all-backend cost executable is 1,553,688 bytes (GNU text
+1,040,289). These short, sequential local probes have no governor control and
+make no speedup, global no-regression or whole-stack monomorphization claim.
+
+This is an additive retained-definition capability, not a production consumer
+migration or a completed phase. General heterogeneous center/radius arithmetic,
+authored-form exact affine-source integration, Jacobian carriers, fact/kernel
+specializations, broader coverage and full consumer/performance qualification
+remain open. Existing solver, Interface and firmware adoption blockers and the
+full 15-phase goal remain unchanged. No push was attempted.
+
+Source and evidence registration: pending.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

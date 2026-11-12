@@ -52,6 +52,9 @@
 
 ### Added
 
+- Re-export independently authored `CenteredVector` and `CenteredMatrix`
+  definitions through the interval feature, with validated component replay.
+
 - Re-export exact `AffineMap`, `AffineImage`, `AffineBox` and `AffineSource`
   through the optional interval features. Subsequent maps retain correlations.
 

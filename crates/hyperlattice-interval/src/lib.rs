@@ -18,6 +18,7 @@
 
 mod affine;
 mod backend;
+mod centered;
 mod contraction;
 mod matrix;
 mod midpoint_radius;
@@ -29,6 +30,7 @@ mod widths;
 
 pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource};
 pub use backend::IntervalArithmetic;
+pub use centered::{CenteredMatrix, CenteredVector};
 pub use hyperinterval;
 pub use matrix::IntervalMatrix;
 pub use midpoint_radius::{MidpointRadiusMatrix, MidpointRadiusVector};
@@ -47,6 +49,12 @@ pub enum IntervalLatticeError {
     NonPointAffineMatrix,
     /// An affine map's translation is empty or has a nonsingleton component.
     NonPointAffineTranslation,
+    /// An authored center is empty or contains more than one point.
+    NonPointCenter,
+    /// An authored radius is empty or contains more than one point.
+    NonPointRadius,
+    /// An authored radius lane is negative.
+    NegativeRadius,
     /// A bounded affine chain already contains its declared maximum maps.
     AffineCapacityExhausted {
         /// Maximum retained map count, fixed by the chain's type.
@@ -80,6 +88,9 @@ impl core::fmt::Display for IntervalLatticeError {
             Self::AffineCapacityExhausted { capacity } => {
                 write!(f, "affine chain capacity {capacity} exhausted")
             }
+            Self::NonPointCenter => f.write_str("center must contain exactly one point"),
+            Self::NonPointRadius => f.write_str("radius must contain exactly one point"),
+            Self::NegativeRadius => f.write_str("radius must be nonnegative"),
             Self::IndexOutOfBounds { index, dimension } => {
                 write!(f, "index {index} is outside dimension {dimension}")
             }
@@ -94,7 +105,10 @@ impl core::error::Error for IntervalLatticeError {
             Self::AffineCapacityExhausted { .. }
             | Self::IndexOutOfBounds { .. }
             | Self::NonPointAffineMatrix
-            | Self::NonPointAffineTranslation => None,
+            | Self::NonPointAffineTranslation
+            | Self::NonPointCenter
+            | Self::NonPointRadius
+            | Self::NegativeRadius => None,
         }
     }
 }

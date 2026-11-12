@@ -52,7 +52,7 @@ fixed widths and float widths that cannot fit a finite float. `widest_axis`
 compares exact widths and breaks ties by the lowest index. Empty boxes have no
 widths; the zero-dimensional unit has an empty width array and no axis.
 
-Independently authored center/radius forms, Jacobian carriers and measured
+Jacobian carriers, broader authored-form composition and measured
 specializations remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).
 
@@ -65,6 +65,16 @@ overflows. `midpoint_enclosure` and `radius_enclosure` explicitly produce
 endpoint-family enclosures with a shared context. They can be nonsingletons
 and never replace the retained exact definition. Replay validates the source
 intervals through the existing serializer; empty and unit products stay distinct.
+
+`CenteredVector<I, N>` and `CenteredMatrix<I, R, C>` instead retain independently
+authored point centers and nonnegative point radii. `new(center, radius)` checks
+those conditions without computing bounds. Borrowed `center()` / `radius()` and
+owned `into_parts()` retain the definition, including when `enclosure()` fails
+with overflow or a resource error. The explicit enclosure uses shared scalar
+subtraction, addition and hull; it can round outward and remains separate from
+the exact definition. Empty or nonsingleton components are invalid; `empty()`
+creates the canonical empty set. Serde revalidates both components. Both use
+the same scalar backend; these authored forms are not yet affine sources.
 
 Square matrices provide `identity_minus()` for the Cartesian image of `Id - A`,
 and `contraction_margin_one()` / `contraction_margin_infinity()` for the ranges
