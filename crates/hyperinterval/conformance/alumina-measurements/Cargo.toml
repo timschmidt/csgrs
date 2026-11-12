@@ -1,0 +1,40 @@
+[package]
+name = "interval-measurement-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[workspace]
+
+[features]
+trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace"]
+probes = []
+
+# Release tests unwind; the matching application probes abort. Keep the latter
+# out of test builds to avoid Cargo's duplicate cdylib/rlib output filenames.
+[[bin]]
+name = "cost"
+required-features = ["probes"]
+
+[[bin]]
+name = "probe"
+required-features = ["probes"]
+
+[dependencies]
+alumina-interface-core = { path = "../../../../../alumina-interface/crates/alumina-interface-core" }
+hyperinterval = { path = "../..", features = ["rational", "serde"] }
+hyperreal = { path = "../../../hyperreal", features = ["serde"], default-features = false }
+hyperlimit = { path = "../../../hyperlimit", default-features = false }
+serde_json = "1"
+
+# Match Alumina Interface's release profile for adoption measurements.
+[profile.release]
+codegen-units = 1
+debug-assertions = false
+incremental = false
+lto = "fat"
+opt-level = "z"
+overflow-checks = true
+panic = "abort"
+strip = "symbols"

@@ -1,0 +1,23 @@
+[package]
+name = "interval-measurement-wasm"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+alumina-interface-core = { path = "../../../../../../alumina-interface/crates/alumina-interface-core" }
+hyperreal = { path = "../../../../hyperreal", default-features = false }
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = "z"
+overflow-checks = true
+panic = "abort"
+strip = "symbols"

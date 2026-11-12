@@ -49,7 +49,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, derived midpoint/radius, norm/contraction evidence and FOC/Krawczyk clients implemented | independent center/radius forms, Jacobian carriers, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
-| 8 interface | not started | unchanged canonical bytes and profiles |
+| 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | not started | domain-neutral extraction and exact field equivalence |
@@ -2531,6 +2531,110 @@ Source commit `f451d7629f71fcf009524f44d4466f1f8232ccf4`; evidence commit
 registration; every previous archive row remains unchanged. Remaining Phase 6
 carriers/specializations, firmware and solver adoption gates, hardware evidence,
 and all later phases remain open. No full pre-push matrix or push was performed.
+
+## Phase 8 admission: unit-bearing measurement construction
+
+Baselines: CSGRS `efb7b2b9909e038987ec93c2b89211439b957a40`, Interface
+`ee6cdb169ba1feb8d5f3e8bcda11256733c70755`. All managed repositories were clean.
+The original Interface core baseline passes all 199 library tests. Owner:
+Hyperinterval rational set arithmetic, with physical meaning retained by
+`BoundedMeasurement<U>`. P1, P4–P10, P19 and P31–P33. Missing acceptance witness:
+full old/shared measurement conformance with comparable cache states, allocation,
+time and footprint, beyond the existing small integer fixtures.
+
+The Interface constructor now delegates to the existing
+`RationalInterval::from_nominal_uncertainty` and consumes its owned bounds.
+It retains every finite Rational nominal and uncertainty input, physical unit,
+private endpoint storage, const accessors, equality, Debug shape and successful
+output. Negative uncertainty keeps the original error and message. The successful
+scalar construction is necessarily nonempty; the adapter checks that invariant.
+`BoundaryError::Interval` preserves any unexpected kernel diagnostic through
+`Error::source`, including a nested scalar cause. This public enum addition is
+recorded in Interface's `docs/INTERVAL-MIGRATION.md`; exhaustive callers need a
+new arm. No new failure occurs for previously valid measurement inputs.
+
+There is one existing scalar sign check, subtraction and addition in the same
+order. Rational's owned operators delegate to the same borrowed kernels; removed
+Arc clones do not replace source identities or arithmetic. No scalar/predicate
+implementation is changed. An inline-hint experiment was rejected and removed.
+All 116 other existing Interface files are byte-identical to the baseline,
+including machine-profile, compiler, fixture and canonical-output code. Firmware
+is unchanged. Machine-profile `from_scalar` needs separate proof transport:
+adding the shared constructor there would introduce a sign check after earlier
+configuration validation, so that path is not part of this candidate.
+
+The maintained standalone `hyperinterval/conformance/alumina-measurements`
+package checks 2,145 common-denominator cases (1,485 nonnegative-radius and 660
+negative-radius cases), both unit types, exact endpoints, checked serialization
+and subsequent addition. Eight representation fixtures include signed, dyadic,
+word-sized, large rational and roughly 4,000-bit inputs. Both STRICT and
+APPROXIMATE_512 downstream comparisons retain exact receipts. Separate fresh
+processes compare complete cold and once-warmed construction traces and scalar
+counters, then assert one exact-rational comparison dispatch per policy. A
+separate executable compares cold/warm allocations and full outputs against the
+original formula. Counts match in every fixture, including zero allocation on
+rejection; cold successful work uses 0–7 allocations and once-warmed work 0–3.
+
+The initial in-process trace test was invalid: recreating equal small rationals
+can retain interned facts. Applying the exact original formula on both sides
+reproduced its failure. That diagnostic and the initial failure are retained;
+the fresh-process replacement compares the same cases and all counts without
+relaxation. A selective release test also exposed Cargo's duplicate CSGRS
+cdylib/rlib filenames when aborting probe binaries and unwinding tests shared a
+build. Native probes now require an explicit `probes` feature, excluded from
+release tests, and adoption artifacts use a separate target directory. Both
+revisions were rebuilt with the final configuration. The failed logs remain.
+
+All 15 final selected commands pass after those changes: five conformance tests
+in debug and release, strict Clippy, documentation with warnings denied, Wasm
+Clippy, Interface core tests/doctests (201), rational-owner tests/doctests (17),
+formatting and dependency inspection. ASan with leak detection passes all five
+conformance tests, including child processes. A preexisting stable-toolchain
+`fetch_update` deprecation warning in alumina-runtime appears in baseline and
+candidate Wasm builds; it is not introduced or suppressed here. No new fuzz,
+full application coverage, hosted-platform, browser or full pre-push claim.
+
+The independent Python Fraction Wasm oracle passes 4,369 calls: 3,015 successful
+bounds, 1,330 negative-radius rejections and 24 invalid denominators. Endpoint
+text hashes supplement full-value host tests and independent fraction bounds;
+they are not the sole correctness witness. Seven existing binding imports are
+present; every import traps if called and the measurement path makes zero host
+calls. An unexpected-error status is explicitly rejected by the oracle. The
+initial assumption of no imports and the earlier panic-based probe are retained
+as failed/superseded harness evidence. Both revisions were rebuilt with the same
+final probe; baseline bytes remain identical. The final raw module is 960,440
+bytes versus 960,500 baseline. Actual artifact digests and fuel bounds are in the
+record. This is a headless measurement consumer, not whole-UI browser coverage.
+
+Matched native probes use Interface's release settings and Rust 1.95. The value
+probe falls from 603,272 to 603,224 bytes; the cost probe from 606,760 to 606,632.
+Post-LTO emitted LLVM falls from 730 definitions / 89,986 noncomment body lines
+to 729 / 89,977. IR lines are a code-expansion measure, not machine bytes.
+Eight full exact endpoint/error outputs agree between revisions. Six alternating
+unpinned rounds contain 1,920 samples, 512 completed constructions/destructions
+per sample after 32 warmups, with zero allocations in the timed scope. Successful
+case median ratios are 0.651–0.737; rejection is 1.018, an adverse result retained.
+Twenty further paired rounds on fixed allowed CPU 0 contain 6,400 samples:
+success ratios are 0.665–0.753 and rejection is 1.000, with a bootstrap median
+ratio interval of [0.99996, 1.00000]. Frequency/governor and other host activity
+are not controlled. These are repeated-input local measurements, not a universal
+speed claim; all raw data, commands and per-case summaries are retained.
+
+The first generic-diagnostic Display candidate increased native footprint by
+912 bytes; it was revised to a short outer message while retaining the typed
+source chain. A six-byte raw Wasm increase came from the new probe's unexpected-
+error panic text; changing that new probe to an explicitly rejected status and
+rebuilding both revisions removed it. No production failure or assertion was
+removed. The final delegation is retained with the measured native/Wasm and IR
+footprint reductions, identical exact results, traces and allocations.
+
+Interface source commit `ff668ca39d5e1ecee91b438b20eca806f3a26f29`.
+CSGRS source/evidence registration pending for measurement adoption. This completes
+one production constructor delegation, not Phase 8 or the full refactor.
+Machine-profile intervals, positive products/quotients, named budgets, complete
+canonical-profile differentials and full browser/schedule measurements remain
+open. The earlier solver/firmware adoption blockers and all later phases remain.
+No push was attempted.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
