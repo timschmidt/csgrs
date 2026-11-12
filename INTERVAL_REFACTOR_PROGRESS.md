@@ -1429,6 +1429,93 @@ Tangent/pole functions, remaining
 Phase 5 qualifications, broader consumer migrations, allocation/cancellation,
 coordinated release and the earlier incomplete plan phases remain open.
 
+## Tangent and cotangent admission (2026-11-12)
+
+Owner: Hyperinterval scalar image layer, P1/P3/P5/P6/P19; baseline `0ef6cc8ec`.
+The missing tan/cot witness is reproduced before implementation in
+`/tmp/interval-refactor/tangent/missing-witness.log`. The input domain is
+connected rational, dyadic and extended dyadic source intervals. Every finite
+rational tangent endpoint is defined; cotangent excludes zero and its irrational
+nonzero poles. A zero-only cotangent source returns EmptyDomain, empty sources
+return empty/Complete, and any excluded pole gives Partial coverage. The image
+is a normalized IntervalSet2 of closed extended dyadic components, rounded
+outward on the requested grid. A full branch or nonempty unbounded source gives
+the entire line/Partial, proved from source topology rather than uncertainty.
+
+Reuse certified half-pi phase reduction, Taylor bounds and extrema detection;
+keep existing sine/cosine call order and accounting unchanged. Prove monotonic
+branch extrema and pole incidence before assembling finite intervals or rays.
+Never infer a whole-range success from a denominator enclosure containing zero:
+refine or exhaust the shared deterministic size/work budget. Exact cotangent
+endpoint poles require one-sided limits and domain qualification. No rounded
+source conversion supplies the authoritative phase. Independent directed MPFR
+point bounds and GMP pole indexing, near-pole sources, huge/tiny arguments,
+partial/repeated operations, fresh-process replay and budget refusal/retry are
+acceptance gates. Actual heap-byte limits, cancellation, wider consumer migration
+and coordinated release remain open.
+
+The implementation shares the existing reducer, alternating Taylor bounds and
+extremum scan. Sine extrema mark tangent poles; cosine extrema mark cotangent
+poles. Nonzero rational endpoints cannot equal nonzero rational multiples of pi.
+Cotangent's exact zero endpoint is excluded from the interior scan and supplied
+as a one-sided infinite limit. Two interior poles, or an interior pole plus an
+endpoint pole, prove a full branch. With no pole, monotonicity selects finite
+extrema; with one interior pole, it selects two rays. Tangent increases and
+cotangent decreases on each branch. Normalization merges only touching or
+overlapping represented enclosures, including gaps closed by outward rounding.
+
+Endpoint evaluation selects the denominator first from certified sine/cosine
+residual enclosures. If zero cannot yet be excluded, refinement continues. The
+original rational source remains authoritative at every attempt. Signed quotient
+bounds must reach adjacent requested-grid endpoints before publication; no
+rounded-source pole decision or exhausted partial result escapes. Full-line
+unbounded-source results need no numerical allocation or budget work.
+
+The source audit in shared-trig-body-check.json proves the old trigonometry
+module is identical after removing only crate visibility, whitespace and one
+optional signature comma. Existing call order/accounting and Hyperreal dispatch
+remain unchanged; no numerical-body refactor was performed. Shared test helpers
+now supply MPFR pi bounds and exact GMP phase indices to both trig corpora.
+
+The final 29-command feature/release/lint/docs/security/portable-build matrix
+passes. It includes the existing sine/cosine corpus, four unchanged Hypersolve
+value/dispatch witnesses, primitive dependency closure, no-feature strict Clippy,
+ARM/WASM no_std builds and repository-wide Zizmor. Two initial Clippy failures
+on the same parity spelling are retained with pre-lint source; the repair keeps
+condition order. One additional adapter test was then added and passed focused
+strict Clippy and the complete instrumented suite. The final unique count is
+148 unit/integration tests plus 12 doctests, recorded by test-list.log; the three
+fresh-process child executions are not additional unique tests. No push occurred.
+
+The independent oracle combines directed MPFR endpoint bounds with GMP branch
+indices, a different closed-form calculation from the production residue scan.
+Its ordinary dyadic corpus has 504 function/source/grid combinations, plus
+explicit pole-crossing cases. Rational near-pole fixtures include points and
+intervals within 2^-128 of periodic boundaries, and huge phases through 2^512.
+Tiny cases include both functions at 2^-1074 with grids 2^-64 and 2^-1074.
+A near-pole point exhausts small work budgets without being mislabeled a pole;
+a larger retry returns the same Complete finite enclosure. Output undergoes
+fresh-process replay, another pole operation, arctangent and exponential use.
+Initial ASan fuzzing completed 10,000 cases in 55 seconds; final-source fuzzing
+completed 10,000 in 61 seconds, seed 20261124, within the published 120-second cap.
+
+Final Rust 1.95 production coverage is 4121/4208 lines (97.93%) and 8190/8772
+regions (93.37%); all 16 new-module functions execute. No branch denominator is
+available. Tests, probes, Hyperreal, dependencies and test-only IEEE code are
+excluded. LLVM's initial extra diagnostic run aborted; the failure/backtrace is
+retained. Running diagnostics with one merge thread succeeded and its report
+table matched the successful ordinary report. All nine profile mismatches are
+excluded Rug OptRational::parts. Final profiles are fresh and separate from the
+earlier adapter-incomplete run; single-thread reporting changes no exclusions.
+
+All 1560 cost samples completed, across rational/dyadic functions and extended
+entire-line inputs, three grids and six finite source shapes. PERFORMANCE.md
+records medians, deterministic work and the expensive subnormal cotangent case;
+raw samples retain compiler/host metadata, executable hash and whole-probe size.
+No allocation/cancellation, embedded-cycle or speedup claim is made.
+Source and archive registration are pending. Phase 5 qualification gaps and all
+remaining plan phases require their own completion evidence.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

@@ -9,22 +9,22 @@ use num_integer::Integer;
 use num_traits::{One, Signed, ToPrimitive, Zero};
 type Image = RangeEnclosure<DyadicInterval>;
 #[derive(Clone, Copy)]
-enum Function {
+pub(crate) enum Function {
     Sin,
     Cos,
 }
 #[derive(Clone, Copy)]
-struct Source<'a> {
-    n: &'a BigInt,
-    d: &'a BigInt,
-    e: i32,
+pub(crate) struct Source<'a> {
+    pub(crate) n: &'a BigInt,
+    pub(crate) d: &'a BigInt,
+    pub(crate) e: i32,
 }
-struct Reduced {
-    index: BigInt,
-    quadrant: u8,
-    negative: bool,
-    zero: bool,
-    argument: DyadicInterval,
+pub(crate) struct Reduced {
+    pub(crate) index: BigInt,
+    pub(crate) quadrant: u8,
+    pub(crate) negative: bool,
+    pub(crate) zero: bool,
+    pub(crate) argument: DyadicInterval,
 }
 
 impl DyadicInterval {
@@ -145,7 +145,11 @@ fn whole(precision: i32, budget: &mut DyadicBudget) -> Result<DyadicInterval, In
 }
 // Both public source families share an exponent. Width >=8 proves a complete
 // period since 2*pi<8, even when resolving either endpoint phase is expensive.
-fn wide(a: Source<'_>, b: Source<'_>, budget: &mut DyadicBudget) -> Result<bool, IntervalError> {
+pub(crate) fn wide(
+    a: Source<'_>,
+    b: Source<'_>,
+    budget: &mut DyadicBudget,
+) -> Result<bool, IntervalError> {
     if a.d == b.d {
         budget.reserve(a.n.bits().max(b.n.bits()).saturating_add(1), 1, false)?;
         return Ok(!crate::dyadic_order::compare(&(b.n - a.n), a.e, a.d, 3, budget)?.is_lt());
@@ -228,7 +232,7 @@ fn range(
         working = working.checked_mul(2).ok_or(IntervalError::Overflow)?;
     }
 }
-fn reduce(
+pub(crate) fn reduce(
     source: Source<'_>,
     half_pi: &DyadicInterval,
     working: i32,
@@ -286,7 +290,7 @@ fn reduce(
         argument: residual,
     }))
 }
-fn extrema(
+pub(crate) fn extrema(
     a: &BigInt,
     b: &BigInt,
     function: Function,
@@ -362,7 +366,7 @@ fn evaluate(
 }
 // Residuals lie in [0,pi/2] subset [0,2]. Beyond the initial cosine term,
 // alternating factorial terms decrease. The signed next term bounds the tail.
-fn series(
+pub(crate) fn series(
     argument: DyadicInterval,
     cosine: bool,
     working: i32,

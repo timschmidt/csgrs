@@ -1,12 +1,13 @@
 //! MPFR point bounds plus the global Lipschitz bound and exact GMP extrema.
 use hyperinterval::DyadicInterval;
-use rug::{
-    Float, Integer, Rational,
-    float::{Constant, Round},
-};
+use rug::{Float, Rational, float::Round};
 #[path = "grid_oracle.rs"]
 mod grid_oracle;
 pub use grid_oracle::q;
+#[path = "phase_oracle.rs"]
+mod phase_oracle;
+pub use phase_oracle::half_pi;
+use phase_oracle::index;
 fn point(x: &Rational, cosine: bool) -> (Rational, Rational) {
     let f = Float::with_val(4096, x);
     let error = (x.clone() - f.to_rational().unwrap()).abs();
@@ -23,17 +24,6 @@ fn point(x: &Rational, cosine: bool) -> (Rational, Rational) {
         lo.to_rational().unwrap() - &error,
         hi.to_rational().unwrap() + error,
     )
-}
-pub fn half_pi() -> (Rational, Rational) {
-    let (a, _) = Float::with_val_round(4096, Constant::Pi, Round::Down);
-    let (b, _) = Float::with_val_round(4096, Constant::Pi, Round::Up);
-    (a.to_rational().unwrap() / 2, b.to_rational().unwrap() / 2)
-}
-fn index(x: &Rational, pi: &(Rational, Rational)) -> Integer {
-    let a = (x.clone() / &pi.0).floor().numer().clone();
-    let b = (x.clone() / &pi.1).floor().numer().clone();
-    assert_eq!(a, b, "independent phase oracle needs more precision");
-    a
 }
 pub fn verify(result: &DyadicInterval, a: &Rational, b: &Rational, precision: i32, cosine: bool) {
     let (a_lo, a_hi) = point(a, cosine);

@@ -479,3 +479,58 @@ speedup comparisons. The archived executable includes GMP/MPFR oracle code,
 so whole-probe size is not production-kernel size. Actual allocation/heap-byte,
 cancellation, rational-backend timing and downstream consumer qualification
 remain open. Source/work reservations do not establish those claims.
+
+
+## Tangent and cotangent completion probe
+
+`conformance/tangent_cost.rs` evaluates rational and dyadic point 1, narrow
+[1,257/256], pole-sensitive [1,2], wide [-4,4], huge 2^128 and tiny 2^-1074
+sources, plus the extended entire line. The [1,2] case crosses a tangent pole
+and stays within one cotangent branch. Independent directed MPFR point bounds
+and exact GMP pole indexing run before timing. Rust 1.99 release, x86_64 Linux,
+dyadic+rational with no default features:
+
+| Backend / function / case | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| dyadic / tan / point | 60158.875 | 112760.594 | 369536.562 |
+| dyadic / tan / narrow | 93677.594 | 176096.219 | 541577.000 |
+| dyadic / tan / pole | 90750.688 | 196303.438 | 612686.688 |
+| dyadic / tan / wide | 154.625 | 154.125 | 154.438 |
+| dyadic / tan / huge | 295284.031 | 383250.156 | 821884.406 |
+| dyadic / tan / tiny | 30974.781 | 60508.219 | 214659.500 |
+| dyadic / cot / point | 58076.969 | 112557.531 | 368712.656 |
+| dyadic / cot / narrow | 93402.375 | 176021.156 | 538127.000 |
+| dyadic / cot / pole | 90946.000 | 195939.406 | 608159.125 |
+| dyadic / cot / wide | 154.438 | 155.031 | 154.344 |
+| dyadic / cot / huge | 295125.438 | 382224.750 | 821193.156 |
+| dyadic / cot / tiny | 34548372.438 | 57426317.531 | 39388858.375 |
+| rational / tan / point | 58283.438 | 112676.406 | 368997.188 |
+| rational / tan / narrow | 94043.562 | 176234.281 | 541215.188 |
+| rational / tan / pole | 90898.250 | 195982.438 | 610121.188 |
+| rational / tan / wide | 257.875 | 256.562 | 257.375 |
+| rational / tan / huge | 294786.562 | 382600.031 | 820607.219 |
+| rational / tan / tiny | 31151.125 | 60540.000 | 214032.844 |
+| rational / cot / point | 58222.000 | 112481.250 | 367486.031 |
+| rational / cot / narrow | 93797.969 | 176370.562 | 537880.656 |
+| rational / cot / pole | 91055.188 | 195886.562 | 606496.750 |
+| rational / cot / wide | 257.969 | 259.094 | 257.500 |
+| rational / cot / huge | 295563.656 | 381423.125 | 819743.562 |
+| rational / cot / tiny | 34490514.812 | 57398168.469 | 39366275.656 |
+| extended / tan / entire | 17.000 | 17.000 | 17.000 |
+| extended / cot / entire | 17.219 | 17.219 | 17.250 |
+
+Values are median ns/image. All 1560 samples complete: 20 samples of 16 calls
+following 16 warmups for each backend/function/source/precision group. Timed work
+includes fresh 32768-bit/10^13-unit budgets, phase and pole proofs, refinement,
+full normalized image/receipt materialization and destruction. Source construction
+and independent oracle work are excluded. Actual deterministic work units remain
+in every raw row; metadata records compiler, host, executable hash and size.
+The executable links GMP/MPFR, so whole-probe size is not production-kernel size.
+
+Tiny cotangent is a stress case: its large image lies very close to a grid
+boundary, requiring substantially finer internal bounds than the requested
+output precision. That cost is reported separately from ordinary point and
+interval completion. Wide/unbounded sources prove complete branch coverage;
+no undecided denominator is counted as whole-range success. These are costs
+for new capabilities, not speedup claims. Actual allocation/heap-byte bounds,
+cancellation, embedded cycles and full downstream qualification remain open.

@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Add rational, dyadic and extended dyadic tangent/cotangent images with
+  certified interior and endpoint poles, one-sided limits, split components
+  and explicit domain coverage. Reuse the existing trigonometric proof helpers.
+- Exercise near-pole refinement, subnormal-scale inputs, canonical replay and
+  subsequent pole/atan/exponential operations with shared budget accounting.
+
 - Add budgeted rational, dyadic and extended dyadic rational powers with
   arbitrary-size exponent components, reduced real-branch semantics, exact
   integer root witnesses, compact perfect roots and split pole images.

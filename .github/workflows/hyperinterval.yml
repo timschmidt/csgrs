@@ -131,7 +131,7 @@ jobs:
       - name: Run constructor and arithmetic campaigns
         run: |
           mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic" "$RUNNER_TEMP/interval-proposals" "$RUNNER_TEMP/interval-strict-float"
-          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots" "$RUNNER_TEMP/interval-exponential" "$RUNNER_TEMP/interval-logarithm" "$RUNNER_TEMP/interval-arctangent" "$RUNNER_TEMP/interval-trigonometry" "$RUNNER_TEMP/interval-split-division" "$RUNNER_TEMP/interval-fractional-power"
+          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots" "$RUNNER_TEMP/interval-exponential" "$RUNNER_TEMP/interval-logarithm" "$RUNNER_TEMP/interval-arctangent" "$RUNNER_TEMP/interval-trigonometry" "$RUNNER_TEMP/interval-split-division" "$RUNNER_TEMP/interval-fractional-power" "$RUNNER_TEMP/interval-tangent"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
@@ -146,3 +146,4 @@ jobs:
           cargo +nightly fuzz run trigonometry --features rational "$RUNNER_TEMP/interval-trigonometry" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261121
           cargo +nightly fuzz run split_division "$RUNNER_TEMP/interval-split-division" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261122
           cargo +nightly fuzz run fractional_power "$RUNNER_TEMP/interval-fractional-power" -- -runs=10000 -max_len=12 -max_total_time=30 -seed=20261123
+          cargo +nightly fuzz run tangent --features rational "$RUNNER_TEMP/interval-tangent" -- -runs=10000 -max_len=8 -max_total_time=120 -seed=20261124

@@ -59,6 +59,8 @@ mod split;
 mod sqrt;
 mod state;
 #[cfg(feature = "dyadic")]
+mod tangent;
+#[cfg(feature = "dyadic")]
 mod trigonometry;
 pub use extended::{ExtendedInterval, ExtendedIntervalView, FiniteRealInterval};
 pub use split::IntervalSet2;

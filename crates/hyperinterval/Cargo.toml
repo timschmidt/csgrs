@@ -113,3 +113,8 @@ required-features = ["dyadic"]
 name = "fractional_power_cost"
 path = "conformance/fractional_power_cost.rs"
 required-features = ["dyadic"]
+
+[[example]]
+name = "tangent_cost"
+path = "conformance/tangent_cost.rs"
+required-features = ["dyadic", "rational"]

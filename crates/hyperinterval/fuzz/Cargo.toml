@@ -124,3 +124,11 @@ path = "fuzz_targets/fractional_power.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "tangent"
+path = "fuzz_targets/tangent.rs"
+required-features = ["rational"]
+test = false
+doc = false
+bench = false

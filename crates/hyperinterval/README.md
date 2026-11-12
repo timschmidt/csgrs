@@ -62,6 +62,15 @@ outward grid enclosure of the whole function range; narrow inputs with huge phas
 budget to resolve those phases. The original exact endpoints remain the source
 through refinement. No native floating transcendental supplies a certificate.
 
+Rational, dyadic and extended dyadic `tan`/`cot` return closed split images with
+certified pole incidence and domain coverage. Tangent on [1,2] retains two rays;
+cotangent on [0,1] retains its one-sided unbounded image. Zero-only cotangent
+returns EmptyDomain. Empty sources succeed with Complete coverage, while any
+excluded pole gives Partial coverage. A full branch or unbounded connected
+source produces the entire line. Coarse outward rounding can merge split
+components. An unresolved numerical denominator triggers refinement or typed
+exhaustion; it never establishes a pole or whole-range result.
+
 Rational, dyadic and extended dyadic `pow_rational(&numerator, &denominator,
 precision, &mut budget)` accepts arbitrary-size integer exponent components.
 It reduces the exponent before selecting its real domain: odd denominators
