@@ -397,6 +397,10 @@ bound, universal completion or downstream migration claim is made. Integer
 powers and other §3.5 gaps, the rejected solver migration, broader cost gates,
 and all later plan phases remain work to do.
 
+Raw dyadic acceptance evidence: `docs/evidence/2026-11-12-interval-dyadic-measures`, evidence commit
+`79ddc1c4c6f6a61f90e197b34ab831567bfe69af`; 136 files, 25363884 bytes,
+SHA-256 `67dd6f9fbaef47c17ea5a15a049854f00d95d8841c954c7689f62066e924db62`.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
