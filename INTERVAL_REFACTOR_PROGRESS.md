@@ -2715,7 +2715,11 @@ consumer adoption remain open. Machine-profile migration still needs proof
 transport to avoid repeated positivity checks. All other phases and earlier
 adoption blockers remain in scope. No push was attempted.
 
-Source and evidence registration: pending.
+Source commit `94e23534708352d6de05ec7262fa722cb301646d`; evidence commit
+`2bcfa39804823fa870f5e70c5887686d94164d6c`, record `docs/evidence/2026-11-12-interval-primitive-layouts`:
+79 files, 1,461,024 bytes, SHA-256
+`dc716354ecee5b1274cce31f6c75775ccf8773d9b07c2963bb89640282cbfed2`. The committed record was regenerated and verified;
+every previous archive row remains unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
