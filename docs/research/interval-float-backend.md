@@ -96,8 +96,8 @@ for multiplication/division. Pointwise square has zero as its minimum when
 the input contains zero; it must not be implemented as an independent-set
 self-product across zero.
 
-Nonnegative integer powers can use at most 32 squarings/products on positive
-endpoint enclosures and apply parity afterward. Document accumulated outward
+Nonnegative integer powers can use at most 32 squarings and 32 products per
+positive endpoint enclosure and apply parity afterward. Document accumulated outward
 rounding and intermediate overflow. Exponent zero maps nonempty input to one;
 empty remains empty. Do not claim a tight image without proving it. An initial
 affine operation may compose directed multiply and add, explicitly documenting
