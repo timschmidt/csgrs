@@ -1119,9 +1119,15 @@ retained. The measured dyadic carrier is 72 bytes and its extended carrier
 80 bytes, excluding heap storage. See the crate's PERFORMANCE.md for all
 latencies; no baseline speedup or full memory bound is claimed.
 
-Source and archive registration are pending. Actual heap-byte limits,
-cancellation, remaining elementary backends/functions, consumer migrations,
-full coverage and release qualification remain open.
+Implementation is committed as `c349a30ec7472fbaacd69a04ab164c1f8c6641f3`.
+The `2026-11-12-interval-logarithm` evidence record is committed at
+`52ac436ea8400b4ceb4243dfdaa044f477932525` with 386 files,
+77,664,890 bytes and record SHA-256
+`be624b23ddaea7651dc5d6cf70ba3f694b608ec4be9b015395fee9dd11637c94`.
+The committed archive digest is verified and registered in
+`docs/evidence-archive.tsv`. Actual heap-byte limits, cancellation, remaining
+elementary backends/functions, consumer migrations, full coverage and release
+qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
