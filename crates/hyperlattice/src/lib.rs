@@ -42,7 +42,8 @@
 pub use hyperlattice_interval as interval;
 #[cfg(feature = "interval")]
 pub use hyperlattice_interval::{
-    BoxN, IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector,
+    AffineBox, AffineImage, AffineMap, AffineSource, BoxN, IntervalArithmetic,
+    IntervalLatticeError, IntervalMatrix, IntervalVector,
 };
 
 pub use hyperreal::{

@@ -359,3 +359,7 @@ arithmetic and shared dyadic budgets. Scalar backends are available under
 `hyperlattice::interval::hyperinterval`. The same implementation is available
 in `hyperlattice-interval` for Rust 1.88 `no_std` firmware; the existing
 Hyperreal-backed Hyperlattice API still requires Rust 1.95.
+
+`AffineMap::image` retains exact affine definitions and shared source parameters.
+Further maps, parameter restrictions and validated replay preserve correlations;
+`AffineImage::enclosure` explicitly projects the result to a Cartesian box.

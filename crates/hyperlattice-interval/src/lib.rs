@@ -1,9 +1,11 @@
 //! Fixed-size Cartesian interval algebra, re-exported by Hyperlattice.
 //!
-//! Each carrier denotes a Cartesian product of scalar sets. Arithmetic returns
+//! Vectors and matrices denote Cartesian products of scalar sets. Arithmetic returns
 //! an enclosure; repeated variables and shared input coordinates can introduce
 //! correlations that a Cartesian product does not retain. An affine enclosure
-//! is not the exact correlated affine image. No midpoint is selected implicitly.
+//! is not the exact correlated affine image. [`AffineImage`] retains the source
+//! and its maps instead, including through further affine operations and replay.
+//! No midpoint is selected implicitly.
 //!
 //! Scalar arithmetic and environment qualification belong to Hyperinterval.
 //! The primitive build is allocation-free `no_std`, with dimension-bounded
@@ -14,12 +16,14 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+mod affine;
 mod backend;
 mod matrix;
 #[cfg(feature = "serde")]
 mod serde;
 mod vector;
 
+pub use affine::{AffineBox, AffineImage, AffineMap, AffineSource};
 pub use backend::IntervalArithmetic;
 pub use hyperinterval;
 pub use matrix::IntervalMatrix;
@@ -34,6 +38,10 @@ pub type BoxN<I, const N: usize> = IntervalVector<I, N>;
 pub enum IntervalLatticeError {
     /// The scalar backend rejected an operation; its typed cause is retained.
     Scalar(hyperinterval::IntervalError),
+    /// An affine map's matrix is empty or has a nonsingleton coefficient.
+    NonPointAffineMatrix,
+    /// An affine map's translation is empty or has a nonsingleton component.
+    NonPointAffineTranslation,
     /// A row or column index lies outside its declared dimension.
     IndexOutOfBounds {
         /// Requested zero-based index.
@@ -53,6 +61,12 @@ impl core::fmt::Display for IntervalLatticeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::Scalar(error) => write!(f, "interval arithmetic failed: {error}"),
+            Self::NonPointAffineMatrix => {
+                f.write_str("affine matrix must contain exactly one matrix")
+            }
+            Self::NonPointAffineTranslation => {
+                f.write_str("affine translation must contain exactly one vector")
+            }
             Self::IndexOutOfBounds { index, dimension } => {
                 write!(f, "index {index} is outside dimension {dimension}")
             }
@@ -64,7 +78,9 @@ impl core::error::Error for IntervalLatticeError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             Self::Scalar(error) => Some(error),
-            Self::IndexOutOfBounds { .. } => None,
+            Self::IndexOutOfBounds { .. }
+            | Self::NonPointAffineMatrix
+            | Self::NonPointAffineTranslation => None,
         }
     }
 }

@@ -30,8 +30,16 @@ inline storage and stack use grow with those dimensions. Scalar overflow and
 resource errors propagate; no partial result is returned. Rational operations,
 explicit clones and serialization have no total-work or heap bound.
 
-The outputs are Cartesian enclosures. They need not equal a correlated image;
-an affine enclosure does not retain the defining affine relation. Exact
-correlated affine carriers, midpoint/radius forms, norms, matrix measures and
-measured specializations remain under development in Phase 6 of the
+The vector/matrix outputs are Cartesian enclosures. They need not equal a
+correlated image. `AffineMap::image` instead retains an exact source box and
+point map; applying another map preserves the shared source parameters.
+`AffineImage::enclosure` composes coefficient bounds before evaluating that box.
+Rational/dyadic success gives its exact coordinate hull; primitive rounding
+can widen the projection. The exact definition survives overflow or exhaustion
+of a projection, off-grid results, parameter restrictions and validated replay.
+Maps with empty or nonsingleton coefficients are rejected. Finite nesting lives
+in the Rust type; inline storage and stack use grow with dimensions and depth.
+
+Midpoint/radius forms, norms, matrix measures and measured specializations
+remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).

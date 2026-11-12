@@ -1,4 +1,7 @@
-use crate::{IntervalArithmetic, IntervalMatrix, IntervalVector, array_result};
+use crate::{
+    AffineImage, AffineMap, AffineSource, IntervalArithmetic, IntervalMatrix, IntervalVector,
+    array_result,
+};
 use ::serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeTuple};
 
 // Serde's built-in arrays do not cover arbitrary const dimensions. This single
@@ -86,5 +89,51 @@ impl<'de, I: IntervalArithmetic + Deserialize<'de>, const R: usize, const C: usi
             Some(values) => Self::new(values.0.map(|row| row.0)),
         }
         .map_err(de::Error::custom)
+    }
+}
+
+impl<I: IntervalArithmetic + Serialize, const R: usize, const C: usize> Serialize
+    for AffineMap<I, R, C>
+{
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        (self.linear(), self.translation()).serialize(serializer)
+    }
+}
+
+impl<'de, I: IntervalArithmetic + Deserialize<'de>, const R: usize, const C: usize> Deserialize<'de>
+    for AffineMap<I, R, C>
+{
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let (linear, translation) =
+            <(IntervalMatrix<I, R, C>, IntervalVector<I, R>)>::deserialize(deserializer)?;
+        Self::new(linear, translation).map_err(de::Error::custom)
+    }
+}
+
+impl<
+    I: IntervalArithmetic + Serialize,
+    S: AffineSource<I, C> + Serialize,
+    const R: usize,
+    const C: usize,
+> Serialize for AffineImage<I, S, R, C>
+{
+    fn serialize<T: Serializer>(&self, serializer: T) -> Result<T::Ok, T::Error> {
+        (self.source(), self.map()).serialize(serializer)
+    }
+}
+
+impl<
+    'de,
+    I: IntervalArithmetic + Deserialize<'de>,
+    S: AffineSource<I, C> + Deserialize<'de>,
+    const R: usize,
+    const C: usize,
+> Deserialize<'de> for AffineImage<I, S, R, C>
+{
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let (source, map) = <(S, AffineMap<I, R, C>)>::deserialize(deserializer)?;
+        // Both operands are fully decoded and validated, including map
+        // singleton constraints, before an empty source can be consumed.
+        Ok(map.image(source))
     }
 }

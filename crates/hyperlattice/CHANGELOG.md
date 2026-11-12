@@ -52,6 +52,9 @@
 
 ### Added
 
+- Re-export exact `AffineMap`, `AffineImage`, `AffineBox` and `AffineSource`
+  through the optional interval features. Subsequent maps retain correlations.
+
 - Add optional Cartesian `IntervalVector`, `IntervalMatrix` and `BoxN`
   re-exports from the Rust 1.88 `no_std` `hyperlattice-interval` companion.
   Backend features are additive; existing no-default Real APIs remain available.

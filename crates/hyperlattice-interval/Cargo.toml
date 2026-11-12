@@ -36,3 +36,8 @@ required-features = ["fixed"]
 name = "linear_cost"
 path = "conformance/linear_cost.rs"
 required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
+
+[[example]]
+name = "affine_cost"
+path = "conformance/affine_cost.rs"
+required-features = ["fixed", "rational", "dyadic", "float-enclosure"]

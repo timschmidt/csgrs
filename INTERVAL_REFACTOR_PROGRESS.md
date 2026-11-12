@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian core implemented and locally qualified | exact affine correlation, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian core and retained exact affine images implemented | runtime composition clients, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
@@ -1627,6 +1627,110 @@ push was attempted. Source commit:
 189 files, 42,314,675 bytes, SHA-256
 `d73ad3b7683a0f1fc42f4b9e4cce275d48b49a59881bdbad3f8cbfb5d1779a03`. The committed record was regenerated and
 verified before registration; all prior archive rows are preserved.
+
+## Phase 6 admission: exact affine definitions and composition
+
+Previous goal turn: progress (Cartesian source and immutable evidence committed).
+Revalidated clean source `8a6fd2f2bbdf4b60419d8dced25fbc328f96f502` and the
+12-test Cartesian baseline. A missing-API witness fails on this revision:
+`AffineMap` is absent. Its intended result maps one parameter to `(x,x)`, then
+subtracts those coordinates; the exact image is `{0}` while materializing the
+intermediate Cartesian box permits `[-2,2]` for `x` in `[-1,1]`.
+
+Owner: Hyperlattice exact affine structure; Hyperinterval scalar arithmetic.
+Relevant properties: P1–P3, P5–P6, P17–P20, P25–P27, P35–P39. Domain: finite
+compile-time-dimensional closed boxes and finite chains of affine maps whose
+matrix and translation entries are exact singleton finite intervals. Admit
+singular maps, arbitrary rectangular dimensions, zero-dimensional unit products,
+canonical empty source domains, and every existing arithmetic backend. Reject
+empty/non-singleton map coefficients even when a source domain is empty.
+
+The exact object retains one source parameter box and its affine definitions,
+with no intermediate Cartesian substitution and no coefficient materialization
+required at construction. Subsequent affine maps consume that definition;
+parameter restrictions intersect the original parameter domain (not the output
+coordinates). Structural equality and deterministic replay are separate from
+equality of geometric images. There is no general image-membership or Boolean
+claim for this numerical carrier.
+
+Enclosure uses `B(Ax+b)+c=(BA)x+(Bb+c)`, pulling coefficient bounds to the
+original source before interval evaluation. Rational/dyadic arithmetic yields
+the exact coordinate hull on successful completion; fixed/strict-float scalar
+rounding can widen it. A rounded enclosure remains an explicit projection and
+never replaces the retained exact definition. Primitive overflow, shared dyadic
+size/work exhaustion and other scalar failures remain typed. Failed queries or
+restrictions must leave the original reusable; owned restriction copies must
+be charged through the scalar backend. Loops are dimension-bounded, nesting is
+finite in the type, and storage is inline. Stack use grows with dimensions/depth;
+there is no claimed heap-byte/CPU-time/cancellation bound for arbitrary-precision
+arithmetic, validation or serde. Explicit caller clones remain caller-owned.
+
+Missing acceptance witnesses: correlated cancellation and inverse compositions,
+exact independent corner expectations, off-grid primitive definitions surviving
+further operations, rank collapse and empty/unit maps, malformed fresh-process
+replay, restrictions in parameter space, nested exhaustion/retry and no-allocation
+primitive chains. Existing Cartesian operations must keep their source and
+observed outputs. Raw staging: `/tmp/interval-refactor/affine-images`.
+The full Phase 6 and 15-phase objective remain active.
+
+## Phase 6 retained affine images: local qualification
+
+Implemented `AffineMap`, `AffineImage`, `AffineBox` and the sealed `AffineSource`
+contract, re-exported by Hyperlattice. Point coefficient validation precedes
+image construction. Further maps retain one parameter source; restriction acts
+in that source's coordinates and preserves every map. Enclosure pulls coefficient
+bounds to the original domain, sharing one scalar context through all operations.
+No existing scalar/Cartesian numerical code changed: 49 source files and the
+array/dot helpers, existing serde implementations and legacy lib body (apart
+from the re-export list) were compared to the baseline.
+
+The 26 maintained tests plus one doctest pass across the declared feature/MSRV
+matrix. New exact corner oracles cover all 6,561 pairs of 2x2 matrices with
+entries in `{-1,0,1}` on each of six backends, with independent point evaluation
+at four source-box corners. Additional witnesses cover correlated cancellation,
+inverse maps with large rational parameters and fractional coefficients,
+rank loss, rectangular/zero-dimensional maps, invalid coefficients, empty sets,
+parameter restrictions, exact work exhaustion/retry and charged owned copies.
+A dyadic image whose intermediate projection exceeds 256 bits can be consumed
+by its inverse and recover its original box within that size budget. Fixed and
+IEEE values below their output grids retain definitions and recover through a
+later map. Fresh-process replay verifies this off-grid composition; malformed
+nested maps fail even with empty sources. All six scalar families exercise
+validated affine serialization when serde is enabled.
+
+All 44 selected checks passed: Rust 1.88/stable feature isolation, Rust 1.95
+all features, release tests, no-default/all-feature Clippy, docs, fmt, two
+Hyperlattice facade tests, four solver differential/dispatch tests, and ARM/Wasm
+subsets on 1.88 and stable. Final ASan tests with leak detection pass (including
+the fresh replay child). Owner coverage is 600/610 lines (98.36%), 767/805 regions
+(95.28%) and 126/126 functions; `affine.rs` has 110/110 executable lines and
+121/126 regions covered. No branch denominator was emitted. Tests, conformance,
+dependencies and toolchain code are excluded. The 100% and directed-fuzz targets
+remain open; this ASan run is the deterministic qualification suite.
+
+A separate Rust 1.88 no_std Wasm consumer links without a global allocator or
+imports and passes 2,051 calls per export (513 unique clamped inputs), checking
+both the old Cartesian and new correlated path. The runtime imposes an external
+one-million-fuel limit per call. The artifact is 18,161 bytes, SHA-256
+`4e49a7683a89ab534ab98bb61fe58f5a5b653d7a417b03ecebb538aaa74ee626`.
+This is a development path consumer, not registry/HIL/firmware-cycle proof.
+
+The final affine probe records 480 samples: four backends, depths 1/2/4,
+enclosure and owned restriction, 20 samples of 128 completed operations after
+64 warmups. Primitive paths allocate zero. Four-map inline footprints are
+312 bytes (fixed Q16), 624 (strict f64), 488 (rational) and 1,872 (dyadic);
+these exclude heap storage and are not peak stack measurements. The original
+probe's `retained_bytes` label was corrected to `inline_bytes`; both runs are
+retained. Timing varies substantially on this shared host, so no speedup is
+claimed. Baseline/current Cartesian probe outputs and allocation counts agree;
+its ELF text section grew 292 bytes and its combined text/data/bss grew 4 bytes.
+This is an additive capability, not a numerical refactor or solver migration.
+
+Definitions currently use finite nesting in Rust types. Chains with lengths
+chosen at runtime, broader client qualification, width/midpoint/radius/norm and
+measure operations, specialized kernels and full legacy performance/size gates
+remain work toward the unchanged complete plan. No phase is complete and no
+push was attempted. Source and immutable affine evidence registration: pending.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

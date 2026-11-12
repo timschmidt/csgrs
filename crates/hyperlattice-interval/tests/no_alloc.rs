@@ -1,6 +1,6 @@
 #![cfg(feature = "fixed")]
 use hyperlattice_interval::hyperinterval::FixedInterval;
-use hyperlattice_interval::{IntervalMatrix, IntervalVector};
+use hyperlattice_interval::{AffineMap, IntervalMatrix, IntervalVector};
 #[path = "../conformance/allocations.rs"]
 mod allocations;
 
@@ -23,6 +23,25 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         let subset = intersection.subset_of(&result, &mut ()).unwrap();
         let interior = intersection.interior_subset_of(&result, &mut ()).unwrap();
         let error = squared.row(3, &mut ()).unwrap_err();
+        let zero = I::point(0).unwrap();
+        let negative = I::point(-(1 << 16)).unwrap();
+        let duplicate = AffineMap::new(
+            IntervalMatrix::new([[p, zero, zero], [p, zero, zero]]).unwrap(),
+            IntervalVector::new([zero, zero]).unwrap(),
+        )
+        .unwrap();
+        let difference = AffineMap::new(
+            IntervalMatrix::new([[p, negative]]).unwrap(),
+            IntervalVector::new([zero]).unwrap(),
+        )
+        .unwrap();
+        let image = difference.image(duplicate.image(x));
+        assert_eq!(image.enclosure(&mut ()).unwrap().lanes(), Some(&[zero]));
+        let selected = image
+            .restrict_parameters(&IntervalVector::new([zero; 3]).unwrap(), &mut ())
+            .unwrap();
+        assert_eq!(selected.enclosure(&mut ()).unwrap().lanes(), Some(&[zero]));
+        std::hint::black_box((image, selected));
         std::hint::black_box((result, transposed, squared, dot, hull, intersection, error));
         (subset, interior)
     });
