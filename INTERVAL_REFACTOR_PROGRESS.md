@@ -1032,8 +1032,15 @@ All 480 cost samples complete: four source widths, three grid precisions,
 and both backends; 128 warmups and 20 samples of 128 owned images per group.
 The crate performance ledger has the full median table. Raw samples also
 retain deterministic work units, which are distinct from measured CPU time.
-No speedup or consumer/firmware claim follows. The separate
-`2026-11-12-interval-exponential` evidence record is pending registration.
+No speedup or consumer/firmware claim follows.
+
+Source commit: `a72659abf47e8d04c54f3c77e4e4391cef7ec519`. The separate
+`2026-11-12-interval-exponential` evidence record is committed at
+`ab6efa286f8e86caa08d8331452a00b926987404`: 829 files,
+142,585,251 bytes, SHA-256
+`2df892c946bd524dac776446ec960ea214b97cb5a1c16c69e9e989d2f735df37`.
+The scoped manifest was verified against that committed archive revision and
+registered in `docs/evidence-archive.tsv`; all prior records are preserved.
 
 Later elementary functions, primitive exponential backends, symbolic-ball
 adapters, consumer migrations, actual memory/cancellation bounds, full coverage
