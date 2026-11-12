@@ -62,6 +62,19 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         std::hint::black_box((chain, selected_chain));
         std::hint::black_box((image, selected));
         std::hint::black_box((result, transposed, squared, dot, hull, intersection, error));
+        let norms = (
+            result.norm_one(&mut ()).unwrap(),
+            result.norm_infinity(&mut ()).unwrap(),
+            squared.norm_one(&mut ()).unwrap(),
+            squared.norm_infinity(&mut ()).unwrap(),
+            squared.measure_one(&mut ()).unwrap(),
+            squared.measure_infinity(&mut ()).unwrap(),
+        );
+        let margins = (
+            squared.row_dominance_margins(&mut ()).unwrap(),
+            squared.column_dominance_margins(&mut ()).unwrap(),
+        );
+        std::hint::black_box((norms, margins));
         (subset, interior)
     });
     assert!(subset && !interior);

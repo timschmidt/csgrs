@@ -25,7 +25,10 @@ accounting. `rational` enables Hyperreal, std and its Rust 1.95 requirement.
 
 Implemented: canonical empty/unit products, component hull/intersection and
 inclusion, sums/differences, dot products, matrix products, affine enclosures,
-transpose and checked row/column projections. All loops have dimension bounds;
+transpose and checked row/column projections. Vector and matrix one/infinity
+norms include lower and upper bounds. Square matrices also supply logarithmic
+one/infinity measures (with signed diagonals) and row/column diagonal-dominance
+margin vectors. These supply interval evidence for downstream decisions. All loops have dimension bounds;
 inline storage and stack use grow with those dimensions. Scalar overflow and
 resource errors propagate; no partial result is returned. Rational operations,
 explicit clones and serialization have no total-work or heap bound.
@@ -44,6 +47,6 @@ in inline storage. `push` reports typed capacity exhaustion without changing
 the chain. Zero maps retain the source, and rectangular static images can
 precede or follow a chain. Replay checks every map and the receiving capacity.
 
-Midpoint/radius forms, norms, matrix measures and measured specializations
+Midpoint/radius forms, widths, contraction helpers and measured specializations
 remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).

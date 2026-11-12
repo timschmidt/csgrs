@@ -25,6 +25,10 @@ pub trait IntervalArithmetic: sealed::Sealed + FiniteRealInterval + Clone {
     fn sub(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Scalar product enclosure.
     fn mul(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
+    /// Absolute-value image, including an interior minimum at zero.
+    fn abs(&self, context: &mut Self::Context) -> Result<Self, IntervalError>;
+    /// Image of the maximum of independently chosen operand members.
+    fn max_image(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Smallest closed interval containing both inputs.
     fn hull(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Exact scalar intersection.
@@ -88,6 +92,12 @@ macro_rules! fixed {
             fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 self.checked_mul(other)
             }
+            fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Self::abs(self)
+            }
+            fn max_image(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
+                Ok(Self::max_image(self, other))
+            }
             unbudgeted_relations!();
         }
     };
@@ -117,6 +127,12 @@ impl IntervalArithmetic for hyperinterval::RationalInterval {
     fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
         Ok(Self::mul(self, other))
     }
+    fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
+        Ok(Self::abs(self))
+    }
+    fn max_image(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
+        Ok(Self::max_image(self, other))
+    }
     unbudgeted_relations!();
 }
 
@@ -139,6 +155,12 @@ impl IntervalArithmetic for hyperinterval::DyadicInterval {
     }
     fn mul(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError> {
         Self::mul(self, other, context)
+    }
+    fn abs(&self, context: &mut Self::Context) -> Result<Self, IntervalError> {
+        Self::abs(self, context)
+    }
+    fn max_image(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError> {
+        Self::max_image(self, other, context)
     }
     fn hull(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError> {
         Self::hull(self, other, context)
@@ -182,6 +204,12 @@ macro_rules! float {
             }
             fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 Self::mul(self, other)
+            }
+            fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Ok(Self::abs(self))
+            }
+            fn max_image(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
+                Ok(Self::max_image(self, other))
             }
             unbudgeted_relations!();
         }

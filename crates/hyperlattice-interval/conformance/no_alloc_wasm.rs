@@ -81,3 +81,38 @@ pub extern "C" fn affine_chain_probe(input: i32, depth: u32) -> i32 {
     );
     lo0 + 3 * hi0 + 5 * lo1 + 7 * hi1
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn interval_norm_probe(input: i32) -> i32 {
+    type I = FixedInterval<i32, 0>;
+    let s = input.clamp(2, 256);
+    let p = |a, b| I::new(a, b).unwrap();
+    let matrix =
+        IntervalMatrix::new([[p(-s - 2, -s - 2), p(1, 2)], [p(-1, 1), p(-s - 1, -s - 1)]]).unwrap();
+    let one = matrix.norm_one(&mut ()).unwrap().bounds().unwrap();
+    let infinity = matrix.norm_infinity(&mut ()).unwrap().bounds().unwrap();
+    let measure_one = matrix.measure_one(&mut ()).unwrap().bounds().unwrap();
+    let measure_infinity = matrix.measure_infinity(&mut ()).unwrap().bounds().unwrap();
+    let rows = matrix.row_dominance_margins(&mut ()).unwrap();
+    let columns = matrix.column_dominance_margins(&mut ()).unwrap();
+    assert_eq!(one, (s + 2, s + 3));
+    assert_eq!(infinity, (s + 3, s + 4));
+    assert_eq!(measure_one, (-s, 1 - s));
+    assert_eq!(measure_infinity, (-s - 1, -s));
+    assert_eq!(
+        rows.norm_one(&mut ()).unwrap().bounds(),
+        Some((2 * s, 2 * s + 2))
+    );
+    assert_eq!(
+        columns.norm_infinity(&mut ()).unwrap().bounds(),
+        Some((s + 1, s + 2))
+    );
+    one.0
+        + 3 * one.1
+        + 5 * infinity.0
+        + 7 * infinity.1
+        + 11 * measure_one.0
+        + 13 * measure_one.1
+        + 17 * measure_infinity.0
+        + 19 * measure_infinity.1
+}

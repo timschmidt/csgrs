@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian core, static affine images and bounded runtime chains implemented | broader composition clients, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian/affine carriers, norm ranges, logarithmic measures and dominance margins implemented | width/midpoint/radius, contraction/Jacobian helpers, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
@@ -1844,6 +1844,116 @@ Immutable evidence commit: `8e82e99b277564f434d34d38b065720020731b6e`, record
 24,482,321 bytes, SHA-256
 `7567ad6632e2f40051e98822d916b49a083b19209f29fae6dbb2743a7c592643`. This committed record was regenerated
 and verified before registration; all prior archive rows are preserved.
+
+## Phase 6 admission: norms, matrix measures and dominance margins
+
+Previous goal turn made progress: bounded runtime affine chains and evidence
+committed. Revalidated source `5336b85d2c23bb71c593e3e521435471a0ed4123`;
+all four managed repositories are clean on interval-refactor. Exact state and
+commands are staged under `/tmp/interval-refactor/lattice-norms`. No nested
+owning AGENTS instructions. Reuse inspection found scalar absolute value,
+maximum image, sum and difference for all six arithmetic backends; no Cartesian
+one/infinity norms, logarithmic matrix measures or dominance-margin helpers.
+
+Owner: Hyperlattice Cartesian linear structure, with all scalar arithmetic and
+resource accounting delegated to Hyperinterval. Properties P1–P3, P5–P6,
+P8–P11, P17–P20, P25–P27, P35–P39; plan §5.2. Domain: finite Cartesian vectors
+and rectangular matrix sets, including canonical empties and zero-dimensional
+unit products. Norm outputs enclose the full scalar norm range, not merely an
+upper bound. Matrix one/infinity norms are maximum absolute column/row sums.
+For square positive dimension, logarithmic measures are the maximum of signed
+diagonal plus absolute off-diagonal column/row sums. Diagonal-dominance margins
+are absolute diagonal minus absolute off-diagonal sums, as interval vectors.
+
+Rational/dyadic successful results are exact ranges because the independent
+Cartesian coordinates attain each term's extrema simultaneously; max reductions
+use disjoint rows/columns. Primitive sums may round outward or overflow. Empty
+input has empty image; unit products have zero norm. For nonempty 0×0 input,
+the norm-limit definition of a logarithmic measure tends to negative infinity;
+the finite output API reports scalar UnboundedImage, never a false zero. Zero
+size dominance vectors retain unit-product semantics. Negative measures must
+not be clamped by initializing their maximum to zero.
+
+No solver certificate/status, policy choice or implicit midpoint enters this
+layer. Outputs remain consumable as scalar/vector enclosures and retain typed
+errors. All dyadic scalar work uses one caller context, including owned copies;
+failed queries must leave inputs reusable. Loops are dimension bounded; primitive
+paths must allocate nothing. Rational heap/time, general cancellation and
+constructor/serde validation retain their existing disclosed limitations.
+
+Missing witnesses: independent exact minima/maxima of absolute values (including
+interior zero), signed measures on all-negative rows, nonsquare norm orientation,
+zero-sized/empty distinctions, dominance margin ranges, fractional/extreme inputs,
+shared exhaustion/retry, consumption of affine projection outputs, checked native
+replay and portable no-allocation clients. Existing arithmetic/predicate order and
+serializations must remain unchanged. Full Phase 6 and the 15-phase goal stay open.
+
+## Phase 6 norms and matrix measures: local qualification
+
+Vector and matrix `norm_one`/`norm_infinity`, square-matrix `measure_one`/
+`measure_infinity`, and `row_dominance_margins`/`column_dominance_margins` now
+return scalar/vector interval evidence through the shared Hyperlattice facade.
+The backend adds only pass-throughs for existing scalar absolute/max images.
+All prior scalar/Cartesian/affine arithmetic, serde and predicate order remain
+unchanged: 52 tracked source files are byte-identical, and the two existing
+source files edited contain additions only. No scalar algorithm was duplicated.
+
+The final owner suite passes 45 tests and three doctests. For all six backends,
+125 three-coordinate interval cases and 625 two-by-two interval cases compare
+full norm/measure/margin ranges against independent integer point enumeration.
+The intervals have integer endpoints and the absolute-value breakpoints are
+zero, so those witnesses attain the continuous piecewise-linear extrema;
+interior minima are checked, not just corner maxima. A nonsquare 2×3 case,
+negative measures, empty/unit products, all zero-dimension orientations, exact
+fractional rational answers, fixed extrema, IEEE subnormals and outward-rounded
+sums extend the corpus. Primitive overflow is explicit, including absolute-value
+and sum overflow; larger exact backends retain their own scalar contract.
+
+All eight reductions share dyadic work/size budgets. One-unit-short work limits
+fail, exact measured work succeeds, and retries preserve the original matrix.
+Margin-output then norm-input uses the same budget without reset. A fresh child
+replays matrix inputs, recomputes measures/margins, and replays/reuses output
+ranges. A retained affine `(x,1-x)` construction remains separate from its box:
+the projection norm is `[0,2]`, while further exact summation is `{1}`. No norm
+of a projected box is mislabeled as the exact correlated image's norm.
+
+All 44 selected checks pass: Rust 1.88/stable feature isolation and portable
+ARM/Wasm subsets, Rust 1.95 all features, release tests, Clippy with warnings
+denied, docs, fmt, four facade tests, four unchanged solver migration/dispatch
+tests, package listing and primitive dependency closure. ASan with leak detection
+passes the owner suite and fresh-process replays. LLVM reports 920/935 owner
+lines (98.40%), 1234/1300 regions (94.92%), and 182/182 functions; the new norms
+file has 117/122 lines and 193/212 regions. No branch denominator. Test,
+conformance, dependency and toolchain code are excluded; the annotated norm
+report and raw profiles are retained. The 100% and directed-fuzz targets remain
+open; this ASan run is the deterministic suite. Initial Clippy rejected a range
+index loop; direct row/column iteration fixed it without relaxing any lint.
+
+A standalone Rust 1.88 no_std Wasm consumer links with no imports/allocator.
+Its new norm/measure export passes 2,051 calls (255 distinct effective inputs),
+alongside all 73,836 runtime-chain and 4,102 existing static-export calls, each
+with an external one-million-fuel limit. Four-export artifact: 39,592 bytes,
+SHA-256 `d41badc0780d71a287e3522d8f90f3e14c7c022088ce50a518f2aeb7e1163df6`.
+Adding the export grows the previous three-export consumer by 11,292 bytes;
+these are different workloads, not a same-contract binary-size comparison.
+
+The cost probe records 640 samples: four backends, eight queries on dimension-4
+inputs, 20 samples of 128 completed operations after 64 warmups. Inputs are
+constructed outside timing and all returned scalar/vector outputs are consumed.
+Independent exact fixture expectations pass. Q16 and strict-f64 queries allocate
+zero. Dimension-4 vector/matrix inline bytes are 48/192 (Q16), 96/384 (f64),
+72/264 (rational), and 288/1152 (dyadic). These exclude heap and do not measure
+peak stack. Raw times, allocations, compiler/CPU, native probe size and hashes
+are retained; no speedup, uniform latency or full legacy-size claim.
+
+No production solver/firmware migration, implicit midpoint or policy decision
+was introduced. Width/midpoint/radius, contraction/Jacobian helpers, specialized
+kernels, measured client adoption, full legacy benchmarks/successive_operations/
+monomorphized-size gates and the remaining plan phases stay open. General
+cancellation and arbitrary rational heap/time bounds remain unimplemented;
+dimension and dyadic scalar budgets are not mislabeled as those bounds.
+No phase is complete and no push was attempted. Source/evidence registration
+pending for the norms checkpoint.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

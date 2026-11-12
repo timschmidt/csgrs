@@ -19,6 +19,7 @@
 mod affine;
 mod backend;
 mod matrix;
+mod norms;
 #[cfg(feature = "serde")]
 mod serde;
 mod vector;

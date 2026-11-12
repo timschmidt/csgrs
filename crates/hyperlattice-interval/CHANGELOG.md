@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add vector/matrix one and infinity norm ranges, logarithmic matrix measures
+  and row/column diagonal-dominance margins using shared scalar accounting.
+
 - Add bounded runtime affine chains, preserving exact maps and parameter-space
   restrictions through further operations and checked capacity-independent replay.
 

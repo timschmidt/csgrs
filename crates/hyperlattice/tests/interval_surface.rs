@@ -58,3 +58,25 @@ fn runtime_chain_is_the_shared_reexport() {
         Some(&[point(511)])
     );
 }
+
+#[test]
+fn interval_norm_and_measure_evidence_is_shared() {
+    let interval = |a: i32, b: i32| RationalInterval::new(a.into(), b.into()).unwrap();
+    let matrix = IntervalMatrix::new([
+        [interval(-4, -4), interval(1, 2)],
+        [interval(-1, 1), interval(-3, -3)],
+    ])
+    .unwrap();
+    assert_eq!(matrix.norm_one(&mut ()).unwrap(), interval(4, 5));
+    assert_eq!(matrix.norm_infinity(&mut ()).unwrap(), interval(5, 6));
+    assert_eq!(matrix.measure_one(&mut ()).unwrap(), interval(-2, -1));
+    assert_eq!(matrix.measure_infinity(&mut ()).unwrap(), interval(-3, -2));
+    assert_eq!(
+        matrix
+            .row_dominance_margins(&mut ())
+            .unwrap()
+            .norm_one(&mut ())
+            .unwrap(),
+        interval(4, 6)
+    );
+}
