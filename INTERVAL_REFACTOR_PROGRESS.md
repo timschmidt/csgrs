@@ -695,8 +695,12 @@ samples, compiler/hardware/build flags and executable identity are retained.
 Source distribution, broader consumer migrations, rational/signed powers and
 all subsequent elementary functions remain unfinished.
 
-Raw evidence staging: `/tmp/interval-refactor/elementary-order`; archive record
-`2026-11-12-interval-elementary-order` is pending registration. No push occurred.
+Implementation: `435be1e85b2ffa884b08e50da6ac2d1f66edfd91`. Evidence record
+`2026-11-12-interval-elementary-order` is archived at
+`6e447153d623d62cddfd52717f2e9a148d07520b`: 477 files, 102,465,598 bytes,
+SHA-256 `a5b6b9d2b1acb8f209179afcf948f6ef38ecb7bc3df81bb7e79ef13c4fad896e`.
+Scoped verification passes and every prior manifest row is preserved. Both
+commits are local; no push occurred.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
