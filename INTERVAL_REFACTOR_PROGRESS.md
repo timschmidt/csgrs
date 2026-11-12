@@ -1178,9 +1178,15 @@ coverage. All 660 timing samples complete, including unbounded sources and
 huge/tiny finite inputs. The crate PERFORMANCE.md reports all group medians;
 raw work units, host/compiler metadata and whole-probe size remain in evidence.
 
-Source/archive registration is pending. Actual heap-byte bounds, cancellation,
-remaining elementary backends/functions, split images, consumer migrations,
-full coverage and release qualification remain open.
+Implementation is committed as `dc953d7bb9d24ff1a3ec1f05a337830a2fd16786`.
+The `2026-11-12-interval-arctangent` evidence record is committed at
+`7c97c5ad4db227316b4b05066871939b2f4522f3` with 219 files,
+63,298,632 bytes and record SHA-256
+`5c51eb4dbf70ed02877bedad259749fa21c778a400240c5b83c92693e24533f9`.
+The committed archive digest is verified and registered in
+`docs/evidence-archive.tsv`. Actual heap-byte bounds, cancellation, remaining
+elementary backends/functions, split images, consumer migrations, full coverage
+and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
