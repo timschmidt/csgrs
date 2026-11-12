@@ -2619,12 +2619,22 @@ version = "0.7.0"
 dependencies = [
  "arbitrary",
  "criterion 0.7.0",
+ "hyperlattice-interval",
  "hyperreal",
  "proptest",
  "rug",
  "serde",
  "serde_json",
  "symbolica",
+]
+
+[[package]]
+name = "hyperlattice-interval"
+version = "0.1.0"
+dependencies = [
+ "hyperinterval",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

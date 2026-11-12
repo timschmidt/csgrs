@@ -5,6 +5,8 @@ on:
     branches: ["**"]
     paths:
       - "crates/hyperlattice/**"
+      - "crates/hyperlattice-interval/**"
+      - "crates/hyperinterval/**"
       - "crates/hyperreal/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -12,6 +14,8 @@ on:
   pull_request:
     paths:
       - "crates/hyperlattice/**"
+      - "crates/hyperlattice-interval/**"
+      - "crates/hyperinterval/**"
       - "crates/hyperreal/**"
       - "Cargo.toml"
       - "Cargo.lock"
@@ -77,3 +81,49 @@ jobs:
       - name: Check fuzz targets
         if: matrix.backend.name == 'default'
         run: cargo check --manifest-path fuzz/Cargo.toml --bins
+
+  interval-core:
+    name: Interval core (Rust ${{ matrix.rust }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.88.0", stable]
+    env:
+      LATTICE_RUST: ${{ matrix.rust }}
+      LATTICE_FEATURES: ${{ matrix.rust == '1.88.0' && 'fixed,dyadic,float-enclosure,serde' || 'fixed,dyadic,rational,float-enclosure,serde' }}
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install compiler and targets
+        run: rustup toolchain install "$LATTICE_RUST" --profile minimal --component clippy --component rustfmt --target thumbv7em-none-eabihf --target wasm32-unknown-unknown
+      - name: Check isolated features and composition
+        run: |
+          cargo +"$LATTICE_RUST" fmt -p hyperlattice-interval -- --check
+          rustfmt +"$LATTICE_RUST" --edition 2024 --check crates/hyperlattice-interval/conformance/no_alloc_wasm.rs
+          for features in '' fixed dyadic float-enclosure serde fixed,serde dyadic,serde float-enclosure,serde; do
+            cargo +"$LATTICE_RUST" test --locked -p hyperlattice-interval --no-default-features --features "$features"
+          done
+          if [ "$LATTICE_RUST" != 1.88.0 ]; then
+            cargo +"$LATTICE_RUST" test --locked -p hyperlattice-interval --features rational,serde
+          fi
+          cargo +"$LATTICE_RUST" test --locked -p hyperlattice-interval --all-targets --features "$LATTICE_FEATURES"
+          cargo +"$LATTICE_RUST" clippy --locked -p hyperlattice-interval --all-targets --no-default-features -- -D warnings
+          cargo +"$LATTICE_RUST" clippy --locked -p hyperlattice-interval --all-targets --features "$LATTICE_FEATURES" -- -D warnings
+      - name: Check embedded dependency closure
+        run: |
+          cargo +"$LATTICE_RUST" tree --locked -p hyperlattice-interval --no-default-features --features fixed,float-enclosure --edges normal --prefix none > lattice-dependencies.txt
+          test "$(wc -l < lattice-dependencies.txt)" -eq 2
+          for target in thumbv7em-none-eabihf wasm32-unknown-unknown; do
+            cargo +"$LATTICE_RUST" check --locked -p hyperlattice-interval --target "$target" --no-default-features --features fixed,float-enclosure,serde
+            cargo +"$LATTICE_RUST" check --locked -p hyperlattice-interval --target "$target" --no-default-features --features dyadic,serde
+          done
+      - name: Build interval API documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo +"$LATTICE_RUST" doc --locked -p hyperlattice-interval --no-deps --features "$LATTICE_FEATURES"

@@ -349,3 +349,13 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --all-features
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+## Interval algebra
+
+Enable `interval-fixed`, `interval-dyadic`, `interval-rational`, or
+`interval-float-enclosure` for `IntervalVector`, `IntervalMatrix` and `BoxN`.
+These are Cartesian enclosures with explicit empty sets, checked scalar
+arithmetic and shared dyadic budgets. Scalar backends are available under
+`hyperlattice::interval::hyperinterval`. The same implementation is available
+in `hyperlattice-interval` for Rust 1.88 `no_std` firmware; the existing
+Hyperreal-backed Hyperlattice API still requires Rust 1.95.

@@ -36,6 +36,15 @@
 
 #![warn(missing_docs)]
 
+/// Cartesian interval algebra. The companion package also provides the
+/// allocation-free Rust 1.88 dependency path for firmware consumers.
+#[cfg(feature = "interval")]
+pub use hyperlattice_interval as interval;
+#[cfg(feature = "interval")]
+pub use hyperlattice_interval::{
+    BoxN, IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector,
+};
+
 pub use hyperreal::{
     DomainFacts, DomainStatus, ExpressionDegree, MagnitudeBits, Rational, RationalStorageClass,
     Real, RealExactSetDenominatorKind, RealExactSetDyadicExponentClass, RealExactSetFacts,

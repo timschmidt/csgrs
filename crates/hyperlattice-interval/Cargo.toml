@@ -1,0 +1,38 @@
+[package]
+name = "hyperlattice-interval"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Fixed-size Cartesian interval algebra for Hyperlattice and no_std consumers"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/csgrs"
+readme = "README.md"
+include = ["/src/**", "/examples/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+categories = ["mathematics", "no-std", "embedded"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = []
+fixed = ["hyperinterval/fixed"]
+dyadic = ["hyperinterval/dyadic"]
+rational = ["hyperinterval/rational"]
+float-enclosure = ["hyperinterval/float-enclosure"]
+serde = ["dep:serde", "hyperinterval/serde"]
+
+[dependencies]
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false }
+serde = { version = "1.0", default-features = false, optional = true }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[[example]]
+name = "fixed_affine"
+required-features = ["fixed"]
+
+[[example]]
+name = "linear_cost"
+path = "conformance/linear_cost.rs"
+required-features = ["fixed", "rational", "dyadic", "float-enclosure"]

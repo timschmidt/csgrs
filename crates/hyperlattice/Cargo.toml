@@ -19,6 +19,7 @@ all-features = true
 
 [dependencies]
 hyperreal = { version = "0.14.0", path = "../hyperreal" }
+hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", default-features = false, optional = true }
 arbitrary = { version = "1", features = ["derive"], optional = true }
 serde = { version = "1", features = ["derive"], optional = true }
 
@@ -33,7 +34,12 @@ symbolica = "1.5.0"
 default = []
 hyperreal-dispatch-trace = ["hyperreal/dispatch-trace"]
 arbitrary = ["dep:arbitrary"]
-serde = ["dep:serde", "hyperreal/serde"]
+serde = ["dep:serde", "hyperreal/serde", "hyperlattice-interval?/serde"]
+interval = ["dep:hyperlattice-interval"]
+interval-fixed = ["interval", "hyperlattice-interval/fixed"]
+interval-dyadic = ["interval", "hyperlattice-interval/dyadic"]
+interval-rational = ["interval", "hyperlattice-interval/rational"]
+interval-float-enclosure = ["interval", "hyperlattice-interval/float-enclosure"]
 
 [[example]]
 name = "readme_quickstart"

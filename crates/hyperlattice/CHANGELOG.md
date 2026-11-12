@@ -52,6 +52,10 @@
 
 ### Added
 
+- Add optional Cartesian `IntervalVector`, `IntervalMatrix` and `BoxN`
+  re-exports from the Rust 1.88 `no_std` `hyperlattice-interval` companion.
+  Backend features are additive; existing no-default Real APIs remain available.
+
 - `Complex::jacobi_sncndn` and `Complex::jacobi_epsilon` evaluate Jacobi's
   sn, cn, dn and epsilon at complex arguments for a real parameter `m < 1`,
   including negative parameters. Poles return `Problem::DivideByZero` and an

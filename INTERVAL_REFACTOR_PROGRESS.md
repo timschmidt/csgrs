@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | not started | component oracles and allocation/cost evidence |
+| 6 lattice | Cartesian core implemented and locally qualified | exact affine correlation, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
@@ -1520,6 +1520,108 @@ SHA-256 `1b2ebd6f32b5d317c8c98d6b8af8428cadac9203c616e3bfe9a26b0010d46cf6`.
 The committed record was regenerated and independently verified before registration.
 Phase 5 qualification gaps and all
 remaining plan phases require their own completion evidence.
+
+## Phase 6 admission: Cartesian interval algebra and dependency boundary
+
+Before production edits, revision `a76acf1ac83c6532e72279ced05305dd29181e5d`
+reproduces absent `IntervalVector`/`IntervalMatrix` imports and fails Rust 1.88
+`cargo check -p hyperlattice --no-default-features --lib`: both Hyperlattice
+and its unconditional Hyperreal dependency require Rust 1.95. The normal
+no-default dependency tree includes Hyperreal and allocating numeric crates.
+Hypersolve and fuzz consumers already use Hyperlattice with defaults disabled;
+removing their existing Real API behind a new default feature would break them.
+This is the dependency evidence required by plan §2.3 to permit a production
+split. A Rust 1.88, no_std `hyperlattice-interval` companion will hold the single
+interval-linear implementation, re-exported additively from Hyperlattice. The
+legacy scalar/linear implementation and its feature behavior stay intact.
+
+Owner: Hyperlattice for Cartesian structure; Hyperinterval for all scalar
+arithmetic, set relations, and backend qualification. Relevant contracts:
+P1, P3, P6, P17–P20, P25, P26, P35–P39. Domain: fixed-size Cartesian products
+of validated finite real intervals (fixed i32/i64, rational, dyadic, qualified
+strict floats), including canonical empty and zero-dimensional unit products.
+An empty lane canonicalizes the entire product to empty. No scalar midpoint
+or point equality is inferred from an interval. Matrix/vector products and
+component hulls return explicit enclosures: their coordinates need not be
+independent in the source image. A coordinate affine enclosure does not satisfy
+the separate planned exact correlated affine-image carrier requirement.
+
+Missing acceptance witnesses: independent exact corner oracles for dot and
+matrix products, fixed outward rounding and overflow, empty/unit distinctions,
+serde validation for arbitrary const dimensions, consumed output chains,
+shared dyadic budget exhaustion and retry, primitive no-allocation/MSRV and
+embedded build, unchanged legacy tests/source/dispatch. Dyadic scalar work and
+size accounting must span every lane and nested product; it is not a wall-time,
+heap-byte or cancellation bound. Rational arithmetic remains explicitly
+unbounded. Primitive work is bounded by dimensions and fixed-width kernels;
+stack storage grows with dimensions. No partial numerical result is published
+on scalar failure. Explicit cloning/serialization are caller-owned work.
+
+Raw staging: `/tmp/interval-refactor/lattice-core`. The first legacy baseline
+was contaminated by a temporary compile-fail witness and is retained separately;
+it is not correctness evidence. The clean rerun on unchanged legacy source
+passed all 240 tests; the additive API run passed those 240 plus its new surface
+witness. Phase 6 remains open for its full advertised operation,
+measurement, solver/firmware consumer and exact-affine obligations.
+
+## Phase 6 Cartesian foundation: executed local qualification
+
+Implemented one sealed adapter to existing Hyperinterval scalar operations and
+inline `IntervalVector`, `IntervalMatrix`, and `BoxN` carriers. Construction,
+component relations, addition/subtraction, dot and matrix products, affine
+**enclosures**, transpose, projections, and arbitrary-dimension serde share the
+same authority through Hyperlattice's additive re-exports. No legacy numerical
+source or scalar kernel changed: a byte comparison covers 47 source files,
+subtracting only the new re-export block from Hyperlattice's lib.rs.
+
+The independent exact corner oracle exhausts 1,296 two-lane interval input
+combinations and 2,916 point-matrix/box combinations per scalar backend (i32,
+i64, rational, dyadic, strict f32 and strict f64). It checks dot, 1x1 and 2x2
+matrix products, affine enclosures, and subsequent products. Another 50,625
+fixed fractional cases check outward bounds against exact integer numerators.
+The 12 maintained tests also cover empty/unit products, invalid scales and
+indices, rounding/overflow, shared budgets and retry, owned-copy accounting,
+malformed replay, dimensions above 32, and allocation-free primitive chains.
+The final deterministic suite passes ASan with leak detection; this is not a
+claim of a directed fuzz campaign or universal proof.
+
+Final feature checks pass on Rust 1.88 and stable, plus the all-feature suite
+on 1.95; no-default and all-enabled Clippy, release tests, docs with warnings
+as errors, fmt and pedantic strict-collection zizmor pass. Hyperlattice's
+all-feature tests pass (241), its all-target Clippy and no-default API build
+pass, and all four Hypersolve interval migration differential/dispatch tests
+pass. ARM thumbv7em and wasm32 subsets check under both 1.88 and stable.
+Primitive normal dependency closure contains exactly the companion and
+Hyperinterval. A clean Rust 1.88 no_std Wasm cdylib links with no global
+allocator and no imports; Wasmtime 50.0.1 verifies 2,049 calls covering 513
+unique clamped inputs. Package listing includes the public source, licenses,
+README and runnable fixed example; registry publication is not established.
+
+Final owner-only instrumentation reports 472/483 executable lines (97.72%),
+605/639 regions (94.68%) and 101/101 functions. There is no measured branch
+denominator. Dependencies, tests, conformance and toolchain code are excluded;
+initial reports/profiles are preserved alongside the final report. The 100%
+coverage and full qualification targets remain open.
+
+A paired scalar-loop/control probe records 200 raw samples: 20 samples per
+path across five completed 2x2 product cases, each with 128 materialized and
+dropped outputs after 64 warmups. Both primitive cases allocate zero; rational
+and dyadic cases match their controls' allocation counts. Median Cartesian
+latencies are approximately 158 ns (fixed Q16), 1.86 us (strict f64), 1.57 us
+(small rational), 1.15 us (97-bit rational numerators), and 6.02 us (dyadic).
+Small/wide rational rows are slower than controls in this run; no speedup,
+firmware cycle, HIL, stack bound, or legacy Real benchmark claim is made.
+The probe ran on a shared host with concurrent validation, not an isolated
+performance machine. This additive capability is retained for its contract
+extension; it is not a behavior-preserving numerical refactor.
+
+Outstanding Phase 6 work includes exact correlated affine carriers, widths and
+widest axes, midpoint/radius forms, norms and matrix measures, contraction and
+Krawczyk helpers, measured specializations/facts and full consumer acceptance.
+Legacy Real benchmark/monomorphized-size and successive-operation comparisons
+remain part of the full phase gate. No solver or firmware production migration
+has occurred in this checkpoint. No phase or overall goal is complete, and no
+push was attempted. Source and immutable evidence registration: pending.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
