@@ -2,13 +2,15 @@ use crate::{IntervalError, SignSet};
 
 // Private generic machinery: downstream types cannot use it to assert
 // certified endpoint semantics. Public backends seal their endpoint traits.
+// All admitted endpoints are totally ordered; Rational exposes that exact
+// ordering through PartialOrd rather than implementing Rust's Ord trait.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub(crate) struct Bounds<T> {
     lower: T,
     upper: T,
 }
 
-impl<T: Copy + Ord> Bounds<T> {
+impl<T: PartialOrd> Bounds<T> {
     pub(crate) fn new(lower: T, upper: T) -> Result<Self, IntervalError> {
         if lower > upper {
             Err(IntervalError::ReversedEndpoints)
@@ -17,9 +19,12 @@ impl<T: Copy + Ord> Bounds<T> {
         }
     }
 
-    pub(crate) fn point(value: T) -> Self {
+    pub(crate) fn point(value: T) -> Self
+    where
+        T: Clone,
+    {
         Self {
-            lower: value,
+            lower: value.clone(),
             upper: value,
         }
     }
@@ -28,6 +33,33 @@ impl<T: Copy + Ord> Bounds<T> {
         (self.lower, self.upper)
     }
 
+    #[cfg(any(feature = "rational", feature = "dyadic"))]
+    pub(crate) fn as_refs(&self) -> Bounds<&T> {
+        Bounds {
+            lower: &self.lower,
+            upper: &self.upper,
+        }
+    }
+
+    // Callers must establish order algebraically before using this private
+    // constructor. Public ingress always uses new().
+    #[cfg(feature = "rational")]
+    pub(crate) fn ordered(lower: T, upper: T) -> Self {
+        Self { lower, upper }
+    }
+}
+
+#[cfg(feature = "rational")]
+impl<T: Clone> Bounds<&T> {
+    pub(crate) fn cloned(self) -> Bounds<T> {
+        Bounds {
+            lower: self.lower.clone(),
+            upper: self.upper.clone(),
+        }
+    }
+}
+
+impl<T: Copy + PartialOrd> Bounds<T> {
     pub(crate) fn is_singleton(self) -> bool {
         self.lower == self.upper
     }
@@ -50,13 +82,33 @@ impl<T: Copy + Ord> Bounds<T> {
 
     pub(crate) fn hull(self, other: Self) -> Self {
         Self {
-            lower: self.lower.min(other.lower),
-            upper: self.upper.max(other.upper),
+            lower: if self.lower <= other.lower {
+                self.lower
+            } else {
+                other.lower
+            },
+            upper: if self.upper >= other.upper {
+                self.upper
+            } else {
+                other.upper
+            },
         }
     }
 
     pub(crate) fn intersection(self, other: Self) -> Option<Self> {
-        Self::new(self.lower.max(other.lower), self.upper.min(other.upper)).ok()
+        Self::new(
+            if self.lower >= other.lower {
+                self.lower
+            } else {
+                other.lower
+            },
+            if self.upper <= other.upper {
+                self.upper
+            } else {
+                other.upper
+            },
+        )
+        .ok()
     }
 
     pub(crate) fn signs(self, zero: T) -> SignSet {
@@ -76,6 +128,7 @@ impl<T: Copy + Ord> Bounds<T> {
 
 // The two concrete families share set relations, not arithmetic or scalar
 // decisions. All constructors and serialization remain family-specific.
+#[cfg(any(feature = "integer", feature = "fixed"))]
 macro_rules! set_relations {
     () => {
         /// Whether this set is empty.
@@ -178,4 +231,5 @@ macro_rules! set_relations {
     };
 }
 
+#[cfg(any(feature = "integer", feature = "fixed"))]
 pub(crate) use set_relations;

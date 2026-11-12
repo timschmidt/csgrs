@@ -31,9 +31,10 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        rust: ["1.88.0", stable]
+        rust: ["1.88.0", "1.95.0", stable]
     env:
       INTERVAL_RUST: ${{ matrix.rust }}
+      INTERVAL_FEATURES: ${{ matrix.rust == '1.88.0' && 'integer,fixed,dyadic,serde' || 'integer,fixed,real-ball,serde,dispatch-trace' }}
     defaults:
       run:
         shell: bash
@@ -46,19 +47,24 @@ jobs:
         run: rustup toolchain install "$INTERVAL_RUST" --profile minimal --component clippy --component rustfmt
       - name: Check feature isolation and laws
         run: |
-          for features in '' integer fixed integer,fixed serde integer,serde fixed,serde alloc std; do
+          for features in '' integer fixed integer,fixed serde integer,serde fixed,serde alloc std bigint dyadic dyadic,serde; do
             cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
           done
-          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --all-targets --all-features
-          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --doc --all-features
+          if [ "$INTERVAL_RUST" != 1.88.0 ]; then
+            for features in rational rational,serde rational,dyadic hyperreal real-ball; do
+              cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
+            done
+          fi
+          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --all-targets --features "$INTERVAL_FEATURES"
+          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --doc --features "$INTERVAL_FEATURES"
       - name: Check formatting and lint
         run: |
           cargo +"$INTERVAL_RUST" fmt -p hyperinterval -- --check
-          cargo +"$INTERVAL_RUST" clippy --locked -p hyperinterval --all-targets --all-features -- -D warnings
+          cargo +"$INTERVAL_RUST" clippy --locked -p hyperinterval --all-targets --features "$INTERVAL_FEATURES" -- -D warnings
       - name: Build documentation
         env:
           RUSTDOCFLAGS: -D warnings
-        run: cargo +"$INTERVAL_RUST" doc --locked -p hyperinterval --no-deps --all-features
+        run: cargo +"$INTERVAL_RUST" doc --locked -p hyperinterval --no-deps --features "$INTERVAL_FEATURES"
       - name: Verify firmware dependency closure
         run: |
           cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt
@@ -85,11 +91,12 @@ jobs:
           persist-credentials: false
       - name: Install minimum compiler and target
         run: rustup toolchain install 1.88.0 --profile minimal --target "$INTERVAL_TARGET"
-      - name: Build allocation-free core
+      - name: Build primitive and allocation-enabled no_std subsets
         run: |
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed,serde
+          cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features dyadic,serde
 
   sanitizer:
     name: Bounded ASan interval campaigns
@@ -109,6 +116,7 @@ jobs:
           cargo install cargo-fuzz --version 0.13.2 --locked
       - name: Run constructor and arithmetic campaigns
         run: |
-          mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic"
+          mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
+          cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112

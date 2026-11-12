@@ -1,0 +1,555 @@
+use crate::bounds::Bounds;
+use crate::{IntervalError, SignSet};
+use num_bigint::BigInt;
+use num_integer::Integer;
+use num_traits::Zero;
+
+/// Caller-owned accounting for dyadic arithmetic and directed conversions.
+///
+/// Each stage reserves an upper bound `n` on its input/output magnitude bits.
+/// Linear stages cost `n` units; product/division stages cost `n*n` units.
+/// The formulas deliberately overestimate small or cancelling results. A size
+/// limit bounds each reservation; a work limit bounds their cumulative cost.
+/// Both limits are checked before the corresponding allocation/arithmetic.
+/// These are deterministic accounting units, not CPU cycles, allocation bytes,
+/// or an instruction-count proof for the BigInt implementation. Caller-owned
+/// inputs, constructor normalization and Hyperreal evaluation are outside this
+/// accounting. There is no cache, and a fresh budget permits an independent retry.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DyadicBudget {
+    max_bits: u64,
+    remaining_work: u64,
+}
+
+impl DyadicBudget {
+    /// Sets the maximum reserved magnitude bits and cumulative work units.
+    pub const fn new(max_bits: u64, work_units: u64) -> Self {
+        Self {
+            max_bits,
+            remaining_work: work_units,
+        }
+    }
+
+    /// Maximum magnitude-bit reservation for an individual stage.
+    pub const fn max_bits(&self) -> u64 {
+        self.max_bits
+    }
+
+    /// Unconsumed deterministic work units.
+    pub const fn remaining_work(&self) -> u64 {
+        self.remaining_work
+    }
+
+    pub(crate) fn reserve(
+        &mut self,
+        bits: u64,
+        stages: u64,
+        quadratic: bool,
+    ) -> Result<(), IntervalError> {
+        if bits > self.max_bits {
+            return Err(IntervalError::SizeExhausted);
+        }
+        let cost = bits
+            .max(1)
+            .checked_mul(if quadratic { bits.max(1) } else { 1 })
+            .and_then(|c| c.checked_mul(stages))
+            .ok_or(IntervalError::WorkExhausted)?;
+        self.remaining_work = self
+            .remaining_work
+            .checked_sub(cost)
+            .ok_or(IntervalError::WorkExhausted)?;
+        Ok(())
+    }
+}
+
+/// An exact closed real interval `[lower, upper] * 2^exponent`, or empty.
+///
+/// Endpoints share a signed 32-bit exponent. Common powers of two are removed
+/// up to the exponent's maximum; zero and empty have canonical exponent zero.
+/// Normalization preserves the set, not the originally requested grid tag.
+/// Arithmetic is exact except explicitly outward-rounded division/regridding.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct DyadicInterval {
+    bounds: Option<Bounds<BigInt>>,
+    exponent: i32,
+}
+
+impl DyadicInterval {
+    /// Validates order and normalizes caller-owned mantissas without growing them.
+    /// This ingress operation has no work budget; input parsing limits belong to
+    /// the caller. Arithmetic methods require a separate explicit budget.
+    pub fn new(lower: BigInt, upper: BigInt, exponent: i32) -> Result<Self, IntervalError> {
+        let bounds = Bounds::new(lower, upper)?;
+        let (mut lower, mut upper) = bounds.endpoints();
+        if lower.is_zero() && upper.is_zero() {
+            return Ok(Self {
+                bounds: Some(Bounds::point(BigInt::zero())),
+                exponent: 0,
+            });
+        }
+        let shift = lower
+            .trailing_zeros()
+            .unwrap_or(u64::MAX)
+            .min(upper.trailing_zeros().unwrap_or(u64::MAX))
+            .min((i64::from(i32::MAX) - i64::from(exponent)) as u64);
+        // shift is bounded by a nonzero input's already allocated bit length.
+        let shift = usize::try_from(shift).map_err(|_| IntervalError::Overflow)?;
+        lower >>= shift;
+        upper >>= shift;
+        Ok(Self {
+            bounds: Some(Bounds::new(lower, upper)?),
+            exponent: (i64::from(exponent) + shift as i64) as i32,
+        })
+    }
+
+    /// The canonical empty set.
+    pub const fn empty() -> Self {
+        Self {
+            bounds: None,
+            exponent: 0,
+        }
+    }
+
+    /// An exact singleton, normalized like `new`.
+    pub fn point(mantissa: BigInt, exponent: i32) -> Result<Self, IntervalError> {
+        Self::new(mantissa.clone(), mantissa, exponent)
+    }
+
+    /// Whether this set is empty.
+    pub fn is_empty(&self) -> bool {
+        self.bounds.is_none()
+    }
+
+    /// Whether this set contains exactly one real value.
+    pub fn is_singleton(&self) -> bool {
+        self.bounds
+            .as_ref()
+            .is_some_and(|b| b.as_refs().is_singleton())
+    }
+
+    /// Exact common-scale mantissas and exponent; `None` for empty.
+    pub fn bounds(&self) -> Option<(&BigInt, &BigInt, i32)> {
+        self.bounds.as_ref().map(|b| {
+            let (a, b) = b.as_refs().endpoints();
+            (a, b, self.exponent)
+        })
+    }
+
+    /// Signs of members, independent of the positive power-of-two scale.
+    pub fn signs(&self) -> SignSet {
+        self.bounds
+            .as_ref()
+            .map_or(SignSet::Empty, |b| b.as_refs().signs(&BigInt::zero()))
+    }
+
+    fn bits(&self) -> u64 {
+        self.bounds().map_or(0, |(a, b, _)| a.bits().max(b.bits()))
+    }
+
+    // Align exactly to a no-coarser grid. Reserve before cloning or shifting.
+    fn align(
+        &self,
+        exponent: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<Option<Bounds<BigInt>>, IntervalError> {
+        let Some((a, b, e)) = self.bounds() else {
+            return Ok(None);
+        };
+        let shift = u64::try_from(i64::from(e) - i64::from(exponent))
+            .map_err(|_| IntervalError::InvalidScale)?;
+        let bits = self
+            .bits()
+            .checked_add(shift)
+            .ok_or(IntervalError::SizeExhausted)?;
+        budget.reserve(bits, 2, false)?;
+        let shift = usize::try_from(shift).map_err(|_| IntervalError::Overflow)?;
+        Ok(Some(Bounds::new(a << shift, b << shift)?))
+    }
+
+    /// Outward enclosure on the grid `2^precision`; finer grids preserve the set.
+    ///
+    /// The result is normalized, so its stored exponent may be larger than
+    /// `precision`. Precision specifies spacing, not a bound on interval width.
+    pub fn regrid(&self, precision: i32, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let Some((a, b, e)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        if precision <= e {
+            let (a, b) = self
+                .align(precision, budget)?
+                .expect("nonempty input")
+                .endpoints();
+            return Self::new(a, b, precision);
+        }
+        budget.reserve(self.bits(), 4, false)?;
+        let shift = usize::try_from(i64::from(precision) - i64::from(e))
+            .map_err(|_| IntervalError::Overflow)?;
+        // Arithmetic right shift is floor division. Negation gives the ceiling
+        // without allocating a potentially enormous power-of-two denominator.
+        Self::new(a >> shift, -((-b) >> shift), precision)
+    }
+
+    /// Exact sum on a shared grid, with bounded shift reservations.
+    pub fn add(&self, other: &Self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.add_sub(other, budget, false)
+    }
+
+    /// Exact Minkowski difference; inputs are independent sets.
+    pub fn sub(&self, other: &Self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.add_sub(other, budget, true)
+    }
+
+    fn add_sub(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+        subtract: bool,
+    ) -> Result<Self, IntervalError> {
+        if self.is_empty() || other.is_empty() {
+            return Ok(Self::empty());
+        }
+        let exponent = self.exponent.min(other.exponent);
+        let (a, b) = self
+            .align(exponent, budget)?
+            .expect("nonempty input")
+            .endpoints();
+        let (c, d) = other
+            .align(exponent, budget)?
+            .expect("nonempty input")
+            .endpoints();
+        budget.reserve(
+            a.bits()
+                .max(b.bits())
+                .max(c.bits())
+                .max(d.bits())
+                .saturating_add(1),
+            2,
+            false,
+        )?;
+        if subtract {
+            Self::new(a - d, b - c, exponent)
+        } else {
+            Self::new(a + c, b + d, exponent)
+        }
+    }
+
+    /// Exact reflected set.
+    pub fn neg(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let Some((a, b, e)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        budget.reserve(self.bits(), 2, false)?;
+        Self::new(-b, -a, e)
+    }
+
+    /// Exact product hull. Exponent overflow is a storage failure, never wrapping.
+    pub fn mul(&self, other: &Self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let (Some((a, b, e)), Some((c, d, f))) = (self.bounds(), other.bounds()) else {
+            return Ok(Self::empty());
+        };
+        if self.signs() == SignSet::Zero || other.signs() == SignSet::Zero {
+            return Self::point(BigInt::zero(), 0);
+        }
+        let exponent = e.checked_add(f).ok_or(IntervalError::Overflow)?;
+        budget.reserve(self.bits().saturating_add(other.bits()), 4, true)?;
+        let products = [a * c, a * d, b * c, b * d];
+        let lower = products.iter().min().expect("four products").clone();
+        let upper = products.into_iter().max().expect("four products");
+        Self::new(lower, upper, exponent)
+    }
+
+    /// Outward quotient hull on grid `2^precision`.
+    ///
+    /// Rejects a zero-containing denominator even for an empty numerator.
+    /// All four rational endpoint quotients are rounded by exact integer
+    /// floor/ceiling division; no approximate reciprocal is used.
+    pub fn div(
+        &self,
+        other: &Self,
+        precision: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        if other.signs().contains_zero() {
+            return Err(IntervalError::ContainsZero);
+        }
+        let (Some((a, b, e)), Some((c, d, f))) = (self.bounds(), other.bounds()) else {
+            return Ok(Self::empty());
+        };
+        let shift = i64::from(e) - i64::from(f) - i64::from(precision);
+        let mut range: Option<(BigInt, BigInt)> = None;
+        for (n, d) in [(a, c), (a, d), (b, c), (b, d)] {
+            let (lo, hi) = scaled_quotient(n, d, shift, budget)?;
+            range = Some(match range {
+                None => (lo, hi),
+                Some((a, b)) => (a.min(lo), b.max(hi)),
+            });
+        }
+        let (lower, upper) = range.expect("four quotients");
+        Self::new(lower, upper, precision)
+    }
+
+    /// Exact hull, charging for common-grid alignment and retained mantissas.
+    pub fn hull(&self, other: &Self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let exponent = if self.is_empty() {
+            other.exponent
+        } else if other.is_empty() {
+            self.exponent
+        } else {
+            self.exponent.min(other.exponent)
+        };
+        let a = self.align(exponent, budget)?;
+        let b = other.align(exponent, budget)?;
+        match (a, b) {
+            (Some(a), Some(b)) => {
+                let (lo, hi) = a.as_refs().hull(b.as_refs()).endpoints();
+                budget.reserve(lo.bits().max(hi.bits()), 2, false)?;
+                Self::new(lo.clone(), hi.clone(), exponent)
+            }
+            (a, b) => match a.or(b) {
+                Some(b) => {
+                    let (a, b) = b.endpoints();
+                    Self::new(a, b, exponent)
+                }
+                None => Ok(Self::empty()),
+            },
+        }
+    }
+
+    /// Exact intersection, or canonical empty when disjoint.
+    pub fn intersection(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        if self.is_empty() || other.is_empty() {
+            return Ok(Self::empty());
+        }
+        let exponent = self.exponent.min(other.exponent);
+        let a = self.align(exponent, budget)?.expect("nonempty input");
+        let b = other.align(exponent, budget)?.expect("nonempty input");
+        match a.as_refs().intersection(b.as_refs()) {
+            None => Ok(Self::empty()),
+            Some(bounds) => {
+                let (lo, hi) = bounds.endpoints();
+                budget.reserve(lo.bits().max(hi.bits()), 2, false)?;
+                Self::new(lo.clone(), hi.clone(), exponent)
+            }
+        }
+    }
+
+    /// Exact set inclusion, with explicit alignment accounting.
+    pub fn subset_of(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<bool, IntervalError> {
+        self.relation(other, budget, false, false)
+    }
+
+    /// Exact strict-endpoint inclusion in the real interior; empty is included.
+    pub fn interior_subset_of(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<bool, IntervalError> {
+        self.relation(other, budget, true, false)
+    }
+
+    /// Whether both sets are nonempty and this set lies strictly to the left.
+    pub fn strictly_left_of(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<bool, IntervalError> {
+        self.relation(other, budget, false, true)
+    }
+
+    fn relation(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+        interior: bool,
+        left: bool,
+    ) -> Result<bool, IntervalError> {
+        if self.is_empty() {
+            return Ok(!left);
+        }
+        if other.is_empty() {
+            return Ok(false);
+        }
+        let exponent = self.exponent.min(other.exponent);
+        let a = self.align(exponent, budget)?.expect("nonempty input");
+        let b = other.align(exponent, budget)?.expect("nonempty input");
+        Ok(if left {
+            a.as_refs().left_of(b.as_refs())
+        } else if interior {
+            a.as_refs().interior_subset(b.as_refs())
+        } else {
+            a.as_refs().subset(b.as_refs())
+        })
+    }
+}
+
+// Exact floor/ceiling of (numerator / denominator) * 2^shift.
+// Guard bit growth before constructing either scaled operand.
+pub(crate) fn scaled_quotient(
+    n: &BigInt,
+    d: &BigInt,
+    shift: i64,
+    budget: &mut DyadicBudget,
+) -> Result<(BigInt, BigInt), IntervalError> {
+    if d.is_zero() {
+        return Err(IntervalError::ContainsZero);
+    }
+    let n_bits = n
+        .bits()
+        .saturating_add(if shift >= 0 { shift as u64 } else { 0 });
+    let d_bits = d
+        .bits()
+        .saturating_add(if shift < 0 { shift.unsigned_abs() } else { 0 });
+    budget.reserve(n_bits.max(d_bits).saturating_add(1), 4, true)?;
+    let amount = usize::try_from(shift.unsigned_abs()).map_err(|_| IntervalError::Overflow)?;
+    let (n, d) = if shift >= 0 {
+        (n << amount, d.clone())
+    } else {
+        (n.clone(), d << amount)
+    };
+    Ok((n.div_floor(&d), n.div_ceil(&d)))
+}
+
+#[cfg(feature = "rational")]
+mod bridge {
+    use super::*;
+    use crate::RationalInterval;
+    use hyperreal::Rational;
+    #[cfg(feature = "hyperreal")]
+    use hyperreal::Real;
+    use num_bigint::BigUint;
+    use num_traits::One;
+
+    impl RationalInterval {
+        /// Outward enclosure with grid spacing `2^precision` and explicit
+        /// conversion accounting. This does not call a floating-point backend.
+        pub fn to_dyadic(
+            &self,
+            precision: i32,
+            budget: &mut DyadicBudget,
+        ) -> Result<DyadicInterval, IntervalError> {
+            let Some((a, b)) = self.bounds() else {
+                return Ok(DyadicInterval::empty());
+            };
+            let (lower, _) = round_rational(a, precision, budget)?;
+            let (_, upper) = round_rational(b, precision, budget)?;
+            DyadicInterval::new(lower, upper, precision)
+        }
+    }
+
+    fn round_rational(
+        value: &Rational,
+        precision: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<(BigInt, BigInt), IntervalError> {
+        budget.reserve(
+            value.numerator().bits().max(value.denominator().bits()),
+            2,
+            false,
+        )?;
+        let n = BigInt::from_biguint(value.sign(), value.numerator().clone());
+        let d = BigInt::from(value.denominator().clone());
+        scaled_quotient(&n, &d, -i64::from(precision), budget)
+    }
+
+    impl DyadicInterval {
+        /// Converts to exactly the represented rational endpoints.
+        /// Budget reservations precede all power-of-two allocations.
+        pub fn to_rational(
+            &self,
+            budget: &mut DyadicBudget,
+        ) -> Result<RationalInterval, IntervalError> {
+            let Some((a, b, e)) = self.bounds() else {
+                return Ok(RationalInterval::empty());
+            };
+            let bits = self
+                .bits()
+                .saturating_add(i64::from(e).unsigned_abs())
+                .saturating_add(1);
+            budget.reserve(bits, 4, true)?;
+            let amount = usize::try_from(i64::from(e).unsigned_abs())
+                .map_err(|_| IntervalError::Overflow)?;
+            if e >= 0 {
+                Ok(RationalInterval::ordered(
+                    Rational::from_bigint(a << amount),
+                    Rational::from_bigint(b << amount),
+                ))
+            } else {
+                let denominator = BigUint::one() << amount;
+                Ok(RationalInterval::ordered(
+                    Rational::from_bigint_fraction(a.clone(), denominator.clone())
+                        .expect("nonzero power of two"),
+                    Rational::from_bigint_fraction(b.clone(), denominator)
+                        .expect("nonzero power of two"),
+                ))
+            }
+        }
+
+        /// Imports exact rational endpoints only when both lie on the specified
+        /// grid. No purported dyadic certificate is trusted without validation.
+        pub fn from_grid_bounds(
+            lower: &Rational,
+            upper: &Rational,
+            precision: i32,
+            budget: &mut DyadicBudget,
+        ) -> Result<Self, IntervalError> {
+            if lower > upper {
+                return Err(IntervalError::ReversedEndpoints);
+            }
+            let (lo, lo_ceil) = round_rational(lower, precision, budget)?;
+            let (hi_floor, hi) = round_rational(upper, precision, budget)?;
+            if lo != lo_ceil || hi_floor != hi {
+                return Err(IntervalError::NonDyadicEndpoint);
+            }
+            Self::new(lo, hi, precision)
+        }
+
+        /// Consumes Hyperreal's certified dyadic enclosure without reinterpreting
+        /// its precision. Spacing `2^precision` is not an interval-width promise.
+        ///
+        /// The budget governs conversion only. Hyperreal evaluation uses its
+        /// existing precision/cancellation contract; this method does not impose
+        /// a total-work bound on that evaluation. No independent cache is added.
+        /// For a wholly budgeted pipeline, obtain certified bounds separately
+        /// under the caller's evaluation policy and use `from_grid_bounds`.
+        #[cfg(feature = "hyperreal")]
+        pub fn from_real(
+            value: &Real,
+            precision: i32,
+            budget: &mut DyadicBudget,
+        ) -> Result<Self, IntervalError> {
+            // Reject an unaffordable grid before asking Hyperreal to construct
+            // its powers of two. This does not bound computable evaluation.
+            budget.reserve(i64::from(precision).unsigned_abs() + 1, 1, false)?;
+            let [lower, upper] = value
+                .certified_dyadic_interval(precision)
+                .ok_or(IntervalError::EnclosureUnavailable)?;
+            Self::from_grid_bounds(&lower, &upper, precision, budget)
+        }
+    }
+}
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for DyadicInterval {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.bounds().serialize(serializer)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for DyadicInterval {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match Option::<(BigInt, BigInt, i32)>::deserialize(deserializer)? {
+            None => Ok(Self::empty()),
+            Some((lower, upper, exponent)) => Self::new(lower, upper, exponent),
+        }
+        .map_err(serde::de::Error::custom)
+    }
+}

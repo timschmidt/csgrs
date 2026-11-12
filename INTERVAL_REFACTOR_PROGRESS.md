@@ -44,7 +44,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 0 inventory/baseline | in progress | audited source map, sibling states, tests, cost/size/coverage/fuzz, hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
-| 3 rational/dyadic/ball | not started | product differential, conversions, independent Real bounds |
+| 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | not started | environment qualification and rational oracle |
 | 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
@@ -163,6 +163,75 @@ Final production Hyperinterval LLVM report: 470 / 496 lines (94.76%),
 900 / 959 regions (93.85%), 83 / 83 functions. Dependencies and tests excluded;
 no branch coverage was measured. The universal 100% coverage target remains
 open; these finite generators/fuzz campaigns are not a universal closure proof.
+
+## Phase 3 admission before edits
+
+Owner: Hyperinterval scalar sets and exact-point bridge, P1/P3/P5/P6/P19.
+Inputs: ordered finite rational endpoints, common-scale arbitrary integer
+mantissas, explicit binary-grid exponents, exact Real centers and nonnegative
+rational radii. Missing witnesses are all sign-partition products against
+independent four-corner rationals, directed scale conversion, bounded huge-shift
+rejection/retry, and independent MPFR controls on Real-derived enclosures.
+
+The primitive build must retain zero production dependencies. Host Rational
+uses Hyperreal's optional dependency and its Rust 1.95 requirement; standalone
+BigInt/dyadic code stays allocation-enabled no_std. No Hyperreal source, layout
+or cache is changed. Solver reports and symbolic RealInterval remain in
+Hypersolve. Arithmetic extraction must preserve predicate/sign order; existing
+consumer migration is gated separately by exact outputs, traces and cost.
+
+## Phase 3 local acceptance and remaining work
+
+Implemented RationalInterval, common-scale DyadicInterval and initial rational-
+radius RealBall. All public ingress validates order/radius; dyadic imports
+validate the claimed grid. The private endpoint relation kernel also handles
+Hyperreal Rational's exact PartialOrd interface; no arbitrary endpoint family
+is publicly admitted. Hyperreal source, representation and caches are unchanged.
+The existing Hypersolve product remains in production pending consumer migration;
+its copied candidate has independent exact and dispatch qualification here.
+
+Final checks after production edits:
+
+- 51 compiler/feature/test/doc/lint/cross-target commands passed on stable,
+  Rust 1.95 host and Rust 1.88 primitive/dyadic subsets. Eight cross-target
+  checks cover WASM and ARM. The initial matrix's two benchmark-only Clippy
+  failures were fixed with a function-pointer type alias; original logs remain.
+- 32 conformance/arithmetic tests and three compile-fail documentation checks
+  pass with all features. Rational products cover 784 ordered interval pairs
+  against an integer numerator oracle. Independent GMP tests cover larger
+  fractions; directed 512-bit MPFR bounds exercise pi, sqrt(2), rational points,
+  signed rational scaling, ball radii, coarse/fine/warm and concurrent use.
+- Product dispatch/reducer snapshots match in 450 windows from independent
+  fresh processes. Earlier attempts sharing per-value or interned Rational
+  cache state correctly failed and are retained; counts were not relaxed.
+- Directed dyadic division covers 50,274 reduced-grid scalar cases; exact
+  rational replay, outward coarsening, extreme exponent reservations, typed
+  work/size failures and fresh-budget retry pass. The bridge's conversion
+  budget does not bound Hyperreal evaluation or arbitrary rational arithmetic.
+- Final ASan campaigns passed 10,000 constructor, 100,000 fixed arithmetic and
+  100,000 dyadic arithmetic runs (seed 20261112; 30-second campaign caps).
+  Fuzz lint/format, workspace formatting and whole-repository Zizmor passed.
+- Production LLVM coverage: 1,161 / 1,203 lines (96.51%), 2,155 / 2,269 regions
+  (94.98%), 179 / 181 functions. Branch instrumentation was not enabled.
+  The plan's full coverage gate is still open.
+- Actual Q30 differential client passes unchanged. Fixed-only normal dependency
+  closure remains exactly Hyperinterval. The final comparison executable has
+  346,782 text / 16,208 data / 296 BSS bytes, identical to the phase-2 artifact.
+  Host-only error variants are feature-gated after the initial build revealed
+  a 384-byte primitive text increase. Paired fixed cost ratios remain about
+  0.906 add/subtract, 0.594 multiply, 0.757 divide, 0.798 square versus legacy.
+- The host product cost probe retains both initial and inlined samples; see
+  the crate performance ledger. Final wrapper symbols are 1,085 bytes shared
+  and 1,098 legacy; this is not a full backend or solver binary comparison.
+  Timing differences around one percent do not establish the consumer gate.
+
+The first independent GMP/MPFR attempt exposed an oracle adapter error: parsing
+Hyperreal's mixed-number Display as a plain fraction. The corrected adapter
+imports exact numerator, denominator and sign; all original fixtures remain.
+MSVC cannot build GMP, so its configured jobs retain the portable integer and
+dispatch tests while directed GMP/MPFR tests run on Unix. Hosted Windows/macOS
+jobs, firmware hardware timing and full downstream migration remain unexecuted.
+No repository has been pushed and the full 15-phase goal remains active.
 
 ## Implementation and open gates
 

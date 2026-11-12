@@ -3,7 +3,8 @@
 No consumer migration is qualified yet. The
 primitive relations and arithmetic allocate nothing: their only storage is an optional pair
 of primitive endpoints, and they call a fixed number of integer comparisons.
-Production source forbids unsafe Rust and imports neither alloc nor std.
+Production source forbids unsafe Rust. The primitive feature subset imports
+neither alloc nor std; optional host backends have separate dependency graphs.
 Cargo feature closure, tests and layout checks must validate that claim.
 
 On a target with i64 alignment 8, the explicit-empty carrier uses 12 bytes
@@ -50,3 +51,30 @@ alone do not compare complete backends. The combined harness has 346,782 text
 bytes, 16,208 data bytes and 296 BSS bytes. Its initial non-inline version had
 347,526 text bytes. No firmware binary/cycle/stack or HIL result is inferred;
 those remain migration gates. Host cycle counters were not available here.
+
+## Phase 3 host carrier probe
+
+`conformance/host_cost.rs` compares the retained Hypersolve product formula to
+the rational carrier on positive, mixed-sign, and wide-rational inputs. Both
+paths consume validated intervals and materialize owned exact endpoints.
+The probe uses Rust 1.95 release, 4,096 warmup pairs, 30 alternating samples
+per backend/case and 16,384 completed operations per sample. It measures warm
+arithmetic, not constructor cost or a whole solver workload.
+
+The initial cross-crate call boundary measured shared/legacy median ratios
+1.015, 1.040 and 1.038 while other qualification jobs ran. After inlining the
+carrier's product and endpoint boundary, a separate run measured 1.004, 1.006
+and 0.990. Raw samples from both runs are retained. These small differences
+do not qualify a solver migration or establish a general speedup/no-regression
+claim. Fresh-process dispatch tests separately require identical paths and
+rational reducer counters for 450 recorded windows.
+
+Dyadic arithmetic reserves upper bounds on magnitude bits before alignment,
+products, division and rational conversion. Linear stages charge `n` units;
+quadratic stages charge `n*n`, multiplied by the method's stage count. These
+conservative reservations are the declared accounting contract; cancellation
+can still consume a reservation. They are not measured CPU/heap bounds.
+Constructors normalize caller-owned mantissas, and arbitrary-precision rational
+arithmetic/Hyperreal evaluation have no new total-work limit. No independent
+cache or worker pool is introduced. Resource errors publish no partial result;
+fresh-budget retries are exercised by the maintained corpus.

@@ -2604,6 +2604,11 @@ dependencies = [
 name = "hyperinterval"
 version = "0.1.0"
 dependencies = [
+ "hyperreal",
+ "num-bigint",
+ "num-integer",
+ "num-traits 0.2.19",
+ "rug",
  "serde",
  "serde_json",
 ]

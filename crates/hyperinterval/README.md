@@ -1,9 +1,10 @@
 # Hyperinterval
 
 Scalar sets with exact endpoint semantics for the Hyper stack. The current
-surface provides checked integer ranges and fixed-point interval arithmetic,
-explicit empty sets, sign sets, and named set relations. Host rational/dyadic
-bridges and qualified float enclosures are under development.
+surface provides checked integer/fixed arithmetic, exact rational intervals,
+budgeted common-scale dyadic arithmetic, and symbolic Real balls. Empty sets,
+sign sets, and set relations are explicit. Qualified float and elementary
+function enclosures remain under development.
 
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
@@ -44,6 +45,23 @@ The `integer` and `fixed` builds are allocation-free `no_std` and target Rust
 1.88. Optional `serde` uses null for empty and an ordered endpoint pair for
 nonempty sets, with scale and endpoint validation on import. This is an
 initial encoding, not a migration of any domain's canonical evidence.
+
+The `rational` feature adds `RationalInterval` over Hyperreal's exact rationals
+and requires Rust 1.95. It supplies exact sum, difference, product hull,
+square, strict quotient, affine images and positive arithmetic helpers. The
+`dyadic` feature is allocation-enabled `no_std` on Rust 1.88: its BigInt
+mantissas share an exponent, with explicit budgets for arithmetic and scale
+changes. `hyperreal` enables both carriers and their certified Real bridge;
+`real-ball` adds exact symbolic centers with nonnegative rational radii.
+
+Dyadic precision means grid spacing `2^precision`, not a bound on interval
+width. Directed conversions preserve containment. `DyadicBudget` accounts for
+reserved intermediate magnitude bits and deterministic work units; it does
+not measure CPU cycles or heap bytes. Rational arithmetic and Hyperreal center
+evaluation retain their existing resource contracts. In particular, a bridge's
+conversion budget is not a total-work bound on computable Real evaluation.
+These carriers add no independent scalar cache and do not choose a predicate
+policy. An inconclusive ball-membership query remains unresolved.
 
 ```sh
 cargo test -p hyperinterval --no-default-features

@@ -9,3 +9,8 @@
   rounding, exact storage conversion, outward rescaling and discrete/real bridges.
 - Add independent exhaustive oracles, actual Alumina Q30 differential client,
   bounded arithmetic fuzzing and a paired cost probe.
+- Add optional rational intervals, common-scale dyadic arithmetic and directed
+  conversion with explicit size/work reservations, and exact-center Real balls.
+- Validate Real bridges against directed MPFR bounds and rational arithmetic
+  against GMP; compare rational product dispatch in isolated fresh processes.
+  Existing solver and domain consumers have not yet migrated.

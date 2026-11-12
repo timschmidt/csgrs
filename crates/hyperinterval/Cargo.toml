@@ -20,14 +20,34 @@ alloc = []
 std = ["alloc"]
 integer = []
 fixed = []
-serde = ["dep:serde"]
+bigint = ["alloc", "dep:num-bigint", "dep:num-traits", "dep:num-integer"]
+dyadic = ["bigint"]
+rational = ["std", "dep:hyperreal"]
+hyperreal = ["rational", "dyadic"]
+real-ball = ["hyperreal"]
+serde = ["dep:serde", "hyperreal?/serde", "num-bigint?/serde"]
+dispatch-trace = ["hyperreal?/dispatch-trace"]
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false, optional = true }
+num-bigint = { version = "0.4.6", default-features = false, optional = true }
+num-traits = { version = "0.2", default-features = false, optional = true }
+num-integer = { version = "0.1", default-features = false, optional = true }
 
 [dev-dependencies]
 serde_json = "1.0"
 
+# GMP does not support the MSVC target. Directed MPFR oracles run on Unix;
+# portable exact-integer and dispatch tests still run on Windows.
+[target.'cfg(not(target_env = "msvc"))'.dev-dependencies]
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
+
 [[example]]
 name = "fixed_bounds"
 required-features = ["fixed"]
+
+[[example]]
+name = "host_cost"
+path = "conformance/host_cost.rs"
+required-features = ["hyperreal"]

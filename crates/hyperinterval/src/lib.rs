@@ -12,8 +12,15 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
-#[cfg(any(feature = "integer", feature = "fixed"))]
+#[cfg(any(
+    feature = "integer",
+    feature = "fixed",
+    feature = "rational",
+    feature = "dyadic"
+))]
 mod bounds;
+#[cfg(feature = "dyadic")]
+mod dyadic;
 #[cfg(feature = "fixed")]
 mod fixed;
 #[cfg(feature = "fixed")]
@@ -22,10 +29,20 @@ mod fixed_arithmetic;
 mod integer;
 #[cfg(feature = "integer")]
 mod integer_arithmetic;
+#[cfg(feature = "rational")]
+mod rational;
+#[cfg(feature = "real-ball")]
+mod real_ball;
 mod state;
 
+#[cfg(feature = "dyadic")]
+pub use dyadic::{DyadicBudget, DyadicInterval};
 #[cfg(feature = "fixed")]
 pub use fixed::{FixedEndpoint, FixedInterval};
 #[cfg(feature = "integer")]
 pub use integer::{IntegerEndpoint, IntegerRange};
+#[cfg(feature = "rational")]
+pub use rational::RationalInterval;
+#[cfg(feature = "real-ball")]
+pub use real_ball::{BallRelation, RealBall};
 pub use state::{DomainCoverage, IntervalError, MidpointRounding, RangeEnclosure, SignSet};

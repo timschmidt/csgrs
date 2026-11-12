@@ -8,6 +8,18 @@ pub enum IntervalError {
     ReversedEndpoints,
     /// A fixed-point scale is outside its endpoint family's supported range.
     InvalidScale,
+    /// A radius or measurement uncertainty is negative.
+    #[cfg(feature = "rational")]
+    NegativeRadius,
+    /// A monotone positive arithmetic helper received a nonpositive lower bound.
+    #[cfg(feature = "rational")]
+    NonPositiveLowerBound,
+    /// An exact bridge could not supply certified point bounds.
+    #[cfg(feature = "hyperreal")]
+    EnclosureUnavailable,
+    /// A purported exact dyadic endpoint is not on the required binary grid.
+    #[cfg(all(feature = "rational", feature = "dyadic"))]
+    NonDyadicEndpoint,
     /// An exact or outward-rounded endpoint is not representable.
     Overflow,
     /// Strict division cannot consume a denominator containing zero.
@@ -22,6 +34,9 @@ pub enum IntervalError {
     PrecisionExhausted,
     /// The caller's total-work budget was exhausted before completion.
     WorkExhausted,
+    /// A declared intermediate-size reservation exceeds its configured limit.
+    #[cfg(feature = "dyadic")]
+    SizeExhausted,
     /// The floating-point environment cannot support the certified backend.
     UnqualifiedEnvironment,
 }
@@ -31,6 +46,14 @@ impl fmt::Display for IntervalError {
         f.write_str(match self {
             Self::ReversedEndpoints => "interval endpoints are reversed",
             Self::InvalidScale => "fixed-point scale is unsupported",
+            #[cfg(feature = "rational")]
+            Self::NegativeRadius => "interval radius is negative",
+            #[cfg(feature = "rational")]
+            Self::NonPositiveLowerBound => "interval lower bound must be positive",
+            #[cfg(feature = "hyperreal")]
+            Self::EnclosureUnavailable => "certified point enclosure unavailable",
+            #[cfg(all(feature = "rational", feature = "dyadic"))]
+            Self::NonDyadicEndpoint => "endpoint is not on the required dyadic grid",
             Self::Overflow => "interval endpoint overflow",
             Self::ContainsZero => "denominator interval contains zero",
             Self::EmptyDomain => "input has no points in the function domain",
@@ -38,6 +61,8 @@ impl fmt::Display for IntervalError {
             Self::UnsupportedBranch => "interval branch is unsupported",
             Self::PrecisionExhausted => "interval precision budget exhausted",
             Self::WorkExhausted => "interval work budget exhausted",
+            #[cfg(feature = "dyadic")]
+            Self::SizeExhausted => "interval intermediate-size budget exhausted",
             Self::UnqualifiedEnvironment => "float environment is not qualified",
         })
     }
