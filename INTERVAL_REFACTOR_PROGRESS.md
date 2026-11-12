@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log/atan/sin/cos and extended-dyadic atan/sin/cos implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -1513,7 +1513,12 @@ entire-line inputs, three grids and six finite source shapes. PERFORMANCE.md
 records medians, deterministic work and the expensive subnormal cotangent case;
 raw samples retain compiler/host metadata, executable hash and whole-probe size.
 No allocation/cancellation, embedded-cycle or speedup claim is made.
-Source and archive registration are pending. Phase 5 qualification gaps and all
+Source commit `9cc7829e966c4b5b3f7a4f427fe03c48c5128cf2`; evidence commit
+`d012804d5d964371d343f2d5189aa7bd05fa043e`, record
+`docs/evidence/2026-11-12-interval-tangent`: 619 files, 124164420 bytes,
+SHA-256 `1b2ebd6f32b5d317c8c98d6b8af8428cadac9203c616e3bfe9a26b0010d46cf6`.
+The committed record was regenerated and independently verified before registration.
+Phase 5 qualification gaps and all
 remaining plan phases require their own completion evidence.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
