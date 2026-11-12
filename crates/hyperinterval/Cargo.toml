@@ -98,3 +98,8 @@ required-features = ["rational", "dyadic"]
 name = "atan_cost"
 path = "conformance/atan_cost.rs"
 required-features = ["rational", "dyadic"]
+
+[[example]]
+name = "trig_cost"
+path = "conformance/trig_cost.rs"
+required-features = ["rational", "dyadic"]

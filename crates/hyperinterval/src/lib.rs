@@ -12,6 +12,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 
+#[cfg(feature = "dyadic")]
+mod arctangent;
 #[cfg(any(
     feature = "integer",
     feature = "fixed",
@@ -20,8 +22,6 @@
     feature = "float-proposal",
     feature = "float-enclosure"
 ))]
-#[cfg(feature = "dyadic")]
-mod arctangent;
 mod bounds;
 #[cfg(feature = "dyadic")]
 mod dyadic;
@@ -55,6 +55,8 @@ mod real_ball;
 #[cfg(any(feature = "fixed", feature = "float-enclosure"))]
 mod sqrt;
 mod state;
+#[cfg(feature = "dyadic")]
+mod trigonometry;
 pub use extended::{ExtendedInterval, ExtendedIntervalView, FiniteRealInterval};
 
 #[cfg(feature = "dyadic")]

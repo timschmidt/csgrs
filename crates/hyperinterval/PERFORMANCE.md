@@ -345,3 +345,57 @@ scale; large rational input coefficients still have their own reservation
 cost. All finite and unbounded cases preserve the same outward-grid contract.
 These are new-capability costs, not baseline speedups or consumer benchmarks.
 No heap-byte, wall-time, cancellation or firmware-cycle bound is claimed.
+
+
+## Budgeted periodic sine/cosine completion probe
+
+`conformance/trig_cost.rs` computes tight outward grid images of point 1,
+narrow [1,1+2^-8], extremum-crossing [1,2], wide [-4,4], huge singleton 2^128,
+tiny singleton 2^-1074, and the entire real line. Every result has Complete
+local domain coverage. Directed MPFR with exact GMP input-error and extrema
+checks runs before timing. Rust 1.99 release, x86_64 Linux, rational+dyadic,
+no default features, 128 warmups and 20 samples of 128 images per group:
+
+| Backend / function / input | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| dyadic / sin / point | 49288.188 | 88050.844 | 302846.449 |
+| dyadic / sin / narrow | 64364.316 | 120516.570 | 391360.309 |
+| dyadic / sin / extrema | 65831.676 | 131730.438 | 426930.289 |
+| dyadic / sin / wide | 268.496 | 268.586 | 268.812 |
+| dyadic / sin / huge | 212008.879 | 277929.414 | 599801.562 |
+| dyadic / sin / tiny | 28612.375 | 60341.516 | 221476.539 |
+| dyadic / cos / point | 49327.988 | 90109.438 | 304005.941 |
+| dyadic / cos / narrow | 63912.113 | 123630.125 | 394203.262 |
+| dyadic / cos / extrema | 63297.684 | 135303.945 | 429640.105 |
+| dyadic / cos / wide | 269.691 | 269.402 | 269.590 |
+| dyadic / cos / huge | 211096.453 | 277780.344 | 603552.664 |
+| dyadic / cos / tiny | 31047.480 | 62744.184 | 223880.574 |
+| rational / sin / point | 49500.176 | 88004.793 | 302219.266 |
+| rational / sin / narrow | 64955.094 | 121445.152 | 391633.469 |
+| rational / sin / extrema | 66034.145 | 132259.945 | 426594.695 |
+| rational / sin / wide | 381.492 | 381.996 | 381.211 |
+| rational / sin / huge | 212277.254 | 278003.613 | 599797.211 |
+| rational / sin / tiny | 28882.438 | 60692.332 | 221623.781 |
+| rational / cos / point | 49379.000 | 90367.531 | 304077.215 |
+| rational / cos / narrow | 64213.824 | 124203.094 | 395021.852 |
+| rational / cos / extrema | 63608.023 | 135570.273 | 429609.348 |
+| rational / cos / wide | 380.723 | 380.832 | 380.586 |
+| rational / cos / huge | 211338.488 | 277952.852 | 603042.523 |
+| rational / cos / tiny | 31348.887 | 63269.785 | 224222.594 |
+| extended / sin / entire | 144.082 | 144.387 | 143.984 |
+| extended / cos / entire | 143.660 | 143.422 | 143.551 |
+
+Values are median ns/image; all 1560 samples complete. Timing includes budget
+creation, phase and extremum selection, all constant/series/refinement work,
+owned output, receipt and destruction; input construction and the independent
+oracle are excluded. Each call has a fresh 32768-bit, 10^13-work-unit budget.
+Raw samples retain actual deterministic work units. Host/compiler metadata,
+executable hash and whole-probe size are archived; GMP/MPFR oracle code is linked
+into this executable, so its size is not production-kernel size.
+
+Wide and unbounded source cases prove a complete function range without costly
+phase resolution. Huge narrow inputs pay for enough pi precision to retain the
+exact source phase. No error or unresolved phase is counted as a completed
+whole-range image. These are new-capability costs on a shared host, not speedup
+comparisons or consumer benchmarks. Actual heap-byte, wall-time, cancellation,
+firmware-cycle and full consumer qualification remain open.

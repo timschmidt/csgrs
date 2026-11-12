@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add budgeted rational/dyadic sine and cosine images with certified quadrant
+  selection, interior extrema, explicit whole-period results and extended inputs.
+- Restore the no-feature bounds-module gate and enforce strict no-feature
+  Clippy in CI after reproducing the arctangent insertion regression.
+
 - Add budgeted rational, dyadic and extended-dyadic arctangent images using
   exact reductions, alternating-series tails and certified unbounded limits.
   Preserve exact zero, extreme-scale inputs, local domain receipts and retry.

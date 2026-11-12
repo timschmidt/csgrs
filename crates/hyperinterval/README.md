@@ -55,6 +55,13 @@ series and refinement attempts. Keep earlier domain receipts when chaining
 operations; for example, `log` followed by `atan` can still have inherited
 Partial coverage.
 
+Rational, dyadic and extended dyadic `sin`/`cos` return outward dyadic images
+with Complete local coverage. They certify phase reduction and include
+interior extrema. A full period or unbounded connected source produces an
+outward grid enclosure of the whole function range; narrow inputs with huge phases require enough size/work
+budget to resolve those phases. The original exact endpoints remain the source
+through refinement. No native floating transcendental supplies a certificate.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

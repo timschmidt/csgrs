@@ -201,7 +201,10 @@ fn tight(
 
 // Machin: pi/4 = 4 atan(1/5) - atan(1/239). Both arguments are in
 // the alternating-series domain. This does not use a global pi cache.
-fn quarter_pi(working: i32, budget: &mut DyadicBudget) -> Result<DyadicInterval, IntervalError> {
+pub(crate) fn quarter_pi(
+    working: i32,
+    budget: &mut DyadicBudget,
+) -> Result<DyadicInterval, IntervalError> {
     budget.reserve(8, 3, false)?;
     let one = BigInt::one();
     let (a, b) = scaled_quotient(&one, &BigInt::from(5), -i64::from(working), budget)?;

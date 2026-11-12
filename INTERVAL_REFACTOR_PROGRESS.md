@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log/atan and extended-dyadic atan implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exp/log/atan/sin/cos and extended-dyadic atan/sin/cos implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -1187,6 +1187,83 @@ The committed archive digest is verified and registered in
 `docs/evidence-archive.tsv`. Actual heap-byte bounds, cancellation, remaining
 elementary backends/functions, split images, consumer migrations, full coverage
 and release qualification remain open.
+
+## Periodic trigonometry admission (2026-11-12)
+
+Owner: Hyperinterval elementary enclosure layer, P1/P3/P5/P6/P19. Baseline
+`9bbeb1012`. Missing sin/cos methods and an interior-extremum acceptance witness
+are reproduced in `/tmp/interval-refactor/trigonometry/missing-witness.log`.
+The required domain is finite rational/dyadic intervals and extended dyadic
+sets, with exact sources, outward dyadic results and local Complete coverage.
+Acceptance includes certified phase reduction and interior extrema, huge and
+tiny arguments, resource refusal/retry, independent MPFR bounds and continued
+operations. No endpoint-only trigonometric range evaluation is admitted.
+
+A baseline review also reproduces a feature-gate regression: the arctangent
+module insertion detached the cfg attribute from the private bounds module.
+No-feature strict Clippy fails with dead-code errors. Restore the original
+gate placement and add no-feature strict Clippy to CI; the earlier successful
+featureful lint runs did not qualify this configuration. Evidence is retained,
+not replaced by the repaired outcome.
+
+The implementation reuses the existing budgeted Machin pi/4 enclosure with
+unchanged arithmetic and predicate order. For each nonzero rational endpoint,
+adjacent integer bounds on abs(x)/(pi/2) certify its quadrant: this quotient
+cannot be an integer. Odd/even symmetry transports negative sources without
+rediscovering a tiny sign after cancellation. The retained integer phase and
+residual select sine/cosine and its sign. Residuals lie in [0,pi/2], within
+[0,2]; alternating factorial terms decrease beyond the initial cosine term,
+and the signed next term encloses the remainder. Directed interval operations
+retain source uncertainty and every rounding error. Exact zero is handled
+structurally; nonzero rational sine/cosine values separate dyadic grid
+boundaries under convergent refinement, subject to work/size/storage limits.
+
+Interior extrema are selected from the certified endpoint phase indices and
+integer residues, not sampled membership. Every crossed critical point is
+accounted for; an endpoint at zero retains its exact function value. Width at
+least 8 proves a whole period before phase materialization (2*pi<8); four
+crossed quarter periods also prove both extrema. Nonempty unbounded sources
+reach both extrema directly. Full-range and exact-zero results preserve fine
+grids without unnecessary expansion. A narrow source at exponent i32::MAX
+reaches an actual declared coefficient reservation limit instead of being
+reported as a completed whole-range approximation. No source is rounded into
+a replacement model; each retry consumes the original exact endpoints.
+
+The final 29-command qualification matrix passes: 123 unit/integration tests,
+12 doctests, strict Clippy (including no-feature builds on 1.88/1.95/stable),
+docs/format, fuzz builds, all repository Zizmor checks, no_std ARM/WASM builds,
+primitive dependency closure and four unchanged Hypersolve value/dispatch
+regressions. Initial type-inference failures and two Clippy failures on the
+quadrant parity expression are retained; the final expression explicitly
+matches quadrants 0/2. The complete matrix was rerun after that final source
+edit. Existing predicate order and the scalar evaluator are unchanged.
+
+The independent oracle uses directed MPFR at an exactly represented rounded
+point plus the global unit Lipschitz bound for any exact rational input error;
+this avoids assuming sine/cosine monotonicity while rounding the source.
+Directed pi bounds and exact GMP arithmetic independently select crossed
+extrema. The corpus covers brackets of width 3*2^-256 around periodic
+boundaries, phase magnitudes through 2^512, output precision through -1024,
+subnormal-scale values, i32 scale extremes with explicit completion/refusal,
+odd/even symmetry, refinement, serde, and log/sin/cos continued use.
+
+The first ASan campaign reaches 8199 inputs before its 30-second stop (31 s
+reported). A 60-second campaign completes 10,000 in 39 seconds, and the final
+post-lint source repeats 10,000 in 39 seconds (seed 20261121). All logs and the
+retained corpus remain in evidence; CI keeps its bounded 30-second campaign.
+Final Rust 1.95 coverage is 3298/3374 lines (97.75%) and 6612/7090 regions
+(93.26%); no branch denominator is reported. Exclusions are tests, probes,
+Hyperreal, dependencies and test-only IEEE code. All seven profile mismatches
+are diagnosed as excluded Rug OptRational::parts; initial and final profiles
+are kept separate. Full coverage remains open.
+
+All 1560 cost samples complete, including finite and unbounded sources and
+all refinement work. PERFORMANCE.md contains every group median; raw work
+units, compiler/host metadata, executable hash and whole-probe size are
+retained. No baseline speedup, actual heap-byte limit or consumer migration
+is inferred. Source/archive registration is pending. Remaining elementary
+backends, rational powers, poles/split images, cancellation, full consumer
+migrations and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

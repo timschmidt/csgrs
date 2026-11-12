@@ -63,6 +63,7 @@ jobs:
       - name: Check formatting and lint
         run: |
           cargo +"$INTERVAL_RUST" fmt -p hyperinterval -- --check
+          cargo +"$INTERVAL_RUST" clippy --locked -p hyperinterval --all-targets --no-default-features -- -D warnings
           cargo +"$INTERVAL_RUST" clippy --locked -p hyperinterval --all-targets --features "$INTERVAL_FEATURES" -- -D warnings
       - name: Build documentation
         env:
@@ -130,7 +131,7 @@ jobs:
       - name: Run constructor and arithmetic campaigns
         run: |
           mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic" "$RUNNER_TEMP/interval-proposals" "$RUNNER_TEMP/interval-strict-float"
-          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots" "$RUNNER_TEMP/interval-exponential" "$RUNNER_TEMP/interval-logarithm" "$RUNNER_TEMP/interval-arctangent"
+          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots" "$RUNNER_TEMP/interval-exponential" "$RUNNER_TEMP/interval-logarithm" "$RUNNER_TEMP/interval-arctangent" "$RUNNER_TEMP/interval-trigonometry"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
@@ -142,3 +143,4 @@ jobs:
           cargo +nightly fuzz run exponential --features rational "$RUNNER_TEMP/interval-exponential" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261118
           cargo +nightly fuzz run logarithm --features rational "$RUNNER_TEMP/interval-logarithm" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261119
           cargo +nightly fuzz run arctangent --features rational "$RUNNER_TEMP/interval-arctangent" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261120
+          cargo +nightly fuzz run trigonometry --features rational "$RUNNER_TEMP/interval-trigonometry" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261121
