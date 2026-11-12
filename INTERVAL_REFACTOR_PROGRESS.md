@@ -2068,7 +2068,12 @@ additive; existing dispatch order, Real APIs, geometry certainty and production
 consumers are unchanged. Full legacy geometry/performance/monomorphized-size
 qualification remains open rather than inferred from source identity.
 
-Source/evidence registration pending for this checkpoint. Phase 6 still needs
+Source commit `e529f241f120a388e439699b371d32b67e697350`; immutable evidence
+commit `6d7ef14df566df76396b5386f21fa64b8eef2d3a`, record
+`docs/evidence/2026-11-12-interval-lattice-widths`: 284 files,
+85,234,615 bytes, SHA-256
+`67402bc6d0d36a9990b87857c8bf1e64112fa862db3d51d37696c0d02e6bc138`. The committed record was regenerated
+and verified before registration; all previous archive rows remain unchanged. Phase 6 still needs
 midpoint/radius forms, contraction/Jacobian/Krawczyk helpers, specialized consumer
 kernels and further qualification. No phase or full-plan completion is claimed.
 
