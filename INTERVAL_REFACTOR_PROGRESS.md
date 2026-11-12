@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian core and retained exact affine images implemented | runtime composition clients, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian core, static affine images and bounded runtime chains implemented | broader composition clients, width/midpoint/radius/norm/measure surface, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
@@ -1736,6 +1736,109 @@ push was attempted. Source commit:
 115 files, 19,983,041 bytes, SHA-256
 `0671e133ed1c8a4a44d351962580d86ba825db7274ff7818c7398ca715b6a99f`. The committed record was regenerated and
 verified before registration; all prior archive rows are preserved.
+
+## Phase 6 admission: runtime affine chains
+
+Previous goal turn made progress: retained affine images and evidence committed.
+Baseline source `948aed757ecfe417c7f82e280099d578740dcb6c`; all four managed
+repositories are clean on `interval-refactor`, with exact states recorded in
+`/tmp/interval-refactor/affine-chains/initial-state.json`. No nested owning
+AGENTS instructions were found. Reuse search found the retained image pullback,
+budgeted map copying and checked serde visitors; no bounded affine chain exists.
+
+Owner: Hyperlattice set-valued linear structure, delegating all scalar work to
+Hyperinterval. Properties P1–P3, P5–P6, P17–P20, P25–P27, P35–P39; plan §5.2.
+Missing witness: a runtime-selected number of retained point maps must compose
+without changing the Rust type, losing shared parameters or projecting between
+steps. Baseline API has only statically nested images. Add bounded inline chains
+of square point maps over any existing exact affine source. Rectangular maps
+remain available before/after the chain. Capacity is a declared storage limit,
+not a mathematical completeness bound. Capacity zero must retain the source,
+including fixed scales unable to encode +1; do not synthesize a rounded identity.
+
+Keep source/map definitions, parameter restrictions, structural identity and
+checked native replay. A failed append leaves the chain unchanged; its moved map
+is consumed (as documented). Owned restriction copies use the scalar context.
+Enclosure traverses maps backwards with the existing matrix product/translation
+operations and shared context; it never replaces retained maps with coefficient
+bounds. Primitive work is dimension/depth bounded and allocation-free. Dyadic
+queries share work/size accounting; rational heap/time, serde, explicit clones,
+and general cancellation remain without an internal total bound. No caches.
+
+Acceptance: independent integer-corner expectations across runtime depths and
+backends; off-grid recovery, empty and zero-dimensional sources, zero capacity,
+capacity exhaustion/rebuild, mixed static/runtime chains, original-parameter
+restriction, budget failure/retry, fresh-process replay with malformed maps and
+lengths, primitive allocation and portable build checks. Existing scalar,
+Cartesian and static affine arithmetic must remain unchanged. Full Phase 6 and
+the 15-phase goal remain open. Raw staging is the directory named above.
+
+## Phase 6 runtime affine chains: local qualification
+
+`AffineChain<I,S,N,CAP>` now retains a runtime-selected number of exact square
+maps over any admitted affine source, including static rectangular images and
+nested runtime chains. Zero maps retain the source without scalar identity
+coefficients. Append exhausts only at its declared capacity and preserves the
+chain; the moved rejected map is dropped as documented. `into_parts` permits
+moving the original source/maps into a larger-capacity chain without cloning.
+Restrictions intersect original parameters and charge owned scalar copies.
+Enclosure iterates backwards, composing temporary coefficient bounds before
+source evaluation. No intermediate Cartesian box replaces the exact source.
+Serialization stores source plus actual maps, validates every map, and checks
+the receiving capacity; no unused slots/count/cache flags are trusted.
+
+The final owner suite passes 35 tests and two doctests. Six scalar backends
+complete all 781 words of lengths 0–4 over five noncommuting/invertible/singular
+maps against independent integer corner calculations. Mixed rectangular/static/
+runtime chains run through depths 0–8; tests cover original-domain restriction,
+empty/unit products, fixed scales unable to represent +1, off-grid recovery,
+overflow followed by a valid collapse, capacity failure/rebuild, and shared
+dyadic work/size exhaustion with exact-work retry and charged copies. A fresh
+process reloads a 33-map off-grid chain into capacity 40 and feeds it into
+runtime and static further operations. Malformed maps at every position fail
+even with empty sources, as do capacity/shape/scale errors.
+
+All 44 selected checks pass: Rust 1.88/stable feature isolation, Rust 1.95 all
+features, release tests, no-default/all-feature Clippy, documentation with
+warnings denied, formatting, three Hyperlattice facade tests, four unchanged
+solver migration/dispatch tests, package file listing/dependency closure, and
+ARM/Wasm subsets on 1.88 and stable. ASan with leak detection passes the owner
+suite including both fresh-process replay children. Owner coverage is 779/789
+lines (98.73%), 1008/1055 regions (95.55%) and 157/157 functions. The new chain
+implementation has 116/116 lines and 152/156 regions covered. No branch
+denominator was emitted. Tests, conformance, dependencies and toolchains are
+excluded; the 100% and directed-fuzz targets remain open. This ASan run is the
+deterministic suite, not a directed fuzz campaign.
+
+The separate Rust 1.88 no_std Wasm consumer links without an allocator/imports.
+It passes 73,836 runtime-chain calls (33 effective depths, 513 unique clamped
+inputs), plus 2,051 calls to each existing export, with a one-million-fuel limit
+per call. Its three-export artifact is 28,300 bytes, SHA-256
+`ee696ee92cef75463c7db6e704d05b905b2ca6e30597e363f97ec5babcb7a1c6`.
+The extra export increases this consumer by 10,139 bytes relative to the prior
+two-export artifact; these are different completed workloads, not a same-contract
+size comparison. No registry release, production firmware migration or HIL claim.
+
+The runtime cost probe records 800 samples per run: four backends, map counts
+0/1/4/16/32, enclosure/restriction, 20 samples of 128 completed operations after
+64 warmups. Primitive Q16 and strict-f64 paths allocate zero. Capacity-32 inline
+footprints are 2,336/4,664/3,632/13,976 bytes for Q16/f64/rational/dyadic,
+respectively, independent of active count. They exclude heap and are not peak
+stack measurements. Initial and final runs are retained; initial timings overlap
+other validation on the shared host. No speedup or universal latency bound is
+claimed. Query scratch is independent of this chain's active count by iterative
+construction; nested sources still add stack frames. Rational operations,
+validation/serde, explicit cloning and general cancellation remain without an
+internal total-resource contract.
+
+This additive carrier leaves 49 tracked scalar/Cartesian/legacy source files
+byte-identical to baseline. Original affine map/image arithmetic, pullbacks,
+serde implementations and dot/array helpers are preserved; the main facade
+only adds the shared re-export. No numerical refactor or solver/firmware
+production migration occurred. Full legacy benchmarks, successive_operations,
+monomorphized-size gates and broader consumer qualification remain open with
+width/midpoint/radius/norm/measure work. No phase is complete; no push attempted.
+Source/evidence registration pending for this checkpoint.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

@@ -39,6 +39,10 @@ can widen the projection. The exact definition survives overflow or exhaustion
 of a projection, off-grid results, parameter restrictions and validated replay.
 Maps with empty or nonsingleton coefficients are rejected. Finite nesting lives
 in the Rust type; inline storage and stack use grow with dimensions and depth.
+`AffineChain<I, S, N, CAP>` retains a runtime-selected number of square maps
+in inline storage. `push` reports typed capacity exhaustion without changing
+the chain. Zero maps retain the source, and rectangular static images can
+precede or follow a chain. Replay checks every map and the receiving capacity.
 
 Midpoint/radius forms, norms, matrix measures and measured specializations
 remain under development in Phase 6 of the

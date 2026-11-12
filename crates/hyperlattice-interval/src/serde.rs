@@ -1,6 +1,6 @@
 use crate::{
-    AffineImage, AffineMap, AffineSource, IntervalArithmetic, IntervalMatrix, IntervalVector,
-    array_result,
+    AffineChain, AffineImage, AffineMap, AffineSource, IntervalArithmetic, IntervalMatrix,
+    IntervalVector, array_result,
 };
 use ::serde::{Deserialize, Deserializer, Serialize, Serializer, de, ser::SerializeTuple};
 
@@ -135,5 +135,121 @@ impl<
         // Both operands are fully decoded and validated, including map
         // singleton constraints, before an empty source can be consumed.
         Ok(map.image(source))
+    }
+}
+
+// The sequence contains only actual maps. Capacity and unused slots are not
+// serialized; decoding checks the receiving type's capacity and every map.
+impl<
+    I: IntervalArithmetic + Serialize,
+    S: AffineSource<I, N> + Serialize,
+    const N: usize,
+    const CAP: usize,
+> Serialize for AffineChain<I, S, N, CAP>
+{
+    fn serialize<T: Serializer>(&self, serializer: T) -> Result<T::Ok, T::Error> {
+        struct Maps<'a, I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: usize>(
+            &'a AffineChain<I, S, N, CAP>,
+        );
+        impl<
+            I: IntervalArithmetic + Serialize,
+            S: AffineSource<I, N>,
+            const N: usize,
+            const CAP: usize,
+        > Serialize for Maps<'_, I, S, N, CAP>
+        {
+            fn serialize<T: Serializer>(&self, serializer: T) -> Result<T::Ok, T::Error> {
+                use ::serde::ser::SerializeSeq;
+                let mut sequence = serializer.serialize_seq(Some(self.0.map_count()))?;
+                for map in self.0.maps() {
+                    sequence.serialize_element(map)?;
+                }
+                sequence.end()
+            }
+        }
+        (self.source(), Maps(self)).serialize(serializer)
+    }
+}
+
+impl<
+    'de,
+    I: IntervalArithmetic + Deserialize<'de>,
+    S: AffineSource<I, N> + Deserialize<'de>,
+    const N: usize,
+    const CAP: usize,
+> Deserialize<'de> for AffineChain<I, S, N, CAP>
+{
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct Maps<I: IntervalArithmetic, S: AffineSource<I, N>, const N: usize, const CAP: usize>(
+            AffineChain<I, S, N, CAP>,
+        );
+        impl<
+            'de,
+            I: IntervalArithmetic + Deserialize<'de>,
+            S: AffineSource<I, N>,
+            const N: usize,
+            const CAP: usize,
+        > de::DeserializeSeed<'de> for Maps<I, S, N, CAP>
+        {
+            type Value = AffineChain<I, S, N, CAP>;
+            fn deserialize<D: Deserializer<'de>>(
+                self,
+                deserializer: D,
+            ) -> Result<Self::Value, D::Error> {
+                deserializer.deserialize_seq(self)
+            }
+        }
+        impl<
+            'de,
+            I: IntervalArithmetic + Deserialize<'de>,
+            S: AffineSource<I, N>,
+            const N: usize,
+            const CAP: usize,
+        > de::Visitor<'de> for Maps<I, S, N, CAP>
+        {
+            type Value = AffineChain<I, S, N, CAP>;
+            fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                write!(f, "at most {CAP} checked affine maps")
+            }
+            fn visit_seq<A: de::SeqAccess<'de>>(
+                mut self,
+                mut sequence: A,
+            ) -> Result<Self::Value, A::Error> {
+                while let Some(map) = sequence.next_element()? {
+                    self.0.push(map).map_err(de::Error::custom)?;
+                }
+                Ok(self.0)
+            }
+        }
+        struct Visitor<I, S, const N: usize, const CAP: usize>(core::marker::PhantomData<(I, S)>);
+        impl<
+            'de,
+            I: IntervalArithmetic + Deserialize<'de>,
+            S: AffineSource<I, N> + Deserialize<'de>,
+            const N: usize,
+            const CAP: usize,
+        > de::Visitor<'de> for Visitor<I, S, N, CAP>
+        {
+            type Value = AffineChain<I, S, N, CAP>;
+            fn expecting(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                f.write_str("an exact source and a bounded sequence of affine maps")
+            }
+            fn visit_seq<A: de::SeqAccess<'de>>(
+                self,
+                mut sequence: A,
+            ) -> Result<Self::Value, A::Error> {
+                let source = sequence
+                    .next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let chain = sequence
+                    .next_element_seed(Maps(AffineChain::new(source)))?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                if sequence.next_element::<de::IgnoredAny>()?.is_some() {
+                    return Err(de::Error::invalid_length(3, &self));
+                }
+                Ok(chain)
+            }
+        }
+        deserializer.deserialize_tuple(2, Visitor::<I, S, N, CAP>(core::marker::PhantomData))
     }
 }

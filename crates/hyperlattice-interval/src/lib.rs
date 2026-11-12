@@ -23,7 +23,7 @@ mod matrix;
 mod serde;
 mod vector;
 
-pub use affine::{AffineBox, AffineImage, AffineMap, AffineSource};
+pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource};
 pub use backend::IntervalArithmetic;
 pub use hyperinterval;
 pub use matrix::IntervalMatrix;
@@ -42,6 +42,11 @@ pub enum IntervalLatticeError {
     NonPointAffineMatrix,
     /// An affine map's translation is empty or has a nonsingleton component.
     NonPointAffineTranslation,
+    /// A bounded affine chain already contains its declared maximum maps.
+    AffineCapacityExhausted {
+        /// Maximum retained map count, fixed by the chain's type.
+        capacity: usize,
+    },
     /// A row or column index lies outside its declared dimension.
     IndexOutOfBounds {
         /// Requested zero-based index.
@@ -67,6 +72,9 @@ impl core::fmt::Display for IntervalLatticeError {
             Self::NonPointAffineTranslation => {
                 f.write_str("affine translation must contain exactly one vector")
             }
+            Self::AffineCapacityExhausted { capacity } => {
+                write!(f, "affine chain capacity {capacity} exhausted")
+            }
             Self::IndexOutOfBounds { index, dimension } => {
                 write!(f, "index {index} is outside dimension {dimension}")
             }
@@ -78,7 +86,8 @@ impl core::error::Error for IntervalLatticeError {
     fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
         match self {
             Self::Scalar(error) => Some(error),
-            Self::IndexOutOfBounds { .. }
+            Self::AffineCapacityExhausted { .. }
+            | Self::IndexOutOfBounds { .. }
             | Self::NonPointAffineMatrix
             | Self::NonPointAffineTranslation => None,
         }

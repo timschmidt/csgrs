@@ -34,3 +34,27 @@ fn exact_affine_images_share_the_companion_definition() {
         Some(&[point(0)])
     );
 }
+
+#[test]
+fn runtime_chain_is_the_shared_reexport() {
+    use hyperlattice::AffineChain;
+    let point = |n: i32| RationalInterval::point(n.into());
+    let source = IntervalVector::new([point(1)]).unwrap();
+    let mut chain = AffineChain::<_, _, 1, 8>::new(source);
+    for _ in 0..8 {
+        chain
+            .push(
+                AffineMap::new(
+                    IntervalMatrix::new([[point(2)]]).unwrap(),
+                    IntervalVector::new([point(1)]).unwrap(),
+                )
+                .unwrap(),
+            )
+            .unwrap();
+    }
+    let chain: hyperlattice::interval::AffineChain<_, _, 1, 8> = chain;
+    assert_eq!(
+        chain.enclosure(&mut ()).unwrap().lanes(),
+        Some(&[point(511)])
+    );
+}

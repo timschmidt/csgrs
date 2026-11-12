@@ -1,5 +1,8 @@
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector};
 
+mod chain;
+pub use chain::AffineChain;
+
 // One internal traversal. Coefficients may acquire outward bounds during
 // pullback, but those temporary bounds never replace the stored point maps.
 mod sealed {
@@ -14,7 +17,7 @@ mod sealed {
     }
 }
 
-/// A sealed source for exact affine images: a box or another affine image.
+/// A sealed source for exact affine images: a box, image or bounded chain.
 ///
 /// `Parameters` is always the original source box's type. Restriction acts in
 /// that parameter space; it does not intersect the output with an output box.
@@ -26,6 +29,12 @@ pub trait AffineSource<I: IntervalArithmetic, const N: usize>: sealed::Pullback<
     /// Whether the exact image is empty. A total affine map of a nonempty set
     /// stays nonempty, including singular maps and zero-dimensional outputs.
     fn is_empty(&self) -> bool;
+    /// Explicit Cartesian projection, preserving the exact source definition.
+    /// The context accounts for scalar work and owned copies across the query.
+    fn enclosure(
+        &self,
+        context: &mut I::Context,
+    ) -> Result<IntervalVector<I, N>, IntervalLatticeError>;
     /// Intersects the original parameter domain with `restriction`, retaining
     /// all maps. Owned scalar copies use the same arithmetic context. Failure
     /// leaves this source unchanged and available for a larger-budget retry.
@@ -209,6 +218,12 @@ impl<I: IntervalArithmetic, const N: usize> AffineSource<I, N> for IntervalVecto
     fn is_empty(&self) -> bool {
         self.is_empty()
     }
+    fn enclosure(
+        &self,
+        context: &mut I::Context,
+    ) -> Result<IntervalVector<I, N>, IntervalLatticeError> {
+        self.hull(&Self::empty()?, context)
+    }
     fn restrict_parameters(
         &self,
         restriction: &Self,
@@ -238,6 +253,12 @@ impl<I: IntervalArithmetic, S: AffineSource<I, C>, const R: usize, const C: usiz
     }
     fn is_empty(&self) -> bool {
         self.is_empty()
+    }
+    fn enclosure(
+        &self,
+        context: &mut I::Context,
+    ) -> Result<IntervalVector<I, R>, IntervalLatticeError> {
+        self.enclosure(context)
     }
     fn restrict_parameters(
         &self,

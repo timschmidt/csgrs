@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add bounded runtime affine chains, preserving exact maps and parameter-space
+  restrictions through further operations and checked capacity-independent replay.
+
 - Retain exact affine images and shared parameters through subsequent maps,
   parameter-space restrictions and validated replay. Enclosure queries compose
   maps before evaluating the source box and share scalar resource accounting.

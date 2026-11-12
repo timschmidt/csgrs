@@ -1,6 +1,6 @@
 #![cfg(feature = "fixed")]
 use hyperlattice_interval::hyperinterval::FixedInterval;
-use hyperlattice_interval::{AffineMap, IntervalMatrix, IntervalVector};
+use hyperlattice_interval::{AffineChain, AffineMap, IntervalMatrix, IntervalVector};
 #[path = "../conformance/allocations.rs"]
 mod allocations;
 
@@ -41,6 +41,25 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
             .restrict_parameters(&IntervalVector::new([zero; 3]).unwrap(), &mut ())
             .unwrap();
         assert_eq!(selected.enclosure(&mut ()).unwrap().lanes(), Some(&[zero]));
+        let mut chain = AffineChain::<_, _, 1, 16>::new(image);
+        let identity = AffineMap::new(
+            IntervalMatrix::new([[p]]).unwrap(),
+            IntervalVector::new([zero]).unwrap(),
+        )
+        .unwrap();
+        for _ in 0..16 {
+            chain.push(identity).unwrap();
+        }
+        assert!(chain.push(identity).is_err());
+        assert_eq!(chain.enclosure(&mut ()).unwrap().lanes(), Some(&[zero]));
+        let selected_chain = chain
+            .restrict_parameters(selected.parameter_domain(), &mut ())
+            .unwrap();
+        assert_eq!(
+            selected_chain.enclosure(&mut ()).unwrap().lanes(),
+            Some(&[zero])
+        );
+        std::hint::black_box((chain, selected_chain));
         std::hint::black_box((image, selected));
         std::hint::black_box((result, transposed, squared, dot, hull, intersection, error));
         (subset, interior)
