@@ -23,6 +23,8 @@
 mod bounds;
 #[cfg(feature = "dyadic")]
 mod dyadic;
+#[cfg(feature = "dyadic")]
+mod exponential;
 #[cfg(feature = "fixed")]
 mod fixed;
 #[cfg(feature = "fixed")]

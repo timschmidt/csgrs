@@ -78,3 +78,11 @@ path = "fuzz_targets/primitive_roots.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "exponential"
+path = "fuzz_targets/exponential.rs"
+required-features = ["rational"]
+test = false
+doc = false
+bench = false

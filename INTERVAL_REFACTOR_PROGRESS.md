@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic/fixed/IEEE square roots and rational/dyadic exponentials implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -959,6 +959,85 @@ registered in `docs/evidence-archive.tsv`; all prior records are preserved.
 Later elementary functions, remaining signed-power surfaces, symbolic-ball
 function adapters, consumer migrations, full coverage and release
 qualification remain open. No phase completion is inferred from this addition.
+
+## Exponential admission (2026-11-12)
+
+Owner: Hyperinterval's interval evaluation layer, P1/P3/P5/P6/P19. Baseline
+`97f0d1d0c`; the missing `exp` witness was reproduced before implementation.
+Domain: finite rational/dyadic closed intervals, canonical empty, signed i32
+output grids. Output is a Complete-domain dyadic range with tight outward
+endpoint bounds. Size/work exhaustion or intermediate exponent-storage
+Overflow is typed before publishing an image. No consumer kernel is changed.
+
+Hyperreal's existing computable exponential has precision and abort controls,
+but no cumulative work contract that a Hyperinterval wrapper can enforce.
+The new interval algorithm has a distinct bounded-work contract and reuses
+existing DyadicInterval arithmetic, scaled quotient, normalization and output
+validation. It does not change or duplicate the computable graph machinery.
+Rational exact numerators/denominators remain the authoritative source at each
+refinement. A shared test-only exact GMP dyadic conversion was extracted from
+the square-root oracle without dropping assertions.
+
+For r in [0,1/2], each successive positive Taylor term ratio is at most 1/2;
+after S_n the tail is at most twice t_(n+1). Directed arithmetic encloses the
+argument, every term, the sum and this tail. Binary argument reduction and
+repeated directed squaring reconstruct exp(abs(x)); reciprocal reconstructs
+negative arguments. Success requires each endpoint enclosure, after output
+regridding, to have adjacent grid bounds. Exp(0) is treated exactly. For
+nonzero rational input exp(x) is not dyadic, so convergent refinement can
+separate the grid boundaries, subject to resource/storage limits. No uncertain
+predicate is treated as a successful bound.
+
+Every attempt and nested arithmetic call shares the caller's DyadicBudget.
+No refinement counter alone claims total work control; intermediate size and
+cumulative deterministic work units are separately limited. There is no
+cache or retained expression graph. These units are not heap bytes, CPU
+instructions or cancellation support; those broader controls remain open.
+For p<=0 and x<=p, exp(x)<=2^p; for p>=0 and x<0, exp(x)<1<=2^p. Exact
+bit-length comparisons establish these negative tails without materializing
+huge magnitudes. Very small nonzero arguments retain the correct side of one.
+
+Two completion regressions were reproduced during review: retaining the unused
+half of a point enclosure during interval assembly forced scale-sized growth,
+and aligning a selected zero unnecessarily exhausted the budget at the minimum
+grid exponent. Assembly now selects only the monotone extrema and constructs
+zero-based results directly through the existing validated constructor. Both
+failed logs and pre-fix source snapshots are retained alongside the original
+extreme-scale witnesses.
+
+The 26-command qualification matrix at `/tmp/interval-refactor/exponential`
+passes: 101 all-feature unit/integration tests and 11 doctests, affected Rust
+1.88/1.95/stable features/release/strict lint/docs, formatting, fuzz harnesses,
+whole-repository zizmor and retention budget, unchanged solver value/dispatch
+witnesses, primitive dependency closure and ARM/WASM compilation. Strengthened
+large-rational and coarse-tail fixtures also pass final release, dyadic-only
+MSRV and strict-lint checks. No hosted OS or distribution claim follows.
+
+Independent directed MPFR grid bounds cover rational sources, values through
+±1024, precision through -2048, coefficients beyond 1024 bits, tiny inputs,
+empty/zero, small budgets and retries, refinement, serialization and further
+operations. The maintained final ASan campaign completes 10,000 cases in
+13 seconds, seed 20261118, 8-byte cap and 30-second limit, with no failure.
+Its precision generator includes every grid exponent from -72 through zero;
+earlier campaigns restricted that band to -72 through -8 and are retained.
+
+Fresh Rust 1.95 coverage reports 2,388/2,432 production lines (98.19%) and
+4,583/4,790 regions (95.68%). Tests, dependencies and probes are excluded;
+LLVM supplies no branch denominator. Report/export/dump all succeed and all
+four mismatch records identify excluded Rug OptRational::parts. Earlier
+profiles remain separate, not mixed into the final report. Full coverage is
+still open.
+
+All 480 cost samples complete: four source widths, three grid precisions,
+and both backends; 128 warmups and 20 samples of 128 owned images per group.
+The crate performance ledger has the full median table. Raw samples also
+retain deterministic work units, which are distinct from measured CPU time.
+No speedup or consumer/firmware claim follows. The separate
+`2026-11-12-interval-exponential` evidence record is pending registration.
+
+Later elementary functions, primitive exponential backends, symbolic-ball
+adapters, consumer migrations, actual memory/cancellation bounds, full coverage
+and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

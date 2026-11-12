@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add tight rational/dyadic exponential images using budgeted interval Taylor
+  tails, range reconstruction and endpoint refinement. Preserve explicit
+  domain coverage, negative-tail shortcuts and retry after exhaustion.
+
 - Add allocation-free fixed-point and qualified IEEE square roots with tight
   endpoints and explicit domain coverage. Validate maximal-scale overflow,
   subnormal inputs and independence from native rounding/FTZ/DAZ modes.

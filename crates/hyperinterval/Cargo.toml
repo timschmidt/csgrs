@@ -83,3 +83,8 @@ required-features = ["rational", "dyadic"]
 name = "primitive_root_cost"
 path = "conformance/primitive_root_cost.rs"
 required-features = ["fixed", "float-enclosure"]
+
+[[example]]
+name = "exp_cost"
+path = "conformance/exp_cost.rs"
+required-features = ["rational", "dyadic"]

@@ -130,7 +130,7 @@ jobs:
       - name: Run constructor and arithmetic campaigns
         run: |
           mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic" "$RUNNER_TEMP/interval-proposals" "$RUNNER_TEMP/interval-strict-float"
-          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots"
+          mkdir -p "$RUNNER_TEMP/interval-rational-powers" "$RUNNER_TEMP/interval-square-roots" "$RUNNER_TEMP/interval-primitive-roots" "$RUNNER_TEMP/interval-exponential"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
@@ -139,3 +139,4 @@ jobs:
           cargo +nightly fuzz run rational_powers --features rational "$RUNNER_TEMP/interval-rational-powers" -- -runs=100000 -max_len=10 -max_total_time=30 -seed=20261115
           cargo +nightly fuzz run square_roots --features rational "$RUNNER_TEMP/interval-square-roots" -- -runs=100000 -max_len=10 -max_total_time=30 -seed=20261116
           cargo +nightly fuzz run primitive_roots "$RUNNER_TEMP/interval-primitive-roots" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261117
+          cargo +nightly fuzz run exponential --features rational "$RUNNER_TEMP/interval-exponential" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261118

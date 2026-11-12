@@ -228,3 +228,40 @@ combinations, and emitted code scans on Rust 1.88, 1.95 and stable, plus stable
 fat LTO, find no native floating arithmetic/comparison in the selected root
 and existing strict-float paths. This target/compiler evidence does not
 qualify a different platform or replace the exact mathematical argument.
+
+## Budgeted exponential completion probe
+
+`conformance/exp_cost.rs` computes tight grid images of preconstructed exact
+inputs: point 1, narrow [1,1+2^-8], wide [-4,4], and negative [-16,-8]. The
+output includes both owned dyadic endpoints and Complete domain coverage;
+all refinement attempts remain charged to the same budget. Independent
+directed MPFR checks run before timing. Rust 1.99 release, x86_64 Linux,
+rational+dyadic features, 128 warmups and 20 samples of 128 images per case:
+
+| Backend / input | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| dyadic / point | 18646.520 | 36383.531 | 114201.234 |
+| dyadic / narrow | 38583.367 | 69556.871 | 213629.574 |
+| dyadic / wide | 64542.234 | 133154.922 | 452603.320 |
+| dyadic / negative | 19836.590 | 75867.113 | 220062.328 |
+| rational / point | 18753.453 | 36558.797 | 114525.246 |
+| rational / narrow | 35268.566 | 69941.078 | 215594.012 |
+| rational / wide | 64724.559 | 133569.125 | 453385.070 |
+| rational / negative | 20020.934 | 76152.012 | 219971.211 |
+
+Values are median ns/image; all 480 samples completed. Timed work includes
+budget creation, Taylor tails, range reconstruction, any endpoint refinement,
+output materialization and destruction. Inputs/oracles are excluded. Raw
+samples retain deterministic work units per image alongside elapsed time;
+compiler/hardware metadata, executable hash and whole-probe size are archived.
+The executable includes GMP/MPFR oracle code, so its size is not kernel size.
+These are finite host completion costs, not a speedup comparison to an
+unbudgeted point evaluator or evidence of a consumer/firmware migration.
+
+The ordinary corpus additionally completes values through ±1024, precision
+through -2048, rational coefficients beyond 1024 bits, tiny inputs, and
+extreme-scale negative tails under its declared size/work settings. Positive
+extreme scales and small budgets exercise typed refusal, not completion.
+Deterministic accounting is distinct from precision, actual heap bytes,
+wall-clock time and cancellation. A broad memory/cancellation contract and
+full consumer performance qualification remain open.

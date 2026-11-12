@@ -26,6 +26,14 @@ are excluded with `Partial` coverage; strictly negative nonempty inputs return
 `EmptyDomain`. Empty inputs return empty with `Complete` coverage. Keep the
 coverage receipt when consuming the result in later arithmetic.
 
+Rational and dyadic intervals also provide `exp(precision, &mut budget)` with
+tight outward dyadic endpoints. Its domain is complete for every input, with
+empty mapped to empty. Certified Taylor tails, directed range reconstruction
+and endpoint refinement share the same work/size budget. A failed attempt
+publishes no partial image; a new budget permits a fresh retry. This path
+provides deterministic work accounting, not cancellation or actual heap-byte
+limits.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

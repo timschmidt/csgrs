@@ -1,16 +1,10 @@
 //! Independent exact grid tightness and directed MPFR square-root oracle.
 use hyperinterval::DyadicInterval;
-use rug::{Float, Integer, Rational as Q, float::Round};
+use rug::{Float, Rational as Q, float::Round};
 
-pub fn q(mantissa: &impl core::fmt::Display, exponent: i32) -> Q {
-    let mut value = Q::from(mantissa.to_string().parse::<Integer>().unwrap());
-    if exponent >= 0 {
-        value <<= exponent as u32;
-    } else {
-        value >>= exponent.unsigned_abs();
-    }
-    value
-}
+#[path = "dyadic_oracle.rs"]
+mod dyadic_oracle;
+pub use dyadic_oracle::q;
 
 // Certify containment AND the impossibility of moving either grid endpoint
 // inward. These exact GMP inequalities do not reuse the implementation's
