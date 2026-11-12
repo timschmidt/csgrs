@@ -2629,7 +2629,12 @@ removed. The final delegation is retained with the measured native/Wasm and IR
 footprint reductions, identical exact results, traces and allocations.
 
 Interface source commit `ff668ca39d5e1ecee91b438b20eca806f3a26f29`.
-CSGRS source/evidence registration pending for measurement adoption. This completes
+CSGRS source commit `f2d4f22e9c527cc1890ad45608f2f05fcf04bc6c`; evidence commit
+`fbb1bb0958d46d20ea1f53f992bcaa73241108b9`, record
+`docs/evidence/2026-11-12-interval-interface-measurements`: 214 files,
+1,296,345 bytes, SHA-256
+`3dc3b63286523969c908fe175ffbffcba5fcea6cc606d7deadcd63866d010c53`. The committed archive was regenerated and verified before
+registration; every previous archive row remains unchanged. This completes
 one production constructor delegation, not Phase 8 or the full refactor.
 Machine-profile intervals, positive products/quotients, named budgets, complete
 canonical-profile differentials and full browser/schedule measurements remain
