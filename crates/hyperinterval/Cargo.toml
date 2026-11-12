@@ -21,6 +21,7 @@ std = ["alloc"]
 integer = []
 fixed = []
 float-proposal = []
+float-enclosure = []
 bigint = ["alloc", "dep:num-bigint", "dep:num-traits", "dep:num-integer"]
 dyadic = ["bigint"]
 rational = ["std", "dep:hyperreal"]
@@ -57,3 +58,8 @@ required-features = ["hyperreal"]
 name = "proposal_cost"
 path = "conformance/proposal_cost.rs"
 required-features = ["float-proposal"]
+
+[[example]]
+name = "float_cost"
+path = "conformance/float_cost.rs"
+required-features = ["float-enclosure"]

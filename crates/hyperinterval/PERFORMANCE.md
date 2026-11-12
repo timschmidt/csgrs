@@ -78,3 +78,36 @@ Constructors normalize caller-owned mantissas, and arbitrary-precision rational
 arithmetic/Hyperreal evaluation have no new total-work limit. No independent
 cache or worker pool is introduced. Resource errors publish no partial result;
 fresh-budget retries are exercised by the maintained corpus.
+
+## Strict IEEE core and validation correction
+
+The integer backend's statically bounded u128 operations allocate no memory.
+Power uses at most 32 squaring and 32 product stages per source endpoint, each
+evaluating both directed bounds. Optional exact bridges have their separately
+documented allocation/resource contracts.
+
+On x86_64 Linux, Rust 1.99 release, `conformance/float_cost.rs` completes
+affine → square → add → reciprocal and materializes both bounds of [4/5,1]
+outward. Thirty samples of 16,384 chains have median 574.681 ns for f32 and
+659.598 ns for f64. These are focused host observations, without an explicit
+warmup or a competing certified backend. Carrier layouts are 12/24 bytes.
+The complete probe executable has 358,621 text, 14,032 data and 2,210 BSS bytes;
+runtime/formatting code is included, so this is not the kernel's isolated size.
+
+An out-of-line finite validator prevents LLVM from substituting a native float
+zero comparison that erases subnormals under DAZ. Compared with `385006d68`,
+three alternating process rounds of the unchanged proposal probe (30 samples
+of 16,384 completed steps per round) give these median ns/step:
+
+| Width | Before correction | After correction |
+| --- | ---: | ---: |
+| f32 | 83.475 | 95.786 |
+| f64 | 67.681 | 99.816 |
+
+Output checksums agree for this ordinary workload. The proposal executable's
+text grows from 332,894 to 334,058 bytes; total text/data/BSS changes from
+350,272 to 350,268 bytes because section layout differs. This adverse latency
+and text-size result is retained with the correctness fix; it is not a
+behavior-preserving simplification or a general performance claim. Commands,
+flags, hardware, binary digests, original failing release evidence and raw
+samples are in the strict-float archive linked by the root progress record.

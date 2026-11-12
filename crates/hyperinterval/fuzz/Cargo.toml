@@ -10,8 +10,9 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "0.4"
-hyperinterval = { path = "..", features = ["integer", "fixed", "dyadic", "float-proposal", "serde"] }
+hyperinterval = { path = "..", features = ["integer", "fixed", "dyadic", "float-proposal", "float-enclosure", "serde"] }
 serde_json = "1.0"
+rug = { version = "1.30.0", default-features = false, features = ["float", "rational", "std"] }
 
 [[bin]]
 name = "constructors"
@@ -40,6 +41,13 @@ bench = false
 [[bin]]
 name = "primitive_proposals"
 path = "fuzz_targets/primitive_proposals.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "strict_float"
+path = "fuzz_targets/strict_float.rs"
 test = false
 doc = false
 bench = false

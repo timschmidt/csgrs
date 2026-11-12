@@ -17,7 +17,8 @@
     feature = "fixed",
     feature = "rational",
     feature = "dyadic",
-    feature = "float-proposal"
+    feature = "float-proposal",
+    feature = "float-enclosure"
 ))]
 mod bounds;
 #[cfg(feature = "dyadic")]
@@ -26,7 +27,9 @@ mod dyadic;
 mod fixed;
 #[cfg(feature = "fixed")]
 mod fixed_arithmetic;
-#[cfg(feature = "float-proposal")]
+#[cfg(feature = "float-enclosure")]
+mod float;
+#[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
 mod ieee;
 #[cfg(feature = "integer")]
 mod integer;
@@ -53,3 +56,6 @@ pub use rational::RationalInterval;
 #[cfg(feature = "real-ball")]
 pub use real_ball::{BallRelation, RealBall};
 pub use state::{DomainCoverage, IntervalError, MidpointRounding, RangeEnclosure, SignSet};
+
+#[cfg(feature = "float-enclosure")]
+pub use float::{F32Enclosure, F64Enclosure};

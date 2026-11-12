@@ -2,6 +2,13 @@
 
 ## 0.1.0 (unreleased)
 
+- Add independent `float-enclosure` finite f32/f64 carriers, initially qualified
+  on x86_64, with integer directed arithmetic, fused affine evaluation, bounded
+  nonnegative powers, validated bit replay and optional exact endpoint bridges.
+- Keep finite-bit validation out of line: optimized inlining could replace
+  integer zero checks with native float comparisons and erase subnormal
+  proposal inputs under DAZ. Release mode regressions now cover that case.
+
 - Add explicit scalar-set states, sign sets, and typed domain/failure carriers.
 - Add checked integer/fixed endpoint carriers and named set relations.
 - Add optional checked serialization with no default allocation dependency.

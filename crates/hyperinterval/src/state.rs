@@ -5,7 +5,7 @@ use core::fmt;
 #[non_exhaustive]
 pub enum IntervalError {
     /// A primitive floating-point input is NaN or infinite.
-    #[cfg(feature = "float-proposal")]
+    #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
     NonFiniteEndpoint,
     /// The proposed lower endpoint is greater than the upper endpoint.
     ReversedEndpoints,
@@ -47,7 +47,7 @@ pub enum IntervalError {
 impl fmt::Display for IntervalError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            #[cfg(feature = "float-proposal")]
+            #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
             Self::NonFiniteEndpoint => "interval endpoint is not finite",
             Self::ReversedEndpoints => "interval endpoints are reversed",
             Self::InvalidScale => "fixed-point scale is unsupported",

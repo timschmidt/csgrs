@@ -1,10 +1,10 @@
 # Strict finite float backend admission design
 
-This is the next implementation design for phase 4 of
-[the interval plan](../INTERVAL_REFACTOR_PLAN.md). It is not an implemented
-capability or qualification claim. The proposal wrappers already exist; no
-`F32Enclosure` or `F64Enclosure` implementation is present at this checkpoint.
-The full plan and its acceptance gates remain authoritative.
+This records the integer IEEE algorithm for phase 4 of
+[the interval plan](../INTERVAL_REFACTOR_PLAN.md), implemented in Hyperinterval's
+`float-enclosure` feature. The [progress record](../../INTERVAL_REFACTOR_PROGRESS.md)
+separates measured qualification from the remaining plan scope. The full plan
+and its acceptance gates remain authoritative.
 
 ## Authority and ownership
 
@@ -15,12 +15,23 @@ are exact IEEE endpoints, not approximate samples of another source.
 No proposal converts into a certified carrier. A caller must replay the
 original exact-source operation to validate a proposed computation.
 
-The candidate backend uses integer operations on IEEE encodings. Native float
+The backend uses integer operations on IEEE encodings. Native float
 arithmetic is unnecessary for add, subtract, multiply or divide. This avoids
 relying on ambient rounding, FTZ or DAZ for the certified path. Only bit transfer
 through `to_bits`/`from_bits` crosses the primitive float interface. Compiler,
 ABI and integer-operation semantics still require qualification; this is not
-a promise about arbitrary GPU or custom targets.
+a promise about arbitrary GPU or custom targets. Public nonempty ingress is
+gated to x86_64; ARM/WASM compilation does not qualify their execution.
+
+Source-level integer logic alone was insufficient: optimized LLVM code replaced
+an inlined magnitude-zero bit test with `ucomisd`, misclassifying subnormals
+under DAZ. The shared `Format::finite` boundary is therefore `inline(never)`.
+Release-mode isolated MXCSR tests and emitted-code inspection are required
+alongside mathematical oracles. This also fixes proposal ingress, whose prior
+normal-environment tests did not establish DAZ independence. The code scanner
+covers emitted strict kernel/client functions and wide-division helpers, not
+unrelated runtime or panic code; compiler qualification is not a universal
+proof for arbitrary build flags or future optimizers.
 
 Use the existing private IEEE validation/ordering helper and `Bounds` storage.
 A private finite-bit wrapper with integer-based `Eq`/`Ord` can let `Bounds`
@@ -96,13 +107,25 @@ for multiplication/division. Pointwise square has zero as its minimum when
 the input contains zero; it must not be implemented as an independent-set
 self-product across zero.
 
-Nonnegative integer powers can use at most 32 squarings and 32 products per
-positive endpoint enclosure and apply parity afterward. Document accumulated outward
+Nonnegative integer powers use at most 32 squaring and 32 product stages per
+source endpoint, evaluating both directed bounds, and apply parity afterward.
+Document accumulated outward
 rounding and intermediate overflow. Exponent zero maps nonempty input to one;
-empty remains empty. Do not claim a tight image without proving it. An initial
-affine operation may compose directed multiply and add, explicitly documenting
-separate rounding and intermediate representability. A fused affine kernel
-requires its own width/rounding argument and should be measured before adoption.
+empty remains empty. Do not claim a tight image without proving it.
+
+Fused affine images compute the exact product (at most 106 magnitude bits)
+before adding the offset. Both dyadic operands have at most 106 bits. A common
+work grid places the dominant top bit at position 126, leaving one carry bit.
+The dominant operand is exact on that grid; only the smaller operand can lose
+a fractional tail. A lost tail requires top-bit separation of at least 21,
+so opposite signs cannot cause severe cancellation. Consequently the result's
+IEEE spacing is coarser than the work grid. The tail, whose magnitude is less
+than one work-grid unit, changes the directed endpoints only when the retained
+sum lies exactly on an IEEE endpoint; then step one endpoint in the tail's
+signed direction. Otherwise its floor/ceiling are unchanged. Without a lost
+tail, cancellation is computed exactly in u128. Intermediate product overflow
+is not an error when the final image is finite: `MAX * 2 - MAX` returns MAX.
+Apply this point kernel to both interval endpoints and take their hull.
 
 Expose checked adjacent-value expansion. Never introduce NaN/infinity through
 next-up/down at the finite extrema. Native replay should encode IEEE bits and

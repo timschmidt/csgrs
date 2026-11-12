@@ -45,7 +45,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers implemented; strict backend pending | environment qualification and rational oracle |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
@@ -512,6 +512,99 @@ implemented or certified by this change.
 Raw proposal evidence: `docs/evidence/2026-11-12-interval-proposals`, evidence commit
 `102f91c01a32fe0123aa3571ed96efaad32a6251`; 158 files, 23812789 bytes,
 SHA-256 `a742c2dbb1ee6d0f977758fb768fe235c8acaa5eb6977f2b15cdf4790fe49669`.
+
+## Strict finite float layer: admission
+
+Owner: Hyperinterval; plan §3.12/phase 4, P1/P3/P5/P6/P8–P11/P19.
+At source `385006d68`, the strict float types and arithmetic do not exist.
+The algorithm and missing witnesses are recorded in
+`docs/research/interval-float-backend.md`. Implement an allocation-free integer
+IEEE backend behind independent `float-enclosure`, initially admitting
+nonempty public inputs only on x86_64. Other architectures must reject with
+UnqualifiedEnvironment; cross-compilation alone will not qualify them.
+Native float arithmetic remains confined to the separate proposal module.
+
+Domain: canonical empty or closed finite f32/f64 endpoint sets; exact finite
+IEEE ingress, explicit NaN/infinity rejection, signed-zero canonicalization,
+integer-based order and outward basic arithmetic. Overflow cannot publish
+saturated finite bounds. Denominator validation precedes empty-numerator
+shortcuts. Primitive work is statically bounded; integer powers use at most
+32 squaring and 32 product stages per source endpoint, each evaluating both
+directed bounds. No ambient modes, caches, hidden
+refinement, standard transcendental or proposal promotion are admitted.
+
+Missing witnesses include reduced-format exhaustive exact oracles, real IEEE
+edge and random exact-rational oracles, cancellation and underflow, operation
+chains/replay, compile-fail authority tests, isolated rounding-mode/FTZ/DAZ
+checks, emitted-code inspection, feature/MSRV/lint/sanitizer/target checks,
+and measured completed workload costs. No existing consumer/predicate path
+is to change, and this record is not evidence of completed implementation.
+
+### Implemented core and qualification
+
+`float-enclosure` now provides independent allocation-free F32/F64 enclosures,
+with exact IEEE ingress, canonical empty, set relations, directed basic
+arithmetic, fused affine images, nonnegative powers, expansion, validated bit
+replay and optional exact rational/dyadic bridges. Only x86_64 admits nonempty
+inputs. Integer basic arithmetic and affine images are tight; powers may widen
+and encounter intermediate overflow. The affine kernel computes the product
+before rounding, so `MAX * 2 - MAX` succeeds. Its width/tail proof is in the
+backend design; no native transcendental or proposal promotion is introduced.
+
+Qualification reproduced a release-only failure: LLVM folded an inlined
+integer zero check into `ucomisd`; DAZ then made a nonzero subnormal compare as
+zero. The original failing release test, disassembly, source patch and snapshot
+are retained. Keeping the shared finite validator out of line fixes the
+reproduced case. This corrects proposal ingress too; the earlier proposal
+record's normal-environment results did not establish DAZ independence.
+
+The final 27-command matrix passes on x86_64 Linux: Rust 1.88/1.95/stable
+feature tests, 67 all-feature unit/integration tests and 11 doctests, release
+float tests, all-target checks, strict Clippy, docs, workspace formatting,
+whole-repository zizmor, repository budget, fuzz builds, four downstream
+Hypersolve value/dispatch witnesses, dependency isolation, and ARM/WASM no_std
+compilation. No other consumer kernel or dispatch path changed. The independent
+integer oracle exhausts 57,121 reduced-format pairs for three operations and
+166,375 fused affine triples. GMP/MPFR oracles cover named IEEE boundaries,
+20,000 random pair candidates per width, interval corner extrema, fused affine
+images, and exact-power containment. Invalid, overflow and zero-denominator
+outcomes are checked separately from successful bounds.
+
+Isolated child processes exercise all 16 combinations of rounding, FTZ and
+DAZ for both widths in debug and release, including exact endpoint bridges.
+Fat-LTO release tests also pass. Emitted-code scans find no native floating
+arithmetic/comparison in the selected kernel/client functions: 55 symbols on
+1.88, 56 on 1.95, 55 on stable 1.99, and 39 with fat LTO. The scan excludes
+runtime/panic code and is compiler-specific evidence. These checks do not
+qualify arbitrary flags, fast-math, GPU execution, macOS/Windows runtime, or
+ARM/WASM execution. CI contains the affected hosted checks; none were pushed.
+
+The ASan strict-float campaign completes 100,000 runs, seed 20261114, maximum
+input 24 bytes, 30-second limit (12 seconds used), with no failure. The old
+two-input corpus remains intact; the new corpus seeds its third operand with
+zero. All-feature production coverage is 1,913/1,960 lines (97.60%) and
+3,611/3,770 regions (95.78%); float.rs is 239/242 lines and ieee.rs 265/266.
+Dependencies, tests, conformance probes and Hyperreal are excluded. LLVM reports
+no branch denominator. Its one profile mismatch is identified as Rug's excluded
+`OptRational::parts`, not a production Hyperinterval function. The 100% gate
+remains open.
+
+The completed strict chain materializes [4/5,1] outward after affine, square,
+add and reciprocal. Thirty samples of 16,384 chains have median 574.681 ns
+(f32) and 659.598 ns (f64); layouts are 12 and 24 bytes. The correctness barrier
+has an adverse cost: three alternating process rounds of the unchanged proposal
+probe, 30 samples/round, measure 83.475→95.786 ns (f32) and 67.681→99.816 ns
+(f64), with identical output checksums. This is a retained correctness fix,
+not a no-regression refactor. Raw samples, build flags and executable hashes
+are retained; these focused host measurements are not firmware or general
+performance guarantees. See the crate PERFORMANCE record for binary sizes.
+
+Raw evidence is staged at `/tmp/interval-refactor/strict-float`, destined for
+`2026-11-12-interval-strict-float` in the separate evidence repository. This
+checkpoint does not complete phase 4 or the plan: direct negative powers,
+remaining common measurements/conversions, full coverage, further targets,
+consumer migrations and distribution qualification remain open. Existing
+solver migration remains rejected under its unchanged size gate.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

@@ -2,7 +2,8 @@
     feature = "integer",
     feature = "fixed",
     feature = "rational",
-    feature = "dyadic"
+    feature = "dyadic",
+    feature = "float-enclosure"
 ))]
 use crate::{IntervalError, SignSet};
 
@@ -21,7 +22,8 @@ impl<T: PartialOrd> Bounds<T> {
         feature = "integer",
         feature = "fixed",
         feature = "rational",
-        feature = "dyadic"
+        feature = "dyadic",
+        feature = "float-enclosure"
     ))]
     pub(crate) fn new(lower: T, upper: T) -> Result<Self, IntervalError> {
         if lower > upper {
@@ -35,7 +37,8 @@ impl<T: PartialOrd> Bounds<T> {
         feature = "integer",
         feature = "fixed",
         feature = "rational",
-        feature = "dyadic"
+        feature = "dyadic",
+        feature = "float-enclosure"
     ))]
     pub(crate) fn point(value: T) -> Self
     where
@@ -61,7 +64,11 @@ impl<T: PartialOrd> Bounds<T> {
 
     // Callers must establish order algebraically before using this private
     // constructor. Public ingress always uses new().
-    #[cfg(any(feature = "rational", feature = "float-proposal"))]
+    #[cfg(any(
+        feature = "rational",
+        feature = "float-proposal",
+        feature = "float-enclosure"
+    ))]
     pub(crate) fn ordered(lower: T, upper: T) -> Self {
         Self { lower, upper }
     }
@@ -81,7 +88,8 @@ impl<T: Clone> Bounds<&T> {
     feature = "integer",
     feature = "fixed",
     feature = "rational",
-    feature = "dyadic"
+    feature = "dyadic",
+    feature = "float-enclosure"
 ))]
 impl<T: Copy + PartialOrd> Bounds<T> {
     pub(crate) fn is_singleton(self) -> bool {

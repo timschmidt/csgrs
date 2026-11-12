@@ -2,9 +2,9 @@
 
 Scalar sets with exact endpoint semantics for the Hyper stack. The current
 surface provides checked integer/fixed arithmetic, exact rational intervals,
-budgeted common-scale dyadic arithmetic, and symbolic Real balls. Empty sets,
-sign sets, and set relations are explicit. Qualified float and elementary
-function enclosures remain under development.
+budgeted common-scale dyadic arithmetic, symbolic Real balls, and finite IEEE
+enclosures on x86_64. Empty sets, sign sets, and set relations are explicit.
+Elementary function enclosures remain under development.
 
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
@@ -70,6 +70,18 @@ or exclusion guarantee, and these types cannot convert into certified intervals.
 NaN/infinity input and overflowing calculations return typed errors. Optional
 serde encodes the endpoint IEEE bit patterns and validates them on import;
 empty is null and both signed zeros canonicalize to positive zero.
+
+`float-enclosure` independently adds `F32Enclosure` and `F64Enclosure` with
+allocation-free integer arithmetic on IEEE encodings. Addition, subtraction,
+product, quotient, square and fused affine images have tight outward finite
+bounds. Nonnegative integer powers accumulate outward rounding and may be
+wider; an unrepresentable intermediate or required endpoint returns Overflow.
+These operations preserve subnormals independently of native rounding modes
+and FTZ/DAZ. Nonempty ingress currently requires x86_64; other architectures
+return UnqualifiedEnvironment. Optional serde validates endpoint bit pairs.
+Optional `rational` and `dyadic` features provide exact endpoint conversions;
+the dyadic bridge takes an explicit size/work budget. IEEE ingress preserves
+the exact binary value: `0.1_f64` is not 1/10.
 
 Dyadic precision means grid spacing `2^precision`, not a bound on interval
 width. Directed conversions preserve containment. `DyadicBudget` accounts for
