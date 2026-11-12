@@ -113,6 +113,17 @@ No existing arithmetic or predicate dispatch has been changed.
   max time 30 s. Fuzz build and strict Clippy passed. Corpus retained in the
   evidence record, outside the source tree. No repository has been pushed.
 
+## Immutable phase-2 evidence
+
+- Source checkpoint: `8d6daa7d7`.
+- Evidence local commit: `8fa48073c8ced67a4dd7cd1460f8a32e8e79c0df`.
+- Record: `docs/evidence/2026-11-12-interval-fixed`.
+- Manifest row: `docs/evidence/2026-11-12-interval-fixed	275	8102925	6545215bd945264a9e8c9cd01966f87ecdd0a805f94b40474bb4bda0585cc328`.
+- Both favorable and rejected cost samples, original failed attempts, final
+  sanitizer corpora, Q30 differential workspaces and completed Hypersolve
+  coverage are retained. Registration uses the same scoped archive manifest
+  and verification functions; no prior evidence row is rewritten.
+
 ## Phase 2 admission and current evidence
 
 Owner: Hyperinterval, P1/P3/P5/P6/P31/P35/P36. Input domains are primitive
