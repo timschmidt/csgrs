@@ -2436,7 +2436,12 @@ byte-identical files, and the firmware checkout remains unchanged.
 | Pre-rounded Clarke coefficient matrix | rejected | exact point output widens by two ulps |
 | Blanket production adoption of current shared transforms | rejected | Clarke/chain time and matched probe size regress on both measured compilers |
 
-Source/evidence registration pending for this checkpoint. Performance-specialized
+Source commit `3422eb3f10e0bd9fb9c0b152a71627ad4024df87`; evidence commit
+`ed8d092582b4091490b83182b760cf4f0345e1a6`, record
+`docs/evidence/2026-11-12-interval-foc-client`: 123 files,
+735,316 bytes, SHA-256
+`2182ecf72274980f523a0cf1aae81bfb1f7a9f2abc4ca3484b0fa37a5bbcceaf`. The committed record was regenerated and
+verified before registration; all previous archive rows remain unchanged. Performance-specialized
 fixed kernels are still needed before firmware migration; the conformance client
 is evidence infrastructure, not an adopted optimization. Jacobian carriers,
 independent authored center/radius, remaining specializations and later phases
