@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add budgeted rational/dyadic square-root enclosures with tight grid bounds,
+  explicit partial-domain coverage and typed empty-domain failures. Exact
+  integer arithmetic establishes direction; generated bounds remain dyadic
+  arithmetic and validated replay operands.
+
 - Add exact signed-integer powers for rational intervals, preserving empty,
   zero-domain, parity and monotonicity semantics. Retain scalar-kernel errors
   and their source, including Hyperreal's existing eager-power growth refusal.

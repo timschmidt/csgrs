@@ -13,6 +13,13 @@ retains zero when its input crosses zero; a signed primitive minimum that
 cannot be reflected returns Overflow. Dyadic methods use the existing shared
 size/work budget. These total real functions do not clip their input domain.
 
+Rational and dyadic intervals provide `sqrt(precision, &mut budget)`, returning
+`RangeEnclosure<DyadicInterval>` with tight outward endpoints on the grid
+`2^precision`. Rational inputs require both features. Negative source points
+are excluded with `Partial` coverage; strictly negative nonempty inputs return
+`EmptyDomain`. Empty inputs return empty with `Complete` coverage. Keep the
+coverage receipt when consuming the result in later arithmetic.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

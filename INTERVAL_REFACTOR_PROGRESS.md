@@ -46,7 +46,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
-| 5 elementary functions | abs/min/max and rational signed powers implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
+| 5 elementary functions | abs/min/max, rational signed powers and rational/dyadic square roots implemented | remaining powers/functions, domain/extrema/pole corpus and full coverage |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
@@ -806,6 +806,74 @@ in `docs/evidence-archive.tsv`; prior records are preserved. Raw staging remains
 at `/tmp/interval-refactor/rational-powers`. Remaining signed-power surfaces,
 square root and subsequent elementary functions, consumer migrations, full
 coverage and release qualification are still required.
+
+## Square-root admission (2026-11-12)
+
+Owner: Hyperinterval, P1/P3/P5/P6 and P19. Target revision before edits:
+`79fa33f6f`. The missing `sqrt` witness was reproduced as a compile failure.
+Domain: finite rational or dyadic closed real intervals, canonical empty,
+all signed i32 output-grid exponents, principal nonnegative root. Rational
+inputs need rational+dyadic features. Output is a `RangeEnclosure` of a dyadic
+interval, with Complete coverage for nonnegative/empty sources, Partial when
+negative source members are excluded, and EmptyDomain for a strictly negative
+nonempty input. No existing consumer dispatch or scalar kernel was changed.
+
+For positive n/d after exact binary scaling, let q=floor(n/d). Then
+floor(sqrt(n/d))=floor(sqrt(q)); the upper endpoint is the same exactly when
+n/d is integral and q is a square, otherwise it is one grid unit higher.
+Monotonicity on the clipped nonnegative domain selects endpoint images. The
+shared existing scaled-quotient helper and num-bigint integer square root
+supply these operations. No rounded source interval substitutes for the input.
+Num-bigint may use a float proposal for a Newton seed when its std feature is
+unified; integer iteration establishes the result. That proposal is not an
+accepted endpoint certificate.
+
+Reservations precede operand cloning/scaling and root extraction. Root stages
+charge `(quotient_bits+2)^2 * (2*bit_length(quotient_bits+2)+4)` deterministic
+work units, in addition to existing linear ingress and scaled-division costs.
+This is the existing accounting contract, not a CPU-cycle, peak-byte or
+cancellation guarantee. Domain checks and caller-owned input construction are
+outside that accounting. Exhaustion publishes no partial interval, and fresh
+budgets permit retry. Zero and empty avoid scale-sized allocations; nonzero
+extreme grids can exhaust the declared size limit.
+
+Final qualification in `/tmp/interval-refactor/square-roots` passes all 26
+commands: 90 all-feature unit/integration tests and 11 doctests; the affected
+Rust 1.88/1.95/stable feature/release/strict-lint matrix; docs, formatting,
+fuzz checks, whole-repository zizmor and retention budget; unchanged solver
+value/dispatch witnesses; primitive dependency closure; and ARM/WASM no_std
+compilation. The first matrix exposed an unused rational-only test import in
+a dyadic-only build; feature-gating that import preserves every assertion.
+Initial compile diagnostics and all matrix results are retained. No hosted
+Windows/macOS or release-distribution completion is inferred.
+
+The first ASan campaign completed 100,000 cases in 28 seconds. After reserving
+the dyadic denominator constant explicitly, the final-source campaign completed
+92,929 cases in 31 seconds at its 30-second wall-time stopping condition, with
+no failure (seed 20261116, 10-byte cap). Both corpora and logs are retained;
+the final run is not reported as 100,000. Each generated case checks rational
+and dyadic tightness, domain coverage, serialization and further root/square
+composition using a shared independent oracle.
+
+Rust 1.95 instrumentation reports 2,186/2,230 production lines (98.03%) and
+4,123/4,289 regions (96.13%), excluding dependencies, tests and probes. No
+branch denominator is reported. Report/export and diagnostic dump succeeded;
+both mismatches identify excluded Rug OptRational::parts records, not a
+Hyperinterval function. Full coverage remains open.
+
+All 640 cost samples complete on Rust 1.99 x86_64 Linux: four input widths,
+four grid exponents and both backends, each with 1,024 warmups followed by
+20 samples of 1,024 owned outputs. Inputs and independent GMP/MPFR checks are
+outside the timed loop; budget creation and output destruction are inside.
+The full median table is in the crate performance ledger. No comparative
+speedup, allocation-byte, firmware or consumer claim follows.
+Independent exact GMP adjacent-grid inequalities and directed MPFR bounds cover
+small rational/dyadic domains, large/near-square coefficients, subnormal-sized
+values, partial domains, full exponent tags, resource refusal/retry, refinement,
+validated serialization, repeated roots/powers and reciprocal composition.
+The separate `2026-11-12-interval-square-roots` evidence record is pending
+registration. Remaining elementary functions, primitive square-root backends, consumer
+migrations, full coverage and release qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

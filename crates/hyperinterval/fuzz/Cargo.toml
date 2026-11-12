@@ -63,3 +63,11 @@ path = "fuzz_targets/strict_float.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "square_roots"
+path = "fuzz_targets/square_roots.rs"
+required-features = ["rational"]
+test = false
+doc = false
+bench = false

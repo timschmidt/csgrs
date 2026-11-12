@@ -1,5 +1,5 @@
 use crate::bounds::Bounds;
-use crate::{IntervalError, SignSet};
+use crate::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
 use num_bigint::BigInt;
 use num_integer::Integer;
 use num_traits::{One, Zero};
@@ -8,6 +8,8 @@ use num_traits::{One, Zero};
 ///
 /// Each stage reserves an upper bound `n` on its input/output magnitude bits.
 /// Linear stages cost `n` units; product/division stages cost `n*n` units.
+/// Square-root extraction reserves `2 * bit_length(n) + 4` quadratic stages,
+/// with `n` the scaled quotient bit length plus two.
 /// The formulas deliberately overestimate small or cancelling results. A size
 /// limit bounds each reservation; a work limit bounds their cumulative cost.
 /// Both limits are checked before the corresponding allocation/arithmetic.
@@ -75,6 +77,49 @@ pub struct DyadicInterval {
 }
 
 impl DyadicInterval {
+    /// Encloses the principal square root on the grid `2^precision`.
+    ///
+    /// The endpoints are the tight outward grid bounds. Negative source points
+    /// are excluded with `Partial` coverage; a strictly negative nonempty input
+    /// returns `EmptyDomain`. Empty maps to empty with `Complete` coverage.
+    /// Exact integer division, square root and a square check establish
+    /// the directed bounds. Reservations precede scaling, root extraction and verification;
+    /// see [`DyadicBudget`] for the accounting units and exclusions.
+    pub fn sqrt(
+        &self,
+        precision: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<RangeEnclosure<Self>, IntervalError> {
+        let Some((a, b, exponent)) = self.bounds() else {
+            return Ok(RangeEnclosure {
+                range: Self::empty(),
+                domain: DomainCoverage::Complete,
+            });
+        };
+        let zero = BigInt::zero();
+        if b < &zero {
+            return Err(IntervalError::EmptyDomain);
+        }
+        let domain = if a < &zero {
+            DomainCoverage::Partial
+        } else {
+            DomainCoverage::Complete
+        };
+        let shift = i64::from(exponent) - 2 * i64::from(precision);
+        budget.reserve(1, 1, false)?;
+        let denominator = BigInt::one();
+        let (lower, lower_ceil) = scaled_sqrt(a.max(&zero), &denominator, shift, budget)?;
+        let upper = if a == b {
+            lower_ceil
+        } else {
+            scaled_sqrt(b, &denominator, shift, budget)?.1
+        };
+        Ok(RangeEnclosure {
+            range: Self::new(lower, upper, precision)?,
+            domain,
+        })
+    }
+
     /// Validates order and normalizes caller-owned mantissas without growing them.
     /// This ingress operation has no work budget; input parsing limits belong to
     /// the caller. Arithmetic methods require a separate explicit budget.
@@ -653,6 +698,36 @@ fn endpoint_power(
     Ok(value.pow(exponent))
 }
 
+// For n >= 0 and d > 0, floor(sqrt(n/d * 2^shift)) equals
+// floor(sqrt(floor(n/d * 2^shift))). The upper endpoint equals this floor
+// exactly when the quotient is integral and its floor is a perfect square.
+// Domain checks belong to the public entry points.
+fn scaled_sqrt(
+    n: &BigInt,
+    d: &BigInt,
+    shift: i64,
+    budget: &mut DyadicBudget,
+) -> Result<(BigInt, BigInt), IntervalError> {
+    if n.is_zero() {
+        budget.reserve(1, 1, false)?;
+        return Ok((BigInt::zero(), BigInt::zero()));
+    }
+    let (floor, ceil) = scaled_quotient(n, d, shift, budget)?;
+    let bits = floor.bits().saturating_add(2);
+    // Charge the integer root backend logarithmically many quadratic stages,
+    // plus its exact square check, increment, and owned output. These are
+    // deterministic accounting units, not a bound on backend CPU instructions.
+    let stages = 2 * u64::from(u64::BITS - bits.leading_zeros()) + 4;
+    budget.reserve(bits, stages, true)?;
+    let lower = floor.sqrt();
+    let upper = if floor == ceil && &lower * &lower == floor {
+        lower.clone()
+    } else {
+        &lower + 1
+    };
+    Ok((lower, upper))
+}
+
 // Exact floor/ceiling of (numerator / denominator) * 2^shift.
 // Guard bit growth before constructing either scaled operand.
 pub(crate) fn scaled_quotient(
@@ -691,6 +766,62 @@ mod bridge {
     use num_traits::One;
 
     impl RationalInterval {
+        /// Tight outward grid enclosure of the principal square root.
+        ///
+        /// Requires the `dyadic` feature. Output spacing is `2^precision`.
+        /// Negative source points are excluded with `Partial` coverage; a
+        /// strictly negative nonempty input returns `EmptyDomain`. Empty maps
+        /// to empty with `Complete` coverage. Scaling, integer division and
+        /// root extraction use the caller's shared [`DyadicBudget`]. No rounded
+        /// rational input or intermediate interval is substituted for the source.
+        pub fn sqrt(
+            &self,
+            precision: i32,
+            budget: &mut DyadicBudget,
+        ) -> Result<RangeEnclosure<DyadicInterval>, IntervalError> {
+            let Some((a, b)) = self.bounds() else {
+                return Ok(RangeEnclosure {
+                    range: DyadicInterval::empty(),
+                    domain: DomainCoverage::Complete,
+                });
+            };
+            if b.is_negative() {
+                return Err(IntervalError::EmptyDomain);
+            }
+            let domain = if a.is_negative() {
+                DomainCoverage::Partial
+            } else {
+                DomainCoverage::Complete
+            };
+            let endpoint = |value: &Rational, budget: &mut DyadicBudget| {
+                if value.is_negative() || value.is_zero() {
+                    budget.reserve(1, 1, false)?;
+                    return Ok((BigInt::zero(), BigInt::zero()));
+                }
+                budget.reserve(
+                    value.numerator().bits().max(value.denominator().bits()),
+                    2,
+                    false,
+                )?;
+                scaled_sqrt(
+                    &BigInt::from(value.numerator().clone()),
+                    &BigInt::from(value.denominator().clone()),
+                    -2 * i64::from(precision),
+                    budget,
+                )
+            };
+            let (lower, lower_ceil) = endpoint(a, budget)?;
+            let upper = if a == b {
+                lower_ceil
+            } else {
+                endpoint(b, budget)?.1
+            };
+            Ok(RangeEnclosure {
+                range: DyadicInterval::new(lower, upper, precision)?,
+                domain,
+            })
+        }
+
         /// Outward enclosure with grid spacing `2^precision` and explicit
         /// conversion accounting. This does not call a floating-point backend.
         pub fn to_dyadic(

@@ -155,3 +155,40 @@ Hyperreal by this adapter. The compiled host layouts are 1 byte for IntervalErro
 promises. The complete probe executable has 666,956 text, 210,984 data and 1,818
 BSS bytes, including runtime and scalar dependencies. Raw evidence is linked
 from the root progress record.
+
+## Square-root completion probe
+
+`conformance/sqrt_cost.rs` materializes owned dyadic enclosures and coverage
+receipts from preconstructed rational/dyadic inputs. The four inputs are the
+singleton 2, narrow [2, 2+2^-16], wide [0,16], and partial-domain [-1,4].
+Independent GMP tightness inequalities and directed MPFR bounds run before
+timing. Rust 1.99 release on x86_64 Linux, rational+dyadic features, 1,024
+warmups and 20 samples of 1,024 completed images per case/grid/backend:
+
+| Backend / input | grid 2^-16 | grid 2^-64 | grid 2^-256 | grid 2^-1024 |
+| --- | ---: | ---: | ---: | ---: |
+| dyadic / point | 505.123 | 1178.072 | 2804.901 | 8326.062 |
+| dyadic / narrow | 713.662 | 2263.782 | 5425.439 | 16532.276 |
+| dyadic / wide | 367.915 | 683.699 | 923.493 | 2588.463 |
+| dyadic / partial | 368.306 | 680.600 | 929.400 | 2606.833 |
+| rational / point | 459.582 | 1219.851 | 2906.726 | 8366.091 |
+| rational / narrow | 899.005 | 2681.588 | 5937.013 | 17435.620 |
+| rational / wide | 397.708 | 735.685 | 975.101 | 2686.746 |
+| rational / partial | 396.959 | 736.199 | 1004.698 | 2719.616 |
+
+Values are median ns/image. Timed work includes a fresh deterministic budget,
+owned output construction and destruction. Source parsing and oracle work are
+excluded. All 640 samples complete with exact directed output bounds and an
+explicit domain receipt. Raw samples, compiler/hardware metadata, executable
+hash and whole-probe size are retained in the square-root evidence record.
+The executable also includes the independent GMP/MPFR oracle; its size is not
+a production-kernel size estimate. These are finite host completion costs,
+not a consumer speedup, no-regression or firmware timing claim. Input width
+alone does not determine cost: exact zero and perfect-square endpoints can
+be cheaper than narrower nonsquare intervals.
+
+Root extraction reserves quadratic accounting stages logarithmic in the
+scaled quotient bit length, plus existing scaling/division and rational
+cloning reservations. These are deterministic work/size units, not CPU cycles
+or peak retained/temporary bytes. Allocation accounting, cancellation, full
+coverage and consumer qualification remain separate work.
