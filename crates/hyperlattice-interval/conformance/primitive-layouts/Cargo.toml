@@ -1,0 +1,18 @@
+[package]
+name = "interval-layout-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[workspace]
+
+[dependencies]
+hyperlattice-interval = { path = "../..", default-features = false, features = ["fixed", "float-enclosure", "serde"] }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[profile.release]
+overflow-checks = true

@@ -2641,6 +2641,82 @@ canonical-profile differentials and full browser/schedule measurements remain
 open. The earlier solver/firmware adoption blockers and all later phases remain.
 No push was attempted.
 
+## 2026-11-12: Phase 6 primitive layout experiment
+
+Admission: CSGRS baseline `6c2ebd9647bd2a171881acb265084851ab3b9351`; all four
+managed repositories were clean. The plan explicitly requires primitive
+structure-of-arrays experiments. Hyperlattice owns Cartesian storage;
+Hyperinterval retains all scalar arithmetic and validation authority
+(P1, P5–P7, P18–P20, P31–P33). The missing witness was a measured, complete
+operation comparison against separate lower/upper endpoint arrays. This
+checkpoint adds an unpublished conformance package only; no production scalar,
+Cartesian carrier, Interface, firmware, policy, or wire format changes.
+
+The prototype retains one canonical Cartesian empty discriminator and private
+endpoint arrays for i32/i64 fixed and qualified f32/f64. It imports validated
+vectors and reconstructs through existing scalar constructors. Arithmetic calls
+remain left-to-right; intersections evaluate later lanes after finding an empty
+lane, and dot products retain multiply-then-add order. There is no unchecked
+endpoint ingress, SIMD arithmetic, rational/dyadic layout change, or new replay
+format. Reconstruction does perform extra scalar validation, so this is not an
+accepted predicate-preserving production refactor.
+
+Six conformance tests pass under Rust 1.88 debug/release, stable debug, and
+nightly AddressSanitizer. Independent integer bounds cover 23,409 pairs of
+small intervals and two-dimensional dot products with outward rounding. Tests
+also cover 3,136 full-range fixed pairs across four width/scale combinations,
+4,000 seeded finite IEEE bit-pattern pairs, subnormal rounding, overflow,
+negative zero canonicalization, invalid families and replay, and dimensions
+0, 1, 2, 3, 4, 16, 64, 256, 1024. Generated outputs feed further operations.
+An injected late scalar failure verifies that empty intermediate lanes do not
+hide failure. Existing owner tests/doctests pass (45). All 15 final selected
+commands pass, including strict Clippy on both toolchains, docs, no_std ARM
+compilation, Wasm Clippy/build, root formatting and diff checks. Initial type
+inference and Clippy diagnostics remain in the evidence; no assertion was
+removed. No full-coverage, new fuzz campaign, full pre-push or HIL claim.
+
+The headless Wasm consumer passes an independent integer endpoint oracle for
+612 completed pairs / 1,224 calls across both fixed families, nine dimensions,
+17 seeds and both layouts. Four malformed fixture selectors trap. Both IEEE
+ingress probes return `UnqualifiedEnvironment`, not fabricated success. The
+module has no imports, is 297,168 bytes, and has SHA-256
+`f405cd86543a80d62f86cc7e6da2510efd0f4f45bbc3bd0b64bf03bc7634bfa5`.
+Maximum fuel for both endpoint calls is 9,134,806, with 100,000,000 allowed per
+call. Fuel is a Wasmtime instruction metric, not wall time or MCU cycles.
+
+Native complete-output comparisons pass for 17 fresh-process seeds and all
+four families at dimensions 4 and 64. The final local cost probe records 6,912
+samples (four families, nine dimensions, eight workloads, twelve alternating
+samples per provider), 16 warmups, and zero allocations in every timed scope.
+It runs on allowed CPU 0 without frequency or governor control. Conversion and
+canonical output materialization are included for operations 0–6; operation 7
+separately measures retained chains with the same final scalar output. At N=64,
+SoA/native median time ratios for imported/retained chains are 0.781/0.743 for
+i32, 0.696/0.660 for i64, 1.184/1.181 for f32 and 1.183/1.189 for f64. Individual
+add/subtract/hull and many other paths regress. These short local probes do not
+establish a general speedup or latency bound; timer-scale rows remain raw data.
+
+At N=64 retained storage is 768→516 bytes for i32/f32 and 1,536→1,032 for
+i64/f64; N=0 and N=1 do not improve. Temporary stack peaks are not measured.
+The corrected single-provider native probe grows from 545,288 to 591,712 bytes;
+GNU size text grows 424,966→469,166. Unique-address out-of-line named kernel
+symbols sum to 72,971→113,342 bytes; this excludes inlined code and is not a
+complete monomorphized-code accounting. The initial runtime-bool size harness
+linked both providers and is retained as a rejected measurement. Its timing
+run also overlapped root formatting; final measurements ran after checks ended.
+
+Decision: **keep the experiment; reject a transparent production layout
+replacement**. Storage savings and faster fixed chains do not overcome the
+measured operation/IEEE regressions, larger executable, additional validation,
+or inability to preserve borrowed `lanes()` without a migration or duplicate
+storage. No production adoption or completed Phase 6 claim. Independent
+center/radius, Jacobian carriers, facts, additional specialized kernels and
+consumer adoption remain open. Machine-profile migration still needs proof
+transport to avoid repeated positivity checks. All other phases and earlier
+adoption blockers remain in scope. No push was attempted.
+
+Source and evidence registration: pending.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

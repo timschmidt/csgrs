@@ -1,0 +1,19 @@
+[package]
+name = "interval-layout-wasm"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+interval-layout-conformance = { path = ".." }
+hyperlattice-interval = { path = "../../..", default-features = false, features = ["fixed", "float-enclosure"] }
+
+[profile.release]
+panic = "abort"
+overflow-checks = true
