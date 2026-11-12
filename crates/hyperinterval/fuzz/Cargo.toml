@@ -1,0 +1,24 @@
+[package]
+name = "hyperinterval-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+rust-version = "1.88"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hyperinterval = { path = "..", features = ["integer", "fixed", "serde"] }
+serde_json = "1.0"
+
+[[bin]]
+name = "constructors"
+path = "fuzz_targets/constructors.rs"
+test = false
+doc = false
+bench = false
+
+[workspace]
+members = ["."]

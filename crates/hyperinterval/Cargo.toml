@@ -1,0 +1,33 @@
+[package]
+name = "hyperinterval"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Explicit scalar sets and checked interval enclosures for the Hyper stack"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/timschmidt/csgrs"
+documentation = "https://docs.rs/hyperinterval"
+readme = "README.md"
+include = ["/src/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+categories = ["mathematics", "no-std", "embedded"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[features]
+default = []
+alloc = []
+std = ["alloc"]
+integer = []
+fixed = []
+serde = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[[example]]
+name = "fixed_bounds"
+required-features = ["fixed"]

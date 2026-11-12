@@ -1,0 +1,92 @@
+name: hyperinterval
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "crates/hyperinterval/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperinterval.yml"
+  pull_request:
+    paths:
+      - "crates/hyperinterval/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperinterval.yml"
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  host:
+    name: Core (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        rust: ["1.88.0", stable]
+    env:
+      INTERVAL_RUST: ${{ matrix.rust }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install toolchain
+        run: rustup toolchain install "$INTERVAL_RUST" --profile minimal --component clippy --component rustfmt
+      - name: Check feature isolation and laws
+        run: |
+          for features in '' integer fixed integer,fixed serde integer,serde fixed,serde alloc std; do
+            cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
+          done
+          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --all-targets --all-features
+          cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --doc --all-features
+      - name: Check formatting and lint
+        run: |
+          cargo +"$INTERVAL_RUST" fmt -p hyperinterval -- --check
+          cargo +"$INTERVAL_RUST" clippy --locked -p hyperinterval --all-targets --all-features -- -D warnings
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo +"$INTERVAL_RUST" doc --locked -p hyperinterval --no-deps --all-features
+      - name: Verify firmware dependency closure
+        run: |
+          cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt
+          test "$(wc -l < interval-dependencies.txt)" -eq 1
+      - name: Check fuzz harness
+        if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
+        run: |
+          cargo check --locked --manifest-path crates/hyperinterval/fuzz/Cargo.toml --bins
+          rustfmt --edition 2024 --check crates/hyperinterval/fuzz/fuzz_targets/constructors.rs
+
+  portable:
+    name: no_std (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [wasm32-unknown-unknown, thumbv7em-none-eabihf]
+    env:
+      INTERVAL_TARGET: ${{ matrix.target }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install minimum compiler and target
+        run: rustup toolchain install 1.88.0 --profile minimal --target "$INTERVAL_TARGET"
+      - name: Build allocation-free core
+        run: |
+          cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features
+          cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed
+          cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed,serde

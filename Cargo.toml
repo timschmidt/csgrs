@@ -114,6 +114,7 @@ exclude = [
   "crates/hypercurve/fuzz",
   "crates/hyperevolution/fuzz",
   "crates/hypergraphics/fuzz",
+  "crates/hyperinterval/fuzz",
   "crates/hyperlattice/fuzz",
   "crates/hyperlimit/fuzz",
   "crates/hypermesh/fuzz",
