@@ -4,6 +4,16 @@ This is the pre-implementation API proposal for
 [`INTERVAL_REFACTOR_PLAN.md`](../INTERVAL_REFACTOR_PLAN.md), phases 1–3.
 It is not a completion claim. The root progress record tracks executed gates.
 
+The phase-4 `float-proposal` extension adds F32ProposalInterval and
+F64ProposalInterval. Their public arithmetic is native, inexact and
+non-authoritative; endpoint access is named `estimates`. They do not expose
+containment, exclusion, sign sets, or conversion into certified carriers.
+Input must be finite and ordered, using integer bit comparisons even in an
+environment that flushes subnormals. Signed zero canonicalizes as a set endpoint.
+Arithmetic overflow is explicit. Serde uses optional integer IEEE bit pairs,
+revalidated on import. No std, allocator or host dependency is required.
+This is not the strict float enclosure backend.
+
 ## Ownership and missing witnesses
 
 Hyperinterval owns scalar sets; Hyperlattice owns their linear algebra;

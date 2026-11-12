@@ -1,0 +1,209 @@
+use crate::IntervalError;
+use crate::bounds::Bounds;
+use crate::ieee::{BINARY32, BINARY64};
+use core::cmp::Ordering;
+
+macro_rules! proposal {
+    ($name:ident, $float:ty, $bits:ty, $format:ident) => {
+        /// Finite primitive endpoint estimates for non-authoritative proposals.
+        ///
+        /// Arithmetic uses the native float environment and is not directed
+        /// outward. These estimates cannot prove containment, exclusion, sign,
+        /// or topology. Certify a proposed operation by replaying its exact
+        /// source through an authoritative backend. No proposal-to-certificate
+        /// conversion exists.
+        ///
+        /// ```compile_fail
+        /// use hyperinterval::F32ProposalInterval;
+        /// let p = F32ProposalInterval::point(1.0).unwrap();
+        /// p.contains_point(1.0); // A proposal cannot certify membership.
+        /// ```
+        ///
+        /// ```compile_fail
+        /// use hyperinterval::F64ProposalInterval;
+        /// let p = F64ProposalInterval::point(1.0).unwrap();
+        /// p.signs(); // A proposal cannot supply authoritative sign sets.
+        /// ```
+        #[cfg_attr(
+            feature = "rational",
+            doc = "
+```compile_fail
+use hyperinterval::{F64ProposalInterval, RationalInterval};
+let proposal = F64ProposalInterval::point(1.0).unwrap();
+let certified: RationalInterval = proposal.into();
+```
+"
+        )]
+        #[derive(Clone, Copy, Debug)]
+        pub struct $name {
+            estimates: Option<Bounds<$float>>,
+        }
+
+        // Equality compares canonical stored bits, not native floating-point
+        // predicates that may be affected by subnormal environment settings.
+        impl PartialEq for $name {
+            fn eq(&self, other: &Self) -> bool {
+                let bits =
+                    |value: &Self| value.estimates().map(|(a, b)| (a.to_bits(), b.to_bits()));
+                bits(self) == bits(other)
+            }
+        }
+
+        impl Eq for $name {}
+
+        impl $name {
+            /// Validates finite ordered estimates. Signed zeros become +0.
+            pub fn new(lower: $float, upper: $float) -> Result<Self, IntervalError> {
+                let a = $format.finite(u64::from(lower.to_bits()))?;
+                let b = $format.finite(u64::from(upper.to_bits()))?;
+                if $format.compare(a, b) == Ordering::Greater {
+                    return Err(IntervalError::ReversedEndpoints);
+                }
+                Ok(Self {
+                    estimates: Some(Bounds::ordered(
+                        <$float>::from_bits(a as $bits),
+                        <$float>::from_bits(b as $bits),
+                    )),
+                })
+            }
+
+            /// A single finite proposed value, without an exact-source claim.
+            pub fn point(value: $float) -> Result<Self, IntervalError> {
+                Self::new(value, value)
+            }
+
+            /// An explicit empty proposal, distinct from an invalid estimate.
+            pub const fn empty() -> Self {
+                Self { estimates: None }
+            }
+
+            /// Whether no estimate is present; this is not a proof of an empty source.
+            pub fn is_empty(&self) -> bool {
+                self.estimates.is_none()
+            }
+
+            /// Endpoint estimates, or None for empty. No enclosure guarantee.
+            pub fn estimates(&self) -> Option<($float, $float)> {
+                self.estimates.map(Bounds::endpoints)
+            }
+
+            /// Approximate midpoint proposal, using halved endpoints to avoid
+            /// overflow. Underflow can move it outside the estimated range.
+            pub fn midpoint_estimate(&self) -> Option<$float> {
+                self.estimates().map(|(a, b)| a * 0.5 + b * 0.5)
+            }
+
+            // Validate every arithmetic result before selecting extrema. Bit
+            // keys avoid treating subnormals as zero under a DAZ environment.
+            fn collect(values: &[$float]) -> Result<Self, IntervalError> {
+                let mut range: Option<(u64, u64)> = None;
+                for value in values {
+                    let bits = $format
+                        .finite(u64::from(value.to_bits()))
+                        .map_err(|_| IntervalError::Overflow)?;
+                    range = Some(match range {
+                        None => (bits, bits),
+                        Some((a, b)) => (
+                            if $format.compare(bits, a) == Ordering::Less {
+                                bits
+                            } else {
+                                a
+                            },
+                            if $format.compare(bits, b) == Ordering::Greater {
+                                bits
+                            } else {
+                                b
+                            },
+                        ),
+                    });
+                }
+                match range {
+                    None => Ok(Self::empty()),
+                    Some((a, b)) => Self::new(
+                        <$float>::from_bits(a as $bits),
+                        <$float>::from_bits(b as $bits),
+                    ),
+                }
+            }
+
+            /// Native sum estimates, with no outward-rounding claim.
+            pub fn add(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.estimates(), other.estimates()) {
+                    (Some((a, b)), Some((c, d))) => Self::collect(&[a + c, b + d]),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Native difference estimates, with no outward-rounding claim.
+            pub fn sub(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.estimates(), other.estimates()) {
+                    (Some((a, b)), Some((c, d))) => Self::collect(&[a - d, b - c]),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Negated endpoint estimates, remaining non-authoritative.
+            pub fn neg(&self) -> Self {
+                match self.estimates() {
+                    None => Self::empty(),
+                    Some((a, b)) => Self::new(-b, -a).expect("finite ordered negation"),
+                }
+            }
+
+            /// Native four-corner product estimates.
+            pub fn mul(&self, other: &Self) -> Result<Self, IntervalError> {
+                match (self.estimates(), other.estimates()) {
+                    (Some((a, b)), Some((c, d))) => Self::collect(&[a * c, a * d, b * c, b * d]),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Native quotient estimates. Rejects a zero-spanning denominator
+            /// even when the numerator is empty; this is not certified division.
+            pub fn div(&self, other: &Self) -> Result<Self, IntervalError> {
+                if let Some((a, b)) = other.estimates() {
+                    if $format.compare(u64::from(a.to_bits()), 0) != Ordering::Greater
+                        && $format.compare(u64::from(b.to_bits()), 0) != Ordering::Less
+                    {
+                        return Err(IntervalError::ContainsZero);
+                    }
+                }
+                match (self.estimates(), other.estimates()) {
+                    (Some((a, b)), Some((c, d))) => Self::collect(&[a / c, a / d, b / c, b / d]),
+                    _ => Ok(Self::empty()),
+                }
+            }
+
+            /// Native estimates of `scale * x + offset`. Scalar inputs are
+            /// validated even when this proposal is empty.
+            pub fn affine(&self, scale: $float, offset: $float) -> Result<Self, IntervalError> {
+                let scale = Self::point(scale)?;
+                let offset = Self::point(offset)?;
+                self.mul(&scale)?.add(&offset)
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl serde::Serialize for $name {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                self.estimates()
+                    .map(|(a, b)| (a.to_bits(), b.to_bits()))
+                    .serialize(serializer)
+            }
+        }
+
+        #[cfg(feature = "serde")]
+        impl<'de> serde::Deserialize<'de> for $name {
+            fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                match Option::<($bits, $bits)>::deserialize(deserializer)? {
+                    None => Ok(Self::empty()),
+                    Some((a, b)) => Self::new(<$float>::from_bits(a), <$float>::from_bits(b)),
+                }
+                .map_err(serde::de::Error::custom)
+            }
+        }
+    };
+}
+
+proposal!(F32ProposalInterval, f32, u32, BINARY32);
+proposal!(F64ProposalInterval, f64, u64, BINARY64);

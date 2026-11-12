@@ -1,3 +1,9 @@
+#[cfg(any(
+    feature = "integer",
+    feature = "fixed",
+    feature = "rational",
+    feature = "dyadic"
+))]
 use crate::{IntervalError, SignSet};
 
 // Private generic machinery: downstream types cannot use it to assert
@@ -11,6 +17,12 @@ pub(crate) struct Bounds<T> {
 }
 
 impl<T: PartialOrd> Bounds<T> {
+    #[cfg(any(
+        feature = "integer",
+        feature = "fixed",
+        feature = "rational",
+        feature = "dyadic"
+    ))]
     pub(crate) fn new(lower: T, upper: T) -> Result<Self, IntervalError> {
         if lower > upper {
             Err(IntervalError::ReversedEndpoints)
@@ -19,6 +31,12 @@ impl<T: PartialOrd> Bounds<T> {
         }
     }
 
+    #[cfg(any(
+        feature = "integer",
+        feature = "fixed",
+        feature = "rational",
+        feature = "dyadic"
+    ))]
     pub(crate) fn point(value: T) -> Self
     where
         T: Clone,
@@ -43,7 +61,7 @@ impl<T: PartialOrd> Bounds<T> {
 
     // Callers must establish order algebraically before using this private
     // constructor. Public ingress always uses new().
-    #[cfg(feature = "rational")]
+    #[cfg(any(feature = "rational", feature = "float-proposal"))]
     pub(crate) fn ordered(lower: T, upper: T) -> Self {
         Self { lower, upper }
     }
@@ -59,6 +77,12 @@ impl<T: Clone> Bounds<&T> {
     }
 }
 
+#[cfg(any(
+    feature = "integer",
+    feature = "fixed",
+    feature = "rational",
+    feature = "dyadic"
+))]
 impl<T: Copy + PartialOrd> Bounds<T> {
     pub(crate) fn is_singleton(self) -> bool {
         self.lower == self.upper

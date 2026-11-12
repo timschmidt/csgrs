@@ -63,6 +63,14 @@ Nonnegative integer powers compute the exact image using bounded endpoint
 exponentiation and parity, with explicit size reservations before growth.
 Negative powers compose with reciprocal at a caller-selected grid.
 
+`float-proposal` adds `F32ProposalInterval` and `F64ProposalInterval`, with
+no dependencies or allocation. Their native arithmetic produces endpoint
+estimates for scheduling and candidate construction. It makes no containment
+or exclusion guarantee, and these types cannot convert into certified intervals.
+NaN/infinity input and overflowing calculations return typed errors. Optional
+serde encodes the endpoint IEEE bit patterns and validates them on import;
+empty is null and both signed zeros canonicalize to positive zero.
+
 Dyadic precision means grid spacing `2^precision`, not a bound on interval
 width. Directed conversions preserve containment. `DyadicBudget` accounts for
 reserved intermediate magnitude bits and deterministic work units; it does

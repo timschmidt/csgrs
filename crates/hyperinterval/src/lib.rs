@@ -16,7 +16,8 @@
     feature = "integer",
     feature = "fixed",
     feature = "rational",
-    feature = "dyadic"
+    feature = "dyadic",
+    feature = "float-proposal"
 ))]
 mod bounds;
 #[cfg(feature = "dyadic")]
@@ -25,10 +26,14 @@ mod dyadic;
 mod fixed;
 #[cfg(feature = "fixed")]
 mod fixed_arithmetic;
+#[cfg(feature = "float-proposal")]
+mod ieee;
 #[cfg(feature = "integer")]
 mod integer;
 #[cfg(feature = "integer")]
 mod integer_arithmetic;
+#[cfg(feature = "float-proposal")]
+mod proposal;
 #[cfg(feature = "rational")]
 mod rational;
 #[cfg(feature = "real-ball")]
@@ -41,6 +46,8 @@ pub use dyadic::{DyadicBudget, DyadicInterval};
 pub use fixed::{FixedEndpoint, FixedInterval};
 #[cfg(feature = "integer")]
 pub use integer::{IntegerEndpoint, IntegerRange};
+#[cfg(feature = "float-proposal")]
+pub use proposal::{F32ProposalInterval, F64ProposalInterval};
 #[cfg(feature = "rational")]
 pub use rational::RationalInterval;
 #[cfg(feature = "real-ball")]

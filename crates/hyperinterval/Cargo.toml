@@ -20,6 +20,7 @@ alloc = []
 std = ["alloc"]
 integer = []
 fixed = []
+float-proposal = []
 bigint = ["alloc", "dep:num-bigint", "dep:num-traits", "dep:num-integer"]
 dyadic = ["bigint"]
 rational = ["std", "dep:hyperreal"]
@@ -51,3 +52,8 @@ required-features = ["fixed"]
 name = "host_cost"
 path = "conformance/host_cost.rs"
 required-features = ["hyperreal"]
+
+[[example]]
+name = "proposal_cost"
+path = "conformance/proposal_cost.rs"
+required-features = ["float-proposal"]

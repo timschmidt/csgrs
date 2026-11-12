@@ -34,7 +34,7 @@ jobs:
         rust: ["1.88.0", "1.95.0", stable]
     env:
       INTERVAL_RUST: ${{ matrix.rust }}
-      INTERVAL_FEATURES: ${{ matrix.rust == '1.88.0' && 'integer,fixed,dyadic,serde' || 'integer,fixed,real-ball,serde,dispatch-trace' }}
+      INTERVAL_FEATURES: ${{ matrix.rust == '1.88.0' && 'integer,fixed,dyadic,float-proposal,serde' || 'integer,fixed,real-ball,float-proposal,serde,dispatch-trace' }}
     defaults:
       run:
         shell: bash
@@ -47,7 +47,7 @@ jobs:
         run: rustup toolchain install "$INTERVAL_RUST" --profile minimal --component clippy --component rustfmt
       - name: Check feature isolation and laws
         run: |
-          for features in '' integer fixed integer,fixed serde integer,serde fixed,serde alloc std bigint dyadic dyadic,serde; do
+          for features in '' integer fixed integer,fixed serde integer,serde fixed,serde alloc std bigint dyadic dyadic,serde float-proposal float-proposal,serde; do
             cargo +"$INTERVAL_RUST" test --locked -p hyperinterval --no-default-features --features "$features"
           done
           if [ "$INTERVAL_RUST" != 1.88.0 ]; then
@@ -69,6 +69,8 @@ jobs:
         run: |
           cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt
           test "$(wc -l < interval-dependencies.txt)" -eq 1
+          cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features float-proposal --edges normal --prefix none > proposal-dependencies.txt
+          test "$(wc -l < proposal-dependencies.txt)" -eq 1
       - name: Check fuzz harness
         if: matrix.os == 'ubuntu-latest' && matrix.rust == 'stable'
         run: |
@@ -97,6 +99,7 @@ jobs:
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features integer,fixed,serde
           cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features dyadic,serde
+          cargo +1.88.0 check --locked -p hyperinterval --target "$INTERVAL_TARGET" --no-default-features --features float-proposal,serde
 
   sanitizer:
     name: Bounded ASan interval campaigns
@@ -116,7 +119,8 @@ jobs:
           cargo install cargo-fuzz --version 0.13.2 --locked
       - name: Run constructor and arithmetic campaigns
         run: |
-          mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic"
+          mkdir -p "$RUNNER_TEMP/interval-constructors" "$RUNNER_TEMP/interval-arithmetic" "$RUNNER_TEMP/interval-dyadic" "$RUNNER_TEMP/interval-proposals"
           cargo +nightly fuzz run constructors "$RUNNER_TEMP/interval-constructors" -- -runs=10000 -max_len=1024 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run fixed_arithmetic "$RUNNER_TEMP/interval-arithmetic" -- -runs=100000 -max_len=16 -max_total_time=30 -seed=20261112
           cargo +nightly fuzz run dyadic_arithmetic "$RUNNER_TEMP/interval-dyadic" -- -runs=100000 -max_len=14 -max_total_time=30 -seed=20261112
+          cargo +nightly fuzz run primitive_proposals "$RUNNER_TEMP/interval-proposals" -- -runs=100000 -max_len=32 -max_total_time=30 -seed=20261113

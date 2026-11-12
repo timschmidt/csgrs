@@ -45,7 +45,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | not started | environment qualification and rational oracle |
+| 4 proposals/float | proposal wrappers implemented; strict backend pending | environment qualification and rational oracle |
 | 5 elementary functions | not started | MPFR domain/extrema/pole corpus |
 | 6 lattice | not started | component oracles and allocation/cost evidence |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
@@ -450,6 +450,64 @@ consumer migration.
 Raw power evidence: `docs/evidence/2026-11-12-interval-dyadic-powers`, evidence commit
 `66472def3c8be87872c46633cdd64d777c81536a`; 167 files, 45423439 bytes,
 SHA-256 `2f6c6073c3eda9ea08139238bdf070de4fda93f8608eea78c0299d7189bd8f2a`.
+
+## Primitive proposal layer: admission
+
+Owner: Hyperinterval, plan §3.11 and phase 4; P3/P5/P6/P8/P9/P19.
+At `6bd4b882c` no proposal or strict-float module exists. Add allocation-free,
+no_std F32ProposalInterval/F64ProposalInterval behind `float-proposal` with
+finite ordered endpoint estimates and explicit empty state. Primitive arithmetic
+may propose new estimates, but cannot establish containment, exclusion, scalar
+sign, or any certified status. No conversion from proposals to an authoritative
+interval is provided. Exact source replay remains the only admission path.
+
+Ingress validates finite bit patterns and numeric order with integer bit keys,
+canonicalizing signed zero as the same set endpoint. NaN/infinity input fails
+with NonFiniteEndpoint; an overflowing estimate fails with Overflow; strict
+proposal division rejects a zero-spanning denominator even with an empty
+numerator. Arithmetic is ordinary native floating point, without an outward
+rounding claim. The method returning a midpoint estimate may be affected by
+underflow and is not an implicitly selected exact point.
+
+Missing acceptance witnesses before implementation: finite/special-value input,
+separate zero/empty/error states, the inability to pass proposal values into
+certified APIs or call containment/sign methods, checked replay, arithmetic
+composition staying in proposal types, no dependencies/allocation, and Rust
+1.88 host/ARM/WASM builds. Shared private Bounds storage is reused. A private
+IEEE ordering helper is needed without Hyperreal: its existing verified decoder
+is crate-private and the proposal subset must not depend on that host crate.
+No Hyperreal code, scalar cache or consumer dispatch is changed.
+
+## Primitive proposal layer: local acceptance
+
+Implemented the two separate proposal wrappers with finite bit-validated
+construction, canonical zero, explicit empty state, native sum/difference/
+product/quotient/affine estimates, reflected estimates and an explicitly
+approximate midpoint. Equality compares stored canonical bits. No containment,
+exclusion, sign-set or certification conversion API was introduced. Native
+bit-pair serialization reconstructs through checked ingress. No default feature,
+Hyperreal source/layout/cache or consumer operation changed.
+
+Final checks: all 46 tests and 9 compile-fail examples pass with all features.
+The 17-command final matrix passes Rust 1.88/1.95 feature combinations, strict
+linting, docs, fuzz-target check, formatting, retained Hypersolve migration
+witnesses, ARM/WASM no_std builds and repository-wide pedantic zizmor. Separate
+proposal-only dependency output contains just Hyperinterval. The final ASan
+campaign completes 100,000 cases with seed 20261113 and no failures. Native
+IEEE ingress tests cover 20,000 generated pairs plus named special values;
+typed errors distinguish nonfinite ingress, reversed estimates, zero-spanning
+denominators and arithmetic overflow. A known rounded sum intentionally
+excludes the exact result, making the lack of certification concrete.
+
+On this x86_64 host, proposal layouts are 12 bytes (f32) and 24 bytes (f64).
+The standalone release probe completes 30 samples of 16,384 add/affine steps
+per width and consumes both final estimates. Observed medians are 83.85 ns/step
+(f32) and 67.73 ns/step (f64); these are workload observations without a speedup
+or cross-target performance claim. The recorded executable includes its host
+benchmark harness, not just kernel code. LLVM line coverage is 103/104 for
+proposal.rs and 15/15 for ieee.rs; branch counters remain unavailable. The
+whole-crate coverage gate remains open. Strict finite float enclosures are not
+implemented or certified by this change.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
