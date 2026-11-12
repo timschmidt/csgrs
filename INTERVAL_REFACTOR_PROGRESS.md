@@ -447,6 +447,10 @@ representation/resource contract. A direct negative-power enclosure and the
 rational-power API are still missing. This does not complete phase 3 or any
 consumer migration.
 
+Raw power evidence: `docs/evidence/2026-11-12-interval-dyadic-powers`, evidence commit
+`66472def3c8be87872c46633cdd64d777c81536a`; 167 files, 45423439 bytes,
+SHA-256 `2f6c6073c3eda9ea08139238bdf070de4fda93f8608eea78c0299d7189bd8f2a`.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
