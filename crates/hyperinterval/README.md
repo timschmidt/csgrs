@@ -54,6 +54,12 @@ mantissas share an exponent, with explicit budgets for arithmetic and scale
 changes. `hyperreal` enables both carriers and their certified Real bridge;
 `real-ball` adds exact symbolic centers with nonnegative rational radii.
 
+Dyadic width, midpoint and radius return exact singleton intervals, or empty
+for an empty input. They never round an unrepresentable half. Pointwise square
+preserves dependence across zero, while multiplication treats its operands as
+independent sets. Reciprocal accepts an explicit output grid and rejects inputs
+containing zero. These operations share the caller's size and work budget.
+
 Dyadic precision means grid spacing `2^precision`, not a bound on interval
 width. Directed conversions preserve containment. `DyadicBudget` accounts for
 reserved intermediate magnitude bits and deterministic work units; it does

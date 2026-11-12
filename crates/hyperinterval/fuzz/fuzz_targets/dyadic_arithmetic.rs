@@ -14,6 +14,24 @@ fuzz_target!(|data: [i16; 7]| {
     let x = DyadicInterval::new(a.into(), b.into(), e).unwrap();
     let y = DyadicInterval::new(c.into(), d.into(), f).unwrap();
     let mut budget = DyadicBudget::new(256, 10_000_000);
+    let point = |n: i128, exponent| DyadicInterval::point(n.into(), exponent).unwrap();
+    assert_eq!(x.width(&mut budget).unwrap(), point(b - a, e));
+    let midpoint = x.midpoint(&mut budget).unwrap();
+    let radius = x.radius(&mut budget).unwrap();
+    assert_eq!(midpoint, point(a + b, e - 1));
+    assert_eq!(radius, point(b - a, e - 1));
+    let lower = midpoint.sub(&radius, &mut budget).unwrap();
+    let upper = midpoint.add(&radius, &mut budget).unwrap();
+    assert_eq!(lower.hull(&upper, &mut budget).unwrap(), x);
+    let low_square = if a <= 0 && b >= 0 {
+        0
+    } else {
+        (a * a).min(b * b)
+    };
+    assert_eq!(
+        x.square(&mut budget).unwrap(),
+        DyadicInterval::new(low_square.into(), (a * a).max(b * b).into(), 2 * e).unwrap()
+    );
     let products = [a * c, a * d, b * c, b * d];
     assert_eq!(
         x.mul(&y, &mut budget).unwrap(),
@@ -25,6 +43,11 @@ fuzz_target!(|data: [i16; 7]| {
         .unwrap()
     );
     let grid = e.min(f);
+    let point_on_grid = c << (f - grid);
+    assert_eq!(
+        x.contains_point(&c.into(), f, &mut budget).unwrap(),
+        (a << (e - grid)) <= point_on_grid && point_on_grid <= (b << (e - grid))
+    );
     assert_eq!(
         x.add(&y, &mut budget).unwrap(),
         DyadicInterval::new(

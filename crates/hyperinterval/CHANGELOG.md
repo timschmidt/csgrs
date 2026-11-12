@@ -14,3 +14,5 @@
 - Validate Real bridges against directed MPFR bounds and rational arithmetic
   against GMP; compare rational product dispatch in isolated fresh processes.
   Existing solver and domain consumers have not yet migrated.
+- Add budgeted dyadic width, exact midpoint/radius, point containment, square
+  and directed reciprocal; normalize representable temporary exponent extremes.

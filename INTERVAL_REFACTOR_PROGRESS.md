@@ -343,6 +343,60 @@ is commit `d70c037b8`. The archive includes rejected patches and adverse samples
   gates remain open.
   No phase-0 completion or downstream migration is claimed.
 
+## Dyadic measurements and unary images: admission
+
+Owner: Hyperinterval, plan §3.5/§3.9; P1, P3, P5, P6, P18–P20.
+At source `f69ee758c`, DyadicInterval has no width, midpoint, radius,
+pointwise square, reciprocal or point-containment APIs. Existing exact add,
+subtract, product and directed division remain unchanged. Input domain: empty
+or finite normalized dyadic intervals with signed 32-bit stored exponent;
+queries and new images share the caller-owned DyadicBudget. Width, midpoint
+and radius return explicit singleton dyadic intervals (empty for empty input),
+without implicitly selecting a point from an enclosure. Midpoint and radius
+are exact; a value below the minimum representable exponent fails typed.
+Square preserves the dependence of repeated operands and is nonnegative across
+zero. Reciprocal uses caller-selected grid spacing and rejects zero.
+
+Missing witnesses before implementation: independent integer expectations for
+all small ordered intervals and several scales; zero-crossing square vs.
+independent-product distinction; minimum-exponent exact halves and unrepresentable
+halves; normalization at exponent limits; budget exhaustion followed by retry;
+consumption through existing arithmetic, set relations, bridges and native replay.
+This is a new core capability, not a production consumer refactor. No existing
+solver predicate order or policy behavior is to change.
+
+## Dyadic measurements and unary images: local acceptance
+
+Implemented exact singleton width/midpoint/radius, endpoint access and point
+containment, zero-aware square, and caller-grid reciprocal. New exact results
+normalize temporary exponents across storage boundaries when representable;
+required mantissa expansion is charged before allocation. Nonrepresentable
+halves and squares fail with Overflow, not a rounded substitute. Existing
+arithmetic and solver dispatch bodies are unchanged.
+
+Independent small-integer expectations cover 1,710 intervals (190 endpoint
+pairs × 9 scales), with 35,910 finer-grid containment cases and 5,670 reciprocal
+images. A 512-bit case uses a binomial identity for the square. Measurements
+reconstruct their original intervals using existing arithmetic. Rational
+bridges and checked serialization consume generated results. Small-budget
+cases include exhaustion after successful products but before normalization,
+then successful retry with fresh budgets.
+
+Final all-feature run: 36 tests plus 3 compile-fail doc tests pass. Strict
+all-target Clippy passes. The recorded matrix has 13 passing commands across
+Rust 1.88/1.95, feature subsets, docs, fuzz-target compilation, workspace format,
+Hypersolve's retained migration corpus, and no_std ARM/WASM checks. Final
+Rust 1.88 dyadic tests and format pass after the last test addition. Expanded
+ASan dyadic campaign: 100,000 runs, seed 20261112, no failures. An initial
+missing-PATH invocation and a test type-inference compile failure are retained;
+both corrected runs passed.
+
+LLVM coverage reports 479/483 dyadic lines (99.17%); no branch counters were
+emitted. The whole-crate 100% gate remains open. No speedup, allocation-byte
+bound, universal completion or downstream migration claim is made. Integer
+powers and other §3.5 gaps, the rejected solver migration, broader cost gates,
+and all later plan phases remain work to do.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

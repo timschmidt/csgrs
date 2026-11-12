@@ -2,7 +2,7 @@ use crate::bounds::Bounds;
 use crate::{IntervalError, SignSet};
 use num_bigint::BigInt;
 use num_integer::Integer;
-use num_traits::Zero;
+use num_traits::{One, Zero};
 
 /// Caller-owned accounting for dyadic arithmetic and directed conversions.
 ///
@@ -135,6 +135,106 @@ impl DyadicInterval {
         })
     }
 
+    /// Exact lower endpoint as mantissa and exponent, or `None` for empty.
+    pub fn lower(&self) -> Option<(&BigInt, i32)> {
+        self.bounds().map(|(lower, _, exponent)| (lower, exponent))
+    }
+
+    /// Exact upper endpoint as mantissa and exponent, or `None` for empty.
+    pub fn upper(&self) -> Option<(&BigInt, i32)> {
+        self.bounds().map(|(_, upper, exponent)| (upper, exponent))
+    }
+
+    /// Whether this set contains the exact point `mantissa * 2^exponent`.
+    /// Alignment and temporary point storage use the caller's shared budget.
+    pub fn contains_point(
+        &self,
+        mantissa: &BigInt,
+        exponent: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<bool, IntervalError> {
+        if self.is_empty() {
+            return Ok(false);
+        }
+        budget.reserve(mantissa.bits(), 2, false)?;
+        Self::point(mantissa.clone(), exponent)?.subset_of(self, budget)
+    }
+
+    /// Exact endpoint distance as a singleton interval; empty for empty input.
+    pub fn width(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.measure(true, false, budget)
+    }
+
+    /// Exact midpoint as a singleton interval; empty for empty input.
+    /// No rounding is performed. An unrepresentable half at the minimum
+    /// exponent returns `Overflow` rather than choosing a nearby point.
+    pub fn midpoint(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.measure(false, true, budget)
+    }
+
+    /// Exact half-width as a singleton interval; empty for empty input.
+    /// Like `midpoint`, this fails if the exact half cannot be represented.
+    pub fn radius(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        self.measure(true, true, budget)
+    }
+
+    fn measure(
+        &self,
+        difference: bool,
+        half: bool,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        let Some((a, b, exponent)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        budget.reserve(self.bits().saturating_add(1), 3, false)?;
+        let value = if difference { b - a } else { a + b };
+        Self::from_wide_exponent(
+            value.clone(),
+            value,
+            i64::from(exponent) - i64::from(half),
+            budget,
+        )
+    }
+
+    // Normalize new exact results whose temporary exponent may exceed storage.
+    // Remove only exact common factors; increasing an excessive exponent's
+    // mantissas requires a separate reservation before shifting.
+    fn from_wide_exponent(
+        mut lower: BigInt,
+        mut upper: BigInt,
+        exponent: i64,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        if lower.is_zero() && upper.is_zero() {
+            return Self::new(lower, upper, 0);
+        }
+        if exponent < i64::from(i32::MIN) {
+            let shift = (i64::from(i32::MIN) - exponent) as u64;
+            if lower.trailing_zeros().unwrap_or(u64::MAX) < shift
+                || upper.trailing_zeros().unwrap_or(u64::MAX) < shift
+            {
+                return Err(IntervalError::Overflow);
+            }
+            budget.reserve(lower.bits().max(upper.bits()), 2, false)?;
+            let shift = usize::try_from(shift).map_err(|_| IntervalError::Overflow)?;
+            lower >>= shift;
+            upper >>= shift;
+            Self::new(lower, upper, i32::MIN)
+        } else if exponent > i64::from(i32::MAX) {
+            let shift = (exponent - i64::from(i32::MAX)) as u64;
+            budget.reserve(
+                lower.bits().max(upper.bits()).saturating_add(shift),
+                2,
+                false,
+            )?;
+            let shift = usize::try_from(shift).map_err(|_| IntervalError::Overflow)?;
+            Self::new(lower << shift, upper << shift, i32::MAX)
+        } else {
+            Self::new(lower, upper, exponent as i32)
+        }
+    }
+
     /// Signs of members, independent of the positive power-of-two scale.
     pub fn signs(&self) -> SignSet {
         self.bounds
@@ -256,6 +356,44 @@ impl DyadicInterval {
         let lower = products.iter().min().expect("four products").clone();
         let upper = products.into_iter().max().expect("four products");
         Self::new(lower, upper, exponent)
+    }
+
+    /// Exact pointwise square, preserving dependence across zero.
+    /// Unlike `self.mul(self)`, a zero-crossing input has lower bound zero.
+    /// Temporary exponent overflow is normalized when representable, with any
+    /// required mantissa growth charged before allocation.
+    pub fn square(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let Some((a, b, exponent)) = self.bounds() else {
+            return Ok(Self::empty());
+        };
+        budget.reserve(self.bits().saturating_mul(2), 2, true)?;
+        let aa = a * a;
+        let bb = b * b;
+        let (lower, upper) = if self.signs().contains_zero() {
+            (BigInt::zero(), aa.max(bb))
+        } else if a < &BigInt::zero() {
+            (bb, aa)
+        } else {
+            (aa, bb)
+        };
+        Self::from_wide_exponent(lower, upper, i64::from(exponent) * 2, budget)
+    }
+
+    /// Outward reciprocal on grid `2^precision`, using exact integer division.
+    /// Empty maps to empty; a zero-containing input returns `ContainsZero`.
+    pub fn reciprocal(
+        &self,
+        precision: i32,
+        budget: &mut DyadicBudget,
+    ) -> Result<Self, IntervalError> {
+        if self.signs().contains_zero() {
+            return Err(IntervalError::ContainsZero);
+        }
+        if self.is_empty() {
+            return Ok(Self::empty());
+        }
+        budget.reserve(1, 2, false)?;
+        Self::point(BigInt::one(), 0)?.div(self, precision, budget)
     }
 
     /// Outward quotient hull on grid `2^precision`.

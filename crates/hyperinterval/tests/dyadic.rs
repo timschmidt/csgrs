@@ -10,6 +10,212 @@ fn budget() -> DyadicBudget {
 }
 
 #[test]
+fn exact_measures_and_square_match_integer_oracles_and_reconstruct_input() {
+    for a in -9i64..=9 {
+        for b in a..=9 {
+            for e in -4..=4 {
+                let x = d(a, b, e);
+                let mut work = budget();
+                assert_eq!(x.width(&mut work).unwrap(), d(b - a, b - a, e));
+                let midpoint = x.midpoint(&mut work).unwrap();
+                let radius = x.radius(&mut work).unwrap();
+                assert_eq!(midpoint, d(a + b, a + b, e - 1));
+                assert_eq!(radius, d(b - a, b - a, e - 1));
+                // Consume exact measurements through the existing set algebra.
+                let lower = midpoint.sub(&radius, &mut work).unwrap();
+                let upper = midpoint.add(&radius, &mut work).unwrap();
+                assert_eq!(lower.hull(&upper, &mut work).unwrap(), x);
+                // Integer endpoints and the stationary point 0 suffice for x².
+                let min_square = (a..=b).map(|n| n * n).min().unwrap();
+                let max_square = (a..=b).map(|n| n * n).max().unwrap();
+                let squared = x.square(&mut work).unwrap();
+                assert_eq!(squared, d(min_square, max_square, 2 * e));
+                assert!(
+                    squared
+                        .subset_of(&x.mul(&x, &mut work).unwrap(), &mut work)
+                        .unwrap()
+                );
+                for p in -10i64..=10 {
+                    // Point uses a finer grid than x; no floating-point oracle.
+                    assert_eq!(
+                        x.contains_point(&p.into(), e - 1, &mut work).unwrap(),
+                        2 * a <= p && p <= 2 * b
+                    );
+                }
+                let (lo, hi, scale) = x.bounds().unwrap();
+                assert_eq!(x.lower(), Some((lo, scale)));
+                assert_eq!(x.upper(), Some((hi, scale)));
+            }
+        }
+    }
+}
+
+#[test]
+fn measures_handle_empty_exponent_limits_and_retry() {
+    let empty = DyadicInterval::empty();
+    let mut no_work = DyadicBudget::new(0, 0);
+    assert_eq!(empty.lower(), None);
+    assert_eq!(empty.upper(), None);
+    assert!(
+        !empty
+            .contains_point(&1.into(), i32::MIN, &mut no_work)
+            .unwrap()
+    );
+    for result in [
+        empty.width(&mut no_work),
+        empty.midpoint(&mut no_work),
+        empty.radius(&mut no_work),
+        empty.square(&mut no_work),
+        empty.reciprocal(i32::MIN, &mut no_work),
+    ] {
+        assert_eq!(result.unwrap(), empty);
+    }
+    let minimum = d(0, 1, i32::MIN);
+    assert_eq!(
+        minimum.midpoint(&mut budget()),
+        Err(IntervalError::Overflow)
+    );
+    assert_eq!(minimum.radius(&mut budget()), Err(IntervalError::Overflow));
+    assert_eq!(minimum.width(&mut budget()).unwrap(), d(1, 1, i32::MIN));
+    assert_eq!(
+        d(1, 3, i32::MIN).midpoint(&mut budget()).unwrap(),
+        d(1, 1, i32::MIN + 1)
+    );
+    assert_eq!(
+        d(1, 3, i32::MIN).radius(&mut budget()).unwrap(),
+        d(1, 1, i32::MIN)
+    );
+    assert_eq!(
+        d(-1, 1, i32::MIN).midpoint(&mut budget()).unwrap(),
+        d(0, 0, 0)
+    );
+    assert_eq!(d(1, 1, i32::MIN).radius(&mut budget()).unwrap(), d(0, 0, 0));
+    assert_eq!(
+        d(-1, 1, i32::MAX).width(&mut budget()).unwrap(),
+        d(2, 2, i32::MAX)
+    );
+    // A zero-crossing square can remove common factors even when its input
+    // cannot. Conversely a positive square may be genuinely unrepresentable.
+    assert_eq!(
+        d(-1, 2, -1_073_741_825).square(&mut budget()).unwrap(),
+        d(0, 1, i32::MIN)
+    );
+    assert_eq!(
+        d(1, 2, -1_073_741_825).square(&mut budget()),
+        Err(IntervalError::Overflow)
+    );
+    assert_eq!(
+        d(-2, 3, -1_073_741_825).square(&mut budget()),
+        Err(IntervalError::Overflow)
+    );
+    for exponent in [-1_073_741_825, 1_073_741_824] {
+        // Products fit the budget, but correcting the temporary scale does not.
+        assert_eq!(
+            d(-1, 2, exponent).square(&mut DyadicBudget::new(64, 32)),
+            Err(IntervalError::WorkExhausted)
+        );
+        assert!(d(-1, 2, exponent).square(&mut budget()).is_ok());
+    }
+    assert_eq!(
+        d(1, 2, 1_073_741_824).square(&mut budget()).unwrap(),
+        d(2, 8, i32::MAX)
+    );
+    assert_eq!(
+        d(1, 2, i32::MAX).square(&mut budget()),
+        Err(IntervalError::SizeExhausted)
+    );
+
+    let x = d(-7, 9, -3);
+    for result in [
+        x.width(&mut no_work),
+        x.midpoint(&mut no_work),
+        x.radius(&mut no_work),
+        x.square(&mut no_work),
+        d(1, 2, 0).reciprocal(-3, &mut no_work),
+    ] {
+        assert_eq!(result, Err(IntervalError::SizeExhausted));
+    }
+    let mut no_work = DyadicBudget::new(4096, 0);
+    assert_eq!(x.width(&mut no_work), Err(IntervalError::WorkExhausted));
+    assert_eq!(
+        x.contains_point(&1.into(), 0, &mut no_work),
+        Err(IntervalError::WorkExhausted)
+    );
+    assert_eq!(x.square(&mut no_work), Err(IntervalError::WorkExhausted));
+    assert_eq!(x.square(&mut budget()).unwrap(), d(0, 81, -6));
+    assert_eq!(x.midpoint(&mut budget()).unwrap(), d(1, 1, -3));
+    assert_eq!(
+        x.reciprocal(0, &mut no_work),
+        Err(IntervalError::ContainsZero)
+    );
+    assert_eq!(
+        d(1, 2, 0).reciprocal(i32::MIN, &mut budget()),
+        Err(IntervalError::SizeExhausted)
+    );
+}
+
+#[test]
+fn wide_mantissas_retain_exact_measures_and_square() {
+    let n: BigInt = (BigInt::from(1) << 512usize) - 1;
+    let x = DyadicInterval::new(-&n, n.clone(), -37).unwrap();
+    let mut work = budget();
+    assert_eq!(x.midpoint(&mut work).unwrap(), d(0, 0, 0));
+    assert_eq!(
+        x.radius(&mut work).unwrap(),
+        DyadicInterval::point(n.clone(), -37).unwrap()
+    );
+    assert_eq!(
+        x.width(&mut work).unwrap(),
+        DyadicInterval::point(n, -36).unwrap()
+    );
+    // Independent binomial identity (2^512 - 1)^2 = 2^1024 - 2^513 + 1.
+    let squared = (BigInt::from(1) << 1024usize) - (BigInt::from(1) << 513usize) + 1;
+    assert_eq!(
+        x.square(&mut work).unwrap(),
+        DyadicInterval::new(0.into(), squared, -74).unwrap()
+    );
+    assert_eq!(
+        x.square(&mut DyadicBudget::new(1023, u64::MAX)),
+        Err(IntervalError::SizeExhausted)
+    );
+    assert!(x.square(&mut DyadicBudget::new(1024, 3_000_000)).is_ok());
+}
+
+#[test]
+fn reciprocal_matches_independent_integer_floor_and_ceiling() {
+    for a in -9i128..=9 {
+        for b in a..=9 {
+            if a <= 0 && b >= 0 {
+                continue;
+            }
+            for e in -3..=3 {
+                for p in -4..=4 {
+                    let shift: i32 = -e - p;
+                    let numerator = 1i128 << shift.max(0);
+                    let floor = |den: i128| {
+                        let den = den << (-shift).max(0);
+                        let q = numerator / den;
+                        q - i128::from(numerator % den != 0 && den < 0)
+                    };
+                    let ceil = |den: i128| {
+                        let den = den << (-shift).max(0);
+                        let q = numerator / den;
+                        q + i128::from(numerator % den != 0 && den > 0)
+                    };
+                    let actual = d(a as i64, b as i64, e)
+                        .reciprocal(p, &mut budget())
+                        .unwrap();
+                    assert_eq!(
+                        actual,
+                        DyadicInterval::new(floor(b).into(), ceil(a).into(), p).unwrap()
+                    );
+                }
+            }
+        }
+    }
+}
+
+#[test]
 fn canonical_common_scale_extremes_and_exact_relations() {
     assert_eq!(d(-8, 12, -3), d(-2, 3, -1));
     assert_eq!(d(0, 0, i32::MIN), d(0, 0, 0));
@@ -157,6 +363,24 @@ fn rational_bridges_preserve_exact_sets_and_round_only_outward() {
                     original
                 );
                 assert_eq!(rational.to_dyadic(e, &mut budget()).unwrap(), original);
+                assert_eq!(
+                    original
+                        .square(&mut budget())
+                        .unwrap()
+                        .to_rational(&mut budget())
+                        .unwrap(),
+                    rational.square()
+                );
+                for (measured, expected) in [
+                    (original.width(&mut budget()), rational.width()),
+                    (original.midpoint(&mut budget()), rational.midpoint()),
+                    (original.radius(&mut budget()), rational.radius()),
+                ] {
+                    assert_eq!(
+                        measured.unwrap().to_rational(&mut budget()).unwrap(),
+                        RationalInterval::point(expected.unwrap())
+                    );
+                }
                 let coarse = original
                     .regrid(2, &mut budget())
                     .unwrap()
@@ -203,6 +427,10 @@ fn checked_dyadic_replay_normalizes_and_rejects_reversed_input() {
         d(-7, 8, -9),
         d(0, 0, 0),
         d(2, 4, i32::MAX),
+        d(-7, 8, -9).square(&mut budget()).unwrap(),
+        d(-7, 8, -9).midpoint(&mut budget()).unwrap(),
+        d(-7, 8, -9).radius(&mut budget()).unwrap(),
+        d(3, 7, -9).reciprocal(-16, &mut budget()).unwrap(),
     ] {
         let bytes = serde_json::to_vec(&value).unwrap();
         assert_eq!(
