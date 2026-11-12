@@ -1341,7 +1341,12 @@ as excluded Rug OptRational::parts; earlier profiles are not merged with final.
 
 All 540 cost samples complete with full image/receipt materialization and
 shared work accounting. The crate PERFORMANCE.md records all medians. Source
-and archive registration are pending. Rational powers themselves, additional
+commit `d42537ac1779409cad572d47f7fff52289aa5416`; evidence commit
+`143c567661e52959fafd09650e0d21a30d1316dc`, record
+`docs/evidence/2026-11-12-interval-split-division`: 644 files, 144380703 bytes,
+SHA-256 `c2b2b26adeeff29a96419af9a79ab82235309524cce61e2ee2434678a4aaecc8`.
+The committed record was independently regenerated and verified before registration.
+Rational powers themselves, additional
 split operations/backends, general union closure, actual heap-byte bounds,
 cancellation, consumer migrations and release qualification remain open.
 
