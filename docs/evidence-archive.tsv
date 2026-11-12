@@ -475,6 +475,7 @@ docs/evidence/2026-11-12-interval-foundation	206	756992	f408b880769a135e8247970f
 docs/evidence/2026-11-12-interval-horner	280	6333332	eb13db0fbfcad7f4a7b192e861d5df66bd85bbf53d47a8a307309af21993919a
 docs/evidence/2026-11-12-interval-host	502	21558032	1c159f57964f1805b30df2310135cb66c775e9ab12f97a405de4c2d9afb6a1ca
 docs/evidence/2026-11-12-interval-proposals	158	23812789	a742c2dbb1ee6d0f977758fb768fe235c8acaa5eb6977f2b15cdf4790fe49669
+docs/evidence/2026-11-12-interval-rational-powers	357	111203749	ec666d5527171ad4dbea70f60501277d16a43b49e05d23dd48095e360698820d
 docs/evidence/2026-11-12-interval-strict-float	601	162500126	42f82b7130db558e55076bf0b2d43a581134e3d4c85208feca6fc606a55ed8fd
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c

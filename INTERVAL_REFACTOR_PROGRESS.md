@@ -796,10 +796,16 @@ derived rational expectations before timing. Final median ns/chain are 561.891,
 final samples, layouts, executable hashes and whole-executable sizes are
 retained. This is a host completion probe, not a speedup or firmware claim.
 
-Raw staging: `/tmp/interval-refactor/rational-powers`; the separate
-`2026-11-12-interval-rational-powers` archive is pending registration. Remaining
-signed-power surfaces, square root and subsequent elementary functions,
-consumer migrations, full coverage and release qualification are still required.
+Source commit: `0a5a732635019abbf4fee1dfcec6e19edba87aa8`. The separate
+`2026-11-12-interval-rational-powers` record is committed in the evidence
+repository at `6c27df18cfffd259fabd676662cd8d6d756f4ae4`: 357 files,
+111,203,749 bytes, SHA-256
+`ec666d5527171ad4dbea70f60501277d16a43b49e05d23dd48095e360698820d`.
+The scoped manifest was verified against that committed revision and registered
+in `docs/evidence-archive.tsv`; prior records are preserved. Raw staging remains
+at `/tmp/interval-refactor/rational-powers`. Remaining signed-power surfaces,
+square root and subsequent elementary functions, consumer migrations, full
+coverage and release qualification are still required.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
