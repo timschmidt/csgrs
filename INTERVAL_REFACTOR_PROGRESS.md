@@ -1261,9 +1261,16 @@ All 1560 cost samples complete, including finite and unbounded sources and
 all refinement work. PERFORMANCE.md contains every group median; raw work
 units, compiler/host metadata, executable hash and whole-probe size are
 retained. No baseline speedup, actual heap-byte limit or consumer migration
-is inferred. Source/archive registration is pending. Remaining elementary
-backends, rational powers, poles/split images, cancellation, full consumer
-migrations and release qualification remain open.
+is inferred. Implementation is committed as
+`52eaa40d2f66a482747c42322d7c065d62f7b9bb`.
+The `2026-11-12-interval-trigonometry` evidence record is committed at
+`aa98e3c00c32852d217e4bb0d58f8734bcb58826` with 595 files,
+110,663,701 bytes and record SHA-256
+`de993c4af15dcdc1d908c3e1266f23db89f379b36a4fb29278979c72583a5542`.
+The committed archive digest is verified and registered in
+`docs/evidence-archive.tsv`. Remaining elementary backends, rational powers,
+poles/split images, cancellation, full consumer migrations and release
+qualification remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
