@@ -182,3 +182,40 @@ pub extern "C" fn midpoint_radius_probe(input: i32) -> i32 {
     );
     (2 * s + 31) as i32
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn contraction_probe(input: i32) -> i32 {
+    type I = FixedInterval<i32, 0>;
+    let s = input.clamp(-256, 256);
+    let zero = I::point(0).unwrap();
+    let matrix = IntervalMatrix::new([
+        [I::new(s, s + 1).unwrap(), I::new(-1, 1).unwrap()],
+        [zero, I::point(1).unwrap()],
+    ])
+    .unwrap();
+    let remainder = matrix.identity_minus(&mut ()).unwrap();
+    assert_eq!(remainder.rows().unwrap()[0][0].bounds(), Some((-s, 1 - s)));
+    assert_eq!(remainder.identity_minus(&mut ()).unwrap(), matrix);
+    let low = if s == 0 || s == 1 {
+        0
+    } else {
+        s.abs().min((1 - s).abs())
+    };
+    let high = s.abs().max((1 - s).abs());
+    let one = remainder.contraction_margin_one(&mut ()).unwrap();
+    let infinity = remainder.contraction_margin_infinity(&mut ()).unwrap();
+    assert_eq!(one.bounds(), Some((1 - high.max(1), 1 - low)));
+    assert_eq!(infinity.bounds(), Some((-high, 1 - low)));
+    let image = remainder
+        .mul_vector(
+            &IntervalVector::new([I::new(-1, 1).unwrap(); 2]).unwrap(),
+            &mut (),
+        )
+        .unwrap();
+    assert_eq!(
+        image.lanes().unwrap()[0].bounds(),
+        Some((-high - 1, high + 1))
+    );
+    assert_eq!(image.lanes().unwrap()[1], zero);
+    one.bounds().unwrap().0 + 3 * infinity.bounds().unwrap().0 + 7 * infinity.bounds().unwrap().1
+}

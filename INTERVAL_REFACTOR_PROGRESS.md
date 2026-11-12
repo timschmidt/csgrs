@@ -47,7 +47,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian/affine carriers, norm ranges, logarithmic measures and dominance margins implemented | width/midpoint/radius, contraction/Jacobian helpers, specialization and full consumer/performance gates |
+| 6 lattice | Cartesian/affine carriers, widths, derived midpoint/radius, norms/measures/dominance and contraction evidence implemented | independent center/radius forms, Jacobian carriers, specialization and full consumer/performance gates |
 | 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | not started | unchanged canonical bytes and profiles |
 | 9 firmware | not started | exact differential, no_alloc, HIL/cycles/stack/size |
@@ -2272,6 +2272,76 @@ and verified before registration; all previous archive rows remain unchanged.
 Independent authored center/radius forms, contraction/Krawczyk/Jacobian helpers,
 specialized consumers, full resource/coverage/performance qualification and the
 remaining plan phases stay open. No phase completion or push is claimed.
+
+## Phase 6 admission: contraction evidence and identity remainders
+
+Baseline `be11e97da74bf8221dbe18e6c17f1c54e5ce9b6b`; all four managed
+repositories were clean before edits. Initial states and absent-upstream results
+are retained in `/tmp/interval-refactor/contraction-primitives`. Owner:
+Hyperlattice's interval companion, with scalar constants/arithmetic delegated to
+Hyperinterval. Properties P1, P3, P5, P6, P18–P20. Domain: checked finite square
+Cartesian matrices over the six existing real interval backends, empty sets and
+zero-dimensional units. The baseline compile witness fails for all three missing
+methods: `identity_minus`, `contraction_margin_one`, and
+`contraction_margin_infinity`. Existing norm reductions and scalar constructors
+were found and reused. No production solver or predicate-dispatch change.
+
+The helpers enclose `Id-A`, `1-||A||_1`, and `1-||A||_infinity`. No Jacobian,
+self-mapping, root-existence or uniqueness status is synthesized. The exact one
+constant must fit the backend: nonempty margins and positive-dimensional identity
+subtraction report overflow for fixed i32/F31 and i64/F63. Empty stays empty;
+0x0 identity subtraction needs no scalar one. Dyadic arithmetic shares one
+budget, with constant construction outside accounting as for existing zero.
+Rational arithmetic has no internal total-work bound. Primitive loops and inline
+storage scale with dimension; partial outputs are never published.
+
+Local qualification passes 625 independently enumerated square matrix boxes per
+backend, exact identity reconstruction and transpose duality, fractional
+coupled-quadratic Krawczyk images with unequal radii and further narrowing,
+a two-root adversary, a nonzero residual, fresh-process replay, full-scale fixed
+failures, subnormal IEEE tails, zero-containing margins, and shared dyadic
+work/size exhaustion followed by exact-budget retry. The original missing-method
+witness now compiles and runs unchanged. No tests or existing assertions were
+removed. Primitive fixed/f32/f64 allocation checks remain zero.
+
+All 49 selected final commands pass: Rust 1.88/stable feature isolation,
+all-feature 1.95/stable/release tests, owner/facade Clippy and docs with warnings
+denied, seven Hyperlattice facade tests, four unchanged Hypersolve migration/
+dispatch tests, ARM/Wasm checks, formatting and package/dependency inspection.
+The first feature-only runs exposed an unused new test import; its cfg fix
+required import formatting. Initial warnings and the formatting failure remain
+in the record. The complete selected matrix was repeated after both fixes.
+ASan with leak detection passes 64 parent-suite tests across 17 executables;
+all-feature doctests add five passes. Companion coverage is 1,157/1,177 lines,
+1,527/1,609 regions, 232/234 functions. The new module has 39/42 lines,
+63/74 regions and 5/7 functions; its two never-entered zero-dimension array
+closures are included in the denominator. No 100% or complete fuzz claim.
+
+The seven-export no-allocator Wasm consumer passes 2,051 new contraction calls
+over 513 effective inputs, plus every prior probe, with one-million-fuel caps.
+Artifact: 69,039 bytes, SHA-256
+`621b2807b75718344902512512ac123b8e0bb8964189fc0787f9860bc8bc68a2`.
+The 7,323-byte increase includes a new export/workload and is not a same-contract
+size comparison. The system Python lacked wasmtime; the recorded retry with the
+existing tools virtual environment passed. No additional float-target or HIL claim.
+
+The extended norm-cost probe records 880 samples, including 240 new-operation
+samples (four backends, three actions, twenty samples each; 128 completed calls
+per sample after 64 warmups). Q16/f64 allocate zero. On the 4x4 fixture, rational
+identity subtraction allocates 24 times/960 bytes and each margin six times/240
+bytes; dyadic identity subtraction allocates 42 times/360 bytes and each margin
+94 times/776 bytes. These are fixture measurements, not general bounds, latency
+guarantees or comparative speed claims. The record includes timing samples,
+inline sizes and executable size/digest/sections. Source preservation confirms
+168 byte-identical scalar/main-lattice/solver/companion implementation files and
+all original lines retained in order in the two extended companion files.
+Full legacy benchmarks, successive_operations and monomorphized/binary-size
+comparison gates remain open; no production migration or behavior refactor.
+
+Source/evidence registration pending for this checkpoint. Independently authored
+center/radius forms, Jacobian carriers, specialized kernels, the full consumer/
+resource/performance gates and later phases remain open. No phase completion
+or push is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

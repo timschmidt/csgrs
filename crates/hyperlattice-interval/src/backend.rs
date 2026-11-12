@@ -35,6 +35,9 @@ pub trait IntervalArithmetic: sealed::Sealed + FiniteRealInterval + Clone {
     fn empty() -> Result<Self, IntervalError>;
     /// Exact scalar zero, validating the backend family.
     fn zero() -> Result<Self, IntervalError>;
+    /// Exact scalar one, or typed overflow if this family cannot represent it.
+    /// Like `zero`, this constant construction is outside dyadic work accounting.
+    fn one() -> Result<Self, IntervalError>;
     /// Scalar sum enclosure.
     fn add(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Scalar difference enclosure.
@@ -116,6 +119,9 @@ macro_rules! fixed {
             fn zero() -> Result<Self, IntervalError> {
                 Self::point(0)
             }
+            fn one() -> Result<Self, IntervalError> {
+                Self::from_ratio(1, 1)
+            }
             fn add(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 self.checked_add(other)
             }
@@ -175,6 +181,9 @@ impl IntervalArithmetic for hyperinterval::RationalInterval {
     fn zero() -> Result<Self, IntervalError> {
         Ok(Self::point(0.into()))
     }
+    fn one() -> Result<Self, IntervalError> {
+        Ok(Self::point(1.into()))
+    }
     fn add(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
         Ok(Self::add(self, other))
     }
@@ -224,6 +233,9 @@ impl IntervalArithmetic for hyperinterval::DyadicInterval {
     }
     fn zero() -> Result<Self, IntervalError> {
         Self::point(0.into(), 0)
+    }
+    fn one() -> Result<Self, IntervalError> {
+        Self::point(1.into(), 0)
     }
     fn add(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError> {
         Self::add(self, other, context)
@@ -290,6 +302,9 @@ macro_rules! float {
             }
             fn zero() -> Result<Self, IntervalError> {
                 Self::point(0.0)
+            }
+            fn one() -> Result<Self, IntervalError> {
+                Self::point(1.0)
             }
             fn add(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 Self::add(self, other)

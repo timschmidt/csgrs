@@ -117,3 +117,26 @@ fn midpoint_radius_forms_reconstruct_and_feed_further_operations() {
     let form: MidpointRadiusMatrix<_, 1, 2> = matrix.clone().midpoint_radius();
     assert_eq!(form.into_intervals(), matrix);
 }
+
+#[test]
+fn contraction_evidence_and_identity_remainder_are_shared() {
+    let m = IntervalMatrix::new([
+        [interval(1, 2), interval(-1, 1)],
+        [interval(0, 0), interval(1, 1)],
+    ])
+    .unwrap();
+    let r = m.identity_minus(&mut ()).unwrap();
+    assert_eq!(
+        r.rows(),
+        Some(&[
+            [interval(-1, 0), interval(-1, 1)],
+            [interval(0, 0), interval(0, 0)]
+        ])
+    );
+    assert_eq!(r.contraction_margin_one(&mut ()).unwrap(), interval(0, 1));
+    assert_eq!(
+        r.contraction_margin_infinity(&mut ()).unwrap(),
+        interval(-1, 1)
+    );
+    assert_eq!(r.identity_minus(&mut ()).unwrap(), m);
+}

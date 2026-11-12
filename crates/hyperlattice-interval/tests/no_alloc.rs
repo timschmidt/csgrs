@@ -75,6 +75,10 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
             squared.column_dominance_margins(&mut ()).unwrap(),
         );
         std::hint::black_box((norms, margins));
+        let remainder = squared.identity_minus(&mut ()).unwrap();
+        std::hint::black_box(remainder.mul_vector(&x, &mut ()).unwrap());
+        std::hint::black_box(remainder.contraction_margin_one(&mut ()).unwrap());
+        std::hint::black_box(remainder.contraction_margin_infinity(&mut ()).unwrap());
         let widths = x.widths(&mut ()).unwrap().unwrap();
         assert_eq!(x.widest_axis(&mut ()).unwrap(), Some(0));
         assert!(widths.iter().all(|w| w.numerator() == 2 << 16));
@@ -90,6 +94,16 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         #[cfg(feature = "float-enclosure")]
         {
             use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+            macro_rules! contraction {
+                ($i:ty) => {{
+                    let m = IntervalMatrix::new([[<$i>::new(-0.25, 0.5).unwrap(); 2]; 2]).unwrap();
+                    let r = m.identity_minus(&mut ()).unwrap();
+                    std::hint::black_box(r.contraction_margin_one(&mut ()).unwrap());
+                    std::hint::black_box(r.contraction_margin_infinity(&mut ()).unwrap());
+                }};
+            }
+            contraction!(F32Enclosure);
+            contraction!(F64Enclosure);
             let f = IntervalVector::new([
                 F64Enclosure::new(f64::from_bits(2), 1.).unwrap(),
                 F64Enclosure::new(f64::from_bits(1), 1.).unwrap(),

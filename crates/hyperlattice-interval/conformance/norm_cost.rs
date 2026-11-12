@@ -42,6 +42,23 @@ fn family<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
         matrix.column_dominance_margins(&mut context()).unwrap(),
         expected
     );
+    let remainder = matrix.identity_minus(&mut context()).unwrap();
+    for r in 0..4 {
+        for c in 0..4 {
+            assert_eq!(
+                remainder.rows().unwrap()[r][c],
+                if r == c { scalar(8, 9) } else { scalar(-2, 1) }
+            );
+        }
+    }
+    assert_eq!(
+        matrix.contraction_margin_one(&mut context()).unwrap(),
+        scalar(-13, -6)
+    );
+    assert_eq!(
+        matrix.contraction_margin_infinity(&mut context()).unwrap(),
+        scalar(-13, -6)
+    );
     eprintln!(
         "{name},vector_inline_bytes={},matrix_inline_bytes={}",
         std::mem::size_of_val(&vector),
@@ -56,6 +73,9 @@ fn family<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
         "measure_infinity",
         "row_margins",
         "column_margins",
+        "identity_minus",
+        "contraction_one",
+        "contraction_infinity",
     ] {
         let mut operation = || match action {
             "vector_one" => {
@@ -87,6 +107,23 @@ fn family<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
                 black_box(
                     black_box(&matrix)
                         .column_dominance_margins(&mut context())
+                        .unwrap(),
+                );
+            }
+            "identity_minus" => {
+                black_box(black_box(&matrix).identity_minus(&mut context()).unwrap());
+            }
+            "contraction_one" => {
+                black_box(
+                    black_box(&matrix)
+                        .contraction_margin_one(&mut context())
+                        .unwrap(),
+                );
+            }
+            "contraction_infinity" => {
+                black_box(
+                    black_box(&matrix)
+                        .contraction_margin_infinity(&mut context())
                         .unwrap(),
                 );
             }

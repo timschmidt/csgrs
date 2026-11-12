@@ -85,6 +85,10 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
                 d.abs() - c.abs(),
                 a.abs() - c.abs(),
                 d.abs() - b.abs(),
+                1 - a,
+                -b,
+                -c,
+                1 - d,
             ]
         });
         let entry = |index: usize| scalar(bounds[index].0, bounds[index].1);
@@ -101,6 +105,28 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
                 "word={word},operation={index}"
             );
         }
+        let remainder = matrix.identity_minus(&mut context()).unwrap();
+        for (index, lane) in remainder.rows().unwrap().iter().flatten().enumerate() {
+            let (lo, hi) = expected[index + 8];
+            assert_eq!(lane, &scalar(lo, hi));
+        }
+        assert_eq!(remainder.identity_minus(&mut context()).unwrap(), matrix);
+        assert_eq!(
+            matrix.contraction_margin_one(&mut context()).unwrap(),
+            scalar(1 - expected[0].1, 1 - expected[0].0)
+        );
+        assert_eq!(
+            matrix.contraction_margin_infinity(&mut context()).unwrap(),
+            scalar(1 - expected[1].1, 1 - expected[1].0)
+        );
+        assert_eq!(
+            matrix
+                .transpose(&mut context())
+                .unwrap()
+                .contraction_margin_one(&mut context())
+                .unwrap(),
+            matrix.contraction_margin_infinity(&mut context()).unwrap()
+        );
         assert_eq!(
             matrix
                 .row_dominance_margins(&mut context())
@@ -209,6 +235,29 @@ fn qualify<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     }
     let matrix = IntervalMatrix::<I, 0, 0>::new([]).unwrap();
     assert_eq!(matrix.norm_one(&mut context()).unwrap(), zero);
+    assert_eq!(matrix.identity_minus(&mut context()).unwrap(), matrix);
+    assert_eq!(
+        matrix.contraction_margin_one(&mut context()).unwrap(),
+        scalar(1, 1)
+    );
+    assert_eq!(
+        matrix.contraction_margin_infinity(&mut context()).unwrap(),
+        scalar(1, 1)
+    );
+    let empty = IntervalMatrix::<I, 2, 2>::empty().unwrap();
+    assert!(empty.identity_minus(&mut context()).unwrap().is_empty());
+    assert!(
+        empty
+            .contraction_margin_one(&mut context())
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        empty
+            .contraction_margin_infinity(&mut context())
+            .unwrap()
+            .is_empty()
+    );
     for measure in [
         matrix.measure_one(&mut context()),
         matrix.measure_infinity(&mut context()),
@@ -437,6 +486,33 @@ fn all_reductions_share_budget_and_allow_retry() {
     check(|c| matrix.measure_infinity(c));
     check(|c| matrix.row_dominance_margins(c));
     check(|c| matrix.column_dominance_margins(c));
+    check(|c| matrix.identity_minus(c));
+    check(|c| matrix.contraction_margin_one(c));
+    check(|c| matrix.contraction_margin_infinity(c));
+    let empty = IntervalMatrix::<I, 2, 2>::empty().unwrap();
+    assert!(
+        empty
+            .identity_minus(&mut DyadicBudget::new(0, 0))
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        empty
+            .contraction_margin_one(&mut DyadicBudget::new(0, 0))
+            .unwrap()
+            .is_empty()
+    );
+    assert!(
+        empty
+            .contraction_margin_infinity(&mut DyadicBudget::new(0, 0))
+            .unwrap()
+            .is_empty()
+    );
+    let unit = IntervalMatrix::<I, 0, 0>::new([]).unwrap();
+    assert_eq!(
+        unit.identity_minus(&mut DyadicBudget::new(0, 0)).unwrap(),
+        unit
+    );
     assert_eq!(matrix, original);
     let mut context = DyadicBudget::new(256, 1_000_000);
     let margins = matrix.row_dominance_margins(&mut context).unwrap();

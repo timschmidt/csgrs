@@ -18,6 +18,7 @@
 
 mod affine;
 mod backend;
+mod contraction;
 mod matrix;
 mod midpoint_radius;
 mod norms;

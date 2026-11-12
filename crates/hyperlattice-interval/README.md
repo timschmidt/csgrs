@@ -52,8 +52,8 @@ fixed widths and float widths that cannot fit a finite float. `widest_axis`
 compares exact widths and breaks ties by the lowest index. Empty boxes have no
 widths; the zero-dimensional unit has an empty width array and no axis.
 
-Midpoint/radius forms, contraction helpers and measured specializations
-remain under development in Phase 6 of the
+Independently authored center/radius forms, Jacobian carriers and measured
+specializations remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).
 
 Consuming a vector or matrix with `midpoint_radius()` creates a
@@ -65,3 +65,12 @@ overflows. `midpoint_enclosure` and `radius_enclosure` explicitly produce
 endpoint-family enclosures with a shared context. They can be nonsingletons
 and never replace the retained exact definition. Replay validates the source
 intervals through the existing serializer; empty and unit products stay distinct.
+
+Square matrices provide `identity_minus()` for the Cartesian image of `Id - A`,
+and `contraction_margin_one()` / `contraction_margin_infinity()` for the ranges
+of `1 - ||A||`. These compose with matrix products and affine enclosures for
+Krawczyk arithmetic. Positive lower margins supply norm evidence; consumers
+still establish Jacobian validity, self-mapping and solver decisions. Empty
+inputs stay empty. Nonempty queries require representable scalar one, except
+zero-dimensional identity subtraction; fixed i32/F31 and i64/F63 therefore
+report typed overflow. Scalar operations share the caller's context.

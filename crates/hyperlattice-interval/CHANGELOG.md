@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add identity subtraction and one/infinity contraction margins, returning
+  interval evidence with shared scalar accounting for Krawczyk arithmetic.
+
 - Add retained midpoint/radius vector and matrix decompositions, exact ownership
   reconstruction, explicit numerical enclosures and validated source replay.
 
