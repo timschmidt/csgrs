@@ -110,3 +110,10 @@ required-features = ["rational"]
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "split_division"
+path = "fuzz_targets/split_division.rs"
+test = false
+doc = false
+bench = false

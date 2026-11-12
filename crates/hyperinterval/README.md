@@ -62,6 +62,16 @@ outward grid enclosure of the whole function range; narrow inputs with huge phas
 budget to resolve those phases. The original exact endpoints remain the source
 through refinement. No native floating transcendental supplies a certificate.
 
+`IntervalSet2<I>` retains up to two normalized closed components without a
+separate union allocation. Dyadic construction and replay validate order and
+separation; queries preserve real gaps. Extended dyadic `div` and `reciprocal`
+return this carrier with domain coverage, including both branches around zero.
+A zero-only denominator returns EmptyDomain. Existing finite division stays
+strict. Outward rounding or closure can merge components at zero; infinity is
+never a member. Split results support negation, membership, inclusion, an
+explicit connected hull and further exponentiation. Keep earlier Partial
+receipts when chaining operations.
+
 Hyperinterval encloses. Hyperlattice carries set-valued linear structure.
 Hyperlimit decides. Hypersolve certifies. Hyperdynamics evolves. Domain crates
 assign meaning.

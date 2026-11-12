@@ -1272,6 +1272,79 @@ The committed archive digest is verified and registered in
 poles/split images, cancellation, full consumer migrations and release
 qualification remain open.
 
+## Split images and extended division admission (2026-11-12)
+
+Owner: Hyperinterval scalar-set layer, P1/P3/P5/P6/P19. Baseline `726f6da83`.
+The missing IntervalSet2 and extended reciprocal witness is reproduced in
+`/tmp/interval-refactor/split-division/missing-witness.log`. This is the plan's
+explicit prerequisite for negative rational powers crossing zero: do not turn
+the disconnected image into an undeclared hull. Existing finite strict division
+and its zero-rejection order remain unchanged.
+
+Domain: connected extended dyadic intervals, with closed outward division
+images containing at most two components on a requested grid. Zero-only
+denominators return EmptyDomain before empty-numerator shortcuts; other empty
+Cartesian sources return successful empty with Complete coverage. A nonempty
+source whose denominator includes zero has Partial coverage. Bounds at infinity
+are limits, never real members; closure may include an unattained zero. Split
+normalization merges touching/overlapping closed enclosures and preserves every
+real gap. Admission requires independent exact rational expectations, extreme
+scales, malformed canonical replay, small-budget refusal/retry, and continued
+negation, membership, subset, explicit hull and exponential use. More general
+set operations that can create more than two pieces require a separate carrier
+or an explicit capacity contract; no universal union closure is claimed.
+The sealed generic carrier stores zero/one/two inline components; two-piece
+construction, canonical replay and numerical operations currently use the dyadic
+backend. Primitive one-piece carriers remain Copy. Exact comparison normalizes
+order and merges touching/overlapping represented enclosures; a real gap is
+never filled implicitly. Native replay rejects reversed, touching, overlapping
+or empty two-piece encodings and revalidates each extended bound. Explicit hull
+is the named operation that fills a gap. Reflection transports order proof by
+reversing components; membership and inclusion inspect the union itself.
+
+Division splits the denominator by sign. On a positive branch, numerator sign
+selects the correct denominator extreme for each quotient endpoint; the negative
+branch is its exact reflection. Finite endpoints are rounded from original
+quotients, not from rounded reciprocals. Pole and infinite-end limits are
+explicit. Rounding may close a gap, in which case normalization correctly
+reports the represented closed union. Zero and unit relations and strict
+sub-grid magnitude bounds avoid irrelevant scale expansion.
+
+A maintained regression found [6,9]/3 and other exact dyadic quotients failing
+at grid i32::MIN through avoidable expansion. The pre-fix source and failure
+remain in evidence. The repair reserves deterministic GCD/reduction work before
+calling the shared integer GCD backend, recognizes reduced power-of-two
+denominators, and retains compact exact coordinates. Non-dyadic fine-grid
+results still require their real coefficient growth. A 1024-bit ratio fixture
+checks exact near-unit bounds, explicit work exhaustion and successful retry.
+
+The final 29-command feature/release/lint/docs/security/portable-build matrix
+passes, including 131 unique unit/integration tests and 12 doctests. The replay
+test additionally succeeds in a fresh child process; its extra one-test result
+is not double-counted. Four unchanged Hypersolve value/dispatch witnesses,
+no-feature strict Clippy on all three compilers, primitive dependency closure,
+ARM/WASM no_std builds and all repository Zizmor checks pass. Two initial
+Clippy failures on a nested condition are retained; the syntax repair keeps
+the same condition order. All affected checks were rerun after the final
+production change. The large-coefficient fixture was added and passed afterward;
+final instrumented tests include it. No existing strict operation was changed.
+
+The independent GMP oracle enumerates all four finite/limit corners for each
+denominator sign branch and normalizes rounded results independently. Its
+23-state connected-source corpus covers every pair at three grids. ASan fuzzing
+completes 100,000 cases in 19 seconds initially and 100,000 in 20 seconds on final
+source (seed 20261122), including replay and continued set operations. Final
+Rust 1.95 coverage is 3570/3643 lines (98.00%) and 7070/7571 regions (93.38%);
+no branch denominator is reported. Tests, probes, Hyperreal, dependencies and
+test-only IEEE code are excluded. All eight profile mismatches are diagnosed
+as excluded Rug OptRational::parts; earlier profiles are not merged with final.
+
+All 540 cost samples complete with full image/receipt materialization and
+shared work accounting. The crate PERFORMANCE.md records all medians. Source
+and archive registration are pending. Rational powers themselves, additional
+split operations/backends, general union closure, actual heap-byte bounds,
+cancellation, consumer migrations and release qualification remain open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

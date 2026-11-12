@@ -399,3 +399,45 @@ exact source phase. No error or unresolved phase is counted as a completed
 whole-range image. These are new-capability costs on a shared host, not speedup
 comparisons or consumer benchmarks. Actual heap-byte, wall-time, cancellation,
 firmware-cycle and full consumer qualification remain open.
+
+
+## Extended division and split-carrier completion probe
+
+`conformance/division_cost.rs` materializes the full normalized quotient image
+and local domain receipt. The finite positive/negative cases divide [1,2] by
+[3,4], or [-2,-1] by [-4,-3]. Pole cases use [1,2]/[-1,1], [1,2]/[0,3], and
+zero/[-1,1]. Unbounded cases use the entire line or closed rays as indicated
+in the probe. A four-corner/limit GMP oracle runs before timing. Rust 1.99
+release, x86_64 Linux, dyadic only with no default features, 128 warmups and
+20 samples of 1024 completed images per group:
+
+| Input case | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| positive | 1619.940 | 1686.340 | 1833.387 |
+| negative | 2000.655 | 2085.183 | 2260.948 |
+| split | 942.878 | 943.143 | 943.705 |
+| touching | 785.209 | 846.865 | 1003.092 |
+| entire_denominator | 423.767 | 423.539 | 422.947 |
+| zero | 607.738 | 607.665 | 608.629 |
+| unbounded_numerator | 776.747 | 836.000 | 991.025 |
+| unbounded_denominator | 440.372 | 440.058 | 440.208 |
+| entire_numerator | 81.238 | 81.199 | 81.201 |
+
+Values are median ns/image; all 540 samples complete. Timed work includes
+budget creation, domain/sign decisions, exact fraction reduction, selected
+quotients, normalized components, receipt and destruction. Input construction
+and independent oracle work are excluded. Each call has a fresh 4096-bit,
+10^11-work-unit budget; actual deterministic work units accompany every row.
+Raw samples, compiler/host metadata, executable hash and whole-probe size are
+in the split-division evidence record. The executable includes GMP oracle code
+and its size is not production-kernel size.
+
+The container adds no separate union allocation; backend BigInts still own
+storage. On this host, DyadicInterval, ExtendedInterval and IntervalSet2 occupy
+72, 80 and 160 inline bytes respectively, excluding owned storage. Layout and
+source-size/work reservations are distinct from actual heap-byte bounds.
+Exact dyadic quotients remain compact even at
+the minimum output-grid exponent, while genuinely fine nondyadic results must
+pay their coefficient growth. These are new-capability costs, not speedups
+against the finite strict API, which intentionally has a different pole contract.
+Full memory/cancellation, consumer and firmware qualification remain open.

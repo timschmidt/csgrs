@@ -103,3 +103,8 @@ required-features = ["rational", "dyadic"]
 name = "trig_cost"
 path = "conformance/trig_cost.rs"
 required-features = ["rational", "dyadic"]
+
+[[example]]
+name = "division_cost"
+path = "conformance/division_cost.rs"
+required-features = ["dyadic"]

@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add normalized IntervalSet2 carriers and extended dyadic division/reciprocal
+  with split pole images, explicit domain coverage and canonical replay.
+- Preserve exact dyadic quotient bounds before grid expansion, with budgeted
+  fraction reduction and continued set/exponential operations.
+
 - Add budgeted rational/dyadic sine and cosine images with certified quadrant
   selection, interior extrema, explicit whole-period results and extended inputs.
 - Restore the no-feature bounds-module gate and enforce strict no-feature
