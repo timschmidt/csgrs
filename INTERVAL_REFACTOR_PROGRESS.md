@@ -2263,7 +2263,12 @@ and peak stack. No speedup or full legacy benchmark/monomorphized-size claim.
 Source preservation records 27 byte-identical implementation files and all
 original lines retained in order in seven edited owner implementation files.
 
-Source/evidence registration pending for the midpoint/radius checkpoint.
+Source commit `842dc85a98bdadc50dfe63b42dd97ffade81ad7b`; immutable evidence
+commit `8acb2801a9a4fd61c779ad38554a02bf0ac2305f`, record
+`docs/evidence/2026-11-12-interval-midpoint-radius`: 417 files,
+94,306,422 bytes, SHA-256
+`551d7e0beb8ca69c9fec6c7f5152a851865c5d3ac34804ca11df870f941347a4`. The committed record was regenerated
+and verified before registration; all previous archive rows remain unchanged.
 Independent authored center/radius forms, contraction/Krawczyk/Jacobian helpers,
 specialized consumers, full resource/coverage/performance qualification and the
 remaining plan phases stay open. No phase completion or push is claimed.
