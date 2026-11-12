@@ -946,8 +946,15 @@ The cost probe completed all 960 samples across four source widths and eight
 endpoint configurations, each with 4,096 warmups then 30 samples of 8,192
 owned images. Independent exact checks precede timing. The crate performance
 ledger contains the complete median table. No comparative improvement or
-firmware cost is inferred. The `2026-11-12-interval-primitive-roots` evidence
-record is pending registration.
+firmware cost is inferred.
+
+Source commit: `af060436e8cbe3d1f47c52a62f4846ae07eebe70`. The separate
+`2026-11-12-interval-primitive-roots` evidence record is committed at
+`d1601f96173528144cfafd73770060f2b458dd70`: 273 files,
+81,619,721 bytes, SHA-256
+`9590b874c9e448e2ec4c3e0c7726294a51535d9b7f81ccea97ab479b8a9f3db7`.
+The scoped manifest was verified against that committed archive revision and
+registered in `docs/evidence-archive.tsv`; all prior records are preserved.
 
 Later elementary functions, remaining signed-power surfaces, symbolic-ball
 function adapters, consumer migrations, full coverage and release
