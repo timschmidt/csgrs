@@ -441,3 +441,41 @@ the minimum output-grid exponent, while genuinely fine nondyadic results must
 pay their coefficient growth. These are new-capability costs, not speedups
 against the finite strict API, which intentionally has a different pole contract.
 Full memory/cancellation, consumer and firmware qualification remain open.
+
+
+## Rational exponent completion probe
+
+`conformance/fractional_power_cost.rs` measures full normalized images and
+local domain receipts. Cases are 2^(1/3), [2,3]^(3/5), [-8,-1]^(2/3),
+[-3,5]^(-1/3), [-3,5]^(-3/2), [8,27]^(1/3), (2^512)^(1/3),
+(2^-512)^(1/3), and the entire line raised to -1/3. Exact GMP power/root/grid
+expectations run before timing, with an additional directed MPFR point check.
+Rust 1.99 release, x86_64 Linux, dyadic only with no default features:
+
+| Case | grid 2^-16 | grid 2^-64 | grid 2^-256 |
+| --- | ---: | ---: | ---: |
+| point | 12368.426 | 48927.836 | 222718.707 |
+| narrow | 17094.371 | 58084.070 | 274537.297 |
+| negative | 2205.164 | 2198.148 | 2197.098 |
+| split | 10379.039 | 57336.215 | 210931.961 |
+| partial | 4751.941 | 17984.922 | 61941.824 |
+| perfect | 2904.707 | 2894.859 | 2841.676 |
+| huge | 126160.676 | 166265.855 | 375193.273 |
+| tiny | 1916.641 | 1914.168 | 55832.668 |
+| entire | 609.613 | 609.582 | 609.684 |
+
+Values are median ns/image. All 540 samples complete: three precisions, nine
+cases, 20 samples of 128 calls after 32 warmups per group. Timed work includes
+exponent normalization, root relations, arithmetic and work reservations,
+component normalization, owned output/receipt and destruction; input construction
+and the independent oracles are excluded. Each call starts a fresh 32768-bit,
+10^13-work-unit budget. Raw rows retain actual deterministic work units.
+
+Perfect rational roots avoid output-grid expansion; a nonperfect root uses
+integer bisection with exact power comparisons. Huge and fine-grid cases pay
+for their larger integer relations. Bounds and root witnesses are recomputed
+per call; no warm cache is assumed. These are costs for a new operation, not
+speedup comparisons. The archived executable includes GMP/MPFR oracle code,
+so whole-probe size is not production-kernel size. Actual allocation/heap-byte,
+cancellation, rational-backend timing and downstream consumer qualification
+remain open. Source/work reservations do not establish those claims.

@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Add budgeted rational, dyadic and extended dyadic rational powers with
+  arbitrary-size exponent components, reduced real-branch semantics, exact
+  integer root witnesses, compact perfect roots and split pole images.
+- Exercise rational-power output through canonical replay and further powers
+  and exponentials; preserve local and inherited domain qualifications.
+
 - Add normalized IntervalSet2 carriers and extended dyadic division/reciprocal
   with split pole images, explicit domain coverage and canonical replay.
 - Preserve exact dyadic quotient bounds before grid expansion, with budgeted

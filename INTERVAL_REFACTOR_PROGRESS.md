@@ -1350,6 +1350,80 @@ Rational powers themselves, additional
 split operations/backends, general union closure, actual heap-byte bounds,
 cancellation, consumer migrations and release qualification remain open.
 
+## Rational exponent admission (2026-11-12)
+
+Owner: Hyperinterval scalar image layer, P1/P3/P5/P6/P19, baseline `593d5c95e`.
+The missing `pow_rational` acceptance witness is reproduced in
+`/tmp/interval-refactor/fractional-power/missing-witness.log` before implementation.
+The domain is connected rational, dyadic and extended dyadic source intervals
+and an arbitrary-size integer numerator/denominator exponent. The denominator
+must be nonzero even for an empty source. Normalize its sign and common factors
+before determining the real branch: odd reduced denominators admit negative
+sources; even denominators admit nonnegative sources. Negative powers exclude
+zero and retain disconnected images. The zero exponent maps every real source
+member, including zero, to one, consistently with existing integer powers.
+Empty maps to empty; no defined member returns EmptyDomain; excluded members
+produce Partial. The output is a normalized closed IntervalSet2 on the requested
+dyadic grid; infinity denotes a limit, and closure may include unattained zero.
+
+Use exact integer root/power relations and monotonicity of each sign branch.
+Retain perfect rational roots before expanding a fine requested grid. Share
+normalization, exact quotient rounding, extended bounds and work accounting
+with existing owners; do not introduce a rounded reciprocal intermediate.
+Small-budget refusal/retry, independent GMP/MPFR expectations, extreme scales,
+replay, and consumption by subsequent supported operations are acceptance gates.
+DyadicBudget's deterministic size/work accounting applies across nested calls;
+actual heap bytes, cancellation and consumer migration are not established by
+this new entry point.
+
+The shared implementation now serves all three adapters. It strips binary
+factors, preserves perfect rational roots before powering, and applies signed
+powers to the exact source fraction before grid rounding/root isolation.
+For nonnegative z, floor(root_q(z)) = floor(root_q(floor(z))); bisection keeps
+lo^q <= floor(z) < hi^q and an exact power comparison distinguishes equality.
+The upper grid bound increments exactly when either relation is nonintegral.
+Reduced numerator parity and denominator parity select admitted sign branches;
+negative exponents reverse magnitude order. Split normalization acts only after
+outward bounds are certified. No approximate scalar or rounded reciprocal is
+used. Hyperreal's existing perfect_nth_root is an unbudgeted u32-degree helper;
+this arbitrary-degree no_std dyadic implementation does not change its dispatch
+or add a Hyperreal dependency. The primitive power helper and its accounting
+also remain unchanged.
+
+Independent GMP tests cover 23 connected source states, 11 numerators, nine
+denominators (including zero and negative), and four grids: 9108 combinations.
+An additional 80 point cases use directed MPFR, with an exact GMP relation for
+singletons that a rounded intermediate MPFR root can straddle. Rational tests
+include perfect roots, partial domains, fine grids and 1024-bit near-one ratios.
+Extreme exponents/scales exercise compact results, explicit reservation
+exhaustion and retry. Fresh-process replay consumes split output in another
+power; further exponentials retain operation-local and inherited coverage.
+
+The initial constant-one shortcut ignored coarse grids. The failing regression
+and pre-fix source are retained in zero-grid-failure.log and pre-zero-grid.rs;
+the final zero-exponent image rounds outward on the requested grid. Early
+oracle compile/lint failures and an initial module-order formatting failure
+remain in the record. These are distinct from successful geometric outcomes.
+The final 29-command feature/release/lint/docs/security/portable-build matrix
+passes, including 140 unique unit/integration tests and 12 doctests. The two
+fresh-process child executions are not double-counted; test-list.log records
+the unique count. Four unchanged Hypersolve value/dispatch witnesses, strict
+Clippy on supported compiler/feature combinations, primitive dependency closure,
+ARM/WASM no_std builds and repository Zizmor checks pass. No push was attempted.
+
+Final Rust 1.95 coverage: 3878/3959 production lines (97.95%), 7709/8259 regions
+(93.34%), all 12 new-module functions executed. No branch denominator is reported.
+Tests, probes, Hyperreal, dependencies and test-only IEEE code are excluded;
+eight profile mismatches are diagnosed as excluded Rug OptRational::parts.
+Initial and final profiles remain separate. ASan fuzzing completes the published
+10,000-case campaign; raw logs/corpus are retained. All 540 completed cost
+samples, compiler/host metadata, executable hash and size are retained;
+PERFORMANCE.md records medians and methodological limits.
+
+Source and archive registration are pending. Tangent/pole functions, remaining
+Phase 5 qualifications, broader consumer migrations, allocation/cancellation,
+coordinated release and the earlier incomplete plan phases remain open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

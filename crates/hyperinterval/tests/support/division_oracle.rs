@@ -1,19 +1,11 @@
 //! Independent four-corner/limit image of each denominator sign component.
-use hyperinterval::{
-    DomainCoverage, DyadicInterval, ExtendedIntervalView as View, IntervalError, IntervalSet2,
-    RangeEnclosure,
-};
-use rug::Rational;
-#[path = "grid_oracle.rs"]
-mod grid_oracle;
-pub use grid_oracle::q;
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub enum End {
-    Minus,
-    Value(Rational),
-    Plus,
-}
-pub type Source = Option<(End, End)>;
+use hyperinterval::{DomainCoverage, DyadicInterval, IntervalError, IntervalSet2, RangeEnclosure};
+#[path = "set_oracle.rs"]
+mod set_oracle;
+pub use set_oracle::{End, Source, actual};
+// Fuzz and cost consumers also construct exact scaled source values.
+#[allow(unused_imports)]
+pub use set_oracle::q;
 fn zero() -> End {
     End::Value(0.into())
 }
@@ -62,10 +54,10 @@ fn image(a: &(End, End), b: &(End, End), branch: i32, precision: i32) -> (End, E
     let mut lo = values.first().unwrap().clone();
     let mut hi = values.last().unwrap().clone();
     if let End::Value(x) = lo {
-        lo = End::Value(grid_oracle::bounds(x.clone(), x, precision).0);
+        lo = End::Value(set_oracle::bounds(x.clone(), x, precision).0);
     }
     if let End::Value(x) = hi {
-        hi = End::Value(grid_oracle::bounds(x.clone(), x, precision).1);
+        hi = End::Value(set_oracle::bounds(x.clone(), x, precision).1);
     }
     (lo, hi)
 }
@@ -109,27 +101,6 @@ pub fn expected(
         DomainCoverage::Complete
     };
     Ok((images, coverage))
-}
-pub fn actual(set: &IntervalSet2<DyadicInterval>) -> Vec<(End, End)> {
-    set.components()
-        .iter()
-        .map(|x| match x.view() {
-            View::Empty => panic!("empty component"),
-            View::Entire => (End::Minus, End::Plus),
-            View::Finite(x) => {
-                let (a, b, e) = x.bounds().unwrap();
-                (End::Value(q(a, e)), End::Value(q(b, e)))
-            }
-            View::Below(x) => {
-                let (_, b, e) = x.bounds().unwrap();
-                (End::Minus, End::Value(q(b, e)))
-            }
-            View::Above(x) => {
-                let (a, _, e) = x.bounds().unwrap();
-                (End::Value(q(a, e)), End::Plus)
-            }
-        })
-        .collect()
 }
 pub fn verify(
     result: Result<RangeEnclosure<IntervalSet2<DyadicInterval>>, IntervalError>,

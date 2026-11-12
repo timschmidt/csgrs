@@ -38,6 +38,8 @@ mod fixed;
 mod fixed_arithmetic;
 #[cfg(feature = "float-enclosure")]
 mod float;
+#[cfg(feature = "dyadic")]
+mod fractional_power;
 #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
 mod ieee;
 #[cfg(feature = "integer")]

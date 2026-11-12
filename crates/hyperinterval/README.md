@@ -62,6 +62,16 @@ outward grid enclosure of the whole function range; narrow inputs with huge phas
 budget to resolve those phases. The original exact endpoints remain the source
 through refinement. No native floating transcendental supplies a certificate.
 
+Rational, dyadic and extended dyadic `pow_rational(&numerator, &denominator,
+precision, &mut budget)` accepts arbitrary-size integer exponent components.
+It reduces the exponent before selecting its real domain: odd denominators
+admit negative bases, even denominators exclude them, and negative powers
+exclude zero. A zero exponent uses the constant-one convention, including at
+zero, with outward grid rounding. A zero denominator is invalid even for empty
+sources. Exact integer relations certify each bound; perfect rational roots
+remain compact. Split results retain poles and Partial domain receipts. Large
+degrees or fine grids can exhaust the declared size/work budget.
+
 `IntervalSet2<I>` retains up to two normalized closed components without a
 separate union allocation. Dyadic construction and replay validate order and
 separation; queries preserve real gaps. Extended dyadic `div` and `reciprocal`

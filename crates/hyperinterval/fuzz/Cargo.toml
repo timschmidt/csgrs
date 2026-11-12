@@ -117,3 +117,10 @@ path = "fuzz_targets/split_division.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "fractional_power"
+path = "fuzz_targets/fractional_power.rs"
+test = false
+doc = false
+bench = false
