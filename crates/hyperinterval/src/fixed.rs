@@ -118,3 +118,48 @@ impl<'de, I: FixedEndpoint + serde::Deserialize<'de>, const FRAC: u32> serde::De
         .map_err(serde::de::Error::custom)
     }
 }
+
+/// An exact nonnegative width `numerator / 2^FRAC`, including a full signed range.
+///
+/// Unlike a signed interval endpoint, this stores every u64 lattice distance.
+/// Equality and ordering compare mathematical values within the fixed scale.
+/// Serialization stores the numerator; the receiving type supplies the scale.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct FixedWidth<const FRAC: u32> {
+    numerator: u64,
+}
+impl<const FRAC: u32> FixedWidth<FRAC> {
+    /// Constructs a width, requiring the shared fixed families' `FRAC < 64`.
+    pub fn new(numerator: u64) -> Result<Self, IntervalError> {
+        if FRAC >= 64 {
+            return Err(IntervalError::InvalidScale);
+        }
+        Ok(Self { numerator })
+    }
+    /// Exact distance in units of `2^-FRAC`, with no signed narrowing.
+    pub const fn numerator(&self) -> u64 {
+        self.numerator
+    }
+    /// Number of binary fractional places in this value's type.
+    pub const fn fraction_bits(&self) -> u32 {
+        FRAC
+    }
+    /// Exact singleton projection into the signed i64 fixed family, or typed
+    /// overflow. Failure leaves this exact unsigned width available for use.
+    pub fn to_interval(&self) -> Result<FixedInterval<i64, FRAC>, IntervalError> {
+        let numerator = i64::try_from(self.numerator).map_err(|_| IntervalError::Overflow)?;
+        FixedInterval::<i64, FRAC>::point(numerator)
+    }
+}
+#[cfg(feature = "serde")]
+impl<const F: u32> serde::Serialize for FixedWidth<F> {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.numerator.serialize(serializer)
+    }
+}
+#[cfg(feature = "serde")]
+impl<'de, const F: u32> serde::Deserialize<'de> for FixedWidth<F> {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        Self::new(u64::deserialize(deserializer)?).map_err(serde::de::Error::custom)
+    }
+}

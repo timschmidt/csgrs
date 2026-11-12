@@ -23,6 +23,7 @@ mod norms;
 #[cfg(feature = "serde")]
 mod serde;
 mod vector;
+mod widths;
 
 pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource};
 pub use backend::IntervalArithmetic;

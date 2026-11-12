@@ -116,3 +116,25 @@ pub extern "C" fn interval_norm_probe(input: i32) -> i32 {
         + 17 * measure_infinity.0
         + 19 * measure_infinity.1
 }
+
+#[unsafe(no_mangle)]
+pub extern "C" fn interval_width_probe(input: i32) -> i32 {
+    type I = FixedInterval<i64, 63>;
+    let s = i64::from(input.clamp(0, 255));
+    let source = IntervalVector::new([
+        I::new(i64::MIN, i64::MAX - s).unwrap(),
+        I::new(-s, s).unwrap(),
+        I::new(i64::MIN + s, i64::MAX).unwrap(),
+        I::new(i64::MIN, i64::MAX).unwrap(),
+    ])
+    .unwrap();
+    let widths = source.widths(&mut ()).unwrap().unwrap();
+    assert_eq!(widths[0].numerator(), u64::MAX - s as u64);
+    assert_eq!(widths[1].numerator(), 2 * s as u64);
+    assert_eq!(widths[0], widths[2]);
+    assert_eq!(widths[3].numerator(), u64::MAX);
+    assert!(widths[3].to_interval().is_err());
+    let axis = source.widest_axis(&mut ()).unwrap().unwrap();
+    assert_eq!(axis, if s == 0 { 0 } else { 3 });
+    axis as i32 * 1000 + s as i32
+}

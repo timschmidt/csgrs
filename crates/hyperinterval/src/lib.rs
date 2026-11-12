@@ -1,8 +1,9 @@
 //! Scalar sets with explicit empty states, exact endpoints and checked ingress.
 //!
 //! Hyperinterval encloses; Hyperlimit decides; Hypersolve certifies. A set
-//! containing zero is not evidence that an exact point equals zero. No carrier
-//! implements scalar ordering or implicitly selects a midpoint.
+//! containing zero is not evidence that an exact point equals zero. Set carriers
+//! do not implement scalar ordering or implicitly select a midpoint. Exact width
+//! values have a separate measurement contract and mathematical value ordering.
 //!
 //! The default build is allocation-free `no_std`. `integer` enables discrete
 //! integer sets; `fixed` enables closed real intervals on an exact binary
@@ -68,7 +69,7 @@ pub use split::IntervalSet2;
 #[cfg(feature = "dyadic")]
 pub use dyadic::{DyadicBudget, DyadicInterval};
 #[cfg(feature = "fixed")]
-pub use fixed::{FixedEndpoint, FixedInterval};
+pub use fixed::{FixedEndpoint, FixedInterval, FixedWidth};
 #[cfg(feature = "integer")]
 pub use integer::{IntegerEndpoint, IntegerRange};
 #[cfg(feature = "float-proposal")]
@@ -80,4 +81,4 @@ pub use real_ball::{BallRelation, RealBall};
 pub use state::{DomainCoverage, IntervalError, MidpointRounding, RangeEnclosure, SignSet};
 
 #[cfg(feature = "float-enclosure")]
-pub use float::{F32Enclosure, F64Enclosure};
+pub use float::{F32Enclosure, F32Width, F64Enclosure, F64Width};

@@ -12,7 +12,7 @@ fn qualify() -> Result<(), IntervalError> {
 }
 
 macro_rules! enclosure {
-    ($name:ident, $endpoint:ident, $float:ty, $bits:ty, $format:ident) => {
+    ($name:ident, $endpoint:ident, $float:ty, $bits:ty, $format:ident, $width:ident, $limbs:literal) => {
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         struct $endpoint($bits);
 
@@ -52,6 +52,71 @@ let enclosure: F64Enclosure = proposal.into();
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub struct $name {
             bounds: Option<Bounds<$endpoint>>,
+        }
+
+        /// Exact nonnegative endpoint distance of a checked finite interval.
+        ///
+        /// Retains the defining endpoints, including widths above the largest
+        /// finite float or between its grid points. `Ord`/`Eq` compare exact
+        /// width values by bounded integer arithmetic, independent of ambient
+        /// float state. Different definitions of equal widths can serialize
+        /// differently; serialization preserves the definition, not a canonical
+        /// mathematical-value encoding. No allocator or native float arithmetic.
+        #[derive(Clone, Copy, Debug)]
+        pub struct $width {
+            bounds: Bounds<$endpoint>,
+        }
+        impl $width {
+            /// Exact interval whose endpoint difference defines this width.
+            pub fn defining_interval(&self) -> $name {
+                $name {
+                    bounds: Some(self.bounds),
+                }
+            }
+            /// Explicit outward projection into the finite endpoint family.
+            /// Overflow is typed; the retained exact width remains unchanged.
+            pub fn enclosure(&self) -> Result<$name, IntervalError> {
+                let (a, b) = self.bounds.endpoints();
+                let (lo, hi) = $format.add(u64::from(b.0), $format.negate(u64::from(a.0)))?;
+                $name::from_bits(lo, hi)
+            }
+        }
+        impl Ord for $width {
+            fn cmp(&self, other: &Self) -> Ordering {
+                let (a, b) = self.bounds.endpoints();
+                let (c, d) = other.bounds.endpoints();
+                $format.compare_width::<$limbs>(
+                    u64::from(a.0),
+                    u64::from(b.0),
+                    u64::from(c.0),
+                    u64::from(d.0),
+                )
+            }
+        }
+        impl PartialOrd for $width {
+            fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+        impl PartialEq for $width {
+            fn eq(&self, other: &Self) -> bool {
+                self.cmp(other) == Ordering::Equal
+            }
+        }
+        impl Eq for $width {}
+        #[cfg(feature = "serde")]
+        impl serde::Serialize for $width {
+            fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+                self.defining_interval().serialize(serializer)
+            }
+        }
+        #[cfg(feature = "serde")]
+        impl<'de> serde::Deserialize<'de> for $width {
+            fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+                $name::deserialize(deserializer)?
+                    .width()
+                    .ok_or_else(|| serde::de::Error::custom(IntervalError::EmptyDomain))
+            }
         }
 
         impl $name {
@@ -118,6 +183,13 @@ let enclosure: F64Enclosure = proposal.into();
                         <$float>::from_bits(b as $bits),
                     )
                 })
+            }
+
+            /// Exact endpoint distance, retained without subtraction or rounding.
+            /// Empty has no width. Use the width's explicit `enclosure` method
+            /// only when a finite floating-point interval projection is wanted.
+            pub fn width(&self) -> Option<$width> {
+                self.bounds.map(|bounds| $width { bounds })
             }
 
             /// Exact lower endpoint, or None for empty.
@@ -479,5 +551,5 @@ let enclosure: F64Enclosure = proposal.into();
     };
 }
 
-enclosure!(F32Enclosure, Binary32, f32, u32, BINARY32);
-enclosure!(F64Enclosure, Binary64, f64, u64, BINARY64);
+enclosure!(F32Enclosure, Binary32, f32, u32, BINARY32, F32Width, 5);
+enclosure!(F64Enclosure, Binary64, f64, u64, BINARY64, F64Width, 33);

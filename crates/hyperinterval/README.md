@@ -190,3 +190,10 @@ cargo run -p hyperinterval --example fixed_bounds --features fixed
 See the [API proposal](../../docs/research/interval-api-design.md) and
 [progress record](../../INTERVAL_REFACTOR_PROGRESS.md) for acceptance evidence
 and the remaining implementation scope.
+
+Exact width measurements preserve values outside endpoint storage: `FixedWidth<F>`
+uses an unsigned numerator with a binary scale, and `F32Width`/`F64Width` retain
+checked endpoint differences. Float width ordering is exact integer arithmetic;
+`enclosure` is an explicit, fallible projection. Rational and dyadic intervals
+retain their exact width operations. `DyadicInterval::compare_singleton` shares
+caller-owned work/size accounting and rejects non-singleton operands.

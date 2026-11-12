@@ -810,3 +810,45 @@ fn exact_bridges_preserve_ieee_values_and_generated_enclosures() {
             .subset_of(&x.square().unwrap().to_rational())
     );
 }
+
+#[cfg(all(target_arch = "x86_64", not(target_env = "msvc")))]
+#[test]
+fn exact_widths_ignore_native_modes() {
+    const KEY: &str = "HYPERINTERVAL_WIDTH_MXCSR";
+    if let Ok(mode) = std::env::var(KEY) {
+        let mode = mode.parse().unwrap();
+        with_mxcsr(mode, || {
+            macro_rules! check {
+                ($i:ty,$f:ty) => {{
+                    let tiny = std::hint::black_box(<$f>::from_bits(1));
+                    let twice = std::hint::black_box(<$f>::from_bits(2));
+                    let one = std::hint::black_box(1.0 as $f);
+                    let a = <$i>::new(tiny, one).unwrap().width().unwrap();
+                    let b = <$i>::new(twice, one).unwrap().width().unwrap();
+                    assert!(a > b);
+                    assert_eq!(a.enclosure().unwrap(), b.enclosure().unwrap());
+                    let wide = <$i>::new(-<$f>::MAX, <$f>::MAX).unwrap().width().unwrap();
+                    assert!(wide > a);
+                    assert_eq!(wide.enclosure(), Err(IntervalError::Overflow));
+                }};
+            }
+            check!(F32Enclosure, f32);
+            check!(F64Enclosure, f64);
+        });
+        return;
+    }
+    for mode in 0..16 {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args(["--exact", "exact_widths_ignore_native_modes", "--nocapture"])
+            .env(KEY, mode.to_string())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "mode={mode}: {} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        eprint!("{}", String::from_utf8_lossy(&output.stderr));
+    }
+}

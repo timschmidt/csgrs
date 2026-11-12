@@ -51,3 +51,8 @@ required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
 name = "norm_cost"
 path = "conformance/norm_cost.rs"
 required-features = ["fixed", "rational", "dyadic", "float-enclosure"]
+
+[[example]]
+name = "width_cost"
+path = "conformance/width_cost.rs"
+required-features = ["fixed", "rational", "dyadic", "float-enclosure"]

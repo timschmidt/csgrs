@@ -76,6 +76,13 @@ macro_rules! arithmetic {
                     .map(|(lower, upper)| (i128::from(upper) - i128::from(lower)) as u64)
             }
 
+            /// Exact scale-tagged unsigned endpoint distance; empty has no width.
+            /// This includes widths larger than either signed endpoint can hold.
+            pub fn width(&self) -> Option<crate::FixedWidth<FRAC>> {
+                self.width_ulps()
+                    .map(|n| crate::FixedWidth::new(n).expect("source scale is valid"))
+            }
+
             /// Changes scale with exact refinement or outward-rounded coarsening.
             ///
             /// No exact source point is lost. Refinement can overflow the

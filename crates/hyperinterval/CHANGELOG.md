@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add scale-tagged unsigned fixed widths and retained exact IEEE widths with
+  bounded integer value ordering, checked replay and explicit projection.
+- Expose budgeted dyadic singleton comparison using existing exact point order.
+
 - Add rational, dyadic and extended dyadic tangent/cotangent images with
   certified interior and endpoint poles, one-sided limits, split components
   and explicit domain coverage. Reuse the existing trigonometric proof helpers.

@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact box widths and deterministic widest-axis selection, preserving full
+  fixed-point distances and retained IEEE differences with shared dyadic budgets.
+
 - Add vector/matrix one and infinity norm ranges, logarithmic matrix measures
   and row/column diagonal-dominance margins using shared scalar accounting.
 

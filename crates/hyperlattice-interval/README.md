@@ -47,6 +47,11 @@ in inline storage. `push` reports typed capacity exhaustion without changing
 the chain. Zero maps retain the source, and rectangular static images can
 precede or follow a chain. Replay checks every map and the receiving capacity.
 
-Midpoint/radius forms, widths, contraction helpers and measured specializations
+`widths` returns exact per-coordinate measurements, including full unsigned
+fixed widths and float widths that cannot fit a finite float. `widest_axis`
+compares exact widths and breaks ties by the lowest index. Empty boxes have no
+widths; the zero-dimensional unit has an empty width array and no axis.
+
+Midpoint/radius forms, contraction helpers and measured specializations
 remain under development in Phase 6 of the
 [implementation plan](../../docs/INTERVAL_REFACTOR_PLAN.md).

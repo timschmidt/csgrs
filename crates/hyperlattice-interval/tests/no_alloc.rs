@@ -75,6 +75,28 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
             squared.column_dominance_margins(&mut ()).unwrap(),
         );
         std::hint::black_box((norms, margins));
+        let widths = x.widths(&mut ()).unwrap().unwrap();
+        assert_eq!(x.widest_axis(&mut ()).unwrap(), Some(0));
+        assert!(widths.iter().all(|w| w.numerator() == 2 << 16));
+        std::hint::black_box(widths);
+        #[cfg(feature = "float-enclosure")]
+        {
+            use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+            let f = IntervalVector::new([
+                F64Enclosure::new(f64::from_bits(2), 1.).unwrap(),
+                F64Enclosure::new(f64::from_bits(1), 1.).unwrap(),
+            ])
+            .unwrap();
+            assert_eq!(f.widest_axis(&mut ()).unwrap(), Some(1));
+            std::hint::black_box(f.widths(&mut ()).unwrap());
+            let f = IntervalVector::new([
+                F32Enclosure::new(f32::from_bits(2), 1.).unwrap(),
+                F32Enclosure::new(f32::from_bits(1), 1.).unwrap(),
+            ])
+            .unwrap();
+            assert_eq!(f.widest_axis(&mut ()).unwrap(), Some(1));
+            std::hint::black_box(f.widths(&mut ()).unwrap());
+        }
         (subset, interior)
     });
     assert!(subset && !interior);

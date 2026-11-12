@@ -205,6 +205,27 @@ impl DyadicInterval {
         Self::point(mantissa.clone(), exponent)?.subset_of(self, budget)
     }
 
+    /// Exact comparison of singleton values, sharing the caller's work/size
+    /// budget and avoiding alignment of irrelevant exponent gaps. With sufficient
+    /// budget, empty or nonsingleton operands return `NonSingletonEndpoint`.
+    pub fn compare_singleton(
+        &self,
+        other: &Self,
+        budget: &mut DyadicBudget,
+    ) -> Result<core::cmp::Ordering, IntervalError> {
+        let Some((a, b, e)) = self.bounds() else {
+            return Err(IntervalError::NonSingletonEndpoint);
+        };
+        let Some((c, d, f)) = other.bounds() else {
+            return Err(IntervalError::NonSingletonEndpoint);
+        };
+        budget.reserve(self.bits().max(other.bits()), 2, false)?;
+        if a != b || c != d {
+            return Err(IntervalError::NonSingletonEndpoint);
+        }
+        crate::dyadic_order::compare(a, e, c, f, budget)
+    }
+
     /// Exact endpoint distance as a singleton interval; empty for empty input.
     pub fn width(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
         self.measure(true, false, budget)

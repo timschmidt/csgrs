@@ -80,3 +80,16 @@ fn interval_norm_and_measure_evidence_is_shared() {
         interval(4, 6)
     );
 }
+
+#[test]
+fn exact_box_widths_survive_reduction_through_the_facade() {
+    let scalar =
+        |a: &str, b: &str| RationalInterval::new(a.parse().unwrap(), b.parse().unwrap()).unwrap();
+    let source = BoxN::new([scalar("-1/3", "2/3"), scalar("-1/11", "12/11")]).unwrap();
+    assert_eq!(source.widest_axis(&mut ()).unwrap(), Some(1));
+    let widths = IntervalVector::new(source.widths(&mut ()).unwrap().unwrap()).unwrap();
+    assert_eq!(
+        widths.norm_one(&mut ()).unwrap(),
+        RationalInterval::point("24/11".parse().unwrap())
+    );
+}

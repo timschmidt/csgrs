@@ -1960,6 +1960,118 @@ No phase is complete and no push was attempted. Source commit:
 `6f9d27889d8f0115360e0f052fc31d645d932e0b85ef63b2b3d22c86a85e1a2e`. The committed record was regenerated
 and verified before registration; all prior archive rows are preserved.
 
+## Phase 6 admission: exact box widths and widest-axis selection
+
+Previous goal turn made progress: norms/measures/margins and evidence committed.
+Revalidated source `6768c26ae0f995973834e50be761e1fe2969c242`, with all four
+managed repositories clean on interval-refactor. Exact states and raw evidence
+are staged at `/tmp/interval-refactor/lattice-widths`. No nested owning AGENTS
+instructions. Reuse search found fixed width_ulps, rational/dyadic exact width,
+the shared integer IEEE decoder and budgeted dyadic_order::compare. No box
+width/widest-axis API exists, and strict float endpoints cannot represent every
+exact width. Full fixed signed-range widths also exceed signed endpoint storage.
+
+Owners: Hyperinterval exact scalar measurements/order; Hyperlattice coordinate
+selection. Properties P1–P6, P8–P11, P17–P20, P25–P27, P35–P39; plan §5.2.
+Domain: every admitted finite Cartesian box, including empty/unit products,
+singletons, full endpoint ranges and arbitrary exact rational/dyadic data.
+Fixed widths use a scale-tagged u64 numerator. Float widths retain their checked
+endpoint difference, with mathematical value ordering independent of defining
+interval position. Compare two widths by the exact signed sum b+c-a-d using
+bounded integer limbs and the existing IEEE decoder; no native float decisions,
+rounded width comparison, allocation or new scalar kernel in an adapter.
+Rational/dyadic width values remain exact singleton intervals; dyadic point
+comparison reuses existing budgeted ordering without expanding irrelevant gaps.
+
+Box widths return None for empty and Some([]) for the zero-dimensional unit;
+widest-axis returns None for either case. Nonempty positive dimension selects
+the lowest-index maximum, including index zero when every width is zero.
+Every dyadic construction/comparison uses one caller context and failure yields
+no partial selection. Primitive work/storage is dimension/encoding bounded and
+allocation-free. Float ingress keeps its existing target qualification. Exact
+widths remain usable when optional projection into endpoint storage overflows.
+Replay validates definitions/scales, not cached flags; equality of width values
+is separate from byte identity of different defining float intervals.
+
+Missing witnesses: full-range fixed widths, float overflow/subnormal/tiny width
+differences and exact ties invisible to rounded subtraction, independent exact
+integer/Rug comparisons, mixed exponent dyadic selection and budget retry,
+empty/unit/singleton/tie behavior, output-as-input and fresh-process replay,
+primitive no-allocation and portable builds. Existing arithmetic and predicate
+order must remain unchanged. Width facts supply scheduling evidence; no solver
+status or implicit midpoint is introduced. General cancellation/rational heap
+bounds and the remaining Phase 6/full-plan requirements stay open.
+
+## Phase 6 exact widths: local qualification
+
+Implemented exact coordinate widths and deterministic widest-axis selection for
+all six backends. `FixedWidth<F>` retains an unsigned numerator and binary scale;
+`F32Width`/`F64Width` retain defining endpoints and compare mathematical distances
+with bounded integer sums. Explicit projection can widen or overflow without
+losing the exact width. Rational/dyadic widths are singleton intervals. Dyadic
+singleton comparison shares the existing order kernel and caller budget.
+`IntervalVector::widths` and `widest_axis` preserve empty/unit distinctions and
+lowest-index ties. No solver status, midpoint, native float subtraction or
+replacement of the retained source is introduced. Float nonempty ingress remains
+qualified only on x86_64; this work does not qualify another float target.
+
+Acceptance: 3,375 independently expected boxes per backend; 12,025 GMP rational
+width comparisons per IEEE format; full fixed ranges, translated equal widths,
+rounded-projection ties, projection overflow, subnormals, invalid replay,
+shared dyadic work/size failures and retry, extreme exponent gaps, fresh-process
+save/reload and further consumption. All 16 x86 rounding/FTZ/DAZ combinations
+pass, including optimized builds on Rust 1.88, 1.95 and stable. The final lattice
+suite has 52 tests and four doctests; the scalar all-feature suite also passes.
+All 56 selected local/downstream commands pass: feature isolation, Clippy with
+warnings denied, docs, formatting, release tests, five main-facade tests, four
+existing Hypersolve migration/dispatch tests, packaging/dependency checks, and
+ARM/Wasm builds. This is not the complete pre-push workflow set. No push.
+
+Sanitizer evidence is deliberately scoped. Scalar width/float tests (24) and
+all lattice integration tests (52) pass ASan with leak detection. A broader
+scalar run stops after five successful arctangent tests with 1,576 leaked bytes
+in three MPFR cache allocations. The same failure reproduces on unchanged
+baseline `6768c26`; symbolized frames identify `mpfr_cache`, `mpfr_atan` and
+Rug's pi/atan oracle paths. Test-oracle cache cleanup remains open; the broad
+sanitizer run is not a pass. A cross-worktree shared-target stale artifact caused
+one focused compile failure; targeted package-cache cleanup and rebuild resolved
+it, with both records retained. The initial baseline attempt without an explicit
+sanitizer target also failed in proc-macro compilation; the explicit-target
+baseline reproduction is the controlling result.
+
+Instrumented owner coverage reports 5,230/5,331 lines (98.11%), 9,717/10,360
+regions (93.79%), and 650/652 functions. The new lattice widths file has 31/31
+lines and 49/50 regions. LLVM reports ten mismatches, all traced separately to
+the same external Rug `OptRational::parts` function (hash zero), which is outside
+the declared report denominator. Raw warnings and per-object diagnostics remain;
+this is owner coverage with a dependency warning, not a warning-free aggregate
+or 100% claim. Directed fuzz and broader qualification remain open.
+
+Completed-work cost probe: 160 samples across four backends and two queries,
+128 calls/sample after 64 warmups, dimension four. Fixed Q16 and strict f64
+allocate zero; measured rational small integers also allocate zero, which does
+not bound general rational data. Dyadic widths/selection use 6/7 allocation
+calls and 48/56 bytes per measured call. Inline source/width-array bytes are
+48/32 fixed, 96/64 f64, 72/64 rational, 288/288 dyadic; these are not peak stack
+or retained-heap measurements. No speedup or full legacy benchmark claim.
+The five-export no_std Wasm consumer has no imports/allocator and passes 2,051
+width calls over 256 effective inputs, alongside all previous probes, under a
+one-million-fuel per-call cap. It is 44,726 bytes, SHA-256
+`a2aa1b70e2a0528852146afd52d2aea03f97cbe55b96881ea7af7858d2c57324`.
+Its extra export changes the workload; the 5,134-byte increase is not a
+same-contract comparison. No firmware HIL or registry-release claim.
+
+Source preservation records show 47 existing implementation files byte-identical
+and every original function body/signature in the six edited implementation
+units retained, including the IEEE finite-ingress inline barrier. New paths are
+additive; existing dispatch order, Real APIs, geometry certainty and production
+consumers are unchanged. Full legacy geometry/performance/monomorphized-size
+qualification remains open rather than inferred from source identity.
+
+Source/evidence registration pending for this checkpoint. Phase 6 still needs
+midpoint/radius forms, contraction/Jacobian/Krawczyk helpers, specialized consumer
+kernels and further qualification. No phase or full-plan completion is claimed.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

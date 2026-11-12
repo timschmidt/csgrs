@@ -119,6 +119,45 @@ impl Format {
         )
     }
 
+    // Compare (b-a) with (d-c) via b+c-a-d. Each finite endpoint is an
+    // integer on the format's minimum grid. Four binary64 magnitudes sum to
+    // fewer than 2^2100 grid units (33 u64 limbs); binary32 needs 279 bits
+    // (5 limbs). Keep positive/negative sums separately, then compare them.
+    // No rounding, floating-point operations or allocation is involved.
+    pub(crate) fn compare_width<const L: usize>(self, a: u64, b: u64, c: u64, d: u64) -> Ordering {
+        let mut positive = [0_u64; L];
+        let mut negative = [0_u64; L];
+        for (bits, subtract) in [(b, false), (c, false), (a, true), (d, true)] {
+            let value = self.decode(bits);
+            let sum = if value.negative ^ subtract {
+                &mut negative
+            } else {
+                &mut positive
+            };
+            let shift = (value.exponent - self.minimum()) as usize;
+            let word = shift / 64;
+            let shifted = value.magnitude << (shift % 64);
+            for (offset, piece) in [shifted as u64, (shifted >> 64) as u64]
+                .into_iter()
+                .enumerate()
+            {
+                if piece == 0 {
+                    continue;
+                }
+                let mut index = word + offset;
+                let (next, mut carry) = sum[index].overflowing_add(piece);
+                sum[index] = next;
+                while carry {
+                    index += 1;
+                    let (next, next_carry) = sum[index].overflowing_add(1);
+                    sum[index] = next;
+                    carry = next_carry;
+                }
+            }
+        }
+        positive.iter().rev().cmp(negative.iter().rev())
+    }
+
     // A coefficient on an output grid; magnitude has at most F+2 bits,
     // and any extra bit is the carry from rounding into the next binade.
     fn encode(self, magnitude: u128, grid: i32) -> Result<u64, IntervalError> {

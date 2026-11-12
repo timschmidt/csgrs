@@ -11,6 +11,18 @@ mod sealed {
 pub trait IntervalArithmetic: sealed::Sealed + FiniteRealInterval + Clone {
     /// Caller-owned arithmetic state: `()` or a shared `DyadicBudget`.
     type Context;
+    /// Exact width value: a scale-tagged unsigned fixed value, retained float
+    /// difference, or rational/dyadic singleton interval. Widths never round.
+    type Width;
+    /// Exact endpoint distance; `None` for empty. Scalar work shares the context.
+    fn width(&self, context: &mut Self::Context) -> Result<Option<Self::Width>, IntervalError>;
+    /// Exact order of width values. Interval-valued width backends require
+    /// singleton operands; this compares values, not interval set inclusion.
+    fn compare_widths(
+        a: &Self::Width,
+        b: &Self::Width,
+        context: &mut Self::Context,
+    ) -> Result<core::cmp::Ordering, IntervalError>;
     /// Validates type-level constraints even for zero-dimensional products.
     fn validate_family() -> Result<(), IntervalError> {
         Self::empty().map(|_| ())
@@ -77,6 +89,17 @@ macro_rules! fixed {
         impl<const F: u32> sealed::Sealed for hyperinterval::FixedInterval<$ty, F> {}
         impl<const F: u32> IntervalArithmetic for hyperinterval::FixedInterval<$ty, F> {
             type Context = ();
+            type Width = hyperinterval::FixedWidth<F>;
+            fn width(&self, _: &mut ()) -> Result<Option<Self::Width>, IntervalError> {
+                Ok(Self::width(self))
+            }
+            fn compare_widths(
+                a: &Self::Width,
+                b: &Self::Width,
+                _: &mut (),
+            ) -> Result<core::cmp::Ordering, IntervalError> {
+                Ok(a.cmp(b))
+            }
             fn empty() -> Result<Self, IntervalError> {
                 Self::empty()
             }
@@ -112,6 +135,24 @@ impl sealed::Sealed for hyperinterval::RationalInterval {}
 #[cfg(feature = "rational")]
 impl IntervalArithmetic for hyperinterval::RationalInterval {
     type Context = ();
+    type Width = Self;
+    fn width(&self, _: &mut ()) -> Result<Option<Self::Width>, IntervalError> {
+        Ok(Self::width(self).map(Self::point))
+    }
+    fn compare_widths(
+        a: &Self,
+        b: &Self,
+        _: &mut (),
+    ) -> Result<core::cmp::Ordering, IntervalError> {
+        if !a.is_singleton() || !b.is_singleton() {
+            return Err(IntervalError::NonSingletonEndpoint);
+        }
+        Ok(a.bounds()
+            .expect("singleton")
+            .0
+            .partial_cmp(b.bounds().expect("singleton").0)
+            .expect("rational order is total"))
+    }
     fn empty() -> Result<Self, IntervalError> {
         Ok(Self::empty())
     }
@@ -141,6 +182,21 @@ impl sealed::Sealed for hyperinterval::DyadicInterval {}
 #[cfg(feature = "dyadic")]
 impl IntervalArithmetic for hyperinterval::DyadicInterval {
     type Context = hyperinterval::DyadicBudget;
+    type Width = Self;
+    fn width(&self, context: &mut Self::Context) -> Result<Option<Self>, IntervalError> {
+        if self.is_empty() {
+            Ok(None)
+        } else {
+            Self::width(self, context).map(Some)
+        }
+    }
+    fn compare_widths(
+        a: &Self,
+        b: &Self,
+        context: &mut Self::Context,
+    ) -> Result<core::cmp::Ordering, IntervalError> {
+        a.compare_singleton(b, context)
+    }
     fn empty() -> Result<Self, IntervalError> {
         Ok(Self::empty())
     }
@@ -186,10 +242,21 @@ impl IntervalArithmetic for hyperinterval::DyadicInterval {
 
 #[cfg(feature = "float-enclosure")]
 macro_rules! float {
-    ($ty:ty) => {
+    ($ty:ty, $width:ty) => {
         impl sealed::Sealed for $ty {}
         impl IntervalArithmetic for $ty {
             type Context = ();
+            type Width = $width;
+            fn width(&self, _: &mut ()) -> Result<Option<Self::Width>, IntervalError> {
+                Ok(Self::width(self))
+            }
+            fn compare_widths(
+                a: &Self::Width,
+                b: &Self::Width,
+                _: &mut (),
+            ) -> Result<core::cmp::Ordering, IntervalError> {
+                Ok(a.cmp(b))
+            }
             fn empty() -> Result<Self, IntervalError> {
                 Ok(Self::empty())
             }
@@ -216,6 +283,6 @@ macro_rules! float {
     };
 }
 #[cfg(feature = "float-enclosure")]
-float!(hyperinterval::F32Enclosure);
+float!(hyperinterval::F32Enclosure, hyperinterval::F32Width);
 #[cfg(feature = "float-enclosure")]
-float!(hyperinterval::F64Enclosure);
+float!(hyperinterval::F64Enclosure, hyperinterval::F64Width);
