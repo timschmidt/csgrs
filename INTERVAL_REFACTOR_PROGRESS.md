@@ -3150,6 +3150,82 @@ symbols, static call-chain reproduction and reviewed next-boundary constraints.
 Its committed digest was regenerated and verified; earlier manifest rows are
 unchanged. Only the ledger and archive manifest are committed here.
 
+## 2026-11-12: Feed, join and lookahead boundary implemented as an unaccepted candidate
+
+Previous turn: progress, rejecting two isolated cost experiments and reviewing
+the remaining ownership boundary. This step extends the pending source at ledger
+HEAD `fc859710c3ba1468e0ec3b0f440a960feedd3fe9`. Hyperdynamics now owns the feed
+profile equations, corner constraints, forward/reverse lookahead and bounded
+component jerk refinement, alongside the earlier axis/metric/jerk candidate.
+`MetricPath` provides lazy aggregate length and `JoinSpan` transports the complete
+source-owned join receipt. Hyperpath retains metric/tangent authority, concrete
+receipt aliases and deprecated wrappers. A borrowed axis-only adapter preserves
+legacy rejection of diagonal lines without copying geometry. The rejected
+private type-erased route experiment is not adopted. Interface uses lower
+operations directly while keeping its original error boundary and encoding.
+
+The missing native-provider witness is reproduced before implementation. Four
+independent lower tests exercise exact feed identities, reachability, one-step
+halving, opaque receipt transport, query/error order and small-budget retry.
+Forty-six fixtures compare complete original/native/compatibility reports and
+dispatch snapshots in six fresh processes under both policies. The first fixture
+retains 161 structural sign queries, 16,930 events and zero GCDs. Three original
+mixed metric/tangent pairings remain diagnostics outside the same-path
+precondition; three added connected arc/cubic-PH/quintic-PH plus line fixtures
+cover source-consistent mixed inputs. All previous hard cases and assertions
+remain. Eleven scalar helper bodies also match the original after explicitly
+recorded error-name, visibility, comment and formatter transformations.
+
+All 459 owner tests and 201 Interface tests/doctests pass. The 41,795-byte
+application golden retains SHA-256
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`.
+Owner and Interface strict Clippy, owner docs, stable Wasm compilation, the
+standalone exact-provider example, both formatting checks and source budget pass.
+ASan passes four lower tests and both feed/join migration tests, including fresh
+processes. Owner benchmark smoke completes all 194 cases; successive_operations
+completes 200 certified manifold rows with identical structural/allocation
+columns and an unchanged graph containing neither affected crate. Those smoke
+elapsed times are not a controlled performance comparison. No full pre-push CI,
+hosted platform, firmware or hardware qualification is claimed.
+
+The cost gate still fails. The final owning executable is 13,451,992 bytes,
++143,168 versus the preserved original baseline; text grows by 112,544 bytes.
+All 194 timed cases complete, broad mean-ratio median 0.9993, range
+0.9084–1.0689. Four targeted candidate/baseline/baseline/candidate runs retain
+parser regressions: the 256-record case averages 1.0592, with baseline
+171.295/172.734 us and candidate 181.896/182.511 us. Other parser means are
+1.0472–1.0763. Lookahead varies materially between repeats; its favorable broad
+observation does not establish a performance improvement. The selected 38
+report/geometry Debug/Clone/drop symbols grow by 127 bytes; that selection is
+not global monomorphized qualification. Owner allocation and complete
+instantiation qualification remain open.
+
+Final review changed two API descriptions. Five follow-up owner checks and
+Interface tests/Clippy pass. The full binary-digest assertion then detected
+24 bytes of symbol metadata growth; this failure and both hashes are retained.
+After stripping symbols and removing only the build-ID section, the measured
+and final candidate ELF files are byte-identical. The complete runtime
+comparison supports reusing the measured timings; the final raw file size is
+reported separately. Final fresh-process transcripts were recaptured afterward.
+No source/algorithm change is hidden by this normalization.
+
+The functional boundary is present but remains unaccepted; Phase 11 and the
+fifteen-phase goal remain open. Next investigate whole-boundary code generation
+with isolated controls and the full correctness corpus. Do not change unrelated
+parser algorithms, compiler policies, fixtures or thresholds to mask the cost
+failures. General enclosed functions and validated ODE/reachability remain open,
+as do all earlier phase obligations. No push ran.
+
+Evidence commit `64cdf13999d157c1ba57a96d6a04737d80588218`, record
+`docs/evidence/2026-11-12-interval-dynamics-feed-join-candidate`: 1810 files,
+26,585,712 bytes, SHA-256
+`1d08bf6f2743392ba1e34ebdbbd52ab3f8996209f75dde7c9c766637b197fe62`.
+The committed digest was regenerated and verified, preserving all earlier
+manifest rows. It retains complete pending CSGRS/Interface patches, frozen
+references, raw transcripts/samples, exact commands, initial failures and adverse
+measurements. Only this ledger and the archive manifest are committed here;
+production source remains pending for qualification.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
