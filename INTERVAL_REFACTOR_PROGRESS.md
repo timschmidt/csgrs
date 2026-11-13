@@ -3585,6 +3585,78 @@ uniqueness, bounded halving, exact horizon/end enclosures and flow tubes. The
 full fifteen-phase goal and all earlier unresolved obligations remain active.
 This registration changes only the ledger and evidence manifest.
 
+## 2026-11-13: Add owned expression field enclosures
+
+Previous turn: progress, accepting source-bound symbolic Jacobians. Source commit
+`afe74ec511744b48aa6229d0fdd9b3f69bcc4ad6` advances section 10.5 with an isolated
+Hyperdynamics field core. `ExpressionField<N>` implements the sealed
+`EnclosedVectorField<N>` interface using exactly N outputs, N distinct state
+variables and one distinct time variable, with arbitrary source binding order.
+Hyperdynamics owns field/time/state semantics; Hypersolve retains expression and
+derivative authority, Hyperlattice supplies native Cartesian carriers, and
+Hyperinterval supplies scalar arithmetic. No second mathematical kernel is added.
+
+Immutable structural identity includes the full original source and time/state
+mapping. Replay deserializes only `FieldDefinition`, then validates the source
+and regenerates its Jacobian. Images evaluate the original source independently
+of derivatives; Jacobians evaluate original outputs before partials and move them
+into native row-major matrices. Original domain guards survive zero derivatives.
+The sqrt field at zero can have a valid value image and an uncertified derivative
+image. Empty products and N=0 unit products retain their distinct native meaning.
+The shipped oscillator example consumes its Jacobian through native linear algebra.
+
+One mutable `EnclosureBudget` carries explicit immutable policy and cumulative
+graph/scalar counters across construction, image and Jacobian calls. Hypersolve
+exposes its existing work charge and entry-admission authority for the adapter;
+existing algorithms and call order are unchanged. Tests verify exact combined
+image/Jacobian budgets, one-unit-short failures, entry-policy transitions,
+cancellation even for empty outputs, and successful retries. Source ingress/
+serde, scalar payload cloning/destruction, Hyperreal constant refinement and
+heap bytes retain their existing accounting exclusions. This is not wholly
+bounded field work or a continuity/existence/uniqueness certificate.
+
+Seven field tests include 125 independently expected affine cases, reordered
+bindings, nonlinear images/partials, zero-power guards, singular derivative vs
+valid value behavior, zero dimension, invalid source/shape, immutable identity,
+changed coordinate interpretation, fresh-process replay with sqrt(2), limits,
+cancellation and retry. All seventeen qualification commands pass: all-feature,
+minimal/default, Rust 1.95, release, strict all-target Clippy, docs/example, Wasm,
+AddressSanitizer, 874 owner tests, 466 integrated dynamics/path tests, formatting
+and diff checks. Supplementary staged-diff and retention checks pass, as do all
+12 point evaluator benchmark smoke cases. This is affected qualification, not
+the full pre-push matrix, hosted-OS/hardware campaign or release packaging.
+
+The external consumer completes 35 constructor/JSON-replay/image/Jacobian/pipeline
+workloads and 21 exhaustion cases, each with zero live allocated bytes after its
+counting epoch. Warm absolute medians span 2.052–907.151 microseconds; maximum
+observed peak is 173,660 bytes. Degree 0/1/8/32/128 constructor graph costs are
+51/116/599/2,255/8,879 units. The probe includes required validation, output checks
+and returned-object destruction; preparation is excluded as documented. It uses
+its own lockfile and path dependencies, so this is neither a matched speedup
+claim nor published-package qualification. The point artifact grows eight bytes
+to 7,047,776; .text/.rodata remain byte-identical and its sized-function union
+remains 3,150,521 bytes. Other section bytes differ. The field consumer is
+3,934,024 bytes with a 1,992,385-byte sized-function union. Raw samples, symbols,
+sections, compiler, hardware and complete source/dependency records are retained.
+
+The core was committed from an isolated worktree. Advancing the main branch
+preserved every working-file byte. The pending extraction was restaged over the
+core and now has 40 paths because the two licenses are committed with the core.
+Legacy algorithms, adapters, tests and the original public API body are unchanged;
+package metadata/docs compose with the field core. The pending patch hash is now
+`c6e2e573a168966c9f81e46120a39a5c4e2fe9da01a6f5868d6ad9c0a171b090`;
+the original patch is retained. Interface patch bytes remain unchanged, Firmware
+is clean, and extraction retention remains open. No push was attempted.
+
+Evidence commit `8ddc03ef0f56eb2f6f5d3e6bc74823502101db21`, record
+`docs/evidence/2026-11-13-interval-expression-field`: 132 files, 10,403,504 bytes,
+SHA-256 `f648855fd472e7dff357cbe3735cb3361123350f819336a12812826a9fba7c51`.
+The committed digest was regenerated and verified. Whole-field resource bounds
+and derivative/continuity evidence remain open, followed by validated Euler/Picard
+evolution, uniqueness, bounded halving, exact horizon/end enclosures and flow
+tubes. The full fifteen-phase goal and earlier unresolved obligations remain
+active. This registration changes only the ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
