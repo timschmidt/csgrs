@@ -28,7 +28,7 @@ mod serde;
 mod vector;
 mod widths;
 
-pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource};
+pub use affine::{AffineBox, AffineChain, AffineImage, AffineMap, AffineSource, TranslatedBox};
 pub use backend::IntervalArithmetic;
 pub use centered::{CenteredMatrix, CenteredVector};
 pub use hyperinterval;

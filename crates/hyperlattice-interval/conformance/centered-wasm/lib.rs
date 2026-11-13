@@ -1,9 +1,42 @@
 //! Headless boundary consumer: 1 = success, -1 = invalid radius, -2 = overflow.
 //! Selectors 1/2 return full endpoints only after status selector 0 succeeds.
 use hyperlattice_interval::{
-    CenteredMatrix, CenteredVector, IntervalLatticeError, IntervalMatrix, IntervalVector,
+    AffineMap, CenteredMatrix, CenteredVector, IntervalLatticeError, IntervalMatrix,
+    IntervalVector,
     hyperinterval::{F64Enclosure, FixedInterval, IntervalError},
 };
+
+#[unsafe(no_mangle)]
+pub extern "C" fn translated_half(c: i32, r: i32, selector: u32) -> i64 {
+    assert!(selector <= 2);
+    type I = FixedInterval<i32, 31>;
+    let p = |x| I::point(x).unwrap();
+    let result = CenteredVector::new(
+        IntervalVector::new([p(c)]).unwrap(),
+        IntervalVector::new([p(r)]).unwrap(),
+    )
+    .and_then(|form| form.affine_source(&mut ()))
+    .and_then(|source| {
+        AffineMap::new(
+            IntervalMatrix::new([[p(1 << 30)]]).unwrap(),
+            IntervalVector::new([p(0)]).unwrap(),
+        )
+        .unwrap()
+        .image(source)
+        .enclosure(&mut ())
+    });
+    match result {
+        Err(error) => failure(error),
+        Ok(bounds) => {
+            let (lower, upper) = bounds.lanes().unwrap()[0].bounds().unwrap();
+            match selector {
+                0 => 1,
+                1 => i64::from(lower),
+                _ => i64::from(upper),
+            }
+        }
+    }
+}
 
 fn failure(error: IntervalLatticeError) -> i64 {
     match error {

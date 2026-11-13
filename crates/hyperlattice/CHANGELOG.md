@@ -52,6 +52,9 @@
 
 ### Added
 
+- Add exact translated parameter boxes for authored center/radius vectors,
+  with affine composition, offset restrictions and validated native replay.
+
 - Re-export independently authored `CenteredVector` and `CenteredMatrix`
   definitions through the interval feature, with validated component replay.
 

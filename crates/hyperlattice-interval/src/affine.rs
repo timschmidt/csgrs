@@ -1,7 +1,9 @@
 use crate::{IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector};
 
 mod chain;
+mod translated;
 pub use chain::AffineChain;
+pub use translated::TranslatedBox;
 
 // One internal traversal. Coefficients may acquire outward bounds during
 // pullback, but those temporary bounds never replace the stored point maps.

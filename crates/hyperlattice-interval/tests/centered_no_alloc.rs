@@ -9,6 +9,8 @@ fn check<I: IntervalArithmetic<Context = ()> + Copy>(point: I, negative: I) {
     let center = IntervalVector::new([point; 64]).unwrap();
     let form = CenteredVector::new(center, center).unwrap();
     std::hint::black_box(form.enclosure(&mut ()).unwrap());
+    let source = form.affine_source(&mut ()).unwrap();
+    std::hint::black_box(source.enclosure(&mut ()).unwrap());
     std::hint::black_box(form.into_parts());
     let m = IntervalMatrix::new([[point; 3]; 2]).unwrap();
     let form = CenteredMatrix::new(m, m).unwrap();

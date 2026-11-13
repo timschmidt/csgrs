@@ -74,7 +74,11 @@ with overflow or a resource error. The explicit enclosure uses shared scalar
 subtraction, addition and hull; it can round outward and remains separate from
 the exact definition. Empty or nonsingleton components are invalid; `empty()`
 creates the canonical empty set. Serde revalidates both components. Both use
-the same scalar backend; these authored forms are not yet affine sources.
+the same scalar backend. A vector’s `affine_source(context)` creates a
+`TranslatedBox` with its exact center and signed offset parameters `[-r,r]`.
+Affine images and chains consume this definition before any absolute endpoint
+projection. Restrictions select offsets, not absolute coordinates. Replay
+validates the center and parameter box. Matrix forms are not affine sources.
 
 Square matrices provide `identity_minus()` for the Cartesian image of `Id - A`,
 and `contraction_margin_one()` / `contraction_margin_infinity()` for the ranges

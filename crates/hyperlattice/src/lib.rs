@@ -44,7 +44,7 @@ pub use hyperlattice_interval as interval;
 pub use hyperlattice_interval::{
     AffineBox, AffineChain, AffineImage, AffineMap, AffineSource, BoxN, CenteredMatrix,
     CenteredVector, IntervalArithmetic, IntervalLatticeError, IntervalMatrix, IntervalVector,
-    MidpointRadiusMatrix, MidpointRadiusVector,
+    MidpointRadiusMatrix, MidpointRadiusVector, TranslatedBox,
 };
 
 pub use hyperreal::{

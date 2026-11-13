@@ -2815,6 +2815,87 @@ Source commit `87c0b59c4907fe9ac2403c6655b13cde45583647`; evidence commit
 `24b6af26d27693cd5555d2f829f8ca59f2e6ef54f5456e04898cd13a62476cd8`. The committed record was regenerated and verified;
 every previous archive row remains unchanged.
 
+## 2026-11-12: exact affine sources for authored centers and radii
+
+The preceding turn made progress through authored definitions and qualification.
+Baseline `b02248ec61add81ea21414ac183a7b804283e4af`, all managed trees clean.
+A fresh checkout of that revision reproduces the missing `affine_source` method;
+the same external Rust 1.88 witness passes against this implementation.
+Admission, raw commands and outcomes are staged at
+`/tmp/interval-refactor/centered-affine`. Owner: Hyperlattice's affine source and
+parameter protocol (P1–P7, P18–P20, P25–P27, P35–P37; plan Phase 6).
+
+`CenteredVector::affine_source(context)` now converts the borrowed exact
+definition into `TranslatedBox<I,N>`, retaining a point center and signed offset
+parameter box `[-radius,radius]`. It never computes overflowing absolute bounds
+and requires no scalar one or identity matrix. Static `AffineImage` and bounded
+`AffineChain` consume this source through the existing protocol. Restriction
+intersects offsets, not absolute coordinates, and retains the exact center even
+when the selected domain becomes empty. Replay validates native dimensions,
+families and singleton centers; a missing center is valid only for an empty
+domain. Source and existing map definitions remain authoritative.
+
+The exact identity is B(c+u)+t = Bu+(Bc+t). Pullback composes existing maps first,
+then evaluates the shifted center and offset domain with the same scalar
+context. Exact rational/dyadic success gives the coordinate hull; primitive
+rounding may widen or fail typed, leaving the retained source reusable. No
+existing scalar algorithm, affine/chain body or predicate order was changed.
+The sealed arithmetic adapter gains only direct forwarding to existing scalar
+negation kernels. Initial construction using `0-radius` failed the maintained
+i32::MIN-exponent dyadic witness with SizeExhausted, because the old subtraction
+path aligns canonical zero across the exponent gap. Exact native negation
+removes that avoidable alignment in this bridge. The original failure and a
+reproduction patch remain; the witness and its budget were not weakened.
+General scalar zero-alignment behavior is not claimed repaired.
+
+The five new tests cover 918 six-backend center/radius fixtures, exact source
+bounds, offset restrictions, correlated duplication/difference, three-map
+runtime chains, empty/unit and rectangular images, malformed/fresh-process
+replay and further operation. F31/F63 tests retain overflowing [0,1] sources
+and successfully apply a half-scale map although scalar one is unrepresentable.
+IEEE and fresh-process fixed cases recover exact zero through a duplicated
+source whose original/intermediate bounds overflow. Every insufficient dyadic
+work limit below a completed bridge and a completed affine query is rejected;
+the unchanged source succeeds at the measured cost and with a larger budget.
+Primitive conversion/projection remains allocation-free in the shared counter.
+
+All 15 selected commands pass: Rust 1.88 owning suite (70 tests/doctests),
+Rust 1.95 debug/release and stable suites (83 each), strict Clippy, docs, ARM
+no_std compilation, Hyperlattice interval surface (7), downstream library Clippy,
+Wasm build/Clippy, root formatting and diff checks. The final expanded affine
+budget test and strict Clippy pass; ASan passes all five new tests plus the
+allocation test. The full unrelated elliptic suite was not repeated: its source
+and arithmetic remain unchanged, and the prior checkpoint retains that result.
+No new full-coverage/fuzz or pre-push claim; no CI files changed.
+
+The maintained zero-import Wasm consumer now also exercises F31 half-scale
+sources with exact integer expected endpoints. Across old and new cases it
+passes 8,027 cases: 4,401 successes, 2,462 invalid radii and 1,164 overflow
+outcomes; 19,046 returned calls plus two invalid-selector traps. The module is
+48,514 bytes, SHA-256
+`b91b28749e6ba7dfb01d106e17c03f2fcde0e70f6547f91dc199f1f98fa05db0`.
+Maximum returned-call fuel is 4,684 under a 1,000,000 allowance. Fuel is not a
+hardware cycle or timing measurement; IEEE ingress remains unqualified on Wasm.
+
+The extended native probe records 1,440 samples after 32 warmups, 128 completed
+operations/sample, six backends and dimensions 4/64 on allowed CPU 0. Separate
+bridge and retained-source projection actions supplement the existing controls;
+all primitive actions allocate zero. The translated source has the same inline
+size as the authored component pair for these host types. At N=64, prepared
+rational bridge/projection use 0/60 allocations (0/2,400 bytes), while dyadic
+uses 462/210 (3,696/1,680 bytes). These are local warmed fixtures, not general
+rational resource bounds. The expanded all-backend executable is 1,619,448
+bytes; absolute size, raw samples and adverse costs are retained. No speedup,
+whole-stack no-regression, peak-stack or monomorphization claim is made.
+
+This completes the vector affine-source bridge, not Phase 6 or the full goal.
+Heterogeneous center/radius arithmetic, matrix-form operations, Jacobian
+carriers, measured facts/specializations, broader coverage and consumer adoption
+remain open, together with all later phases and prior migration blockers.
+No Interface/firmware source changed and no push was attempted.
+
+Source and evidence registration: pending.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 

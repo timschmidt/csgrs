@@ -57,7 +57,13 @@ fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug, const N: usize>(
         core::mem::size_of_val(&matrix)
     );
     let mut owned = Some((center.clone(), radius.clone()));
-    for action in 0..4 {
+    let translated = form.affine_source(&mut context()).unwrap();
+    assert_eq!(translated.enclosure(&mut context()).unwrap(), expected);
+    eprintln!(
+        "{name},{N},translated_bytes={}",
+        core::mem::size_of_val(&translated)
+    );
+    for action in 0..6 {
         let mut execute = || match action {
             0 => {
                 let (c, r) = black_box(owned.take().unwrap());
@@ -73,6 +79,12 @@ fn family<I: IntervalArithmetic + PartialEq + core::fmt::Debug, const N: usize>(
                 let low = c.sub(r, &mut context).unwrap();
                 let high = c.add(r, &mut context).unwrap();
                 black_box(low.hull(&high, &mut context).unwrap());
+            }
+            4 => {
+                black_box(black_box(&form).affine_source(&mut context()).unwrap());
+            }
+            5 => {
+                black_box(black_box(&translated).enclosure(&mut context()).unwrap());
             }
             _ => {
                 black_box(black_box(&matrix).enclosure(&mut context()).unwrap());

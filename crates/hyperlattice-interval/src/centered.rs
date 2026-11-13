@@ -29,8 +29,9 @@ macro_rules! centered {
         /// This differs from the existing midpoint/radius decomposition, which
         /// retains source bounds. Structural equality compares the authored
         /// components; serde validates them again, without trusting cached flags.
-        /// This form is not an affine source. An explicitly requested enclosure
-        /// can enter existing box operations without replacing this definition.
+        /// Vector forms can convert to an exact translated affine source with
+        /// [`CenteredVector::affine_source`]. An explicit enclosure can also
+        /// enter box operations without replacing this definition.
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub struct $name<I: IntervalArithmetic, $(const $dimension: usize),+> {
             components: Option<Components<$product<I, $($dimension),+>>>,

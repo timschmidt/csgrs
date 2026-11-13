@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact translated parameter boxes for authored center/radius vectors,
+  with affine composition, offset restrictions and validated native replay.
+
 - Add independently authored center/radius vector and matrix definitions,
   retaining exact components through projection overflow and validated replay.
 

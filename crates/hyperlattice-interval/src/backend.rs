@@ -44,6 +44,8 @@ pub trait IntervalArithmetic: sealed::Sealed + FiniteRealInterval + Clone {
     fn sub(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Scalar product enclosure.
     fn mul(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError>;
+    /// Exact reflected set, using native negation without aligning a zero operand.
+    fn neg(&self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Absolute-value image, including an interior minimum at zero.
     fn abs(&self, context: &mut Self::Context) -> Result<Self, IntervalError>;
     /// Image of the maximum of independently chosen operand members.
@@ -131,6 +133,9 @@ macro_rules! fixed {
             fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 self.checked_mul(other)
             }
+            fn neg(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                self.checked_neg()
+            }
             fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
                 Self::abs(self)
             }
@@ -193,6 +198,9 @@ impl IntervalArithmetic for hyperinterval::RationalInterval {
     fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
         Ok(Self::mul(self, other))
     }
+    fn neg(&self, _: &mut ()) -> Result<Self, IntervalError> {
+        Ok(Self::neg(self))
+    }
     fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
         Ok(Self::abs(self))
     }
@@ -245,6 +253,9 @@ impl IntervalArithmetic for hyperinterval::DyadicInterval {
     }
     fn mul(&self, other: &Self, context: &mut Self::Context) -> Result<Self, IntervalError> {
         Self::mul(self, other, context)
+    }
+    fn neg(&self, context: &mut Self::Context) -> Result<Self, IntervalError> {
+        Self::neg(self, context)
     }
     fn abs(&self, context: &mut Self::Context) -> Result<Self, IntervalError> {
         Self::abs(self, context)
@@ -314,6 +325,9 @@ macro_rules! float {
             }
             fn mul(&self, other: &Self, _: &mut ()) -> Result<Self, IntervalError> {
                 Self::mul(self, other)
+            }
+            fn neg(&self, _: &mut ()) -> Result<Self, IntervalError> {
+                Ok(Self::neg(self))
             }
             fn abs(&self, _: &mut ()) -> Result<Self, IntervalError> {
                 Ok(Self::abs(self))
