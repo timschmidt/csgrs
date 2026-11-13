@@ -47,8 +47,8 @@ No existing arithmetic or predicate dispatch has been changed.
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
-| 6 lattice | Cartesian/affine carriers, widths, derived and independently authored center/radius forms, norm/contraction evidence and FOC/Krawczyk clients implemented | broader authored-form composition, Jacobian carriers, facts/specialization and full consumer/performance gates |
-| 7 solver | qualification started; production migration rejected | satisfy size/performance gates with unchanged statuses, certificates and dispatch |
+| 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
+| 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
@@ -4689,6 +4689,82 @@ Compiler artifacts remain outside the record with hashes; raw disassembly and
 strings retain their emitted whitespace. Scoped archive verification passes;
 all seven preceding frozen stages verify unchanged. The fifteen-phase goal
 and the unresolved machine-profile migration remain open.
+
+## 2026-11-13: Retain source-bound fixed-size Jacobian matrix projections
+
+Source `8b63fa68d0b952fdab026b4b11c609ff4a0fa319` extends Hypersolve through
+opt-in `interval-lattice`. A reproduced E0599 witness established the missing
+bridge at `40d337953`. `RegularJacobianEnclosure::matrix::<R,C>` returns a native
+Hyperlattice matrix while retaining a borrow of the original source, domain,
+selected variables and precision. It preserves exact bounds/grid and selected
+column order, distinguishes empty domains from zero-dimensional unit products,
+and shares graph/native copy budgets. Shape errors precede empty handling;
+exhaustion/cancellation publishes no partial result and preserves retry.
+Numerical matrix products/norms do not become new regularity certificates.
+No derivative or matrix kernel is duplicated and no existing consumer is migrated.
+
+Seven maintained tests exercise independent rectangular polynomial derivatives,
+binding/column permutations, products/norms, shape/resource failures, source
+replay and zero new scalar dispatch/reducer calls. Nonselected parameter cases
+retain t in [0,4] for t^2*x and sqrt(t)*x while differentiating only in x, including
+the distinction between continuity in t and C1 regularity in x. Graph work and
+coefficient limits are explicit; total stack/heap and intra-copy cancellation
+remain outside these counters. This adds a completed projection capability,
+not whole-resource closure or an inverse/ODE algorithm.
+
+Corrected source passes 1,461 owner tests and 455 benchmark smokes, strict
+all-target/all-feature Clippy, warning-denying docs, WASM compilation, 60
+isolated downstream tests and formatting. The final additional parameter test
+passes seven release tests and six ASan tests (trace instrumentation excluded).
+The unchanged full coverage script passes its 85% gate at 53,497/62,018 lines
+(86.26%); that denominator also includes interval dependencies. The owner-prefix
+subtotal is 51,700/57,777 (89.48%), and the new module is 61/61 under the script's
+trailing-inline-test convention. These are not branch-coverage claims. The last
+coverage configuration compiles the final seven-test corpus. The new ASan fuzz
+target completes 10,000 runs in six seconds, seed 20261113, max input 16 bytes;
+fuzz checks, strict Clippy and formatting pass. This is bounded smoke, not a
+completed lexicase campaign.
+
+The initial proposed combined shape diagnostic grows `ExpressionError` from
+24 to 40 bytes and is rejected. Separate row/column diagnostics retain 24 bytes
+without boxing or lost causes. Twelve completed cost cases compare projection,
+retained evidence, native norm and output/drop against a handwritten control.
+All exact values, work, allocations and peak/live memory match. For 1x1, 3x2 and
+8x8 cases, sixteen calls allocate 96, 864 and 8,608 times; peak bytes range
+48–1,536, 176–5,632 and 1,104–35,328 with coefficient size. Empty/unit cases
+allocate nothing. Source construction is outside this measurement.
+
+The enabled shared probe costs +288 stripped ELF bytes, +176 text bytes and
++181 sized-function-union bytes. Both six-block ABBA timing campaigns retain
+unfavorable results. With CPU warmup, ordinary nonempty median differences are
+about -0.7% to +2.9%; the zero-row unit case costs 59 versus 55 ns. A 1x1 large-
+coefficient outlier remains adverse (mean ratio 1.0499, pointwise 95% bootstrap
+interval 1.0017–1.1416). Short samples and uncontrolled host/frequency behavior
+limit these comparisons. No speedup or unchanged-runtime claim is made.
+Retention is for the new opt-in completeness extension, not a performance
+refactor or permission to relax the rejected migration gates.
+
+The existing feature-disabled expression benchmark preserves all machine code
+and its 5,409,376-byte stripped size. Unstripped size grows eight bytes from
+symbol metadata/alignment; eighteen diagnostic source locations shift by thirteen
+lines. Both versions pass twelve smoke workloads. ELF bytes are not identical.
+Combined qualification with the exact pending extraction passes 25 owner, 71
+dynamics and 448 path tests plus strict Clippy. Main then passes eight focused
+tests and formatting. The initial integration command's nonexistent test-target
+error is preserved separately; the corrected command did not weaken any test.
+
+Evidence record `docs/evidence/2026-11-13-interval-jacobian-matrix`, local archive
+commit `7b7aac30903ba3a4a6e40c051cfa239f3823f74b`, contains 596 files,
+22,848,827 bytes, digest
+`aff2dd277d79231c31895ddea643ce2810fc8c30609d6b11755713e56206e969`.
+It retains the rejected layout, final source, raw costs, full coverage and all
+command outcomes. Scoped archive verification and all eight preceding frozen
+stage digests pass. Four isolated worktrees are restored clean after verifying
+their intended source. Main's 41 staged extraction paths and Interface's eight
+edits retain their previous exact patch digests; firmware is unchanged. Source
+budget passes at 4,159 files and 142,973,711 bytes before this ledger addition.
+No push occurred. No phase is declared complete; field adoption, remaining
+migration gates, competitive workloads, HIL and coordinated release remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

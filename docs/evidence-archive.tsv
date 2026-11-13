@@ -529,3 +529,4 @@ excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
 excluded:crates/comparisons/audits/tmp/reals-0.4.0.crate	1	19060	5931e5a33599abd0514ffc6e7bb902d161963bb1a1670b1c03df89fe0f4d9775
 excluded:docs/evidence/2026-10-10-scalar-evaluation-failure/bigint-portable-repackage-v2473/num-bigint-0.4.6.crate	1	155747	781d22cfabc4348bc57143607a8b288d98c050c5f8b87f5a2a36bc27eaa9425c
+docs/evidence/2026-11-13-interval-jacobian-matrix	596	22848827	aff2dd277d79231c31895ddea643ce2810fc8c30609d6b11755713e56206e969
