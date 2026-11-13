@@ -498,6 +498,7 @@ docs/evidence/2026-11-12-interval-lattice-widths	284	85234615	67402bc6d0d36a9990
 docs/evidence/2026-11-12-interval-logarithm	386	77664890	be624b23ddaea7651dc5d6cf70ba3f694b608ec4be9b015395fee9dd11637c94
 docs/evidence/2026-11-12-interval-midpoint-radius	417	94306422	551d7e0beb8ca69c9fec6c7f5152a851865c5d3ac34804ca11df870f941347a4
 docs/evidence/2026-11-12-interval-mpfr-cache-lifecycle	508	441320	374c190ee40b95dac399fc108a0e1bbb8efa5be2b0b58ea03427c7dfed45e459
+docs/evidence/2026-11-12-interval-owned-expression-program	128	4190515	e1f28d147eeab09d14b3dd282550a9979b6255d7cb75828af2a73dd8b3b9e306
 docs/evidence/2026-11-12-interval-primitive-layouts	79	1461024	dc716354ecee5b1274cce31f6c75775ccf8773d9b07c2963bb89640282cbfed2
 docs/evidence/2026-11-12-interval-primitive-roots	273	81619721	9590b874c9e448e2ec4c3e0c7726294a51535d9b7f81ccea97ab479b8a9f3db7
 docs/evidence/2026-11-12-interval-proposals	158	23812789	a742c2dbb1ee6d0f977758fb768fe235c8acaa5eb6977f2b15cdf4790fe49669

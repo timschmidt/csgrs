@@ -3375,6 +3375,77 @@ commands, failures, final logs, branch-equality evidence and rebuilt artifact
 identities are retained. This registration commits only the ledger and manifest;
 the independent four-path source repair is the preceding commit.
 
+## 2026-11-12: Own and replay symbolic expression programs
+
+Previous turn: progress, repairing the symbolic power boundary and unavailable
+Jacobian estimate. This increment advances section 10.5 in the symbolic owning
+layer. Source commit `32dea45c8e4f7aac347a808f05095d3d6a3cb50a` adds the opt-in
+Hypersolve `expression-program` feature, optional serde, a standalone example,
+and its qualification corpus. Existing consumers are not migrated.
+
+`ExpressionProgram` retains an immutable flat definition with ordered bindings,
+all 17 Expr constructors, full source metadata and original domain guards.
+Replay validates distinct variable identifiers, every binding, strictly backward
+operand references and output indices, including unused nodes and empty output
+lists. Exact evaluation follows output and operand order, reuses shared DAG
+nodes and propagates typed scalar failures. Structural equality is not function
+equality; serde is experimental and unversioned. The oscillator example consumes
+existing symbolic derivative outputs and replays exact point/Jacobian values.
+
+Compilation borrows recursive Expr inputs and traverses them iteratively.
+Graph-work and definition-entry limits check before structural growth, observe
+cooperative cancellation and permit fresh-budget retry. They do not bound scalar
+cloning/arithmetic/destruction, coefficient growth, serialized ingress or heap
+bytes. Caller-owned Expr destruction remains recursive. Source-bound interval
+Jacobians and bounded derivative construction are not yet implemented.
+
+The 14 focused tests cover every operator, independent exact expectations,
+400 generated shared DAGs, source mutation and binding order, malformed replay,
+guarded failures, error order, exhaustion/cancellation/retry, fresh-process
+replay and a 20,000-deep source on a small stack. They pass on Rust 1.95, in
+release mode and under AddressSanitizer. A real avoidable intermediate clone
+was caught by scalar dispatch comparison and repaired with final-use moves.
+The retained fresh-process warm witness preserves the complete old evaluation
+trace: 11 dispatch events, zero rational temporaries, GCDs and sign queries.
+Initial unmatched-cache and parallel-test interference logs remain retained;
+no universal trace equivalence is claimed.
+
+All 19 final qualification commands pass. Distinct owner coverage comprises
+627 library tests, 211 smoke tests, two README tests, four previous derivative
+regressions and the 14 new tests. The selected downstream configuration passes
+454 Hyperdynamics/Hyperpath tests. Strict owner all-feature/all-target Clippy,
+warning-free docs, stable WASM, standalone/external consumers, formatting,
+diff validation and source-budget checks pass. This is affected qualification,
+not a full pre-push, hosted OS or hardware matrix. No push occurred.
+
+Twelve new completed-workload Criterion cases measure compile, replay including
+cloning, and exact evaluation/output checking for degree 1/8/32/128 polynomials.
+Absolute medians range from 0.389 to 47.577 microseconds; these are not speedup
+or validated-field claims. The reused allocation probe completes all 28 success
+and exhaustion rows with zero live bytes after each counting epoch. Degree-128
+compile/replay/evaluate peak at 74,028/49,476/45,424 measured bytes. Caller inputs
+and prior scalar caches are excluded. Artifact hashes, sized-function coverage,
+raw samples, source/dependency/toolchain/hardware records and adverse results
+are retained; no old owner/downstream cost gate is credited from these numbers.
+
+Evidence commit `051801701b369fb796059d54d622acea9258cc52`, record
+`docs/evidence/2026-11-12-interval-owned-expression-program`: 128 files,
+4,190,515 bytes, SHA-256
+`e1f28d147eeab09d14b3dd282550a9979b6255d7cb75828af2a73dd8b3b9e306`.
+The committed digest was regenerated and verified. The pending dynamics patch
+changes only its Cargo.lock blob-header identities after the independent serde
+addition; every other patch byte is identical. Its new SHA-256 is
+`79d7ec1dbcbed5bc368a69c43e2ad872f22e04eb2b0cff0676f9eac26ba0e377`.
+Interface's pending patch and Firmware are unchanged. Dynamics extraction
+retention remains open, and its prior timing qualification remains historical.
+
+The full goal remains active: finish bounded derivative/source associations,
+interval field images and Jacobians, then validated Euler/Picard evolution,
+existence/uniqueness evidence, bounded halving, exact horizon, retained failed
+attempts, flow tubes and end enclosures. No Phase 12 completion is claimed and
+no earlier phase obligation is removed. This registration changes only the
+ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
