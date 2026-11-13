@@ -69,6 +69,16 @@ accounting. This is an interval expression evaluator, not a validated ODE solver
 Run `cargo run -p hypersolve --features interval-program --example enclosed_program`
 for an oscillator image and source-bound symbolic-Jacobian enclosure.
 
+`interval-lattice` adds `RegularJacobianEnclosure::matrix::<R, C>()`. It checks
+source output and selected-variable counts, then copies partials into the same
+row-major `IntervalMatrix` used by Hyperlattice. The returned `JacobianMatrix`
+borrows the original regularity evidence, retaining source, arguments and grid.
+Its `intervals()` supplies numerical products and norms; `into_intervals()`
+explicitly extracts only the numerical matrix. Copies share caller-owned graph
+and dyadic budgets. Empty domains stay empty even with zero matrix dimensions;
+nonempty zero-dimensional products remain distinct. Replay rebuilds the original
+evidence through `enclose_regular`; no serialized proof flag is accepted.
+
 `taylor-model` adds demanded normalized mixed partials through
 `ExpressionProgram::coefficients` and centered exact-coefficient models through
 `taylor_model`. Supply an exact singleton dyadic center, a finite box, total
@@ -512,6 +522,7 @@ their use case.
 | `dispatch-trace` | no | Hyperreal/Hyperlattice/Hyperlimit exact-dispatch instrumentation |
 | `expression-program` | no | Experimental owned flat expression definitions and exact scalar evaluation |
 | `interval-program` | no | Experimental dyadic expression images with complete-domain checks |
+| `interval-lattice` | no | Fixed-size Jacobian matrix projections retaining source/domain evidence |
 | `serde` | no | Symbol and expression-definition serialization using validated Hyperreal scalar replay |
 
 ## Validation and performance

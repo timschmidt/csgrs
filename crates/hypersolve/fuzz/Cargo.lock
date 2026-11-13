@@ -51,10 +51,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperinterval"
+version = "0.1.0"
+dependencies = [
+ "hyperreal",
+ "num-bigint",
+ "num-integer",
+ "num-traits",
+]
+
+[[package]]
 name = "hyperlattice"
 version = "0.7.0"
 dependencies = [
+ "hyperlattice-interval",
  "hyperreal",
+]
+
+[[package]]
+name = "hyperlattice-interval"
+version = "0.1.0"
+dependencies = [
+ "hyperinterval",
 ]
 
 [[package]]
@@ -76,6 +94,7 @@ dependencies = [
 name = "hypersolve"
 version = "0.4.0"
 dependencies = [
+ "hyperinterval",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
@@ -86,6 +105,7 @@ dependencies = [
 name = "hypersolve-fuzz"
 version = "0.0.0"
 dependencies = [
+ "hyperinterval",
  "hyperlimit",
  "hyperreal",
  "hypersolve",

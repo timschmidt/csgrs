@@ -19,6 +19,8 @@ use crate::{Expr, SymbolId, SymbolRef, work_budget::CancellationToken};
 
 #[cfg(feature = "interval-program")]
 mod dyadic;
+#[cfg(feature = "interval-lattice")]
+pub use dyadic::JacobianMatrix;
 #[cfg(feature = "interval-program")]
 pub use dyadic::RegularJacobianEnclosure;
 mod affine;
@@ -195,6 +197,15 @@ pub enum ExpressionError {
     InvalidOutput { output: usize, node: usize },
     /// Evaluation arguments do not match the explicit binding table.
     BindingCount { expected: usize, actual: usize },
+    /// Requested matrix rows differ from the source output count.
+    #[cfg(feature = "interval-lattice")]
+    JacobianRows { expected: usize, actual: usize },
+    /// Requested matrix columns differ from the selected variable count.
+    #[cfg(feature = "interval-lattice")]
+    JacobianColumns { expected: usize, actual: usize },
+    /// Native matrix construction failure, preserving the lattice diagnostic.
+    #[cfg(feature = "interval-lattice")]
+    Lattice(hyperlattice::IntervalLatticeError),
     /// The configured definition-entry limit was exceeded.
     SizeExhausted,
     /// The next graph work charge could not be admitted.
@@ -236,6 +247,8 @@ impl fmt::Display for ExpressionError {
 impl std::error::Error for ExpressionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            #[cfg(feature = "interval-lattice")]
+            Self::Lattice(source) => Some(source),
             Self::Scalar { source, .. } => Some(source),
             #[cfg(feature = "interval-program")]
             Self::Enclosure { source, .. } => Some(source),

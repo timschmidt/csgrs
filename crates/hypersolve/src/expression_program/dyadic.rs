@@ -8,6 +8,10 @@ use super::{
 
 mod regularity;
 pub use regularity::RegularJacobianEnclosure;
+#[cfg(feature = "interval-lattice")]
+mod matrix;
+#[cfg(feature = "interval-lattice")]
+pub use matrix::JacobianMatrix;
 
 impl ExpressionProgram {
     /// Enclose every output over the Cartesian product of the input intervals.

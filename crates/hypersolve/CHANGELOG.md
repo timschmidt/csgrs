@@ -2,6 +2,9 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in fixed-size Jacobian projections retaining source/domain evidence,
+  checked rectangular shapes and shared graph/native copy budgets.
+
 - Add opt-in exact coordinate programs with STRICT inverse proofs, shared graph substitution and replayable source association.
 - Add source-bound affine Taylor forms with exact coefficient combination, retained original residual coordinates, subdomain reuse and composed-map replay.
 - Add optional demanded sparse normalized partials and exact-coefficient Taylor

@@ -48,6 +48,7 @@ taylor-model = ["interval-program"]
 taylor-affine = ["taylor-model"]
 float-proposal-program = ["expression-program"]
 interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
+interval-lattice = ["interval-program", "hyperlattice/interval-dyadic"]
 serde = ["dep:serde", "hyperreal/serde", "hyperinterval?/serde"]
 dispatch-trace = [
     "hyperreal/dispatch-trace",

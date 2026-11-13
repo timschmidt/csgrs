@@ -12,6 +12,10 @@ libfuzzer-sys = "0.4"
 hyperlimit = { path = "../../hyperlimit", default-features = false }
 hyperreal = { path = "../../hyperreal", default-features = false }
 hypersolve = { path = "..", default-features = false }
+hyperinterval = { path = "../../hyperinterval", default-features = false, features = ["dyadic"], optional = true }
+
+[features]
+jacobian-matrix = ["hypersolve/interval-lattice", "dep:hyperinterval"]
 
 [[bin]]
 name = "sketch_projected_distance"
@@ -488,3 +492,11 @@ path = "fuzz_targets/bivariate_vertical_components.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "jacobian_matrix"
+path = "fuzz_targets/jacobian_matrix.rs"
+test = false
+doc = false
+bench = false
+required-features = ["jacobian-matrix"]
