@@ -69,6 +69,15 @@ accounting. This is an interval expression evaluator, not a validated ODE solver
 Run `cargo run -p hypersolve --features interval-program --example enclosed_program`
 for an oscillator image and source-bound symbolic-Jacobian enclosure.
 
+`float-proposal-program` adds `ExpressionProgram::float_proposal` and a prepared
+`FloatProposalProgram::estimate` view. Demanded constants are projected once;
+ordered bindings, original domain guards and shared nodes remain in the schedule.
+Native results are finite point estimates, without enclosure or exact-source
+claims. Numerical domain/overflow errors do not prove failure of the exact source.
+Recompute consumed evidence from the retained original program. Graph budgets
+cover preparation and evaluation bookkeeping; scalar projection and native math
+library internals remain outside whole-work accounting.
+
 `work_budget::with_budget` bounds instrumented root-subdivision and tensor-image
 promotion attempts across nested synchronous operations. Exhaustion is a typed
 resource failure and never authorizes approximation. The counters do not yet

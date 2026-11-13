@@ -15,6 +15,7 @@ all-features = true
 
 [features]
 default = []
+rk-proposal = ["field", "hypersolve/float-proposal-program", "hyperinterval/float-proposal"]
 field = ["dep:hyperreal", "dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
 serde = ["dep:serde", "hypersolve?/serde", "hyperlattice-interval?/serde"]
 dispatch-trace = ["hypersolve?/dispatch-trace", "hyperinterval?/dispatch-trace"]
@@ -33,3 +34,7 @@ serde_json = "1.0"
 [[example]]
 name = "expression_field"
 required-features = ["field"]
+
+[[example]]
+name = "rk_proposal"
+required-features = ["rk-proposal"]

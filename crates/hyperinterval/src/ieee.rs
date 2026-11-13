@@ -47,7 +47,7 @@ impl Format {
     }
 }
 
-#[cfg(feature = "float-enclosure")]
+#[cfg(any(feature = "float-enclosure", feature = "dyadic"))]
 #[derive(Clone, Copy)]
 struct Dyadic {
     negative: bool,
@@ -57,16 +57,6 @@ struct Dyadic {
 
 #[cfg(feature = "float-enclosure")]
 impl Format {
-    fn fraction(self) -> u32 {
-        self.infinity.trailing_zeros()
-    }
-    fn bias(self) -> i32 {
-        ((self.infinity >> self.fraction()) >> 1) as i32
-    }
-    fn minimum(self) -> i32 {
-        1 - self.bias() - self.fraction() as i32
-    }
-
     pub(crate) fn one(self) -> u64 {
         (self.bias() as u64) << self.fraction()
     }
@@ -87,36 +77,6 @@ impl Format {
     pub(crate) fn next_down(self, bits: u64) -> Result<u64, IntervalError> {
         self.next_up(self.negate(bits))
             .map(|next| self.negate(next))
-    }
-
-    fn decode(self, bits: u64) -> Dyadic {
-        let f = self.fraction();
-        let field = (bits & self.infinity) >> f;
-        let tail = bits & ((1 << f) - 1);
-        Dyadic {
-            negative: bits & self.sign != 0,
-            magnitude: u128::from(if field == 0 { tail } else { tail | (1 << f) }),
-            exponent: if field == 0 {
-                self.minimum()
-            } else {
-                field as i32 - self.bias() - f as i32
-            },
-        }
-    }
-
-    #[cfg(feature = "dyadic")]
-    pub(crate) fn exact_parts(self, bits: u64) -> (i64, i32) {
-        let value = self.decode(bits);
-        // All input significands have at most 53 bits, including their sign.
-        let magnitude = value.magnitude as i64;
-        (
-            if value.negative {
-                -magnitude
-            } else {
-                magnitude
-            },
-            value.exponent,
-        )
     }
 
     // Compare (b-a) with (d-c) via b+c-a-d. Each finite endpoint is an
@@ -438,3 +398,64 @@ impl Format {
 #[cfg(all(test, feature = "float-enclosure"))]
 #[path = "ieee_tests.rs"]
 mod tests;
+
+#[cfg(any(feature = "float-enclosure", feature = "dyadic"))]
+impl Format {
+    fn fraction(self) -> u32 {
+        self.infinity.trailing_zeros()
+    }
+    fn bias(self) -> i32 {
+        ((self.infinity >> self.fraction()) >> 1) as i32
+    }
+    fn minimum(self) -> i32 {
+        1 - self.bias() - self.fraction() as i32
+    }
+
+    fn decode(self, bits: u64) -> Dyadic {
+        let f = self.fraction();
+        let field = (bits & self.infinity) >> f;
+        let tail = bits & ((1 << f) - 1);
+        Dyadic {
+            negative: bits & self.sign != 0,
+            magnitude: u128::from(if field == 0 { tail } else { tail | (1 << f) }),
+            exponent: if field == 0 {
+                self.minimum()
+            } else {
+                field as i32 - self.bias() - f as i32
+            },
+        }
+    }
+
+    #[cfg(feature = "dyadic")]
+    pub(crate) fn exact_parts(self, bits: u64) -> (i64, i32) {
+        let value = self.decode(bits);
+        // All input significands have at most 53 bits, including their sign.
+        let magnitude = value.magnitude as i64;
+        (
+            if value.negative {
+                -magnitude
+            } else {
+                magnitude
+            },
+            value.exponent,
+        )
+    }
+
+    // The caller has already validated finite bits. Keep this allocation and
+    // admission authority shared by enclosure conversion and exact scalar ingress.
+    #[cfg(feature = "dyadic")]
+    #[inline(always)]
+    pub(crate) fn dyadic_point(
+        self,
+        bits: u64,
+        budget: &mut crate::DyadicBudget,
+    ) -> Result<crate::DyadicInterval, IntervalError> {
+        let (mantissa, exponent) = self.exact_parts(bits);
+        budget.reserve(
+            u64::from(i64::BITS - mantissa.unsigned_abs().leading_zeros()),
+            2,
+            false,
+        )?;
+        crate::DyadicInterval::point(mantissa.into(), exponent)
+    }
+}

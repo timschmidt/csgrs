@@ -468,3 +468,7 @@ impl<const N: usize> EnclosedVectorField<N> for ExpressionField<N> {
         Ok(image)
     }
 }
+
+/// Source-bound primitive RK4 estimates consumed only through exact verification.
+#[cfg(feature = "rk-proposal")]
+pub mod proposal;

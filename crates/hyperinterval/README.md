@@ -6,6 +6,13 @@ budgeted common-scale dyadic arithmetic, symbolic Real balls, and finite IEEE
 enclosures on x86_64. Empty sets, sign sets, and set relations are explicit.
 Elementary function enclosures remain under development.
 
+With `dyadic` and either float feature, `DyadicInterval::from_f64(value, budget)`
+adopts a finite IEEE value exactly, including subnormals. It rejects NaN and
+infinity and reserves significand work before allocation. This conversion needs
+no strict-float platform qualification or Hyperreal dependency. `0.1_f64` remains
+its binary value, not 1/10; importing numerical estimates does not certify their
+relationship to an earlier source.
+
 Finite integer, fixed, rational, dyadic and qualified IEEE carriers provide
 exact `abs`, `min_image` and `max_image`. Min/max are images over independently
 chosen operand members, so either empty operand gives empty. Absolute value

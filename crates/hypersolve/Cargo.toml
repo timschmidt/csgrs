@@ -43,6 +43,7 @@ serde_json = "1.0.149"
 default = []
 # Owned expression graphs; validated dynamics integration remains experimental.
 expression-program = []
+float-proposal-program = ["expression-program"]
 interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
 serde = ["dep:serde", "hyperreal/serde", "hyperinterval?/serde"]
 dispatch-trace = [

@@ -543,16 +543,9 @@ let enclosure: F64Enclosure = proposal.into();
                 let Some((a, b)) = self.bits() else {
                     return Ok(crate::DyadicInterval::empty());
                 };
-                let point = |bits, budget: &mut crate::DyadicBudget| {
-                    let (mantissa, exponent) = $format.exact_parts(bits);
-                    budget.reserve(
-                        u64::from(i64::BITS - mantissa.unsigned_abs().leading_zeros()),
-                        2,
-                        false,
-                    )?;
-                    crate::DyadicInterval::point(mantissa.into(), exponent)
-                };
-                point(a, budget)?.hull(&point(b, budget)?, budget)
+                $format
+                    .dyadic_point(a, budget)?
+                    .hull(&$format.dyadic_point(b, budget)?, budget)
             }
         }
 

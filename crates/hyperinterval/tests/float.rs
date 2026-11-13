@@ -741,8 +741,64 @@ fn with_mxcsr<T>(mode: u32, work: impl FnOnce() -> T) -> T {
             hyperinterval::F64ProposalInterval::new(a, 0.0),
             Err(IntervalError::ReversedEndpoints)
         );
+        assert_eq!(
+            hyperinterval::F64ProposalInterval::new(0.0, -a),
+            Err(IntervalError::ReversedEndpoints)
+        );
     }
     std::hint::black_box(work)()
+}
+
+#[cfg(all(feature = "dyadic", target_arch = "x86_64", not(target_env = "msvc")))]
+#[test]
+fn exact_scalar_ingress_ignores_native_modes() {
+    const KEY: &str = "HYPERINTERVAL_INGRESS_MXCSR";
+    if let Ok(mode) = std::env::var(KEY) {
+        with_mxcsr(mode.parse().unwrap(), || {
+            use hyperinterval::{DyadicBudget, DyadicInterval};
+            for (bits, mantissa, exponent) in [
+                (0u64, 0i64, 0),
+                (1, 1, -1074),
+                (0x8000_0000_0000_0001, -1, -1074),
+                (0x8000_0000_0000_0000, 0, 0),
+                (0x0010_0000_0000_0000, 1, -1022),
+                (0x3ff0_0000_0000_0001, (1 << 52) + 1, -52),
+                (0x7fef_ffff_ffff_ffff, (1 << 53) - 1, 971),
+            ] {
+                let input = std::hint::black_box(f64::from_bits(bits));
+                assert_eq!(
+                    DyadicInterval::from_f64(input, &mut DyadicBudget::new(53, 106)).unwrap(),
+                    DyadicInterval::point(mantissa.into(), exponent).unwrap()
+                );
+            }
+            assert_eq!(
+                DyadicInterval::from_f64(
+                    f64::from_bits(0x7ff0_0000_0000_0001),
+                    &mut DyadicBudget::new(0, 0)
+                ),
+                Err(IntervalError::NonFiniteEndpoint)
+            );
+        });
+        return;
+    }
+    for mode in 0..16 {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "exact_scalar_ingress_ignores_native_modes",
+                "--nocapture",
+            ])
+            .env(KEY, mode.to_string())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "mode={mode}: {} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        eprint!("{}", String::from_utf8_lossy(&output.stderr));
+    }
 }
 
 #[cfg(all(feature = "rational", feature = "dyadic", target_arch = "x86_64"))]

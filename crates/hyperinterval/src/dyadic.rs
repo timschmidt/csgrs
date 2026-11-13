@@ -1040,3 +1040,18 @@ impl<'de> serde::Deserialize<'de> for DyadicInterval {
         .map_err(serde::de::Error::custom)
     }
 }
+
+impl DyadicInterval {
+    /// Import exactly the finite IEEE binary64 value, independent of the native
+    /// arithmetic environment. NaN and infinity are typed validation errors.
+    ///
+    /// This adopts the supplied bits as a number; it certifies no relation to an
+    /// earlier exact source or trajectory. In particular, `0.1_f64` is not 1/10.
+    /// Bit validation/decoding precede native budget reservation, and reservation
+    /// precedes mantissa allocation. No large power-of-two denominator is built.
+    #[cfg(any(feature = "float-proposal", feature = "float-enclosure"))]
+    pub fn from_f64(value: f64, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
+        let bits = crate::ieee::BINARY64.finite(value.to_bits())?;
+        crate::ieee::BINARY64.dyadic_point(bits, budget)
+    }
+}

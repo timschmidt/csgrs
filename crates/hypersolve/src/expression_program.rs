@@ -586,3 +586,8 @@ impl UnaryOperation {
         }
     }
 }
+
+#[cfg(feature = "float-proposal-program")]
+mod proposal;
+#[cfg(feature = "float-proposal-program")]
+pub use proposal::{FloatProposalError, FloatProposalProgram};

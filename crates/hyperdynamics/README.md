@@ -46,14 +46,24 @@ With `serde`, serialize a `RationalTimeField` and deserialize into
 `RationalTimeDefinition`, then rebuild with `RationalTimeField::from_definition`.
 Replay revalidates the original source and regenerates the clock, transformation
 and derivatives. Generated proof flags are never trusted as certificates.
-RK proposals, wrapping control, broader reachability and whole-resource bounds
-remain open.
+
+Enable `rk-proposal` for `field.rk4_proposer(budget)`. Its reusable primitive view
+retains the exact source. `propose(request, options, budget)` records four RK4
+stages and a padded candidate box; padding is a search heuristic without an error
+bound. Consume the candidate with `certify(budget)` and inspect `proof().status()`:
+only the existing exact Picard verifier can certify a tube or endpoint. Failed
+proposals retain the original request and partial stage trace. Rebuild from the
+field definition, request and options for replay; numerical traces are not proof.
+The native horizon integrator remains available independently. Automatic RK step
+selection, wrapping control, broader reachability and whole-resource bounds remain
+open.
 
 Build on Rust 1.95 and run the time-dependent oscillator example:
 
 ```sh
 cargo test -p hyperdynamics --all-features
 cargo run -p hyperdynamics --features field --example expression_field
+cargo run -p hyperdynamics --features rk-proposal --example rk_proposal
 ```
 
 The default feature set is empty. `dispatch-trace` enables underlying exact
