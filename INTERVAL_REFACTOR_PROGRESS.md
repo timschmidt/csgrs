@@ -53,7 +53,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
-| 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks and RK proposals implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
+| 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | not started | consumer evidence and remainder/wrapping proofs |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
@@ -4094,6 +4094,81 @@ reverted, accepted core and firmware remain clean. No push occurred. This is
 affected validation, not the complete pre-push matrix. The full fifteen-phase goal
 remains active, including the unretained extraction and all other open obligations.
 This registration changes only the progress ledger and evidence manifest.
+
+## 2026-11-13: Qualify finite epsilon endpoint covers
+
+Previous turn reproduced phase-11 extraction timing regressions and left that
+candidate unretained. This turn implements the missing finite-cover boundary in
+plan 10.8. Source commit `404ba07ecdeeab8838836df0bc6b36bc78401b20` adds fifteen
+paths/changes for optional Hyperdynamics reachability and exact dyadic Cartesian
+subdivision/regridding. The full fifteen-phase goal remains active.
+
+`ExpressionField::reach` returns a finite endpoint union C only after certifying
+`R ⊆ C ⊆ R + [-epsilon,epsilon]^N` at the exact requested horizon. Exact initial
+partitions, source identity, all attempts and native Picard evidence remain
+retained. Certified native prefixes are consumed explicitly with checked outward
+endpoint transport; their local step-limit statuses are not relabeled complete.
+The last transfer, positive progress, horizon and diameter checks precede whole
+success. Stopped reports expose no whole-request cover. Empty and identity retain
+exact set semantics. Source/request/policies are reconstructed for native replay.
+
+The original uncertain Riccati fixture, with depth 8, maximum 2048 whole attempts,
+default 256 segments and epsilon 1/128, first reproduced depth, coefficient-growth
+and segment-limit failures. Those observations remain archived. Exact time-cap
+refinement, outward continuation and displacement-width proposals now complete
+that unchanged fixture through the existing Picard authority. New proposal
+provenance is independently reconstructed with rational endpoints. Other independent
+controls cover exact constant flows, partition equality, an exponential Taylor sum
+with a bounded tail, and Riccati fiber images `x/(1-x/2)`. Tests cover output reuse,
+final contributions, multi-prefix structural/scalar budget boundaries,
+cancellation/retry, invalid inputs paired with empty, and fresh-process replay.
+
+All fourteen isolated qualification groups and eleven combined downstream groups
+pass. Counts are 48 Hyperdynamics tests, 84 Hyperlattice-interval tests, 15 minimal
+feature tests, 33 selected release tests and 17 AddressSanitizer tests. Strict
+Clippy, warnings-denied docs, WASM, Rust 1.95, default-off checks, the example,
+formatting and whitespace checks pass. Combined owner tests total 507; Interface
+passes 201. All 194 path benchmark smoke cases pass. The 200 successive rows
+preserve structural fields, allocation counts and displayed memory columns; their
+timings remain smoke observations. Six fresh-process migration transcripts match
+within policy and their previous digests (92 report/trace lines each). Three native
+field traces preserve their independently measured fixed counts.
+
+Legacy reports remain byte-identical (177,398 bytes across thirteen signatures)
+and all twenty-two resource/allocation rows match. Early inlining and entry-point
+experiments reproduced adverse timing or size changes and are retained. Restoring
+the original temporary lifetimes and compiling the optional strategy separately
+preserves byte-identical `.text` in both old consumers. Cost-observer ELF size is
+4,023,072 → 4,023,032 bytes, semantic-observer size 4,160,728 → 4,160,704; function
+unions remain 2,100,408 and 2,187,002 bytes. A fixed twelve-pair, alternating-order
+follow-up with common path, fixed ASLR/affinity and warming retains every case.
+All twenty-two paired bootstrap 95% intervals contain one; ratios range
+0.996292–1.002192. This is measured absence of a detected regression, not a universal
+performance claim. The pending-extraction path benchmark executable remains
+byte-identical to its prior 13,304,584-byte build; its phase-11 blockers remain.
+
+Both new-cost runs complete all six workloads with identical work/allocation rows.
+The uncertain Riccati case produces 72 leaves from 143 cells and 556 whole attempts,
+using 22,817 native prefix searches, 3,410,783 structural and 25,166,644,711 scalar
+work units. Complete report construction/check/drop medians are 0.560740 and
+0.558703 seconds. It retains 114,502,920 incremental owned heap bytes at return,
+peaks at 114,504,336 and releases them on drop. Source reconstruction is measured
+separately. This substantial retained evidence is a practical limitation. Cell,
+depth, attempt and refinement limits do not establish whole-heap, CPU, wall-clock
+or excluded scalar-refinement bounds. Zero epsilon and arbitrary fields/horizons
+need not complete. Taylor models, wrapping, broader consumers, physical-clock cover
+convenience, platform/HIL and release qualification remain open.
+
+Evidence commit `7f7e64b278bbbde4687738282f88e83d01754874`, record
+`docs/evidence/2026-11-13-interval-reachability`: 346 files, 85,174,134 bytes, SHA-256
+`d3f5f0781211545075fb8b7f407dac85e0fad91b70613af052a12d103f4a9b99`.
+The committed digest was regenerated and verified. A copied validation runner's
+misdirected new log was moved out before rerunning the full downstream matrix;
+all 5,480 historical record files were verified unchanged. Forty extraction paths
+remain staged, with their three overlapping files incorporating accepted additions;
+all thirty-seven other pending blobs and all eight Interface edits are preserved.
+The isolated accepted worktree and firmware remain clean. No push occurred; this
+is affected qualification, not the full pre-push matrix.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 

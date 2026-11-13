@@ -516,6 +516,7 @@ docs/evidence/2026-11-13-interval-picard-step	101	6565124	add71eb4bce245b2fb6f7d
 docs/evidence/2026-11-13-interval-program-jacobians	80	12401121	f04ba69ed417f79f63b5f09ab753af70e25bb9cb46fc613f6518e457852c0850
 docs/evidence/2026-11-13-interval-rational-constant-budget	108	8903429	1ecfb2cd02584490820249811dbca613cda0bbfd390e85b96d1141655d3f14aa
 docs/evidence/2026-11-13-interval-rational-time	184	6308703	ae7faec60dee7c80b7e6c25e6b00611b13662da19392b470a79798ef9af79db9
+docs/evidence/2026-11-13-interval-reachability	346	85174134	d3f5f0781211545075fb8b7f407dac85e0fad91b70613af052a12d103f4a9b99
 docs/evidence/2026-11-13-interval-rk-proposals	204	5883677	24e03ab992b385d209e6ff75eb88720d8164c0868c84aacbc48e740c0b13fb5e
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912
 excluded:crates/comparisons/audits/tmp/computable-real-0.3.0.crate	1	11676	d15f7d44e4a3b8bbaf4222ccc45a3196a9dec539d2a0d10eb14e31635fd50d9c
