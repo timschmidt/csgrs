@@ -52,8 +52,8 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
-| 11 path dynamics | axis-projection candidate implemented; retention gate open | owner timing/binary regression; remaining metric/join, feed/lookahead/jerk extraction |
-| 12 ODE/reachability | not started | certified tubes, bounded refinement, analytic oracles |
+| 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
+| 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks and RK proposals implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | not started | consumer evidence and remainder/wrapping proofs |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
@@ -4017,6 +4017,83 @@ pre-push matrix. Automatic RK horizon selection, wrapping/reachability, whole-
 resource closure, legacy retention, platform/HIL and the other plan obligations
 remain open. The full goal stays active. This registration changes only the
 ledger and evidence manifest.
+
+## 2026-11-13: Reproduce extraction costs and isolate return overhead
+
+Previous turn accepted source-bound RK proposals. This turn returns to the pending
+phase-11 extraction at source base `b816c48cca12c922f3dbfb004c4d27586c06ad74`.
+The full extraction is implemented but remains unretained. No production edit is
+accepted by this investigation. The phase table above now reflects the existing
+metric/join/feed/lookahead/jerk candidate and the already accepted phase-12 work;
+that correction does not establish any additional implementation capability.
+
+A fresh clean baseline and the exact 40-path candidate were built in one isolated
+checkout with Rust 1.95 and locked dependencies. All 194 owner cases have identical
+full result observations and allocation rows in a separate completed-result/drop
+observer, with zero live-byte deltas. Debug snapshots are differential evidence,
+not an independent geometry oracle or canonical serialization. The original owner
+benchmark body differs only by two deprecation allowances. Its executable shrinks
+13,312,600 → 13,304,584 bytes; complete defined-function union shrinks
+8,044,187 → 8,036,358 bytes and `.text` 8,118,103 → 8,110,279 bytes. The main-tree
+candidate executable is byte-identical to the measured isolated candidate.
+
+Actual indirect/aliased targets are resolved, including the parser's formerly
+ambiguous slot. Userspace instruction profiles of the real owner executable have
+identical instruction/memory-operation counts for the selected parser, importer
+and skew calls; motion calls differ slightly. The warmed complete-result/drop
+observer likewise has equal parser/import/pad-clearance counts and motion count
+increases up to about 0.16%. Static equality and simulated cache/branch results
+are not hardware-counter evidence or an explanation of wall-clock differences.
+
+Four complete 194-case sweeps use one executable path/argv, one working directory,
+fixed CPU affinity, scoped warm-up and balanced order. Every slower case plus every
+historically targeted case enters a four-run, 121-case follow-up. Forty-one cases
+have candidate mean confidence ranges entirely above both baseline ranges. Examples
+include parser 256 (ratio 1.05459), mixed route parsing (1.05806), circular-edge
+clearance (1.06905) and arc-wire lifting (1.09998). Selection is not an acceptance
+tolerance; aggregate or favorable cases do not clear this failure. A twelve-case
+follow-up disables ASLR only for benchmark subprocesses: six adverse ranges remain,
+including parser 256 at 1.05908 and arc-wire lifting at 1.08315. All raw unfavorable
+observations remain. No governor, sysctl or compiler policy changed.
+
+A single ordinary inline attribute removes the profiled metric-length adapter
+call and lowers mixed-jerk instruction count, but leaves other overhead; its file
+is 13,304,728 bytes. It was not fully timing-qualified or retained. A separate
+shared-error experiment reexports DynamicsError under the old RouteCertificationError
+name, preserving all variants. Its 194 observed results/allocations match and jerk
+instruction counts fall below baseline, but file size rises to 13,316,864 bytes.
+Removing sixteen now-identity conversions leaves 13,316,848 bytes, still above
+baseline. Function union is 8,043,152 for both; unwind and symbol sections account
+for file growth. Both experiments are reverted. No new public error ownership is
+accepted, and no full functional qualification is claimed for rejected variants.
+
+The restored original candidate passes all eleven affected validation groups:
+496 owner tests, 201 Interface tests, strict Clippy, docs, WASM, 194 owner benchmark
+smoke cases, 200 successive rows, formatting and whitespace checks. Six fresh-process
+legacy/direct/compatibility transcripts match within STRICT and APPROXIMATE_512,
+with 92 report/trace lines each and unchanged fixed dispatch assertions. Interface's
+existing exact lowering checks preserve the 41,795-byte transcript golden digest
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`. Successive structural,
+allocator-count and displayed memory columns match the retained 200-row control;
+its timings are smoke validation, not a matched performance claim.
+
+Valgrind was extracted locally without installing host packages. A linux-perf
+package fetch returned HTTP 404; a direct self-process hardware-counter probe was
+denied (errno 13, paranoid=3). The hardware cause of equal-instruction timing
+regressions remains unresolved. Further retention work must address code generation,
+return copies or layout with evidence; repeating favorable timings or changing
+unrelated parser algorithms is not a fix.
+
+Evidence commit `019ee95d1543c705ec98d1be068cf56a405354dc`, record
+`docs/evidence/2026-11-13-interval-dynamics-requalification`: 5,480 files,
+71,483,391 bytes, SHA-256
+`ae1d5ecd798dee0c3f069af4e468daa55b55bc78c5a46ee566393d1be2524e18`.
+The committed digest was regenerated and verified. All 40 main staged paths and
+eight Interface edits remain byte-for-byte unchanged; isolated experiments are
+reverted, accepted core and firmware remain clean. No push occurred. This is
+affected validation, not the complete pre-push matrix. The full fifteen-phase goal
+remains active, including the unretained extraction and all other open obligations.
+This registration changes only the progress ledger and evidence manifest.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
