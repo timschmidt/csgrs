@@ -3100,6 +3100,56 @@ The committed record was regenerated and verified, preserving all earlier
 manifest rows. Only this ledger and the archive manifest are committed here;
 production code remains staged for continued qualification.
 
+## 2026-11-12: Two dynamics code-generation experiments rejected
+
+Previous turn: progress, with exact metric/jerk extraction and reproduced cost
+failures. The primary pending candidate is unchanged from ledger HEAD
+`99b810a567ad89162b5ffa23e074948311fadb3c`. A detached checkout reproduces its
+owner executable byte-for-byte (13,379,488 bytes, SHA-256
+`d331496d666548da7e9c90d790d2bc1ff683cd75a8c8c20460a76536c43f3c36`), providing
+an isolated control without changing compiler/profile/dependencies or fixtures.
+
+Two bounded experiments fail the existing binary gate:
+
+- Ordinary inline availability for moved jerk helpers/shared guards produces
+  13,383,312 bytes (+3,824 versus the already failing control). Rejected as a
+  standalone cost change; no timing or consumer qualification is claimed.
+- A private borrowed route adapter keeps lazy metric access generic while
+  compiling scheduling bodies once. All 453 owner tests pass, including full
+  original/direct/compatibility reports and dispatch snapshots under both
+  policies. The binary grows to 13,392,472 bytes (+12,984 versus control), so
+  this standalone change is also rejected. No downstream, timing, allocation,
+  sanitizer or complete CI qualification is claimed for it.
+
+Selected dynamics symbols shrink in both variants while the executable grows;
+that selected sum cannot establish the binary or monomorphized-code gate.
+Static caller tracing also refines the previous attribution: a new 10,107-byte
+Real signed-product instance reaches unchanged geometry routines, but a larger
+Rational instance disappears. The three changed signed-product families shrink
+124,739 -> 123,102 named text bytes in aggregate. The new symbol alone is not
+10,107 bytes of net growth. Complete causal attribution of the owner regression
+remains unresolved; no extra arithmetic work is inferred from symbol counts.
+
+Neither experiment is applied to the primary repositories. The isolated tree
+is restored to its staged control and rebuilt to the same binary digest.
+The primary staged patch still matches the preceding immutable archive.
+Source review identifies the next coherent work: finish feed/join ownership,
+preserving axis-only legacy rejection, lazy metric/classifier order, complete
+geometry-owned tangent receipts, old aliases and application encoding, then
+qualify the full boundary. The rejected narrow adapter is not accepted merely
+because a broader design may need route access. All earlier adverse records,
+remaining phase obligations and the full fifteen-phase goal remain active.
+No push ran.
+
+Evidence commit `3132007a9ca569ccc591a9e3a4f8775f3c95d487`, record
+`docs/evidence/2026-11-12-interval-dynamics-boundary-cost`: 30 files,
+6,132,181 bytes, SHA-256
+`e5075ba88a285ac2e37b9de888fd5e16d2f9a6626f6e6d759444e5b17fb2db09`.
+The record includes exact control/experiment patches, commands, build/test logs,
+symbols, static call-chain reproduction and reviewed next-boundary constraints.
+Its committed digest was regenerated and verified; earlier manifest rows are
+unchanged. Only the ledger and archive manifest are committed here.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
