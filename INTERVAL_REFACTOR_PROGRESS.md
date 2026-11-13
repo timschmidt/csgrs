@@ -2959,7 +2959,11 @@ All broader Phase 3/6 qualification and adoption gaps, the earlier solver and
 firmware migration blockers, and the remaining 15-phase goal stay open.
 No Interface or firmware source changed; no push was attempted.
 
-DYADIC_ZERO_GRID_ARCHIVE_PENDING
+Source commit `e58498cfbdb851cdf1c69c5839c1d3d9baf0b242`; evidence commit
+`aa61d762ad69e91809edee6e085d7127cea7f648`, record `docs/evidence/2026-11-12-interval-dyadic-zero-grid`:
+56 files, 575,198 bytes, SHA-256
+`43fdf5e35cb750fa2b561ceded58000d896982c3ad21623a6c5a10e11a6c5cfc`. The committed record was regenerated and verified;
+every previous archive row remains unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
