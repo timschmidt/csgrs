@@ -4821,6 +4821,65 @@ or demonstrated code-generation cause; favorable aggregates or unrelated parser
 changes cannot resolve these gates. No push or phase-completion claim is made.
 The complete fifteen-phase objective remains active.
 
+## 2026-11-13: Provider-owned failures clear size and copy costs, fail owner timing
+
+Previous turn rejected forced forwarding and native outlining. This experiment
+starts at `8ea26dac524dacdaaab6c255a54c355f8cb9de2f`, with the same pending
+41-path extraction, in an isolated tree. Hyperdynamics' unpublished metric/path/
+join protocols gain associated errors that preserve native failure distinctions
+and provider causes. Hyperpath chooses its unchanged legacy error enum; thirteen
+whole-report identity conversions disappear. Actual deprecated functions remain.
+No inline attributes, mathematical expressions, validation/predicate order,
+compiler profile, dependency versions or acceptance thresholds change.
+
+The missing provider-error test first fails against the original protocols.
+Two new tests then pass under both policies: non-Clone metric/join causes retain
+identity and error chains; wrapped native failures preserve exact retry selection,
+one component halving, zero-budget exhaustion, receipts and subsequent replay.
+Focused native, routing and axis controls plus strict all-target/all-feature owner
+Clippy pass. The complete owner log records 521 passing tests and no failures;
+its outer process exit status was not recovered after context compaction, so the
+record distinguishes observed complete test output from a captured exit code.
+
+The real owner ELF shrinks from 13,312,600 to 13,302,416 bytes; the complete
+sized-function union shrinks from 8,044,187 to 8,035,134. All 194 full result and
+allocation rows match in the separately attributed observer. Seven Callgrind
+cases across three variants preserve four control instruction totals, remove
+the original extraction's extra jerk report-copy instructions, and retain a
+130-instruction-per-call increase in corner lookahead. These observer results
+are not hardware-cycle measurements, canonical serialization proof or owner
+wall-clock timings.
+
+Six matched real-owner sweeps complete all 194 cases in balanced order, with
+CPU affinity, per-process ASLR control and fixed executable path. All 67 candidate
+cases flagged by separated mean-confidence intervals receive four longer
+candidate/baseline/baseline/candidate repeats. Sixty-one retain adverse separation;
+all six nonconfirmations remain in the record. Longer mean ratios include 1.0933
+for line offsets, 1.0890 for quadratic hodographs, 1.0672 for rectangular-pad
+clearance, 1.0517 for additive-bead scheduling, 1.0416 for exact trace import and
+1.0219 for the 256-record parser. These are repeated per-case observations, not
+a family-wise confidence claim. Favorable jerk timings and lower code size do
+not clear the unchanged owner gate. The candidate is rejected.
+
+After the final candidate edit, formatting and six fresh report/dispatch
+transcripts pass. The original extraction is restored and its three routing
+tests, axis migration test, formatting and six additional transcripts pass.
+Each transcript has 92 report/trace lines; hashes match within both policies
+across legacy/direct/compatibility modes, candidate, restoration and prior record.
+The isolated tree is restored clean. Main's original 41 staged paths, Interface's
+eight edits and clean firmware retain their exact starting states. No new full
+downstream, successive_operations, sanitizer, fuzz, coverage, WASM, packaging or
+pre-push qualification is claimed for this rejected design. No push ran.
+
+Evidence record `docs/evidence/2026-11-13-interval-dynamics-provider-errors` at
+local commit `b7c58335ea0ce9f0fad2c7ab726e174d0ae696c3` contains 5,916 files and
+67,111,954 bytes, digest
+`dbe1f8aebf2cf3b8e86e2d443a043be64c571b8025401557c787136b00433787`.
+Scoped archive verification and all ten prior immutable-stage checks pass.
+The design and its acceptance witness are archived for future qualified work;
+they are not retained production support. Phase 11 and the full fifteen-phase
+objective remain active, with all preceding obligations unchanged.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
