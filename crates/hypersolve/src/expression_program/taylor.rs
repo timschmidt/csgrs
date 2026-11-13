@@ -295,7 +295,15 @@ fn derive(
             continue;
         }
         let derivatives = DerivativeInputs { memo, variable };
-        let value = super::jacobian::derive_node!(builder, &node, variable, derivatives, zero, one);
+        let value = super::jacobian::derive_node!(
+            builder,
+            &node,
+            variable,
+            |input: usize| derivatives[input],
+            |input: usize| derivatives[input],
+            zero,
+            one
+        );
         builder
             .budget
             .check_entries(&[retained, memo.len(), tasks.len(), 1])?;

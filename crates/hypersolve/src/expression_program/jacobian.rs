@@ -11,9 +11,11 @@ use crate::{Expr, SymbolId};
 
 // One local derivative rule, expanded into the original visitation loop or
 // the demanded-partial traversal. This keeps operation and temporary order
-// while avoiding another symbolic differentiation authority.
+// while avoiding another symbolic differentiation authority. Keep unary and
+// binary checked indexing at distinct caller sites, as in the original loop:
+// merging their panic locations also moves the downstream global address table.
 macro_rules! derive_node {
-    ($builder:ident, $node:expr, $variable:expr, $derivatives:ident, $zero:ident, $one:ident) => {
+    ($builder:ident, $node:expr, $variable:expr, $unary_input:expr, $binary_input:expr, $zero:ident, $one:ident) => {
         match $node {
             $crate::expression_program::ExpressionNode::Constant(_) => $zero,
             $crate::expression_program::ExpressionNode::Variable(reference) => {
@@ -24,7 +26,7 @@ macro_rules! derive_node {
                 }
             }
             $crate::expression_program::ExpressionNode::Unary { operation, input } => {
-                let derivative = $derivatives[*input];
+                let derivative = ($unary_input)(*input);
                 if derivative == $zero {
                     $zero
                 } else {
@@ -43,7 +45,7 @@ macro_rules! derive_node {
             } => {
                 let mut terms = [$zero; 2];
                 for (column, input) in [*left, *right].into_iter().enumerate() {
-                    let derivative = $derivatives[input];
+                    let derivative = ($binary_input)(input);
                     if derivative != $zero {
                         let template = $crate::expression_program::jacobian::binary(
                             *operation,
@@ -205,7 +207,15 @@ impl ExpressionProgram {
                 if uses[index] == 0 {
                     continue;
                 }
-                derivatives[index] = derive_node!(builder, node, *variable, derivatives, zero, one);
+                derivatives[index] = derive_node!(
+                    builder,
+                    node,
+                    *variable,
+                    |input: usize| derivatives[input],
+                    |input: usize| derivatives[input],
+                    zero,
+                    one
+                );
             }
             for &root in &source.outputs {
                 builder.budget.charge(1)?;
