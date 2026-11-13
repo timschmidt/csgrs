@@ -3859,6 +3859,81 @@ end covers/thickening, total resource closure, release qualification and all oth
 plan obligations remain open. The full goal and legacy extraction retention gate
 remain active. This registration changes only the ledger and evidence manifest.
 
+## 2026-11-13: Retain exact rational physical clocks through evolution
+
+Previous turn: progress, composing bounded dyadic evolution. Source commit
+`6f2c110f3758c5059df7e852536769bc94bcd2b6` extends that path to exact rational
+physical horizons. For a<b, retain H=b-a and t=a+H*tau; Hypersolve constructs the
+source-bound DAG for H*f(a+H*tau,x). The existing field/Jacobian and Picard owners
+remain the sole derivative and ODE authorities. Original source guards survive
+zero output scaling, parameter expressions stay shared, and the original source,
+node mapping and exact affine specification remain available.
+
+Physical reports bind every accepted normalized proof to its original field and
+exact rational time interval. Physical endpoint materialization and final horizon
+equality must succeed before whole-request completion; exhaustion can withhold the
+final endpoint even after normalized integration completes. All normalized attempts,
+partial physical prefixes and separate mapping failures remain inspectable. Equal
+time is an identity without an ODE existence claim; empty/unit/invalid outcomes
+remain distinct. Options explicitly use normalized tau units. Replay validates
+original source/endpoints and regenerates the transformation and proofs. The
+README, crate overview and shipped example describe this path and its limits.
+
+The new borrowed rational admission view inspects raw stored coefficient sizes
+before delegating to Hyperreal, sharing the native dyadic counter. Its declared
+comparison/arithmetic weights and coefficient envelopes are not bounds on GCD
+steps, CPU work, temporary heap, scalar payloads or caches. Whole-resource closure
+remains open. The isolated package adds the required optional production Hyperreal
+dependency; external dependency versions are unchanged.
+
+All 20 final checks and eight supplementary groups pass: 199 native interval,
+1,418 Hypersolve and 487 dynamics/path tests including docs; minimal/default-off
+configurations; Rust 1.95, release and isolated package runs; strict Clippy/docs;
+WASM; shipped example; ASan; owning/path/point benches; 201 Interface tests; and
+format/diff/budget checks. Six clock tests exercise 49 uncertain constant flows
+with endpoint reuse, independent physical-time affine and Riccati controls,
+300-bit-close and 512-bit-large endpoints, exact physical coverage, invalid/empty/
+unit/identity cases, shared budget boundaries, partial materialization, cancellation,
+retry and fresh-process replay. Native/affine tests add 14,161 independent fraction
+pairs and 2,401 value/Jacobian samples. Initial compile, MSRV-command, Clippy and
+documentation diagnostics remain archived; no fixture, policy or assertion weakened.
+
+The unchanged constructor reproduces fixed full dispatch/reducer counts, work and
+serialized source. All 13 complete evolution report signatures match the baseline,
+including nine completed and four stopped workloads with every local proof and
+failure scope. Allocation and work rows match. The 200-row successive corpus keeps
+all geometry/outcome/complexity fields and allocator-call counts; concurrent smoke
+run timings are not used as a speed claim.
+
+Initial CBBC completed ratios were adverse (1.0051–1.1080, median 1.0710); reversed
+ordering varied substantially. Under the same two-second scoped CPU warm-up and
+balanced order, four runs per variant give retained-helper ratios 0.9205–1.0166,
+median 0.9936; seven medians are slower, with overlapping per-run ranges on adverse
+rows. No governor settings changed. All unfavorable timings remain, with no speedup
+or regression-free timing claim. A macro-sharing experiment supplied no clear
+completed-work benefit and was rejected; the final direct-helper source and binary
+were restored byte-for-byte. The unchanged release consumer shrinks from 4,084,752
+to 4,082,872 bytes; function union shrinks from 2,065,448 to 2,065,371 bytes.
+
+The new clock probe completes 18 integration/replay cases with all physical
+materialization and destruction, at observed medians 0.427–175.960 microseconds and
+maximum completed peak allocation 15,188 bytes. Its 36 deliberate budget failures
+and 12 zero-allocation large-coefficient rejections remain separate from completion.
+Every allocation epoch ends at zero live bytes. The new consumer is 4,028,456 bytes,
+an absolute measurement of a different workload, not a size-comparison claim.
+
+Evidence commit `fc47eefd79f70849ec1f43e7febf9e08d5a2c317`, record
+`docs/evidence/2026-11-13-interval-rational-time`: 184 files, 6,308,703 bytes,
+SHA-256 `ae7faec60dee7c80b7e6c25e6b00611b13662da19392b470a79798ef9af79db9`.
+The committed digest was regenerated and verified. The remaining legacy extraction
+still has 40 staged paths; only the accepted dependency/README/crate overview change
+its delta against the new base. All other original staged blobs and the Interface
+patch are preserved. Firmware and the isolated core remain clean. No push occurred;
+this is affected validation, not the complete pre-push workflow matrix. RK proposals,
+stronger wrapping/end covers, total resource closure, legacy retention, platform/HIL,
+release qualification and all other plan obligations remain open. The full goal
+stays active. This registration changes only the ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
