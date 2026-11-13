@@ -4629,6 +4629,67 @@ semantic transcripts, samples and section diagnostics remain. The full goal is
 active. Machine-profile delegation, positive arithmetic, integer scaling, named
 budgets and the other phase gates remain open; documentation is not completion.
 
+## 2026-11-13: Diagnose reducer linkage and reject interval-only ingress variants
+
+Phase 8 qualification continued on the same isolated CSGRS `3e4382664d` and
+Interface `ff668ca39` source, excluding the pending extraction. Main `f5ba9ce9b`
+differs only in ledger/index metadata. Missing API witnesses, input domains,
+ownership and acceptance gates were recorded before edits. No production
+source from this investigation is retained.
+
+The freshly rebuilt `borrowed_ops` baseline exactly matches its prior hash.
+A new typed scalar wrapper in a child module grows that artifact by 120 bytes;
+same-module inclusion grows it by 128; delegation through public scalar ingress
+grows it by 40. Disassembly and relocations establish that the child-module
+variant changes an existing direct reducer call into an indirect GOT call.
+Existing function bodies consequently grow despite unchanged source locations.
+These are measured failures, not a rationale to waive the artifact gate.
+
+Keeping Hyperreal unchanged avoids that scalar modification. Four interval-only
+variants were evaluated against the 806,000-byte native profile baseline:
+
+| Variant | Native profile bytes | Disposition |
+| --- | ---: | --- |
+| Infallible entry with formatted invariant failure | 806,440 | rejected |
+| Inline only the new interval entry | 806,408 | rejected |
+| Static invariant panic without scalar diagnostic formatting | 806,136 | rejected |
+| Propagate the existing scalar `Problem` result | 805,904 | rejected: WASM grows 1,064,908 → 1,064,948 bytes |
+
+The final scalar-result variant preserves valid input completion and original
+application error causes. It passes three new owner tests plus four existing
+rational tests in debug, release and ASan, affected-owner strict Clippy and
+warning-denying rustdoc. Independent endpoint checks cover 7,497 small cases,
+35 full-width boundary pairs and a 1,200-digit nominal, including subsequent
+operations. Three Interface migration tests pass, including fresh-process
+cold/warm dispatch checks under both policies. The full Interface run passes
+201 unit tests, one integration test and one doctest. No test or policy was
+weakened. Arbitrary rational arithmetic remains unbudgeted.
+
+Complete native profile values, identities and raw allocation totals match.
+The native defined-function union shrinks 438,574 → 438,468 bytes. The attributed
+`successive_operations` artifact stays at 21,930,560 bytes with byte-identical
+text. WASM replay preserves all corresponding transcripts, rejects invalid
+indices and makes zero host calls, but its binary-size gate fails. Wasmtime
+fuel rises by 132 for each of six successful profiles and 30 for the expected
+typed invalid profile. Fuel is not a browser latency measurement. No final
+scalar, measurement or successive-operation runtime campaign was executed after
+this failure; full benchmark, coverage, MSRV, browser, release and pre-push
+acceptance remain unclaimed.
+
+All three isolated worktrees are restored cleanly. Restored rational tests,
+199 Interface unit tests, its integration/doctest and both workspace formatting
+checks pass. Main's 41 staged paths and Interface's eight edits retain their
+previous exact patch digests. Firmware is unchanged; no push occurred.
+
+Evidence commit `d0402e24fe173be606a4e8744c1131b6d2a0f986`, record
+`docs/evidence/2026-11-13-interval-machine-profile-module`, contains 155 files,
+7,560,490 bytes, digest
+`2479b56c77710a018e91923799c8bd260b28cc7bd7c21e4e7d19e95e6ac0a43f`.
+Compiler artifacts remain outside the record with hashes; raw disassembly and
+strings retain their emitted whitespace. Scoped archive verification passes;
+all seven preceding frozen stages verify unchanged. The fifteen-phase goal
+and the unresolved machine-profile migration remain open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
