@@ -4499,6 +4499,70 @@ No push occurred; the full pre-push matrix remains required. Phase 11 retention,
 adaptive wrapping/QR, nonlinear composition, wider adoption, whole-resource
 closure, HIL and coordinated release remain open.
 
+## 2026-11-13: Reject broad and boundary-only dynamics inline experiments
+
+The previous turn retained exact state charts. This turn returns to the open
+phase-11 retention gate at `65a832b8cf108894fe0913a77f4253407f48c332` and the
+exact 41-path pending extraction. Main and Interface production sources remain
+unchanged. Two isolated experiments preserve method bodies, predicate order,
+error identities and report fields: twenty ordinary inline attributes on trait/
+error methods and compatibility wrappers, then only the five boundary methods.
+The source audit also verifies that the original owner benchmark differs only
+by the pending extraction's two deprecation allowances.
+
+Same-path Rust 1.95 builds reproduce baseline/extraction ELF sizes 13,312,600 /
+13,304,584 bytes and defined-function union sizes 8,044,187 / 8,036,358 bytes.
+The broad variant grows to 13,319,296 ELF and 8,059,498 function-union bytes,
+failing admission. Callback body expansion is visible in the symbol diagnostic;
+no full timing or functional qualification is claimed for this rejected variant.
+The narrow variant is 13,304,608 ELF and 8,036,427 function-union bytes, below
+the retained baseline. All 194 complete Debug result observations and warmed
+result/drop allocation rows match for the original extraction and both variants,
+with zero live-byte delta. These are differential observations, not independent
+geometry or canonical encoding proof. Dependency versions remain pinned.
+
+Six complete cost sweeps run in balanced order baseline/extraction/narrow/narrow/
+extraction/baseline, each with all 194 cases, one executable path/argv, CPU 0,
+scoped warm-up and ASLR disabled only for the subprocess. There are 65 cases
+for the original extraction and 109 for the narrow variant whose lower pointwise
+mean-confidence bounds in both runs exceed the upper bounds of both baseline
+runs. All 1,164 measured case executions and raw estimates remain. This is an
+observed per-case gate failure, not a family-wise statistical claim. The narrow
+variant improves parser-256 from the original extraction's ratio 1.06169 to
+0.94960, but has adverse separated ranges for skew (1.04129), rectangular-pad
+clearance (1.05064) and rational-quadratic evaluation (1.06147). No favorable
+aggregate, case removal, threshold change or selective repeat clears the failure.
+Host clock/governor and other activity are not controlled.
+
+After timing, 21 Callgrind runs measure seven cases across baseline, extraction
+and narrow variants, each with 32 warmed complete-result/drop callbacks. Parser,
+importer, skew and rectangular-pad instruction counts match exactly. Narrow
+inlining lowers lookahead and mixed-jerk counts relative to the original
+extraction, but remains above baseline: 2,507,304 versus 2,503,560 and 2,296,200
+versus 2,293,160 respectively. Symmetric jerk remains 2,053,160 versus 2,050,344.
+Removing the separate 256-byte metric-length adapter therefore does not remove
+all motion overhead. These are instruction-reference observations, not hardware
+cycles or an explanation of unchanged-instruction wall-time differences.
+
+Both experiments are rejected and reverted. The isolated worktree again matches
+the original 41-path patch exactly. After restoration, three routing tests and
+one axis-migration test pass, including fresh-process report/dispatch comparisons;
+format and whitespace checks pass. Six separately captured legacy/direct/compat
+transcripts under STRICT and APPROXIMATE_512 each contain 92 matching report/trace
+lines within policy. No count assertion changed. This focused restored-candidate
+validation does not claim a new full downstream/WASM/sanitizer/pre-push matrix.
+
+Evidence commit `6d1a1a33c32a537edf7803e749f4246920d5597a`, record
+`docs/evidence/2026-11-13-interval-dynamics-adapters`, contains 4,809 files,
+59,342,303 bytes, digest
+`5fe72cd01add9d288cc4b55ee5365b60d8c6f38628a758d66e9d48c75fe263d0`.
+The preceding coordinate and extraction-requalification stages verify unchanged.
+All 41 main staged paths, Interface's eight edits and clean firmware are preserved.
+No push occurred. Blanket wrapper inlining and boundary-only hints are now
+measured rejected approaches; ABI/return and code-generation retention work
+remains unresolved. The complete fifteen-phase goal and every other open phase
+remain active.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
