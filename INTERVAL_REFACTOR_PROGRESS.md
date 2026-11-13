@@ -3934,6 +3934,90 @@ stronger wrapping/end covers, total resource closure, legacy retention, platform
 release qualification and all other plan obligations remain open. The full goal
 stays active. This registration changes only the ledger and evidence manifest.
 
+## 2026-11-13: Verify source-bound primitive RK4 proposals
+
+Previous turn: progress, accepting exact rational physical clocks. Source commit
+`c7bfacdff04ca228193d4c6d0dd1a16a85c4e88c` adds the optional phase-12 RK proposal
+path. Hypersolve prepares a primitive view retaining the exact DAG, ordered
+bindings, demanded-node sharing, original guards and full-width integer powers.
+Hyperdynamics records four RK stages, heuristic padding, the unchanged exact
+request and partial failures. The candidate adopts finite IEEE coordinates exactly
+and is consumed by the existing source-bound Picard verifier. Only that verifier's
+report exposes a certified tube or endpoint. Native horizon integration remains
+available where float projection fails. Source/request/options are rebuilt for
+replay; numerical traces and serialized success flags are not certificates.
+
+Hyperinterval owns exact finite `DyadicInterval::from_f64` ingress. It shares the
+existing decoder and admission-before-allocation point construction with enclosure
+conversion, without requiring strict-float platform qualification or Hyperreal.
+NaN/infinity are typed invalid inputs; subnormals retain their exact values and
+signed zero canonicalizes. Importing 0.1_f64 adopts its binary value, not 1/10 or
+an earlier source. No exact evaluator or native integrator is replaced.
+
+Final review reproduced a new-option validation defect in debug: DAZ admits a
+negative subnormal through native `< 0.0` checks, in eight modes for each of two
+padding fields. The release baseline already rejects those inputs through different
+optimized lowering; that passing baseline is retained. Reusing the existing
+bit-ordered `[0,padding]` constructor rejects all 32 cases in both configurations.
+Negative zero remains valid and its bits remain in the trace. The failed debug
+baseline and existing MXCSR helper are retained with the executable reproduction.
+
+All 23 primary, 12 supplementary and 14 final boundary-check groups pass. The
+post-layout suites report 204 Hyperinterval, 1,422 Hypersolve and 496 dynamics/path
+tests including applicable docs; the isolated accepted package reports 37 and
+Interface reports 201. Coverage includes minimal/default-off configurations,
+Rust 1.88 minimal ingress and Rust 1.95 field/program, release, ASan, strict Clippy
+and docs, WASM, no-std thumb ingress compilation, examples, owner benches and
+formatting. Independent controls cover the complete owned primitive grammar,
+4,096 seeded IEEE/Rational pairs, 49 uncertain constant flows, affine/exponential/
+oscillator/Riccati cases, rounded-away source-domain failure, poor candidates,
+stage poles, every graph cutoff, scalar exhaustion, cancellation/retry, empty/unit
+and invalid inputs. Certified output feeds native evolution and rational clocks.
+Five fresh-process cases rebuild source/request/options and compare retained
+numerical bits, exact evidence, status and resource counts; bad references and
+bindings are rejected. Full-resource and universal ODE completeness are not claimed.
+
+All 13 old evolution report signatures agree with the accepted baseline, including
+nine completed and four stopped reports with complete attempt/proof/prefix scopes.
+Fixed constructor dispatch/work assertions remain unchanged; IEEE conversions have
+zero Hyperreal dispatch and no predicate-policy parameter. The 200-row successive
+corpus preserves geometry, certainty, complexity and allocator counts. Its timings
+are smoke validation, not a performance claim.
+
+Matched old conversion, strict-float and native-evolution executable `.text` bytes
+are identical; function unions remain 484,827, 271,197 and 2,065,371 bytes. Raw file
+sizes are 1,131,416 (eight fewer), 499,936 (unchanged), and 4,082,872 (unchanged).
+An initial declaration layout enlarged symbol metadata; keeping existing impl
+order and appending optional APIs removes the increase without changing execution
+order. All measured old exact/work/allocation rows agree and live-byte deltas end
+at zero. Initial balanced timing ratios span 0.99099–1.01841 for conversion,
+0.99720–0.99770 for strict float, and 0.98824–1.03847 for native evolution. The last
+has median 1.01097 and a nonoverlapping adverse Riccati row. A follow-up normalizes
+the executable path/argv and retains both original binaries: ratios 0.98219–1.02648,
+median 0.99539, all run ranges overlap, Riccati 0.99036. Both data sets remain.
+Identical executable code and resource results support retention; no speedup or
+regression-free timing claim is made.
+
+Four successful RK fixtures separately measure preparation, proposal plus exact
+proof, and source serialization/rebuild plus proposal/proof. Warm host medians are
+0.164–0.394, 6.748–13.352 and 13.875–23.544 microseconds; maximum measured peak owned
+bytes are 3,768. Rejected-proof and 15 controlled-exhaustion rows remain separate.
+The new consumer is 4,084,144 file bytes and 2,034,974 function-union bytes, an
+absolute measurement of a different workload. Projection/refinement, total CPU
+work and whole-heap bounds remain outside the declared counters.
+
+Evidence commit `01fd673011500a4e6fc679005ea509ceba75aca5`, record
+`docs/evidence/2026-11-13-interval-rk-proposals`: 204 files, 5,883,677 bytes,
+SHA-256 `24e03ab992b385d209e6ff75eb88720d8164c0868c84aacbc48e740c0b13fb5e`.
+The committed digest was regenerated and verified. All 40 staged legacy paths
+remain: 38 blobs unchanged, manifest/README incorporating the accepted API while
+preserving legacy edits. The Interface patch is unchanged; firmware and accepted
+core are clean. No push occurred; this is affected validation, not the complete
+pre-push matrix. Automatic RK horizon selection, wrapping/reachability, whole-
+resource closure, legacy retention, platform/HIL and the other plan obligations
+remain open. The full goal stays active. This registration changes only the
+ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
