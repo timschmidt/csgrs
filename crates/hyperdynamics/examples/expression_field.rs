@@ -1,11 +1,13 @@
 //! An owned time-dependent field, verified steps and bounded horizon integration.
 use hyperdynamics::field::{
     EnclosedVectorField, EnclosureBudget, EnclosurePolicy, ExpressionField, FieldDefinition,
+    clock::ClockStatus,
     evolution::{EvolutionOptions, EvolutionRequest, EvolutionStatus},
     picard::{PicardProposal, PicardStatus},
 };
 use hyperinterval::DyadicInterval;
 use hyperlattice_interval::BoxN;
+use hyperreal::Rational;
 use hypersolve::{
     Expr, SymbolId,
     expression_program::{ExpressionBudget, ExpressionProgram},
@@ -104,6 +106,27 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         horizon.segments().len(),
         horizon.attempts().len(),
         horizon.end_enclosure()
+    );
+    let physical = field.on_time_span(
+        Rational::fraction(1, 3)?,
+        Rational::fraction(2, 3)?,
+        &mut budget,
+    )?;
+    let rational_horizon = physical.integrate(
+        BoxN::new([d(1, 1), d(0, 0)])?,
+        EvolutionOptions {
+            // One quarter of the normalized clock is 1/12 physical time here.
+            maximum_step: Some(DyadicInterval::point(1.into(), -2)?),
+            ..Default::default()
+        },
+        &mut budget,
+    );
+    assert!(matches!(rational_horizon.status(), ClockStatus::Completed));
+    assert_eq!(rational_horizon.reached_time(), &Rational::fraction(2, 3)?);
+    println!(
+        "{} certified physical segments reach exact rational time 2/3; endpoint {:?}",
+        rational_horizon.segments().len(),
+        rational_horizon.end_enclosure()
     );
     Ok(())
 }

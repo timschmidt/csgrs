@@ -21,6 +21,8 @@ use crate::{Expr, SymbolId, SymbolRef, work_budget::CancellationToken};
 mod dyadic;
 #[cfg(feature = "interval-program")]
 pub use dyadic::RegularJacobianEnclosure;
+mod affine;
+pub use affine::{AffineParameterization, AffineProgram};
 mod jacobian;
 pub use jacobian::JacobianProgram;
 

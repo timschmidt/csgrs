@@ -1,6 +1,8 @@
 //! Owned dyadic fields. Scalar refinement and payload costs retain the
 //! Hypersolve accounting exclusions; these are not yet whole-work-bounded ODEs.
 
+/// Exact rational physical time through a source-bound affine clock.
+pub mod clock;
 /// Bounded native proposals and certified finite-horizon composition.
 pub mod evolution;
 /// Source-bound Picard self-map and contraction verification for dyadic steps.
@@ -308,27 +310,40 @@ impl<const N: usize> ExpressionField<N> {
             }
         }
         let source = ExpressionProgram::from_definition(definition.source, &mut budget.graph)?;
+        Self::from_validated_source(source, definition.time, definition.state, inputs, budget)
+    }
+
+    // Shape, time/state separation and the source graph are already validated.
+    // Reparameterization preserves those invariants and can share the owned DAG.
+    // Keep the same constructor effects/order when called from from_definition.
+    #[inline(always)]
+    fn from_validated_source(
+        source: ExpressionProgram,
+        time: SymbolId,
+        state: Vec<SymbolId>,
+        inputs: usize,
+        budget: &mut EnclosureBudget,
+    ) -> Result<Self, FieldError> {
         let mut bindings = Vec::new();
         for id in &source.definition().variables {
             budget.graph.charge(inputs)?;
-            bindings.push(if *id == definition.time {
+            bindings.push(if *id == time {
                 Input::Time
             } else {
                 Input::State(
-                    definition
-                        .state
+                    state
                         .iter()
                         .position(|state| state == id)
                         .ok_or(FieldError::UnexpectedBinding(*id))?,
                 )
             });
         }
-        let jacobian = source.jacobian(&definition.state, &mut budget.graph)?;
+        let jacobian = source.jacobian(&state, &mut budget.graph)?;
         budget.graph.charge(2)?;
         let identity = FieldIdentity(Arc::new(IdentityData {
             source,
-            time: definition.time,
-            state: definition.state,
+            time,
+            state,
         }));
         let field = Self {
             data: Arc::new(FieldData {

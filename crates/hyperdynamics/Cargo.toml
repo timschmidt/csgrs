@@ -15,11 +15,12 @@ all-features = true
 
 [features]
 default = []
-field = ["dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
+field = ["dep:hyperreal", "dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
 serde = ["dep:serde", "hypersolve?/serde", "hyperlattice-interval?/serde"]
 dispatch-trace = ["hypersolve?/dispatch-trace", "hyperinterval?/dispatch-trace"]
 
 [dependencies]
+hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false, optional = true }
 hypersolve = { version = "0.4.0", path = "../hypersolve", default-features = false, optional = true }
 hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["hyperreal"], optional = true }
 hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", default-features = false, features = ["dyadic"], optional = true }

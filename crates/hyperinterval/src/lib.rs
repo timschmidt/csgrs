@@ -55,6 +55,8 @@ mod logarithm;
 mod proposal;
 #[cfg(feature = "rational")]
 mod rational;
+#[cfg(all(feature = "rational", feature = "dyadic"))]
+mod rational_admission;
 #[cfg(feature = "real-ball")]
 mod real_ball;
 mod split;
@@ -78,6 +80,8 @@ pub use integer::{IntegerEndpoint, IntegerRange};
 pub use proposal::{F32ProposalInterval, F64ProposalInterval};
 #[cfg(feature = "rational")]
 pub use rational::RationalInterval;
+#[cfg(all(feature = "rational", feature = "dyadic"))]
+pub use rational_admission::RationalArithmetic;
 #[cfg(feature = "real-ball")]
 pub use real_ball::{BallRelation, RealBall};
 pub use state::{DomainCoverage, IntervalError, MidpointRounding, RangeEnclosure, SignSet};

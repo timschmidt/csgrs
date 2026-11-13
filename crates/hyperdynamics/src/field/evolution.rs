@@ -203,6 +203,10 @@ impl<const N: usize> EvolutionReport<N> {
     pub fn segments(&self) -> impl ExactSizeIterator<Item = &PicardReport<N>> {
         self.segments.iter().map(|&i| &self.attempts[i].report)
     }
+    /// Indexed certified segment without scanning the retained attempts.
+    pub fn segment(&self, index: usize) -> Option<&PicardReport<N>> {
+        self.segments.get(index).map(|&i| &self.attempts[i].report)
+    }
     /// Whole-horizon status, separate from the available prefix.
     pub fn status(&self) -> &EvolutionStatus {
         &self.status
