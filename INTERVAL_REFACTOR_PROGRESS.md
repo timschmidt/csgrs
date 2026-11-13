@@ -52,7 +52,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | not started | proof/cost/trace admission |
-| 11 path dynamics | not started | domain-neutral extraction and exact field equivalence |
+| 11 path dynamics | axis-projection candidate implemented; retention gate open | owner timing/binary regression; remaining metric/join, feed/lookahead/jerk extraction |
 | 12 ODE/reachability | not started | certified tubes, bounded refinement, analytic oracles |
 | 13 Taylor/adoption | not started | consumer evidence and remainder/wrapping proofs |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
@@ -2964,6 +2964,69 @@ Source commit `e58498cfbdb851cdf1c69c5839c1d3d9baf0b242`; evidence commit
 56 files, 575,198 bytes, SHA-256
 `43fdf5e35cb750fa2b561ceded58000d896982c3ad21623a6c5a10e11a6c5cfc`. The committed record was regenerated and verified;
 every previous archive row remains unchanged.
+
+## 2026-11-12: Hyperdynamics axis extraction candidate, retention gate open
+
+The preceding turn progressed by fixing dyadic zero alignment. Baseline CSGRS
+`0d17fe178839b002b95173adf1f05137291639f3`, Interface
+`ff668ca39d5e1ecee91b438b20eca806f3a26f29`, all managed trees initially clean.
+Plan Phase 11's affine axis projection is now implemented as a pending
+Hyperdynamics candidate. It depends only on lower scalar/predicate/solver
+crates. Hyperpath keeps type aliases and deprecated one-release function
+wrappers; Interface calls the new owner while preserving its Route error
+boundary. The production edits remain uncommitted and unaccepted. This entry
+records qualification and an adverse gate, not completion or permission to
+ignore that gate.
+
+The moved body is identical after its error/import rename and the repository's
+formatter. A frozen test-only original establishes equality of every full
+report and dispatch snapshot for 56 fixtures, both policies and fresh processes
+through direct and legacy entry points. Independent exact minima, first-tie
+selection, invalid input and unresolved symbolic cases pass. Fixed first-case
+trace counts are 9 rational comparisons, 40 structural sign queries, 1,220
+total events and zero GCDs. The full owner suites pass (444 baseline; 448 with
+new tests), Interface passes 201 tests/doctests, strict Clippy/docs/Wasm compile
+and formatting checks pass, and ASan passes the four focused tests. A separately
+checked-out Interface/CSGRS baseline supplies the maintained golden planner
+transcript: 41,795 bytes, SHA-256
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`.
+The new caller passes that golden plus the existing exact lowering assertions.
+
+Both successive_operations runs complete 200 certified manifold rows with
+matching structural and allocation columns. The audited complete dependency
+graphs are identical and contain neither Hyperpath nor Hyperdynamics. Concurrent
+build activity prevents treating those elapsed times as a controlled comparison.
+The completed projection probe preserves checksums and allocations; its twelve
+local ratios span 0.949–1.015 with substantial drift. Its executable shrinks
+3,780,856 -> 3,536,808 bytes, and the affected 17 generic formatting/drop symbols
+remain 2,848 bytes. These favorable narrow observations do not clear the owner
+gate.
+
+All 194 owning Criterion cases complete, but several unchanged Specctra parsers
+regress. Targeted reruns retain roughly 198–200 microseconds for 256-record
+parsing versus 171–172 microseconds before extraction. The owning benchmark
+binary grows 13,308,824 -> 13,319,976 bytes (+11,152; text +6,896). A candidate
+build in the original absolute directory is byte-identical, ruling out that
+path difference. Restoring the old implementation while retaining the new
+dependency restores original timing. Thus the candidate has an unresolved
+movement/code-generation/layout effect; it cannot be retained as an accepted
+behavior-preserving refactor. No unrelated parser optimization, relaxed test or
+favorable-only performance claim was used to bypass this finding.
+
+The pending source and Interface patches, raw samples, locks, source-equivalence
+check, baseline canonical witness, failed initial checks and controlled build
+patches are archived below. The isolated `dynamics-axis-baseline` checkout now
+contains the dependency-only control; it is not a clean baseline. Primary
+worktrees retain the extraction candidate for continued work. Next work must
+resolve the owner cost gate while completing the planned domain-neutral
+feed/lookahead/jerk boundary, preserving lazy metric/join calls and their exact
+receipts. All prior gaps and the full 15-phase goal remain active. No push ran.
+
+Unaccepted candidate source is bound by CANDIDATE.json and both retained patches.
+Evidence commit `865da1ad11b25edc855307a42fab454f504a84ad`, record
+`docs/evidence/2026-11-12-interval-dynamics-axis-candidate`: 1793 files, 5,920,196 bytes,
+SHA-256 `e628a7082d95447935348bc96e8e3a439623c17edd3c801a2768e259155d89c4`. The committed record was
+regenerated and verified; all previous archive rows remain unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
