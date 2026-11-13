@@ -510,6 +510,7 @@ docs/evidence/2026-11-12-interval-tangent	619	124164420	1b2ebd6f32b5d317c8c98d6b
 docs/evidence/2026-11-12-interval-trigonometry	595	110663701	de993c4af15dcdc1d908c3e1266f23db89f379b36a4fb29278979c72583a5542
 docs/evidence/2026-11-13-interval-expression-field	132	10403504	f648855fd472e7dff357cbe3735cb3361123350f819336a12812826a9fba7c51
 docs/evidence/2026-11-13-interval-expression-images	123	21371619	e61bb904dae9d0cede8772e607a4915289a6bd4098c73fa2fccfb9736c56ec7c
+docs/evidence/2026-11-13-interval-picard-step	101	6565124	add71eb4bce245b2fb6f7d9a07fc2d42aa8973e0d8a0895f1e748d490f27be39
 docs/evidence/2026-11-13-interval-program-jacobians	80	12401121	f04ba69ed417f79f63b5f09ab753af70e25bb9cb46fc613f6518e457852c0850
 docs/evidence/2026-11-13-interval-rational-constant-budget	108	8903429	1ecfb2cd02584490820249811dbca613cda0bbfd390e85b96d1141655d3f14aa
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912

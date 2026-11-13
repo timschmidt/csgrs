@@ -3736,6 +3736,68 @@ existence/uniqueness, bounded halving, exact horizon/end enclosures and flow tub
 remain open, as do earlier unresolved phases and the extraction retention gate.
 The full goal stays active. This registration changes only the ledger and manifest.
 
+## 2026-11-13: Verify source-bound dyadic Picard steps
+
+Previous turn: progress, admitting rational coefficient costs before copying.
+Source commit `f6c48522d2784b6bbd4adf4dbeae6466758b3aec` adds a sufficient
+source-domain regular Jacobian enclosure in Hypersolve, native vector scale in
+Hyperlattice-interval, and a one-step Picard verifier in Hyperdynamics. Original
+source continuity and strict active primitive domains establish state regularity;
+time-only square roots can include zero. Conservative regularity rejection is
+not proof of nondifferentiability. No serialized flag is accepted as proof.
+
+For exact dyadic singleton times and caller-supplied X0/Y, the verifier checks
+forward time, X0 subset Y, P = X0 + [0,h]F(T,Y) subset Y and h*upper(||J||inf)<1.
+It checks the final endpoint contribution before certification. Immutable reports
+retain source, proposal, policy, completed intermediate evidence and typed status.
+Failed proposals expose no certified endpoint/tube. Empty initial sets and the
+nonempty zero-dimensional unit remain distinct. Native outward integral images
+include rounding; no Taylor contribution is discarded or exact point trajectory
+claimed. The shipped time-dependent example consumes its first endpoint in a
+second certified step with shared counters.
+
+All 21 final qualification commands and two supplementary checks pass: 876
+Hypersolve owner tests, 473 dynamics/path tests, 80 Cartesian interval tests,
+feature-minimal/default-off and MSRV configurations, release, strict all-target
+Clippy/docs, Wasm, AddressSanitizer, isolated field package, shipped example,
+12 point benchmark smoke cases, formatting/diffs and repository budgets. Nine
+added tests and existing-test extensions cover independent analytic expectations,
+49 uncertain constant-field chains, a nonsymmetric Jacobian, temporal versus
+state singularity, invalid/empty/unit inputs, final-contribution exhaustion,
+shared budgets, cancellation/retry and fresh-process symbolic replay. No existing
+assertion, policy or fixture was weakened. This is affected validation, not the
+complete pre-push workflow matrix; no push occurred.
+
+The new external probe completes 15 timing rows, with three proposal rejection
+rows, 21 exhaustion-boundary rows and seven budget-16 trials reported separately.
+Completed medians span 0.565–20.172 microseconds, peak measured temporary storage
+is 3,312 bytes, and every allocation epoch ends with zero live-byte delta.
+Verification, source replay and a two-step chain include full report materialization
+and destruction. An initial probe incorrectly expected an empty step to exhaust
+budget 16; the corrected probe retains that successful case and checks measured
+required work minus one. The original failure and build diagnostics are archived.
+
+Matched parent/candidate field probes complete the same 35 workloads plus 21
+exhaustion cases. Allocation, peak-memory and graph/scalar counts are identical.
+CBBC and reverse BCCB measurements retain every sample and adverse result:
+pooled median ratios range 0.9553–1.1134, overall median 1.0198; 21 rows are slower.
+This is a proof-capability extension, not a performance optimization or a claim
+of regression-free timing. Existing field-consumer bytes fall 3,934,184 to
+3,931,664, sized function union 1,992,586 to 1,991,490. Point benchmark .text and
+.rodata are identical and its function union remains 3,150,521 bytes. The distinct
+Picard probe is 4,022,968 bytes with a 2,037,790-byte function union; this is an
+absolute artifact measurement, not an incremental feature-size comparison.
+
+Evidence commit `3d0eb55d91617bb9b6253e3a45ef830562d2683b`, record
+`docs/evidence/2026-11-13-interval-picard-step`: 101 files, 6,565,124 bytes,
+SHA-256 `add71eb4bce245b2fb6f7d9a07fc2d42aa8973e0d8a0895f1e748d490f27be39`.
+The committed digest was regenerated and verified. The 40-path pending dynamics
+patch and Interface patch are byte-preserved; Firmware and the isolated core are
+clean. General symbolic/resource accounting, rational time endpoints, automatic
+bounded halving/proposals, horizon integration and complete flow-tube aggregation
+remain open. The legacy extraction retention gate and full fifteen-phase goal
+remain active. This registration changes only the ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
