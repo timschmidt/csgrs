@@ -131,3 +131,35 @@ fn unrepresentable_dense_jacobian_is_a_typed_failure() {
         );
     }
 }
+
+#[test]
+fn identity_power_derivative_accepts_zero_and_retains_base_guards() {
+    let symbol = SymbolId(0);
+    let x = || Expr::anonymous_symbol(symbol);
+    let derivative = x().powi(1).derivative(symbol);
+    for point in [-2, 0, 3] {
+        let bindings = HashMap::from([(symbol, Real::from(point))]);
+        assert_eq!(derivative.eval_real(&bindings).unwrap(), Real::one());
+    }
+    let guarded = x().ln().powi(1).derivative(symbol);
+    for point in [1, 2] {
+        let bindings = HashMap::from([(symbol, Real::from(point))]);
+        assert_eq!(
+            guarded.eval_real(&bindings).unwrap(),
+            (Real::one() / Real::from(point)).unwrap()
+        );
+    }
+    for point in [-1, 0] {
+        let bindings = HashMap::from([(symbol, Real::from(point))]);
+        assert!(matches!(
+            guarded.eval_real(&bindings),
+            Err(ExprEvalError::Hyperreal(_))
+        ));
+    }
+    // Identity powers must not turn an actually singular derivative into zero.
+    let singular = x().sqrt().powi(1).derivative(symbol);
+    assert!(matches!(
+        singular.eval_real(&HashMap::from([(symbol, Real::zero())])),
+        Err(ExprEvalError::Hyperreal(_))
+    ));
+}

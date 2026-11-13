@@ -50,8 +50,12 @@ graphs with ordered bindings and validated replay. It retains the existing
 `Expr` grammar and exact scalar definitions. Enable `serde` to serialize its
 unvalidated definitions; load them through `ExpressionProgram::from_definition`
 before evaluation. Graph budgets cover structural work and entry counts, not
-scalar arithmetic or heap bytes. Bounded derivative construction and validated
-evolution remain separate work. Run the source and
+scalar arithmetic or heap bytes. `ExpressionProgram::jacobian` builds symbolic
+partials through bounded local templates and a shared DAG, retaining original
+source guards and ordered differentiation variables for replay. Its combined
+program evaluates source outputs before column-major partials. This bounds graph
+expansion, not total scalar work; removable derivative singularities can still
+prevent evaluation. Validated evolution remains separate work. Run the source and
 symbolic-Jacobian example with:
 
 ```sh
@@ -63,7 +67,7 @@ definition and refusing partial-domain images. Graph work and dyadic arithmetic
 have separate budgets; Hyperreal constant refinement is outside their total-work
 accounting. This is an interval expression evaluator, not a validated ODE solver.
 Run `cargo run -p hypersolve --features interval-program --example enclosed_program`
-for an oscillator image and symbolic-Jacobian enclosure.
+for an oscillator image and source-bound symbolic-Jacobian enclosure.
 
 `work_budget::with_budget` bounds instrumented root-subdivision and tensor-image
 promotion attempts across nested synchronous operations. Exhaustion is a typed

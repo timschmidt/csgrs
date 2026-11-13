@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Add graph-bounded `ExpressionProgram::jacobian` construction through the
+  existing symbolic derivative rules and shared source references. Retain source
+  guards, ordered variables and replay by regeneration. This does not establish
+  global smoothness or bound all scalar arithmetic and payload costs.
+- Correct identity-power derivatives at a zero base while retaining the base's
+  original domain guards; `x^1` no longer introduces an artificial `x != 0` guard.
+
 - Add experimental `interval-program` evaluation of owned expressions over
   dyadic input boxes. Preserve
   source guards, including Expr's exclusion of zero-to-zero. Refuse partial

@@ -2,9 +2,9 @@
 //!
 //! This experimental prerequisite for enclosed vector fields preserves every
 //! [`Expr`] operation and its domain guards. The `interval-program` feature adds
-//! certified dyadic images with complete-domain checks. Derivative construction
-//! and trajectory certification remain separate. Graph limits are distinct from
-//! scalar arithmetic limits.
+//! certified dyadic images with complete-domain checks. Source-bound Jacobian
+//! construction has graph limits; trajectory certification remains separate.
+//! Graph limits are distinct from scalar arithmetic limits.
 //!
 //! Definitions are data, not evidence. After deserialization, call
 //! [`ExpressionProgram::from_definition`] to validate references and bindings.
@@ -19,6 +19,8 @@ use crate::{Expr, SymbolId, SymbolRef, work_budget::CancellationToken};
 
 #[cfg(feature = "interval-program")]
 mod dyadic;
+mod jacobian;
+pub use jacobian::JacobianProgram;
 
 /// An operation on two expressions, preserving left-to-right evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

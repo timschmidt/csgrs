@@ -15,21 +15,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Expr::anonymous_symbol(velocity),
         -Expr::anonymous_symbol(position),
     ];
-    let mut outputs = field.to_vec();
-    for component in &field {
-        for variable in [position, velocity] {
-            // Existing symbolic authority; derivative construction is outside
-            // the program's structural graph budget.
-            outputs.push(component.derivative(variable));
+    let mut budget = ExpressionBudget::new(100, 1_000);
+    let source = ExpressionProgram::compile(&field, &[time, position, velocity], &mut budget)?;
+    let jacobian = source.jacobian(&[position, velocity], &mut budget)?;
+    let replay_source =
+        ExpressionProgram::from_definition(jacobian.source().definition().clone(), &mut budget)?;
+    let replay = replay_source.jacobian(jacobian.variables(), &mut budget)?;
+    assert_eq!(
+        jacobian.program().definition(),
+        replay.program().definition()
+    );
+    let values = replay
+        .program()
+        .eval_real(&[Real::zero(), Real::from(2), Real::from(3)], &mut budget)?;
+    assert_eq!(values[..2], [3, -2].map(Real::from));
+    for (row, entries) in [[0, 1], [-1, 0]].into_iter().enumerate() {
+        for (column, entry) in entries.into_iter().enumerate() {
+            assert_eq!(
+                values[replay.partial_output(row, column).unwrap()],
+                Real::from(entry)
+            );
         }
     }
-    let mut budget = ExpressionBudget::new(100, 1_000);
-    let program = ExpressionProgram::compile(&outputs, &[time, position, velocity], &mut budget)?;
-    drop(outputs);
-    let replay = ExpressionProgram::from_definition(program.definition().clone(), &mut budget)?;
-    assert_eq!(program.definition(), replay.definition());
-    let values = replay.eval_real(&[Real::zero(), Real::from(2), Real::from(3)], &mut budget)?;
-    assert_eq!(values, [3, -2, 0, 1, -1, 0].map(Real::from));
     println!("exact field: (3, -2); Jacobian: [[0, 1], [-1, 0]]");
     Ok(())
 }

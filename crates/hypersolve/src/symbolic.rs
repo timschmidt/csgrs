@@ -366,6 +366,10 @@ impl Expr {
             Self::PowI(value, exponent) => {
                 if *exponent == 0 {
                     Self::zero()
+                } else if *exponent == 1 {
+                    // x^0 excludes zero in the scalar grammar. Retain the
+                    // base's domain checks without inventing that exclusion.
+                    Self::zero() * (*value.clone()) + value.derivative(symbol)
                 } else if *exponent == i64::MIN {
                     // The derivative exponent is below this node's storage range.
                     // x^n / x retains the original negative power's x != 0 domain.

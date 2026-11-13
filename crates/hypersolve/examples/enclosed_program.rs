@@ -16,16 +16,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Expr::anonymous_symbol(velocity),
         -Expr::anonymous_symbol(position),
     ];
-    let mut outputs = field.to_vec();
-    for component in &field {
-        for variable in [position, velocity] {
-            // Symbolic derivative construction still has a separate resource
-            // gap. It is not included in the graph/evaluation budgets below.
-            outputs.push(component.derivative(variable));
-        }
-    }
     let mut graph = ExpressionBudget::new(100, 1_000);
-    let program = ExpressionProgram::compile(&outputs, &[time, position, velocity], &mut graph)?;
+    let source = ExpressionProgram::compile(&field, &[time, position, velocity], &mut graph)?;
+    let jacobian = source.jacobian(&[position, velocity], &mut graph)?;
+    let program = jacobian.program();
     let state = [d(0, 1, -2), d(1, 2, 0), d(-1, 1, 0)];
     let result = program.eval_dyadic(
         &state,
@@ -33,17 +27,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut graph,
         &mut DyadicBudget::new(16_384, 1_000_000_000),
     )?;
-    assert_eq!(
-        result,
-        [
-            d(-1, 1, 0),
-            d(-2, -1, 0),
-            d(0, 0, 0),
-            d(1, 1, 0),
-            d(-1, -1, 0),
-            d(0, 0, 0)
-        ]
-    );
+    assert_eq!(result[..2], [d(-1, 1, 0), d(-2, -1, 0)]);
+    for (row, entries) in [[0, 1], [-1, 0]].into_iter().enumerate() {
+        for (column, entry) in entries.into_iter().enumerate() {
+            assert_eq!(
+                result[jacobian.partial_output(row, column).unwrap()],
+                d(entry, entry, 0)
+            );
+        }
+    }
     println!("field: ([-1,1], [-2,-1]); Jacobian: [[0,1], [-1,0]]");
     Ok(())
 }
