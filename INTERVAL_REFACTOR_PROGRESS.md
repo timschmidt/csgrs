@@ -3028,6 +3028,78 @@ Evidence commit `865da1ad11b25edc855307a42fab454f504a84ad`, record
 SHA-256 `e628a7082d95447935348bc96e8e3a439623c17edd3c801a2768e259155d89c4`. The committed record was
 regenerated and verified; all previous archive rows remain unchanged.
 
+## 2026-11-12: Exact metric-span and jerk extraction candidate, cost gates still fail
+
+The preceding turn implemented the axis candidate and reproduced its retention
+failure. This turn extends that pending work from ledger HEAD
+`26be8eeb7eb214cbf62440269a3eb11b4ad9c85a`; the earlier adverse archive remains
+immutable. Phase 11 now has a geometry-independent `MetricSpan` protocol,
+constant-jerk replay and two-phase monotonic planning in Hyperdynamics.
+Hyperpath supplies exact lengths from retained line, explicit arc, cubic PH and
+quintic PH sources. Its concrete entry points remain deprecated wrappers and
+report aliases; Interface imports the new operations and preserves Route error
+boundaries. All 26 legacy error variants map explicitly in both directions.
+The production changes remain pending and unaccepted.
+
+The original jerk body is identical after the documented import/error rename,
+generic input and lazy length-method substitutions, and formatting. Length
+queries retain their original order and repeated replay requests. Shared
+positive/nonnegative checks preserve decision certainty, stage and refinement
+requirements; legacy internal wrappers retain their old flattened errors. The
+axis positive-limit helper reuses this authority without extra classifications.
+The metric trait is an exact-input contract, not certification of arbitrary
+geometry. No cumulative resource, ODE or universal closure claim is added.
+
+A frozen original module and original guards match complete reports and full
+dispatch snapshots for 43 fixtures, both policies and fresh original/direct/
+compatibility processes. The first fixture fixes 35 structural sign queries,
+5,287 total events and zero GCDs. The earlier 56-fixture axis differential and
+its fixed counts also pass. Four new lower-layer tests independently exercise
+integrated phase identities, violated continuity/caps, lazy query precedence,
+failed-source retry and check metadata. Existing hard cases and assertions
+remain. Final owner tests pass 453; Interface passes 201 tests/doctests and the
+unchanged 41,795-byte planner transcript SHA-256
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`.
+All ten selected final checks pass: strict owner/Interface Clippy, docs, Wasm
+compile, owner bench smoke, successive operations, Interface tests, formatting
+and diff validation. ASan was not rerun in this step; its earlier scope is not
+extended by implication. No pre-push matrix or push ran.
+
+Successive operations again completes 200 certified manifold rows with the
+same structural and allocation columns as the original baseline. Its unchanged
+complete dependency graph contains neither Hyperpath nor Hyperdynamics; elapsed
+times are not used as a controlled comparison. Both owner Criterion runs finish
+all 194 cases after builds stop, pinned to CPU 0. Broad ratios have median
+0.9989 and range 0.8632–1.3062. Alternating targeted reruns retain 256-record
+parser means of 171.817/171.347 us at baseline versus 182.085/186.832 us for the
+candidate. Several other parser regressions persist. Broad jerk gains largely
+disappear in the repeats; they cannot support a no-regression claim.
+
+The owning executable grows 13,308,824 -> 13,379,488 bytes (+70,664), with
+text +52,256. Full symbols show additional scalar/solver instantiations.
+The narrow report/geometry Debug/Clone/drop subset shrinks 6,788 -> 6,705 bytes,
+but that excludes broader growth and does not establish the monomorphized-code
+gate. The baseline is its preserved, hash-verified original executable; the
+isolated checkout remains the earlier dependency-only control and was not
+rebuilt for these measurements. Binary and timing gates therefore still fail.
+No test, policy or fixture was weakened to accept the extraction.
+
+Next work must investigate cross-crate instantiation/code-generation boundaries
+with isolated cost evidence while completing exact metric/join ownership.
+Feed/lookahead extraction, join evidence, general functions/reachability and
+all earlier plan obligations remain open. Current work is progress on a pending
+candidate, not an accepted refactor or completed phase. CANDIDATE.json binds both
+complete pending patches to their base revisions; initial failures, original
+references, all final transcripts, raw samples and adverse measurements are kept.
+
+Evidence commit `ab370e01cac14702b7e6c4a514361a6a36da071a`, record
+`docs/evidence/2026-11-12-interval-dynamics-jerk-candidate`: 1792 files,
+13,769,446 bytes, SHA-256
+`316eb2b0cbc29314d3f61bf8619e3424082e6d543e3d40c1cea7b10a1a5afd4f`.
+The committed record was regenerated and verified, preserving all earlier
+manifest rows. Only this ledger and the archive manifest are committed here;
+production code remains staged for continued qualification.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
