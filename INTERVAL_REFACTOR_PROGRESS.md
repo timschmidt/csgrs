@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine output forms and field consumers retained after local qualification | ODE wrapping, nonlinear model composition, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms, fixed exact state charts and one-step Picard transport retained after local qualification | adaptive ODE wrapping/QR, nonlinear model composition, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4409,6 +4409,95 @@ budget passes at 4,147 files and 142,849,433 bytes before this registration. No
 push occurred; the complete pre-push matrix remains required before publication.
 Phase 11 retention, ODE wrapping/QR, nonlinear composition, wider adoption,
 competitive comparisons and all other open plan phases remain in scope.
+
+## 2026-11-13: Retain fixed exact state charts and Picard transport
+
+The full fifteen-phase goal remains active. Source
+`de56e383c3754f77896e9cde939b5207b784ab91` adds opt-in coordinate programs
+owned by Hypersolve: prove B*A=I under STRICT, retain x=c+A*y, and construct
+B*f(t,c+A*y) as a shared DAG. Source operations, domain guards, binding order,
+node correspondence and inverse receipts remain available. Hyperdynamics assigns
+state/time meaning and reuses the existing derivative, field and Picard owners.
+A completed step transports its initial set, tube and endpoint through the native
+Hyperlattice affine enclosure. A final transport failure preserves the native
+report but cannot publish whole-step success. The exact original initial set is
+c+A*Y; existence is not asserted for every point of its Cartesian envelope.
+
+Fourteen maintained tests cover independent polynomial/Jacobian expectations,
+nontrivial bindings, exact and undecided inverse outcomes, algebraic coefficients,
+poles, eight shear/inverse round trips, empty/unit distinctions, fresh-process
+replay, typed error source chains and resource/cancellation/retry behavior. The
+concrete completion witness x1'=128*x2, x2'=0 rejects an original half-unit step
+for contraction, but A=diag(128,1) certifies it with source endpoint
+[-64,64] x [-1,1]. This establishes fixed-chart one-step support, not adaptive
+QR, a complete wrapping portfolio or a whole-horizon coordinate integrator.
+An initially uncharged native-carrier validation scan was reproduced and fixed;
+dimensions 0, 1 and 3 now isolate its accounting. Structural work and native
+arithmetic remain separate; exact Real payload/refinement, predicate internals,
+total heap and intra-scalar cancellation exclusions remain explicit.
+
+Fifteen owner command groups pass on final production code: 1,455 Hypersolve
+tests and 455 benchmark smokes, 60 Hyperdynamics tests, minimal/default-off
+configurations, strict Clippy, warnings-denied docs, WASM, example, release,
+ASan and format checks. Combined extraction qualification passes seven groups,
+including 519 dynamics/path tests and 194 path benchmark smokes. All 200
+successive-operations rows preserve structural fields, allocation counts and
+shown memory relative to the preceding affine stage; their timings are smoke
+observations. Subsequent assertion-only strengthening passes the seven affected
+tests in isolated and combined worktrees, strict Clippy and formatting. The
+final source snapshot distinguishes these checks and the later fuzz package
+from the initial thirteen-path broad qualification.
+
+The unchanged full Hypersolve coverage script passes its 85% gate at 87.52%
+(53,295/60,897 physical executable lines). Its existing regex includes some
+Hyperinterval files; a separately retained owner-only analysis using the same
+trailing-inline-test convention gives 89.47% (51,639/57,715), with 93.84% in
+the new module. Dedicated cfg(test) source files/helpers may remain in that
+convention. Hyperdynamics source-prefix coverage is 90.95% (1,999/2,198 lines),
+with 160/180 lines in its new module; no crate-specific threshold is configured.
+Neither measurement establishes branch coverage. The ASan coordinate fuzz target
+uses independent polynomial/Jacobian/trajectory expectations, inverse rejection,
+graph cutoffs and replay. It completed 6,060 executions in 61 seconds with no
+findings, stopping at its time cap before the 10,000 ceiling. Short inputs are
+skipped, so executions are not a valid-chart count. All 220 retained corpus files
+also replay successfully in the combined worktree. Locked/offline fuzz builds,
+strict Clippy and formatting pass.
+
+Same-path baseline/final builds preserve both legacy binaries byte-for-byte at
+4,023,080 and 4,160,888 bytes and the complete 177,398-byte semantic transcript.
+Existing model/affine consumers preserve machine code and loaded sections except
+build identifiers; the model ELF shrinks eight nonallocated metadata bytes and
+the affine ELF size is unchanged. Twelve fixed alternating legacy timing pairs
+retain all 22 cases and equal resource/allocation rows. One pointwise 95%
+bootstrap interval remains adverse: exponential/integrate ratio 1.0103964844,
+interval [1.0006803585,1.0280168222]. It remains in the evidence; deterministic
+identical binaries support execution preservation, not a speedup claim or a
+claim that every timing interval contains one.
+
+Two coordinate cost trials reproduce records. Scaled-shear construction uses
+700 graph units and retains 8,832 incremental bytes (10,016 peak); its completed
+step/transport uses 380 graph and 513,467 native units. Translated-constant
+construction uses 455 graph units and retains 7,152 bytes (8,328 peak), with
+299/476,317 step units. Construction medians are about 24.0/7.5 us,
+step/transport 34.1/34.6 us, and full replay 80.7/60.1 us. Construction starts
+from an existing field; replay includes source/chart reconstruction and output
+transport. Measured operations and failure controls return live allocation delta
+to zero after drop. These are absolute completed-task costs, not competitive
+benchmarks or uniform completion bounds.
+
+Evidence record `docs/evidence/2026-11-13-interval-coordinates` at external commit
+`b48e9742d6d35d4b52b2a47a2db2481da537a744` contains 670 files, 10,064,155 bytes,
+digest `9df7d2bbf4830ac4ce5dd5876260d13aa6e5de69fb969c40483064d70a0259fd`.
+All three preceding immutable Taylor stages verify unchanged. The original forty
+pending extraction paths remain separate, with 37 identical nonoverlapping blobs
+and three merged package files. A reproduced combined locked-build failure adds
+one pending path: the new fuzz lock needs the extraction's direct Hyperlimit
+edge, with no version changes. Thus 41 paths remain staged, without unstaged
+changes. Interface's eight edits and clean firmware are preserved. Source budget
+passes at 4,156 files and 142,931,405 bytes before this ledger registration.
+No push occurred; the full pre-push matrix remains required. Phase 11 retention,
+adaptive wrapping/QR, nonlinear composition, wider adoption, whole-resource
+closure, HIL and coordinated release remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
