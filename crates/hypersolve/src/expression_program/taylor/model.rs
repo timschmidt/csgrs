@@ -570,3 +570,11 @@ fn generate(
     }
     Ok(())
 }
+
+#[cfg(feature = "taylor-affine")]
+mod affine;
+#[cfg(feature = "taylor-affine")]
+pub use affine::{
+    TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
+    TaylorAffineTerm,
+};

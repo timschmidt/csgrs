@@ -358,3 +358,9 @@ impl From<hyperinterval::IntervalError> for TaylorError {
         Self::Interval(error)
     }
 }
+
+#[cfg(feature = "taylor-affine")]
+pub use model::{
+    TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
+    TaylorAffineTerm,
+};

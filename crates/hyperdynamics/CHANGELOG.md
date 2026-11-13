@@ -2,6 +2,7 @@
 
 ## 0.1.0 (unreleased)
 
+- Add a nonlinear-field affine Taylor observable example with explicit downstream projection.
 - Add optional midpoint-centered field Taylor models, retaining exact source,
   time/state bindings, coefficient/remainder evidence and native images.
   Subdomain reuse preserves the original grid and global remainder. Empty/unit

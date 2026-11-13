@@ -44,6 +44,7 @@ default = []
 # Owned expression graphs; validated dynamics integration remains experimental.
 expression-program = []
 taylor-model = ["interval-program"]
+taylor-affine = ["taylor-model"]
 float-proposal-program = ["expression-program"]
 interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
 serde = ["dep:serde", "hyperreal/serde", "hyperinterval?/serde"]

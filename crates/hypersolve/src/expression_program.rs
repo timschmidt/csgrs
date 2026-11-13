@@ -599,3 +599,9 @@ pub use taylor::{
     CoefficientProgram, CoefficientRequest, TaylorError, TaylorModel, TaylorRemainderTerm,
     TaylorRequest, TaylorTerm,
 };
+
+#[cfg(feature = "taylor-affine")]
+pub use taylor::{
+    TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
+    TaylorAffineTerm,
+};

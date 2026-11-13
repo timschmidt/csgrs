@@ -622,3 +622,14 @@ tests, and strict Clippy.
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+Enable `taylor-affine` for `TaylorAffineModel`, which retains exact affine output maps over a shared `TaylorModel`.
+It combines equal polynomial monomials before enclosure and composes subsequent
+maps against the original residual coordinates. A shear followed by its inverse
+therefore does not adopt an intermediate output box. Rectangular/singular maps,
+nonrational exact coefficients, empty/unit dimensions and subdomain reuse are
+supported. Replay the original source/request and the composed `TaylorAffineMap`;
+serialized derived coefficients or flags are not proof. This is an image of a
+function, not an ODE coordinate-change certificate or nonlinear model arithmetic.
+The graph/native budgets apply with the existing scalar/payload exclusions;
+entry checks are stage-local, not a total live-memory bound.

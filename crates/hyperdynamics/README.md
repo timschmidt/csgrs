@@ -111,3 +111,9 @@ source/request/policies for replay; reports are not deserialized as proof.
 ```sh
 cargo run -p hyperdynamics --features reachability --example reachability
 ```
+
+Run `cargo run -p hyperdynamics --features taylor-affine --example taylor_affine`
+for source-bound linear observables of a nonlinear field. The example retains
+shared Taylor coefficients through an exact output map, then explicitly projects
+the result for a further field operation. It does not transform an ODE proof or
+replace the authoritative model with its Cartesian image.
