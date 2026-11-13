@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | not started | consumer evidence and remainder/wrapping proofs |
+| 13 Taylor/adoption | candidate implemented; retention pending | exact coefficients/remainder and field consumer qualified; two stopped-path timing observations unresolved; wrapping/wider adoption open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4169,6 +4169,102 @@ remain staged, with their three overlapping files incorporating accepted additio
 all thirty-seven other pending blobs and all eight Interface edits are preserved.
 The isolated accepted worktree and firmware remain clean. No push occurred; this
 is affected qualification, not the full pre-push matrix.
+
+## 2026-11-13: Qualify Taylor candidate; withhold retention on pristine cost evidence
+
+The full fifteen-phase goal remains active. Candidate commit
+`8d07a1ff8b7f09ba0df3b97ff0fc37b862f4e859` is clean in
+`/mnt/development/csgrs-taylor`, based on `e72c0d8b`. Its twenty source paths
+implement demanded sparse normalized partials, exact-coefficient Taylor models
+with certified finite remainders, and a concrete Hyperdynamics field consumer.
+The candidate is not retained in main: its local installation was withdrawn after
+the pristine performance repeat below. Main source and all forty staged extraction
+paths were restored exactly; all eight Interface edits are unchanged.
+
+Hypersolve owns the shared derivative graph, normalization, exact coefficients,
+analytic-domain checks and multivariate integral remainder. Every next-order
+contribution remains explicit. Original source outputs preserve guards, including
+under zero derivatives. Models retain the original box, exact center and source;
+subdomain use keeps the original global remainder and grid. The field adapter
+preserves time/state bindings, original requests, native empty/unit carriers and
+shared budgets. Its image can feed another field. Replay regenerates evidence
+from source/request rather than trusting proof flags. This is not model arithmetic,
+wrapping control, an ODE existence claim or a whole-work/heap resource bound.
+
+Independent controls include binomial/mixed and high-factorial coefficients,
+nonrational exact coefficients, polynomial identities, rational-function and sine
+tails, original domain guards, stronger regularity rejection, empty/unit products,
+precise final budgets, cancellation/retry and fresh-process replay. The logistic
+field x(1-x) on [0,1] certifies [0,1/4], with coefficients [1/4,0,-1] and zero
+remainder, versus the unchanged natural enclosure [0,1]. The reproduced empty
+subdomain bug was fixed before field reuse. Authored 0^0 remains invalid under
+Expr's original contract; the original failing input is preserved as a guard test.
+
+All fifteen isolated and eleven combined downstream qualification groups pass:
+1,438 Hypersolve tests plus 455 benchmark smoke cases; 53 Hyperdynamics tests;
+37 selected minimal-feature tests; 29 release tests; 28 AddressSanitizer tests;
+strict Clippy, warnings-denied docs, WASM, default-off configurations, example,
+Rust 1.95, formatting and whitespace checks. Combined Hyperdynamics/Hyperpath tests
+total 512 and Interface 201. All 194 path benchmark smoke cases pass. The 200
+successive-operations rows preserve structural fields, allocator counts and
+shown memory columns; these timings remain smoke observations. Its dependency
+graph does not enable the changed expression-program module.
+
+The full all-target run also reproduced an existing benchmark-report assertion
+expecting six suites while the baseline manifest contains seven. The candidate
+strengthens it to the seven exact names and the expression benchmark's feature/
+Criterion requirements. That correction is still part of the isolated candidate.
+Generated benchmark reports are archived separately from authored source.
+
+A direct Jacobian baseline regression covers every derivative rule and consumes
+results under STRICT and APPROXIMATE_512. Complete source/value serialization,
+certainty receipts, work and dispatch/rational counts match in 52,947 bytes.
+A fixed repository fixture asserts counts and fingerprints; complete transcripts
+are archived. Existing field/evolution signatures match in 177,398 bytes. Legacy
+consumer function unions/.text remain 2,100,408/2,121,815 and
+2,187,002/2,209,703 bytes; both original ELF sizes decrease by 24 bytes. Text
+hashes differ, so byte-identical code is not claimed. The earlier forced-inline
+helper grew emitted functions by 3,066 bytes and was rejected; its evidence remains.
+
+The first fixed twelve-pair cost run has all 22 workload confidence intervals
+containing one, with identical nine resource records and 58 allocation rows.
+Archive audit found that earlier `objcopy --dump-section` extraction rewrote its
+input ELF container when no output ELF was supplied. A disposable-copy reproduction
+matches the altered baseline hash exactly. Pristine baseline/final rebuilds match
+all four original build hashes, and the accepted source hashes were restored.
+The first observations are preserved alongside the correction.
+
+A second fixed twelve-pair run using pristine binaries retains two adverse 95%
+bootstrap intervals: step-limit/stopped ratio 1.0037487387, interval
+[1.0012705217,1.0070406055]; halving-limit/stopped ratio 1.0033361909, interval
+[1.0010526076,1.0060343072]. Allocation/resource records still match. These small
+observations do not establish a universal slowdown, but they do not satisfy the
+strict retention gate. No threshold, fixture or assertion was loosened. Main
+retention was withdrawn; candidate code and both complete runs remain available
+for code-layout/measurement investigation.
+
+Two workspace-pinned completed-model trials agree on work/allocation records.
+Construction medians are about 55 us logistic, 138 us mixed polynomial, 200 us
+reciprocal and 844--850 us sine; subdomain reuse about 5.4, 31.9, 21.6 and 5.4 us.
+Replay is measured separately. Incremental retained bytes over shared source are
+5,272/10,360/9,400/5,952, with peaks 7,436/16,312/15,444/8,172 and zero measured
+live delta after drop. Sixteen resource-failure controls and retry pass. These
+are four absolute completed-workload measurements, not a general speedup,
+completion envelope or whole-resource bound. The new workload binary is not
+compared in size against consumers doing different work.
+
+Evidence record `docs/evidence/2026-11-13-interval-taylor-candidate` at external
+commit `102425928655792d063a3cfa8121dfcdec37a555` contains 314 files and
+58,884,332 bytes, digest
+`da15cf76824197c12746e9b0d6b87bc354d9e1059c44324533d4093a8a52500c`.
+The committed digest was regenerated and verified. The original pending patch
+remains `f5174309ce5958971b486b85c1020212c67c37049c600b8395ba3ff36bf1eecb`;
+Interface remains `1dd2b902b84e07ffe6d63de0a0f007d026ef21f2391aeb598871b9de31395748`.
+No push occurred. This is affected validation, not the full pre-push matrix.
+This registration changes only the ledger and evidence manifest. Resolve the
+stopped-path costs before retaining the candidate; wrapping, wider adoption,
+competitive dynamics comparisons, the independent phase-11 extraction and all
+other open phases remain in scope.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
