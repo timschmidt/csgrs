@@ -364,6 +364,12 @@ impl Expr {
             Self::PowI(value, exponent) => {
                 if *exponent == 0 {
                     Self::zero()
+                } else if *exponent == i64::MIN {
+                    // The derivative exponent is below this node's storage range.
+                    // x^n / x retains the original negative power's x != 0 domain.
+                    Self::int(*exponent)
+                        * ((*value.clone()).powi(*exponent) / (*value.clone()))
+                        * value.derivative(symbol)
                 } else {
                     Self::int(*exponent)
                         * (*value.clone()).powi(*exponent - 1)

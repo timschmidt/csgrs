@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Preserve the exact integer-power derivative at `i64::MIN` using a quotient
+  whose exponent remains representable, including repeated differentiation and
+  the nonzero-base domain. Report an unavailable dense symbolic-Jacobian
+  conversion through `DenseSolverEstimateUnavailable` instead of a zero entry.
+
 - Add `resultant_bivariate_perturbation_ordered_field` and
   `OrderedFieldResultantPerturbation` to retain finite-contact projections beside
   common supports. Reuse the existing ordered-field determinant authority and

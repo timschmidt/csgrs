@@ -124,11 +124,11 @@ fn symbolic_jacobian_with_sparsity(
             // those facts in a future hyperreal/hyperlattice linear backend so
             // this dense-solver conversion is needed only for external f64
             // solvers.
-            row.push(
-                (value * constraint.weight.clone())
-                    .to_f64_lossy()
-                    .unwrap_or(0.0),
-            );
+            row.push((value * constraint.weight.clone()).to_f64_lossy().ok_or(
+                EvalError::DenseSolverEstimateUnavailable(
+                    "symbolic Jacobian entry is not f64-estimable",
+                ),
+            )?);
         }
         rows.push(row);
     }
