@@ -2576,6 +2576,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "hyperdynamics"
+version = "0.1.0"
+dependencies = [
+ "hyperinterval",
+ "hyperlattice-interval",
+ "hyperreal",
+ "hypersolve",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "hyperevolution"
 version = "0.3.0"
 dependencies = [

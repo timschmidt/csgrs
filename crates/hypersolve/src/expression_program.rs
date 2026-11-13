@@ -142,7 +142,10 @@ impl ExpressionBudget {
         self.remaining_work
     }
 
-    fn charge(&mut self, amount: usize) -> Result<(), ExpressionError> {
+    /// Admit structural work, including a consumer adapter's own graph work.
+    /// Checks cancellation before spending; a failed charge spends no units.
+    /// This does not account for scalar arithmetic or heap bytes.
+    pub fn charge(&mut self, amount: usize) -> Result<(), ExpressionError> {
         if self
             .cancellation
             .as_ref()
@@ -155,6 +158,13 @@ impl ExpressionBudget {
         }
         self.remaining_work -= amount;
         Ok(())
+    }
+
+    /// Check a consumer's aggregate structural entry count without allocating.
+    /// Counts use the same configured limit and checked sum as program builds.
+    /// This is a stage size check, not a retained-memory reservation.
+    pub fn check_entries(&self, counts: &[usize]) -> Result<(), ExpressionError> {
+        self.entries(counts)
     }
 
     fn entries(&self, counts: &[usize]) -> Result<(), ExpressionError> {
