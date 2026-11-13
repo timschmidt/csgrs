@@ -3446,6 +3446,73 @@ attempts, flow tubes and end enclosures. No Phase 12 completion is claimed and
 no earlier phase obligation is removed. This registration changes only the
 ledger and evidence manifest.
 
+## 2026-11-13: Enclose owned expressions without weakening source guards
+
+Previous turn: progress, owning and replaying exact expression programs. Source
+commit `edb68461ece8dc8a170799df06cd11269b25e487` advances section 10.5 with
+Hyperinterval principal dyadic `asin`, `acos`, `acosh` and `atanh` images, and
+Hypersolve's opt-in `interval-program` interpreter. Native monotonicity and
+certified arithmetic retain complete/partial/empty domains and explicit
+unbounded atanh endpoint limits. Exact special values and empty inputs survive
+extreme requested grids. These are outward enclosures, not tightness promises.
+
+`eval_dyadic` consumes all 17 Expr constructors over Cartesian input products,
+retains the exact owned definition and accepts only complete operand-domain
+images. It preserves source guards under zero factors and powers, including
+Expr's exclusion of zero-to-zero. Native failures retain their node and source;
+dependency overestimation returns `DomainNotCertified`, not a proof of invalid
+geometry. Empty input products map to empty outputs after graph/binding checks;
+zero-dimensional inputs remain the unit product. Shared nodes, output/operand
+order, budgeted interval copies, cancellation and fresh-budget retry are covered.
+Graph and dyadic work accounts remain separate. Hyperreal constant refinement,
+total heap bytes and bounded derivative construction remain outside the complete
+resource contract. No trajectory or source-bound Jacobian certificate is claimed.
+
+Five shared generic-traversal refactors were rejected because the point benchmark
+binary grew by 624/920/304/360/384 bytes. The final point evaluator and consumption
+helper remain unchanged. The specialized interval interpreter reuses graph
+validation, use counts and native arithmetic authority. Its point-only benchmark
+artifact matches the accepted 7,046,936-byte size, 3,151,803-byte sized-function
+range union, GNU text/data/bss sizes, and byte-identical `.text` and `.rodata`.
+Whole-file identity and a speedup are not claimed. Existing point dispatch
+assertions remain unchanged and pass; no old consumer refactor gate is waived.
+
+All 16 final qualification commands pass: 27 distinct selected native tests,
+866 Hypersolve owner tests, strict all-feature/all-target Clippy, strict docs,
+examples, formatting/diff/source-budget checks, Rust 1.88 native and Rust 1.95
+program tests, release tests, AddressSanitizer, stable Wasm builds, and 454
+selected downstream Hyperdynamics/Hyperpath tests. The four new native tests
+include 2,068 directed 512-bit MPFR endpoint comparisons. Eight program-image
+tests cover independent affine expectations (588 boxes), all operators, source
+guards, shared DAG/repeated outputs, error order, symbolic constants, existing
+derivatives and resource boundaries. Existing fresh-process replay now checks
+interval images too. A new test's incorrect one-cell constant-width assumption
+was corrected to independent containment and exact fresh/live replay; original
+assertions are unchanged. Initial compile/test failures remain in the evidence.
+
+An external probe reuses the existing allocation helper and completes 42 warm
+interval workloads (17 constructors and four polynomial degrees, each at grids
+-16/-64), plus 84 work-exhaustion cases and successful retries. All allocation
+epochs end with zero live bytes. Preparation is excluded; evaluation, full output
+checks and destruction are included. Absolute medians span 0.402–269.271
+microseconds, with a largest observed temporary peak of 57,808 bytes. Consumed
+graph/arithmetic work peaks at 3,081/16,053,477 under the published entry, bit
+and work budgets. These are absolute completed-image observations, not matched
+speedups, total-work proofs or validated-flow measurements. Raw samples,
+outputs, sources, dependencies, artifacts and adverse results are retained.
+
+Evidence commit `943d4a68409179b1172108fbbb3523cbf88983f1`, record
+`docs/evidence/2026-11-13-interval-expression-images`: 123 files, 21,371,619 bytes,
+SHA-256 `e61bb904dae9d0cede8772e607a4915289a6bd4098c73fa2fccfb9736c56ec7c`.
+The committed digest was regenerated and verified. Pending dynamics and
+Interface patches remain byte-identical to their preceding recorded hashes;
+Firmware is unchanged. Dynamics extraction retention and its earlier cost
+qualification remain open. No push or full pre-push/hardware/hosted-OS claim
+is made. The full goal remains active: bounded derivatives and source association,
+owned field/Jacobian semantics, complete resource accounting, then validated
+Euler/Picard evolution and its required downstream proofs. Earlier phase
+obligations remain open. This registration changes only the ledger and manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
