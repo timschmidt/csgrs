@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | candidate implemented; retention pending | exact coefficients/remainder and field consumer qualified; two stopped-path timing observations unresolved; wrapping/wider adoption open |
+| 13 Taylor/adoption | exact coefficients/remainder and field consumer retained after local qualification | wrapping, model composition, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4265,6 +4265,73 @@ This registration changes only the ledger and evidence manifest. Resolve the
 stopped-path costs before retaining the candidate; wrapping, wider adoption,
 competitive dynamics comparisons, the independent phase-11 extraction and all
 other open phases remain in scope.
+
+## 2026-11-13: Retain Taylor models with unchanged legacy execution artifacts
+
+The full fifteen-phase goal remains active. Main now retains source
+`5222328cf32f96ae77fb9d8226b441ceb2dae3a5`, including the initial Taylor candidate
+and the qualification-history merge. The final correction restores the original
+complete-column Jacobian traversal; only existing builder/helper visibility changes.
+The demanded traversal composes by operand arity using those existing helpers
+and Expr's derivative rules. Optional exports are appended after existing source.
+No local calculus authority is duplicated, no predicate order is changed, and
+legacy source-diagnostic locations remain intact.
+
+Both legacy consumer binaries preserve every byte except twenty build-ID bytes
+and ninety-one nonallocated symbol-string bytes. Code, constants, runtime data,
+diagnostic locations, relocations, unwind tables, function addresses and sizes
+are identical. ELF sizes remain 4,022,488 and 4,160,184 bytes; function unions and
+text remain 2,100,408/2,121,815 and 2,187,002/2,209,703 bytes. Inspection reads
+bytes without rewriting either binary. The full 177,398-byte semantic transcript
+matches; maintained Jacobian and native evolution tests preserve exact outputs,
+serialization, certainty, work and dispatch under both policies.
+
+All fifteen final owner and eleven downstream qualification groups pass:
+1,438 Hypersolve tests and 455 benchmark smoke cases; 53 Hyperdynamics tests;
+37 minimal-feature tests; 29 release tests; 28 AddressSanitizer tests; strict
+Clippy, warnings-denied owner docs, WASM, default-off configurations, example,
+formatting and whitespace checks. Combined dynamics/path tests total 512 and
+Interface 201; all 194 path smoke cases pass. The 200 successive-operations rows
+preserve structural fields, allocation counts and shown memory columns. Their
+timings are smoke observations. Generated owner reports remain in evidence,
+separate from authored source.
+
+All adverse measurements are retained. The intermediate two-accessor revision
+restored text identity but changed nineteen diagnostic records. Its twelve-pair
+short run retained an adverse halving-limit interval; a predeclared longer-batch
+repeat retained adverse identity-replay and halving-limit intervals. Its identical
+baseline control had no adverse intervals. These are different source revisions,
+not erased or superseded measurements of the final implementation.
+
+The final arity revision completes all twelve fixed paired runs and all 22 cases,
+with identical resource/allocation rows. One pointwise 95% interval remains
+adverse: unit/integrate ratio 1.0049825577, interval
+[1.0000935935,1.0101950084]. Retention rests on the stronger deterministic proof
+of unchanged execution artifacts, layout and work; it does not claim every timing
+interval contains one or infer a speedup. No threshold, case or assertion changed.
+The earlier stopped-path observations remain recorded above and in both archives.
+
+Two final model trials preserve the earlier candidate's image, resource and
+allocation records. Construction medians are about 54/136/197--198/828 us for
+logistic/mixed/reciprocal/sine; reuse about 5.4/31.9/21.7/5.4 us. Replay is separate.
+Retained memory and drop controls are unchanged. These are absolute completed-task
+costs, not a cross-contract speedup, universal completion envelope or whole-resource
+bound. Model arithmetic, wrapping, wider consumers and competitive comparisons
+remain open, as do the previously documented scalar/payload/cancellation exclusions.
+
+Evidence record `docs/evidence/2026-11-13-interval-taylor-cost-resolution` at
+external commit `fe10a393c2aeac4088a928b29ff42926df19b10a` contains 333 files,
+77,929,031 bytes, digest
+`1ab5f27a5f959a1ba153b8f311a8d786bdeafd0221b79e292c9fac6f02bc9d73`.
+Its final source/results are under `arity-qualification/`; top-level snapshots
+describe the earlier accessor experiment. The prior 314-file Taylor archive
+verifies unchanged. All forty pending extraction paths remain staged separately:
+37 nonoverlapping blobs are identical and the three overlapping Hyperdynamics
+files incorporate the retained Taylor additions. Interface's eight edits are
+unchanged. Source budget passes at 4,144 files and 142,800,953 bytes before this
+ledger registration. No push occurred; the complete pre-push matrix remains
+required before publication. Phase 11 retention and all other open phases remain
+in scope.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
