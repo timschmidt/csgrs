@@ -483,6 +483,7 @@ docs/evidence/2026-11-12-interval-dynamics-jerk-candidate	1792	13769446	316eb2b0
 docs/evidence/2026-11-12-interval-dynamics-whole-cost	2067	59179330	fe3ca693fe615514fd116a11fb38b7342e1a4809db00aa62f1e81c1bffac8acb
 docs/evidence/2026-11-12-interval-elementary-order	477	102465598	a5b6b9d2b1acb8f209179afcf948f6ef38ecb7bc3df81bb7e79ef13c4fad896e
 docs/evidence/2026-11-12-interval-exponential	829	142585251	2df892c946bd524dac776446ec960ea214b97cb5a1c16c69e9e989d2f735df37
+docs/evidence/2026-11-12-interval-field-derivative-repair	43	1099661	91bceea8715cec1cc075562f8f79b3dba68e2be33a8a8d203e60f3b9a655e220
 docs/evidence/2026-11-12-interval-fixed	275	8102925	6545215bd945264a9e8c9cd01966f87ecdd0a805f94b40474bb4bda0585cc328
 docs/evidence/2026-11-12-interval-fixed-integer-div	191	4734853	f4fc094365089543658042879f12f099f4be2978ee2351654997596c59aa69c8
 docs/evidence/2026-11-12-interval-foc-client	123	735316	2182ecf72274980f523a0cf1aae81bfb1f7a9f2abc4ca3484b0fa37a5bbcceaf

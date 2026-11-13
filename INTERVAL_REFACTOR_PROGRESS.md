@@ -3306,6 +3306,75 @@ full inventories, static listings, fresh transcripts, commands and raw timing
 samples are retained. Only this ledger and the archive manifest are committed
 in the primary repository; source changes remain staged and unaccepted.
 
+## 2026-11-12: Repair symbolic derivative prerequisites for owned fields
+
+Previous turn: progress, clearing the measured dynamics size regression while
+retaining failed timing evidence. Review of plan section 10.5 on ledger HEAD
+`e0eb94168cfbe8257f70827eb4775248ada9baa7` finds two concrete Hypersolve defects
+before an owned field can safely reuse the symbolic layer. Their independent
+correctness repair is committed as
+`d499614eafd096f488ffd4e7b19c4058dbaa9329`, affecting only symbolic.rs,
+jacobian.rs, the changelog and one regression-test file. The staged dynamics
+and Interface patches are unchanged and remain unaccepted.
+
+The integer power rule subtracted one from every nonzero i64 exponent. At
+`i64::MIN`, debug builds panic and release builds wrap the exponent, producing
+wrong repeated derivatives. Both failures are reproduced on the target source.
+Only that boundary now uses `n * (x^n / x) * x'`: every stored exponent remains
+representable, and the original negative power already excludes zero. Removing
+the new branch recovers the entire old symbolic.rs byte-for-byte. Other branches
+and predicate/evaluation sequences are unchanged. Repeated differentiation and
+composed bases remain consumable without discarding the nonzero-domain guard.
+
+The dense symbolic-Jacobian adapter also returned a guessed zero for a failed
+binary64 conversion. A finite exact slope `2^2048` at `x=0` reproduced
+`Ok([[0.0]])`. Plain and prepared entry points now propagate the existing typed
+`DenseSolverEstimateUnavailable` after the same exact weighted-entry calculation.
+These are still dense proposal APIs; the repair does not turn them into rigorous
+interval Jacobians or certify other finite-difference/solver conversion paths.
+
+Four new tests use independent i128 homogeneous-degree accounting and exact
+unit-value expectations for ten boundary/ordinary exponents through three
+derivatives. They cover a composed base at both unit signs, its excluded zero,
+unbound input and an unrelated differentiation variable. Both symbolic-Jacobian
+entry points consume the boundary derivative and reject the unavailable estimate.
+No enormous rational power is materialized as a proxy for the symbolic proof,
+and no old assertion, policy or hard fixture is weakened.
+
+All eleven final local/downstream commands pass: 842 tests across the affected
+Hypersolve library/smoke/regression suites; four release witnesses; strict owner
+Clippy; 459 dynamics/path tests including frozen full-report/trace comparisons;
+201 Interface tests/doctests; strict Interface Clippy; docs; stable Wasm compile;
+successive_operations; formatting and diff validation. The application golden
+remains 41,795 bytes with SHA-256
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`.
+All 200 successive-operation rows preserve structural/allocation columns.
+Hypersolve and Hyperpath benchmark smoke runs complete 417 and 194 cases.
+Source budget passes. Initial debug/release failures, the false-zero witness and
+the corrected test-only Clippy style finding remain recorded. This is affected
+qualification, not the full pre-push matrix or every integration suite; no
+sanitizer, hardware/platform or controlled performance claim is made. No push ran.
+
+Section 10.5's owned/replayable field, exact interval image/Jacobian, full resource
+accounting and Phase 12 validated evolution remain unimplemented. The next
+interface must retain original source-domain obligations alongside derivatives,
+explicit bindings and replayable identity, and must not reuse a dense point
+proposal as interval evidence. Other existing proposal conversions and recursive
+traversal/resource gaps are recorded for follow-up. Earlier dynamics cost results
+precede this lower-layer correctness repair; newly built artifact hashes are
+recorded separately and need fresh cost qualification. The extraction retention
+gate and all earlier phase obligations remain open; the full goal is active.
+
+Evidence commit `e6895420e0149991d5d8ceaab75c4671f987ffa6`, record
+`docs/evidence/2026-11-12-interval-field-derivative-repair`: 43 files,
+1,099,661 bytes, SHA-256
+`91bceea8715cec1cc075562f8f79b3dba68e2be33a8a8d203e60f3b9a655e220`.
+Its committed digest was regenerated and verified, preserving every earlier
+manifest row. The exact repair and qualified pending-tree patches, source base,
+commands, failures, final logs, branch-equality evidence and rebuilt artifact
+identities are retained. This registration commits only the ledger and manifest;
+the independent four-path source repair is the preceding commit.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
