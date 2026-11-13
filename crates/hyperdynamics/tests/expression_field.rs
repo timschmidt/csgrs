@@ -24,6 +24,45 @@ fn d(a: i64, b: i64) -> DyadicInterval {
 fn b() -> EnclosureBudget {
     EnclosureBudget::new(EnclosurePolicy::default())
 }
+
+#[test]
+fn rational_constants_obey_native_size_limits_and_retry_through_field_operations() {
+    let exact = 1_000_000_000_000_i64;
+    let field = ExpressionField::<1>::from_definition(
+        definition(&[Expr::int(exact)], &[T, X], &[X]),
+        &mut b(),
+    )
+    .unwrap();
+    let time = d(0, 1);
+    let state = BoxN::new([d(1, 2)]).unwrap();
+    for jacobian in [false, true] {
+        let mut small = EnclosureBudget::new(EnclosurePolicy {
+            precision: 0,
+            scalar_bits: 32,
+            ..EnclosurePolicy::default()
+        });
+        let error = if jacobian {
+            field.jacobian(&time, &state, &mut small).unwrap_err()
+        } else {
+            field.image(&time, &state, &mut small).unwrap_err()
+        };
+        assert!(matches!(
+            error,
+            FieldError::Expression(ExpressionError::Enclosure {
+                source: IntervalError::SizeExhausted,
+                ..
+            })
+        ));
+    }
+    assert_eq!(
+        field.image(&time, &state, &mut b()).unwrap(),
+        IntervalVector::new([d(exact, exact)]).unwrap()
+    );
+    assert_eq!(
+        field.jacobian(&time, &state, &mut b()).unwrap(),
+        IntervalMatrix::new([[d(0, 0)]]).unwrap()
+    );
+}
 fn variable(id: SymbolId) -> Expr {
     Expr::anonymous_symbol(id)
 }

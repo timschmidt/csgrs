@@ -30,6 +30,10 @@
 
 ### Added
 
+- Add `Rational::ratio_parts`, a borrowed exact, potentially unreduced ratio
+  view for resource admission before coefficient copying or canonicalization.
+  Existing canonical numerator/denominator getters retain their behavior.
+
 - Cold-domain continuation regressions cover rational cotangents around pi,
   extreme shifted trig arguments, malformed hidden children, exact downstream
   consumers and abort/reset. Bounded structural proofs restore the scoped

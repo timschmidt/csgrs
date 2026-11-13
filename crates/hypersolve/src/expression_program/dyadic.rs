@@ -20,7 +20,9 @@ impl ExpressionProgram {
     /// `graph_budget`; interval arithmetic uses the separate `arithmetic_budget`.
     /// `precision` is spacing for rounded native operations and constant
     /// enclosures, not a final-width guarantee. Exact sums/products keep their
-    /// native grids. Hyperreal constant enclosure refinement is outside both
+    /// native grids. Structurally rational constants use native budgeted
+    /// conversion before coefficient copies or normalization. Other Hyperreal
+    /// constant enclosure refinement is outside both
     /// budgets' total-work accounting; this API is not a wholly bounded field
     /// evaluator. Graph cancellation cannot interrupt that scalar refinement or
     /// a native interval operation. No interval result is retained between calls.

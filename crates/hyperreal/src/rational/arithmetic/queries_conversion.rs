@@ -191,6 +191,17 @@ impl Rational {
         &self.canonicalized_ref().numerator
     }
 
+    /// Borrow the stored sign, numerator magnitude and positive denominator.
+    ///
+    /// Their ratio is exactly this value, but the parts need not be reduced.
+    /// Unlike [`Self::numerator`] and [`Self::denominator`], this view never
+    /// canonicalizes, allocates or populates a cache. Budgeted consumers can
+    /// inspect operand sizes before copying or performing arithmetic. Do not
+    /// use these parts as a canonical serialization or mathematical identity.
+    pub fn ratio_parts(&self) -> (Sign, &BigUint, &BigUint) {
+        (self.sign, &self.numerator, &self.denominator)
+    }
+
     pub(crate) fn factor_two_powers(&self) -> (i32, Self) {
         if self.is_internally_unreduced() {
             return self.canonicalized_ref().factor_two_powers();

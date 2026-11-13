@@ -4,6 +4,41 @@ mod tests {
     use std::mem::size_of;
 
     #[test]
+    fn borrowed_ratio_parts_do_not_canonicalize_or_populate_caches() {
+        let factor = (BigUint::one() << 8192_usize) + BigUint::from(7_u8);
+        for sign in [Plus, Minus] {
+            let value = Rational::from_parts_raw_unreduced(sign, &factor * 6_u8, &factor * 4_u8);
+            assert!(value.product_cache.get().is_none());
+            let check = || {
+                let (actual_sign, numerator, denominator) = value.ratio_parts();
+                assert_eq!(actual_sign, sign);
+                assert!(std::ptr::eq(numerator, &value.numerator));
+                assert!(std::ptr::eq(denominator, &value.denominator));
+                assert_eq!(numerator.bits(), 8195);
+                assert_eq!(denominator.bits(), 8195);
+            };
+            #[cfg(feature = "dispatch-trace")]
+            {
+                crate::dispatch_trace::reset();
+                crate::dispatch_trace::with_recording(check);
+                assert!(crate::dispatch_trace::take_trace().dispatch.is_empty());
+            }
+            check();
+            assert!(value.product_cache.get().is_none());
+            assert_eq!(value.numerator(), &BigUint::from(3_u8));
+            assert_eq!(value.denominator(), &BigUint::from(2_u8));
+            assert!(value.product_cache.get().is_some());
+            // The view and hence size admission do not depend on cache warmth.
+            check();
+        }
+        let zero = Rational::zero();
+        let (sign, numerator, denominator) = zero.ratio_parts();
+        assert_eq!(sign, NoSign);
+        assert!(numerator.is_zero());
+        assert!(denominator.is_one());
+    }
+
+    #[test]
     fn dyadic_enclosure_rounds_outward_and_is_tight_on_its_grid() {
         let check = |value: Rational, precision: i32| {
             let exact = num::BigRational::new(

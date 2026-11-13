@@ -2,6 +2,12 @@
 
 ## 0.1.0 (unreleased)
 
+- Add budgeted `DyadicInterval::from_rational` and use it for structurally
+  rational `from_real` inputs. Stored coefficient sizes are admitted before
+  copying, normalization or division, including lazy unreduced ratios. Exact
+  outward grid bounds are preserved; symbolic refinement keeps its separate
+  resource contract.
+
 - Add dyadic principal `asin`, `acos`, `acosh` and `atanh` enclosures using
   certified native arithmetic, square root, arctangent and logarithm. Preserve
   complete/partial/empty domains, exact zero special values and unbounded atanh

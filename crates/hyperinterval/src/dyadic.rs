@@ -917,17 +917,30 @@ mod bridge {
         precision: i32,
         budget: &mut DyadicBudget,
     ) -> Result<(BigInt, BigInt), IntervalError> {
-        budget.reserve(
-            value.numerator().bits().max(value.denominator().bits()),
-            2,
-            false,
-        )?;
-        let n = BigInt::from_biguint(value.sign(), value.numerator().clone());
-        let d = BigInt::from(value.denominator().clone());
+        let (sign, numerator, denominator) = value.ratio_parts();
+        budget.reserve(numerator.bits().max(denominator.bits()), 2, false)?;
+        let n = BigInt::from_biguint(sign, numerator.clone());
+        let d = BigInt::from(denominator.clone());
         scaled_quotient(&n, &d, -i64::from(precision), budget)
     }
 
     impl DyadicInterval {
+        /// Tight outward enclosure of an exact rational on grid `2^precision`.
+        ///
+        /// Reservations precede coefficient copies and scaled integer division.
+        /// Stored ratios may be unreduced: admission uses their actual sizes
+        /// without forcing a GCD or populating a canonicalization cache. The
+        /// source stays exact; only this returned enclosure is rounded. Input
+        /// construction and parsing are outside the arithmetic budget.
+        pub fn from_rational(
+            value: &Rational,
+            precision: i32,
+            budget: &mut DyadicBudget,
+        ) -> Result<Self, IntervalError> {
+            let (lower, upper) = round_rational(value, precision, budget)?;
+            Self::new(lower, upper, precision)
+        }
+
         /// Converts to exactly the represented rational endpoints.
         /// Budget reservations precede all power-of-two allocations.
         pub fn to_rational(
@@ -982,6 +995,9 @@ mod bridge {
         /// Consumes Hyperreal's certified dyadic enclosure without reinterpreting
         /// its precision. Spacing `2^precision` is not an interval-width promise.
         ///
+        /// Structurally rational values use [`Self::from_rational`], with
+        /// reservations before coefficient copies or division. Other values
+        /// retain the Hyperreal refinement path below.
         /// The budget governs conversion only. Hyperreal evaluation uses its
         /// existing precision/cancellation contract; this method does not impose
         /// a total-work bound on that evaluation. No independent cache is added.
@@ -996,6 +1012,9 @@ mod bridge {
             // Reject an unaffordable grid before asking Hyperreal to construct
             // its powers of two. This does not bound computable evaluation.
             budget.reserve(i64::from(precision).unsigned_abs() + 1, 1, false)?;
+            if let Some(rational) = value.exact_rational_ref() {
+                return Self::from_rational(rational, precision, budget);
+            }
             let [lower, upper] = value
                 .certified_dyadic_interval(precision)
                 .ok_or(IntervalError::EnclosureUnavailable)?;
