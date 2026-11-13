@@ -136,3 +136,6 @@ fn dot<'a, I: IntervalArithmetic + 'a>(
     }
     Ok(sum)
 }
+
+#[cfg(feature = "dyadic")]
+mod subdivision;

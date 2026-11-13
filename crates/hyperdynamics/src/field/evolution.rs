@@ -54,6 +54,13 @@ pub enum CandidateSource {
         /// Index in the retained execution-order attempt list.
         attempt: usize,
     },
+    /// Hull with the named Picard image, then pad by its coordinate width
+    /// growth beyond the initial box. The resulting candidate still needs proof.
+    #[cfg(feature = "reachability")]
+    PicardDisplacementExpansion {
+        /// Index in the retained execution-order attempt list.
+        attempt: usize,
+    },
 }
 
 /// One actual invocation of the source-bound step verifier.
@@ -262,14 +269,49 @@ impl<const N: usize> ExpressionField<N> {
             segments: Vec::new(),
             status: EvolutionStatus::Identity,
         };
-        report.status = match self.evolve(&mut report, budget) {
+        #[cfg(not(feature = "reachability"))]
+        {
+            report.status = match self.evolve(&mut report, budget) {
+                Ok(status) => status,
+                Err(error) => EvolutionStatus::Stopped(error),
+            };
+        }
+        #[cfg(feature = "reachability")]
+        {
+            report.status = match self.evolve::<false>(&mut report, budget) {
+                Ok(status) => status,
+                Err(error) => EvolutionStatus::Stopped(error),
+            };
+        }
+        report
+    }
+
+    // Reachability selects a tighter untrusted proposal. The search and
+    // source-bound verifier remain shared with the original public entry point.
+    #[cfg(feature = "reachability")]
+    pub(super) fn integrate_displacement(
+        &self,
+        request: EvolutionRequest<N>,
+        options: EvolutionOptions,
+        budget: &mut EnclosureBudget,
+    ) -> EvolutionReport<N> {
+        let mut report = EvolutionReport {
+            identity: self.identity(),
+            request,
+            options,
+            policy: budget.policy(),
+            attempts: Vec::new(),
+            segments: Vec::new(),
+            status: EvolutionStatus::Identity,
+        };
+        report.status = match self.evolve::<true>(&mut report, budget) {
             Ok(status) => status,
             Err(error) => EvolutionStatus::Stopped(error),
         };
         report
     }
 
-    fn evolve(
+    fn evolve<#[cfg(feature = "reachability")] const DISPLACEMENT: bool>(
         &self,
         report: &mut EvolutionReport<N>,
         budget: &mut EnclosureBudget,
@@ -390,12 +432,51 @@ impl<const N: usize> ExpressionField<N> {
                             previous.evidence().picard_image().expect("self-map stage"),
                             &mut budget.arithmetic,
                         )?;
-                        candidate = hull.add(
-                            &hull.sub(&hull, &mut budget.arithmetic)?,
-                            &mut budget.arithmetic,
-                        )?;
+                        #[cfg(not(feature = "reachability"))]
+                        {
+                            candidate = hull.add(
+                                &hull.sub(&hull, &mut budget.arithmetic)?,
+                                &mut budget.arithmetic,
+                            )?;
+                        }
+                        #[cfg(feature = "reachability")]
+                        {
+                            candidate = if DISPLACEMENT {
+                                budget.graph.charge(
+                                    N.checked_mul(5).ok_or(ExpressionError::SizeExhausted)?,
+                                )?;
+                                let widths = BoxN::new(
+                                    hull.widths(&mut budget.arithmetic)?
+                                        .expect("nonempty candidate"),
+                                )?;
+                                let initial_widths = BoxN::new(
+                                    initial
+                                        .widths(&mut budget.arithmetic)?
+                                        .expect("nonempty initial state"),
+                                )?;
+                                let growth = widths.sub(&initial_widths, &mut budget.arithmetic)?;
+                                let reflection = growth.scale(
+                                    &DyadicInterval::point((-1).into(), 0)?,
+                                    &mut budget.arithmetic,
+                                )?;
+                                hull.add(
+                                    &growth.hull(&reflection, &mut budget.arithmetic)?,
+                                    &mut budget.arithmetic,
+                                )?
+                            } else {
+                                hull.add(
+                                    &hull.sub(&hull, &mut budget.arithmetic)?,
+                                    &mut budget.arithmetic,
+                                )?
+                            };
+                        }
                         expansions += 1;
                         source = CandidateSource::PicardExpansion { attempt: index };
+                        #[cfg(feature = "reachability")]
+                        if DISPLACEMENT {
+                            source =
+                                CandidateSource::PicardDisplacementExpansion { attempt: index };
+                        }
                     } else {
                         if halvings == report.options.maximum_halvings {
                             return Err(EvolutionFailure::HalvingLimit {
@@ -432,7 +513,7 @@ impl<const N: usize> ExpressionField<N> {
     }
 }
 
-fn copy_state<const N: usize>(
+pub(super) fn copy_state<const N: usize>(
     state: &BoxN<DyadicInterval, N>,
     budget: &mut EnclosureBudget,
 ) -> Result<BoxN<DyadicInterval, N>, EvolutionFailure> {

@@ -88,6 +88,10 @@ fn complete<const N: usize>(r: &EvolutionReport<N>) {
     }
     for (i, a) in r.attempts().iter().enumerate() {
         match a.source() {
+            #[cfg(feature = "reachability")]
+            CandidateSource::PicardDisplacementExpansion { .. } => {
+                panic!("native integrate changed proposal strategy")
+            }
             CandidateSource::InitialBox => assert_eq!(
                 a.report().proposal().candidate,
                 a.report().proposal().initial

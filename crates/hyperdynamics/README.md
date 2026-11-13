@@ -68,3 +68,33 @@ cargo run -p hyperdynamics --features rk-proposal --example rk_proposal
 
 The default feature set is empty. `dispatch-trace` enables underlying exact
 arithmetic instrumentation when `field` is enabled.
+
+Enable `reachability` for `field.reach(request, policy, budget)`. The request gives
+an exact dyadic horizon, an initial box and nonnegative singleton `epsilon`.
+Only `end_cover()` on a completed report exposes a finite endpoint union `C`:
+`R ⊆ C ⊆ R + [-epsilon, epsilon]^N`, where `R` is the exact reachable set.
+This is an infinity-norm bound in the supplied state-coordinate units, not an
+exact reachable-set or per-trajectory pairing claim. Identity and empty requests
+retain their exact set meanings. Zero epsilon need not complete.
+
+The search partitions the widest initial coordinate exactly, choosing the first
+axis on ties and visiting the lower child first. Small cells may instead halve
+the time cap. Every cell, failed attempt and exact source identity is retained.
+Native certified prefixes are consumed explicitly: their local one-segment-limit
+status is preserved. Each continuation box is rounded outward on the enclosure
+policy's grid, with checked inclusion. The final transfer and endpoint diameter
+must pass before whole-horizon success. The original `integrate` strategy remains
+available; reachability selects displacement-based untrusted candidate padding
+and uses the same Picard verifier.
+
+`ReachabilityPolicy` bounds cells, depth, whole-cell evolution attempts and time
+refinements. Each attempt performs at most `max(1, evolution.maximum_steps)`
+native prefix searches. All calls share the supplied budget. These bounds retain
+the existing exclusions for scalar refinement, total CPU work and heap bytes.
+A rounding floor, a mathematical/domain failure or an exhausted bound yields a
+typed stopped report with no whole-request cover. Rebuild the field and rerun
+source/request/policies for replay; reports are not deserialized as proof.
+
+```sh
+cargo run -p hyperdynamics --features reachability --example reachability
+```

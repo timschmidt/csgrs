@@ -15,6 +15,7 @@ all-features = true
 
 [features]
 default = []
+reachability = ["field"]
 rk-proposal = ["field", "hypersolve/float-proposal-program", "hyperinterval/float-proposal"]
 field = ["dep:hyperreal", "dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
 serde = ["dep:serde", "hypersolve?/serde", "hyperlattice-interval?/serde"]
@@ -38,3 +39,7 @@ required-features = ["field"]
 [[example]]
 name = "rk_proposal"
 required-features = ["rk-proposal"]
+
+[[example]]
+name = "reachability"
+required-features = ["reachability"]

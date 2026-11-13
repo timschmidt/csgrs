@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact closed dyadic box bisection and outward grid transport, preserving
+  empty/unit products, typed boundaries and shared scalar budgets.
+
 - Add exact translated parameter boxes for authored center/radius vectors,
   with affine composition, offset restrictions and validated native replay.
 

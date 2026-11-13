@@ -472,3 +472,7 @@ impl<const N: usize> EnclosedVectorField<N> for ExpressionField<N> {
 /// Source-bound primitive RK4 estimates consumed only through exact verification.
 #[cfg(feature = "rk-proposal")]
 pub mod proposal;
+
+/// Finite source-bound endpoint covers with explicit infinity-norm accuracy.
+#[cfg(feature = "reachability")]
+pub mod reachability;
