@@ -9,6 +9,75 @@ use super::{
 };
 use crate::{Expr, SymbolId};
 
+// One local derivative rule, expanded into the original visitation loop or
+// the demanded-partial traversal. This keeps operation and temporary order
+// while avoiding another symbolic differentiation authority.
+macro_rules! derive_node {
+    ($builder:ident, $node:expr, $variable:expr, $derivatives:ident, $zero:ident, $one:ident) => {
+        match $node {
+            $crate::expression_program::ExpressionNode::Constant(_) => $zero,
+            $crate::expression_program::ExpressionNode::Variable(reference) => {
+                if reference.id == $variable {
+                    $one
+                } else {
+                    $zero
+                }
+            }
+            $crate::expression_program::ExpressionNode::Unary { operation, input } => {
+                let derivative = $derivatives[*input];
+                if derivative == $zero {
+                    $zero
+                } else {
+                    let template = $crate::expression_program::jacobian::unary(
+                        *operation,
+                        $crate::Expr::anonymous_symbol($crate::SymbolId(0)),
+                    );
+                    let partial = $builder.partial(template, 0, &[*input], $zero, $one)?;
+                    $builder.chain(partial, derivative, $zero, $one)?
+                }
+            }
+            $crate::expression_program::ExpressionNode::Binary {
+                operation,
+                left,
+                right,
+            } => {
+                let mut terms = [$zero; 2];
+                for (column, input) in [*left, *right].into_iter().enumerate() {
+                    let derivative = $derivatives[input];
+                    if derivative != $zero {
+                        let template = $crate::expression_program::jacobian::binary(
+                            *operation,
+                            $crate::Expr::anonymous_symbol($crate::SymbolId(0)),
+                            $crate::Expr::anonymous_symbol($crate::SymbolId(1)),
+                        );
+                        let partial = $builder.partial(
+                            template,
+                            column as u32,
+                            &[*left, *right],
+                            $zero,
+                            $one,
+                        )?;
+                        terms[column] = $builder.chain(partial, derivative, $zero, $one)?;
+                    }
+                }
+                match terms {
+                    [a, b] if a == $zero => b,
+                    [a, b] if b == $zero => a,
+                    [left, right] => {
+                        $builder.push($crate::expression_program::ExpressionNode::Binary {
+                            operation: $crate::expression_program::BinaryOperation::Add,
+                            left,
+                            right,
+                        })?
+                    }
+                }
+            }
+        }
+    };
+}
+#[cfg(feature = "taylor-model")]
+pub(super) use derive_node;
+
 /// An owned source and its generated symbolic partial derivatives.
 ///
 /// The executable program first evaluates every original output, then partials
@@ -136,60 +205,7 @@ impl ExpressionProgram {
                 if uses[index] == 0 {
                     continue;
                 }
-                derivatives[index] = match node {
-                    ExpressionNode::Constant(_) => zero,
-                    ExpressionNode::Variable(reference) => {
-                        if reference.id == *variable {
-                            one
-                        } else {
-                            zero
-                        }
-                    }
-                    ExpressionNode::Unary { operation, input } => {
-                        let derivative = derivatives[*input];
-                        if derivative == zero {
-                            zero
-                        } else {
-                            let template = unary(*operation, Expr::anonymous_symbol(SymbolId(0)));
-                            let partial = builder.partial(template, 0, &[*input], zero, one)?;
-                            builder.chain(partial, derivative, zero, one)?
-                        }
-                    }
-                    ExpressionNode::Binary {
-                        operation,
-                        left,
-                        right,
-                    } => {
-                        let mut terms = [zero; 2];
-                        for (column, input) in [*left, *right].into_iter().enumerate() {
-                            let derivative = derivatives[input];
-                            if derivative != zero {
-                                let template = binary(
-                                    *operation,
-                                    Expr::anonymous_symbol(SymbolId(0)),
-                                    Expr::anonymous_symbol(SymbolId(1)),
-                                );
-                                let partial = builder.partial(
-                                    template,
-                                    column as u32,
-                                    &[*left, *right],
-                                    zero,
-                                    one,
-                                )?;
-                                terms[column] = builder.chain(partial, derivative, zero, one)?;
-                            }
-                        }
-                        match terms {
-                            [a, b] if a == zero => b,
-                            [a, b] if b == zero => a,
-                            [left, right] => builder.push(ExpressionNode::Binary {
-                                operation: BinaryOperation::Add,
-                                left,
-                                right,
-                            })?,
-                        }
-                    }
-                };
+                derivatives[index] = derive_node!(builder, node, *variable, derivatives, zero, one);
             }
             for &root in &source.outputs {
                 builder.budget.charge(1)?;
@@ -206,13 +222,13 @@ impl ExpressionProgram {
     }
 }
 
-struct Builder<'a> {
-    definition: ExpressionDefinition,
-    outputs: usize,
-    budget: &'a mut ExpressionBudget,
+pub(super) struct Builder<'a> {
+    pub(super) definition: ExpressionDefinition,
+    pub(super) outputs: usize,
+    pub(super) budget: &'a mut ExpressionBudget,
 }
 impl Builder<'_> {
-    fn push(&mut self, node: ExpressionNode) -> Result<usize, ExpressionError> {
+    pub(super) fn push(&mut self, node: ExpressionNode) -> Result<usize, ExpressionError> {
         self.budget.entries(&[
             self.definition.variables.len(),
             self.definition.nodes.len(),
@@ -224,7 +240,7 @@ impl Builder<'_> {
         self.definition.nodes.push(node);
         Ok(index)
     }
-    fn chain(
+    pub(super) fn chain(
         &mut self,
         partial: usize,
         derivative: usize,
@@ -245,7 +261,7 @@ impl Builder<'_> {
             })
         }
     }
-    fn partial(
+    pub(super) fn partial(
         &mut self,
         template: Expr,
         variable: u32,
@@ -288,7 +304,7 @@ impl Builder<'_> {
     }
 }
 
-fn binary(operation: BinaryOperation, left: Expr, right: Expr) -> Expr {
+pub(super) fn binary(operation: BinaryOperation, left: Expr, right: Expr) -> Expr {
     match operation {
         BinaryOperation::Add => left + right,
         BinaryOperation::Sub => left - right,
@@ -296,7 +312,7 @@ fn binary(operation: BinaryOperation, left: Expr, right: Expr) -> Expr {
         BinaryOperation::Div => left / right,
     }
 }
-fn unary(operation: UnaryOperation, value: Expr) -> Expr {
+pub(super) fn unary(operation: UnaryOperation, value: Expr) -> Expr {
     match operation {
         UnaryOperation::Neg => -value,
         UnaryOperation::PowI(n) => value.powi(n),

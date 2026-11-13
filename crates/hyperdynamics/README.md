@@ -26,6 +26,19 @@ serialization, scalar payload cloning, Hyperreal constant refinement and heap
 bytes remain outside total-work accounting. These counters do not yet provide
 whole-work or total-heap bounds.
 
+Enable `taylor-model` for `field.taylor_model(request, budget)`. The request
+specifies a time/state box and total polynomial degree; each exact midpoint
+defines the center. Hypersolve constructs exact coefficients and a certified
+finite remainder. The result retains the original field identity, request,
+coefficient/remainder evidence and native image. `enclose_on` consumes subdomains
+with the retained grid and global remainder, preserving empty/unit products.
+Source replay reconstructs the proof. This certifies a field image; flow
+existence, model composition and wrapping control require additional work.
+
+```sh
+cargo run -p hyperdynamics --features taylor-model --example taylor_model
+```
+
 `ExpressionField::certify_step` checks a proposed Picard self-map and contraction,
 returning source-bound tube and endpoint evidence or a typed rejection.
 `ExpressionField::integrate` searches bounded expansions and step halvings on a

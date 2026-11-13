@@ -69,6 +69,18 @@ accounting. This is an interval expression evaluator, not a validated ODE solver
 Run `cargo run -p hypersolve --features interval-program --example enclosed_program`
 for an oscillator image and source-bound symbolic-Jacobian enclosure.
 
+`taylor-model` adds demanded normalized mixed partials through
+`ExpressionProgram::coefficients` and centered exact-coefficient models through
+`taylor_model`. Supply an exact singleton dyadic center, a finite box, total
+polynomial degree and enclosure grid. The model retains exact `Real` coefficients,
+source regularity and every degree-(n+1) contribution to a certified remainder.
+Its image includes that remainder and intersects an independent natural source
+enclosure. Subdomain reuse retains the original global remainder and grid;
+replay regenerates evidence from the source and request. This requires the
+current primitive grammar's open analytic domains, which can be stricter than
+value evaluation. Empty products remain explicit. Structural/native arithmetic
+budgets retain the scalar-refinement and heap-byte exclusions above.
+
 `float-proposal-program` adds `ExpressionProgram::float_proposal` and a prepared
 `FloatProposalProgram::estimate` view. Demanded constants are projected once;
 ordered bindings, original domain guards and shared nodes remain in the schedule.

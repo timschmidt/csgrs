@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add optional midpoint-centered field Taylor models, retaining exact source,
+  time/state bindings, coefficient/remainder evidence and native images.
+  Subdomain reuse preserves the original grid and global remainder. Empty/unit
+  products, shared budgets and typed failures remain explicit.
+
 - Add optional finite endpoint covers with explicit infinity-norm epsilon
   thickening, exact initial partitions and retained whole-cell/prefix evidence.
   Outward endpoint transport is checked before continuation and final publication.

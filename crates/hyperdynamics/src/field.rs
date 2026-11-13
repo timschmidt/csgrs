@@ -476,3 +476,7 @@ pub mod proposal;
 /// Finite source-bound endpoint covers with explicit infinity-norm accuracy.
 #[cfg(feature = "reachability")]
 pub mod reachability;
+
+/// Exact centered field polynomials with certified finite remainders.
+#[cfg(feature = "taylor-model")]
+pub mod taylor;

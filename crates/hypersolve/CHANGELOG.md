@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Add optional demanded sparse normalized partials and exact-coefficient Taylor
+  models with explicit certified remainders, source guards and analytic-domain
+  evidence. Subdomain reuse preserves the global remainder; replay rebuilds
+  coefficients and proof from original definitions. Graph/native budgets retain
+  scalar-refinement and heap-byte exclusions.
+
 - Add graph-bounded `ExpressionProgram::jacobian` construction through the
   existing symbolic derivative rules and shared source references. Retain source
   guards, ordered variables and replay by regeneration. This does not establish

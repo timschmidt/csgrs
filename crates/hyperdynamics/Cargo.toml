@@ -15,6 +15,7 @@ all-features = true
 
 [features]
 default = []
+taylor-model = ["field", "hypersolve/taylor-model"]
 reachability = ["field"]
 rk-proposal = ["field", "hypersolve/float-proposal-program", "hyperinterval/float-proposal"]
 field = ["dep:hyperreal", "dep:hyperinterval", "dep:hyperlattice-interval", "dep:hypersolve", "hypersolve/interval-program"]
@@ -43,3 +44,7 @@ required-features = ["rk-proposal"]
 [[example]]
 name = "reachability"
 required-features = ["reachability"]
+
+[[example]]
+name = "taylor_model"
+required-features = ["taylor-model"]

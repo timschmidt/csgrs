@@ -465,7 +465,27 @@ mod tests {
     fn manifest_catalog_matches_registered_targets() {
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
         let suites = super::read_bench_suites(root).unwrap();
-        assert_eq!(suites.len(), 6);
+        assert_eq!(
+            suites
+                .iter()
+                .map(|suite| suite.name.as_str())
+                .collect::<Vec<_>>(),
+            [
+                "algebraic_fiber",
+                "certification",
+                "competitive",
+                "dispatch_trace",
+                "expression_program",
+                "representations",
+                "retained_fuzz",
+            ]
+        );
+        let expressions = suites
+            .iter()
+            .find(|suite| suite.name == "expression_program")
+            .unwrap();
+        assert!(expressions.criterion);
+        assert_eq!(expressions.required_features, ["expression-program"]);
         assert!(suites.iter().any(|suite| suite.name == "competitive"));
         assert!(suites.iter().any(|suite| !suite.criterion));
     }
