@@ -3657,6 +3657,85 @@ evolution, uniqueness, bounded halving, exact horizon/end enclosures and flow
 tubes. The full fifteen-phase goal and earlier unresolved obligations remain
 active. This registration changes only the ledger and evidence manifest.
 
+## 2026-11-13: Admit rational constant costs before materialization
+
+Previous turn: progress, accepting the owned field core. Source commit
+`b3fb87d9bd6457d3f6b64ddbf219d299e1eb7a8b` closes a reproduced native resource
+gap under that field adapter. On the target revision, `from_real` rejected
+129-/4,097-/131,073-bit rational coefficients under a 64-bit limit only after
+four allocations totaling 248/1,240/32,984 bytes per call. The same external
+zero-allocation assertion now passes all three cases. The original failure,
+all sizes, executable identities and allocator source are retained.
+
+Hyperreal adds `Rational::ratio_parts`, a borrowed sign and potentially unreduced
+numerator/denominator view with no normalization, allocation or cache publication.
+Canonical getters and rational storage/arithmetic remain unchanged. Hyperinterval's
+existing rounding kernel uses this view to reserve actual stored sizes before
+coefficient copies; its existing scaled-division kernel owns arithmetic admission.
+`DyadicInterval::from_rational` returns tight outward grid bounds through those
+kernels. Structurally rational `from_real` inputs use it after the existing grid
+check. Other symbolic inputs keep their existing supported refinement path.
+
+This is a resource correctness extension, not a preserving refactor. Budget work
+and outcomes intentionally reflect admitted stored coefficients. A large unreduced
+ratio may need a larger budget even when its reduced value is small; hidden GCD
+work is no longer used to bypass admission. The conversion and admission size do
+not depend on canonicalization-cache warmth. Source identity and exact outward
+bounds remain unchanged. General symbolic refinement, other bridge validation
+costs, source ingress/serde, scalar payload lifecycle and total heap accounting
+remain open; this does not establish wholly bounded field evaluation.
+
+Six new tests cover borrowed 8,195-bit lazy components and unchanged caches,
+13,243 independent signed rational/grid cases, further native set/arithmetic
+consumption, large coefficients, exact/one-unit-short budgets, precision extremes,
+retry, genuinely unreduced line-intersection coordinates, zero refinement/
+canonicalization dispatch counts and field image/Jacobian exhaustion/retry.
+Existing fresh-process replay and symbolic sqrt(2) witnesses remain intact.
+An initial already-canonical complex-quotient test fixture was replaced by a truly
+lazy line-intersection fixture while preserving the unreduced-storage assertion.
+No existing test, policy or fixture was weakened.
+
+All fourteen final and five supplementary qualification commands pass: 182 native
+interval tests, 218 rational-owner tests, 874 Hypersolve owner checks, 467 integrated
+dynamics/path tests, feature-specific MSRV checks, release, strict all-target
+Clippy, Wasm, docs, AddressSanitizer, formatting/diffs and retention budgets.
+All eight field tests also pass in the isolated package without the pending
+extraction, and all 12 point benchmark smoke cases pass. An initial Rust 1.88
+all-feature command rejected Hyperreal's documented Rust 1.95 requirement;
+correct rational/Real 1.95 and dyadic-only 1.88 configurations both pass. The
+initial rejection is retained; no compiler requirement was bypassed.
+
+The unchanged external field probe compares parent/candidate at the same paths
+and lockfile, completing 35 constructor/replay/image/Jacobian/pipeline workloads
+and separately testing 21 exhaustion cases. CPU-0 CBBC runs initially showed
+constructor/replay regressions up to 26.8%, prompting BCCB repeats. All initial
+samples and adverse results remain retained. Pooled results include all 124 timing
+samples per implementation per case: median candidate/control ratios are 0.9533
+for construction, 0.9449 replay, 0.7885 image, 0.8172 Jacobian and 0.8809 pipeline.
+Four affine construction/replay cases remain slower, up to ratio 1.03042. These
+finite noisy measurements do not establish a universal or across-the-board speedup.
+
+Every allocation epoch ends with zero live bytes. Degree-128 pipeline allocations
+fall from 8,879 to 8,105; maximum observed peak remains 173,660 bytes. Graph work
+is unchanged; degree-128 image/Jacobian scalar accounting falls from
+4,528,715/4,599,743 to 2,280,761/2,351,789 units. The field executable grows 160
+bytes to 3,934,184 and its sized-function union grows 201 bytes to 1,992,586.
+The point benchmark shrinks eight bytes with identical .text/.rodata and unchanged
+3,150,521-byte function union; other section bytes differ. These costs accompany
+the demonstrated resource correctness gain, without an unchanged-cost claim.
+
+Evidence commit `f95aafa6ebfe45f67815b159a63b04328b40c5c1`, record
+`docs/evidence/2026-11-13-interval-rational-constant-budget`: 108 files,
+8,903,429 bytes, SHA-256
+`1ecfb2cd02584490820249811dbca613cda0bbfd390e85b96d1141655d3f14aa`.
+The committed digest was regenerated and verified. Pending dynamics and Interface
+patches remain byte-identical, Firmware remains clean, and no push occurred.
+Full pre-push/hosted-OS/hardware/release qualification is not claimed. Complete
+field resource and derivative/continuity contracts, validated Euler/Picard
+existence/uniqueness, bounded halving, exact horizon/end enclosures and flow tubes
+remain open, as do earlier unresolved phases and the extraction retention gate.
+The full goal stays active. This registration changes only the ledger and manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
