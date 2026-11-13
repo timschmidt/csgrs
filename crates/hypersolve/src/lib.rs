@@ -32,6 +32,8 @@ pub mod domain;
 pub mod domain_certification;
 pub mod eval;
 pub mod exact_factor;
+#[cfg(feature = "expression-program")]
+pub mod expression_program;
 pub mod failed_constraints;
 mod integer_interpolation;
 pub mod interval;

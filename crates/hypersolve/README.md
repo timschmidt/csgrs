@@ -15,7 +15,7 @@ dense floating-point proposal loop a source of topology truth.
 Domain geometry remains owned by Hyperlimit, Hypercurve, Hypertri, and their
 consumers. Hypersolve owns reusable equation structure and certification.
 
-This README describes crate version `0.3.1`.
+This README describes crate version `0.4.0`.
 
 ## Primary types
 
@@ -44,6 +44,19 @@ cargo run -p hypersolve --example basic
 
 Hypersolve has no default features. `dispatch-trace` is for exact-dispatch
 instrumentation and does not change the mathematical API.
+
+The experimental `expression-program` feature adds owned flat expression
+graphs with ordered bindings and validated replay. It retains the existing
+`Expr` grammar and exact scalar definitions. Enable `serde` to serialize its
+unvalidated definitions; load them through `ExpressionProgram::from_definition`
+before evaluation. Graph budgets cover structural work and entry counts, not
+scalar arithmetic or heap bytes. Interval images, bounded derivative
+construction and validated evolution remain separate work. Run the source and
+symbolic-Jacobian example with:
+
+```sh
+cargo run -p hypersolve --features expression-program --example owned_program
+```
 
 `work_budget::with_budget` bounds instrumented root-subdivision and tensor-image
 promotion attempts across nested synchronous operations. Exhaustion is a typed
@@ -465,6 +478,8 @@ their use case.
 | Feature | Default | Purpose |
 | --- | --- | --- |
 | `dispatch-trace` | no | Hyperreal/Hyperlattice/Hyperlimit exact-dispatch instrumentation |
+| `expression-program` | no | Experimental owned flat expression definitions and exact scalar evaluation |
+| `serde` | no | Symbol and expression-definition serialization using validated Hyperreal scalar replay |
 
 ## Validation and performance
 

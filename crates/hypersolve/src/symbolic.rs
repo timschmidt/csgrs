@@ -5,10 +5,12 @@ use hyperreal::{Problem as HyperProblem, Rational, Real, SymbolicDependencyMask}
 
 /// Stable identifier for a solve variable.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SymbolId(pub u32);
 
 /// Metadata attached to a symbolic variable reference.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SymbolRef {
     pub id: SymbolId,
     pub name: Option<String>,

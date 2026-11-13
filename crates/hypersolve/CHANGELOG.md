@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Add experimental `expression-program` support for immutable flat symbolic
+  definitions, explicit ordered bindings, validated DAG replay, and exact scalar
+  evaluation. Preserve source guards and typed scalar failures. Structural work
+  and entry limits include cancellation and retry; they do not bound scalar
+  arithmetic or heap bytes. Optional `serde` retains validated Hyperreal scalar
+  definitions. This is not an interval field or validated ODE implementation.
+
 - Preserve the exact integer-power derivative at `i64::MIN` using a quotient
   whose exponent remains representable, including repeated differentiation and
   the nonzero-base domain. Report an unavailable dense symbolic-Jacobian
