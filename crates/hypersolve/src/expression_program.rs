@@ -25,13 +25,6 @@ mod affine;
 pub use affine::{AffineParameterization, AffineProgram};
 mod jacobian;
 pub use jacobian::JacobianProgram;
-#[cfg(feature = "taylor-model")]
-mod taylor;
-#[cfg(feature = "taylor-model")]
-pub use taylor::{
-    CoefficientProgram, CoefficientRequest, TaylorError, TaylorModel, TaylorRemainderTerm,
-    TaylorRequest, TaylorTerm,
-};
 
 /// An operation on two expressions, preserving left-to-right evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -598,3 +591,11 @@ impl UnaryOperation {
 mod proposal;
 #[cfg(feature = "float-proposal-program")]
 pub use proposal::{FloatProposalError, FloatProposalProgram};
+
+#[cfg(feature = "taylor-model")]
+mod taylor;
+#[cfg(feature = "taylor-model")]
+pub use taylor::{
+    CoefficientProgram, CoefficientRequest, TaylorError, TaylorModel, TaylorRemainderTerm,
+    TaylorRequest, TaylorTerm,
+};

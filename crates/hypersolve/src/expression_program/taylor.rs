@@ -294,16 +294,56 @@ fn derive(
             }
             continue;
         }
-        let derivatives = DerivativeInputs { memo, variable };
-        let value = super::jacobian::derive_node!(
-            builder,
-            &node,
-            variable,
-            |input: usize| derivatives[input],
-            |input: usize| derivatives[input],
-            zero,
-            one
-        );
+        // Demand scheduling differs from the complete-column Jacobian loop.
+        // Reuse its construction primitives and Expr's local derivative rules;
+        // combine the nonzero operand contributions in original input order.
+        let value = match &node {
+            ExpressionNode::Constant(_) => zero,
+            ExpressionNode::Variable(reference) => {
+                if reference.id == variable {
+                    one
+                } else {
+                    zero
+                }
+            }
+            ExpressionNode::Unary { .. } | ExpressionNode::Binary { .. } => {
+                let operands = node.inputs();
+                let first = operands[0].expect("nonleaf has an operand");
+                let inputs = [first, operands[1].unwrap_or(first)];
+                let arity = if operands[1].is_some() { 2 } else { 1 };
+                let mut terms = [zero; 2];
+                for column in 0..arity {
+                    let derivative = memo[&(inputs[column], variable)];
+                    if derivative == zero {
+                        continue;
+                    }
+                    let template = match &node {
+                        ExpressionNode::Unary { operation, .. } => super::jacobian::unary(
+                            *operation,
+                            crate::Expr::anonymous_symbol(SymbolId(0)),
+                        ),
+                        ExpressionNode::Binary { operation, .. } => super::jacobian::binary(
+                            *operation,
+                            crate::Expr::anonymous_symbol(SymbolId(0)),
+                            crate::Expr::anonymous_symbol(SymbolId(1)),
+                        ),
+                        _ => unreachable!("nonleaf already selected"),
+                    };
+                    let partial =
+                        builder.partial(template, column as u32, &inputs[..arity], zero, one)?;
+                    terms[column] = builder.chain(partial, derivative, zero, one)?;
+                }
+                match terms {
+                    [a, b] if a == zero => b,
+                    [a, b] if b == zero => a,
+                    [left, right] => builder.push(ExpressionNode::Binary {
+                        operation: super::BinaryOperation::Add,
+                        left,
+                        right,
+                    })?,
+                }
+            }
+        };
         builder
             .budget
             .check_entries(&[retained, memo.len(), tasks.len(), 1])?;
@@ -311,17 +351,6 @@ fn derive(
         memo.insert((index, variable), value);
     }
     Ok(memo[&(root, variable)])
-}
-
-struct DerivativeInputs<'a> {
-    memo: &'a BTreeMap<(usize, SymbolId), usize>,
-    variable: SymbolId,
-}
-impl std::ops::Index<usize> for DerivativeInputs<'_> {
-    type Output = usize;
-    fn index(&self, input: usize) -> &Self::Output {
-        &self.memo[&(input, self.variable)]
-    }
 }
 
 impl From<hyperinterval::IntervalError> for TaylorError {
