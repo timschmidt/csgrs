@@ -518,6 +518,7 @@ docs/evidence/2026-11-13-interval-rational-constant-budget	108	8903429	1ecfb2cd0
 docs/evidence/2026-11-13-interval-rational-time	184	6308703	ae7faec60dee7c80b7e6c25e6b00611b13662da19392b470a79798ef9af79db9
 docs/evidence/2026-11-13-interval-reachability	346	85174134	d3f5f0781211545075fb8b7f407dac85e0fad91b70613af052a12d103f4a9b99
 docs/evidence/2026-11-13-interval-rk-proposals	204	5883677	24e03ab992b385d209e6ff75eb88720d8164c0868c84aacbc48e740c0b13fb5e
+docs/evidence/2026-11-13-interval-taylor-affine	259	4644737	048b328a2f3d95257149cfa0329cfce39466109adcce26f51ddec443447ff092
 docs/evidence/2026-11-13-interval-taylor-candidate	314	58884332	da15cf76824197c12746e9b0d6b87bc354d9e1059c44324533d4093a8a52500c
 docs/evidence/2026-11-13-interval-taylor-cost-resolution	333	77929031	1ab5f27a5f959a1ba153b8f311a8d786bdeafd0221b79e292c9fac6f02bc9d73
 excluded:crates/comparisons/audits/tmp/computable-0.1.0.crate	1	108257	e3134cfa5d49bf2fb4292fb9711cedc1eb0571f4ce790a4e840eea8f3f847912

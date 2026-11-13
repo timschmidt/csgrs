@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder and field consumer retained after local qualification | wrapping, model composition, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine output forms and field consumers retained after local qualification | ODE wrapping, nonlinear model composition, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4332,6 +4332,83 @@ unchanged. Source budget passes at 4,144 files and 142,800,953 bytes before this
 ledger registration. No push occurred; the complete pre-push matrix remains
 required before publication. Phase 11 retention and all other open phases remain
 in scope.
+
+## 2026-11-13: Retain source-bound affine Taylor output forms
+
+The full fifteen-phase goal remains active. Source
+`dbe8d0fdfae14a7e0a311831cba293b9dec10fb6` adds opt-in `taylor-affine` support
+owned by Hypersolve. Exact coefficients combine by monomial, and repeated output
+maps compose against the original source and residual coordinates before interval
+projection. The source certificate, domain, grid and global residual remain shared
+and authoritative. This supports finite affine chains, rectangular/singular maps,
+translations, nonrational coefficients, empty sources and zero-dimensional products.
+The Hyperdynamics example derives x² and y from (x²+y,x²-y), then explicitly
+projects to another field operation. It does not establish ODE coordinate
+transport, nonlinear model arithmetic or completed wrapping support.
+
+Ten maintained tests exercise independent polynomial coefficients, eight repeated
+shear/inverse cycles, original residual identity, domain restriction, nonrational
+cancellation, empty/unit composition, fresh-process replay and typed resource
+failure/retry. The distinct-function residual control has equal residual bounds
+but independently known difference 8/15 at 1/4, preventing invalid cancellation
+from bound equality. A final audit reproduced an uncharged affine domain scan;
+the failed witness and pre-fix source are retained. The corrected scan charges
+before executing, and a dimension-sensitive test isolates transport from owner
+work. Structural-stage and native arithmetic budgets retain the documented Real
+payload/refinement, total live-entry/heap and within-scalar cancellation exclusions;
+this increment does not claim a whole-resource bound.
+
+The isolated-feature implementation before that final accounting line passed
+17 owner and seven combined downstream command groups: 1,447 Hypersolve tests,
+455 owner benchmark smokes, 53 Hyperdynamics tests, minimal configurations,
+release/ASan, strict Clippy, warnings-denied docs, WASM, examples and format checks.
+Combined dynamics/path ran 512 tests and 194 path benchmark smokes. All 200
+successive-operations rows preserve structural fields, allocation counts and shown
+memory columns relative to the preceding retained revision; timings are smoke
+observations. After the production accounting fix, all twelve affected groups
+pass: 25 focused tests, nine minimal affine and 21 original minimal Taylor tests,
+53 Hyperdynamics tests, 19 release and 24 ASan tests, strict Clippy, docs, WASM,
+the combined downstream consumer, formatting and whitespace. The last test-only
+zero-output-chain extension subsequently passes all ten tests, strict Clippy and
+formatting. Earlier broad runs are not advertised as final-code full reruns.
+
+The first prototype passed its checks but grew an existing Taylor consumer by
+10,848 ELF and 2,688 text bytes; it was not retained. The final separate feature
+and nested module preserve all original bytes of the three existing implementation
+files as prefixes. Both legacy evolution binaries are now byte-for-byte identical
+at 4,022,952 and 4,160,560 bytes; the full 177,398-byte semantic transcript matches.
+The existing Taylor consumer preserves machine code and every allocated section
+except its build identifier. Its unstripped ELF grows eight bytes, from 3,919,488
+to 3,919,496, in nonallocated symbol metadata. This measured additive extension
+cost is explicit; this is not a size-neutral behavior-preserving refactor claim.
+
+All twelve fixed alternating legacy timing pairs retain all 22 cases and identical
+resource/allocation rows. One pointwise 95% interval remains adverse:
+halving-limit/stopped ratio 1.0023400422, interval [1.0008895914,1.0041541563].
+Retention uses the stronger deterministic evidence of identical complete legacy
+binaries; no timing threshold, assertion or case was changed and no speedup is
+claimed. Two old-model trials preserve image/work/allocation records. New affine
+trials reproduce their records: coupled construction uses 145 graph/588,876 native
+units and retains 2,632 incremental bytes (3,520 peak); reciprocal-copy uses
+30/228,565 and 1,360 bytes (2,160 peak). Construction medians are about 52.7/13.4 us,
+reuse 45.7/9.7 us, eight round trips 964/246 us, and full replay 191/83 us. All
+measured operations and failure controls return live allocation delta to zero
+after drop. Construction starts from an existing shared source; replay includes
+its reconstruction. These are absolute completed-task costs, not competitive
+results or universal completion bounds.
+
+Evidence record `docs/evidence/2026-11-13-interval-taylor-affine` at external commit
+`910978f28d0f9fa9f0b4ecae6e1354c785272224` contains 259 files, 4,644,737 bytes,
+digest `048b328a2f3d95257149cfa0329cfce39466109adcce26f51ddec443447ff092`.
+Final source/results are under `isolated-feature/`; its README distinguishes
+superseded prototypes, the final accounting fix and later test-only checks. Both
+previous immutable Taylor archives verify unchanged. All forty pending extraction
+paths remain staged separately, including 37 identical nonoverlapping blobs and
+three merged Hyperdynamics files. Interface's eight edits are unchanged. Source
+budget passes at 4,147 files and 142,849,433 bytes before this registration. No
+push occurred; the complete pre-push matrix remains required before publication.
+Phase 11 retention, ODE wrapping/QR, nonlinear composition, wider adoption,
+competitive comparisons and all other open plan phases remain in scope.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
