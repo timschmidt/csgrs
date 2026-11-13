@@ -143,7 +143,10 @@ refusals retain the typed `Problem` in `IntervalError::Scalar` and `source()`.
 This guard is not a cumulative work, memory-byte or cancellation budget. The
 `dyadic` feature is allocation-enabled `no_std` on Rust 1.88: its BigInt
 mantissas share an exponent, with explicit budgets for arithmetic and scale
-changes. `hyperreal` enables both carriers and their certified Real bridge;
+changes. Common-grid arithmetic, set operations and comparisons keep exact
+zero on the other operand's grid; zero copies consume work without reserving
+bits for a shift. An interval that merely contains zero still uses ordinary
+alignment accounting. `hyperreal` enables both carriers and their certified Real bridge;
 `real-ball` adds exact symbolic centers with nonnegative rational radii.
 
 Dyadic width, midpoint and radius return exact singleton intervals, or empty

@@ -70,6 +70,9 @@ impl DyadicBudget {
 /// up to the exponent's maximum; zero and empty have canonical exponent zero.
 /// Normalization preserves the set, not the originally requested grid tag.
 /// Arithmetic is exact except explicitly outward-rounded division/regridding.
+/// Common-grid operations keep exact zero on the other operand's grid. Copying
+/// zero still consumes work, but requires no magnitude-bit shift reservation;
+/// an interval that merely contains zero receives ordinary alignment accounting.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct DyadicInterval {
     bounds: Option<Bounds<BigInt>>,
@@ -343,7 +346,22 @@ impl DyadicInterval {
         self.bounds().map_or(0, |(a, b, _)| a.bits().max(b.bits()))
     }
 
-    // Align exactly to a no-coarser grid. Reserve before cloning or shifting.
+    // Nonempty operands share the finer grid unless one is exactly zero.
+    // Canonical zero has exponent zero and is representable on every grid.
+    fn common_exponent(&self, other: &Self) -> i32 {
+        if self.exponent == other.exponent {
+            self.exponent
+        } else if self.exponent == 0 && self.bits() == 0 {
+            other.exponent
+        } else if other.exponent == 0 && other.bits() == 0 {
+            self.exponent
+        } else {
+            self.exponent.min(other.exponent)
+        }
+    }
+
+    // Align exactly to a no-coarser grid (zero permits any grid).
+    // Reserve before cloning or shifting.
     fn align(
         &self,
         exponent: i32,
@@ -352,10 +370,14 @@ impl DyadicInterval {
         let Some((a, b, e)) = self.bounds() else {
             return Ok(None);
         };
+        let bits = self.bits();
+        if bits == 0 {
+            budget.reserve(0, 2, false)?;
+            return Ok(Some(Bounds::new(a.clone(), b.clone())?));
+        }
         let shift = u64::try_from(i64::from(e) - i64::from(exponent))
             .map_err(|_| IntervalError::InvalidScale)?;
-        let bits = self
-            .bits()
+        let bits = bits
             .checked_add(shift)
             .ok_or(IntervalError::SizeExhausted)?;
         budget.reserve(bits, 2, false)?;
@@ -405,7 +427,7 @@ impl DyadicInterval {
         if self.is_empty() || other.is_empty() {
             return Ok(Self::empty());
         }
-        let exponent = self.exponent.min(other.exponent);
+        let exponent = self.common_exponent(other);
         let (a, b) = self
             .align(exponent, budget)?
             .expect("nonempty input")
@@ -476,7 +498,7 @@ impl DyadicInterval {
         if self.is_empty() || other.is_empty() {
             return Ok(Self::empty());
         }
-        let exponent = self.exponent.min(other.exponent);
+        let exponent = self.common_exponent(other);
         let a = self.align(exponent, budget)?.expect("nonempty input");
         let b = other.align(exponent, budget)?.expect("nonempty input");
         let selected = if maximum {
@@ -632,7 +654,7 @@ impl DyadicInterval {
         } else if other.is_empty() {
             self.exponent
         } else {
-            self.exponent.min(other.exponent)
+            self.common_exponent(other)
         };
         let a = self.align(exponent, budget)?;
         let b = other.align(exponent, budget)?;
@@ -661,7 +683,7 @@ impl DyadicInterval {
         if self.is_empty() || other.is_empty() {
             return Ok(Self::empty());
         }
-        let exponent = self.exponent.min(other.exponent);
+        let exponent = self.common_exponent(other);
         let a = self.align(exponent, budget)?.expect("nonempty input");
         let b = other.align(exponent, budget)?.expect("nonempty input");
         match a.as_refs().intersection(b.as_refs()) {
@@ -714,7 +736,7 @@ impl DyadicInterval {
         if other.is_empty() {
             return Ok(false);
         }
-        let exponent = self.exponent.min(other.exponent);
+        let exponent = self.common_exponent(other);
         let a = self.align(exponent, budget)?.expect("nonempty input");
         let b = other.align(exponent, budget)?.expect("nonempty input");
         Ok(if left {

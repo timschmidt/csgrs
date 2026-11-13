@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Keep exact zero on the other dyadic operand's grid for arithmetic, set
+  operations and comparisons. Zero regridding and extreme-scale compositions
+  no longer reserve storage for an irrelevant exponent gap; work and size
+  exhaustion remain explicit.
+
 - Add tight fixed-point division by an exact signed integer, including divisors
   outside the fixed-point value range and signed extremes, with allocation-free
   arithmetic and checked replay into further operations.

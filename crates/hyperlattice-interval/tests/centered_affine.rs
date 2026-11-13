@@ -368,3 +368,43 @@ fn dyadic_sources_and_shared_retry() {
         result
     );
 }
+
+#[cfg(feature = "dyadic")]
+#[test]
+fn dyadic_zero_centers_and_extreme_scale_accumulators() {
+    use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
+    let point = |v: i32, e| I::point(v.into(), e).unwrap();
+    let budget = || DyadicBudget::new(64, 10000);
+    for exponent in [i32::MIN, -1000, 0, 1000, i32::MAX] {
+        let form = CenteredVector::new(
+            IntervalVector::new([point(0, 0), point(0, 0)]).unwrap(),
+            IntervalVector::new([point(1, exponent), point(3, exponent)]).unwrap(),
+        )
+        .unwrap();
+        let expected = IntervalVector::new([
+            I::new((-1).into(), 1.into(), exponent).unwrap(),
+            I::new((-3).into(), 3.into(), exponent).unwrap(),
+        ])
+        .unwrap();
+        assert_eq!(form.enclosure(&mut budget()).unwrap(), expected);
+        let source = form.affine_source(&mut budget()).unwrap();
+        assert_eq!(source.enclosure(&mut budget()).unwrap(), expected);
+        let identity = AffineMap::new(
+            IntervalMatrix::new([[point(1, 0), point(0, 0)], [point(0, 0), point(1, 0)]]).unwrap(),
+            IntervalVector::new([point(0, 0), point(0, 0)]).unwrap(),
+        )
+        .unwrap();
+        let image = identity.image(source);
+        assert_eq!(image.enclosure(&mut budget()).unwrap(), expected);
+        let sum = AffineMap::new(
+            IntervalMatrix::new([[point(1, 0), point(1, 0)]]).unwrap(),
+            IntervalVector::new([point(0, 0)]).unwrap(),
+        )
+        .unwrap()
+        .image(image);
+        assert_eq!(
+            sum.enclosure(&mut budget()).unwrap(),
+            IntervalVector::new([I::new((-4).into(), 4.into(), exponent).unwrap(),]).unwrap()
+        );
+    }
+}

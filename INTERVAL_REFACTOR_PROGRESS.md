@@ -2900,6 +2900,67 @@ Source commit `728ea5d7d63f9d98e9cf44fbeb55202d8fffa423`; evidence commit
 `18cbe6601bff2737896a5f74b7946f0470492f14d8d22085288a44005e03c3fd`. The committed record was regenerated and verified;
 every previous archive row remains unchanged.
 
+## 2026-11-12: exact zero uses a compact dyadic grid
+
+The preceding turn completed the authored affine-source bridge. Baseline
+`6bd212482843261c9d514fdff3fe9b5b5bd2deac`, all four managed trees clean.
+The new scalar acceptance witness reproduces SizeExhausted when adding zero to
+a compact value at exponent i32::MIN. Owner: Hyperinterval's private dyadic
+alignment (P1–P7, P18–P20, P35–P37; plan Phases 3 and 6). The admission and
+raw results are staged at `/tmp/interval-refactor/dyadic-zero-grid`.
+
+Kept as a resource-completion fix: common-grid operations use the nonzero
+operand's exponent when the other operand is exactly zero. Alignment reserves
+two work units before copying zero without a shift; its magnitude needs zero
+bits on any grid. All five shared-grid sites use one private helper. Merely
+zero-containing intervals keep ordinary alignment and exhaustion. Empty paths,
+left/right reservation order, Bounds predicates, division preconditions and
+normalization remain unchanged. There are no Hyperlimit policy or dispatch
+calls in this path. Nonzero budget formulas are unchanged; the deliberately
+smaller mixed-zero charges reflect work that is no longer performed. This is
+not a behavior-preserving refactor or a new resource/cancellation mechanism.
+
+Five scalar tests cover 1,320 small signed intervals across eleven exponents,
+all nine affected binary operations in both orders, zero regridding, true
+nonzero extreme-gap exhaustion, empty identities, 1/7/64/257-bit mantissas,
+every insufficient work budget and fresh retry, independent integer arithmetic
+expectations for 2,025 nonzero pairs, and fresh-process replay followed by
+further operations. Downstream authored and translated zero-centered sources,
+identity maps and accumulated sums complete at both exponent extremes.
+The initial test compilation error (missing BigInt type annotation) is retained
+alongside its correction; no failing arithmetic witness or budget was weakened.
+
+All twelve selected checks pass: Rust 1.88/stable dyadic suites (71 tests and
+doctests each), Rust 1.95 all-feature scalar debug/release suites (188 each),
+the all-feature interval-lattice suite (84), Hyperlattice's interval surface
+(7), strict all-target Clippy, docs, ARM and Wasm no_std compilation, root fmt
+and diff checks. ASan passes five scalar and two dyadic affine tests. The
+compile checks are not Wasm execution or hardware qualification. No new full
+coverage, fuzz, formal proof or complete pre-push matrix claim is made.
+
+Matched local probes preserve all 60 serialized sum/difference/hull/intersection
+outputs and nonzero work charges. The primary runs use identical registry
+versions/checksums from the repository lock; the initial alternate-dependency
+runs are retained separately and do not supply the primary claims. Each case
+has 64 warmups and 30 samples of 4,096 completed/materialized/dropped outputs,
+pinned to CPU 0 without frequency control. Sixteen additional extreme-zero
+cases complete only on the candidate; an old exhausted attempt is not counted
+as a successful baseline. Ordinary nonzero median timing ratios range from
+0.855 to 1.009; this short sequential probe is not a global speedup or
+no-regression claim. For [-3,7]*2^e plus zero, e=-17/+17, work falls from
+48/84 to 16 units; measured allocations remain two (16 bytes). Hull uses four
+allocations (32 bytes), intersection two (16 bytes). The probe executable grows
+from 524,952 to 526,112 bytes (+1,160); this lower-priority cost is retained for
+new exact completion. Peak temporary memory, stack and monomorphized size are
+unmeasured. Input construction is outside the timed/accounted scope.
+
+This repairs scalar zero alignment and its tested downstream compositions.
+All broader Phase 3/6 qualification and adoption gaps, the earlier solver and
+firmware migration blockers, and the remaining 15-phase goal stay open.
+No Interface or firmware source changed; no push was attempted.
+
+DYADIC_ZERO_GRID_ARCHIVE_PENDING
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
