@@ -433,3 +433,176 @@ fn fresh_process_replay_regenerates_partials_from_source_and_variables() {
         values
     );
 }
+
+#[cfg(feature = "interval-program")]
+mod regularity {
+    use super::*;
+    use hyperinterval::{DyadicBudget, DyadicInterval, IntervalError};
+    fn arithmetic() -> DyadicBudget {
+        DyadicBudget::new(16_384, 1_000_000_000_000)
+    }
+    fn d(a: i64, b: i64) -> DyadicInterval {
+        DyadicInterval::new(a.into(), b.into(), 0).unwrap()
+    }
+
+    #[test]
+    fn strict_active_primitive_domains_are_distinct_from_time_continuity() {
+        for (expression, boundary, interior) in [
+            (x().sqrt(), d(0, 1), d(1, 4)),
+            (
+                x().asin(),
+                d(-1, 0),
+                DyadicInterval::new((-1).into(), 1.into(), -1).unwrap(),
+            ),
+            (
+                x().acos(),
+                d(0, 1),
+                DyadicInterval::new((-1).into(), 1.into(), -1).unwrap(),
+            ),
+            (x().acosh(), d(1, 2), d(2, 3)),
+        ] {
+            let source = compile(&[expression], &[SymbolId(0)]);
+            assert!(
+                source
+                    .eval_dyadic(
+                        std::slice::from_ref(&boundary),
+                        -32,
+                        &mut budget(),
+                        &mut arithmetic()
+                    )
+                    .is_ok()
+            );
+            let active = source.jacobian(&[SymbolId(0)], &mut budget()).unwrap();
+            assert!(matches!(
+                active.enclose_regular(
+                    std::slice::from_ref(&boundary),
+                    -32,
+                    &mut budget(),
+                    &mut arithmetic()
+                ),
+                Err(ExpressionError::RegularityNotCertified { .. })
+            ));
+            assert!(
+                active
+                    .enclose_regular(&[interior], -32, &mut budget(), &mut arithmetic())
+                    .is_ok()
+            );
+            let inactive = source.jacobian(&[], &mut budget()).unwrap();
+            let proof = inactive
+                .enclose_regular(
+                    std::slice::from_ref(&boundary),
+                    -32,
+                    &mut budget(),
+                    &mut arithmetic(),
+                )
+                .unwrap();
+            assert_eq!(proof.arguments(), [boundary]);
+            assert_eq!(proof.program().source().definition(), source.definition());
+        }
+        let constant = compile(&[Expr::int(0).sqrt()], &[SymbolId(0)])
+            .jacobian(&[SymbolId(0)], &mut budget())
+            .unwrap();
+        assert_eq!(
+            constant
+                .enclose_regular(&[d(-1, 1)], -32, &mut budget(), &mut arithmetic())
+                .unwrap()
+                .values(),
+            [d(0, 0), d(0, 0)]
+        );
+        // Invalid source domains retain their original diagnosis.
+        let source = compile(&[x().sqrt()], &[SymbolId(0)])
+            .jacobian(&[SymbolId(0)], &mut budget())
+            .unwrap();
+        assert!(matches!(
+            source.enclose_regular(&[d(-2, -1)], -32, &mut budget(), &mut arithmetic()),
+            Err(ExpressionError::Enclosure {
+                source: IntervalError::EmptyDomain,
+                ..
+            })
+        ));
+    }
+
+    #[test]
+    fn regular_jacobian_retains_domains_values_limits_and_retry() {
+        let source = compile(&[x().powi(3) + Expr::int(2) * x()], &[SymbolId(0)]);
+        let jacobian = source.jacobian(&[SymbolId(0)], &mut budget()).unwrap();
+        let inputs = [d(1, 2)];
+        let mut graph = budget();
+        let mut scalar = arithmetic();
+        let proof = jacobian
+            .enclose_regular(&inputs, -32, &mut graph, &mut scalar)
+            .unwrap();
+        assert_eq!(proof.values(), [d(3, 12), d(5, 14)]);
+        assert_eq!(proof.precision(), -32);
+        assert_eq!(proof.program().variables(), [SymbolId(0)]);
+        let gw = budget().remaining_work() - graph.remaining_work();
+        let sw = arithmetic().remaining_work() - scalar.remaining_work();
+        assert!(
+            jacobian
+                .enclose_regular(
+                    &inputs,
+                    -32,
+                    &mut ExpressionBudget::new(1_000_000, gw),
+                    &mut DyadicBudget::new(16_384, sw)
+                )
+                .is_ok()
+        );
+        assert!(matches!(
+            jacobian.enclose_regular(
+                &inputs,
+                -32,
+                &mut ExpressionBudget::new(1_000_000, gw - 1),
+                &mut arithmetic()
+            ),
+            Err(ExpressionError::WorkExhausted)
+        ));
+        assert!(
+            jacobian
+                .enclose_regular(
+                    &inputs,
+                    -32,
+                    &mut budget(),
+                    &mut DyadicBudget::new(16_384, sw - 1)
+                )
+                .is_err()
+        );
+        let token = CancellationToken::new();
+        token.cancel();
+        let mut cancelled = budget();
+        cancelled.cancellation = Some(token);
+        assert!(matches!(
+            jacobian.enclose_regular(&inputs, -32, &mut cancelled, &mut arithmetic()),
+            Err(ExpressionError::Cancelled)
+        ));
+        assert_eq!(
+            jacobian
+                .enclose_regular(&inputs, -32, &mut budget(), &mut arithmetic())
+                .unwrap()
+                .values(),
+            proof.values()
+        );
+        // Changing caller input cannot mutate the retained domain or proof.
+        let changed = [d(9, 10)];
+        assert_ne!(
+            jacobian
+                .enclose_regular(&changed, -32, &mut budget(), &mut arithmetic())
+                .unwrap()
+                .values(),
+            proof.values()
+        );
+        assert_eq!(proof.arguments(), inputs);
+        assert!(matches!(
+            jacobian.enclose_regular(&[], -32, &mut budget(), &mut arithmetic()),
+            Err(ExpressionError::BindingCount { .. })
+        ));
+        let empty = jacobian
+            .enclose_regular(
+                &[DyadicInterval::empty()],
+                -32,
+                &mut budget(),
+                &mut arithmetic(),
+            )
+            .unwrap();
+        assert!(empty.values().iter().all(DyadicInterval::is_empty));
+    }
+}

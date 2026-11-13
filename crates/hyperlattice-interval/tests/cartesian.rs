@@ -53,6 +53,37 @@ fn exact_products<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
     assert!(unit.interior_subset_of(&unit, &mut context()).unwrap());
     assert_eq!(unit.into_rows(), Some([]));
     let ranges = [(-1, -1), (-1, 0), (-1, 1), (0, 0), (0, 1), (1, 1)];
+    // Independent corner enumeration for each scaled coordinate, including
+    // signed scalars and a scalar interval shared between coordinates.
+    for a in ranges {
+        for scale in ranges {
+            let vector = IntervalVector::new([scalar(a.0, a.1), scalar(-a.1, -a.0)]).unwrap();
+            let expected = [
+                dot_bounds(&[a], &[scale]),
+                dot_bounds(&[(-a.1, -a.0)], &[scale]),
+            ];
+            assert_eq!(
+                vector
+                    .scale(&scalar(scale.0, scale.1), &mut context())
+                    .unwrap()
+                    .into_lanes(),
+                Some(expected.map(|(lo, hi)| scalar(lo, hi)))
+            );
+            assert!(
+                vector
+                    .scale(&I::empty().unwrap(), &mut context())
+                    .unwrap()
+                    .is_empty()
+            );
+        }
+    }
+    let unit = IntervalVector::<I, 0>::new([]).unwrap();
+    assert_eq!(unit.scale(&scalar(-1, 1), &mut context()).unwrap(), unit);
+    assert!(
+        unit.scale(&I::empty().unwrap(), &mut context())
+            .unwrap()
+            .is_empty()
+    );
     // Exhaust every two-lane dot product over this finite endpoint domain.
     for a0 in ranges {
         for a1 in ranges {
@@ -413,5 +444,32 @@ fn shared_budget_copies_exhaustion_and_retry() {
         a.mul_vector(&x, &mut DyadicBudget::new(256, 1_000_000))
             .unwrap(),
         result
+    );
+}
+
+#[cfg(feature = "dyadic")]
+#[test]
+fn vector_scale_shares_work_across_coordinates_and_retries() {
+    use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval as I};
+    let x = IntervalVector::new([
+        I::new((-2).into(), 3.into(), -1).unwrap(),
+        I::new(4.into(), 7.into(), -2).unwrap(),
+    ])
+    .unwrap();
+    let scalar = I::new((-3).into(), 2.into(), -1).unwrap();
+    let mut measured = DyadicBudget::new(256, 1_000_000);
+    let expected = x.scale(&scalar, &mut measured).unwrap();
+    let work = 1_000_000 - measured.remaining_work();
+    let mut exact = DyadicBudget::new(256, work);
+    assert_eq!(x.scale(&scalar, &mut exact).unwrap(), expected);
+    assert_eq!(exact.remaining_work(), 0);
+    assert!(
+        x.scale(&scalar, &mut DyadicBudget::new(256, work - 1))
+            .is_err()
+    );
+    assert_eq!(
+        x.scale(&scalar, &mut DyadicBudget::new(256, 1_000_000))
+            .unwrap(),
+        expected
     );
 }

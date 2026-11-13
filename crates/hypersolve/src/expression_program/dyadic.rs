@@ -6,6 +6,9 @@ use super::{
     UnaryOperation,
 };
 
+mod regularity;
+pub use regularity::RegularJacobianEnclosure;
+
 impl ExpressionProgram {
     /// Enclose every output over the Cartesian product of the input intervals.
     ///
@@ -60,6 +63,7 @@ impl ExpressionProgram {
                 precision,
                 budget: arithmetic_budget,
             },
+            None,
         )
     }
 
@@ -72,6 +76,7 @@ impl ExpressionProgram {
         values: &[DyadicInterval],
         budget: &mut ExpressionBudget,
         arithmetic: &mut DyadicArithmetic<'_>,
+        regularity: Option<&[bool]>,
     ) -> Result<Vec<DyadicInterval>, ExpressionError> {
         budget.charge(0)?;
         let source = &self.definition;
@@ -121,9 +126,26 @@ impl ExpressionProgram {
                         let value =
                             consume_dyadic_operand(&mut cache, &mut uses, *input, arithmetic)
                                 .map_err(|error| DyadicArithmetic::copy_error(*input, error))?;
-                        arithmetic
+                        let regular = if regularity
+                            .and_then(|active| active.get(index))
+                            .copied()
+                            .unwrap_or(false)
+                        {
+                            arithmetic
+                                .regular_input(*operation, &value)
+                                .map_err(|error| DyadicArithmetic::copy_error(index, error))?
+                        } else {
+                            true
+                        };
+                        let result = arithmetic
                             .unary(*operation, value)
-                            .map_err(|error| DyadicArithmetic::operation_error(index, error))?
+                            .map_err(|error| DyadicArithmetic::operation_error(index, error))?;
+                        // Preserve original domain failures before reporting a
+                        // stronger differentiability proof as unavailable.
+                        if !regular {
+                            return Err(ExpressionError::RegularityNotCertified { node: index });
+                        }
+                        result
                     }
                     ExpressionNode::Binary {
                         operation,

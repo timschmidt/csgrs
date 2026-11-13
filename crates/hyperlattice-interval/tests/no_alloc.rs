@@ -12,6 +12,11 @@ fn primitive_construction_composition_and_errors_do_not_allocate() {
         let x = IntervalVector::new([I::new(-(1 << 16), 1 << 16).unwrap(); 3]).unwrap();
         let m = IntervalMatrix::new([[p; 3]; 3]).unwrap();
         let result = m.affine_enclosure(&x, &x, &mut ()).unwrap();
+        assert_eq!(x.scale(&p, &mut ()).unwrap(), x);
+        std::hint::black_box(
+            x.scale(&I::new(-(1 << 16), 1 << 16).unwrap(), &mut ())
+                .unwrap(),
+        );
         let transposed = m.transpose(&mut ()).unwrap();
         let squared = m.mul_matrix(&transposed, &mut ()).unwrap();
         let row = squared.row(0, &mut ()).unwrap();

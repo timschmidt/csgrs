@@ -113,6 +113,26 @@ impl<I: IntervalArithmetic, const N: usize> IntervalVector<I, N> {
         self.zip(other, context, I::sub)
     }
 
+    /// Enclose `{ s*x : s in scalar, x in self }` coordinate by coordinate.
+    ///
+    /// A shared scalar can correlate coordinates; this returns their Cartesian
+    /// enclosure, not an exact correlated image. Empty operands give empty,
+    /// including dimension zero. A nonempty scalar times the unit product is
+    /// the unit product. Every multiplication shares the caller's context.
+    pub fn scale(
+        &self,
+        scalar: &I,
+        context: &mut I::Context,
+    ) -> Result<Self, IntervalLatticeError> {
+        let Some(lanes) = self.lanes() else {
+            return Self::empty();
+        };
+        if scalar.is_empty() {
+            return Self::empty();
+        }
+        Self::new(array_result(|i| lanes[i].mul(scalar, context))?)
+    }
+
     /// Dot-product enclosure with left-to-right multiplication then addition.
     /// The same caller budget is used for every scalar operation. The empty
     /// Cartesian set has empty image; a zero-dimensional unit dot product is zero.

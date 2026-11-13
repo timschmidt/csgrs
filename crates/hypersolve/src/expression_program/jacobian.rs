@@ -16,7 +16,9 @@ use crate::{Expr, SymbolId};
 /// even when a derivative is identically zero. A derivative formula can have a
 /// smaller domain than a differentiable composite (for example at a removable
 /// chain-rule singularity); failure to evaluate it is not proof of
-/// nondifferentiability. No global smoothness or trajectory certificate is made.
+/// nondifferentiability. Construction alone makes no smoothness or trajectory
+/// certificate. The `interval-program` feature supplies `enclose_regular` for
+/// a separate sufficient source-domain regularity proof.
 ///
 /// Identity and replay consist of [`Self::source`]'s complete definition and the
 /// ordered [`Self::variables`]. Replay validates the source and calls

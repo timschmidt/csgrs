@@ -19,6 +19,8 @@ use crate::{Expr, SymbolId, SymbolRef, work_budget::CancellationToken};
 
 #[cfg(feature = "interval-program")]
 mod dyadic;
+#[cfg(feature = "interval-program")]
+pub use dyadic::RegularJacobianEnclosure;
 mod jacobian;
 pub use jacobian::JacobianProgram;
 
@@ -203,6 +205,18 @@ pub enum ExpressionError {
     /// Dependency overestimation can cause this even for valid exact inputs.
     #[cfg(feature = "interval-program")]
     DomainNotCertified { node: usize },
+    /// A state-dependent primitive enclosure touches a differentiability boundary.
+    /// This is a failed sufficient proof, not a claim of nondifferentiability.
+    #[cfg(feature = "interval-program")]
+    RegularityNotCertified { node: usize },
+    /// Native failure while retaining an argument for a domain certificate.
+    #[cfg(feature = "interval-program")]
+    ArgumentEnclosure {
+        /// Original binding slot.
+        slot: usize,
+        /// Native resource/domain cause.
+        source: hyperinterval::IntervalError,
+    },
     /// Interval failure, preserving the node and native resource/domain cause.
     #[cfg(feature = "interval-program")]
     Enclosure {
@@ -223,6 +237,8 @@ impl std::error::Error for ExpressionError {
             Self::Scalar { source, .. } => Some(source),
             #[cfg(feature = "interval-program")]
             Self::Enclosure { source, .. } => Some(source),
+            #[cfg(feature = "interval-program")]
+            Self::ArgumentEnclosure { source, .. } => Some(source),
             _ => None,
         }
     }
