@@ -2894,7 +2894,11 @@ carriers, measured facts/specializations, broader coverage and consumer adoption
 remain open, together with all later phases and prior migration blockers.
 No Interface/firmware source changed and no push was attempted.
 
-Source and evidence registration: pending.
+Source commit `728ea5d7d63f9d98e9cf44fbeb55202d8fffa423`; evidence commit
+`8d715b8c21bacef53b9528fb2b379ed96a3a5fbe`, record `docs/evidence/2026-11-12-interval-centered-affine`:
+50 files, 1,286,436 bytes, SHA-256
+`18cbe6601bff2737896a5f74b7946f0470492f14d8d22085288a44005e03c3fd`. The committed record was regenerated and verified;
+every previous archive row remains unchanged.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
