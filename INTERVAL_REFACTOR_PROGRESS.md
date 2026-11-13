@@ -4766,6 +4766,61 @@ budget passes at 4,159 files and 142,973,711 bytes before this ledger addition.
 No push occurred. No phase is declared complete; field adoption, remaining
 migration gates, competitive workloads, HIL and coordinated release remain open.
 
+## 2026-11-13: Reject forced return-boundary inline and outline variants
+
+The previous turn retained source-bound Jacobian projections. Phase-11 retention
+work now reproduces the pristine and exact pending-extraction owner artifacts at
+`cc056c7c36101d8ff145907563ef21b0335687af`. Both SHA-256 hashes match the prior
+adapter record exactly. The isolated worktree excludes main's pending changes
+until the recorded 41-path patch is explicitly applied. No production source
+from the new experiments is retained.
+
+Direct deprecated reexports were considered to remove compatibility bodies.
+A Rust 1.95 compiler probe shows that `#[deprecated]` on the reexport does not
+warn at a legacy call, even with `-D deprecated`; a real forwarding function
+produces the expected diagnostic. Reexports would drop the required migration
+notice, so that alternative is rejected before touching production entry points.
+
+The shared native error alias is reproduced as a control. Two new variants keep
+real deprecated functions: force inline only their fifteen forwarding bodies,
+then additionally outline the twelve native scheduling entry points they call.
+Equation constructors, metric/join methods and predicates remain untouched.
+All method bodies, argument order and arithmetic remain unchanged.
+
+| Variant | Owner ELF bytes | Complete sized-function union |
+| --- | ---: | ---: |
+| Pristine baseline | 13,312,600 | 8,044,187 |
+| Original extraction | 13,304,584 | 8,036,358 |
+| Shared error, identity conversions removed | 13,316,848 | 8,043,152 |
+| Shared error and forced forwarding inlines | 13,319,192 | 8,059,155 |
+| Same with native entry points outlined | 13,350,472 | 8,069,963 |
+
+Both new variants fail the unchanged binary and code-size gates. Fewer function
+ranges in the forced-inline variant do not imply less emitted code. Every artifact
+passes 194 benchmark smoke workloads; those are not independent full-result,
+allocation or runtime comparisons. No timing campaign or full downstream/sanitizer
+qualification is claimed for a variant already rejected by size. No compiler,
+linker, stripping or acceptance policy changed.
+
+After verifying the final experimental patch, the exact original extraction is
+restored. Its three routing tests and axis migration test pass, including the
+fresh-process report/dispatch assertions. Six additional legacy/direct/compat
+transcripts each contain 92 matching report/trace lines within STRICT and
+APPROXIMATE_512; their hashes also equal the previous restored-candidate record.
+Formatting and whitespace checks pass. The isolated worktree is then restored
+clean at its baseline. Main's 41 staged paths, Interface's eight edits and clean
+firmware retain their exact preceding states.
+
+Evidence record `docs/evidence/2026-11-13-interval-dynamics-return` at local commit
+`4ac36e669e27e462b4c21ee5bc23024ad1857014` contains 86 files and 50,707,255 bytes,
+digest `c58ef69a7fade56b9e1b97d85871335d27831b2a89394d0c52c371d1ddeb2188`.
+Scoped archive verification and all nine prior immutable stage digests pass.
+Forced forwarding and native outlining now join the rejected ordinary-inline
+approaches. Further retention work needs a distinct error/result ownership design
+or demonstrated code-generation cause; favorable aggregates or unrelated parser
+changes cannot resolve these gates. No push or phase-completion claim is made.
+The complete fifteen-phase objective remains active.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
