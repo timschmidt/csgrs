@@ -1,0 +1,28 @@
+[package]
+name = "hyperdynamics-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+rust-version = "1.95.0"
+
+[package.metadata]
+cargo-fuzz = true
+
+[workspace]
+members = ["."]
+
+[dependencies]
+libfuzzer-sys = "=0.4.12"
+hyperdynamics = { path = "..", features = ["coordinates", "serde"] }
+hypersolve = { path = "../../hypersolve", features = ["coordinate-program", "serde"] }
+hyperinterval = { path = "../../hyperinterval", features = ["hyperreal"] }
+hyperlattice-interval = { path = "../../hyperlattice-interval", features = ["dyadic"] }
+hyperreal = { path = "../../hyperreal" }
+serde_json = "1.0"
+
+[[bin]]
+name = "coordinate_change"
+path = "fuzz_targets/coordinate_change.rs"
+test = false
+doc = false
+bench = false

@@ -633,3 +633,15 @@ serialized derived coefficients or flags are not proof. This is an image of a
 function, not an ODE coordinate-change certificate or nonlinear model arithmetic.
 The graph/native budgets apply with the existing scalar/payload exclusions;
 entry checks are stage-local, not a total live-memory bound.
+
+### Exact coordinate programs
+
+The opt-in `coordinate-program` feature certifies finite exact state charts
+`x = c + A*y`. `ExpressionProgram::change_coordinates` validates a supplied
+inverse B with STRICT proofs of B*A=I, then retains `B*f(c+A*y)` as a shared DAG.
+`CoordinateProgram` keeps the original definition, chart, source-node mapping and
+inverse outcomes. Nonselected inputs remain unchanged; source guards survive
+zero coefficients. Invalid shapes, wrong inverses, undecided identities and
+resource failures are distinct. Replay the original definition and chart to
+regenerate the evidence. Graph limits do not bound exact scalar/predicate payload
+work, total heap bytes or cancellation inside one scalar/predicate stage.

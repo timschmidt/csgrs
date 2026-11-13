@@ -605,3 +605,8 @@ pub use taylor::{
     TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
     TaylorAffineTerm,
 };
+
+#[cfg(feature = "coordinate-program")]
+mod coordinates;
+#[cfg(feature = "coordinate-program")]
+pub use coordinates::{CoordinateChange, CoordinateError, CoordinateProgram};

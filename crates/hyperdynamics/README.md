@@ -117,3 +117,21 @@ for source-bound linear observables of a nonlinear field. The example retains
 shared Taylor coefficients through an exact output map, then explicitly projects
 the result for a further field operation. It does not transform an ODE proof or
 replace the authoritative model with its Cartesian image.
+
+### Fixed state coordinates
+
+With `coordinates`, `ExpressionField::in_coordinates` certifies `x = c + A*y`
+and constructs `y' = A^-1*f(t,c+A*y)` using Hypersolve. Time and the ordered state
+interpretation are retained. Its transformed field supports existing image,
+Jacobian, Taylor (when enabled), Picard and evolution routines.
+`CoordinateField::certify_step` additionally retains the chart and transports a
+completed native Picard tube and endpoint to original-coordinate enclosures.
+Original initial states are the exact correlated set `c + A*Y`; its Cartesian
+envelope is only an explicit outer projection. Final transport exhaustion retains
+the native report but cannot publish whole-step success. Replay validates source,
+inverse and derivatives again. Fixed charts do not imply adaptive QR selection,
+a whole-resource bound or automatic wrapping reduction.
+
+Run `cargo run -p hyperdynamics --features coordinates --example coordinates`
+for an exact scaling of `x1' = 128*x2, x2' = 0` that admits a half-unit step after
+the original-coordinate contraction check rejects it.

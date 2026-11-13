@@ -480,3 +480,7 @@ pub mod reachability;
 /// Exact centered field polynomials with certified finite remainders.
 #[cfg(feature = "taylor-model")]
 pub mod taylor;
+
+/// Certified fixed state charts and original-coordinate Picard transport.
+#[cfg(feature = "coordinates")]
+pub mod coordinates;

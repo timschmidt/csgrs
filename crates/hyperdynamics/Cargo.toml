@@ -15,6 +15,7 @@ all-features = true
 
 [features]
 default = []
+coordinates = ["field", "hypersolve/coordinate-program"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
 reachability = ["field"]
@@ -53,3 +54,7 @@ required-features = ["taylor-model"]
 [[example]]
 name = "taylor_affine"
 required-features = ["taylor-affine"]
+
+[[example]]
+name = "coordinates"
+required-features = ["coordinates"]
