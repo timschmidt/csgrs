@@ -3513,6 +3513,78 @@ owned field/Jacobian semantics, complete resource accounting, then validated
 Euler/Picard evolution and its required downstream proofs. Earlier phase
 obligations remain open. This registration changes only the ledger and manifest.
 
+## 2026-11-13: Build source-bound symbolic Jacobians with graph budgets
+
+Previous turn: progress, accepting guarded interval expression images. Source
+commit `f69be5f322b697861a7a46179858562c693190ee` advances section 10.5 with
+`ExpressionProgram::jacobian` and its private `JacobianProgram` association.
+The original source definition and ordered differentiation variables determine
+identity and replay; replay validates the source and regenerates derivatives.
+Combined evaluation visits original outputs before column-major partials, and
+`partial_output` maps their positions. Both shipped oscillator examples now use
+this construction rather than independently supplied derivative trees.
+
+Each demanded node is visited once per column. Fixed-size local templates call
+the existing Expr derivative authority and substitute source references into a
+shared flat graph; arbitrary source trees are never reconstructed. One source
+prefix copy serves all columns. Known zero partials skip derivative work while
+retaining every original output's domain checks. Construction charges graph
+copies, binding/column checks, traversal, local expansion, template import and
+final validation, with typed limits, cancellation and retry. Scalar payload
+cloning, arithmetic/refinement and heap bytes remain outside total-work bounds.
+A removable derivative singularity can still prevent formula evaluation; that
+failure is not a proof of nondifferentiability or a global smoothness result.
+
+Target-revision reproduction found a necessary correction: differentiating
+`x^1` introduced `x^0`, which incorrectly rejected x=0. The identity-power rule
+now retains guarded base evaluation through `0 * base + derivative(base)` and
+existing domain-aware simplification. Tests cover zero/nonzero identity powers,
+ln(x)^1 at a zero base, excluded logarithm inputs and genuine sqrt derivative
+singularities. This is a correctness extension, not a preserving refactor. The
+original minimum-exponent and unavailable-Jacobian regressions remain intact.
+
+Seven new Jacobian tests cover the 17 constructors, extreme exponents, 81
+independently expected polynomial input pairs, repeated differentiation, domain
+guards, empty/invalid bindings and columns, exact work/entry boundaries,
+cancellation/retry, shared DAGs, interval extrema, and fresh-process replay with
+source mutation/regeneration. A 128-level shared squaring graph retains linear
+node growth and computes slope 2^128 at one. A 20,000-deep graph constructs,
+differentiates, evaluates and drops on a 128-KiB stack.
+
+All 19 qualification commands pass: 874 owner tests, minimal features, Rust 1.95,
+release, strict owner/Interface Clippy, examples/docs, Wasm, AddressSanitizer,
+459 dynamics/path tests, 201 Interface tests, formatting/diff checks and benchmark
+smokes. All 200 successive_operations rows match the earlier derivative-repair
+record's structural/outcome/allocation columns; timings are not compared.
+Certification/path/point smoke suites pass 417/194/12 cases. This is affected
+qualification, not a full pre-push, hosted-OS or hardware campaign. No push occurred.
+
+An external probe completes 16 constructor/replay/point/interval workloads and
+12 exhaustion cases with zero live bytes per counting epoch and successful
+retries. Warm absolute medians span 0.873–389.775 microseconds; maximum observed
+peak is 115,256 bytes. Degree 1/8/32/128 programs grow from 5/33/129/513 source
+nodes to 7/49/193/769 generated nodes and spend 71/526/2,086/8,326 constructor
+graph units. Preparation is excluded; replay cloning, output checking and
+returned-object destruction are included. No speedup or whole-field bound is
+claimed. The point benchmark grows 832 bytes while its sized-function range
+union shrinks 1,282 bytes; text/rodata change. Certification/path artifacts grow
+176/104 bytes from the historical derivative-repair artifacts. These costs are
+retained explicitly with the correctness extension and new capability, without
+an unchanged-cost claim or acceptance of the pending extraction's cost gate.
+
+Evidence commit `fdb00c27b2b629298213966fd9f0323914bcb98b`, record
+`docs/evidence/2026-11-13-interval-program-jacobians`: 80 files, 12,401,121 bytes,
+SHA-256 `f04ba69ed417f79f63b5f09ab753af70e25bb9cb46fc613f6518e457852c0850`.
+The committed digest was regenerated and verified. Complete source/dependency/
+compiler/hardware records, raw samples, artifact identities and the original
+failing witness are retained. Pending dynamics/Interface patches remain
+byte-identical, and Firmware is unchanged. A Hyperdynamics field adapter with
+explicit time/state/shape semantics, whole-operation accounting and derivative/
+continuity evidence remains open, followed by validated Euler/Picard evolution,
+uniqueness, bounded halving, exact horizon/end enclosures and flow tubes. The
+full fifteen-phase goal and all earlier unresolved obligations remain active.
+This registration changes only the ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
