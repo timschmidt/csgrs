@@ -3798,6 +3798,67 @@ bounded halving/proposals, horizon integration and complete flow-tube aggregatio
 remain open. The legacy extraction retention gate and full fifteen-phase goal
 remain active. This registration changes only the ledger and evidence manifest.
 
+## 2026-11-13: Compose bounded dyadic evolution with retained attempts
+
+Previous turn: progress, admitting source-bound Picard steps. Source commit
+`61e867f5062ee692c6805e3113ffe9c2d6b3a920` adds finite-horizon integration using
+that verifier, native interval proposals, bounded candidate expansion and exact
+dyadic halving. Proposals are capped by exact remaining time and the last accepted
+duration. Every actual attempt retains its source, candidate origin and ordered
+segment/halving/expansion indices. Each accepted endpoint becomes the next
+initial box through native checked copying; no proof counters reset.
+
+Whole-horizon completion requires strictly progressing certified segments and a
+final exact end-time comparison. A failed final comparison withholds completion
+even when a certified prefix already reaches that time. Stopped reports expose
+that prefix separately. Zero horizon is an identity without an ODE existence
+claim; successful empty evolution validates inputs and reports the requested end
+time. Invalid input, native failures, cancellation and actually reached limits
+remain typed, with mathematical rejection reasons retained in the step reports.
+The shipped example reaches time 5/8 in three certified segments and retains all
+seven attempts. No new scalar, derivative or step-proof authority was introduced.
+
+All fifteen final qualification commands and three supplementary checks pass:
+480 dynamics/path tests, 18 minimal-feature tests, default-off, all 21 field/flow
+tests under Rust 1.95/release/ASan/isolated package configurations, strict Clippy
+and docs, Wasm, example, external builds, formatting/diffs and repository budgets.
+Seven new tests include 49 uncertain constant-flow horizons with endpoint reuse,
+exact partial final steps, forced affine contraction halving, independent rational
+exponential and oscillator Taylor bounds, exact Riccati controls, negative time,
+minimum-exponent halving overflow, invalid/empty/unit/identity cases, complete
+attempt provenance, aggregate budget boundaries, cancellation/retry and
+fresh-process replay. The initial oscillator-halving assumption was corrected
+using a separate q=1 affine fixture while retaining and extending the oscillator
+analytic checks. No existing test, policy or assertion was weakened. Earlier
+failed diagnostics and control-executable permission correction remain archived.
+
+The external probe completes 18 integration/replay workloads and separately
+records four stopped workloads and 36 exhaustion cases. Full retained reports
+and destruction are included. Completed medians span 0.179–126.633 microseconds,
+peak temporary memory is 26,780 bytes, and every allocation epoch ends at zero
+live-byte delta. The Riccati stress run retains 149 attempts and 24 certified
+segments before its actual step limit, reaching 2357295/4194304 rather than the
+requested singular horizon. Its stopped workload peaks at 272,008 temporary
+bytes with a 2.357-millisecond median; this is not completed-flow performance.
+
+The matched existing Picard consumer has identical allocation/work counts,
+4,022,968-byte executables, unchanged 2,037,790-byte function unions and identical
+.text/.rodata. CBBC completed timing ratios span 0.9786–1.1059, median 1.0027;
+eight rows are slower. All samples remain, with no speedup or regression-free
+timing claim. The distinct evolution consumer is 4,084,752 bytes with a
+2,065,448-byte sized function union, an absolute artifact measurement.
+
+Evidence commit `b19c727cd6ba09022009ceb03fed3a7f32f6177d`, record
+`docs/evidence/2026-11-13-interval-dyadic-evolution`: 98 files, 3,255,280 bytes,
+SHA-256 `c81cd6cd5ae19d54617496bac5d22e2847a4b77c9f5dfd0c7e5e536b3b3fef65`.
+The committed digest was regenerated and verified. The pending 40-path dynamics
+patch and Interface patch are byte-preserved; Firmware and the isolated core are
+clean. This is affected validation, not the full pre-push workflow matrix; no
+push occurred. Rational time endpoints, f64 RK proposals, stronger wrapping,
+end covers/thickening, total resource closure, release qualification and all other
+plan obligations remain open. The full goal and legacy extraction retention gate
+remain active. This registration changes only the ledger and evidence manifest.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
