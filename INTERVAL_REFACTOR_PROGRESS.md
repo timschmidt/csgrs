@@ -4563,6 +4563,72 @@ measured rejected approaches; ABI/return and code-generation retention work
 remains unresolved. The complete fifteen-phase goal and every other open phase
 remain active.
 
+## 2026-11-13: Reject machine-profile uncertainty ingress variants
+
+Phase 8 was investigated on CSGRS `3e4382664d50a7734d3fbef33b0a5da0c5ac22ef`
+and Interface `ff668ca39d5e1ecee91b438b20eca806f3a26f29`, excluding the pending
+extraction. Hyperreal owns fraction reduction; Hyperinterval owns closed
+nominal-plus/minus sets; Interface retains units, nominal values, configuration
+identity and validation. Missing shared-ingress witnesses were reproduced before
+implementation. Existing signed and arbitrary-rational domains, predicate order
+and typed failures were preserved on admitted configuration inputs. Rational
+arithmetic remains unbudgeted; no resource-completeness claim is added.
+
+Three experiments are rejected, with source and unfavorable evidence retained:
+
+| Variant | Decisive size result | Disposition |
+| --- | --- | --- |
+| Signed fraction uncertainty ingress | Profile ELF 805,904 → 806,576 bytes | rejected |
+| Typed `u64`/`NonZeroU64` scalar and interval ingress | `borrowed_ops` 6,463,088 → 6,463,232; `successive_operations` 21,930,560 → 21,930,696 bytes | rejected |
+| Inline only the new typed scalar wrapper | `borrowed_ops` 6,463,088 → 6,463,176 bytes | rejected before broader qualification |
+
+The typed variant passes 7,497 independently derived endpoint cases, full-width
+scalar boundaries, a 1,200-digit nominal, consumed outputs, typed invalid-input
+checks and fresh-process cold/warm trace comparisons under both policies.
+Its full Interface suite passes 201 unit tests, one integration test and one
+doctest; the migration trace tests run separately. Affected all-feature owner
+and scalar-oracle tests, release, ASan, strict Clippy and warning-denying docs
+pass. Existing measurement conformance passes all four tests and eight full
+value cases. Failed harness attempts remain in the record and are not counted
+as acceptance; no production or fixture assertion was weakened.
+
+Seven profile scenarios include six successful profiles and one expected typed
+invalid profile. Complete native/WASM fields and full identities match. Exact
+raw allocation totals match. Same-toolchain Rust 1.95 raw-profile ELF shrinks
+806,000 → 805,792 bytes, emitted function union 438,574 → 438,415, and WASM
+1,064,908 → 1,064,857. WASM rejects invalid indices and consumes no host calls.
+Two focused native timing campaigns each run six ABBA blocks, 31 samples of 64
+complete outcomes, one executable path, CPU 0 and subprocess-only ASLR disable.
+Their per-case bootstrap intervals are below one; raw-harness mean ratios span
+0.94031–0.95563. Host clocks and unrelated activity are not controlled. Neither
+these observations nor the profile size reductions waive the broader failures.
+Scalar/successive-operation timing campaigns were not run after their size gates
+failed. This is not complete benchmark, coverage, browser or pre-push acceptance.
+
+The existing measurement binaries retain their sizes and byte-identical text;
+changed build IDs and five values matching the twelve-line source shift explain
+the observed section differences. All 160 completion/allocation rows match;
+concurrent-build diagnostic times are not performance evidence. The typed scalar
+benchmark has byte-identical text but a twenty-byte larger exception table.
+Equal code length does not establish equal binary size.
+
+All three isolated worktrees are restored cleanly. After restoration, four
+rational/replay tests, 199 Interface unit tests, its integration/doctest and
+workspace formatting pass. Main's 41 staged extraction paths retain patch digest
+`3bebcf6370ec1ce7b72691a9699a01e3295b7a32063c4da0a52b0996b4686d48`;
+Interface's eight pending paths retain
+`1dd2b902b84e07ffe6d63de0a0f007d026ef21f2391aeb598871b9de31395748`.
+Firmware is unchanged. No source from these experiments is retained or pushed.
+
+Evidence commit `f1d491d7627331dcb4b3a46ef1568e92049fd60c`, record
+`docs/evidence/2026-11-13-interval-machine-profile`, contains 288 files,
+10,811,621 bytes, digest
+`fb6ea79fcfc463911aef5f45e53e8d7e0cd0d897602a74589b242b967e7ddf0b`.
+Compiler binaries and Python caches are excluded; source, locks, build attribution,
+semantic transcripts, samples and section diagnostics remain. The full goal is
+active. Machine-profile delegation, positive arithmetic, integer scaling, named
+budgets and the other phase gates remain open; documentation is not completion.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
