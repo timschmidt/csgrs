@@ -1,6 +1,8 @@
 //! Owned dyadic fields. Scalar refinement and payload costs retain the
 //! Hypersolve accounting exclusions; these are not yet whole-work-bounded ODEs.
 
+/// Bounded native proposals and certified finite-horizon composition.
+pub mod evolution;
 /// Source-bound Picard self-map and contraction verification for dyadic steps.
 pub mod picard;
 use std::{collections::BTreeSet, fmt, sync::Arc};

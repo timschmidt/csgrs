@@ -1,6 +1,7 @@
-//! An owned time-dependent field and two verified Picard steps.
+//! An owned time-dependent field, verified steps and bounded horizon integration.
 use hyperdynamics::field::{
     EnclosedVectorField, EnclosureBudget, EnclosurePolicy, ExpressionField, FieldDefinition,
+    evolution::{EvolutionOptions, EvolutionRequest, EvolutionStatus},
     picard::{PicardProposal, PicardStatus},
 };
 use hyperinterval::DyadicInterval;
@@ -80,6 +81,29 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!(
         "two certified steps reach exact time 1/2 with endpoint {:?}",
         second.end_enclosure()
+    );
+    let horizon = field.integrate(
+        EvolutionRequest {
+            start: d(0, 0),
+            end: DyadicInterval::point(5.into(), -3)?,
+            initial: BoxN::new([d(1, 1), d(0, 0)])?,
+        },
+        EvolutionOptions {
+            maximum_step: Some(DyadicInterval::point(1.into(), -2)?),
+            ..Default::default()
+        },
+        &mut budget,
+    );
+    assert!(matches!(horizon.status(), EvolutionStatus::Completed));
+    assert_eq!(
+        horizon.reached_time(),
+        &DyadicInterval::point(5.into(), -3)?
+    );
+    println!(
+        "{} certified segments reach exact time 5/8; {} attempts retained; endpoint {:?}",
+        horizon.segments().len(),
+        horizon.attempts().len(),
+        horizon.end_enclosure()
     );
     Ok(())
 }
