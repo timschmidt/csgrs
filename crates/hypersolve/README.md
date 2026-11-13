@@ -50,13 +50,20 @@ graphs with ordered bindings and validated replay. It retains the existing
 `Expr` grammar and exact scalar definitions. Enable `serde` to serialize its
 unvalidated definitions; load them through `ExpressionProgram::from_definition`
 before evaluation. Graph budgets cover structural work and entry counts, not
-scalar arithmetic or heap bytes. Interval images, bounded derivative
-construction and validated evolution remain separate work. Run the source and
+scalar arithmetic or heap bytes. Bounded derivative construction and validated
+evolution remain separate work. Run the source and
 symbolic-Jacobian example with:
 
 ```sh
 cargo run -p hypersolve --features expression-program --example owned_program
 ```
+
+`interval-program` adds `eval_dyadic` over input boxes, retaining the exact
+definition and refusing partial-domain images. Graph work and dyadic arithmetic
+have separate budgets; Hyperreal constant refinement is outside their total-work
+accounting. This is an interval expression evaluator, not a validated ODE solver.
+Run `cargo run -p hypersolve --features interval-program --example enclosed_program`
+for an oscillator image and symbolic-Jacobian enclosure.
 
 `work_budget::with_budget` bounds instrumented root-subdivision and tensor-image
 promotion attempts across nested synchronous operations. Exhaustion is a typed
@@ -479,6 +486,7 @@ their use case.
 | --- | --- | --- |
 | `dispatch-trace` | no | Hyperreal/Hyperlattice/Hyperlimit exact-dispatch instrumentation |
 | `expression-program` | no | Experimental owned flat expression definitions and exact scalar evaluation |
+| `interval-program` | no | Experimental dyadic expression images with complete-domain checks |
 | `serde` | no | Symbol and expression-definition serialization using validated Hyperreal scalar replay |
 
 ## Validation and performance

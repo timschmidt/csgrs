@@ -55,6 +55,12 @@ series and refinement attempts. Keep earlier domain receipts when chaining
 operations; for example, `log` followed by `atan` can still have inherited
 Partial coverage.
 
+Dyadic `asin`, `acos`, `acosh` and `atanh` use the same shared work budget and
+retain Complete/Partial coverage for their real domains. The first three return
+finite outward enclosures; `atanh` retains explicit unbounded limits at -1 and 1.
+Inputs with no defined member return EmptyDomain. These composed enclosures are
+not promised tight. Exact zero special values and empty inputs are preserved.
+
 Rational, dyadic and extended dyadic `sin`/`cos` return outward dyadic images
 with Complete local coverage. They certify phase reduction and include
 interior extrema. A full period or unbounded connected source produces an

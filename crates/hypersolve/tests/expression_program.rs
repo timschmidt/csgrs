@@ -439,6 +439,31 @@ fn fresh_process_replay_retains_symbolic_constants_and_revalidates_edges() {
         .unwrap();
     let replayed: Vec<Real> = serde_json::from_str(encoded).unwrap();
     assert_eq!(replayed, [Real::from(5) + Real::from(2).sqrt().unwrap()]);
+    #[cfg(feature = "interval-program")]
+    {
+        let encoded = stdout
+            .lines()
+            .find_map(|line| line.strip_prefix("INTERVAL_REPLAY="))
+            .unwrap();
+        let replayed: Vec<hyperinterval::DyadicInterval> = serde_json::from_str(encoded).unwrap();
+        // Independent integer-square-root witness for floor(sqrt(2)*2^32).
+        let lower = num::BigInt::from((5_u128 << 32) + (2_u128 << 64).isqrt());
+        let minimal = hyperinterval::DyadicInterval::new(lower.clone(), lower + 1, -32).unwrap();
+        let mut arithmetic = hyperinterval::DyadicBudget::new(16384, 1_000_000_000_000);
+        assert_eq!(replayed.len(), 1);
+        assert!(minimal.subset_of(&replayed[0], &mut arithmetic).unwrap());
+        // Hyperreal promises certified grid bounds, not a one-cell enclosure.
+        // Check replay equality separately from the independent root witness.
+        let live = program
+            .eval_dyadic(
+                &[hyperinterval::DyadicInterval::point(5.into(), 0).unwrap()],
+                -32,
+                &mut budget(),
+                &mut arithmetic,
+            )
+            .unwrap();
+        assert_eq!(replayed, live);
+    }
     let mut bad = program.definition().clone();
     bad.nodes[2] = ExpressionNode::Unary {
         operation: UnaryOperation::Neg,
@@ -463,11 +488,26 @@ fn replay_child() {
     let definition: ExpressionDefinition =
         serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
     match ExpressionProgram::from_definition(definition, &mut budget()) {
-        Ok(program) => println!(
-            "REPLAY={}",
-            serde_json::to_string(&program.eval_real(&[Real::from(5)], &mut budget()).unwrap())
-                .unwrap()
-        ),
+        Ok(program) => {
+            println!(
+                "REPLAY={}",
+                serde_json::to_string(&program.eval_real(&[Real::from(5)], &mut budget()).unwrap())
+                    .unwrap()
+            );
+            #[cfg(feature = "interval-program")]
+            {
+                let values = [hyperinterval::DyadicInterval::point(5.into(), 0).unwrap()];
+                let image = program
+                    .eval_dyadic(
+                        &values,
+                        -32,
+                        &mut budget(),
+                        &mut hyperinterval::DyadicBudget::new(16384, 1_000_000_000_000),
+                    )
+                    .unwrap();
+                println!("INTERVAL_REPLAY={}", serde_json::to_string(&image).unwrap());
+            }
+        }
         Err(ExpressionError::InvalidReference { .. }) => println!("INVALID_REFERENCE"),
         Err(error) => panic!("unexpected replay failure: {error}"),
     }

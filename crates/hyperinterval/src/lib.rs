@@ -48,6 +48,8 @@ mod integer;
 #[cfg(feature = "integer")]
 mod integer_arithmetic;
 #[cfg(feature = "dyadic")]
+mod inverse_functions;
+#[cfg(feature = "dyadic")]
 mod logarithm;
 #[cfg(feature = "float-proposal")]
 mod proposal;

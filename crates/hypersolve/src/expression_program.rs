@@ -1,9 +1,10 @@
 //! Owned, flat symbolic definitions with explicit ordered bindings.
 //!
 //! This experimental prerequisite for enclosed vector fields preserves every
-//! [`Expr`] operation and its domain guards. It does not certify an interval
-//! image, derivative, Jacobian, or trajectory. Existing expression consumers
-//! are unchanged. Graph limits are distinct from scalar arithmetic limits.
+//! [`Expr`] operation and its domain guards. The `interval-program` feature adds
+//! certified dyadic images with complete-domain checks. Derivative construction
+//! and trajectory certification remain separate. Graph limits are distinct from
+//! scalar arithmetic limits.
 //!
 //! Definitions are data, not evidence. After deserialization, call
 //! [`ExpressionProgram::from_definition`] to validate references and bindings.
@@ -15,6 +16,9 @@ use std::{collections::BTreeMap, fmt, sync::Arc};
 use hyperreal::{Problem, Real};
 
 use crate::{Expr, SymbolId, SymbolRef, work_budget::CancellationToken};
+
+#[cfg(feature = "interval-program")]
+mod dyadic;
 
 /// An operation on two expressions, preserving left-to-right evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -183,6 +187,16 @@ pub enum ExpressionError {
     Cancelled,
     /// Scalar failure, retaining its source node and original diagnostic.
     Scalar { node: usize, source: Problem },
+    /// The operand enclosure does not certify the operation's whole domain.
+    /// Dependency overestimation can cause this even for valid exact inputs.
+    #[cfg(feature = "interval-program")]
+    DomainNotCertified { node: usize },
+    /// Interval failure, preserving the node and native resource/domain cause.
+    #[cfg(feature = "interval-program")]
+    Enclosure {
+        node: usize,
+        source: hyperinterval::IntervalError,
+    },
 }
 
 impl fmt::Display for ExpressionError {
@@ -195,6 +209,8 @@ impl std::error::Error for ExpressionError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             Self::Scalar { source, .. } => Some(source),
+            #[cfg(feature = "interval-program")]
+            Self::Enclosure { source, .. } => Some(source),
             _ => None,
         }
     }

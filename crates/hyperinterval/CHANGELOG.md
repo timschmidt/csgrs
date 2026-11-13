@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Add dyadic principal `asin`, `acos`, `acosh` and `atanh` enclosures using
+  certified native arithmetic, square root, arctangent and logarithm. Preserve
+  complete/partial/empty domains, exact zero special values and unbounded atanh
+  endpoint limits. Bounds are outward but are not promised tight.
+
 - Keep exact zero on the other dyadic operand's grid for arithmetic, set
   operations and comparisons. Zero regridding and extreme-scale compositions
   no longer reserve storage for an irrelevant exponent gap; work and size

@@ -25,6 +25,7 @@ hyperlattice = { version = "0.7.0", path = "../hyperlattice", default-features =
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false }
 num = { version = "0.4.3", features = ["num-bigint"] }
 serde = { version = "1.0", features = ["derive"], optional = true }
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, optional = true }
 [dev-dependencies]
 # Test-only interval migration candidates; production remains gated by cost.
 hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["rational"] }
@@ -42,7 +43,8 @@ serde_json = "1.0.149"
 default = []
 # Owned expression graphs; validated dynamics integration remains experimental.
 expression-program = []
-serde = ["dep:serde", "hyperreal/serde"]
+interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
+serde = ["dep:serde", "hyperreal/serde", "hyperinterval?/serde"]
 dispatch-trace = [
     "hyperreal/dispatch-trace",
     "hyperlattice/hyperreal-dispatch-trace",
@@ -80,6 +82,10 @@ name = "allocation_profile"
 [[example]]
 name = "owned_program"
 required-features = ["expression-program"]
+
+[[example]]
+name = "enclosed_program"
+required-features = ["interval-program"]
 
 [[bench]]
 name = "expression_program"

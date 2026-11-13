@@ -2,6 +2,13 @@
 
 ## [0.4.0] - Unreleased
 
+- Add experimental `interval-program` evaluation of owned expressions over
+  dyadic input boxes. Preserve
+  source guards, including Expr's exclusion of zero-to-zero. Refuse partial
+  domains instead of treating their images as complete field evidence. Graph
+  and dyadic budgets remain separate; Hyperreal constant refinement and symbolic
+  derivative construction still lack whole-operation resource accounting.
+
 - Add experimental `expression-program` support for immutable flat symbolic
   definitions, explicit ordered bindings, validated DAG replay, and exact scalar
   evaluation. Preserve source guards and typed scalar failures. Structural work
