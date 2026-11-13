@@ -3226,6 +3226,86 @@ references, raw transcripts/samples, exact commands, initial failures and advers
 measurements. Only this ledger and the archive manifest are committed here;
 production source remains pending for qualification.
 
+## 2026-11-12: Whole-boundary inlining clears measured size gates, timing remains open
+
+Previous turn: progress, with the full feed/join/lookahead candidate and reproduced
+cost failures. This step starts at ledger HEAD
+`898bd9bce0f4640f38982823a6f2635a87e87dfe`. An isolated checkout reproduces the
+pending owner executable byte-for-byte before experimentation. No compiler,
+profile, dependency policy, mathematical body, predicate order, fixture or
+arithmetic core changes in this step.
+
+Four attribute-only variants establish a concrete improvement over the failing
+13,451,992-byte candidate. Ordinary inline availability for all 71 top-level
+dynamics functions yields 13,315,312 bytes; forced inlining yields 13,337,400;
+adding 13 geometry/metric/error adapter methods yields 13,315,464. Those variants
+still exceed the original 13,308,824-byte baseline. Ordinary function availability
+plus all 15 report methods yields 13,300,712 bytes: -151,280 versus the pending
+control and -8,112 versus the original. Only this last variant is selected for
+continued qualification and applied to the primary pending source. Removing
+exactly its 86 ordinary inline attribute lines recovers all five prior files
+byte-for-byte. The other variants remain archived experiments.
+
+The primary and isolated selected binaries match, SHA-256
+`98914d6b2b2f59989f86324d28b0c43cb2e1bfe3a2c43a6f59b0b08b27c305b7`.
+GNU size's text category shrinks by 7,536 bytes versus original; the actual ELF
+.text section shrinks by 7,824. A complete emitted FUNC-range inventory, merging
+aliases/overlaps, shrinks 8,042,989 -> 8,035,160 bytes (-7,829), with 9,401 ->
+9,392 sized ranges. Six unsized function symbols are retained separately and
+whole-section size also shrinks. This addresses the earlier incomplete selected-
+family size evidence for this compiled workload; it is not a universal bound
+for arbitrary future providers/consumers. Data and BSS also shrink. The expanded
+control's extra scalar/operator/solver instances mostly disappear, supporting
+the boundary hypothesis without establishing a unique runtime cause.
+
+All eleven final qualification commands pass: owner tests, strict owner Clippy,
+docs, stable Wasm compile, owner benchmark smoke, Interface tests/strict Clippy,
+successive_operations, both formatting checks and diff validation. Owner tests
+pass 459 cases and Interface passes 201 tests/doctests. All existing frozen
+axis/jerk/feed/join comparisons and count assertions remain intact. Six fresh
+feed/join transcripts match complete reports and traces under both policies;
+the first fixture retains 161 signs, 16,930 events and zero GCDs. The application
+golden remains 41,795 bytes with digest
+`df893df83e90e6b53452e18586ffcaa2524a021631a395d4a6523be16263669c`.
+All 200 successive_operations rows retain their structural/allocation columns;
+its unchanged graph contains neither affected crate. Source budget passes.
+ASan was not rerun for attribute-only edits; the preceding functional record
+retains its sanitizer scope. Full CI/platform/hardware and owner-wide heap/peak
+memory qualification are not claimed. No push ran.
+
+Timing still fails retention. All 194 owner cases complete against the preserved,
+hash-verified original binary: broad mean-ratio median 1.0040, range
+0.8876–1.1233. Four longer candidate/baseline/baseline/candidate runs for the
+earlier ten cases give a 256-record parser mean ratio 1.0318 (baseline
+176.676/172.579 us, candidate 180.377/179.985 us). Scheduler repeats show visible
+drift; neither a favorable final repeat nor a favorable median proves equality.
+Fifteen additional cases selected mechanically from the broad sweep also receive
+four longer repeats. Adverse means include skew certification 1.0951, exact
+trace import 1.0889, rectangular-pad clearance 1.0623, mixed symmetric jerk
+1.0365, symmetric jerk 1.0356 and corner lookahead 1.0337. The supplemental
+screening rule is not an acceptance tolerance. All raw samples, including
+reversals of apparent broad regressions, are retained.
+
+The skew, trace-import and multi-record-parser entry functions have unchanged
+static byte/instruction counts. Their differing data/indirect-call or displayed
+alias targets do not prove equal transitive code or explain timing. Further
+work should resolve actual call targets or profile a fixed workload before
+changing any algorithm; do not mask failures with unrelated parser/compiler
+changes. The complete extraction is still unaccepted, production remains
+pending, and Phase 11 plus the full fifteen-phase goal remain open. Owned
+replayable fields and validated evolution remain unimplemented; all other
+phase obligations and earlier adverse evidence are preserved.
+
+Evidence commit `a014aaebaf1c0339ae015a9cb7c1d8017df42e33`, record
+`docs/evidence/2026-11-12-interval-dynamics-whole-cost`: 2067 files,
+59,179,330 bytes, SHA-256
+`fe3ca693fe615514fd116a11fb38b7342e1a4809db00aa62f1e81c1bffac8acb`.
+The committed digest was regenerated and verified, preserving earlier manifest
+rows. Exact complete source patches, variant transforms, compiler/CPU/lock data,
+full inventories, static listings, fresh transcripts, commands and raw timing
+samples are retained. Only this ledger and the archive manifest are committed
+in the primary repository; source changes remain staged and unaccepted.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
