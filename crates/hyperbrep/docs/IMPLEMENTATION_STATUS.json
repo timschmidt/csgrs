@@ -5585,7 +5585,7 @@
         "P36",
         "P37"
       ],
-      "decision": "isolated capability candidate; focused acceptance and measured workloads pass; broad qualification pending",
+      "decision": "retained finite capability extension after source-specific owner/downstream, completed cost and archive-consumer qualification; general closure and coordinated release remain open",
       "source_base_revision": "b0fde90b4d9eb51c51723fb6e24a9b6ab6938962",
       "measured_source_revision": "2d2fc538b7cc8b3b76555878cf34064e4f4ee072",
       "change": "Opt-in positive-weight native rational Bezier tensor interval coordinates and partials, retaining original Surface, UV domain, denominator guards and C1 evidence through native Aabb exclusion. Hypersolve owns exact bivariate quotient compilation; native conversion and existing interval authority are reused. Default features and old evaluator bodies are unchanged.",
@@ -5598,12 +5598,15 @@
         "../src/geometry/interval_ranges/tests.rs",
         "../tests/surface_ranges_example.rs"
       ],
-      "validation": "52 focused tests pass: 32 solver, 4 private native/cache/replay, 11 public/example and 5 downstream spline-exchange. Focused format, strict Clippy/docs and feature-disabled checks pass. Full owner/downstream suites, stable/WASM checks and archive-only consumer remain pending. Newly introduced complete trace snapshots pin scalar first-observation warming rather than claim invisible caching; the original unchanged solver trace regression still passes.",
+      "validation": "52 focused tests pass. Full Rust 1.95 release owner runs report 2399 passes across 147 harness summaries; HyperBrep IO reports 127 across 28. No failed tests; ignored reports: owner 0, downstream 0. Counts sum explicit test/doctest summaries, including any subprocess reports, not a unique coverage denominator. All-feature/all-target strict Clippy, strict docs, actual example, disabled-feature checks, WASM library check and stable all-target check pass. Nine archives verify; an archive-only unchanged native example builds/runs/passes strict Clippy. The same example executes three sixteen-cell portfolios through a zero-import/default-stack debug WASM test export. Metadata-only docs.rs configuration changes no Rust source/dependencies/default features; packaged strict docs and five rendered API pages pass. Complete new lifecycle trace snapshots pin actual scalar warming; the old solver trace assertion remains unchanged. Original failed fixture, artifact-comparison and Cargo CLI premises remain in evidence.",
       "cost_evidence": "Three complete sixteen-cell portfolios, thirty alternating warm pairs and thirty fresh-process cold pairs per source; shared preparation warm speedups 1.653..3.297 and cold 1.712..3.298. Five repeated allocation observations retain all outputs/destruction. Cold retained scalar storage and 32-query plateau diagnostics remain explicit. See ../PERFORMANCE.md#native-surface-interval-ranges. These are same-API comparisons, not old-kernel nonregression or general performance claims.",
       "evidence": "SURFACE_INTERVAL_RANGES.md",
       "local_evidence": "/tmp/interval-refactor/surface-interval-ranges",
-      "limits": "Native rational Bezier tensors only; C1 is not rank, injectivity, trimmed-face or topology evidence. Denominator overestimation can refuse a box. Fully expanded algebraic scalar equality may remain undecided; test-only per-node exact quadratic oracle verifies maintained generated outputs. Structural resource budgets do not bound total scalar CPU, coefficient growth or heap. Other surface families, general closure, coverage/formal proof and release qualification remain open. All work package statuses remain unchanged.",
-      "evidence_published": false
+      "limits": "Native rational Bezier tensors only; C1 is not rank, injectivity, trimmed-face or topology evidence. Denominator overestimation can refuse a box. Fully expanded algebraic scalar equality may remain undecided; test-only per-node exact quadratic oracle verifies maintained generated outputs. Structural resource budgets do not bound total scalar CPU, coefficient growth or heap. Other surface families, general closure, coverage/formal proof and full pre-push/coordinated release qualification remain open. All work package statuses remain unchanged.",
+      "evidence_published": false,
+      "qualification_source_revision": "014a082252da83d8d5d566253bcb598c7a456df3",
+      "documentation_metadata_revision": "d625de5b8e93dcb34e481a99253b1bb3cdd77592",
+      "delivery_evidence": "Nine verified archives; registry versions/checksums preserved. Archive comparison permits only revision receipts, docs metadata and dependent checksums individually matched to actual archive digests. Native/WASM implementation qualification and metadata-only documentation qualification retain distinct source revisions. No published release or hosted docs execution is claimed."
     }
   ],
   "work_packages": [

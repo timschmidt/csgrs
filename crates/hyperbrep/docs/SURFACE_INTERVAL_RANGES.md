@@ -99,8 +99,24 @@ claiming general scalar-decision closure.
 
 The [completed workload](../benches/surface_ranges.rs) compares independent and
 shared preparation with exact analytic extrema, all output evidence, native
-exclusion and destruction. Focused tests and measured ordinary/cold workloads
-are available; full owner, downstream, WASM/stable and archive-consumer
-qualification remains pending at this checkpoint. The
-[existing implementation ledger](IMPLEMENTATION_STATUS.json) records progress.
-This is not a released-package or universal algebraic closure claim.
+exclusion and destruction. Expanded acceptance records 52 focused passes. Full Rust 1.95 release owner
+and downstream runs report 2399 and 127 passes across
+147 and 28 harness summaries, respectively, with no failures.
+These are reported test/doctest results, not a unique coverage denominator.
+Strict all-feature/all-target Clippy, strict documentation, the actual example,
+disabled-feature checks, WASM library compilation and stable all-target checks
+also pass on the fixed implementation revision.
+
+Nine archives are verified. An external consumer builds, runs the unchanged
+example and passes strict Clippy using only extracted Hyper archives. The same
+archived example completes three sixteen-cell portfolios in WebAssembly with
+zero host imports and the default linker stack. This debug Rust test export does
+not qualify a public JavaScript binding. A metadata-only followup enables all
+features for docs.rs; strict packaged documentation and the rendered API pages
+are verified locally. Hosted docs.rs execution is not claimed.
+
+The [existing implementation ledger](IMPLEMENTATION_STATUS.json) and
+[interval refactor progress](../../../INTERVAL_REFACTOR_PROGRESS.md) identify
+source-specific evidence. Full pre-push workflows, stable runtime suites,
+hosted platforms, public bindings and universal algebraic closure remain open.
+Local archive qualification is not a published release.

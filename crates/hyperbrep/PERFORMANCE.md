@@ -1477,9 +1477,12 @@ The benchmark executable is 18,147,672 bytes (text 14,633,175; data 341,832;
 bss 1,760); the allocation probe is 18,166,848 bytes. These distinct harnesses
 are absolute size observations, not an API binary-growth comparison.
 
-Raw final warm/cold samples, allocation observations, retained-state diagnostics,
-build equivalence and original adverse attempts are held in the stage admission
-record pending archival. Full owner/downstream, WASM/stable and archive-consumer
-qualification remains pending. The finite ordinary completion envelope does not
-establish arbitrary-degree performance, general surface operation closure or a
-release qualification.
+For raw warm/cold samples, allocation observations, retained-state diagnostics,
+build equivalence and original adverse attempts, consult the source-specific
+[interval refactor progress](../../INTERVAL_REFACTOR_PROGRESS.md). Full Rust 1.95
+owner/downstream release tests, strict lint/docs, stable compilation and WASM
+library checks pass. Nine archives and the unchanged native example are verified;
+the archived example also executes through a test-only WASM export. Packaged
+documentation exposes every feature after a metadata-only followup. These checks
+do not establish arbitrary-degree performance, general surface operation closure,
+public JS binding support, hosted execution or the full coordinated release.
