@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries, retained after local qualification | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -6973,6 +6973,65 @@ extraction and proved exact reversal to the prior index tree; its patch digest
 changed only because blob IDs and hunk metadata changed. Interface's eight
 pending files and firmware are unchanged. The extraction remains unaccepted.
 No phase completion, full pre-push qualification, push or publication is claimed.
+
+## 2026-11-14 — Shared prepared trajectory orders
+
+Source `5722d7eaaeb561e74e5b8163c265a2557b7c2822` adds
+`FlowTaylorProgram::restrict_order`: a prepared higher polynomial order can supply
+any lower order, including zero, without regenerating exact Lie coefficient
+DAGs. The prefix retains its mandatory next-order remainder stage and original
+source guards. Stage handles and output indices are copied under structural
+budgets; exact programs and derivative requests stay shared. The ordinary step
+and whole-horizon verifiers remain unchanged. Higher-than-prepared requests,
+actual resource exhaustion and cancellation have distinct typed outcomes.
+
+The missing API was reproduced as E0599 before implementation. Every existing
+executable body, feature/dependency declaration and package metadata is unchanged;
+the existing trajectory module only gains a module declaration. Both Rust1.95.0
+and stable1.99.0 passed all eight qualification commands: 139 owner tests across
+17 suites, doctests, strict Clippy at all-feature and minimal-feature boundaries,
+warnings-denied docs, actual example execution, ten release tests and unchanged
+legacy Taylor benchmark smoke cases. Main formatting, budget, ten new tests and
+the example pass. Tests compare complete proof artifacts, exact stage/guard
+associations, graph/native consumption and step-dispatch counts with independent
+preparation. Restriction performs zero scalar/predicate dispatch. Independent
+polynomial/rational-solution expectations, algebraic constants, empty/unit cases,
+invalid domains, exact work limits, cancellation/retry, nested restrictions,
+owner drop, two-step and whole-horizon use are retained.
+
+Seven clean dependency-chain packages verified. The archive-only example builds,
+runs and passes strict Clippy; nine original test bodies also pass against only
+unpacked archives, including three fresh-process source/proof reconstructions.
+No test assertion was dropped or weakened. Source digests, manifests and metadata
+record provenance. Package qualification does not establish whole-stack release.
+
+Three completed portfolios construct/certify orders0..3 and materialize/destroy
+all four reports. Shared preparation and independent preparation give identical
+proofs. Mean 95% timing intervals (microseconds) are 194.716–201.309 versus
+172.477–172.710 for constant flow, 333.613–334.845 versus 307.688–308.207 for
+exponential flow, and 483.214–484.114 versus 444.638–445.191 for Riccati flow.
+All Taylor preparation is included; only the common original field is excluded.
+Thirty samples per row and all raw Criterion JSON remain. The separate repeated
+probe shows unchanged native work and lower graph work/allocation traffic for
+all three fixtures. Requested output-live bytes fall 35520→30352, 44528→38976
+and 54312→46392. These counts exclude common inputs and allocator overhead;
+they are not RSS, whole-process memory or universal bounds. No broad speedup,
+binary-size reduction or existing-path performance claim is made.
+
+Evidence commit `33e8e027ad03322db1e31bfee94ae448f5e21139`, record
+`docs/evidence/2026-11-14-interval-taylor-order-sharing`: 129 files, 1,419,835 bytes,
+SHA-256 `3f4814b84bf4a42c49ab5cd383f00bd3ac7576786d96eac7e38dd0094f79e294`.
+`STATUS.md`, `DESIGN.md`, `QUALIFICATION.json` and `REPRODUCE.md` define scope and
+commands. All 41 preceding frozen stages verify unchanged. Integration proves
+exact reversal to the previous index tree and identical pending extraction
+content except diff metadata. The 41 staged extraction paths remain unaccepted;
+Interface's eight pending paths and firmware are unchanged.
+
+The automatic adaptive controller still prepares each distinct order separately.
+Its lazy preparation, history, resource-failure points and cost contract need
+separate qualification before it adopts reuse. ODE noise propagation, wider
+wrapping/adoption, unresolved migration costs, embedded/HIL and coordinated
+release gates remain open. No phase completion, push or publication is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
