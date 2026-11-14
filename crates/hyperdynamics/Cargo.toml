@@ -101,3 +101,12 @@ required-features = ["qr-evolution"]
 [[example]]
 name = "taylor_noise"
 required-features = ["taylor-noise"]
+
+[[example]]
+name = "taylor_orders"
+required-features = ["taylor-flow"]
+
+[[bench]]
+name = "taylor_orders"
+harness = false
+required-features = ["taylor-flow"]

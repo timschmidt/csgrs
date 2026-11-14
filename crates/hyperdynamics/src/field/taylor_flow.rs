@@ -470,3 +470,6 @@ pub mod evolution;
 /// Bounded automatic order and duration selection with local remainder limits.
 #[cfg(feature = "adaptive-taylor")]
 pub mod adaptive;
+
+/// Reuse prepared coefficient graphs across polynomial orders.
+pub mod orders;

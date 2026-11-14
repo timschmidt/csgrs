@@ -267,3 +267,15 @@ checks an exact cancellation and consumes an explicit Cartesian projection in a
 further field-image operation while retaining the original source certificate.
 This is field-image wrapping control; noise propagation through ODE trajectories
 and sensitivity-adaptive noise creation are not implemented by this feature.
+
+A prepared trajectory program can supply any lower polynomial order with
+`FlowTaylorProgram::restrict_order(order, &mut budget)`. The result shares the
+exact coefficient graphs and derivative requests, and retains the requested
+order's mandatory remainder stage. It is an ordinary program accepted by
+`certify_step` and whole-horizon Taylor evolution. This only shares preparation;
+trajectory existence, analyticity and the complete remainder are still certified
+for each supplied domain. Lower orders copy a bounded array of stage handles;
+same-order requests share the whole array. No source term or guard is discarded.
+Run `cargo run -p hyperdynamics --features taylor-flow --example taylor_orders`.
+The adaptive controller still prepares each distinct order independently; callers
+can explicitly reuse a prepared higher order for their own finite portfolios.

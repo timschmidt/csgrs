@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Share prepared trajectory coefficient graphs across lower polynomial orders,
+  retaining the complete selected remainder stage and original source guards.
+
 - Add an optional Taylor noise field-image consumer with exact cancellation
   assertions and subsequent use of its explicit Cartesian enclosure.
 
