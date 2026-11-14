@@ -616,3 +616,219 @@ fn source_request_and_policy_replay_in_fresh_processes() {
         serde_json::from_value(bad).unwrap();
     assert!(ExpressionField::<2>::from_definition(source, &mut b()).is_err());
 }
+
+#[test]
+fn regridded_exponential_completes_the_growth_case_under_default_resources() {
+    use hyperinterval::IntervalError;
+    use hyperlattice_interval::IntervalLatticeError;
+    let f = field::<1>(&[Expr::anonymous_symbol(SymbolId(0))]);
+    let req = request(BoxN::new([d(1, 1, 0)]).unwrap(), d(1, 1, -9));
+    let options = EvolutionOptions {
+        maximum_step: Some(d(1, 1, -12)),
+        maximum_steps: 16384,
+        ..Default::default()
+    };
+    // Preserve the original hard case: ordinary unrounded continuation reaches
+    // the real scalar-size bound, not a mathematical no-solution result.
+    let ordinary = f.integrate(req.evolution.clone(), options.clone(), &mut b());
+    assert!(
+        matches!(
+            ordinary.status(),
+            EvolutionStatus::Stopped(EvolutionFailure::Step(
+                hyperdynamics::field::picard::PicardFailure::Field(FieldError::Lattice(
+                    IntervalLatticeError::Scalar(IntervalError::SizeExhausted)
+                ))
+            ))
+        ),
+        "{:?}",
+        ordinary.status()
+    );
+    assert!(ordinary.end_enclosure().is_none());
+    assert!(
+        ordinary
+            .reached_time()
+            .compare_singleton(&req.evolution.end, &mut sb())
+            .unwrap()
+            .is_lt()
+    );
+    let policy = ReachabilityPolicy {
+        evolution: options,
+        maximum_cells: 1,
+        maximum_evolutions: 1,
+        maximum_depth: 0,
+        maximum_time_refinements: 0,
+    };
+    let mut work = b();
+    let r = f.reach(req.clone(), policy.clone(), &mut work);
+    check(&r);
+    assert_eq!(r.cells().len(), 1);
+    assert_eq!(r.attempts().len(), 1);
+    let evolution = r.attempts()[0].evolution();
+    assert_eq!(evolution.steps().len(), 2048);
+    let mut time = &req.evolution.start;
+    let mut state = &req.evolution.initial;
+    let mut rounded = 0;
+    for step in evolution.steps() {
+        let proof = step.native().segment(0).unwrap();
+        assert_eq!(&proof.proposal().start, time);
+        assert_eq!(&proof.proposal().initial, state);
+        let carried = step.carried().unwrap();
+        assert!(
+            proof
+                .end_enclosure()
+                .unwrap()
+                .subset_of(carried, &mut sb())
+                .unwrap()
+        );
+        assert!(carried.lanes().unwrap()[0].bounds().unwrap().2 >= -64);
+        rounded += usize::from(proof.end_enclosure().unwrap() != carried);
+        time = &proof.proposal().end;
+        state = carried;
+    }
+    assert!(rounded > 0);
+    assert_eq!(time, &req.evolution.end);
+    let cover = r.end_cover().unwrap();
+    assert_eq!(cover.boxes().len(), 1);
+    assert_eq!(cover.end_time(), &req.evolution.end);
+    assert_eq!(cover.epsilon(), &req.epsilon);
+    let endpoint = cover.boxes().next().unwrap();
+    assert_eq!(endpoint, state);
+    let value = endpoint.lanes().unwrap()[0].to_rational(&mut sb()).unwrap();
+    let mut term = hyperreal::Rational::from(1);
+    let mut sum = term.clone();
+    for k in 1..=32 {
+        term = term / hyperreal::Rational::from(2 * k);
+        sum = sum + &term;
+    }
+    let upper = &sum
+        + term / hyperreal::Rational::from(66) * hyperreal::Rational::fraction(68, 67).unwrap();
+    assert!(value.contains_point(&sum));
+    assert!(value.contains_point(&upper));
+    let spent_graph = work.policy().graph_work - work.remaining_graph_work();
+    let spent_scalar = work.policy().scalar_work - work.remaining_scalar_work();
+    let mut larger = EnclosureBudget::new(EnclosurePolicy {
+        scalar_bits: 1_048_576,
+        scalar_work: 100_000_000_000_000,
+        ..EnclosurePolicy::default()
+    });
+    let again = f.reach(req, policy, &mut larger);
+    check(&again);
+    assert_eq!(again.end_cover().unwrap().boxes().next(), Some(endpoint));
+    assert_eq!(
+        larger.policy().graph_work - larger.remaining_graph_work(),
+        spent_graph
+    );
+    assert_eq!(
+        larger.policy().scalar_work - larger.remaining_scalar_work(),
+        spent_scalar
+    );
+
+    #[cfg(feature = "taylor-evolution")]
+    {
+        use hyperdynamics::field::taylor_flow::evolution::FlowTaylorEvolutionStatus;
+        let p = f.flow_taylor(3, &mut b()).unwrap();
+        let next = p.integrate(
+            EvolutionRequest {
+                start: d(1, 1, -1),
+                end: d(3, 3, -2),
+                initial: endpoint.clone(),
+            },
+            EvolutionOptions {
+                maximum_step: Some(d(1, 1, -2)),
+                ..Default::default()
+            },
+            &mut b(),
+        );
+        assert!(
+            matches!(next.status(), FlowTaylorEvolutionStatus::Completed),
+            "{:?}",
+            next.status()
+        );
+        let end = next.end_enclosure().unwrap().lanes().unwrap()[0]
+            .to_rational(&mut sb())
+            .unwrap();
+        let mut term = hyperreal::Rational::from(1);
+        let mut lower = term.clone();
+        for k in 1..=16 {
+            term *= hyperreal::Rational::fraction(3, 4 * k).unwrap();
+            lower = lower + &term;
+        }
+        let upper = &lower
+            + term
+                * hyperreal::Rational::fraction(3, 68).unwrap()
+                * hyperreal::Rational::fraction(24, 23).unwrap();
+        assert!(end.contains_point(&lower));
+        assert!(end.contains_point(&upper));
+    }
+}
+
+#[test]
+fn regridded_portfolio_cap_meets_quality_while_the_coarser_control_does_not() {
+    let f = field::<1>(&[Expr::anonymous_symbol(SymbolId(0))]);
+    let req = request(BoxN::new([d(1, 1, 0)]).unwrap(), d(1, 1, -9));
+    for (exponent, count, completes) in [(-10, 512, false), (-11, 1024, true)] {
+        let r = f.reach(
+            req.clone(),
+            ReachabilityPolicy {
+                evolution: EvolutionOptions {
+                    maximum_step: Some(d(1, 1, exponent)),
+                    maximum_steps: 16384,
+                    ..Default::default()
+                },
+                maximum_cells: 1,
+                maximum_evolutions: 1,
+                maximum_depth: 0,
+                maximum_time_refinements: 0,
+            },
+            &mut b(),
+        );
+        assert_eq!(r.cells().len(), 1);
+        assert_eq!(r.attempts().len(), 1);
+        assert_eq!(r.attempts()[0].evolution().steps().len(), count);
+        assert!(matches!(
+            r.attempts()[0].evolution().status(),
+            EvolutionStatus::Completed
+        ));
+        if completes {
+            check(&r);
+            let endpoint = r
+                .end_cover()
+                .unwrap()
+                .boxes()
+                .next()
+                .unwrap()
+                .lanes()
+                .unwrap()[0]
+                .to_rational(&mut sb())
+                .unwrap();
+            let mut term = hyperreal::Rational::from(1);
+            let mut lower = term.clone();
+            for k in 1..=32 {
+                term = term / hyperreal::Rational::from(2 * k);
+                lower = lower + &term;
+            }
+            let upper = &lower
+                + term / hyperreal::Rational::from(66)
+                    * hyperreal::Rational::fraction(68, 67).unwrap();
+            assert!(endpoint.contains_point(&lower));
+            assert!(endpoint.contains_point(&upper));
+        } else {
+            assert!(matches!(
+                r.status(),
+                ReachabilityStatus::Stopped(ReachabilityFailure::TimeRefinementLimit {
+                    cell: 0,
+                    limit: 0
+                })
+            ));
+            assert!(r.end_cover().is_none());
+            assert!(
+                r.cells()[0]
+                    .end_diameter()
+                    .unwrap()
+                    .compare_singleton(&req.epsilon, &mut sb())
+                    .unwrap()
+                    .is_gt()
+            );
+        }
+    }
+}

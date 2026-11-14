@@ -3,6 +3,9 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use hyperdynamics::field::{
     EnclosureBudget, EnclosurePolicy, ExpressionField, FieldDefinition,
     evolution::{EvolutionOptions, EvolutionReport, EvolutionRequest, EvolutionStatus},
+    reachability::{
+        ReachabilityPolicy, ReachabilityReport, ReachabilityRequest, ReachabilityStatus,
+    },
     taylor_flow::{
         FlowTaylorProgram,
         evolution::{FlowTaylorEvolution, FlowTaylorEvolutionStatus},
@@ -131,6 +134,40 @@ fn validate(f: &Fixture, end: &BoxN<DyadicInterval, 1>) {
     }
     eprintln!("COMPLETED {} end={end:?}", f.name);
 }
+// Existing checked regridding plus displacement proposals, including the
+// complete single-cell epsilon-cover certificate and every native prefix.
+fn reachability(f: &Fixture, work: &mut EnclosureBudget) -> ReachabilityReport<1> {
+    let r = f.field.reach(
+        ReachabilityRequest {
+            evolution: request(f),
+            epsilon: if f.name == "constant" {
+                d(0, 0, 0)
+            } else {
+                d(1, 1, -9)
+            },
+        },
+        ReachabilityPolicy {
+            // The retained cap probe rejects -10 and admits -11 at width 1/512.
+            // Constant flow keeps the same 1/4 cap in every strategy.
+            evolution: options(if f.name == "constant" {
+                f.native_exponent
+            } else {
+                -11
+            }),
+            maximum_cells: 1,
+            maximum_evolutions: 1,
+            maximum_depth: 0,
+            maximum_time_refinements: 0,
+        },
+        work,
+    );
+    assert!(
+        matches!(r.status(), ReachabilityStatus::Completed),
+        "{:?}",
+        r.status()
+    );
+    r
+}
 fn benchmarks(c: &mut Criterion) {
     for f in fixtures() {
         let a = native(&f, &mut budget());
@@ -145,7 +182,18 @@ fn benchmarks(c: &mut Criterion) {
             a.segments().len(),
             b.segments().len()
         );
-        drop((a, b));
+        let cover = reachability(&f, &mut budget());
+        let end = cover.end_cover().unwrap();
+        assert_eq!(end.boxes().len(), 1);
+        assert_eq!(end.end_time(), &request(&f).end);
+        validate(&f, end.boxes().next().unwrap());
+        assert_eq!(cover.cells().len(), 1);
+        assert_eq!(cover.attempts().len(), 1);
+        assert_eq!(
+            cover.attempts()[0].evolution().steps().len(),
+            if f.name == "constant" { 2 } else { 1024 }
+        );
+        drop((a, b, cover));
         let mut group = c.benchmark_group(f.name);
         group.bench_function("picard", |b| {
             b.iter(|| drop(black_box(native(black_box(&f), &mut budget()))))
@@ -155,6 +203,9 @@ fn benchmarks(c: &mut Criterion) {
         });
         group.bench_function("prepare_taylor3", |b| {
             b.iter(|| drop(black_box(prepare(black_box(&f.field)))))
+        });
+        group.bench_function("reachability", |b| {
+            b.iter(|| drop(black_box(reachability(black_box(&f), &mut budget()))))
         });
         group.finish();
     }

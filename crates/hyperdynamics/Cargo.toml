@@ -83,4 +83,4 @@ required-features = ["qr-coordinates"]
 [[bench]]
 name = "taylor_evolution"
 harness = false
-required-features = ["taylor-evolution"]
+required-features = ["taylor-evolution", "reachability"]
