@@ -112,8 +112,14 @@ Run these after the last change, in addition to the
      must be on `PATH`; without `tsc`, the script runs TypeScript 5.7.3
      through `npx`.
 
-   Before unpacking, it also builds each crate's documentation with its
-   docs.rs configuration and `-D warnings`. Add `--toolchain 1.95.0` to repeat
+   The consumer also enables Hypercurve's `interval-ranges` feature and runs
+   `examples/interval_ranges.rs` copied from its archive. This checks retained
+   native source and tangent evidence over four parameter cells, conversion
+   to native bounds, and consumption by the native nonoverlap predicate.
+
+   Before unpacking, it also builds each crate's documentation from the
+   workspace with its docs.rs feature configuration and `-D warnings`. This
+   is not an archive-only documentation check. Add `--toolchain 1.95.0` to repeat
    everything on the minimum supported compiler. The `release` job of
    `.github/workflows/rust.yml` runs it on stable and on 1.95.0.
 

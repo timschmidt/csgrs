@@ -3,7 +3,7 @@
 # path"). It packages every released crate, verifies each package builds from
 # its own contents, then builds a clean consumer project outside the
 # repository against the packaged sources only. The consumer runs the csgrs
-# user path and every README quick start.
+# user path, every README quick start and the packaged curve-range example.
 #
 # Usage: scripts/release-check.sh [--no-verify] [--allow-dirty] [--toolchain <name>]
 #
@@ -41,12 +41,13 @@ crates=(
   hyperphysics hypersdf csgrs csgrs-ffi hypergraphics hyperevolution hyperpack
   hyperparts hyperpath hyperdrc hypercircuit
 )
-# README quick starts that need non-default features of their crate.
+# Consumer quick starts and packaged examples that need non-default features.
 declare -A quickstart_features=(
   [hypertri]="earcut"
   [hyperinterval]="fixed"
   [hyperlattice-interval]="fixed"
   [hyperdynamics]="field"
+  [hypercurve]="interval-ranges"
 )
 
 target="${CARGO_TARGET_DIR:-${root}/target}/release-check"
@@ -154,6 +155,10 @@ open(sys.argv[2], "w").write(block.group(1))
 EOF
 done
 
+# Exercise the shipped optional API with the example from the actual archive.
+cp "${work}/packages/hypercurve-${version[hypercurve]}/examples/interval_ranges.rs" \
+  "${consumer}/src/bin/curve_interval_ranges.rs"
+
 echo "== building the consumer against packaged sources"
 (cd "${consumer}" && CARGO_TARGET_DIR="${target}/consumer" "${cargo_command[@]}" build --bins)
 
@@ -194,7 +199,7 @@ c++ -std=c++17 -Wall -Wextra -Werror -I "${ffi}/include" -I bindings/cpp \
   scripts/release-consumer/bindings_smoke.cpp "${target}/ffi/debug/libcsgrs_ffi.a" \
   -lm -lpthread -ldl -o "${work}/cpp_smoke"
 
-echo "== running the user path, README quick starts and C and C++ consumers"
+echo "== running the user path, README quick starts, curve ranges and C and C++ consumers"
 run_dir="${work}/run"
 mkdir -p "${run_dir}"
 run() {
@@ -209,6 +214,7 @@ run() {
   echo "ok"
 }
 for binary in "${target}/consumer/debug/user_path" "${target}"/consumer/debug/quickstart_* \
+    "${target}/consumer/debug/curve_interval_ranges" \
     "${work}/ffi_smoke" "${work}/cpp_smoke"; do
   [[ -x ${binary} && -f ${binary} ]] || continue
   run "$(basename "${binary}")" "${binary}"
