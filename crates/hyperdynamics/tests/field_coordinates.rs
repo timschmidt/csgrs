@@ -495,3 +495,7 @@ fn source_projection_charges_coefficient_and_carrier_validation_scans() {
 
 #[cfg(feature = "serde")]
 use hyperdynamics::field::coordinates::CoordinateFieldDefinition;
+
+#[cfg(feature = "coordinate-transition")]
+#[path = "field_coordinates/transition.rs"]
+mod transition;

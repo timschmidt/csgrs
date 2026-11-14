@@ -294,3 +294,8 @@ impl<const N: usize> CoordinateStep<N> {
         self.source_boxes.as_ref().map(|v| &v.2)
     }
 }
+
+#[cfg(feature = "coordinate-transition")]
+mod transition;
+#[cfg(feature = "coordinate-transition")]
+pub use transition::{CoordinateFieldTransition, CoordinateTransport, CoordinateTransportError};

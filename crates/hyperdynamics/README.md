@@ -150,3 +150,5 @@ certified trajectory and endpoint enclosures. Every contribution and both source
 proofs remain inspectable; generated endpoints can seed later steps. Replay the
 field definition, order and proposal. This is a forward-step verifier, not an
 automatic order/step controller or adaptive wrapping algorithm.
+
+With `coordinate-transition`, `CoordinateField::transition_to` prepares direct endpoint transport between two validated charts of the same field. `enclose` retains the exact relation and input beside its outer box, which can enter the destination chart’s next step. Frame selection and QR wrapping control remain separate work.

@@ -326,3 +326,8 @@ fn affine_row(
     }
     Ok(root)
 }
+
+#[cfg(feature = "coordinate-transition")]
+mod transition;
+#[cfg(feature = "coordinate-transition")]
+pub use transition::{CoordinateTransition, CoordinateTransitionError};

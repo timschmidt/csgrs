@@ -677,3 +677,5 @@ zero coefficients. Invalid shapes, wrong inverses, undecided identities and
 resource failures are distinct. Replay the original definition and chart to
 regenerate the evidence. Graph limits do not bound exact scalar/predicate payload
 work, total heap bytes or cancellation inside one scalar/predicate stage.
+
+The opt-in `coordinate-transition` feature composes two validated charts of the same source into an exact affine map, retaining both inverse proofs. Interval evaluation can then project that map without first projecting through source coordinates.

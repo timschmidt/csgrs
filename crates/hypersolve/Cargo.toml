@@ -44,6 +44,7 @@ default = []
 # Owned expression graphs; validated dynamics integration remains experimental.
 expression-program = []
 coordinate-program = ["expression-program"]
+coordinate-transition = ["coordinate-program"]
 taylor-model = ["interval-program"]
 taylor-affine = ["taylor-model"]
 taylor-polynomial = ["taylor-affine"]

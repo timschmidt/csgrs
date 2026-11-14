@@ -2,6 +2,8 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in exact source-bound coordinate transitions for direct chart transport.
+
 - Add opt-in polynomial output maps over existing Taylor models, retaining exact
   coefficients, every truncated term and residual cross-product, shared proof
   stages, checked subdomain reuse and source/map replay. `taylor-polynomial`

@@ -16,6 +16,7 @@ all-features = true
 [features]
 default = []
 coordinates = ["field", "hypersolve/coordinate-program"]
+coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-flow = ["taylor-model"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
@@ -66,3 +67,8 @@ required-features = ["coordinates"]
 name = "taylor_flow"
 harness = false
 required-features = ["taylor-flow"]
+
+[[bench]]
+name = "coordinate_transition"
+harness = false
+required-features = ["coordinate-transition"]

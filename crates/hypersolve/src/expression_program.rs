@@ -632,3 +632,6 @@ pub use taylor::{
     TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
     TaylorRange,
 };
+
+#[cfg(feature = "coordinate-transition")]
+pub use coordinates::{CoordinateTransition, CoordinateTransitionError};
