@@ -31,16 +31,7 @@ macro_rules! arithmetic {
             #[inline(always)]
             pub fn midpoint(&self, rounding: MidpointRounding) -> Option<$endpoint> {
                 let (lower, upper) = self.bounds()?;
-                let width = upper.abs_diff(lower);
-                // Half of the maximum unsigned distance fits the signed
-                // endpoint, and the sum is between lower and upper.
-                let floor = lower + (width / 2) as $endpoint;
-                let increment = width % 2 != 0 && match rounding {
-                    MidpointRounding::Floor => false,
-                    MidpointRounding::Ceiling => true,
-                    MidpointRounding::NearestTiesEven => floor % 2 != 0,
-                };
-                Some(floor + <$endpoint>::from(increment))
+                Some(crate::bounds::lattice_midpoint!(lower, upper, rounding, $endpoint))
             }
 
             /// Outward integer radius around any supported rounded midpoint.

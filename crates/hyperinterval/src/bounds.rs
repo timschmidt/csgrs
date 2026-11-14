@@ -322,3 +322,28 @@ macro_rules! set_relations {
 
 #[cfg(any(feature = "integer", feature = "fixed"))]
 pub(crate) use set_relations;
+
+// Exact midpoint of ordered primitive lattice endpoints. Shared by discrete
+// integer ranges and fixed-point intervals; only the numerator is returned.
+#[cfg(any(feature = "integer", feature = "fixed"))]
+macro_rules! lattice_midpoint {
+    ($lower:expr, $upper:expr, $rounding:expr, $endpoint:ty) => {{
+        let lower = $lower;
+        let upper = $upper;
+        let rounding = $rounding;
+        let width = upper.abs_diff(lower);
+        // Half of the maximum unsigned distance fits the signed
+        // endpoint, and the sum is between lower and upper.
+        // These additions cannot wrap: both rounded choices lie in the bounds.
+        let floor = lower.wrapping_add((width / 2) as $endpoint);
+        let increment = width % 2 != 0
+            && match rounding {
+                crate::MidpointRounding::Floor => false,
+                crate::MidpointRounding::Ceiling => true,
+                crate::MidpointRounding::NearestTiesEven => floor % 2 != 0,
+            };
+        floor.wrapping_add(<$endpoint>::from(increment))
+    }};
+}
+#[cfg(any(feature = "integer", feature = "fixed"))]
+pub(crate) use lattice_midpoint;

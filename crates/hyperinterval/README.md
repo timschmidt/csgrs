@@ -129,7 +129,8 @@ Integer arithmetic uses checked sum, difference, negation, product hull,
 square and nonnegative integer powers. Integer multiplication can have gaps;
 the result is the smallest containing integer range. Division is not silently
 interpreted as truncated real arithmetic. Exact width/radius and explicitly
-rounded midpoints support every primitive integer width, including i128/u128.
+rounded midpoints support every primitive integer width, including i128/u128. Fixed and integer midpoints share the same exact numerator kernel;
+fixed widths retain the full unsigned endpoint distance.
 `scale` returns the smallest integer hull of multiplication by one exact
 scalar. With either `integer` or `fixed`, `integer_quotient_bounds` returns the
 integer floor and ceiling of an i128 ratio, with typed zero-denominator and

@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Share exact primitive lattice midpoint arithmetic between integer and fixed
+  intervals, retaining all rounding modes and full unsigned widths. Fixed
+  accessors avoid widened arithmetic and remain allocation-free.
+
 - Preserve proved endpoint order during fixed arithmetic reconstruction and
   exact storage conversion. Use native checked additive operations and explicit
   checked narrowing without changing rounded bounds or failure outcomes.

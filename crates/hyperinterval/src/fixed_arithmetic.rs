@@ -68,9 +68,10 @@ macro_rules! arithmetic {
 
             /// Exact width in lattice units, including the full signed range.
             /// Empty has no width and returns `None`.
+            #[inline(always)]
             pub fn width_ulps(&self) -> Option<u64> {
                 self.bounds()
-                    .map(|(lower, upper)| (i128::from(upper) - i128::from(lower)) as u64)
+                    .map(|(lower, upper)| upper.abs_diff(lower) as u64)
             }
 
             /// Exact scale-tagged unsigned endpoint distance; empty has no width.
@@ -143,18 +144,10 @@ macro_rules! arithmetic {
             }
 
             /// Midpoint lattice numerator with explicit rounding; empty returns `None`.
+            #[inline(always)]
             pub fn midpoint(&self, rounding: MidpointRounding) -> Option<$endpoint> {
                 self.bounds().map(|(lower, upper)| {
-                    let width = i128::from(upper) - i128::from(lower);
-                    let floor = i128::from(lower) + width / 2;
-                    let increment = width % 2 != 0
-                        && match rounding {
-                            MidpointRounding::Floor => false,
-                            MidpointRounding::Ceiling => true,
-                            MidpointRounding::NearestTiesEven => floor % 2 != 0,
-                        };
-                    // The rounded midpoint lies between representable endpoints.
-                    (floor + i128::from(increment)) as $endpoint
+                    crate::bounds::lattice_midpoint!(lower, upper, rounding, $endpoint)
                 })
             }
 
