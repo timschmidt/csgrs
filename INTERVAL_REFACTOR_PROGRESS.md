@@ -53,8 +53,8 @@ No existing arithmetic or predicate dispatch has been changed.
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
-| 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
+| 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard and whole-horizon transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5306,6 +5306,92 @@ qualification for a retained filter, broader predicate families, release and
 all other open plan obligations remain. No new full workflow, sanitizer,
 fuzz/coverage, root successive_operations or hardware campaign is claimed.
 Phase 10 and the full fifteen-phase goal remain active.
+
+## 2026-11-13: Reproduce dynamics controls; discard an invalid inline experiment
+
+Previous turn: progress on predicate admission. Current baseline, extraction and
+provider-error controls reproduce the prior owner artifacts and all 194 complete
+result/drop observer rows. A private-helper experiment accidentally duplicated
+an existing `#[inline]`. Strict Clippy rejected it; the duplicate was removed,
+without suppressing warnings. It is an invalid experiment, not a new optimization
+or a resolution of phase 11's cost gate. Current corner Callgrind totals remain
+2,503,560 baseline versus 2,507,720 provider control for 32 calls. No fresh wall-
+clock campaign or universal impossibility claim is made. Corrected control Clippy
+and restored original extraction routing/axis/format checks pass. The isolated
+tree is clean at `3c9a6a8e`; main and Interface were not changed by this experiment.
+
+Evidence `90f42c67e7a64a67a9f43c925a0e291174b67e7d`, record
+`docs/evidence/2026-11-13-interval-dynamics-replay-inline`: 105 files,
+33,593,272 bytes, SHA-256
+`518439a679bacedaa00bbd1757636d3d1ca5d162c6ad18f49ae2ec6f3e6ad57f`.
+The invalid artifact, source-inspection mistake, controls and restoration are
+retained explicitly. Phase 11 remains open.
+
+## 2026-11-13: Retain whole-horizon evolution in exact state charts
+
+Source `eac3183213830ef30c11e01352f98bff5cdac3b5` adds
+`CoordinateField::integrate` after reproducing the missing API on `3c9a6a8e`.
+The existing integrator runs entirely in the retained exact chart; original-
+coordinate Cartesian projections never become the next step's input. The report
+keeps the original/transformed source association, inverse evidence, all native
+attempts and exact native failure. Completed initial/tube/endpoint transport is
+atomic. A failed final transport exposes no original-coordinate result; a
+stopped native run keeps only its explicitly qualified native prefix. Identity,
+empty, invalid and resource outcomes remain distinct.
+
+Eight new integration tests reuse existing fixtures and preserve every prior
+assertion. Three constant-flow steps independently establish endpoints and tube
+inclusion, retain the zero-width source invariant through the chart, and feed
+output into another integration and field evaluation. Native report equality,
+fresh-process definition/request replay, fixed dispatch counts, stopped-prefix
+work preservation, empty/unit/identity/invalid inputs, cancellation, exact budget
+boundaries and retry pass. Native/complete graph work is 1,554/1,657 and native
+scalar work 937,228/1,684,486. A 64-step combined structural-entry boundary succeeds
+at 524 and fails transport at 523 after native completion. These accounting units
+exclude scalar refinement/payload lifecycle, allocator capacity and total heap.
+
+The affine example runs four steps and checks analytic tube/endpoint inclusion.
+Its first new assertion incorrectly expected reachable-set equality; the native
+candidate search actually produces [-384,384] while the analytic x range is
+[-128,128]. The corrected example asserts that precise computed envelope and
+checks analytic inclusion separately. The original one-step assertions and native
+algorithm are unchanged. Fixed charts do not eliminate native overestimation.
+
+Nine isolated groups pass: 67 all-feature tests, 34 minimal-feature tests,
+no-default check, strict all-target Clippy, warning-denied docs, WASM, the release
+example, formatting and diff checks. Six combined groups pass, including 78 owner
+and four downstream routing/axis tests. Fuzz package check/Clippy/format and ASan
+build pass; the expanded shear/nonlinear/Jacobian/inverse/replay corpus exercises
+one to four whole-horizon segments. Its fixed-seed one-minute campaign completes
+4,184 libFuzzer inputs without failure (including inputs taking the length guard).
+Main's combined fuzz check and strict Clippy also pass.
+
+Four focused external consumer workloads preserve exact complete Debug rows and
+independent analytic endpoints. Old/new native allocation counts agree; manual
+and owned transported outputs also have identical allocation statistics and zero
+remaining allocated bytes after drop. Initial unfavorable timing samples are
+retained. Eight later randomized paired rounds show native median shifts of about
++0.4%/+0.6% for 16/64 segments and owned transport about +0.7%/+1.9% versus manual
+assembly. Manual assembly lacks the new atomic aggregate resource admission and
+is only a successful-output cost comparator. No speedup, cold-cache, competitive
+or universal performance claim is made. External .text grows by 10,432 bytes;
+function-address union grows by 10,208 bytes. The external lock is shared across
+controls and differs explicitly from the workspace lock. No new dependency or
+existing production predicate order changed.
+
+Evidence `2845f1e399e85f62284274a0403ce1ab955b386f`, record
+`docs/evidence/2026-11-13-interval-coordinate-evolution`: 482 files,
+5,894,162 bytes, SHA-256
+`d556d0d524bd3d45e79d90c2c5efd7d6d272c6afd5ba1ad7c33b89f810302150`.
+Scoped archive verification and nineteen preceding immutable-stage checks pass.
+The indexed source budget passes at 4,174 files and 143,176,954 bytes before this
+ledger registration. Main's 41 staged extraction paths retain SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending paths are unchanged. Both isolated trees are clean,
+and firmware is unchanged. No push occurred. Adaptive wrapping/QR, changing
+frames, whole-resource closure, wider adoption, competitive workloads, phase 11
+costs, coordinated release and the remaining fifteen-phase obligations stay open.
+No new full coverage, root successive_operations or hardware campaign is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
