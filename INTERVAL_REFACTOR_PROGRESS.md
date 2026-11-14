@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6491,6 +6491,94 @@ Taylor/frame evolution, Phase 11 extraction costs, embedded gaps and release.
 No all-feature geometry integration test campaign, full pre-push matrix,
 coverage/fuzz/sanitizer campaign, hosted-platform or HIL qualification is claimed.
 No push occurred. The full fifteen-phase goal remains active.
+
+## Continuous point-mass flow consumer (2026-11-14)
+
+Phase 13 gains opt-in Hyperphysics `certified-flow`, retained at
+`6fade18056dc7e63865def845aae091d4255c413`. A missing-consumer E0599 witness
+was reproduced before implementation. A fixed strictly positive exact mass and
+three exact forces F(t,x,v) become the six-state continuous field x'=v, v'=F/m.
+The immutable model retains the original validated force graph, arbitrary ordered
+seven-symbol interpretation, strict mass-sign receipt and provenance. Constant-force
+construction uses the existing accumulator and snapshots each source/vector.
+Original references are validated before generated nodes are appended; all source
+guards remain active. Authored physical units, frames and force-law validity are
+assumptions, not claims established by interval verification.
+
+Hyperphysics assigns physical meaning; Hypersolve owns source validation and
+derivatives, Hyperinterval/Hyperlattice own set arithmetic and Hyperdynamics owns
+Picard/evolution verification. No new integrator or scalar kernel is introduced.
+Existing Euler replay retains its original discrete meaning. Step/evolution wrappers
+retain the original model and complete native policy/proposal/source/evidence, typed
+failures and attempt history. Certified endpoint boxes feed subsequent steps and
+whole-horizon evolution. A stopped certified prefix is separate from completed
+horizon success. Empty state sets do not bypass model/time validation.
+
+The new opaque graph-budget view forwards bounded graph operations through the
+existing counter without permitting reset/replacement or configuration mutation.
+Construction, field preparation and subsequent verification share one budget.
+Exact scalar refinement/arithmetic, source strings/payload, total heap and cancellation
+inside scalar/force-accumulation operations remain explicit exclusions. Exhausted
+construction publishes no model; retry does not inherit a poisoned source/cache.
+
+Ten new tests cover independent continuous constant-force expectations versus
+velocity-first Euler, uncertain initial states, repeated steps/full horizons,
+nonlinear/time/velocity forces and exact Jacobians across seven binding orders,
+source-reference/shape/domain failures, algebraic and unresolved mass receipts,
+empty versus invalid inputs, final one-unit-short work limits, cancellation/retry,
+stopped prefixes, native exhaustion, fresh-process exact input replay and zero-dispatch
+getters. The isolated owner run passes 189 tests; the combined main checkout passes
+200 owner tests and 42 downstream MNA/simulation/nonlinear tests. Strict owner
+all-feature/all-target Clippy, benchmark Clippy, warnings-denied docs, disabled-feature
+and WASM builds, formatting and repository budget pass. Initial compiler/test and
+measurement-driver mistakes remain recorded; no acceptance expectation was weakened.
+
+Three CPU0/ASLR-disabled 10,000-operation trials with 16 warmups per mode measure
+m=2, F=[4,-4,0], h=1/4, including materialized tube/end/source/mass/provenance/proof
+and result destruction. Mean microseconds per operation: preparation 6.517–6.582,
+prepared verification 32.785–33.050, preparation plus verification 41.468–41.575.
+Reuse includes prepared source/cache benefits; it is not a universal cold-call speedup
+or a comparison to discrete replay. The complete benchmark-body allocation observer
+uses matching external dependency versions. Preparation/reuse/combined allocate
+7,576 / 15,004 / 22,580 bytes per operation and peak at 4,182 / 7,048 / 10,974
+incremental bytes. Preparation retains 3,926 bytes beyond the held source; a step
+retains 328 and uses 449 graph / 316,536 scalar units. Preparation consumes 467 graph
+units; scalar positivity remains outside that accounting. Every measured drop returns
+to zero incremental live heap; existing source/cache and allocator overhead are excluded.
+
+Six physics control runs preserve all sixteen fixtures/checksums. Default executable
+size remains 3,935,656 bytes with unchanged .text/.rodata sizes and all 1,702 symbol
+size multisets; moved symbols prevent byte identity. The limited two-run min/max
+screen observes no default adverse separation, with visible drift and no statistical
+no-regression claim. Enabling the feature adds 21,816 executable bytes (+10,056 GNU
+size text, -3,184 .text bytes) and an unfavorable slab-conduction control:
+baseline 2.005–2.206 µs, default 1.997–2.015 µs, enabled 2.314–2.350 µs.
+This opt-in code cost and observed regression are explicitly accepted for the
+higher-priority added continuous certification capability; no blanket enabled-feature
+no-regression claim is made. Hyperdynamics' existing Taylor benchmark grows 16 raw
+bytes but has byte-identical .text/.rodata/.data.rel.ro, unchanged symbol groups/sizes
+and addresses. Four actual Criterion constant-flow trials and all exponential/constant
+completion checks are preserved; timing drift despite identical sections limits
+interpretation of sequential significance labels.
+
+Alternate-index application and exact reversal recover the original pending tree.
+All 41 staged extraction paths and their logical changes remain identical; only
+blob IDs/hunk offsets change. The pending SHA-256 changes from
+`e52d18c6c53a33a3037b977bb3f718eca60ff766f474b024748897b7ffef4273` to
+`d0f3f56e94d54d5f7330111f7bd6051cfe2caaf7ea23b21910b9b2cfaf69f6c0`.
+Interface's eight edits and Firmware's clean state are unchanged. All 34 previous
+frozen stages verify unchanged. New record `docs/evidence/2026-11-14-interval-physics-flow`
+contains 110 files / 1,817,565 bytes, SHA-256
+`69b2698c4147a8dc33e78c618ef3d6b267929b66bb8fbdfec52d0668c1d0485a`, archive commit
+`1e80e3579b838ecf0acb7b0d3ed6579b521dfac1`. Its committed blob digest and addition-only
+scope are verified. Reproduction instructions require copying drivers to mutable stages.
+
+Variable/uncertain mass, rotations, contacts/impulses, coupled bodies, automatic
+physical-law lowering and wider consumer adoption remain open, alongside automatic
+Taylor/order/frame evolution, Phase 11 timing regressions, embedded flash/whole-call
+stack/cycles/HIL, outstanding Interface Clippy issues and coordinated release.
+No full pre-push/workflow, fuzz/coverage/sanitizer or platform qualification is claimed.
+No push occurred. Phase 13 and the full fifteen-phase goal remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
