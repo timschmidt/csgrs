@@ -6256,6 +6256,71 @@ preserved. The new stage is frozen. No push occurred. Phase 11 cost failures,
 remaining migrations, automatic order/frame selection, wider adoption, external
 competitive qualification, embedded work and coordinated release remain open.
 
+## Recheck current extraction costs and diagnostic cache models (2026-11-14)
+
+Phase 11 remains unretained. At current revision `04286c458d15b356b305d5805bfe04be659ba246`, all three
+real-owner executables (baseline, exact pending extraction, earlier provider-error
+control) reproduce their previous hashes byte for byte. The separate observer's
+full 194-workload body, external dependencies, completed Debug outputs and all
+allocation/deallocation/reallocation/bytes/peak/live rows agree across variants.
+This is not an independent geometry oracle or canonical serialization proof.
+No production change is retained, and this diagnostic is not implementation
+progress toward a completed phase.
+
+Six longer CPU0/ASLR-disabled sweeps repeat the same six previously published
+failures in baseline/extraction/provider/provider/extraction/baseline order,
+with one-second warmup, two-second measurement and thirty samples. No concurrent
+builds, tests or profiles run during timing. All six provider failures reproduce;
+extraction retains adverse separation for hodograph, pad clearance and parser.
+Both candidate lower mean confidence bounds exceeding both baseline upper bounds
+is a screen, not family-wise significance or a permitted regression tolerance.
+
+| Case | Extraction/baseline mean | Provider/baseline mean |
+| --- | ---: | ---: |
+| `axis_aligned_line_offset_exact` | 0.98653 | 1.03759 |
+| `quadratic_bezier_exact_hodograph` | 1.03227 | 1.10136 |
+| `rect_pad_board_edge_clearance_exact` | 1.02374 | 1.06468 |
+| `rectangular_additive_bead_schedule` | 0.96811 | 1.04829 |
+| `specctra_grid_route_text_parse_256` | 1.05099 | 1.02477 |
+| `specctra_trace_record_exact_import` | 0.98476 | 1.03869 |
+
+Hardware counters are unavailable (`perf_event_open` returns EACCES). Eighteen
+cache/branch simulations measure 32 warmed completed/drop callbacks in the
+separate observer, using explicit generic 32 KiB eight-way I1/D1 and 8 MiB
+sixteen-way LL models. All six instruction totals reproduce the prior record;
+decoded profile hashes and per-function event sums verify. Simulated events vary,
+but do not consistently explain hardware timing: parser I1 misses remain six and
+conditional branch misses decrease from 370,371 to 362,085/365,636 while wall time
+increases. Offset and exact-import provider controls have fewer simulated I1
+misses despite slower timing. The model omits the physical sliced cache hierarchy,
+TLBs, prefetchers and execution scheduling, and has different code generation
+from the real timing executable. It establishes neither a hardware cause nor a
+source fix. No arbitrary layout hint or unrelated mathematical change follows.
+
+Initial short hardware-counter attributes, an unrepresentable physical aggregate
+cache setting and obsolete provider-patch changelog context failed preflight;
+logs remain. Two builds accidentally launched after the patch failure repeated
+extraction and are quarantined, excluded from timing/profiles. The implementation-
+only provider patch was then rebuilt and its real-owner hash verified before
+measurement. The corrected cache model completed all 18 profiles.
+
+Both provider fixtures pass. Restored extraction passes three routing tests
+including fresh-process two-policy reports/dispatch, one axis migration test,
+workspace formatting and staged whitespace checks. The isolated tree is restored
+clean. All four authoritative states match their starting HEAD/status/patch hashes
+before archival; main's 41 staged paths and Interface's eight edits are preserved.
+All 31 prior frozen stages verify unchanged. No new full-owner/Clippy, downstream
+cost, successive_operations, sanitizer/fuzz, WASM, packaging, HIL or pre-push
+qualification is claimed. No push occurred. Repeating this same diagnostic is
+not a next implementation step; pursue a distinct supported hypothesis or another
+open plan task while retaining this cost blocker.
+
+Evidence `docs/evidence/2026-11-14-interval-dynamics-layout-recheck` at archive
+`eed20ff24447bacc625cfb9e802e5aa59ca236ee` contains 295 files,
+21,374,597 bytes, SHA-256 `a5bfb063c2b0a75207c1daa62202da0f2dcde46f17f80984a2d3cc0fe6793e23`.
+Committed blobs and parent diff scope verify, all prior registry rows are preserved,
+and this stage is frozen. The full fifteen-phase goal remains active.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
