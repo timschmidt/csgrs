@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Compile native bivariate polynomial quotients into shared expression/Jacobian
+  programs with exact coefficients, ordered bindings, original denominator guards
+  and explicit graph/work budgets.
+
 - Add opt-in sensitivity-retained Taylor noise enclosures for repeated affine
   observations, retaining exact sources, shared selected monomials and every
   omitted contribution in distinct residual bounds.

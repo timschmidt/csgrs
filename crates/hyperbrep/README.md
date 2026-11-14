@@ -54,6 +54,12 @@ let exact_volume = bodies.bodies().next().expect("one cuboid").volume()?;
 
 ## Current boundary
 
+The optional `interval-ranges` feature prepares native rational Bézier surfaces
+for source-bound coordinate and UV-partial enclosures over parameter boxes.
+Run `cargo run -p hyperbrep --features interval-ranges --example surface_ranges`.
+The [range-query contract](docs/SURFACE_INTERVAL_RANGES.md) explains evidence,
+resource limits and native spatial exclusion.
+
 The [support matrix](docs/SUPPORT_MATRIX.md) describes completed native workflows
 and explicit blockers. The [implementation ledger](docs/IMPLEMENTATION_STATUS.json)
 records the same work; constructor or carrier inventories do not prove closure.

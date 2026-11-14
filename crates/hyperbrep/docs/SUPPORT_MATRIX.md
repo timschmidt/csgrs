@@ -354,6 +354,18 @@ interior. See the [finite qualification](https://github.com/timschmidt/csgrs-evi
 
 ## Surface carriers
 
+With `interval-ranges`, positive-weight native rational Bézier tensors also
+admit source-bound coordinate and both-UV-partial enclosure attempts over
+finite dyadic parameter boxes. The retained C1 certificate can project to a
+native spatial `Aabb` for certified exclusion. Canonical empty boxes, generated
+algebraic subdivisions, reflected nonuniform affine images and checked native
+replay are exercised. This adds no rank, trimmed-face membership, intersection
+completeness or solid-topology claim. Other surface families return a typed
+unsupported diagnostic; denominator overestimation can refuse certification
+even for a valid positive-weight patch. See the
+[contract](SURFACE_INTERVAL_RANGES.md) and the existing
+[implementation record](IMPLEMENTATION_STATUS.json) for qualification scope.
+
 | Family | Domain / evaluation / partials | Bounds | Supported topology image proof | Transform | Persistence |
 | --- | --- | --- | --- | --- | --- |
 | Plane | Exact | Unbounded | Line, circular arc, rational Bezier/NURBS and retained planar-image agreement | Affine | Exact |

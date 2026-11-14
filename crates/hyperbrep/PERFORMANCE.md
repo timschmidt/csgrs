@@ -1415,3 +1415,71 @@ The [admission](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a
 Three alternating pairs per cohort cover 79 preceding semantic-workflow groups in 48 processes, retaining their full assertions, iterations and outcomes. One capability-migrated control is recorded separately without time ratios. Time ratios range 0.950832–3.131993; 3 of 79 groups exceed the 10% review marker and 63 increase allocation calls or requested bytes. Twelve new complete acceptance groups have absolute costs from three processes. Every slower and adverse observation is retained. Archive-version migration changes serialization work; these are the same complete semantic workflows, not identical encoded bytes. Candidate includes upstream dbe99e3cc and cannot isolate the feature effect. This finite shared-host comparison does not rerun the historical 192-case catalogue or establish a general speedup, significance or an internal resource bound.
 
 [Complete costs](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/costs.md) and [resource observations](https://github.com/timschmidt/csgrs-evidence/blob/b20000e377626a41b6ff8e6f87aee2b20ebd7865/crates/hyperbrep/docs/evidence/2026-10-18-selected-procedural-profiles/resource-review.json) retain every adverse result. The capability-migrated control has no ratio. Earlier adverse obligations and whole-operation resource gates remain open.
+## Native surface interval ranges
+
+The opt-in [surface range adapter](docs/SURFACE_INTERVAL_RANGES.md) has a
+measured sixteen-cell workload at source
+`2d2fc538b7cc8b3b76555878cf34064e4f4ee072`. The
+[checked-in benchmark](benches/surface_ranges.rs) compares preparing each cell
+independently with preparing one shared program inside each portfolio. Both
+paths retain all three coordinate and six partial enclosures, original source
+and domain evidence, native spatial exclusion, and output destruction. Exact
+analytic extrema and full output agreement are checked before ordinary timing.
+This compares two uses of the new API; it is not a comparison with the previous
+native surface or Boolean kernel.
+
+Measurements used Rust 1.95.0 release builds on an Intel Xeon E5-2680 v2,
+pinned to CPU 8, with no concurrent compiler/test workers. Warm measurements
+discard two samples and retain thirty alternating pairs of sixteen portfolios.
+Cold measurements retain thirty alternating fresh-process pairs, each with one
+portfolio. Original surface construction is excluded in both. Cold time sums
+query/materialization and destruction spans, with the independent oracle between
+them outside timing; cold refers to the process scalar-cache lifecycle, not OS
+or machine cache state. Ratios below are paired geometric speedups with 95%
+percentile bootstrap intervals (10,000 resamples, seed 20261114).
+
+| Source over [0,1]² | Warm independent/shared mean ms | Warm speedup | Cold speedup |
+| --- | --- | --- | --- |
+| (u,2v,uv) | 3.051 / 1.774 | 1.720 [1.710,1.727] | 1.815 [1.786,1.848] |
+| (u/(1+u),v,0) | 2.989 / 1.808 | 1.653 [1.652,1.654] | 1.712 [1.700,1.723] |
+| (u,v,u^8 v^3), degree 8×3 | 15.859 / 4.809 | 3.297 [3.296,3.299] | 3.298 [3.277,3.316] |
+
+Each workload completes all sixteen cells with certified C1 ranges and exact
+native exclusion. Graph limits are 1,000,000 entries and 1,000,000,000 work
+units; dyadic limits are 16,384 bits and 1,000,000,000,000 work units. Structural
+work units are not total CPU, coefficient-growth or heap bounds.
+
+Five identical warmed allocation observations per row use a separate executable
+with the same workload helper, dependency versions, features, profiles and
+compiler flags. Ownership headers distinguish measured allocations from earlier
+ones. Bytes count requested payload, excluding allocator overhead and RSS.
+
+| Source / preparation | Graph work | Dyadic work | Allocation + reallocation calls | Requested bytes | Peak live bytes | Output live bytes |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Polynomial / independent | 53,936 | 5,589,900 | 35,998 | 1,869,560 | 229,784 | 221,256 |
+| Polynomial / shared | 15,731 | 5,589,900 | 19,213 | 481,325 | 50,384 | 41,856 |
+| Rational / independent | 53,936 | 7,466,146 | 37,828 | 1,920,344 | 229,392 | 220,864 |
+| Rational / shared | 15,731 | 7,466,146 | 21,043 | 532,109 | 49,992 | 41,464 |
+| Degree 8×3 / independent | 2,077,424 | 14,459,784 | 208,702 | 15,268,088 | 1,576,616 | 1,515,544 |
+| Degree 8×3 / shared | 217,079 | 14,459,784 | 43,552 | 2,415,413 | 183,776 | 122,704 |
+
+All warmed rows return tracked live storage to zero after destruction. Cold
+observations retain 888 bytes for polynomial and 584 bytes for rational sources
+after both source and output destruction. Degree 8×3 retains 20,032 bytes in
+independent mode and initially 15,632 in shared mode. A separate 32-query
+fresh-source diagnostic finds the first three values stable; shared degree 8×3
+grows through 18,936 and 19,760 to 20,032 bytes on its fourth query, then remains
+there. These observations are consistent with existing process-global small
+rational caches; they do not establish exact allocation attribution, leak
+freedom or a uniform retention bound.
+
+The benchmark executable is 18,147,672 bytes (text 14,633,175; data 341,832;
+bss 1,760); the allocation probe is 18,166,848 bytes. These distinct harnesses
+are absolute size observations, not an API binary-growth comparison.
+
+Raw final warm/cold samples, allocation observations, retained-state diagnostics,
+build equivalence and original adverse attempts are held in the stage admission
+record pending archival. Full owner/downstream, WASM/stable and archive-consumer
+qualification remains pending. The finite ordinary completion envelope does not
+establish arbitrary-degree performance, general surface operation closure or a
+release qualification.

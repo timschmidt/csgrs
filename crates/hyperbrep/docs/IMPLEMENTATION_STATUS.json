@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_on": "2026-11-07",
+  "updated_on": "2026-11-14",
   "plan": "DEVELOPMENT_PLAN.md",
   "research": "ALGORITHM_RESEARCH.md",
   "property_ledger": "../../../docs/properties-status.json",
@@ -5566,6 +5566,44 @@
       "limits": "Scoped owner/downstream admission, not the separate827 main280-command matrix or a new native pre-push/release qualification. First prototype source identity failure, failed test-copy compiles and canceled prototype MSRV remain distinct. Original punctured sqrt image and shared/unselected component denominator census still block. General algebraic operation/continuous assembly, total work/heap/cancellation, runtime fuzz/coverage and BRep shipped consumers remain open. All work package statuses unchanged.",
       "evidence_record": "docs/evidence/2026-11-07-native-nurbs-components",
       "local_evidence_commit": "70daed6650e35274bbdec2b86ae286fa2a22f343"
+    },
+    {
+      "id": "native-surface-interval-ranges",
+      "work_packages": [
+        "WP04",
+        "WP17",
+        "WP18",
+        "WP21",
+        "WP23"
+      ],
+      "properties": [
+        "P4",
+        "P18",
+        "P19",
+        "P20",
+        "P35",
+        "P36",
+        "P37"
+      ],
+      "decision": "isolated capability candidate; focused acceptance and measured workloads pass; broad qualification pending",
+      "source_base_revision": "b0fde90b4d9eb51c51723fb6e24a9b6ab6938962",
+      "measured_source_revision": "2d2fc538b7cc8b3b76555878cf34064e4f4ee072",
+      "change": "Opt-in positive-weight native rational Bezier tensor interval coordinates and partials, retaining original Surface, UV domain, denominator guards and C1 evidence through native Aabb exclusion. Hypersolve owns exact bivariate quotient compilation; native conversion and existing interval authority are reused. Default features and old evaluator bodies are unchanged.",
+      "source": [
+        "../src/geometry/interval_ranges.rs",
+        "../../hypersolve/src/expression_program/bivariate.rs"
+      ],
+      "regressions": [
+        "../tests/interval_ranges.rs",
+        "../src/geometry/interval_ranges/tests.rs",
+        "../tests/surface_ranges_example.rs"
+      ],
+      "validation": "52 focused tests pass: 32 solver, 4 private native/cache/replay, 11 public/example and 5 downstream spline-exchange. Focused format, strict Clippy/docs and feature-disabled checks pass. Full owner/downstream suites, stable/WASM checks and archive-only consumer remain pending. Newly introduced complete trace snapshots pin scalar first-observation warming rather than claim invisible caching; the original unchanged solver trace regression still passes.",
+      "cost_evidence": "Three complete sixteen-cell portfolios, thirty alternating warm pairs and thirty fresh-process cold pairs per source; shared preparation warm speedups 1.653..3.297 and cold 1.712..3.298. Five repeated allocation observations retain all outputs/destruction. Cold retained scalar storage and 32-query plateau diagnostics remain explicit. See ../PERFORMANCE.md#native-surface-interval-ranges. These are same-API comparisons, not old-kernel nonregression or general performance claims.",
+      "evidence": "SURFACE_INTERVAL_RANGES.md",
+      "local_evidence": "/tmp/interval-refactor/surface-interval-ranges",
+      "limits": "Native rational Bezier tensors only; C1 is not rank, injectivity, trimmed-face or topology evidence. Denominator overestimation can refuse a box. Fully expanded algebraic scalar equality may remain undecided; test-only per-node exact quadratic oracle verifies maintained generated outputs. Structural resource budgets do not bound total scalar CPU, coefficient growth or heap. Other surface families, general closure, coverage/formal proof and release qualification remain open. All work package statuses remain unchanged.",
+      "evidence_published": false
     }
   ],
   "work_packages": [
