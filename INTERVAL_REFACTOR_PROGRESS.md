@@ -5393,6 +5393,74 @@ frames, whole-resource closure, wider adoption, competitive workloads, phase 11
 costs, coordinated release and the remaining fifteen-phase obligations stay open.
 No new full coverage, root successive_operations or hardware campaign is claimed.
 
+## 2026-11-13 — exact clock arithmetic migration
+
+Previous goal turn: progress (whole-horizon coordinate evolution). Retained
+software migration in source `c7108d084810f175232ab087749d95edaca10f0d`
+and Alumina Firmware `cb92f80c08ba13cb732dd2a3a4ad63ccdee5e1cd`.
+The full fifteen-phase goal remains active; this is not Phase 9 completion.
+
+Hyperinterval now provides checked signed i128 quotient bounds and exact scalar
+images of all twelve primitive integer range families. Quotient bounds are
+numerical floor/ceiling of the ratio, not a discrete set substituted for the
+rational value. Zero denominators, MIN/-1 overflow, signed-minimum denominators,
+empty ranges and scalar-product overflow retain explicit outcomes. The shared
+positive-denominator kernel uses truncating quotient/remainder with corrections
+proved not to overflow. Fixed arithmetic reuses it. Integer sum retains endpoint
+addition order and uses order proved by monotonicity after checked products/sums;
+public ingress validation remains unchanged. Private primitive paths perform no
+Hyperreal dispatch or rational reductions, as asserted by a new trace test.
+
+Alumina-clock delegates intersection, forward affine range arithmetic, directed
+inverse division, and explicit midpoint/radius. Boot identity, causal validation,
+freshness, health, deadlines, scheduling and stored scaled model stay with the
+clock owner. Its new production dependency disables defaults and enables only
+integer; no std, allocation or arbitrary precision enters the dependency graph.
+Device heartbeat source is unchanged. Original clock tests remain, with new
+fractional-offset and rejected-sample/retry regressions.
+
+The standalone observer reproduces all 481 pristine public-observation rows,
+wire bytes and typed errors over 24 analytic complete workloads; independent
+forward/inverse inclusion checks pass. Estimator layout remains 208 bytes with
+16-byte alignment, and all measured allocation/reallocation/byte counts are zero.
+The first candidate was about 10% slower and is rejected. Recorded intermediate
+inlining, outlined Option-map and affine/division investigations converge on a
+final 24-pair pinned host comparison: median candidate/baseline ratio 1.000469,
+bootstrap 95% interval [0.999465,1.001691]. This resolves neither a slowdown nor
+a speedup. Native probe .text shrinks 267,196 -> 267,148 bytes and binary size
+428,016 -> 423,712 bytes. Fixed control .text shrinks 240,028 -> 239,740 bytes;
+six paired run medians show no regression on its five completed operations.
+All fixed counts and checksums match; full Q30 differential coverage also passes.
+These are host controls, not MCU or whole-application performance claims.
+
+Final checks pass: 213 all-feature Hyperinterval tests, 53 Rust 1.88
+integer/fixed/serde tests, strict owner all-target Clippy, warning-denied docs,
+formatting, 7 clock and 76 simulator tests, strict firmware owner/simulator
+Clippy, 86 Interface client tests, and Interface WASM checking. Clock no_std
+checks pass for thumbv7em-none-eabihf and wasm32 with Rust 1.88. Production
+checkouts repeat owner tests and firmware Clippy after transfer. Interface
+Clippy 1.95 remains blocked by the same large_enum_variant in network.rs and
+nonminimal_bool in worker.rs reproduced on unchanged baseline source. The
+attempted Interface 1.88 check is inapplicable because its MSRV is 1.95.
+No warning was suppressed and no unrelated Interface source was changed.
+
+Evidence `d478b26d5d8703199e56a656165001cb0e770a64`, record
+`docs/evidence/2026-11-13-interval-clock-migration`: 382 files,
+64,547,622 bytes, SHA-256
+`5f0a54ec727da2384d4b4708e2e9763fbcf65eaf94ebbc7f325a9338dfa4c253`.
+Scoped archive verification and all twenty previous frozen-stage checks pass.
+Indexed source budget before this ledger: 4,177 files, 143,196,608 bytes.
+The 41 staged CSGRS extraction paths retain binary-patch SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending paths retain their original hash. Firmware and the
+isolated core source checkout are clean at their retained commits.
+
+Hardware cycles, stack maxima, HIL, final MCU image and WASM code-size comparison
+remain unmeasured. No new root successive_operations, whole-application cost,
+full workflow, sanitizer or coverage campaign is claimed. No push occurred.
+The remaining firmware/FOC/servo migration, Phase 11 cost blocker, broader
+integration and coordinated release obligations remain open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
