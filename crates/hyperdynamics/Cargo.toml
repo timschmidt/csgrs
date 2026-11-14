@@ -24,6 +24,7 @@ taylor-flow = ["taylor-model"]
 taylor-evolution = ["taylor-flow"]
 adaptive-taylor = ["taylor-flow"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
+taylor-noise = ["taylor-affine", "hypersolve/taylor-noise"]
 taylor-polynomial = ["taylor-model", "hypersolve/taylor-polynomial"]
 reachability = ["field"]
 rk-proposal = ["field", "hypersolve/float-proposal-program", "hyperinterval/float-proposal"]
@@ -96,3 +97,7 @@ required-features = ["adaptive-taylor", "taylor-evolution"]
 name = "qr_evolution"
 harness = false
 required-features = ["qr-evolution"]
+
+[[example]]
+name = "taylor_noise"
+required-features = ["taylor-noise"]

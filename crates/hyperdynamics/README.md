@@ -257,3 +257,13 @@ graph/native counters are shared; exact scalar payload/refinement, nested retain
 size, vector capacity, whole heap and within-scalar cancellation remain outside a total
 resource claim. Replay the field definition, request and all selection options to rebuild
 proofs; serialized statuses and cached enclosures are not certificates.
+
+
+Enable `taylor-noise` and run `cargo run -p hyperdynamics --features taylor-noise
+--example taylor_noise` for repeated affine observations of a nonlinear field.
+Hypersolve retains a bounded set of shared monomials using certified contribution
+widths and includes every omitted term in distinct residual bounds. The example
+checks an exact cancellation and consumes an explicit Cartesian projection in a
+further field-image operation while retaining the original source certificate.
+This is field-image wrapping control; noise propagation through ODE trajectories
+and sensitivity-adaptive noise creation are not implemented by this feature.

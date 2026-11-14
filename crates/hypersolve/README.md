@@ -655,6 +655,21 @@ function, not an ODE coordinate-change certificate or nonlinear model arithmetic
 The graph/native budgets apply with the existing scalar/payload exclusions;
 entry checks are stage-local, not a total live-memory bound.
 
+`taylor-noise` adds `TaylorNoiseModel` over an existing `TaylorAffineModel`.
+It retains at most a requested number of shared monomial columns, ranked by
+certified coefficient-times-monomial widths. Every omitted contribution enters
+its affine output omission residual; equal bounds do not merge identities.
+Original Taylor residual coordinates keep their exact affine weights separately,
+so duplication and cancellation of a known shared residual remain available.
+`enclose` combines exact coefficients for an affine observation before projecting
+retained noise. Independence is an outer-enclosure device, not a claim about the
+original functions. The exact source and all discarded term indices remain
+available. Reducing capacity can widen answers; no box replaces the source.
+Replay the original Taylor definition/request, affine map and capacity. Graph
+and native budgets cover selection and queries, with the existing exact-scalar
+and heap-byte exclusions. See the Hyperdynamics `taylor_noise` example for a
+field-image consumer; no ODE noise-propagation guarantee is implied.
+
 Enable `taylor-polynomial` for `TaylorPolynomialModel` output maps over an
 existing shared Taylor model. Validated `ExpressionProgram` maps may use constants,
 inputs, negation, addition, subtraction and multiplication. Products retain exact

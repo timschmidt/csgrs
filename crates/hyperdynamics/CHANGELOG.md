@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add an optional Taylor noise field-image consumer with exact cancellation
+  assertions and subsequent use of its explicit Cartesian enclosure.
+
+
 - Add opt-in automatic finite-window QR evolution with exact frame/transport proofs,
   explicit Picard or trajectory Taylor endpoints, retained attempts and typed failure.
 

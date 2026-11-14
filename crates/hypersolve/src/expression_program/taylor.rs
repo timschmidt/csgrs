@@ -370,3 +370,6 @@ pub use model::{
     TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
     TaylorRange,
 };
+
+#[cfg(feature = "taylor-noise")]
+pub use model::{TaylorNoiseColumn, TaylorNoiseModel};

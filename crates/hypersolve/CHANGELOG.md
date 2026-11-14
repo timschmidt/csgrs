@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in sensitivity-retained Taylor noise enclosures for repeated affine
+  observations, retaining exact sources, shared selected monomials and every
+  omitted contribution in distinct residual bounds.
+
+
 - Add opt-in certified Taylor model composition, preserving both source proofs,
   full outer-domain inclusion, generated polynomial/cross-remainder evidence and
   the complete outer residual. Generated results accept subsequent model maps.

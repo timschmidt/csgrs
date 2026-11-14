@@ -419,3 +419,9 @@ impl TaylorAffineRange {
         self.bounds
     }
 }
+
+#[cfg(feature = "taylor-noise")]
+mod noise;
+
+#[cfg(feature = "taylor-noise")]
+pub use noise::{TaylorNoiseColumn, TaylorNoiseModel};

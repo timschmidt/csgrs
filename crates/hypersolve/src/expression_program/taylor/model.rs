@@ -587,3 +587,6 @@ pub use affine::TaylorAffineRange as TaylorRange;
 pub use polynomial::{
     TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
 };
+
+#[cfg(feature = "taylor-noise")]
+pub use affine::{TaylorNoiseColumn, TaylorNoiseModel};

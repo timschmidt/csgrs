@@ -48,6 +48,7 @@ qr-coordinates = ["coordinate-program"]
 coordinate-transition = ["coordinate-program"]
 taylor-model = ["interval-program"]
 taylor-affine = ["taylor-model"]
+taylor-noise = ["taylor-affine"]
 taylor-polynomial = ["taylor-affine"]
 taylor-composition = ["taylor-polynomial"]
 float-proposal-program = ["expression-program"]
@@ -110,3 +111,8 @@ required-features = ["taylor-polynomial"]
 name = "taylor_composition"
 harness = false
 required-features = ["taylor-composition"]
+
+[[bench]]
+name = "taylor_noise"
+harness = false
+required-features = ["taylor-noise"]
