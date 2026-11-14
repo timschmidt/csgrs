@@ -168,3 +168,111 @@ fn bivariate_quotients_preserve_axis_order_and_independent_derivatives() {
         Real::from(3)
     );
 }
+
+#[test]
+fn high_degree_algebraic_coefficients_retain_independent_values_and_derivatives() {
+    // P=sqrt(2)*u^34*v^3+3, W=1+v. This is outside a low-degree catalog.
+    let alpha = Real::from(2).sqrt().unwrap();
+    let mut coefficients = vec![vec![]; 35];
+    coefficients[0] = vec![3.into()];
+    coefficients[34] = vec![0.into(), 0.into(), 0.into(), alpha.clone()];
+    let program = ExpressionProgram::from_bivariate_quotients(
+        &[BivariatePolynomial::new(coefficients)],
+        &BivariatePolynomial::new(vec![vec![1.into(), 1.into()]]),
+        [SymbolId(8), SymbolId(3)],
+        &mut budget(),
+    )
+    .unwrap();
+    let jacobian = program
+        .jacobian(&[SymbolId(8), SymbolId(3)], &mut budget())
+        .unwrap();
+    let values = jacobian
+        .program()
+        .eval_real(&[1.into(), 1.into()], &mut budget())
+        .unwrap();
+    let expected = [
+        (&alpha + Real::from(3)) / Real::from(2),
+        Ok(Real::from(17) * &alpha),
+        (Real::from(5) * &alpha - Real::from(3)) / Real::from(4),
+    ];
+    for (slot, expected) in [
+        0,
+        jacobian.partial_output(0, 0).unwrap(),
+        jacobian.partial_output(0, 1).unwrap(),
+    ]
+    .into_iter()
+    .zip(expected)
+    {
+        assert_eq!(
+            hyperlimit::compare_reals(
+                &values[slot],
+                &expected.unwrap(),
+                hyperlimit::PredicatePolicy::STRICT
+            )
+            .value(),
+            Some(std::cmp::Ordering::Equal)
+        );
+    }
+}
+
+#[test]
+fn empty_output_maps_still_validate_ordered_bindings() {
+    let program = ExpressionProgram::from_bivariate_quotients(
+        &[],
+        &BivariatePolynomial::new(vec![]),
+        [SymbolId(7), SymbolId(2)],
+        &mut budget(),
+    )
+    .unwrap();
+    assert_eq!(program.definition().variables, [SymbolId(7), SymbolId(2)]);
+    assert!(
+        program
+            .eval_real(&[1.into(), 2.into()], &mut budget())
+            .unwrap()
+            .is_empty()
+    );
+    for arguments in [vec![], vec![1.into()], vec![1.into(), 2.into(), 3.into()]] {
+        assert!(
+            matches!(program.eval_real(&arguments,&mut budget()),Err(ExpressionError::BindingCount{expected:2,actual}) if actual==arguments.len())
+        );
+    }
+}
+
+#[cfg(feature = "serde")]
+#[test]
+fn native_definition_replay_preserves_shared_denominator_and_rejects_bad_references() {
+    let source = ExpressionProgram::from_bivariate_quotients(
+        &[
+            BivariatePolynomial::new(vec![vec![], vec![2.into()]]),
+            BivariatePolynomial::new(vec![]),
+        ],
+        &BivariatePolynomial::new(vec![vec![0.into(), 1.into()]]),
+        [SymbolId(4), SymbolId(9)],
+        &mut budget(),
+    )
+    .unwrap();
+    let bytes = serde_json::to_string(source.definition()).unwrap();
+    let definition = serde_json::from_str(&bytes).unwrap();
+    let replay = ExpressionProgram::from_definition(definition, &mut budget()).unwrap();
+    assert_eq!(source.definition(), replay.definition());
+    assert_eq!(serde_json::to_string(replay.definition()).unwrap(), bytes);
+    assert_eq!(
+        replay
+            .eval_real(&[3.into(), 2.into()], &mut budget())
+            .unwrap(),
+        [Real::from(3), Real::from(0)]
+    );
+    assert!(matches!(
+        replay.eval_real(&[3.into(), 0.into()], &mut budget()),
+        Err(ExpressionError::Scalar { .. })
+    ));
+    let mut invalid = source.definition().clone();
+    let output = invalid.outputs[0];
+    let ExpressionNode::Binary { right, .. } = &mut invalid.nodes[output] else {
+        panic!("division guard")
+    };
+    *right = output;
+    assert!(
+        matches!(ExpressionProgram::from_definition(invalid,&mut budget()),Err(ExpressionError::InvalidReference{node,input}) if node==output && input==output)
+    );
+}

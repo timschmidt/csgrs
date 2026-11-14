@@ -1,4 +1,7 @@
 //! Native tensor-surface ranges with retained chart and derivative evidence.
+#[cfg(test)]
+mod tests;
+
 use std::{fmt, sync::OnceLock};
 
 use hyperinterval::{DyadicBudget, DyadicInterval, IntervalError};

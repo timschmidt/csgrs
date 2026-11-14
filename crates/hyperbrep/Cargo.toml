@@ -14,6 +14,7 @@ categories = ["mathematics", "graphics", "data-structures"]
 default = []
 tessellation = ["dep:hypertri"]
 interval-ranges = ["dep:hyperinterval", "hyperlattice/interval-dyadic", "hypersolve/interval-lattice"]
+dispatch-trace = ["hypercurve/dispatch-trace", "hypersolve/dispatch-trace"]
 
 [dependencies]
 hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["hyperreal"], optional = true }
@@ -30,6 +31,10 @@ stacker = "0.1.25"
 
 [dev-dependencies]
 proptest = "1.7.0"
+
+[[example]]
+name = "surface_ranges"
+required-features = ["interval-ranges"]
 
 [[bench]]
 name = "kernel"
