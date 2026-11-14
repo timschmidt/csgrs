@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers and a measured three-strategy dynamics corpus, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers and a measured three-strategy dynamics corpus, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6320,6 +6320,85 @@ Evidence `docs/evidence/2026-11-14-interval-dynamics-layout-recheck` at archive
 21,374,597 bytes, SHA-256 `a5bfb063c2b0a75207c1daa62202da0f2dcde46f17f80984a2d3cc0fe6793e23`.
 Committed blobs and parent diff scope verify, all prior registry rows are preserved,
 and this stage is frozen. The full fifteen-phase goal remains active.
+
+## Certified Taylor model composition (2026-11-14)
+
+Phase 13 gains opt-in `taylor-composition` at production commit
+`55fe5251be50c341bcf70abcfc550de7a83a76a4`, with a final acceptance-only follow-up
+at `fde51f4dd49735ae324788befebda526eefab261`. The owning Hypersolve layer
+implements `Arc<TaylorModel>::compose` and `TaylorPolynomialModel::compose`.
+The reproduced missing-consumer witness, admission contract and implementation
+are retained in the evidence record. Existing defaults and raw polynomial grammar
+remain unchanged.
+
+For inner f in P+R and outer g in Q+S, prove the full input image lies inside the
+outer certificate domain, propagate Q(f) through the existing polynomial engine
+as T+U, then retain T+U+S. This preserves both source certificates, exact outer
+coefficients and center, inner parameters/order, truncated terms, cross residuals
+and product evidence. The supplied outer center need not lie inside the inner image;
+result polynomial coefficients need not be the exact composite derivatives.
+Domain/binding validation precedes empty success. Failed enclosure containment is
+not proof that the underlying actual function is undefined. Generated results feed
+further certified-model and polynomial operations, including subdomain queries.
+Original definitions and requests rebuild certificates in fresh-process replay.
+
+The full Hypersolve/Hyperdynamics run passed 1,603 top-level tests in 75 groups,
+including the preceding eight-test composition corpus. Final focus passed ten new
+composition tests plus ten existing polynomial tests; minimal features passed eight
+applicable new tests. Tests cover independent exact coefficient expectations,
+outer and nonlinear inner residuals, higher-degree truncation, mixed/unsorted
+bindings, shifted centers, empty/unit/zero outputs, domain/shape rejection,
+resource cutoffs, cancellation/retry, source preservation, fresh replay and
+zero-dispatch proof getters. Main with the pending extraction passed 20 focused
+owner and 117 downstream tests with composition explicitly enabled. Strict
+all-feature/all-target Clippy, warning-denied docs, minimal/disabled feature and
+WASM checks, formatting and repository budget passed. The final follow-up changes
+only a test; final focused checks, test Clippy and formatting passed afterward.
+No previous assertion, fixture or dispatch threshold was relaxed.
+
+Three final CPU0/ASLR-disabled trials completed all 24 measurements against the
+same function/domain/order/endpoint-quality contract, including output and proof
+construction and destruction. Median ranges in microseconds:
+
+| Case | Prepared reuse | Fresh differentiation | Inner preparation | Outer preparation |
+| --- | ---: | ---: | ---: | ---: |
+| nested reciprocal | 142.857–143.453 | 256.714–257.191 | 124.388–125.213 | 120.176–120.371 |
+| algebraic square root | 147.599–148.425 | 186.601–189.171 | 20.982–21.082 | 186.968–190.548 |
+
+Both paths validate exact coefficients under STRICT and APPROXIMATE_512 without
+approximate certainty, analytic extrema and identical materialized ranges. This is
+prepared reuse, not a one-off cold speedup. Reuse allocates fewer cumulative bytes
+but retains more proof memory: reciprocal reuse/fresh retained 21,052/12,624 bytes,
+and square-root reuse/fresh retained 19,956/8,712. All observed construct/drop epochs
+return to zero incremental live heap. Previously retained sources/caches are excluded.
+
+Six established polynomial workloads show no adverse separation in final ABBA
+sweeps. Disabled-feature .text/.rodata, allocated section layouts and sized-function
+unions match; changed allocated bytes are verified panic source-line metadata and
+build ID. Raw binary size decreases 16 non-code bytes. Enabling composition adds
+an observed eight allocated/retained/peak bytes per existing raw-map stage while
+preserving completed ranges, allocation counts and graph/native work. This opt-in
+cost buys capability; it is not presented as a cost-free refactor. Initial artifact
+parser/preflight failures and earlier measurements remain in the archive.
+
+Graph/native construction budgets are shared and checked before publication.
+Scalar payload/refinement, within-scalar cancellation, vector capacities and total
+live heap remain outside a universal resource claim. Independent-base arithmetic,
+automatic order/step/frame/QR control, wider adoption, competitive qualification,
+Phase 11's measured extraction regressions, embedded gaps and release remain open.
+No full pre-push, external solver, sanitizer/fuzz, hosted platform or HIL campaign
+is claimed. No push occurred; no phase is marked complete.
+
+Alternate-index aggregate application and exact reversal preserve all 41 staged
+extraction paths, patch SHA-256
+`676e5d602a1fbdcc3fc7ff0d15bfb62692ef03f69a5a62f957aa7c7b6697b359`.
+Interface's eight existing edits and Firmware's clean state are unchanged.
+All 32 previous frozen stages verify unchanged. New frozen record:
+`docs/evidence/2026-11-14-interval-taylor-model-composition`, 937 files / 1,785,163 bytes,
+SHA-256 `5154a6d9d351df6bd5db024a8064fc0d488ffc671f10043875f78d5c8c9a6d34`,
+archive commit `96c5c0259f27b62e8fe84ff423ff41153a252971`. Committed blob digest and
+addition-only archive scope are verified. The record includes reproduction
+instructions; copy frozen drivers to new mutable stages before running them.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
