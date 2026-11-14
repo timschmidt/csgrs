@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE step/order and automatic frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6069,6 +6069,102 @@ Committed blobs and parent diff scope verify; all older registry rows are preser
 The new stage is frozen. No push occurred. Phase 11 cost failures, adaptive
 step/order/frame control, remaining migrations and adoption, embedded qualification
 and Phase 14 release obligations remain open under the full fifteen-phase goal.
+
+## Retain whole-horizon trajectory Taylor composition (2026-11-14)
+
+Phase 13 gains opt-in `taylor-evolution` at `d1ff299482dd25367d49cf4e3c243413c6f1d1ad`.
+FlowTaylorProgram::integrate reuses the existing bounded Picard search with an
+internal one-accepted-step limit and consumes its accepted proof by reference
+in the existing Taylor verifier. Complete Taylor endpoints become subsequent
+initial sets. No Picard predicates are repeated or entire Picard proof cloned.
+Original source/order/request/options/policy, all rejected native attempts,
+partial/completed analytic and remainder evidence, and accepted indices remain
+retained. The internal StepLimit(1) is an explicit native prefix, not native
+whole-horizon success. Taylor failure stops without fallback. Exact time equality
+and final checks precede completed output. Prepared order is fixed; automatic
+order/step-growth and frame control remain open.
+
+The baseline missing-method witness fails. Eleven final focused tests establish
+independent exact constant/nonautonomous and uncertain-initial flows, exponential
+bounds from a rational series, tighter endpoints than Picard and actual chaining,
+QR-generated field evolution followed by changed-chart transport and further
+evolution, retained halvings/failures, empty/unit/identity and invalid-empty cases,
+qualified prefixes, analytic failure without fallback, final graph/native cutoffs,
+aggregate nested-record exhaustion, cancellation/retry, zero getter dispatch and
+fresh-process complete proof/work replay. Eight tests also pass with only the
+minimal new feature. Existing tests and mathematical thresholds are preserved.
+
+The all-feature Hypersolve/Hyperdynamics run passes 1,591 top-level tests in 73
+test/doc groups, with no failures, ignored or filtered top-level tests. Its
+existing selected replay child is counted separately. This full run compiled
+the preceding ten-test version; the final added aggregate-record regression is
+covered by the 11-test focused run. Production code did not change after full
+compilation. Strict all-feature/all-target Clippy, warning-denied docs,
+minimal/disabled builds, WASM and formatting pass on final source. Main's combined
+extraction additionally passes 115 Hyperdynamics tests, 8 minimal-feature tests,
+strict Clippy, formatting and repository budget. Full pre-push/release/platform/
+sanitizer/fuzz qualification is not claimed.
+
+Three old-feature controls cover native evolution, trajectory Taylor steps and
+QR evolution. Allocated sections except build IDs and canonical function layouts
+match; raw metadata differences are recorded. Same-path fixed-feature controls
+do not establish arbitrary-platform or unified all-feature invariance.
+
+The maintained completed benchmark compares x'=x, x(0)=1, horizon 1/2 and endpoint
+width <= 1/512, with an independent rational bracket for exp(1/2). Original Picard
+uses 2,048 segments/4,096 attempts; Taylor uses two segments/two searches/four
+native attempts. A constant x'=2 flow uses two segments/four attempts in both
+methods and returns exact singleton one. Complete reports, all proofs and
+output destruction are measured; preparation is separate. Both use the same
+backend, not an external competitive solver. Three trials give these median
+microsecond ranges:
+
+| Workload | Minimum | Maximum |
+| --- | ---: | ---: |
+| constant/picard | 31.575 | 31.696 |
+| constant/prepare_taylor3 | 10.727 | 10.873 |
+| constant/taylor | 127.612 | 128.194 |
+| exponential/picard | 170734.985 | 172609.394 |
+| exponential/prepare_taylor3 | 21.634 | 21.669 |
+| exponential/taylor | 255.594 | 257.307 |
+
+The default scalar-size limit exhausts on the many-step Picard comparison; that
+failed probe is retained and excluded from completed timing claims. Both measured
+methods use precision -64, a 1,048,576-bit scalar stage limit and 10^14 native work
+units with default graph limits. This changes the benchmark envelope, not source,
+horizon, quality threshold or production defaults. The allocation observer's
+initial num-bigint 0.4.8 resolution mismatched the maintained 0.4.6 benchmark;
+original results and lock correction remain archived. Final observations use
+matching versions/features and operation bodies.
+
+Matched warm allocations are 493,194,344 versus 80,132 bytes for exponential
+Picard/Taylor and 10,740 versus 56,052 for constant flow. Retained/peak heap is
+123,685,072/123,732,912 versus 22,224/26,256 bytes for exponential flow; constant
+flow is 4,552/5,792 versus 18,160/21,408. Every complete warm construction/drop
+epoch returns to zero incremental live heap. Graph/native work and preparation
+costs are fully recorded, including exact dyadic growth in the compared Picard
+strategy. These are completed fixture results, not a universal speedup, optimality
+claim or zero cold-cache-growth guarantee.
+
+Aggregate stage-entry checks include nested search and accepted-index records,
+but are not whole retained-graph or peak-heap reservations. The last search is
+retained in a stopped report when the post-search aggregate check fails. Scalar
+payloads, exact arithmetic/refinement, predicate internals, vector capacity and
+within-scalar cancellation retain existing exclusions. Preexisting source and
+coefficient storage and stack are outside query heap epochs. Zero native
+preparation work excludes exact Real arithmetic; it is not zero computation.
+
+Alternate-index application and exact reversal recover the complete original
+pending tree. Exactly 41 extraction paths remain staged, SHA-256
+`9641b4df9a65e2fcd0c3c10c305a164c8f7d3e80c0a1b73ebf5711e299e69fe5`.
+Interface's eight edits and Firmware's clean state remain unchanged. All 29 prior
+frozen stages verify. Evidence `docs/evidence/2026-11-14-interval-taylor-evolution`
+at archive `4f9ed8b692ffd723f2f87fcddc57fca2c143fc1e` contains 265 files,
+1,205,425 bytes, SHA-256 `4c7461ffea9c22ad22dc4eb0768c2f031a0281d28c8eb73c4a0b1d80157e2786`.
+Committed blobs and parent diff scope verify; all previous registry rows are
+preserved. The new stage is frozen. No push occurred. Phase 11 cost failures,
+automatic order/frame control, remaining migrations/adoption, embedded
+qualification and coordinated release remain open under the full goal.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
