@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms, fixed exact state charts and one-step Picard transport retained after local qualification | adaptive ODE wrapping/QR, nonlinear model composition, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed exact state charts and one-step Picard transport retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4879,6 +4879,65 @@ Scoped archive verification and all ten prior immutable-stage checks pass.
 The design and its acceptance witness are archived for future qualified work;
 they are not retained production support. Phase 11 and the full fifteen-phase
 objective remain active, with all preceding obligations unchanged.
+
+## 2026-11-13: Retain source-bound nonlinear program composition
+
+Previous turn: progress, rejecting the provider-error dynamics experiment after
+reproduced timing regressions. Source commit
+`62b8676bcb41652d558a75743dccd0e980fe78a6` adds Hypersolve
+`ExpressionProgram::compose`: independently scoped outer bindings select inner
+outputs, preserving shared nodes, exact definitions and original operations.
+The executable returns every inner output before the composed outputs, so
+ignored inputs or an empty outer result cannot discard inner domain failures.
+Unreached source nodes remain unevaluated. Original sources, selections and node
+maps support diagnostics and fresh-process replay. Existing arithmetic kernels,
+predicate order, dependencies and compiler profiles are unchanged.
+
+Repeated composition, Jacobians and native Taylor projection consume the result.
+An independent logistic example certifies [0,1/4] with zero remainder where
+independent interval evaluation yields [0,1]. Construction uses a shared graph
+work/entry budget with typed shape, resource and cancellation failures; the
+existing scalar/payload/heap exclusions remain explicit. Taylor regularity still
+applies to all retained outputs. This is source composition followed by native
+proof construction; arithmetic on existing nonlinear remainder models, direct
+field output selection, adaptive wrapping/QR and wider adoption remain open.
+
+All final affected commands pass: 1,469 Hypersolve and 60 Hyperdynamics tests,
+strict all-target/all-feature Clippy, strict docs, WASM, feature-minimal and
+feature-disabled checks, and workspace formatting. Eight new acceptance tests
+cover exact chain-rule values, guards, sharing, empty/unit domains, budgets,
+cancellation/retry, zero construction dispatch, fresh-process replay and Taylor
+projection. Main repeats pass those eight tests and 12 downstream field tests.
+ASan/leak checking passes all eight; the standard-library sysroot is not
+instrumented. Memcheck could not initialize because loader debug symbols needed
+for strcmp redirection were absent. Original development compile failures and
+the corrected retries are preserved; no assertion was weakened.
+
+The actual 12-case owner benchmark completed baseline/candidate/candidate/
+baseline measurements at a fixed path/CPU with ASLR disabled. No case had
+separated slower candidate confidence intervals; degree-32 evaluation retains
+an adverse mean point ratio 1.00667835 with overlapping intervals. Initial
+method/module prototypes added 136 bytes and a constructor probe added 24;
+they were rejected. The retained ordinary-inline method matches the baseline
+6,836,472-byte executable, all section sizes and 3,167,734-byte function-address
+union. Machine-code bytes differ; byte equivalence is not claimed. A separately
+attributed allocation observer matches all 16 legacy result/allocation rows.
+New graphs grow linearly in the measured corpus; maximum construction temporary
+peak is 47,452 bytes, with zero live-byte delta after all measured successes and
+late exhaustion. These are local completed-workload observations, not universal
+performance or memory guarantees.
+
+Evidence commit `709ed26a99a8926b9d7f3f522f5b08cd5bdfc7bc`, record
+`docs/evidence/2026-11-13-interval-program-composition`: 309 files,
+19,057,276 bytes, SHA-256
+`c06f85cc6e98dfbe75aa6faa9941bac7476585c050e7bb242f358d669bfeaeb3`.
+Scoped archive verification and all eleven preceding immutable-stage checks
+pass. The main 41-path extraction and Interface eight-path pending patches are
+byte-identical; firmware remains clean and the isolated composition tree is
+clean at the retained source. Default CSGRS/Hyperpath graphs do not activate
+the changed optional module. No new root successive_operations, complete
+browser/firmware, release, full coverage/fuzz or pre-push qualification is
+claimed. No push occurred. Phase 13 and the full fifteen-phase goal remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
