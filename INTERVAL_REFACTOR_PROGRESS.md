@@ -50,7 +50,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
+| 9 firmware | production clock and Q30 arithmetic delegation retained after local exactness/cost qualification | wide servo migration, MCU cycles/stack/HIL and final firmware image size |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -5460,6 +5460,75 @@ remain unmeasured. No new root successive_operations, whole-application cost,
 full workflow, sanitizer or coverage campaign is claimed. No push occurred.
 The remaining firmware/FOC/servo migration, Phase 11 cost blocker, broader
 integration and coordinated release obligations remain open.
+
+## Production Q30 interval delegation (2026-11-13)
+
+Retained CSGRS `441c925b559005b81074f9fc45d9b47adb3298b4`, Firmware
+`953ed4b7e8059288abe5146cfd68400f0961587e`, and Interface
+`27086866147cb5db9fb22e6cccc4581a6fea5a02`. Hyperinterval owns exact fixed
+arithmetic and ordered result reconstruction; Q30Interval retains its domain
+wrapper, eight-byte layout, const surface and explicit Range/DivideByZero
+outcomes. Clarke retains wide differences through the shared product before
+one outward rounding and exact narrowing. Nominal point arithmetic and wide
+servo carriers are unchanged. The admission record identifies the affected
+properties, full integer endpoint/ratio domain and independent missing
+acceptance witnesses; private ordered reconstruction is justified per caller,
+while public reversed-endpoint validation remains checked.
+
+Qualification passed: Hyperinterval 216 all-feature tests/doctests, 39
+fixed/serde MSRV tests/doctests, strict Clippy, docs and formatting; Firmware
+168 tests on Rust 1.88 and 1.95 plus strict MSRV Clippy; seven maintained
+transform conformance tests per compiler including allocation/error cases;
+three scalar Q30 differential tests; fixed-only Hyperlattice tests/Clippy;
+86 Interface tests and actual-client locked native/WASM validation; and the
+Cortex-M clock/FOC build. All 9,488 full observer rows remain byte-identical
+across compilers and retained variants, including extreme endpoints, ratios,
+errors and composed transforms. Feature inspection confirms fixed-only FOC
+and integer-only clock without std, allocation, bigint or global state.
+Interface Clippy reproduces its two pre-existing large_enum_variant and
+nonminimal_bool findings; it is not reported as passing.
+
+Completed transform measurements use 24 alternating pairs per compiler,
+explicit warmup, pinned CPU, matching counts/checksums and zero timed
+allocations. Candidate/baseline median ratios for Clarke, Park, inverse Park,
+inverse Clarke and the composed chain are respectively 0.909, 0.824, 0.816,
+0.877 and 0.872 on Rust 1.88; 0.972, 0.863, 0.860, 0.938 and 0.895 on 1.95.
+Each seeded bootstrap 95% interval is below one. Host noise and frequency
+remain uncontrolled; these are scoped host results. Native text shrank
+235,644 to 235,180 bytes and 231,040 to 230,352 bytes; complete probe binaries
+were 369,928 to 369,928 and 372,944 to 372,360 bytes. Scoped emitted
+owner/consumer symbol unions shrank 6,949 to 6,508 and 6,515 to 5,841 bytes.
+The fixed primitive control preserved counts/checksums with improved sampled
+medians. Regressing intermediate candidates remain recorded as rejected.
+
+Wasmtime 50.0.1 independent integer replay passed 1,660 complete transforms
+and 405 range checks (335 success, 70 Range) on both artifacts, with the
+unchanged million-fuel per-call limit and no exhaustion. Maximum observed
+fuel fell 20,481 to 16,555 and WASM bytes 40,082 to 35,451. This is emulator
+evidence, not hardware qualification. MCU cycles, stack/register pressure,
+HIL and final firmware image remain unmeasured. No new root
+successive_operations, whole-application benchmark, complete workflow,
+sanitizer or coverage campaign is claimed.
+
+The Interface commit adds only two lockfile dependency entries required by
+clock/FOC. Its eight earlier pending edits remain unstaged: seven files match
+their saved bytes, and removing precisely the two task entries restores the
+original Cargo.lock bytes. The old patch hash is no longer an applicable
+preservation check because the lockfile base changed. All 41 staged CSGRS
+extraction paths retain binary-patch SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`.
+
+Evidence: `docs/evidence/2026-11-13-interval-q30-migration` at archive commit
+`e98298a3209f9d45c7ebd07e34d87c33679049ef`: 717 files, 112,804,931 bytes,
+manifest SHA-256
+`800a92fdd0ed0b06b13885c66947d589c9526e402e5e0674cbef5640e46d8f76`.
+Scoped archive verification passed; all 21 prior frozen stages matched their
+registered digests before archiving. STATUS.md, CONTRACT.md and REPRODUCE.md
+retain exact commands, source revisions, proof audit, raw timings, replay and
+limitations. The new stage is frozen. Source budget before this ledger update
+passed at 4,178 files / 143,206,836 bytes. No push occurred. Phase 9 hardware
+and wide servo obligations, Phase 11 retention costs and the full 15-phase
+goal remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
