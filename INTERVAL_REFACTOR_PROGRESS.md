@@ -7088,6 +7088,69 @@ qualification were not rerun after rejection. No phase completion, push or
 publication is claimed. Do not repeat these rejected transformations without a
 concrete change addressing the failed gates.
 
+## 2026-11-14 — Native rational curve interval ranges
+
+The optional `hypercurve/interval-ranges` consumer prepares the existing native
+rational Bézier source as a reusable Hypersolve expression/Jacobian program. It
+returns coordinate and local-parameter derivative enclosures with C1 evidence
+over a finite dyadic subdomain of the native unit interval. Native Aabb
+comparisons consume exact outward bounds while borrowing that evidence. Empty,
+invalid, denominator-noncertificate, exhausted and cancelled outcomes remain
+distinct. This extends evaluation and exclusion; it does not establish an exact
+hull, immersion, topology or general curve-operation closure.
+
+Source `c6c43e095b245e753b53237aa4eda3b9dc0737f8` passed 12 qualified commands,
+including 3261 full-release owner tests across 128 suite summaries, 12 focused
+witnesses in debug and optimized builds, strict Clippy/docs, the actual example,
+downstream work-budget tests, a WASM library check and a stable
+all-target/all-feature compile check. Eight packages were verified and an
+archive-only consumer built, ran and passed strict Clippy. Existing ignored
+tests are not completed coverage. Stable full tests and the full pre-push matrix
+were not rerun.
+
+The initial candidate populated a native basis cache and changed later
+high-degree point dispatch. Its differing traces and deliberately stopped owner
+run are preserved. The retained adapter borrows an existing basis or owns its
+conversion without filling that cache. Fresh-process witnesses preserve complete
+native traces, fixed counts and certified receipts under `STRICT` and
+`APPROXIMATE_512`. Existing native evaluator bodies and default dependencies are
+unchanged. Earlier test-fixture and rustdoc failures are retained; no count
+assertion was loosened.
+
+Measured portfolios include preparation, sixteen coordinate/derivative reports,
+bound projection, native comparisons, retained output and destruction. Common
+source construction is excluded and scalar caches are warm. Timing uses 30
+paired samples of 32 portfolios on one pinned CPU; unrelated host activity is
+uncontrolled. Allocation results use repository-locked dependencies and five
+identical observations. An earlier probe with four newer dependencies is
+preserved as superseded evidence.
+
+| Fixture | Shared speedup (paired geometric mean; 95% bootstrap) | Allocations independent → shared | Peak requested live bytes independent → shared |
+| --- | --- | --- | --- |
+| polynomial | 1.691×; 1.685–1.699 | 14864 → 8039 | 113936 → 22976 |
+| rational | 1.491×; 1.488–1.495 | 13002 → 8592 | 94280 → 20600 |
+| degree8 | 2.187×; 2.183–2.191 | 36324 → 12729 | 380112 → 47232 |
+
+Native arithmetic work is identical within each pair; structural graph work
+decreases. Requested bytes exclude allocator overhead and are not a total memory
+bound. Structural/dyadic budgets do not bound scalar refinement, coefficient
+growth, payload cloning or uninterrupted native basis conversion. These results
+compare shared and independent preparation of the new complete workload, not the
+speed of existing modeling operations.
+
+Evidence commit `ddc31825077d35ceab55a74e81fe2f1b4914b0dc`, record
+`docs/evidence/2026-11-14-interval-curve-ranges`: 219 files, 3,321,299 bytes,
+SHA-256 `ef013e80643dbc91e95c577f88290caf242fba96b1729aa81df18e3817a220a5`. All
+43 earlier frozen stages verified unchanged. `STATUS.md`, `CAPABILITIES.json`
+and `REPRODUCE.md` delimit the demonstrated contract. Integration preserves the
+41 staged extraction paths by exact reversal and pending-content comparison;
+Interface changes and firmware remain unchanged.
+
+General monotonicity, interval Newton/Krawczyk integration, certified native
+subdivision scheduling, normal-parallel/implicit/surface adapters and wider
+Phase 13 adoption remain open, along with other unresolved plan gates. No phase
+completion, push or publication is claimed.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
