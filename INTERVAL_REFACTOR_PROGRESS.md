@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | higher-utility automatic frame strategies, independent-noise/sensitivity retention, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries, retained after local qualification | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -6917,6 +6917,62 @@ extraction. Hosted GitHub Actions, runtime example mains, sanitizer campaigns,
 coverage instrumentation, other OS targets, full pre-push checks and wider plan
 gates remain open. No timing improvement, phase completion, push or publication
 is claimed.
+
+## 2026-11-14 — Sensitivity-retained Taylor noise queries
+
+Source `2de9c0ae569a5e40fe97d8e4d179406834c677d3` adds opt-in Hypersolve
+`taylor-noise` and its Hyperdynamics field consumer. Certified contribution-width
+ranking selects shared monomial columns with canonical ties and caller capacity.
+Exact source definitions and coefficient associations remain authoritative.
+Every omitted monomial is accounted in explicit per-output residual bounds;
+original Taylor residual coordinates keep their exact affine weights through
+queries. This closes a static field-image query subtask of Phase 13/plan 10.7,
+not independent-noise propagation through ODE steps or global sensitivity.
+
+The missing API was reproduced before implementation. Review then found a real
+residual-correlation regression: subtracting duplicated original residuals did
+not cancel. Its failing test and old source are preserved; separating original
+residual coordinates from omitted-monomial boxes restores that identity. Initial
+broad runs were deliberately interrupted with SIGTERM/143 and do not count as
+acceptance. Final capacity tests also retain a deliberate widening case:
+`[9,23]` at one column versus `[15,17]` at two. The exact source remains shared;
+independent enclosure parameters do not assert exact function/image equality.
+
+Rust 1.95.0 and stable 1.99.0 each passed all eight qualification commands:
+1,637 combined all-feature owner/consumer tests in 77 suites, doctests, strict
+all-target Clippy, warnings-denied docs, minimal new-feature compilation, actual
+field example, ten release owner tests and one release field consumer test.
+Seven clean packages verified, and a consumer built, ran and passed strict Clippy
+using their unpacked archives. Three fresh processes rebuilt matching noise
+proof outputs from source definitions/requests/maps/capacity; four invalid
+source/map/query controls failed without successful output, including a forged
+certification flag. Existing executable bodies and feature/dependency definitions
+are unchanged. Main formatting, budget and focused owner/consumer tests pass.
+
+The completed shared-quadratic observation fixture checks identical exact
+`[-n,n]` bounds for every query. Thirty-sample Criterion mean 95% intervals for
+16 observations are 515.706–516.324 microseconds using full affine construction,
+94.512–94.668 including noise preparation, and 74.407–74.476 with prepared noise.
+Original Taylor/affine source construction is excluded equally; output checking
+and destruction are included. "Cold" includes noise construction, not cold
+scalar caches. The separate repeated probe reports allocation calls/traffic of
+5392/115840 bytes, 1141/18040 bytes, and 976/14336 bytes respectively. Six timing
+rows, raw samples, exact work counts and probe sources are archived. Additional
+noise buffers retain the original shared source; no retained-memory/binary
+reduction or universal speedup is claimed. Whole-resource bounds, ODE noise
+propagation, global sensitivity, cross-order sharing and wider competitive
+portfolio qualification remain open.
+
+Evidence commit `6dde2edd0375940bf45af997a8aeace3cf49b994`, record
+`docs/evidence/2026-11-14-interval-taylor-noise`: 166 files, 1,971,643 bytes,
+SHA-256 `e2ac8632134dcf9fa5043a2cdd7e73d73b39b8d9418408101ab4aa6230aeddae`.
+`STATUS.md`, `DESIGN.md`, `QUALIFICATION.json` and `REPRODUCE.md` document the
+proof, limits, adverse evidence and commands. All 40 previous frozen stages
+verify unchanged. Integration preserved every line of the 41-path pending
+extraction and proved exact reversal to the prior index tree; its patch digest
+changed only because blob IDs and hunk metadata changed. Interface's eight
+pending files and firmware are unchanged. The extraction remains unaccepted.
+No phase completion, full pre-push qualification, push or publication is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
