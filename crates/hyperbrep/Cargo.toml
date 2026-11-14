@@ -37,6 +37,11 @@ name = "surface_ranges"
 required-features = ["interval-ranges"]
 
 [[bench]]
+name = "surface_ranges"
+harness = false
+required-features = ["interval-ranges"]
+
+[[bench]]
 name = "kernel"
 harness = false
 
