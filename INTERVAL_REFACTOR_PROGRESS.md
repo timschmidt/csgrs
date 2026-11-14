@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE step/order and wrapping/QR control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps, direct exact chart transport, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE step/order and frame/QR wrapping control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5910,6 +5910,86 @@ archive parent-tree scope verify; every older registry row is preserved. This
 stage is frozen. No push or full pre-push workflow campaign occurred. Phase 11
 cost failures, remaining Phase 7–13 work, embedded qualification and Phase 14
 release obligations remain open under the unchanged full fifteen-phase goal.
+
+## Retain direct exact chart transport (2026-11-14)
+
+Phase 13 gains opt-in `coordinate-transition`, retained at
+`86dbb4dd80d3997a5ca566a52c8e0c5cdff6ccaa`. Hypersolve owns the source-bound
+relation between two validated charts; Hyperdynamics preserves their time/state
+meaning and transports native boxes. For x=c0+A0*y=c1+A1*z, preparation forms
+z=B1*A0*y+B1*(c0-c1) with the existing exact product-sum authority before any
+interval projection. Both original source associations, strict inverse proofs,
+exact coefficients and executable are retained. Independent structural source
+reconstructions are admitted; foreign sources, variable orders and field
+interpretations are rejected. This is a prerequisite for changing frames during
+wrapping control; automatic frame selection and QR reduction remain open.
+
+The transport proof owns its original input and exact map beside the Cartesian
+outer enclosure. That enclosure is a sound enlarged initial set for the next
+operation, not equality of the correlated image or an ODE existence claim.
+Existing graph/native budgets apply with scalar payload/refinement/predicate,
+whole-heap and within-scalar cancellation exclusions. Final checks precede
+publication; no serialized proof flag is trusted. Empty and zero-dimensional
+unit sets remain distinct. No old arithmetic or predicate sequence changes.
+
+The missing-method witness fails on the baseline. Five core and seven field
+fixtures then establish independent exact coefficient/point and width expectations,
+algebraic scaling/translation, reconstruction and source rejection, empty/unit,
+final work/native cutoffs, cancellation/retry, fresh-process full proof/work replay,
+zero getter dispatch, and generated Picard/Taylor endpoints transported into a
+changed chart and consumed by another step. Draft ownership/trace-test compile
+errors and the corrected observer feature mismatch remain in the archive.
+
+The isolated final revision passes 1,569 top-level tests in 71 test/doc groups,
+with zero failures, ignored or filtered top-level tests. An existing replay child
+runs one selected test separately; its parent runs all seven, and the child is
+not double-counted. Strict all-feature/all-target Clippy, warning-denied docs,
+minimal/disabled builds, WASM and formatting pass. Main's combined extraction
+state additionally passes 97 Hyperdynamics tests, the five core transition tests,
+the standalone minimal core feature, strict Hyperdynamics Clippy, formatting and
+repository budget. Full pre-push/release/sanitizer/fuzz qualification is not claimed.
+
+The old native consumer is byte-identical. The old Taylor-model, affine-model and
+coordinate-evolution consumers have identical allocated sections except build IDs
+and identical canonical function layouts. Their raw file deltas are 0, 0 and
+-32 bytes respectively, confined to nonallocated symbol/string metadata. These
+same-path, fixed-feature controls do not establish arbitrary-platform or unified
+all-feature cost invariance; no old-path timing improvement is claimed.
+
+Three maintained-benchmark trials each complete six transport workloads on CPU 0,
+with ASLR disabled, one-second warmup, two-second measurement and 30 samples.
+Exact charts and relations already exist before timing; every query materializes
+and drops all transport proofs. Both strategies enclose the same exact affine
+image, with independent expected bounds. The two-projection strategy uses the
+same backend through a Cartesian source box; this is not an external solver
+comparison or a claim that both output boxes are equal.
+
+| Case | Direct median microseconds | Roundtrip median microseconds | Direct / roundtrip first-coordinate width |
+| --- | ---: | ---: | ---: |
+| Identity | 4.565–4.606 | 12.552–12.945 | 0 / 0 |
+| Same shear | 4.521–4.594 | 13.986–14.351 | 0 / 512 |
+| Changed shear | 6.204–6.352 | 13.749–13.990 | 128 / 384 |
+
+Direct queries allocate 2,408/2,408/2,720 bytes versus 5,288/5,544/5,544 for the
+round trip. Warm retained/peak heap and native work observations are explicit in
+the archive; every construction/drop epoch returns to zero incremental live
+bytes. Preparation separately allocates 3,432 bytes, retains 1,768 and peaks at
+2,016 on each fixture. Preexisting source/chart/relation storage and stack values
+are outside query heap epochs. These observations do not establish zero cold-cache
+growth, a total heap/work bound, a universal width/cost improvement or an ODE
+speedup. Observer operation bodies and core dependency versions/features agree
+with the maintained benchmark; preparation is a separate measured supplement.
+
+An alternate-index integration and exact reversal recover the complete original
+pending tree. Exactly 41 extraction paths remain staged, SHA-256
+`408c1215508fab22167f00f39d0829b8e006df5e4bfef72fea32062137134c5f`.
+Interface's eight edits and Firmware's clean state remain unchanged. All 27 prior
+frozen stages verify. Evidence `docs/evidence/2026-11-14-interval-coordinate-transition` at archive `ae8c65e44ced85227bd30461480d997b80ca7c70` contains 279
+files, 1,172,257 bytes, SHA-256 `f2816c1d74198341387eb3e311446d6c07ffd3d04a421dacb1bca5c95156029b`; its committed blobs and parent diff scope
+verify and every older registry row is preserved. The new stage is frozen.
+No push occurred. Phase 11 cost failures, adaptive frame/QR and other remaining
+Phase 7–13 work, embedded qualification and Phase 14 release obligations remain
+open under the unchanged full fifteen-phase goal.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
