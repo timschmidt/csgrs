@@ -50,7 +50,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | production clock and Q30 arithmetic delegation retained after local exactness/cost qualification | wide servo migration, MCU cycles/stack/HIL and final firmware image size |
+| 9 firmware | production clock, Q30 and servo interval delegation retained after local exactness/cost qualification | MCU cycles/stack/HIL, final firmware image and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -5529,6 +5529,67 @@ limitations. The new stage is frozen. Source budget before this ledger update
 passed at 4,178 files / 143,206,836 bytes. No push occurred. Phase 9 hardware
 and wide servo obligations, Phase 11 retention costs and the full 15-phase
 goal remain open.
+
+## Servo interval delegation and shared midpoint kernel (2026-11-14)
+
+Retained CSGRS `b30763aa5a4bf5895f62462cb900eb3730e0f49b` and Firmware
+`558df6d6ebf4dbca5377abf64b775c9e072aa013`. Fixed and integer intervals share
+exact unsigned-distance midpoint arithmetic, with explicit rounding and
+proved representable sums. Fixed widths retain the full unsigned distance.
+Servo position intervals delegate midpoint/width while keeping const ingress,
+endpoint methods and layout. Q30 velocity errors widen before shared i64
+subtraction. Position errors retain their required i128 endpoints and exact
+full-width differences. No control policy, fault order or protocol changed.
+
+The missing full-range acceptance witnesses were added and passed on the
+baseline before migration. Final qualification passed 219 core tests/doctests,
+56 MSRV fixed/integer/serde tests/doctests plus the later integer-midpoint test,
+171 firmware/clock/simulator tests, 28 fixed-only Hyperlattice tests, seven FOC
+conformance tests, 86 Interface client tests, locked Interface WASM validation,
+and Cortex-M clock/FOC checks. Core tests cover all 96 valid fixed scales,
+all three rounding modes, empty/replayed outputs and all 12 primitive integer
+families. Zero scalar dispatch/reduction counts remain asserted. Strict core
+and firmware Clippy, core docs and affected formatting pass. The committed
+production paths repeat the core 219 and firmware 171 tests and Clippy.
+Interface Clippy reproduces its two existing findings and is not passing.
+
+Complete observers match: 5,366 servo rows per compiler (Rust 1.88/1.95),
+9,488 FOC rows and the maintained clock corpus. Successful reports, errors,
+fault-latched states and allocation reports are preserved. Independent WASM
+FOC replay completes 1,660 transforms and 405 range cases with unchanged fuel
+and size. Independent position replay completes 2,090 midpoint/width calls;
+max fuel falls 206 to 21 and probe size 5,233 to 3,495 bytes, without changing
+the 10,000-fuel limit or exhausting it.
+
+With identical release profiles, completed counts/checksums, zero timed
+allocation, warmup and alternating CPU-0 runs, accessor/successful-service/
+fault-latched-service median ratios are 0.9705/0.9909/0.9727 on 1.88 (12 pairs)
+and 0.9826/0.9941/0.9724 on 1.95 (24 pairs). Servo text shrinks 247,148 to
+247,116 and 244,590 to 244,462 bytes; binaries stay 389,560 and shrink 395,400
+to 395,272. Clock has no resolved timing change: ratio 0.9994, bootstrap95
+[0.9975,1.0012], with smaller text and unchanged binary. FOC chain ratio is
+0.9836, bootstrap95 [0.98349,0.98364], with smaller text/binary. These scoped
+host/emulator measurements do not establish MCU cycle, stack or HIL behavior.
+Regressing intermediate candidates and initial build/test corrections remain
+recorded separately from the retained artifacts.
+
+The captured normal and successive_operations CSGRS dependency graphs exclude
+Hyperinterval, so these arithmetic edits do not enter that benchmark binary.
+No fresh whole-geometry benchmark, full workflow, coverage or sanitizer campaign
+is claimed. Hardware cycles, stack/register pressure, HIL and final firmware
+image remain open. The full 15-phase goal, Phase 11 retention costs and other
+integration/release obligations remain active. No push occurred.
+
+Evidence record `docs/evidence/2026-11-14-interval-servo-migration`, archive
+`f379647b6ee0bb1986ead5ea013eec020d2cd922`: 565 files, 6,089,833 bytes,
+SHA-256 `573481101d2a17940669399dc69b0cc56d75f808f85a7c32bfed568610fb9b6f`.
+Scoped archive verification passed. All 22 prior frozen stages match their
+registered digests. The 41 staged extraction paths retain patch SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface HEAD and its eight pending edits are unchanged. Source budget before
+this ledger update: 4,180 files / 143,218,006 bytes. STATUS.md, CONTRACT.md,
+REPRODUCE.md, source patches, exact observers, raw timings and artifacts retain
+the qualification scope and limitations. The new evidence stage is frozen.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
