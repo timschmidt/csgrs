@@ -213,7 +213,7 @@ impl PreparedRationalBezierRanges {
     pub fn program(&self) -> &JacobianProgram {
         &self.jacobian
     }
-    /// Enclose coordinates and local tangents on a dyadic subset of [0,1].
+    /// Enclose coordinates and local tangents on a dyadic subset of `[0,1]`.
     ///
     /// Precision selects an enclosure grid, not a final-width guarantee. All
     /// nested graph/native work shares these budgets. Exact scalar refinement
