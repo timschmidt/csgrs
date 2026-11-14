@@ -7246,3 +7246,86 @@ Before any edit:
 - never reset, clean, delete, reformat, or rewrite unrelated files;
 - attribute only agent-owned changes to this project.
 
+
+## 2026-11-14 — Native tensor surface interval ranges
+
+The optional hyperbrep/interval-ranges consumer retains admitted positive-weight
+native rational Bezier tensor surfaces and their UV domains while preparing a
+shared Hypersolve coordinate/Jacobian program. It certifies three coordinate and
+six local partial enclosures and feeds exact outward Aabb bounds into native
+spatial exclusion. Generated algebraic subdivisions, affine/reflected sources,
+reconstruction and fresh native replay feed later queries. C1 evidence does not
+establish rank, injectivity, trimmed-face membership, topology or general
+surface operation closure.
+
+Implementation source `014a082252da83d8d5d566253bcb598c7a456df3` passed ten
+qualification commands, including full Rust 1.95 owner and downstream release
+tests/doctests. Their explicit harness summaries report 2399 passes across 147
+summaries and 127 across 28, with no failures or ignored reports. These counts
+are not a unique coverage denominator. Expanded acceptance adds 52 focused
+passes. Strict all-feature/all-target Clippy, strict docs, disabled-feature
+checks, the actual example, WASM library and stable all-target checks pass.
+Stable full runtime and full pre-push workflows were not rerun.
+
+Documentation metadata source `d625de5b8e93dcb34e481a99253b1bb3cdd77592` changes
+no Rust source, workload, runtime dependency or default feature. Nine archives
+verify; an archive-only unchanged native example builds/runs/passes strict
+Clippy. The same archived example at the implementation revision completes three
+sixteen-cell portfolios through a zero-import/default-stack debug WASM test
+export. Packaged all-feature documentation and five rendered API pages pass
+locally. Hosted docs.rs and public JS binding support are not claimed. Final
+documentation source `8a9180461b63398d92906af4a30f5f99976d2dbf` passes affected
+format, repository-budget, strict lint/docs and integrated-main private/example
+checks.
+
+Existing native evaluator bodies and default dependencies remain unchanged.
+Preparation preserves the native homogeneous-control cache but can warm shared
+exact scalar facts: the new complete lifecycle snapshots pin actual cold/warm
+success, post-conversion exhaustion and cancellation behavior under both
+policies. No old trace assertion is changed. The original mistaken
+cold-transparency fixture remains in evidence. Whole expanded algebraic scalar
+equality can remain undecided; an independent per-node exact quadratic oracle
+verifies the maintained generated outputs without changing production
+normalization. Original failed assertions, Cargo CLI and archive-comparison
+premises remain visible.
+
+Measurements compare two uses of the new API over three complete sixteen-cell
+portfolios, including preparation, all coordinate/partial and source/domain
+evidence, native exclusion, output retention and destruction. Warm runs use two
+discarded samples and thirty alternating pairs of sixteen portfolios. Cold runs
+use thirty fresh-process alternating pairs of one portfolio; source construction
+and the oracle between timed query/destruction spans are excluded. CPU 8 is
+pinned and no compiler/test workers run during timing; other host activity is
+not controlled. These are finite same-API results, not old-kernel nonregression
+or universal speedups.
+
+| Fixture | Warm shared speedup (95% bootstrap) | Cold shared speedup (95% bootstrap) | Allocation calls independent → shared | Peak requested live bytes independent → shared |
+| --- | --- | --- | --- | --- |
+| polynomial | 1.720×; 1.710–1.727 | 1.815×; 1.786–1.848 | 35998 → 19213 | 229784 → 50384 |
+| rational | 1.653×; 1.652–1.654 | 1.712×; 1.700–1.723 | 37828 → 21043 | 229392 → 49992 |
+| degree8x3 | 3.297×; 3.296–3.299 | 3.298×; 3.277–3.316 | 208702 → 43552 | 1576616 → 183776 |
+
+Five warmed allocation observations per row are identical and return tracked
+live storage to zero after output destruction. Cold runs retain 888 bytes for
+polynomial and 584 for rational sources after source/output destruction. Degree
+8×3 retains 20032 bytes independently and initially 15632 with sharing; a
+separate 32-query diagnostic reaches 20032 by its fourth shared query and then
+plateaus. This is consistent with existing small-rational caches, not precise
+attribution, leak freedom or a uniform bound. Requested payload excludes
+allocator overhead/RSS. Structural graph and dyadic budgets do not bound total
+scalar CPU, coefficient growth, heap or interrupt native conversion.
+
+Evidence commit `1ae464092041d0de2667cf17a9cec05b09b1486e`, record
+`docs/evidence/2026-11-14-interval-surface-ranges`: 338 files, 7,919,430 bytes,
+SHA-256 `eaf0e44271d600f7453bc02088f27cf02e5d18665636a1659bfcc0bdd82c87c1`. All
+44 earlier frozen stages verify unchanged. STATUS.md, CAPABILITIES.json and
+REPRODUCE.md delimit the contract. Integration proves exact index reversal and
+identical pending content apart from blob/hunk metadata, preserving all 41
+staged extraction paths. Interface's eight pending edits, firmware and prior
+evidence remain unchanged.
+
+Other surface-family adapters, native automatic subdivision/monotonicity and
+interval Newton integration, wider wrapping/adoption, unresolved migration
+costs, embedded/HIL and coordinated release remain open. No phase or full-goal
+completion, push or publication is claimed.
+
