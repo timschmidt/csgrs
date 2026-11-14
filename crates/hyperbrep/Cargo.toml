@@ -10,6 +10,9 @@ readme = "README.md"
 keywords = ["brep", "cad", "geometry", "exact", "topology"]
 categories = ["mathematics", "graphics", "data-structures"]
 
+[package.metadata.docs.rs]
+all-features = true
+
 [features]
 default = []
 tessellation = ["dep:hypertri"]
