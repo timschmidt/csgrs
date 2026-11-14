@@ -55,6 +55,12 @@ optional path; existing queries remain available. Graph and
 native arithmetic budgets are caller-owned; scalar refinement/payload and heap
 exclusions remain explicit.
 
+`SdfProgram::subdivide` builds a bounded adaptive closed cover using native exact
+box bisection. It retains parent/child enclosures and explicit unresolved leaves
+at the requested depth or at singleton cells. Capacity, arithmetic, domain and
+cancellation failures return errors without a partial cover. Adjacent children
+share a closed facet; a cover is not a surface mesh or a disjoint-volume model.
+
 ## Quick start
 
 This example intersects a sphere with a slab, offsets the result, and performs

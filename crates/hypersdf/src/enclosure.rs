@@ -25,6 +25,15 @@ pub enum SdfProgramError {
     Taylor(TaylorError),
     /// Original strict primitive-parameter domain or undecided diagnostic.
     Source(SdfEvaluationError),
+    /// Original exact box-selection, bisection or arithmetic diagnostic.
+    Lattice(hyperlattice::IntervalLatticeError),
+    /// The requested retained-tree capacity cannot admit the next records.
+    SubdivisionCapacity {
+        /// Configured maximum number of tree records.
+        limit: usize,
+        /// Total records required for the next complete split.
+        required: usize,
+    },
 }
 impl fmt::Display for SdfProgramError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -37,13 +46,19 @@ impl std::error::Error for SdfProgramError {
             Self::Source(e) => Some(e),
             Self::Expression(e) => Some(e),
             Self::Taylor(e) => Some(e),
-            Self::Unsupported(_) => None,
+            Self::Lattice(e) => Some(e),
+            Self::Unsupported(_) | Self::SubdivisionCapacity { .. } => None,
         }
     }
 }
 impl From<SdfEvaluationError> for SdfProgramError {
     fn from(e: SdfEvaluationError) -> Self {
         Self::Source(e)
+    }
+}
+impl From<hyperlattice::IntervalLatticeError> for SdfProgramError {
+    fn from(e: hyperlattice::IntervalLatticeError) -> Self {
+        Self::Lattice(e)
     }
 }
 impl From<ExpressionError> for SdfProgramError {
@@ -416,3 +431,7 @@ fn compile(
 }
 
 mod primitive;
+mod subdivision;
+pub use subdivision::{
+    SdfSubdivision, SdfSubdivisionCell, SdfSubdivisionOptions, SdfUnresolvedCell,
+};

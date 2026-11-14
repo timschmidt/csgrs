@@ -39,6 +39,6 @@ harness = false
 
 [features]
 default = []
-enclosure-program = ["dep:hypersolve", "dep:hyperinterval"]
+enclosure-program = ["dep:hypersolve", "dep:hyperinterval", "hyperlattice/interval-dyadic"]
 dispatch-trace = ["hyperlimit/dispatch-trace", "hyperreal/dispatch-trace"]
 hypervoxel-adapter = ["dep:hypervoxel"]

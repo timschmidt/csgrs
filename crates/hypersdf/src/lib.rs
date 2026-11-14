@@ -1293,4 +1293,7 @@ mod tests {
 #[cfg(feature = "enclosure-program")]
 pub mod enclosure;
 #[cfg(feature = "enclosure-program")]
-pub use enclosure::{SdfCellEnclosure, SdfProgram, SdfProgramError};
+pub use enclosure::{
+    SdfCellEnclosure, SdfProgram, SdfProgramError, SdfSubdivision, SdfSubdivisionCell,
+    SdfSubdivisionOptions, SdfUnresolvedCell,
+};

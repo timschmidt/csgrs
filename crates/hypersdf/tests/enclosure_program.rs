@@ -446,3 +446,6 @@ mod uncertainty;
 
 #[path = "support/enclosure_affine.rs"]
 mod affine_acceptance;
+
+#[path = "support/enclosure_subdivision.rs"]
+mod subdivision_acceptance;

@@ -16,6 +16,11 @@ Initial release.
   preserves source qualification, parameter guards and native Taylor composition.
   Nested frames retain shared graph coordinates without expanding source trees.
 
+- Adaptive source-bound cell covers reuse native exact box bisection, preserve
+  every parent/child enclosure, and expose depth-limited or singleton unresolved
+  leaves. Shared work limits, separate tree capacity and typed failure prevent
+  a partial traversal from being published as a complete cover.
+
 Hypersdf provides signed-distance and implicit-field expressions for the
 Hyper geometry stack. It retains expression structure and exact parameters so
 that inside, boundary, and outside questions are answered from the field
