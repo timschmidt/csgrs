@@ -26,6 +26,37 @@ scaling preserves native causes as `FabricationPackageError::Construction`;
 failed transforms cannot become empty manufacturing images. This error enum
 now implements `PartialEq` without `Eq` for the same reason.
 
+## Circuit residual enclosures
+
+The opt-in `interval-residuals` feature adds `residual::CircuitResidualProgram`.
+It associates a validated Hypersolve expression source with ordered net-voltage,
+branch-current and component-parameter inputs, retaining nominal values, units,
+provenance and equation labels. Input domains are native dyadic Cartesian products;
+repeated parameter occurrences share a symbol. Express correlated tolerances through
+shared latent inputs instead of declaring independent lanes.
+
+`LinearMnaSystem::residual_program` snapshots its exact matrix/RHS and unknown order
+into that same carrier. Existing point replay and solve methods are unchanged.
+`enclose` retains the circuit association and Hypersolve's full-domain regularity,
+residual and derivative evidence. Its Jacobian includes every input, so parameter
+columns expose sensitivities. The evidence's `matrix` projection feeds existing
+Hyperlattice operations. Hypersolve and Hyperinterval remain the numerical authority.
+
+`Excluded` proves that one residual cannot vanish anywhere in the input product.
+`NotExcluded` proves neither existence nor uniqueness of a circuit operating point.
+`Empty` denotes an empty product; it is separate from invalid input, insufficient
+regularity evidence, arithmetic/resource failure and cancellation. Domain guards
+use sufficient enclosures and can reject a mathematically valid dependent expression.
+The expression grammar is Hypersolve's existing grammar; this feature does not add
+an exponential node, automatic device lowering, or a nonlinear/DAE root solver.
+
+Graph work/structural entry limits and native arithmetic budgets are explicit and
+shared through each operation. Precision is grid spacing, not a final-width bound.
+Scalar payload/refinement, metadata strings, total heap bytes and cancellation
+within scalar/native operations are not wholly bounded by these budgets. Definitions,
+ordered metadata and domains must be replayed through validated constructors;
+serialized proof flags and cached derivatives do not establish a certificate.
+
 ## What HyperCircuit is for
 
 A circuit design has several related representations:

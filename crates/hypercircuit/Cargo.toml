@@ -19,6 +19,7 @@ all-features = true
 [features]
 default = []
 behavior-async = []
+interval-residuals = ["hypersolve/interval-lattice", "dep:hyperinterval"]
 dispatch-trace = ["hyperreal/dispatch-trace"]
 layout = [
     "dep:hypercurve",
@@ -48,6 +49,7 @@ interchange = [
 lceda = ["interchange"]
 
 [dependencies]
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["dyadic"], optional = true }
 hyperreal = { version = "0.14.0", path = "../hyperreal" }
 hypersolve = { version = "0.4.0", path = "../hypersolve" }
 semver = { version = "1.0.28", features = ["serde"] }
@@ -204,3 +206,8 @@ required-features = ["drc"]
 
 [[example]]
 name = "diode_transient"
+
+[[bench]]
+name = "interval_residuals"
+harness = false
+required-features = ["interval-residuals"]

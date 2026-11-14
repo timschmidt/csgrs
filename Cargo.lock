@@ -2507,6 +2507,7 @@ dependencies = [
  "csgrs",
  "hypercurve",
  "hyperdrc",
+ "hyperinterval",
  "hyperlattice",
  "hyperlimit",
  "hyperpath",

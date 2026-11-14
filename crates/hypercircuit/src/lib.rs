@@ -79,6 +79,8 @@ pub mod project;
 pub mod project_manifest;
 #[cfg(feature = "interchange")]
 pub mod release_artifact;
+#[cfg(feature = "interval-residuals")]
+pub mod residual;
 #[cfg(feature = "layout")]
 pub mod route_constraints;
 #[cfg(feature = "layout")]

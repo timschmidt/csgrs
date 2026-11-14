@@ -22,6 +22,12 @@
 
 ### Added
 
+- Opt-in `interval-residuals` retains circuit input identity, component-parameter
+  provenance and equation labels with Hypersolve full-domain residual/Jacobian
+  enclosures. `LinearMnaSystem::residual_program` snapshots existing exact MNA
+  equations into the same carrier. Root exclusion is distinct from unresolved
+  zero-containing ranges and empty input domains.
+
 - `BoardBoundaryGeometry` adds outcome methods for point classification, inset,
   disc, segment and axis-aligned box queries. They retain the complete query's
   Hypercurve certainty receipt; existing methods keep their signatures.
