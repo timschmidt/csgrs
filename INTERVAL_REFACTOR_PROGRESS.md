@@ -51,7 +51,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | FOC conformance client qualified; production migration not started | fixed transform performance/size regression, clock migration, HIL/cycles/stack/size |
-| 10 predicate filters | not started | proof/cost/trace admission |
+| 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
@@ -5248,6 +5248,64 @@ Interface's eight pending edits are unchanged, and firmware/isolated source are
 clean. No push, full workflow, root successive_operations, browser/firmware/
 hardware, full fuzz/coverage or release campaign occurred. Wider adoption,
 wrapping/QR and the full fifteen-phase goal remain open.
+
+## 2026-11-13: Predicate filter admission frontier and rejected placements
+
+Previous turn: progress, correcting affine SDF bounds. Phase 10 review on
+`db6cab1e7` confirms existing certified primitive, exact-word and rational
+orientation filters before the general resolver. The plan requires profiling
+before extending that cascade. Nine independent rational, algebraic and
+transcendental controls now establish an initial admission frontier, including
+2^-100 near-degeneracy, exact cancellation, generated translations and collinearity.
+
+An unconditional native dyadic coordinate filter helps separated e/pi points
+but penalizes cheap and structural cases: initial strict retained-input ratios
+at spacing 2^-16 range from 0.54 to 47.28. A second implemented experiment adds
+a native two-term difference only after the existing signed-term callback
+fails, preserving the resolver order. Its missing trace is reproduced before
+implementation, and its full owner suite passes. Nevertheless, matched strict
+retained/rebuilt ratios are 1.2376/1.2435 for separated e/pi points and
+1.2240/1.1337 near degeneracy, with separated adverse batch ranges. Both
+placements are rejected. Neither runtime code nor a new dependency is retained.
+
+Only strict positive/negative enclosure exclusion could decide in either
+experiment. Zero contact, unavailable enclosures and actual local budget failures
+preserve fallback. Ordinary float proposals never decide. Native work/size
+accounting excludes Hyperreal refinement; no total-work guarantee is invented.
+The late-stage experiment changes the separated case's receipt from Exact/Refined
+to Filtered/Filter under both policies; those observed differences are archived,
+not presented as behavior-preserving equivalence.
+
+Source `6c0819c52bf7949ecd3b464ecdb220c04f15f5d9` retains only the regression
+corpus: exact result/receipt equality under both policies, 36 generated-translation
+and reversal checks, admitted path/structural/refinement/terminal trace counts,
+and fresh-process reconstruction. Earlier assertions remain intact. Qualification
+passes 381 owner tests plus one replay child, 366 no-default tests plus one replay
+child, strict all-target/all-feature Clippy, strict rustdoc, WASM, formatting and
+diff checks. Main owner acceptance, formatting and indexed budget checks pass.
+
+The matched probe uses CBBC order, CPU 0, disabled ASLR, one executable path,
+recorded warmup frequency, separate tracing and five batches of 32 complete
+outcomes per mode/policy. Rebuilt mode includes fixture construction; retained
+mode excludes it. Neither is called cache-empty. All raw samples, adverse rows,
+prototype source, failure witness and build artifacts' hashes are retained.
+The initial coordinate run is exploratory, not a matched speedup claim. The
+baseline external lock reconstruction is labeled explicitly. No production
+performance or shipped-size improvement is claimed for this test-only retention.
+
+Evidence commit `ae704229b3963f9ad1f6f123e88ecbb1593f6820`, record
+`docs/evidence/2026-11-13-interval-predicate-filters`: 76 files,
+788,273 bytes, SHA-256
+`9dd0dc428ae231b2a2fd178767da44ba2d7ce9aba7dcec89c0ea70a59ebf87aa`. Scoped archive
+verification and all seventeen preceding immutable-stage checks pass. The
+41-path staged extraction retains SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending paths are unchanged, and firmware/isolated source are
+clean. No push occurred. Representative Hypertri/Hypercurve/Hypersolve/Hypermesh
+qualification for a retained filter, broader predicate families, release and
+all other open plan obligations remain. No new full workflow, sanitizer,
+fuzz/coverage, root successive_operations or hardware campaign is claimed.
+Phase 10 and the full fifteen-phase goal remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
