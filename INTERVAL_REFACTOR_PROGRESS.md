@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed exact state charts and one-step Picard transport retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -4938,6 +4938,70 @@ clean at the retained source. Default CSGRS/Hyperpath graphs do not activate
 the changed optional module. No new root successive_operations, complete
 browser/firmware, release, full coverage/fuzz or pre-push qualification is
 claimed. No push occurred. Phase 13 and the full fifteen-phase goal remain active.
+
+## 2026-11-13: Adopt native whole-cell enclosures in Hypersdf
+
+Previous turn: progress, retaining source-bound program composition. Source
+`61e9c55642c6b538a3e7bab87ef41d59d2274b25` adds optional `enclosure-program`
+to Hypersdf. `SdfProgram` retains the original field and translates its smooth
+scalar expressions and translations into Hypersolve's existing evaluator and
+Taylor proofs. No arithmetic kernel or default query body is replaced. Whole-cell
+sign reports retain the original distance qualification; zero-containing ranges
+remain unresolved, and empty cells differ from identically zero fields.
+Primitive, piecewise and affine lowering remain explicit unsupported gaps on
+this new route, with their existing APIs retained.
+
+The missing API and old sine/cosine cell-enclosure gap were reproduced before
+retention. The new route certifies sin(x)+cos(0)>0 on x in [0,1]. For
+x(1-x)-3/8, the natural range [-3/8,5/8] tightens to [-3/8,-1/8] with an exact
+quadratic model and zero remainder, proving the whole cell inside. Independent
+integer expectations, original domain guards, source composition, native model
+reuse and fresh-process reconstruction of an authored recipe are exercised.
+This does not add a generic SDF serialization format or promote a range proof
+to surface topology or Euclidean distance.
+
+Final resource review reproduced an unnecessary constant-program rejection at
+nine graph entries: every task reserved the largest linear expansion. Follow-up
+`09f540dc8340618f587ca4c7d6282eb894d3b631` reserves each operation's actual
+additional live records and charges initial binding/task construction. The
+nine-entry regression and all prior exact-budget, exhaustion and retry checks
+pass. Existing scalar refinement/payload, source-ingress and heap-byte exclusions
+remain explicit. No resource or failure assertion was weakened.
+
+Final qualification passes 124 owner tests plus the separate replay child,
+114 default-feature tests, strict all-target/all-feature Clippy, strict docs,
+WASM, formatting and diff checks. ASan/leak checking passes all nine new tests;
+its standard-library sysroot is not instrumented. Main-worktree acceptance,
+formatting and indexed source-budget checks also pass. All 46 default owner
+benchmark smoke cases pass. Baseline/final default executables are
+8,102,600/8,102,576 bytes, with identical loaded sections except the build-ID
+note and identical 4,467,244-byte function-address unions. An artifact-inspection
+rewrite was detected and corrected by rebuilding the baseline to its recorded
+hash and restoring the identical raw final candidate; the full provenance is
+retained. No new default runtime timing claim is inferred from noisy samples.
+
+A separately attributed warmed allocation/timing harness completes polynomial
+and trigonometric compilation, natural images, Taylor images, subdomain reuse
+and late exhaustion. Final polynomial compile/natural/Taylor/reuse medians are
+1.50/3.55/62.10/5.77 microseconds; trig medians are
+1.09/90.45/701.39/16.52 microseconds. The largest measured temporary peak is
+11,368 bytes; every success/drop and late-exhaustion epoch ends with zero signed
+live-byte delta. Initial prototype samples, adverse differences and failed
+attempts remain archived. These are local instrumented completion observations,
+not an old/new speedup, universal bound or competitive validated-dynamics claim.
+
+Evidence commit `377c832533c261dc51720e07f814ffae318bc4e0`, record
+`docs/evidence/2026-11-13-interval-sdf-enclosure`: 126 files, 8,427,727 bytes,
+SHA-256 `8a25e59d989f352cdcf8deb6499b1c31697fb9a37cb2ebcf043981d6a605c0c6`.
+Scoped archive verification and all twelve preceding immutable-stage checks pass.
+The 41 pending extraction paths retain every original hunk. Adding the optional
+dependencies changed only the Cargo.lock blob-identifier line in their staged
+patch; its new SHA-256 is
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`.
+Interface's eight pending edits are unchanged; firmware and the isolated source
+tree are clean. The default CSGRS graph does not enable the new feature. No new
+full root/browser/firmware/hardware, coverage/fuzz, release or pre-push campaign
+is claimed. No push occurred. Phase 13 and all fifteen phases remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
