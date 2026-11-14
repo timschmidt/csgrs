@@ -3171,6 +3171,11 @@ impl RationalBezier2 {
         &self.data.homogeneous_controls
     }
 
+    #[cfg(feature = "interval-ranges")]
+    pub(crate) fn cached_homogeneous_power_basis(&self) -> Option<&RationalParametricCurve2> {
+        self.data.homogeneous_power_basis.get()
+    }
+
     pub(crate) fn homogeneous_power_basis(&self) -> CurveResult<&RationalParametricCurve2> {
         if let Some(power_basis) = self.data.homogeneous_power_basis.get() {
             return Ok(power_basis);

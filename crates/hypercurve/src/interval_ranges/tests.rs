@@ -389,3 +389,136 @@ fn native_box_projection_keeps_evidence_empty_semantics_and_touching_candidates(
             .is_none()
     );
 }
+
+#[test]
+fn zero_weight_control_remains_homogeneous_and_has_exact_midpoint_tangent() {
+    let source = RationalBezier2::from_homogeneous_controls(vec![
+        HomogeneousControl2::new(r!(0), r!(0), r!(1)),
+        HomogeneousControl2::new(r!(1), r!(1), r!(0)),
+        HomogeneousControl2::new(r!(2), r!(0), r!(1)),
+    ])
+    .unwrap();
+    // X=2t, Y=2t(1-t), W=(1-t)^2+t^2. No affine middle control exists.
+    let report = enclose(&source, &d(1, 1, -1));
+    assert_eq!(report.coordinates(), [&d(2, 2, 0), &d(1, 1, 0)]);
+    assert_eq!(report.tangents(), [&d(4, 4, 0), &d(0, 0, 0)]);
+    assert_eq!(report.source().homogeneous_controls()[1].weight(), &r!(0));
+    assert!(source.cached_homogeneous_power_basis().is_none());
+}
+
+#[test]
+fn constant_curve_is_c1_without_claiming_nonzero_tangents_or_injectivity() {
+    let source = RationalBezier2::try_new(vec![pt!(2, 3); 3], vec![r!(1); 3]).unwrap();
+    let report = enclose(&source, &d(0, 1, 0));
+    assert_eq!(report.coordinates(), [&d(2, 2, 0), &d(3, 3, 0)]);
+    assert_eq!(report.tangents(), [&d(0, 0, 0), &d(0, 0, 0)]);
+    let projected = report
+        .native_bounds(&mut graph(), &mut arithmetic())
+        .unwrap();
+    assert_eq!(projected.bounds(), Some(&Aabb2::from_point(pt!(2, 3))));
+}
+
+#[test]
+fn preparation_and_failed_attempts_leave_native_basis_caches_unchanged() {
+    let source = parabola();
+    assert!(source.cached_homogeneous_power_basis().is_none());
+    // The conversion reservation is 6*n*n+6*n=72. Fail after conversion.
+    assert!(matches!(
+        prepare_rational_bezier_ranges(&source, &mut ExpressionBudget::new(1_000_000, 73)),
+        Err(CurveRangeError::Expression(ExpressionError::WorkExhausted))
+    ));
+    assert!(source.cached_homogeneous_power_basis().is_none());
+    let independent = prepare_rational_bezier_ranges(&source, &mut graph()).unwrap();
+    assert!(source.cached_homogeneous_power_basis().is_none());
+    assert_eq!(
+        source.point_at(&r!(1 / 2)).unwrap(),
+        Point2::new(r!(1), r!(1 / 4))
+    );
+    let native = source.cached_homogeneous_power_basis().unwrap() as *const _;
+    let reused = prepare_rational_bezier_ranges(&source, &mut graph()).unwrap();
+    assert_eq!(
+        source.cached_homogeneous_power_basis().unwrap() as *const _,
+        native
+    );
+    assert_eq!(
+        independent.program().program().definition(),
+        reused.program().program().definition()
+    );
+    assert_eq!(
+        independent
+            .enclose(&d(0, 1, 0), -64, &mut graph(), &mut arithmetic())
+            .unwrap()
+            .evidence()
+            .values(),
+        reused
+            .enclose(&d(0, 1, 0), -64, &mut graph(), &mut arithmetic())
+            .unwrap()
+            .evidence()
+            .values()
+    );
+}
+
+#[cfg(feature = "dispatch-trace")]
+#[test]
+fn high_degree_native_point_dispatch_is_unchanged_by_range_preparation() {
+    use hyperreal::dispatch_trace;
+    // Fixed dispatch counts require a fresh scalar-cache lifecycle. A reused
+    // libtest worker can retain scalar facts from unrelated earlier fixtures.
+    const CHILD: &str = "HYPERCURVE_INTERVAL_RANGE_DISPATCH_CHILD";
+    if std::env::var_os(CHILD).is_none() {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "interval_ranges::tests::high_degree_native_point_dispatch_is_unchanged_by_range_preparation",
+                "--nocapture",
+            ])
+            .env(CHILD, "1")
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+        return;
+    }
+    for policy in [
+        crate::PredicatePolicy::STRICT,
+        crate::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let n = 257;
+        let source = RationalBezier2::try_new(
+            (0..=n)
+                .map(|i| {
+                    Point2::new(
+                        (Real::from(i) / Real::from(n)).unwrap(),
+                        Real::from(i32::from(i == n)),
+                    )
+                })
+                .collect(),
+            vec![r!(1); n as usize + 1],
+        )
+        .unwrap();
+        // Match the external dispatch probe: construct the query before recording.
+        let parameter = r!(1 / 2);
+        let evaluate = || {
+            let outcome = crate::evaluate_under(policy, || source.point_at(&parameter));
+            assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+            outcome.certified().unwrap().unwrap()
+        };
+        let warm = evaluate();
+        dispatch_trace::reset();
+        let expected = dispatch_trace::with_recording(evaluate);
+        let baseline = dispatch_trace::take_trace();
+        assert_eq!(expected, warm);
+        assert_eq!(baseline.rational.temporary_rationals, 2567);
+        assert_eq!(baseline.rational.gcds, 751);
+        let _prepared = prepare_rational_bezier_ranges(&source, &mut graph()).unwrap();
+        assert!(source.cached_homogeneous_power_basis().is_none());
+        dispatch_trace::reset();
+        let actual = dispatch_trace::with_recording(evaluate);
+        assert_eq!(actual, expected);
+        assert_eq!(dispatch_trace::take_trace(), baseline);
+    }
+}

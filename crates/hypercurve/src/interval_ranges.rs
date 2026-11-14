@@ -1,16 +1,17 @@
 //! Native curve sources with shared dyadic range and regularity evidence.
-use std::fmt;
+use std::{borrow::Cow, fmt};
 
 use hyperinterval::{DyadicBudget, DyadicInterval, IntervalError};
 use hyperreal::Real;
 use hypersolve::{
-    SymbolId, SymbolRef,
+    RationalParametricCurve2, SymbolId, SymbolRef,
     expression_program::{
         BinaryOperation, ExpressionBudget, ExpressionDefinition, ExpressionError, ExpressionNode,
         ExpressionProgram, JacobianProgram, RegularJacobianEnclosure,
     },
 };
 
+use crate::bezier_parameter::bernstein_to_power_coefficients;
 use crate::{Aabb2, CurveError, Point2, RationalBezier2};
 
 /// Native source conversion, invalid local domain, or original resource diagnostic.
@@ -68,6 +69,7 @@ pub struct PreparedRationalBezierRanges {
 /// tangents enclose derivatives with respect to that source's local parameter.
 /// This establishes neither an exact range hull nor topology or source fidelity
 /// beyond the supplied native curve. Empty domains yield empty numerical ranges.
+/// C1 smoothness does not assert nonzero tangents, immersion or injectivity.
 /// No serialized certificate or cached flag is accepted as replay authority.
 #[derive(Clone, Debug)]
 pub struct RationalBezierRangeEnclosure {
@@ -99,8 +101,10 @@ impl CurveRangeBox<'_> {
 /// Prepare repeated range queries for an existing exact native rational span.
 ///
 /// Arbitrary finite degree, algebraic controls and generated native spans retain
-/// their exact definitions. Existing native homogeneous basis conversion is
-/// reused; the adapter builds no independent geometry or arithmetic kernel.
+/// their exact definitions. Existing native Bernstein conversion is reused;
+/// the adapter builds no independent geometry or arithmetic kernel. An existing
+/// native basis may be borrowed, but this operation never populates that cache:
+/// doing so would change later high-degree native point-evaluation dispatch.
 /// The graph budget reserves `6*n*n + 6*n` structural conversion units, where n
 /// is the number of homogeneous controls, even if the native basis is cached.
 /// It also charges emitted nodes, validation and differentiation. Entry checks
@@ -108,7 +112,8 @@ impl CurveRangeBox<'_> {
 /// payload cloning/destruction and total heap bytes remain outside this budget.
 /// Cancellation cannot interrupt native scalar work or basis conversion; it is
 /// checked before and after conversion and before publishing the prepared result.
-/// A failed attempt may warm the native exact basis cache, never cache failure.
+/// Scalar caches retain their existing semantics; failures never become cached
+/// proof of undecidability. The native geometry basis cache remains unchanged.
 pub fn prepare_rational_bezier_ranges(
     source: &RationalBezier2,
     graph: &mut ExpressionBudget,
@@ -124,9 +129,18 @@ pub fn prepare_rational_bezier_ranges(
         .and_then(|v| v.checked_add(conversion_entries))
         .ok_or(ExpressionError::SizeExhausted)?;
     graph.charge(conversion_work)?;
-    let basis = source
-        .homogeneous_power_basis()
-        .map_err(CurveRangeError::Source)?;
+    let controls = source.homogeneous_controls();
+    let basis = match source.cached_homogeneous_power_basis() {
+        Some(basis) => Cow::Borrowed(basis),
+        None => Cow::Owned(RationalParametricCurve2::new(
+            bernstein_to_power_coefficients(controls.iter().map(|c| c.x().clone()).collect())
+                .map_err(CurveRangeError::Source)?,
+            bernstein_to_power_coefficients(controls.iter().map(|c| c.y().clone()).collect())
+                .map_err(CurveRangeError::Source)?,
+            bernstein_to_power_coefficients(controls.iter().map(|c| c.weight().clone()).collect())
+                .map_err(CurveRangeError::Source)?,
+        )),
+    };
     graph.charge(1)?;
     let parameter = SymbolId(0);
     let mut definition = ExpressionDefinition {
