@@ -55,7 +55,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | higher-utility automatic frame strategies, independent-noise/sensitivity retention, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -6877,6 +6877,46 @@ Phase 14 remains open: full coordinated workflow/feature/platform qualification,
 registry/docs.rs publication, application/HIL and remaining plan gates still apply.
 The optional hypervoxel/voxelis publication blocker persists. No push or publication
 was performed; the pre-push validation suite has not been claimed complete.
+
+## 2026-11-14 — Continuous Hyperdynamics feature and runtime gates
+
+Source `c633925421f6924d8aa3be9433000eec2cce80f3` adds the missing dedicated
+Hyperdynamics workflow and updates the workspace workflow's ownership comment.
+The prior workflow configuration never named Hyperdynamics, and the reproduced
+no-feature test run executed zero tests. Existing field, Taylor, reachability and
+coordinate implementations now have explicit feature and runtime CI commands.
+No Rust source, dependency manifest/lock, fixture or mathematical policy changed.
+
+The workflow covers Rust 1.95 and stable, with push/PR triggers for all seven local
+dependency owners, `.cargo`, root Cargo files and the workflow itself, plus merge
+groups. Both toolchains passed all nine validation steps locally: 18 independent
+feature configurations each, 128 debug and 128 release tests across all 14
+integration suites, 29 Criterion smoke cases, strict Clippy at both feature
+boundaries, fuzz-target check/lint and warnings-denied documentation. No-feature
+and doctest commands passed but execute zero tests. All six examples compile as
+test targets; their main functions are not run by this workflow. The pinned
+cargo-hack 0.6.46 also builds with Rust 1.95. Stable was 1.99.0.
+
+Actual YAML command bodies were executed, and the final command sequence is
+checked against the recorded runs. The late `.cargo` trigger addition changes no
+validation command. Final trigger/dependency checks and repository-wide
+`zizmor --pedantic --strict-collection .` pass with no findings; Zizmor 1.32.0's
+default offline mode leaves network-dependent audits unavailable. Integrated
+workflow shell syntax, formatting, Zizmor, budget and diff checks pass.
+
+Evidence commit `0a454dbc3c32312a34172ed795f8db8e30f2a1a2`, record
+`docs/evidence/2026-11-14-interval-dynamics-ci`: 77 files, 1,280,262 bytes,
+SHA-256 `2cd306eacb1634e3261dca0f155f59eef2730ef851c694f23c79a20487ffb121`.
+`QUALIFICATION.json`, `STATUS.md`, `REPRODUCE.md` and raw command logs specify the
+scope. All 39 preceding frozen stages verify unchanged. Main's 41 pending paths
+retain the identical staged patch digest; Interface's eight pending files and
+firmware are unchanged.
+
+This is local qualification of the retained source, excluding the unaccepted
+extraction. Hosted GitHub Actions, runtime example mains, sanitizer campaigns,
+coverage instrumentation, other OS targets, full pre-push checks and wider plan
+gates remain open. No timing improvement, phase completion, push or publication
+is claimed.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
