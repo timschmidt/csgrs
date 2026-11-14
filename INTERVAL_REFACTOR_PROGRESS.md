@@ -5189,6 +5189,66 @@ No new full workflow, root/browser/firmware/hardware, coverage/fuzz or
 successive_operations campaign is claimed. No push occurred. Phase 13 and the
 full fifteen-phase objective remain active.
 
+## 2026-11-13: Correct affine SDF Lipschitz certificates
+
+Previous turn: progress, retaining adaptive SDF covers. Review of the broader
+plan reproduced an existing false certificate on revision `37eed4312`: an X
+scale of 1/2 makes f=x change by 2 over world distance 1, while the API returned
+bound 1. Source `265249c34ac6580f2e23bb07583d3150d067dda2` corrects transport
+through the retained inverse linear part. This is a correctness repair, not a
+behavior-preserving refactor or completion of the next plan phase.
+
+Native Vector3 self/cross dots form the symmetric Gram matrix. The maximum
+absolute row sum gives a proved conservative Euclidean expansion factor; an
+undecided row ordering uses an independent Frobenius bound. Existing strict
+max/provenance helpers preserve child certainty. Translations, unknown children
+and structural constants retain their meaning and predicate prefix. No scalar
+kernel, public report shape, policy, cache or resource contract is replaced.
+Exact similarities and signed axis scales remain sharp; general bounds need
+not be minimal. Raw inverse consistency and stronger source/replay contracts
+remain outside this correction.
+
+Maintained acceptance covers the original failure, scales/reflections/shear,
+algebraic rotation, nested transforms, constants, collapsed raw inverses,
+undecided norm order and unknown children. Three fields exercise 324 exact
+point-pair inequalities with independently formed world distances. Fresh-process
+reconstruction recomputes the certificate. Trace assertions retain 18 old AABB
+comparisons plus two new maxima; constants/unknown children stay at 18 and
+translation at zero. No existing assertion was weakened.
+
+The selected source passes 158 owner tests plus five replay children, 121
+no-default tests plus one replay child, strict all-feature/all-target Clippy,
+strict rustdoc, WASM, formatting and diff checks. ASan/leak checking passes eight
+new tests plus one replay child; its standard-library sysroot is not instrumented.
+Main owner acceptance, formatting and indexed budget checks pass after transfer.
+The external default-feature consumer exercises the affected public API locally;
+it is not a packaged release claim.
+
+Both correct matrix/vector implementations and all failed/adverse observations
+are retained. All ten probe report/allocation rows agree between them. The
+vector scale/shear median ratios are 0.7358/0.8313; the unchanged linear probe
+is 1.0062 with separated short-batch ranges. All 46 owner cases complete, with
+24 separated adverse candidate confidence ranges and median ratios spanning
+0.9669–1.0746. No general speedup or no-regression claim is made. The old incorrect
+affine rows cannot serve as a same-completed-contract performance baseline.
+The selected default executable grows 14,744 bytes to 8,117,344; its read-only
+ELF function union grows 10,269 bytes to 4,477,513. Exactness takes priority over
+these measured costs. Every measured complete-report/drop allocation epoch
+ends with zero signed live-byte delta; scale allocates zero and shear peaks at
+144 bytes. These are warmed local observations, not universal resource bounds.
+
+Evidence commit `cd7ffa124a60153eabec7b3cb10900decfd4f731`, record
+`docs/evidence/2026-11-13-interval-sdf-lipschitz`: 1,589 files,
+11,579,748 bytes, SHA-256
+`3a563ca07af51f0ecd88de8f56dadd146a5a2515ddb0408705848c2d3be18a98`. Scoped archive
+verification and all sixteen preceding immutable-stage checks pass. The original
+41-path staged extraction retains SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending edits are unchanged, and firmware/isolated source are
+clean. No push, full workflow, root successive_operations, browser/firmware/
+hardware, full fuzz/coverage or release campaign occurred. Wider adoption,
+wrapping/QR and the full fifteen-phase goal remain open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
