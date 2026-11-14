@@ -5657,6 +5657,80 @@ and eight Interface pending edits are preserved. No push occurred. Whole-stack
 release, flash-fit/hardware qualification, Phase 11 costs and the full goal
 remain active; no phase is marked complete.
 
+## Reproduce dynamics costs across the complete owner workload (2026-11-14)
+
+Phase 11 remains unretained. A fresh isolated worktree at b3dcd2d3b reproduces
+baseline, the exact pending extraction and the earlier associated-provider-error
+control. All three owner benchmark ELF hashes equal the prior record, despite
+intervening interval work. Their binary/function-union sizes remain baseline
+13,312,600/8,044,187, extraction 13,304,584/8,036,358 and provider control
+13,302,416/8,035,134 bytes. Six unsized symbols remain disclosed. The separate
+observer reproduces identical complete results and allocation/deallocation/
+reallocation/bytes/peak/live rows for all 194 owner workloads. Its entire workload
+body matches the real benchmark; this is not an independent geometry oracle.
+
+Six current real-owner sweeps complete all 194 cases, using the unchanged
+Criterion settings, CPU0, disabled process ASLR, the same executable path and
+baseline/extraction/provider/provider/extraction/baseline order. No compilation,
+tests or instruction profiles run during timing. Adverse confidence-interval
+screening flags 62 extraction and 76 provider cases; this is not simultaneous
+significance or an acceptance tolerance. Before the current comparison was
+available, the six adverse examples published in the old provider record were
+selected for longer repeats (one-second warmup, two-second measurement, thirty
+samples). All six provider cases retain adverse separation:
+
+| Case | Provider/baseline mean ratio |
+| --- | ---: |
+| Axis-aligned line offset | 1.0421 |
+| Quadratic hodograph | 1.0924 |
+| Rectangular-pad clearance | 1.0703 |
+| Additive-bead schedule | 1.0452 |
+| 256-record parser | 1.0190 |
+| Exact trace import | 1.0376 |
+
+Extraction also retains adverse separation for hodograph, pad clearance and
+parser in these repeats. All favorable and adverse observations remain in the
+record; the other broad-screen flags did not receive longer confirmation here.
+A repeat-driver preflight referenced the wrong status filename and failed before
+measurement; its log is retained, and the corrected complete run passes.
+
+The new diagnostic covers all 582 Callgrind observations: 194 cases times three
+variants, 32 warmed completed-result/drop callbacks each. Four instrumentation
+workers run after wall timing; their elapsed times are not performance evidence.
+All compressed profiles decode to their recorded hashes and their function self
+counts sum to the total. Extraction has 101 increased, 15 decreased and 78
+unchanged instruction observations; provider control has 95 increased, 21
+decreased and 78 unchanged. These are single observations, not universal bounds.
+Crucially, all six longer-timed cases have identical instruction totals AND
+per-function self counts across all variants. Instruction-count reduction alone
+therefore does not explain or clear those runtime failures. Layout/cache effects
+remain hypotheses; no unique hardware cause is established.
+
+Tangent alignment changes 240,808 to 241,704 instructions per epoch, with
+attribution shifting among exact-rational product-sum layers. Corner lookahead
+reproduces 2,503,560 baseline, 2,508,360 extraction and 2,507,720 provider counts.
+Complete attribution and 57 bounded owner-function disassemblies are retained.
+Generic names can combine instantiations, and observer code generation is not
+assumed equal to the timing executable. No unrelated parser/geometry mathematics,
+compiler policy, predicate order, fixture or gate is changed to hide a failure.
+
+Current provider fixtures pass two tests. The restored original extraction passes
+three routing tests (including fresh-process full report/dispatch comparisons in
+both policies), axis migration, workspace formatting and staged whitespace checks.
+The isolated tree is then restored clean at b3dcd2d3b. No new full all-feature/
+Clippy, downstream cost, successive_operations, coverage, fuzz, sanitizer, WASM,
+packaging or pre-push qualification is claimed. No push occurs and no production
+source is retained from this investigation. Main's 41-path index and Interface's
+eight pending edits remain exact; all four authoritative states match their start
+before archival. All 24 prior frozen records verify unchanged.
+
+Evidence `docs/evidence/2026-11-14-interval-dynamics-current-cost` is verified
+at archive `26216ee286e7048d3b60dedd5d1ef3c7d28ce17b`: 6,714 files,
+50,033,990 bytes, SHA-256
+`35a9c91d2cdca9ab3457d8a7ada0755b966de6fa907ed9a9c47e5888bac53db9`. The stage is now frozen. A further candidate must
+address a demonstrated compilation/layout or result-ownership cause and pass the
+unchanged full contract. Phase 11 and every remaining full-goal obligation stay open.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
