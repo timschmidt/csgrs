@@ -140,3 +140,13 @@ The opt-in `taylor-polynomial` feature forwards Hypersolve polynomial arithmetic
 on existing native Taylor models. The original field identity and time/state
 binding remain with the field model; output-image arithmetic is not an ODE flow
 or coordinate-change certificate.
+
+Enable `taylor-flow` for `field.flow_taylor(order, budget)`. The prepared program
+constructs source-bound normalized Lie coefficients through the next order. Its
+`certify_step(proposal, budget)` first proves Picard existence/uniqueness, then
+requires the original Taylor layer's analytic-domain proof over the complete
+time/tube product. Initial coefficients and the whole next-order remainder give
+certified trajectory and endpoint enclosures. Every contribution and both source
+proofs remain inspectable; generated endpoints can seed later steps. Replay the
+field definition, order and proposal. This is a forward-step verifier, not an
+automatic order/step controller or adaptive wrapping algorithm.

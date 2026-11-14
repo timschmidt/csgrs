@@ -484,3 +484,7 @@ pub mod taylor;
 /// Certified fixed state charts and original-coordinate Picard transport.
 #[cfg(feature = "coordinates")]
 pub mod coordinates;
+
+/// Source-bound trajectory Taylor enclosures over certified Picard tubes.
+#[cfg(feature = "taylor-flow")]
+pub mod taylor_flow;

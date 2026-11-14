@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add optional trajectory Taylor enclosures over certified Picard tubes, with
+  source-bound normalized Lie coefficients, complete next-order remainders,
+  analytic time/state domain proofs, typed failure and fresh-process replay.
+
 - Add fixed exact state charts and source-bound Picard tube/endpoint transport with explicit final materialization failures.
 - Add a nonlinear-field affine Taylor observable example with explicit downstream projection.
 - Add optional midpoint-centered field Taylor models, retaining exact source,

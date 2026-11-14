@@ -17,6 +17,7 @@ all-features = true
 default = []
 coordinates = ["field", "hypersolve/coordinate-program"]
 taylor-model = ["field", "hypersolve/taylor-model"]
+taylor-flow = ["taylor-model"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
 taylor-polynomial = ["taylor-model", "hypersolve/taylor-polynomial"]
 reachability = ["field"]
@@ -33,6 +34,7 @@ hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", 
 serde = { version = "1.0", features = ["derive"], optional = true }
 
 [dev-dependencies]
+criterion = "0.5"
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
 serde_json = "1.0"
 
@@ -59,3 +61,8 @@ required-features = ["taylor-affine"]
 [[example]]
 name = "coordinates"
 required-features = ["coordinates"]
+
+[[bench]]
+name = "taylor_flow"
+harness = false
+required-features = ["taylor-flow"]
