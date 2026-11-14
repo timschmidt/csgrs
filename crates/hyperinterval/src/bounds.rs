@@ -65,6 +65,7 @@ impl<T: PartialOrd> Bounds<T> {
     // Callers must establish order algebraically before using this private
     // constructor. Public ingress always uses new().
     #[cfg(any(
+        feature = "integer",
         feature = "rational",
         feature = "float-proposal",
         feature = "float-enclosure"
@@ -194,7 +195,7 @@ impl<T: Copy + PartialOrd> Bounds<T> {
 // decisions. All constructors and serialization remain family-specific.
 #[cfg(any(feature = "integer", feature = "fixed"))]
 macro_rules! set_relations {
-    () => {
+    ($(#[$intersection_attribute:meta])*) => {
         /// Whether this set is empty.
         pub fn is_empty(&self) -> bool {
             self.bounds.is_none()
@@ -300,6 +301,7 @@ macro_rules! set_relations {
         }
 
         /// Exact intersection; disjoint intervals produce explicit empty.
+        $(#[$intersection_attribute])*
         pub fn intersection(&self, other: &Self) -> Self {
             Self {
                 bounds: match (self.bounds, other.bounds) {

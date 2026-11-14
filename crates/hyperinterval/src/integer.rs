@@ -57,6 +57,12 @@ pub struct IntegerRange<I: IntegerEndpoint> {
 }
 
 impl<I: IntegerEndpoint> IntegerRange<I> {
+    pub(crate) fn from_bounds(bounds: Bounds<I>) -> Self {
+        Self {
+            bounds: Some(bounds),
+        }
+    }
+
     /// Constructs an exact nonempty range, rejecting reversed endpoints.
     pub fn new(lower: I, upper: I) -> Result<Self, IntervalError> {
         Ok(Self {
@@ -76,7 +82,7 @@ impl<I: IntegerEndpoint> IntegerRange<I> {
         }
     }
 
-    set_relations!();
+    set_relations!(#[inline(always)]);
 
     /// Converts endpoints exactly to another primitive width or signedness.
     ///

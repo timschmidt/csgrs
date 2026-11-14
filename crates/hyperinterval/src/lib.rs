@@ -47,6 +47,8 @@ mod ieee;
 mod integer;
 #[cfg(feature = "integer")]
 mod integer_arithmetic;
+#[cfg(any(feature = "integer", feature = "fixed"))]
+mod integer_quotient;
 #[cfg(feature = "dyadic")]
 mod inverse_functions;
 #[cfg(feature = "dyadic")]
@@ -76,6 +78,8 @@ pub use dyadic::{DyadicBudget, DyadicInterval};
 pub use fixed::{FixedEndpoint, FixedInterval, FixedWidth};
 #[cfg(feature = "integer")]
 pub use integer::{IntegerEndpoint, IntegerRange};
+#[cfg(any(feature = "integer", feature = "fixed"))]
+pub use integer_quotient::integer_quotient_bounds;
 #[cfg(feature = "float-proposal")]
 pub use proposal::{F32ProposalInterval, F64ProposalInterval};
 #[cfg(feature = "rational")]

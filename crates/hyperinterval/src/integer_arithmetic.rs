@@ -1,3 +1,4 @@
+use crate::bounds::Bounds;
 use crate::{IntegerRange, IntervalError, MidpointRounding};
 
 macro_rules! arithmetic {
@@ -27,19 +28,19 @@ macro_rules! arithmetic {
             }
 
             /// Midpoint with explicit integer rounding; empty returns `None`.
+            #[inline(always)]
             pub fn midpoint(&self, rounding: MidpointRounding) -> Option<$endpoint> {
-                self.bounds().map(|(lower, upper)| {
-                    let width = upper.abs_diff(lower);
-                    // Half of the maximum unsigned distance fits the signed
-                    // endpoint, and the sum is between lower and upper.
-                    let floor = lower + (width / 2) as $endpoint;
-                    let increment = width % 2 != 0 && match rounding {
-                        MidpointRounding::Floor => false,
-                        MidpointRounding::Ceiling => true,
-                        MidpointRounding::NearestTiesEven => floor % 2 != 0,
-                    };
-                    floor + <$endpoint>::from(increment)
-                })
+                let (lower, upper) = self.bounds()?;
+                let width = upper.abs_diff(lower);
+                // Half of the maximum unsigned distance fits the signed
+                // endpoint, and the sum is between lower and upper.
+                let floor = lower + (width / 2) as $endpoint;
+                let increment = width % 2 != 0 && match rounding {
+                    MidpointRounding::Floor => false,
+                    MidpointRounding::Ceiling => true,
+                    MidpointRounding::NearestTiesEven => floor % 2 != 0,
+                };
+                Some(floor + <$endpoint>::from(increment))
             }
 
             /// Outward integer radius around any supported rounded midpoint.
@@ -50,9 +51,13 @@ macro_rules! arithmetic {
             /// Exact discrete Minkowski sum, with checked endpoint arithmetic.
             pub fn checked_add(&self, other: &Self) -> Result<Self, IntervalError> {
                 match (self.bounds(), other.bounds()) {
-                    (Some((a, b)), Some((c, d))) => Self::new(
-                        a.checked_add(c).ok_or(IntervalError::Overflow)?,
-                        b.checked_add(d).ok_or(IntervalError::Overflow)?),
+                    (Some((a, b)), Some((c, d))) => {
+                        let lower = a.checked_add(c).ok_or(IntervalError::Overflow)?;
+                        let upper = b.checked_add(d).ok_or(IntervalError::Overflow)?;
+                        // Addition is monotone in each operand. Once both
+                        // checked sums succeed, a <= b and c <= d prove order.
+                        Ok(Self::from_bounds(Bounds::ordered(lower, upper)))
+                    }
                     _ => Ok(Self::empty()),
                 }
             }
@@ -92,6 +97,23 @@ macro_rules! arithmetic {
                     }
                     _ => Ok(Self::empty()),
                 }
+            }
+
+            /// Smallest integer hull after multiplication by one exact scalar.
+            ///
+            /// Scaling can leave gaps between attained integers. A negative
+            /// factor reverses endpoint order; zero maps every nonempty range
+            /// to zero, and empty stays empty. Unrepresentable products return
+            /// `Overflow`. Known scalar sign avoids a general four-corner product.
+            #[inline]
+            pub fn scale(&self, factor: $endpoint) -> Result<Self, IntervalError> {
+                let Some((a, b)) = self.bounds() else { return Ok(Self::empty()); };
+                let a = a.checked_mul(factor).ok_or(IntervalError::Overflow)?;
+                let b = b.checked_mul(factor).ok_or(IntervalError::Overflow)?;
+                let (lower, upper) = if factor.cmp(&0).is_lt() { (b, a) } else { (a, b) };
+                // Multiplication by a nonnegative scalar is monotone; a
+                // negative scalar reverses order. Checked products remain exact.
+                Ok(Self::from_bounds(Bounds::ordered(lower, upper)))
             }
 
             /// Smallest integer hull of pointwise squares, with zero-aware bounds.

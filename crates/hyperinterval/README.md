@@ -130,6 +130,10 @@ square and nonnegative integer powers. Integer multiplication can have gaps;
 the result is the smallest containing integer range. Division is not silently
 interpreted as truncated real arithmetic. Exact width/radius and explicitly
 rounded midpoints support every primitive integer width, including i128/u128.
+`scale` returns the smallest integer hull of multiplication by one exact
+scalar. With either `integer` or `fixed`, `integer_quotient_bounds` returns the
+integer floor and ceiling of an i128 ratio, with typed zero-denominator and
+overflow errors; it does not replace the ratio by a discrete integer set.
 
 Fixed arithmetic widens intermediates to i128. Products, quotients, reciprocals,
 squares, ratio ingress and fused affine images round outward; representational

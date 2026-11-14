@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add allocation-free signed integer quotient bounds and exact scalar images of
+  primitive integer ranges, including signed extremes and typed overflow. Share
+  directed quotient arithmetic with fixed-point operations.
+
 - Add budgeted `DyadicInterval::from_rational` and use it for structurally
   rational `from_real` inputs. Stored coefficient sizes are admitted before
   copying, normalization or division, including lazy unreduced ratios. Exact

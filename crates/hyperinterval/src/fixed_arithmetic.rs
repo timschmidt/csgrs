@@ -1,16 +1,7 @@
 //! Widened arithmetic for the sealed i32/i64 fixed-point families.
 
+use crate::integer_quotient::positive_quotient_bounds as quotient_bounds;
 use crate::{DomainCoverage, FixedInterval, IntervalError, MidpointRounding, RangeEnclosure};
-
-// Every caller supplies a positive denominator. Numerators here are products
-// of signed 64-bit values and a scale at most 2^63, so division cannot meet
-// i128::MIN / -1 and the ceiling increment cannot overflow.
-#[inline]
-fn quotient_bounds(numerator: i128, denominator: i128) -> (i128, i128) {
-    let lower = numerator.div_euclid(denominator);
-    let upper = lower + i128::from(numerator.rem_euclid(denominator) != 0);
-    (lower, upper)
-}
 
 #[inline]
 fn scaled_ratio(numerator: i128, denominator: i128, scale: i128) -> (i128, i128) {
