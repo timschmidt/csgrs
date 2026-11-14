@@ -4,6 +4,11 @@
 
 Initial release.
 
+- Optional `enclosure-program` supplies source-bound whole-cell and Taylor
+  enclosures for smooth scalar expressions and translations. It retains original
+  field identity, domain errors, full remainders, distance qualification and
+  caller-owned budgets; unsupported forms and unresolved signs remain explicit.
+
 Hypersdf provides signed-distance and implicit-field expressions for the
 Hyper geometry stack. It retains expression structure and exact parameters so
 that inside, boundary, and outside questions are answered from the field

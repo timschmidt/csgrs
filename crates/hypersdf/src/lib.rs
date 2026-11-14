@@ -1288,3 +1288,9 @@ mod tests {
         );
     }
 }
+
+/// Native source-bound whole-cell and Taylor enclosures.
+#[cfg(feature = "enclosure-program")]
+pub mod enclosure;
+#[cfg(feature = "enclosure-program")]
+pub use enclosure::{SdfCellEnclosure, SdfProgram, SdfProgramError};

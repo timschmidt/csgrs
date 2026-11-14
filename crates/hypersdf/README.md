@@ -40,7 +40,17 @@ cargo run -p hypersdf --example basic
 ```
 
 There are no default features. Enable `hypervoxel-adapter` only when
-materializing a classified field batch into Hypervoxel records.
+materializing a classified field batch into Hypervoxel records. Enable
+`enclosure-program` for `SdfProgram`, an owned translation of smooth scalar
+expressions into Hypersolve programs. It certifies whole-cell dyadic images,
+including sine/cosine/tangent, and optionally centered Taylor images with their
+complete remainder. Source distance qualification is preserved; a range merely
+containing zero does not certify a crossing. Constants, coordinates, linear
+fields, scalar arithmetic, square root, complement, offset and translations are
+supported. Primitive, piecewise and affine nodes have explicit unsupported
+results on this optional path; existing queries remain available. Graph and
+native arithmetic budgets are caller-owned; scalar refinement/payload and heap
+exclusions remain explicit.
 
 ## Quick start
 

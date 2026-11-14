@@ -2743,9 +2743,11 @@ version = "0.2.0"
 dependencies = [
  "criterion 0.5.1",
  "fast-surface-nets",
+ "hyperinterval",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",
+ "hypersolve",
  "hypervoxel",
  "proptest",
 ]
