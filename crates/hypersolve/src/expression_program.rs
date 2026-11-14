@@ -27,6 +27,7 @@ mod affine;
 pub use affine::{AffineParameterization, AffineProgram};
 mod jacobian;
 pub use jacobian::JacobianProgram;
+mod bivariate;
 
 /// An operation on two expressions, preserving left-to-right evaluation.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]

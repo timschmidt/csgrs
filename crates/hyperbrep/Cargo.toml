@@ -13,8 +13,10 @@ categories = ["mathematics", "graphics", "data-structures"]
 [features]
 default = []
 tessellation = ["dep:hypertri"]
+interval-ranges = ["dep:hyperinterval", "hyperlattice/interval-dyadic", "hypersolve/interval-lattice"]
 
 [dependencies]
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["hyperreal"], optional = true }
 hypercurve = { version = "0.4.0", path = "../hypercurve", features = ["svg"] }
 hyperlattice = { version = "0.7.0", path = "../hyperlattice" }
 hyperlimit = { version = "0.5.0", path = "../hyperlimit" }

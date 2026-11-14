@@ -2476,6 +2476,7 @@ name = "hyperbrep"
 version = "0.2.0"
 dependencies = [
  "hypercurve",
+ "hyperinterval",
  "hyperlattice",
  "hyperlimit",
  "hyperreal",

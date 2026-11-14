@@ -17,6 +17,8 @@ mod cache;
 mod context;
 mod error;
 mod geometry;
+#[cfg(feature = "interval-ranges")]
+pub use geometry::interval_ranges;
 mod parameter;
 mod persistence;
 mod topology;

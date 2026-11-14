@@ -26,6 +26,8 @@ mod curve_revolution;
 mod curve_tensor_image;
 mod cylinder_atlas;
 mod implicit_tensor;
+#[cfg(feature = "interval-ranges")]
+pub mod interval_ranges;
 mod line_tensor;
 mod location;
 mod parameter_components;
