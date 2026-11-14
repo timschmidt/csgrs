@@ -5,6 +5,31 @@ use std::{hint::black_box, time::Instant};
 use workload::{arithmetic, compare, complete, graph, source, validate};
 
 fn main() {
+    if let Ok(case) = std::env::var("SURFACE_RANGE_COLD_CASE") {
+        let case: usize = case.parse().unwrap();
+        let shared = match std::env::var("SURFACE_RANGE_COLD_SHARED").unwrap().as_str() {
+            "0" => false,
+            "1" => true,
+            _ => panic!("cold mode must be 0 or 1"),
+        };
+        let source = source(case);
+        let start = Instant::now();
+        let reports = complete(black_box(&source), shared, &mut graph(), &mut arithmetic());
+        let query_elapsed = start.elapsed();
+        // Independent oracle cost is excluded in both cold modes. Destruction
+        // remains measured; the two spans and intervening oracle are explicit.
+        validate(case, &reports);
+        let drop_start = Instant::now();
+        drop(black_box(reports));
+        let destruction_elapsed = drop_start.elapsed();
+        println!(
+            "cold case={case} shared={shared} query_ns={} destruction_ns={} total_ns={}",
+            query_elapsed.as_nanos(),
+            destruction_elapsed.as_nanos(),
+            (query_elapsed + destruction_elapsed).as_nanos()
+        );
+        return;
+    }
     let iterations: u32 = std::env::var("SURFACE_RANGE_ITERATIONS")
         .map(|s| s.parse().unwrap())
         .unwrap_or(16);
