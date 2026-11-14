@@ -17,6 +17,15 @@ belongs in [Hypermesh](https://github.com/timschmidt/csgrs/tree/main/crates/hype
 
 This README describes crate version `0.4.0`.
 
+With `interval-ranges`, `interval_ranges::prepare_rational_bezier_ranges`
+prepares repeated dyadic coordinate and tangent queries for native rational
+Bézier spans, including generated spans with algebraic controls. Each result
+retains the native source, parameter domain and shared regularity evidence.
+Queries use explicit graph/arithmetic budgets; a failed denominator enclosure
+remains a typed failure. A borrowed `native_bounds` projection feeds the existing
+`Aabb2` broad phase while retaining the original evidence. Run the
+`interval_ranges` example with this feature.
+
 ## Primary types
 
 | Type | Role |

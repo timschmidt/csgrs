@@ -9,7 +9,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/timschmidt/csgrs"
 documentation = "https://docs.rs/hypercurve"
 readme = "README.md"
-include = ["/src/**", "/tests/support/**", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
+include = ["/src/**", "/tests/support/**", "/examples/interval_ranges.rs", "/README.md", "/CHANGELOG.md", "/LICENSE*"]
 keywords = ["cad", "curves", "geometry", "hyperreal", "topology"]
 categories = ["mathematics", "graphics", "algorithms"]
 
@@ -19,6 +19,7 @@ all-features = true
 [dependencies]
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false }
 hypersolve = { version = "0.4.0", path = "../hypersolve", default-features = false }
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["hyperreal"], optional = true }
 hyperlimit = { version = "0.5.0", path = "../hyperlimit", default-features = false, features = ["std"] }
 hypertri = { version = "0.5.0", path = "../hypertri", default-features = false, features = ["earcut"], optional = true }
 num = { version = "0.4.3", features = ["num-bigint"] }
@@ -34,6 +35,7 @@ proptest = "1"
 
 [features]
 default = []
+interval-ranges = ["dep:hyperinterval", "hypersolve/interval-program"]
 dispatch-trace = ["hyperreal/dispatch-trace", "hyperlimit/dispatch-trace", "hypersolve/dispatch-trace"]
 triangulation = ["dep:hypertri"]
 svg = ["dep:svg", "dep:svgtypes", "hyperreal/serde"]
@@ -44,6 +46,10 @@ comparative-benchmarks = [
     "dep:i_overlay",
     "dep:nalgebra",
 ]
+
+[[example]]
+name = "interval_ranges"
+required-features = ["interval-ranges"]
 
 [[bench]]
 name = "containment"
@@ -143,3 +149,8 @@ required-features = ["comparative-benchmarks"]
 [[bench]]
 name = "pathological_regions"
 harness = false
+
+[[bench]]
+name = "interval_ranges"
+harness = false
+required-features = ["interval-ranges"]

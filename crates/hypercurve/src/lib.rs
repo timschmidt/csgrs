@@ -24,6 +24,10 @@ extern crate hypersolve;
 #[macro_use]
 mod test_macros;
 
+/// Prepared native rational-span coordinate and tangent enclosures.
+#[cfg(feature = "interval-ranges")]
+pub mod interval_ranges;
+
 #[cfg(test)]
 mod algebraic_image_tests;
 mod arc_bezier;

@@ -2,6 +2,11 @@
 
 ## [0.4.0] - Unreleased
 
+- Add optional prepared rational Bézier coordinate and tangent ranges through
+  the shared dyadic expression evaluator. Retain native source, local domain,
+  derivative association and full-domain regularity evidence across repeated
+  queries, with typed domain/resource failures and explicit accounting limits.
+
 - Retain exact SVG transform tokens and affine composition, including nested
   groups, authored rotation centers and symbolic rotation/skew trigonometry.
   Matrix coefficients and underflow-small translations no longer enter through
