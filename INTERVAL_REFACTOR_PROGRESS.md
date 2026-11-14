@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native smooth/polynomial-primitive SDF cell/Taylor enclosures retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5061,6 +5061,65 @@ source tree are clean. Other primitives, piecewise/affine lowering, wider
 adoption, wrapping/QR and release obligations remain open. No full workflow,
 browser, firmware/hardware, coverage/fuzz or pre-push campaign is claimed.
 No push occurred. Phase 13 and the full fifteen-phase objective remain active.
+
+## 2026-11-13: Preserve affine frames in native SDF enclosures
+
+Previous turn: progress, retaining polynomial primitives and their qualification.
+Source `a686a1e7a2aa88acbacf9f95f6a25fd87ca89dfe` closes the reproduced
+`Unsupported("affine transform")` gap for the existing enclosure grammar. It
+emits the retained inverse's three coordinate rows through the existing Linear
+emitter and binds the child to their shared graph nodes. Nested/sibling frames
+remain local; each frame adds 30 nodes without expanding the source tree or
+recomputing an inverse. Original source identity, parameter admission and metric
+qualification remain intact. Compilation follows existing inverse_point semantics;
+a manually assembled public transform is not promoted to an invertibility proof.
+
+Acceptance checks 125 independent rational sphere values, an independent
+chain-rule Jacobian, algebraic coefficients, raw inverse-field semantics, mixed
+nested transforms, 64-frame growth, guards, empty queries, exact entry/work
+limits, cancellation and retry. The transformed quadratic fixture tightens its
+natural range [-3/8,5/8] to the exact Taylor range [-3/8,-1/8] with zero remainder,
+certifying the complete cell inside. Native subdomain reuse, subsequent squaring
+and fresh-process authored-recipe reconstruction preserve the source proof.
+Affine compilation asserts no scalar/predicate dispatch; existing trace checks
+remain unchanged. No distance, topology or generic interchange claim is added.
+
+Final qualification passes 141 owner tests plus three replay children, 114
+default tests, strict all-target/all-feature Clippy, strict rustdoc, WASM,
+workspace formatting and diff checks. ASan/leak checking passes 26 enclosure
+tests plus three replay children; its standard-library sysroot is not instrumented.
+Main acceptance, formatting and indexed source-budget checks pass. A new test's
+ambiguous Into expectation and duplicate shared-helper import were corrected
+without weakening assertions; failed attempts remain in the evidence.
+
+The owning default benchmark is byte-identical to baseline (8,102,576 bytes,
+SHA-256 `be7d09278a800c3623335e196ec26bb172198cfa849ec25097f1a1607b6c9afc`),
+and all 46 smoke cases pass. All 21 optional legacy definition/result/allocation
+rows match exactly. Controlled local timings nevertheless show polynomial,
+trig and Linear compile slowdowns of 3.59%, 3.57% and 2.47%, each with separated
+batch ranges. The optional executable/function union grows 776/641 bytes.
+A second out-of-line emission variant did not remove the slowdown and grew more;
+it is rejected, with its source and results preserved. These are explicit costs
+of new completion, not a performance-neutral refactor or speedup claim.
+
+The new transformed-field compile/natural/Taylor/reuse medians are
+2.267/7.529/236.631/11.842 microseconds; the largest temporary peak is 27,212 bytes.
+Success/drop and late-exhaustion epochs end with zero signed live-byte delta.
+This is a local warmed instrumented completion envelope; existing scalar and
+heap-byte resource exclusions remain explicit. No new successive_operations or
+competitive dynamics claim is made.
+
+Evidence commit `3dea21c54bc849cd1ce18bcc71ffc4954191212e`, record
+`docs/evidence/2026-11-13-interval-sdf-affine`: 166 files, 14,771,249 bytes,
+SHA-256 `7c3068484c1f24940074673b1184cee8c5f6bafb76769434d138283c14ecf4d8`. Scoped archive verification and all fourteen
+preceding immutable-stage checks pass. The 41-path staged extraction patch is
+unchanged, SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending edits are unchanged, and firmware/the isolated tree
+are clean. Other primitives, piecewise fields, adaptive subdivision, wider
+consumers, wrapping/QR and release obligations remain open. No full workflow,
+root/browser/firmware/hardware or coverage/fuzz campaign is claimed. No push
+occurred. Phase 13 and the full fifteen-phase goal remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
