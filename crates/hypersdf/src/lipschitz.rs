@@ -4,13 +4,17 @@
 //! They are scheduling and solver facts, not topology decisions. The formulas
 //! follow classical Lipschitz arithmetic rules over interval enclosures: sums
 //! add bounds, products use `|f| L_g + |g| L_f`, and min/max CSG composition
-//! takes the larger active-family bound. Unsupported expressions return
+//! takes the larger active-family bound. Affine composition includes a certified
+//! Euclidean expansion bound for the retained inverse linear part; a bound is
+//! conservative and need not be the smallest possible Lipschitz constant.
+//! Unsupported expressions return
 //! explicit unknown evidence, separating certified facts from missing optimizations.
 
 use core::cmp::Ordering;
 
+use hyperlattice::{Matrix4, Vector3};
 use hyperlimit::{Certainty, Escalation, Point3, PredicateOutcome, RefinementNeed};
-use hyperreal::Real;
+use hyperreal::{Real, ZeroOneMinusOneStatus};
 
 use crate::expr::SdfExpr;
 use crate::interval::{SdfInterval, interval_expr_cell};
@@ -88,8 +92,69 @@ pub(crate) fn lipschitz_expr_cell(
             let Some((child_min, child_max)) = transform.inverse_aabb(min, max) else {
                 return unsupported();
             };
-            lipschitz_expr_cell(child, &child_min, &child_max)
+            let child_bound = lipschitz_expr_cell(child, &child_min, &child_max);
+            match transform {
+                crate::SdfTransform::Translation { .. } => child_bound,
+                crate::SdfTransform::Affine { inverse, .. } => match &child_bound {
+                    PredicateOutcome::Unknown { .. } => child_bound,
+                    PredicateOutcome::Decided { value, .. }
+                        if value.zero_one_or_minus_one() == ZeroOneMinusOneStatus::Zero =>
+                    {
+                        child_bound
+                    }
+                    PredicateOutcome::Decided { .. } => combine_lipschitz_pair(
+                        child_bound,
+                        affine_expansion_bound(inverse),
+                        |bound, expansion| decided(bound * expansion),
+                    ),
+                },
+            }
         }
+    }
+}
+
+// For the inverse linear part B, G=B^T B is positive semidefinite. The maximum
+// absolute row sum M of G gives ||B v||² <= M ||v||²: use
+// 2|v_i v_j| <= v_i²+v_j² on the symmetric off-diagonal terms.
+// This is sharp for diagonal G, including similarities and signed axis scales.
+// Vector self-dots, cross-dots and exact absolute values remain native operations;
+// selecting the maximum reuses the owner's strict, provenance-bearing helper.
+fn affine_expansion_bound(inverse: &Matrix4) -> PredicateOutcome<Real> {
+    let columns: [Vector3; 3] = core::array::from_fn(|column| {
+        Vector3(core::array::from_fn(|row| inverse.0[row][column].clone()))
+    });
+    // Retain symmetry instead of recomputing the three mirrored Gram entries.
+    let diagonal = columns.each_ref().map(Vector3::norm_squared);
+    let xy = columns[0].dot(&columns[1]).abs();
+    let xz = columns[0].dot(&columns[2]).abs();
+    let yz = columns[1].dot(&columns[2]).abs();
+    let rows = [
+        &(&diagonal[0] + &xy) + &xz,
+        &(&diagonal[1] + &xy) + &yz,
+        &(&diagonal[2] + &xz) + &yz,
+    ];
+    let [first, second, third] = rows;
+    let maximum = combine_lipschitz_pair(max_real(first, second), decided(third), max_real);
+    let (squared, certainty, stage) = match maximum {
+        PredicateOutcome::Decided {
+            value,
+            certainty,
+            stage,
+        } => (value, certainty, stage),
+        PredicateOutcome::Unknown { .. } => {
+            // An undecided row ordering is not a failed field certificate.
+            // The Frobenius bound is independent of that ordering:
+            // ||B v||² <= trace(B^T B) ||v||² by row-wise Cauchy-Schwarz.
+            (
+                &(&diagonal[0] + &diagonal[1]) + &diagonal[2],
+                Certainty::Exact,
+                Escalation::Exact,
+            )
+        }
+    };
+    match squared.sqrt() {
+        Ok(value) => PredicateOutcome::decided(value, certainty, stage),
+        Err(_) => unsupported(),
     }
 }
 

@@ -21,6 +21,11 @@ Initial release.
   leaves. Shared work limits, separate tree capacity and typed failure prevent
   a partial traversal from being published as a complete cover.
 
+- Fixed understated affine Lipschitz certificates: local child bounds now include
+  a certified inverse-frame Euclidean expansion factor. Exact similarities,
+  scales, nested transforms and uncertain norm orderings retain conservative
+  bounds; translations and child uncertainty keep their existing meaning.
+
 Hypersdf provides signed-distance and implicit-field expressions for the
 Hyper geometry stack. It retains expression structure and exact parameters so
 that inside, boundary, and outside questions are answered from the field
