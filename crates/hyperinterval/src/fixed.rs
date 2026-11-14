@@ -45,6 +45,15 @@ pub struct FixedInterval<I: FixedEndpoint, const FRAC: u32> {
 }
 
 impl<I: FixedEndpoint, const FRAC: u32> FixedInterval<I, FRAC> {
+    // Arithmetic callers establish endpoint order before reaching this path.
+    // Scale validation remains mandatory; public ingress always uses new().
+    pub(crate) fn from_ordered(lower: I, upper: I) -> Result<Self, IntervalError> {
+        Self::validate_scale()?;
+        Ok(Self {
+            bounds: Some(Bounds::ordered(lower, upper)),
+        })
+    }
+
     fn validate_scale() -> Result<(), IntervalError> {
         if FRAC < I::BITS {
             Ok(())
@@ -88,7 +97,8 @@ impl<I: FixedEndpoint, const FRAC: u32> FixedInterval<I, FRAC> {
     ) -> Result<FixedInterval<J, FRAC>, IntervalError> {
         let empty = FixedInterval::<J, FRAC>::empty()?;
         match self.bounds() {
-            Some((lower, upper)) => FixedInterval::new(
+            // Successful integer conversion is exact and preserves order.
+            Some((lower, upper)) => FixedInterval::from_ordered(
                 J::try_from(lower).map_err(|_| IntervalError::Overflow)?,
                 J::try_from(upper).map_err(|_| IntervalError::Overflow)?,
             ),

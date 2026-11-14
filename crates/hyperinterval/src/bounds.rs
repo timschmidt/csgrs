@@ -66,6 +66,7 @@ impl<T: PartialOrd> Bounds<T> {
     // constructor. Public ingress always uses new().
     #[cfg(any(
         feature = "integer",
+        feature = "fixed",
         feature = "rational",
         feature = "float-proposal",
         feature = "float-enclosure"

@@ -135,7 +135,7 @@ scalar. With either `integer` or `fixed`, `integer_quotient_bounds` returns the
 integer floor and ceiling of an i128 ratio, with typed zero-denominator and
 overflow errors; it does not replace the ratio by a discrete integer set.
 
-Fixed arithmetic widens intermediates to i128. Products, quotients, reciprocals,
+Fixed products and fused arithmetic use i128 intermediates. Products, quotients, reciprocals,
 squares, ratio ingress and fused affine images round outward; representational
 overflow is an error, never saturation. Integer powers use a bounded sequence
 of outward-rounded products and may be wider than the tight hull. Storage

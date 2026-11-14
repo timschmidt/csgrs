@@ -1,4 +1,4 @@
-//! Widened arithmetic for the sealed i32/i64 fixed-point families.
+//! Checked arithmetic with widened products for the sealed i32/i64 fixed-point families.
 
 use crate::integer_quotient::positive_quotient_bounds as quotient_bounds;
 use crate::{DomainCoverage, FixedInterval, IntervalError, MidpointRounding, RangeEnclosure};
@@ -41,9 +41,15 @@ macro_rules! arithmetic {
             }
 
             fn from_wide(lower: i128, upper: i128) -> Result<Self, IntervalError> {
-                let lower = <$endpoint>::try_from(lower).map_err(|_| IntervalError::Overflow)?;
-                let upper = <$endpoint>::try_from(upper).map_err(|_| IntervalError::Overflow)?;
-                Self::new(lower, upper)
+                if lower < i128::from(<$endpoint>::MIN) || lower > i128::from(<$endpoint>::MAX) {
+                    return Err(IntervalError::Overflow);
+                }
+                if upper < i128::from(<$endpoint>::MIN) || upper > i128::from(<$endpoint>::MAX) {
+                    return Err(IntervalError::Overflow);
+                }
+                // Callers select ordered extrema before outward rounding.
+                // Exact narrowing preserves that established order.
+                Self::from_ordered(lower as $endpoint, upper as $endpoint)
             }
 
             /// Smallest outward lattice enclosure of an exact i64 ratio.
@@ -190,20 +196,20 @@ macro_rules! arithmetic {
             /// Exact Minkowski sum, or `Overflow` if an endpoint does not fit.
             pub fn checked_add(&self, other: &Self) -> Result<Self, IntervalError> {
                 match (self.bounds(), other.bounds()) {
-                    (Some((a, b)), Some((c, d))) => Self::from_wide(
-                        i128::from(a) + i128::from(c),
-                        i128::from(b) + i128::from(d),
+                    (Some((a, b)), Some((c, d))) => Self::from_ordered(
+                        a.checked_add(c).ok_or(IntervalError::Overflow)?,
+                        b.checked_add(d).ok_or(IntervalError::Overflow)?,
                     ),
                     _ => Self::empty(),
                 }
             }
 
-            /// Exact Minkowski difference, with widened intermediates and no saturation.
+            /// Exact Minkowski difference, with checked endpoints and no saturation.
             pub fn checked_sub(&self, other: &Self) -> Result<Self, IntervalError> {
                 match (self.bounds(), other.bounds()) {
-                    (Some((a, b)), Some((c, d))) => Self::from_wide(
-                        i128::from(a) - i128::from(d),
-                        i128::from(b) - i128::from(c),
+                    (Some((a, b)), Some((c, d))) => Self::from_ordered(
+                        a.checked_sub(d).ok_or(IntervalError::Overflow)?,
+                        b.checked_sub(c).ok_or(IntervalError::Overflow)?,
                     ),
                     _ => Self::empty(),
                 }
@@ -212,7 +218,10 @@ macro_rules! arithmetic {
             /// Exact reflected set, or `Overflow` at an unrepresentable negation.
             pub fn checked_neg(&self) -> Result<Self, IntervalError> {
                 match self.bounds() {
-                    Some((lower, upper)) => Self::from_wide(-i128::from(upper), -i128::from(lower)),
+                    Some((lower, upper)) => Self::from_ordered(
+                        upper.checked_neg().ok_or(IntervalError::Overflow)?,
+                        lower.checked_neg().ok_or(IntervalError::Overflow)?,
+                    ),
                     None => Self::empty(),
                 }
             }

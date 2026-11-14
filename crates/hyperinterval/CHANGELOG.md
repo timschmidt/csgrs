@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Preserve proved endpoint order during fixed arithmetic reconstruction and
+  exact storage conversion. Use native checked additive operations and explicit
+  checked narrowing without changing rounded bounds or failure outcomes.
+
 - Add allocation-free signed integer quotient bounds and exact scalar images of
   primitive integer ranges, including signed extremes and typed overflow. Share
   directed quotient arithmetic with fixed-point operations.
