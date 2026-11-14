@@ -408,3 +408,14 @@ fn bound_row(
     }
     Ok(result)
 }
+
+#[cfg(feature = "taylor-polynomial")]
+impl TaylorAffineRange {
+    // Callers retain the source-domain proof, including empty/unit identity.
+    pub(super) fn new(bounds: Vec<DyadicInterval>, empty: bool) -> Self {
+        Self { bounds, empty }
+    }
+    pub(super) fn into_bounds(self) -> Vec<DyadicInterval> {
+        self.bounds
+    }
+}

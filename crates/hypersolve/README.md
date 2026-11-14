@@ -655,6 +655,17 @@ function, not an ODE coordinate-change certificate or nonlinear model arithmetic
 The graph/native budgets apply with the existing scalar/payload exclusions;
 entry checks are stage-local, not a total live-memory bound.
 
+Enable `taylor-polynomial` for `TaylorPolynomialModel` output maps over an
+existing shared Taylor model. Validated `ExpressionProgram` maps may use constants,
+inputs, negation, addition, subtraction and multiplication. Products retain exact
+coefficients and account for every truncated monomial and residual cross-product;
+generated models accept further maps without new differentiation. Subdomain
+queries return `TaylorRange`, the existing Cartesian image carrier, preserving
+empty/unit products. Replay the original source/request and each map definition.
+This does not implement division, transcendental model maps, or combination of
+independently centered models. Use `taylor-affine` when composing linear maps
+against the original residual coordinates is the intended operation.
+
 ### Exact coordinate programs
 
 The opt-in `coordinate-program` feature certifies finite exact state charts

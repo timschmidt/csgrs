@@ -46,6 +46,7 @@ expression-program = []
 coordinate-program = ["expression-program"]
 taylor-model = ["interval-program"]
 taylor-affine = ["taylor-model"]
+taylor-polynomial = ["taylor-affine"]
 float-proposal-program = ["expression-program"]
 interval-program = ["expression-program", "dep:hyperinterval", "hyperinterval/hyperreal"]
 interval-lattice = ["interval-program", "hyperlattice/interval-dyadic"]
@@ -96,3 +97,8 @@ required-features = ["interval-program"]
 name = "expression_program"
 harness = false
 required-features = ["expression-program"]
+
+[[bench]]
+name = "taylor_polynomial"
+harness = false
+required-features = ["taylor-polynomial"]

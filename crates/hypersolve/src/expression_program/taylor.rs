@@ -37,7 +37,7 @@ pub enum TaylorError {
     CenterOutsideDomain { slot: usize },
     /// Reuse was requested outside the certified model domain.
     OutsideDomain { slot: usize },
-    /// The requested next derivative order cannot be represented by usize.
+    /// A required derivative or composed monomial degree cannot be represented by usize.
     DegreeOverflow,
     /// A native monomial image did not cover its whole operand domain.
     MonomialDomain { variable: SymbolId, exponent: usize },
@@ -363,4 +363,10 @@ impl From<hyperinterval::IntervalError> for TaylorError {
 pub use model::{
     TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
     TaylorAffineTerm,
+};
+
+#[cfg(feature = "taylor-polynomial")]
+pub use model::{
+    TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
+    TaylorRange,
 };

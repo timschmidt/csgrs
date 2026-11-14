@@ -626,3 +626,9 @@ pub use coordinates::{CoordinateChange, CoordinateError, CoordinateProgram};
 
 mod composition;
 pub use composition::{CompositionError, CompositionProgram};
+
+#[cfg(feature = "taylor-polynomial")]
+pub use taylor::{
+    TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
+    TaylorRange,
+};

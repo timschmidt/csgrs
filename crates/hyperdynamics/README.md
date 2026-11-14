@@ -135,3 +135,8 @@ a whole-resource bound or automatic wrapping reduction.
 Run `cargo run -p hyperdynamics --features coordinates --example coordinates`
 for an exact scaling of `x1' = 128*x2, x2' = 0` that admits a half-unit step after
 the original-coordinate contraction check rejects it.
+
+The opt-in `taylor-polynomial` feature forwards Hypersolve polynomial arithmetic
+on existing native Taylor models. The original field identity and time/state
+binding remain with the field model; output-image arithmetic is not an ODE flow
+or coordinate-change certificate.

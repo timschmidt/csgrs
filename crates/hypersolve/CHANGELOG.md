@@ -2,6 +2,12 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in polynomial output maps over existing Taylor models, retaining exact
+  coefficients, every truncated term and residual cross-product, shared proof
+  stages, checked subdomain reuse and source/map replay. `taylor-polynomial`
+  leaves established feature sets unchanged. `TaylorRange` reuses the existing
+  Cartesian range carrier, including empty/unit distinctions.
+
 - Add source-bound nonlinear program composition with explicit binding selection,
   shared nodes, retained inner domain checks and original-source replay. Existing
   Jacobian/Taylor consumers retain the guard prefix when certifying final values.

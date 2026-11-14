@@ -578,3 +578,12 @@ pub use affine::{
     TaylorAffineError, TaylorAffineMap, TaylorAffineModel, TaylorAffineRange, TaylorAffineRow,
     TaylorAffineTerm,
 };
+
+#[cfg(feature = "taylor-polynomial")]
+mod polynomial;
+#[cfg(feature = "taylor-polynomial")]
+pub use affine::TaylorAffineRange as TaylorRange;
+#[cfg(feature = "taylor-polynomial")]
+pub use polynomial::{
+    TaylorPolynomialError, TaylorPolynomialModel, TaylorPolynomialProduct, TaylorPolynomialTerms,
+};
