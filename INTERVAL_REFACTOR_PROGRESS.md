@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps, direct exact chart transport, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE step/order and frame/QR wrapping control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE step/order and automatic frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5990,6 +5990,85 @@ verify and every older registry row is preserved. The new stage is frozen.
 No push occurred. Phase 11 cost failures, adaptive frame/QR and other remaining
 Phase 7–13 work, embedded qualification and Phase 14 release obligations remain
 open under the unchanged full fifteen-phase goal.
+
+## Retain exact QR coordinate construction (2026-11-14)
+
+Phase 13 gains opt-in `qr-coordinates` at `35bc68ed30cde1d267aa7af5e4776318aca2284b`.
+Hypersolve constructs unpivoted exact QR from a caller-supplied finite square
+basis and origin. Strict positive residual-norm decisions precede normalization;
+the existing source-bound coordinate authority proves Q-transpose*Q=I, and a
+separate exact reconstruction pass proves Q*R=M. Shared results retain the basis,
+source/order/origin, Q, R and all strict decisions. Reflections and zero-dimensional
+units are supported. Dependence, unknown, malformed input, scalar errors and
+exhaustion remain distinct. Hyperdynamics consumes the admitted transformation
+through its existing field/Jacobian and Picard/Taylor/transport/evolution APIs.
+No old arithmetic or predicate sequence changes. Automatic basis selection and
+adaptive whole-horizon QR/Lohner control remain open.
+
+The baseline missing-API witness fails. Five core and seven field tests cover
+independent rational 2D/3D and algebraic decompositions, near-dependence, unresolved
+norms, invalid input, final cutoffs, cancellation/retry, strict receipts, zero
+getter dispatch, fresh-process proof/work replay and QR-generated endpoints
+transported into another chart and consumed by further Picard/Taylor steps.
+Failed draft assertions expecting native singleton values for exact 3/5
+coefficients are preserved. Tests now distinguish exact point equations from
+outward native containment (width <= 2^-48), retain the tight candidate's rejection,
+and certify a widened proposal. No production bypass or weakened existing test
+is used. Draft compiler/observer failures and their corrections are also retained.
+
+The isolated revision passes 1,581 top-level tests across 72 test/doc groups,
+with zero failures, ignored or filtered top-level tests. An existing selected
+replay child is counted separately. Strict all-feature/all-target Clippy,
+warning-denied docs, minimal/disabled features, WASM and formatting pass. Main's
+combined extraction state passes 104 Hyperdynamics tests, 5 focused core tests,
+standalone minimal core feature, strict Hyperdynamics Clippy, formatting and
+repository budget. Full pre-push/release/sanitizer/fuzz qualification is not claimed.
+
+All five old-feature consumer controls preserve allocated sections except build
+IDs and canonical function layouts. Their raw file deltas and metadata differences
+are recorded in the archive. Same-path fixed-feature observations do not establish
+arbitrary-platform or unified all-feature invariance; no old-path speedup is claimed.
+
+Three maintained Criterion trials compare complete source-flow reports in identity
+and QR charts, including all attempts, projections and destruction. Source initial
+sets, horizons, independent exact endpoints and width <= 2^-48 acceptance are the
+same; output box equality is not claimed. Preparation is measured separately.
+Median microseconds across trials:
+
+| Workload | Minimum | Maximum |
+| --- | ---: | ---: |
+| constant_flow/identity | 43.208 | 43.377 |
+| constant_flow/prepare_qr | 12.111 | 12.300 |
+| constant_flow/qr | 55.430 | 55.763 |
+| rotated_equilibrium/identity | 111.140 | 111.737 |
+| rotated_equilibrium/prepare_qr | 50.883 | 51.076 |
+| rotated_equilibrium/qr | 55.277 | 55.701 |
+
+Rotated equilibrium requires two identity segments/three attempts versus one QR
+segment/attempt. QR reduces allocated bytes from 54,030 to 24,226, but native
+work increases from 1,834,946 to 2,478,206. Constant flow uses one segment/two
+attempts in both charts; QR allocation increases from 21,828 to 26,076 bytes and
+native work from 619,950 to 1,434,334. QR preparation allocates 75,502/17,622 bytes
+for these two fixtures. Every warm construction/drop epoch returns to zero
+incremental live heap. Retained/peak storage and full graph/native work are
+recorded. Exact scalar arithmetic, refinement/predicate internals, scalar payload
+lifetime, whole heap and within-scalar cancellation remain outside the structural
+budget contract. Prepared source/frame storage and stack are outside query heap
+epochs. Zero native preparation work is a counter-scope fact, not zero arithmetic.
+These measurements do not establish a universal speedup, total resource bound,
+zero cold-cache growth or independent competitive-solver qualification.
+
+Alternate-index application and exact reversal recover the entire original pending
+tree. Exactly 41 extraction paths remain staged, SHA-256
+`6713fe7fcebdd216a23d1ee5867701999f94ac6c772dcd50202d4648d9281e62`.
+Interface's eight edits and Firmware's clean state remain unchanged. All 28 prior
+frozen stages verify. Evidence `docs/evidence/2026-11-14-interval-qr-coordinates`
+at archive `3c19d8596988b451f181167f9ff57b8cbf6afd39` contains 277 files,
+1,207,112 bytes, SHA-256 `934a074acc5f447faf9177e943f3f7f119878880beca9f806e161943ec0df5bf`.
+Committed blobs and parent diff scope verify; all older registry rows are preserved.
+The new stage is frozen. No push occurred. Phase 11 cost failures, adaptive
+step/order/frame control, remaining migrations and adoption, embedded qualification
+and Phase 14 release obligations remain open under the full fifteen-phase goal.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
