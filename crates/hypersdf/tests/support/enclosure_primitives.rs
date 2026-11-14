@@ -140,6 +140,24 @@ fn native_squares_taylor_and_later_composition_preserve_complete_source() {
         4.into(),
         1.into(),
     ));
+    let jacobian = torus
+        .program()
+        .jacobian(&torus.program().definition().variables, &mut graph())
+        .unwrap();
+    // At (3,0,4), q=28: f=640, df/dx=4*x*q-32*x=240,
+    // df/dy=0, and df/dz=4*z*q=448.
+    assert_eq!(
+        jacobian
+            .program()
+            .eval_real(&[3.into(), 0.into(), 4.into()], &mut graph())
+            .unwrap(),
+        vec![
+            Real::from(640),
+            Real::from(240),
+            Real::zero(),
+            Real::from(448)
+        ]
+    );
     let model = torus
         .taylor_cell(
             TaylorRequest {
