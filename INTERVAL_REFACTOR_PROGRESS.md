@@ -5731,6 +5731,99 @@ at archive `26216ee286e7048d3b60dedd5d1ef3c7d28ce17b`: 6,714 files,
 address a demonstrated compilation/layout or result-ownership cause and pass the
 unchanged full contract. Phase 11 and every remaining full-goal obligation stay open.
 
+## Retain polynomial arithmetic over existing Taylor proofs (2026-11-14)
+
+Phase 13 gains an opt-in `taylor-polynomial` capability, retained at
+`568ddff117ee0ba873cdfa14186b1830201ede4c`. Hypersolve owns the exact sparse
+coefficient arithmetic and remainder evidence; Hyperdynamics forwards the feature.
+A shared original model supplies center, domain, order, bindings and source guards.
+Constant/input/negation/add/subtract/multiply maps retain every truncated monomial
+and P*S, Q*R, R*S cross term. Generated outputs accept further maps without fresh
+differentiation. Flat shared stage history preserves source/map/node identity and
+avoids recursively owning parent chains. Subdomain output reuses the existing
+Cartesian carrier, including distinct empty/unit semantics. Private proofs replay
+from original source/request and maps, including fresh-process validation.
+
+The preimplementation missing API witness, empty/unit regression and misattributed
+multiplication-evidence witness all fail before their fixes. The last finding
+arose because a reused input shared its producer's proof: lookup now checks the
+requested map node before returning a multiplication certificate. Ten core tests
+cover independent exact/algebraic coefficients, all residual contributions,
+multivariate cancellation, generated chains, source guards, unsupported versus
+unused nodes, invalid/empty/unit cases, subdomains, final-budget cutoffs,
+cancellation/retry, shared sources, replay and zero getter dispatch. The field
+fixture retains field identity with reordered time/state bindings and consumes
+its product in another exact polynomial map.
+
+This is a new polynomial map grammar, not general model division/transcendentals,
+direct PowI evaluation, independently centered model combination, adaptive QR,
+ODE wrapping control or completion of Phase 13. Residual intervals do not establish
+independence/equality; the specialized affine form remains available for its
+stronger residual-coordinate composition contract. Shared graph/native budgets
+apply, with existing scalar payload/refinement, total heap and within-scalar
+cancellation exclusions. Stage entry checks do not claim a total memory bound.
+
+The first ungated implementation grew the existing model consumer by 8,200 ELF
+bytes and was rejected. Feature isolation, appended declarations and preserving
+private range fields leave all allocated sections except build IDs identical in
+three established consumers and eight owner bench/test executables. Complete sized
+function layouts also agree after canonicalizing numeric LLVM disambiguators.
+The field-only ELF is byte-identical. Raw file deltas are -8 bytes for the old
+model consumer, zero for affine and 0/+8/+16/+40 for owner executables, attributable
+to nonallocated symbol metadata. These are explicit additive-extension costs,
+not a zero-size-growth refactor claim. Existing feature selections are fixed;
+functional all-features checks additionally exercise the new feature. All three
+consumer output/work/allocation/peak/live records and the full owner dispatch
+report match. Incidental timings recorded during builds are not performance claims.
+
+Three real maintained-benchmark trials complete all six callback workloads on
+CPU 0 with ASLR disabled, one-second warmup, two-second measurement and 30 samples,
+after builds/tests finish. Both paths materialize and drop their complete proof
+for the same function/domain/order, with independent coefficient/extremum checks.
+Seed models already exist before timing. The observed median ranges are:
+
+| Case | Reuse (microseconds) | Fresh differentiation (microseconds) |
+| --- | ---: | ---: |
+| Centered logistic | 42.291–42.388 | 48.612–49.193 |
+| Algebraic product | 53.913–54.207 | 42.895–43.051 |
+| Reciprocal square | 73.637–73.807 | 259.477–261.305 |
+
+The small algebraic case is slower with reuse; no blanket speedup is claimed.
+Reuse allocates 10,066/12,850/9,166 bytes versus 24,950/21,984/129,116 for fresh
+differentiation. Its retained and peak memory are higher in the first two cases
+and lower in the reciprocal case; native work is also higher in the simple cases.
+All measurements remain explicit in the archive. Warm construction/drop trials
+return to zero incremental live bytes. A first cold retained-output observer
+left 104 bytes while the original seed remained live; its failed assertion is
+retained. Warming removes that incremental remainder. The archive narrative's
+attribution to source caches is an inference from this stabilization; individual
+allocation ownership was not traced. Warm measurements therefore do not establish
+zero cold-cache growth, a whole-heap bound or an end-to-end seed-construction
+speedup.
+
+The final isolated revision passes 1,547 tests across 70 test/doc groups with no
+failures or ignored tests, strict all-feature/all-target Clippy, warning-denied
+docs, minimal/disabled feature builds, WASM and workspace formatting. Main's
+combined extraction-plus-extension state additionally passes the eleven focused
+core/field tests and formatting. The root default/benchmark feature graph does
+not compile the changed Taylor module; no new successive_operations timing or
+unified-workspace-all-features cost claim is made. Full pre-push workflows,
+coverage/fuzz/sanitizer and remaining release qualification remain open. No push.
+
+The 41-path pending extraction is preserved by an exact index-tree reversal proof
+across the overlapping Hyperdynamics manifest/README; its new patch hash is
+`c0b740cfaa6e6ae85aa409cd835fa5739160112cdb4a42693eaf97fc69672be5`.
+Interface's eight edits and Firmware's clean state are unchanged. All 25 earlier
+frozen stages verify. Evidence `docs/evidence/2026-11-14-interval-taylor-polynomial-arithmetic` at archive
+`06d80b74a155c4bbec5d299a293f1b66b4121920` contains 351 files,
+2,782,312 bytes, SHA-256
+`084db5012b25b55b516676291510d4265bc135af872ca4d245e93c8df5dde471`.
+All 351 committed blobs verify against this digest; the archive parent-tree diff
+and manifest comparison preserve every older entry. A broader historical-blob scan
+was stopped while fetching unrelated partial-clone objects and has no completion
+claim. The stage is frozen. Phase 11 cost failures, remaining Phase 7–13 work, embedded qualification and
+Phase 14 release obligations remain open under the unchanged full goal.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
