@@ -47,8 +47,10 @@ including sine/cosine/tangent, and optionally centered Taylor images with their
 complete remainder. Source distance qualification is preserved; a range merely
 containing zero does not certify a crossing. Constants, coordinates, linear
 fields, scalar arithmetic, square root, complement, offset and translations are
-supported. Primitive, piecewise and affine nodes have explicit unsupported
-results on this optional path; existing queries remain available. Graph and
+supported, along with polynomial plane, sphere and torus fields. Their original
+strict parameter checks retain invalid versus undecided outcomes. Other
+primitive, piecewise and affine nodes have explicit unsupported results on this
+optional path; existing queries remain available. Graph and
 native arithmetic budgets are caller-owned; scalar refinement/payload and heap
 exclusions remain explicit.
 

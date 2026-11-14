@@ -243,6 +243,14 @@ fn original_guards_and_unsupported_forms_are_not_empty_or_success() {
         .location(),
         None
     );
+    let sphere = program(SdfExpr::sphere(point(0, 0, 0), Real::one()));
+    assert_eq!(
+        sphere
+            .program()
+            .eval_real(&[2.into(), 0.into(), 0.into()], &mut graph())
+            .unwrap(),
+        vec![Real::from(3)]
+    );
     let tangent = program(SdfExpr::x().tan());
     assert!(
         tangent
@@ -281,7 +289,7 @@ fn original_guards_and_unsupported_forms_are_not_empty_or_success() {
         SdfExpr::x().abs(),
         SdfExpr::x().union(SdfExpr::y()),
         SdfExpr::x().intersection(SdfExpr::y()),
-        SdfExpr::sphere(point(0, 0, 0), Real::one()),
+        SdfExpr::aabb(point(0, 0, 0), point(1, 1, 1)),
     ] {
         assert!(matches!(
             SdfProgram::compile(Arc::new(Sdf::new(expr)), &mut graph()),
@@ -429,3 +437,6 @@ fn constant_compilation_does_not_reserve_unrelated_linear_expansion() {
     // Three bindings, four nodes, one output, and one retained traversal result.
     assert!(SdfProgram::compile(source, &mut ExpressionBudget::new(9, 1000)).is_ok());
 }
+
+#[path = "support/enclosure_primitives.rs"]
+mod primitive_acceptance;

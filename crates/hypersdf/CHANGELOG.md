@@ -8,6 +8,9 @@ Initial release.
   enclosures for smooth scalar expressions and translations. It retains original
   field identity, domain errors, full remainders, distance qualification and
   caller-owned budgets; unsupported forms and unresolved signs remain explicit.
+- Polynomial plane, sphere and torus source lowering reuses native strict
+  parameter admission, retains algebraic centers and exact squares, and remains
+  consumable by native Jacobian/Taylor proofs and subsequent composition.
 
 Hypersdf provides signed-distance and implicit-field expressions for the
 Hyper geometry stack. It retains expression structure and exact parameters so

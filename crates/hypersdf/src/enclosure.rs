@@ -1,5 +1,7 @@
 //! Retained implicit expressions interpreted through native Hypersolve proofs.
-use crate::{Sdf, SdfCellLocation, SdfCoordinate, SdfExpr, SdfMetricStatus, SdfTransform};
+use crate::{
+    Sdf, SdfCellLocation, SdfCoordinate, SdfEvaluationError, SdfExpr, SdfMetricStatus, SdfTransform,
+};
 use hyperinterval::{DyadicBudget, DyadicInterval, SignSet};
 use hyperreal::Real;
 use hypersolve::{
@@ -21,6 +23,8 @@ pub enum SdfProgramError {
     Expression(ExpressionError),
     /// Original Taylor regularity, coefficient or remainder diagnostic.
     Taylor(TaylorError),
+    /// Original strict primitive-parameter domain or undecided diagnostic.
+    Source(SdfEvaluationError),
 }
 impl fmt::Display for SdfProgramError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -30,10 +34,16 @@ impl fmt::Display for SdfProgramError {
 impl std::error::Error for SdfProgramError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
+            Self::Source(e) => Some(e),
             Self::Expression(e) => Some(e),
             Self::Taylor(e) => Some(e),
             Self::Unsupported(_) => None,
         }
+    }
+}
+impl From<SdfEvaluationError> for SdfProgramError {
+    fn from(e: SdfEvaluationError) -> Self {
+        Self::Source(e)
     }
 }
 impl From<ExpressionError> for SdfProgramError {
@@ -51,8 +61,9 @@ impl From<TaylorError> for SdfProgramError {
 ///
 /// Coordinates are always bound as x,y,z. Supported forms are constants,
 /// coordinates, linear fields, add/subtract/multiply, sqrt, sin/cos/tan,
-/// complement, offset and translation. Primitive, piecewise and affine nodes
-/// currently return `Unsupported`; existing SDF APIs remain available.
+/// complement, offset, translation, and polynomial plane/sphere/torus fields.
+/// Their original strict parameter checks remain mandatory. Other primitive,
+/// piecewise and affine nodes return `Unsupported`; existing SDF APIs remain available.
 /// No metric-distance or zero-set topology guarantee follows from compilation.
 /// Replay by compiling the original SDF again, never by adopting serialized
 /// generated nodes or flags as proof of their association with that SDF.
@@ -66,7 +77,9 @@ impl SdfProgram {
     ///
     /// Graph entries/work include traversal tasks, emitted nodes, validation and
     /// publication. Scalar payloads, source ingestion/destruction and heap bytes
-    /// retain ExpressionBudget's exclusions. The source is immutable and no
+    /// retain ExpressionBudget's exclusions. Primitive admission uses the owner's
+    /// strict predicate policy; its scalar refinement is not graph work.
+    /// The source is immutable and no
     /// failed attempt caches evidence. No domain guard is simplified away.
     pub fn compile(
         source: Arc<Sdf>,
@@ -197,6 +210,24 @@ impl Builder<'_> {
         self.nodes.push(node);
         Ok(id)
     }
+    // Same emitted nodes, charges and order as the original Linear arm.
+    #[inline]
+    fn linear(
+        &mut self,
+        coefficients: [&Real; 3],
+        offset: &Real,
+        xyz: [usize; 3],
+    ) -> Result<usize, ExpressionError> {
+        let mut terms = [0; 3];
+        for i in 0..3 {
+            let c = self.constant(coefficients[i])?;
+            terms[i] = self.binary(B::Mul, c, xyz[i])?;
+        }
+        let xy = self.binary(B::Add, terms[0], terms[1])?;
+        let xyz = self.binary(B::Add, xy, terms[2])?;
+        let offset = self.constant(offset)?;
+        self.binary(B::Add, xyz, offset)
+    }
     fn constant(&mut self, x: &Real) -> Result<usize, ExpressionError> {
         self.emit(Node::Constant(x.clone()))
     }
@@ -255,8 +286,8 @@ fn compile(
                     transform: SdfTransform::Translation { .. },
                     ..
                 } => 7,
-                SdfExpr::Primitive(_)
-                | SdfExpr::Union(..)
+                SdfExpr::Primitive(p) => primitive::entries(p),
+                SdfExpr::Union(..)
                 | SdfExpr::Intersection(..)
                 | SdfExpr::Abs(_)
                 | SdfExpr::Transform { .. } => 0,
@@ -283,15 +314,11 @@ fn compile(
                     coefficients,
                     offset,
                 } => {
-                    let mut terms = [0; 3];
-                    for i in 0..3 {
-                        let c = b.constant(&coefficients.0[i])?;
-                        terms[i] = b.binary(B::Mul, c, xyz[i])?;
-                    }
-                    let xy = b.binary(B::Add, terms[0], terms[1])?;
-                    let xyz = b.binary(B::Add, xy, terms[2])?;
-                    let offset = b.constant(offset)?;
-                    results.push(b.binary(B::Add, xyz, offset)?);
+                    results.push(b.linear(
+                        [&coefficients.0[0], &coefficients.0[1], &coefficients.0[2]],
+                        offset,
+                        xyz,
+                    )?);
                 }
                 SdfExpr::Add(a, c) | SdfExpr::Sub(a, c) | SdfExpr::Mul(a, c) => {
                     let op = match expr {
@@ -332,7 +359,7 @@ fn compile(
                     }
                     tasks.push(Task::Visit(child, moved));
                 }
-                SdfExpr::Primitive(_) => return Err(SdfProgramError::Unsupported("primitive")),
+                SdfExpr::Primitive(p) => results.push(b.primitive(p, xyz)?),
                 SdfExpr::Union(..) => return Err(SdfProgramError::Unsupported("union")),
                 SdfExpr::Intersection(..) => {
                     return Err(SdfProgramError::Unsupported("intersection"));
@@ -375,3 +402,5 @@ fn compile(
     )
     .map_err(Into::into)
 }
+
+mod primitive;
