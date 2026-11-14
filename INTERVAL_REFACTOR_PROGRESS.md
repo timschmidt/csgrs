@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | automatic frame/QR evolution control, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6579,6 +6579,112 @@ Taylor/order/frame evolution, Phase 11 timing regressions, embedded flash/whole-
 stack/cycles/HIL, outstanding Interface Clippy issues and coordinated release.
 No full pre-push/workflow, fuzz/coverage/sanitizer or platform qualification is claimed.
 No push occurred. Phase 13 and the full fifteen-phase goal remain active.
+
+## Bounded adaptive Taylor order and duration selection (2026-11-14)
+
+Phase 13 and plan 10.7 gain opt-in `adaptive-taylor`, retained at
+`eb8261c888bcb3fdbec0e6c1ad45c88b72fcf1ca`. The absent consumer was reproduced
+as E0599 before production edits. `field.adaptive_taylor(options).integrate`
+tries a finite ascending order range on each original certified Picard proposal.
+The first order meeting all exact coordinate limits on absolute endpoint remainder
+contributions advances the state. Nonzero singleton remainders do not pass a zero
+allowance merely because their interval width is zero. If every order fails quality,
+bounded exact halving retries. Accepted durations may double for the next proposal,
+capped by the configured maximum and exact horizon. Native existence-search and
+quality-search halving limits remain separate.
+
+The controller retains original source/options/request/policy, every native search,
+ordered Taylor refinement, complete/partial proof status, magnitude enclosure and
+quality decision. Native or Taylor domain/resource failures stop with their original
+cause; no weaker Picard success is substituted. Prepared programs are generated once
+per distinct order within a run and shared by index across refinements. The existing
+coefficient generator still prepares different orders independently. Only completed,
+quality-checked endpoints advance the state; stopped prefixes remain separate from
+whole-horizon success. Replay rebuilds the source, request and selection options.
+Local truncation limits do not bound global solution error or uncertain initial state,
+and no exact reachable-set equality or optimal-order/runtime claim is made.
+
+Existing native/Picard/fixed-order evolution files are byte-identical; the original
+Taylor-flow implementation remains an unchanged prefix with an appended gated module.
+Hyperdynamics owns selection/proofs, while Hypersolve/Hyperinterval/Hyperlattice retain
+derivative/scalar/set authority. One budget spans preparation, native searches,
+refinements, comparisons and publication. Aggregate stage record checks retain typed
+exhaustion and explicit partial history. Nested proof-graph size, exact scalar payload/
+refinement, vector capacity, whole heap and within-scalar cancellation remain excluded
+from a whole-resource claim; these gaps are not renamed completed support.
+
+Ten focused cases pass: independent constant flow and singleton-remainder rejection;
+order escalation/program reuse; quality halvings and later regrowth; uncertain
+exponential flow with independent rational bounds and endpoint continuation; oscillator
+alternating-series bounds; empty/unit/identity and invalid configuration/time; quality
+versus native limits and stopped prefixes; original analyticity failure after native
+success; all graph-work cutoffs below completion, exact final graph/native limits,
+small structural limits and cancellation/retry; fresh-process source/request/options
+replay; and zero-dispatch getters. Initial compiler diagnostics remain archived without
+weakened mathematical expectations, source domains, policies or limits.
+
+The isolated owner suite passes 116 tests in 15 groups; the combined main checkout
+passes 127 owner tests and nine downstream physical-flow tests. The latter command
+does not enable its tenth dispatch-gated test. Strict all-feature/all-target owner
+Clippy, warnings-denied docs, disabled features, WASM, formatting and repository budget
+pass. No full pre-push/workflow, fuzz/coverage/sanitizer, hosted-platform, HIL, external
+solver or coordinated release qualification is claimed.
+
+The maintained completed-workload benchmark includes fresh preparation, integration,
+local remainder checks, materialized source/proof/endpoints, independent expectations
+and destruction. Fixed order three and automatic orders zero through three use the
+same source, initial state, horizon 1/2, cap 1/4 and local limits 1/1024. End enclosures
+match; exponential width must be at most 1/512 and include independently bounded
+exp(1/2). Three CPU0/ASLR-disabled trials of 1,000 operations after 16 warmups give:
+
+| Fixture | Fixed order 3, µs/op | Automatic orders 0–3, µs/op |
+| --- | ---: | ---: |
+| constant | 143.465–144.054 | 150.057–151.028 |
+| exponential | 304.510–306.189 | 644.752–645.664 |
+
+Automatic selection is slower on both fixtures. Its rejected-order work and retained
+history are explicit costs accepted for the higher-priority new automatic selection,
+halving/regrowth and certified local-quality capability. This is not a speedup or
+performance-only refactor; fixed-order programs remain available. The full benchmark-
+body allocation observer uses matching dependency versions and returns to zero
+incremental live heap after all 32 warm operations per mode. Allocated bytes/op are
+constant fixed/adaptive 74,692/63,230 and exponential 114,580/238,880. Peak bytes are
+28,912/29,800 and 35,632/79,632. Separate proof-retention epochs, excluding benchmark
+oracle work, retain 25,664/29,408 bytes for constant and 31,600/75,600 for exponential.
+Graph/native work is 1,582/1,605,906 and 949/668,132 for constant; 2,054/3,088,363 and
+4,265/5,767,196 for exponential. Common original source/caches and allocator/platform
+costs are excluded; these are fixture measurements, not universal bounds.
+
+The existing default-feature benchmark shrinks 32 raw bytes to 6,462,528. Every
+allocated ELF section matches baseline bytes/addresses/sizes except the build-ID note;
+all 3,256 symbol-group size/address multisets match. Enabling the feature shrinks 72
+raw bytes versus baseline, with unchanged .text length and symbol size multisets but
+21 moved groups. The new benchmark is 3,471,984 bytes. Initial controls show adverse
+separation in default Picard/preparation/reachability and enabled Picard. A second
+six-run same-executable-path campaign removes the latter separations except default
+Picard: baseline 29.708–29.739 µs versus default 29.950–29.975 µs, about 0.8% slower.
+This observation is also explicitly accepted as cost/uncertainty for the new capability;
+no default no-regression claim or hardware-cause attribution is made. Allocated-code
+identity does not erase measured samples. Both campaigns and unfavorable results
+remain; no threshold was loosened or further repetitions selected for favorable output.
+
+Alternate-index application and exact reversal recover the original pending tree.
+All 41 staged extraction paths and logical changes remain identical; only blob IDs and
+hunk offsets change. Pending SHA-256 changes from
+`d0f3f56e94d54d5f7330111f7bd6051cfe2caaf7ea23b21910b9b2cfaf69f6c0` to
+`7402c446dd98a3c94a6cca38ad4620fc4d8b8d20929ace044afd9ceda8b68b40`.
+Interface's eight edits and Firmware's clean state remain unchanged. All 35 prior
+frozen stages verify. New record `docs/evidence/2026-11-14-interval-adaptive-taylor`
+contains 110 files / 2,070,653 bytes, SHA-256
+`669de51e089c482ab534a87e03929b3673b9f4b5140da2f877c31dd368848dbc`, archive commit
+`9a8116bd54b5bc0ea252119bc2d4f15a95ae9324`. Committed blob digest and addition-only
+archive scope verify; reproduction requires copying frozen drivers to mutable stages.
+
+Automatic frame/QR evolution, independent-noise retention, cross-order preparation
+sharing, competitive external portfolios, remaining migrations/adoption, Phase 11
+extraction regressions, embedded flash/whole-call stack/cycles/HIL, outstanding
+Interface Clippy issues and coordinated release remain open. No push occurred.
+The full fifteen-phase goal remains active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
