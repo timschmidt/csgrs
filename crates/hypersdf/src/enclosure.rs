@@ -222,6 +222,7 @@ fn compile(
 ) -> Result<ExpressionProgram, SdfProgramError> {
     budget.charge(0)?;
     budget.check_entries(&[8])?;
+    budget.charge(4)?; // Initial binding table and traversal task.
     let variables = vec![SymbolId(0), SymbolId(1), SymbolId(2)];
     let mut b = Builder {
         budget,
@@ -236,10 +237,37 @@ fn compile(
     let mut tasks = vec![Task::Visit(expr, [0, 1, 2])];
     let mut results = Vec::new();
     while let Some(task) = tasks.pop() {
-        // Reserve the largest one-step expansion (linear or translation),
-        // including both stacks, before emitting or enqueueing any work.
+        // Maximum additional live records in this specific step. Consumed
+        // operand records are removed before their replacement is emitted.
+        let additional = match &task {
+            Task::Visit(expr, _) => match expr {
+                SdfExpr::Constant(_) => 2,
+                SdfExpr::Coordinate(_) => 1,
+                SdfExpr::Linear { .. } => 11,
+                SdfExpr::Add(..) | SdfExpr::Sub(..) | SdfExpr::Mul(..) => 3,
+                SdfExpr::Sqrt(_)
+                | SdfExpr::Sin(_)
+                | SdfExpr::Cos(_)
+                | SdfExpr::Complement(_)
+                | SdfExpr::Tan(_)
+                | SdfExpr::Offset { .. } => 2,
+                SdfExpr::Transform {
+                    transform: SdfTransform::Translation { .. },
+                    ..
+                } => 7,
+                SdfExpr::Primitive(_)
+                | SdfExpr::Union(..)
+                | SdfExpr::Intersection(..)
+                | SdfExpr::Abs(_)
+                | SdfExpr::Transform { .. } => 0,
+            },
+            Task::Unary(_) => 1,
+            Task::Binary(_) => 0,
+            Task::Offset(_) => 2,
+            Task::Tan => 3,
+        };
         b.budget
-            .check_entries(&[4, b.nodes.len(), tasks.len(), results.len(), 12])?;
+            .check_entries(&[4, b.nodes.len(), tasks.len(), results.len(), additional])?;
         b.budget.charge(1)?;
         match task {
             Task::Visit(expr, xyz) => match expr {

@@ -422,3 +422,10 @@ fn nested_translation_keeps_source_guards_and_linear_graph_growth() {
             .is_err()
     );
 }
+
+#[test]
+fn constant_compilation_does_not_reserve_unrelated_linear_expansion() {
+    let source = Arc::new(Sdf::new(SdfExpr::constant(Real::one())));
+    // Three bindings, four nodes, one output, and one retained traversal result.
+    assert!(SdfProgram::compile(source, &mut ExpressionBudget::new(9, 1000)).is_ok());
+}
