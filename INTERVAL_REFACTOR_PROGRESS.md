@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native smooth/polynomial-primitive SDF cell/Taylor enclosures retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5002,6 +5002,65 @@ Interface's eight pending edits are unchanged; firmware and the isolated source
 tree are clean. The default CSGRS graph does not enable the new feature. No new
 full root/browser/firmware/hardware, coverage/fuzz, release or pre-push campaign
 is claimed. No push occurred. Phase 13 and all fifteen phases remain active.
+
+## 2026-11-13: Polynomial primitives in native SDF enclosure programs
+
+Previous turn: progress, retaining native SDF enclosures and precise graph-entry
+accounting. Source `01f8b858bc9370ff9c6bf2247b104aaa557b7639` extends the optional
+route to planes, spheres and all three torus axes; follow-up
+`fa51fd2e232cc92e83662d1c02129ca35032ad8d` adds independent torus Jacobian
+expectations. The valid-sphere rejection was reproduced before implementation.
+Native strict parameter admission retains invalid versus undecided errors,
+including beneath zero multiplication. Native squared factors preserve interval
+correlation; source identity, distance qualification and subsequent native
+composition remain intact. No new arithmetic or predicate kernel is introduced.
+
+Independent formulas cover 625 field values, algebraic-center spheres,
+degenerate admitted parameters, empty queries, exact graph/work thresholds,
+cancellation and retry. The translated-sphere cell range is [-4,-1]. For the
+quartic torus cell, the natural range [-11583/256,4617/256] is unresolved;
+the fourth-order Taylor range [-35/2,-2775/256] has zero remainder and certifies
+the whole cell inside. Independent derivatives give (240,0,448) at (3,0,4).
+Fresh-process authored-recipe reconstruction regenerates its proof; this is
+not generic SDF serialization, a topology guarantee or a metric promotion.
+
+Final qualification passes 133 owner tests plus two replay children, 114 default
+tests, strict all-target/all-feature Clippy, strict rustdoc, WASM, workspace
+formatting and diff checks. ASan/leak checking passes 18 enclosure tests plus
+replay children; its standard-library sysroot is not instrumented. The independent
+Jacobian follow-up reruns the full owner suite, strict Clippy and ASan. Main
+acceptance, formatting and indexed source-budget checks pass after both commits.
+
+The actual default owner benchmark is byte-identical to baseline: 8,102,576
+bytes, SHA-256 `be7d09278a800c3623335e196ec26bb172198cfa849ec25097f1a1607b6c9afc`;
+all 46 smoke cases pass. The optional legacy harness preserves all 21 exact
+definition/result/allocation rows. Final controlled local timings nevertheless
+show trig natural/Taylor/reuse slowdowns of 1.43%/0.81%/2.43%, with separated
+batch ranges. Linear compile has a 1.67% adverse median with overlapping ranges.
+The optional consumer grows 6,560 executable bytes and 3,138 function-union
+bytes. These costs are retained explicitly for the new completion capability;
+performance neutrality is not claimed. Both candidate variants and unfavorable
+measurements remain archived. No new successive_operations timing is claimed.
+
+New sphere/torus Taylor construction completes at local medians of
+179.422/657.039 microseconds. The largest measured temporary peak is 51,700
+bytes; all successful-result/drop and late-exhaustion epochs have zero signed
+live-byte delta. This warmed instrumented corpus is a measured completion
+envelope, not a universal bound or competitive dynamics result. Scalar
+refinement/payload, source ingestion and heap-byte resource exclusions remain
+explicit. No acceptance assertion was weakened.
+
+Evidence commit `83bccd2bbbd09cf4ff5e46e0df589fc2c9fd393a`, record
+`docs/evidence/2026-11-13-interval-sdf-primitives`: 162 files, 10,205,187 bytes,
+SHA-256 `11ea413b4825c5b0bd7ee1906f627d38c937d265209451c6bfbdb193fd263ed9`.
+Scoped archive verification and all thirteen preceding immutable-stage checks
+pass. The 41-path staged extraction patch remains unchanged, SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`.
+Interface's eight pending edits remain unchanged; firmware and the isolated
+source tree are clean. Other primitives, piecewise/affine lowering, wider
+adoption, wrapping/QR and release obligations remain open. No full workflow,
+browser, firmware/hardware, coverage/fuzz or pre-push campaign is claimed.
+No push occurred. Phase 13 and the full fifteen-phase objective remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
