@@ -5,17 +5,24 @@ scalar arithmetic; this package owns Cartesian structure and linear products.
 Hyperlattice re-exports the same types for host consumers. This companion
 provides the Rust 1.88, allocation-free `no_std` dependency path for firmware.
 
+<!-- quickstart:start -->
 ```rust
-use hyperlattice_interval::{IntervalMatrix, IntervalVector};
 use hyperlattice_interval::hyperinterval::FixedInterval;
+use hyperlattice_interval::{IntervalLatticeError, IntervalMatrix, IntervalVector};
 
-type I = FixedInterval<i32, 0>;
-let matrix = IntervalMatrix::new([[I::point(2)?, I::point(-1)?]])?;
-let vector = IntervalVector::new([I::new(1, 3)?, I::new(4, 5)?])?;
-let image = matrix.mul_vector(&vector, &mut ())?;
-assert_eq!(image.lanes().unwrap()[0].bounds(), Some((-3, 2)));
-# Ok::<(), hyperlattice_interval::IntervalLatticeError>(())
+fn main() -> Result<(), IntervalLatticeError> {
+    type I = FixedInterval<i32, 0>;
+    let matrix = IntervalMatrix::new([[I::point(2)?, I::point(-1)?]])?;
+    let vector = IntervalVector::new([I::new(1, 3)?, I::new(4, 5)?])?;
+    let image = matrix.mul_vector(&vector, &mut ())?;
+    assert_eq!(image.lanes().unwrap()[0].bounds(), Some((-3, 2)));
+    let scale = IntervalMatrix::new([[I::point(2)?]])?;
+    let next = scale.mul_vector(&image, &mut ())?;
+    assert_eq!(next.lanes().unwrap()[0].bounds(), Some((-6, 4)));
+    Ok(())
+}
 ```
+<!-- quickstart:end -->
 
 Build and test with `cargo test -p hyperlattice-interval --features fixed`.
 No scalar backend is enabled by default. `fixed` and `float-enclosure` require

@@ -9,6 +9,9 @@ shipped-user-path rules in [`admission.md`](admission.md#the-shipped-user-path).
 | Crate | Version | On crates.io | Notes |
 | --- | --- | --- | --- |
 | `hyperreal` | 0.14.0 | 0.13.0 | breaking |
+| `hyperinterval` | 0.1.0 | not verified | first coordinated interval release |
+| `hyperlattice-interval` | 0.1.0 | not verified | first coordinated interval release |
+| `hyperdynamics` | 0.1.0 | not verified | first coordinated interval release |
 | `hyperlattice` | 0.7.0 | 0.6.0 | breaking |
 | `hyperlimit` | 0.5.0 | 0.4.0 | breaking |
 | `hypertri` | 0.5.0 | 0.4.0 | breaking |
@@ -42,9 +45,11 @@ vendored `voxelis` 25.5.0 (`legacy-voxelis`), while crates.io has `voxelis`
 dependency, the chain also holds back `csgrs`, `csgrs-ffi`, `hyperdrc` and
 `hypercircuit`.
 
-The crates that do not depend on `hypersdf` can be published now:
-`hyperreal`, `hyperlattice`, `hyperlimit`, `hypertri`, `hypersolve`,
-`hypercurve`, `hypermesh`, `hyperphysics`, `hypergraphics`, `hyperevolution`,
+These crates do not share the optional-voxel publication blocker; their other
+release checks still apply:
+`hyperreal`, `hyperinterval`, `hyperlattice-interval`, `hyperlattice`,
+`hyperlimit`, `hypertri`, `hypersolve`, `hyperdynamics`, `hypercurve`, `hypermesh`,
+`hyperphysics`, `hypergraphics`, `hyperevolution`,
 `hyperpack`, `hyperparts` and `hyperpath`.
 
 ### Known limitations
@@ -96,7 +101,9 @@ Run these after the last change, in addition to the
      transform, compose under `STRICT` with certified certainty, validate the
      closed manifold and exact volume, export STL, OBJ and PLY, reimport STL
      and OBJ, and check each format's counts and round trip;
-   - every README quick start, extracted from its `quickstart` markers;
+   - every packaged README quick start, extracted from its `quickstart` markers;
+     the interval examples check typed scalar rejection, Cartesian composition
+     and a certified flow endpoint consumed by a subsequent horizon;
    - C and C++ programs (`scripts/release-consumer/ffi_smoke.c`,
      `bindings_smoke.cpp`) linked against the packaged `csgrs-ffi` static
      library and its shipped header, a Python program through
@@ -132,7 +139,8 @@ itself, and the crates.io and docs.rs builds, stay unverified until it happens.
 
 Publish in dependency order, waiting for each crate to appear in the index:
 
-1. `hyperreal`, `hyperlattice`, `hyperlimit`, `hypertri`, `hypersolve`,
+1. `hyperreal`, `hyperinterval`, `hyperlattice-interval`, `hyperlattice`,
+   `hyperlimit`, `hypertri`, `hypersolve`, `hyperdynamics`,
    `hypercurve`, `hypermesh`, `hyperphysics`
 2. `hypergraphics`, `hyperevolution`, `hyperpack`, `hyperparts`, `hyperpath`
 3. after `hypervoxel` 0.3.0 is on crates.io: `hypersdf`, `csgrs`,

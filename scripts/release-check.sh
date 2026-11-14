@@ -30,15 +30,24 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+cargo_command=(cargo)
+[[ -z "${toolchain}" ]] || cargo_command+=("${toolchain}")
+
 # Released crates in dependency order. hypervoxel, hyperbrep, hyperbrep-io
 # and hyperspatial are not part of this release.
 crates=(
-  hyperreal hyperlattice hyperlimit hypertri hypersolve hypercurve hypermesh
+  hyperreal hyperinterval hyperlattice-interval hyperlattice hyperlimit hypertri
+  hypersolve hyperdynamics hypercurve hypermesh
   hyperphysics hypersdf csgrs csgrs-ffi hypergraphics hyperevolution hyperpack
   hyperparts hyperpath hyperdrc hypercircuit
 )
 # README quick starts that need non-default features of their crate.
-declare -A quickstart_features=([hypertri]="earcut")
+declare -A quickstart_features=(
+  [hypertri]="earcut"
+  [hyperinterval]="fixed"
+  [hyperlattice-interval]="fixed"
+  [hyperdynamics]="field"
+)
 
 target="${CARGO_TARGET_DIR:-${root}/target}/release-check"
 # Unpacked packages and the consumer live outside the repository, so Cargo
@@ -64,11 +73,11 @@ overlay=(--config 'patch.crates-io.hypervoxel.path="crates/hypervoxel"')
 verify_args=()
 [[ ${verify} -eq 1 ]] || verify_args=(--no-verify)
 echo "== packaging ${#crates[@]} crates"
-CARGO_HOME="${work}/cargo-home" CARGO_TARGET_DIR="${target}" cargo ${toolchain} package --locked \
+CARGO_HOME="${work}/cargo-home" CARGO_TARGET_DIR="${target}" "${cargo_command[@]}" package --locked \
   "${overlay[@]}" "${verify_args[@]}" "${dirty[@]}" "${package_args[@]}"
 
 echo "== documenting each crate with its docs.rs configuration"
-cargo metadata --locked --no-deps --format-version 1 | python3 -c '
+"${cargo_command[@]}" metadata --locked --no-deps --format-version 1 | python3 -c '
 import json, sys
 crates = set(sys.argv[1:])
 for package in json.load(sys.stdin)["packages"]:
@@ -84,14 +93,19 @@ for package in json.load(sys.stdin)["packages"]:
         args += ["--features", ",".join(docs["features"])]
     print(" ".join(args))
 ' "${crates[@]}" | while read -r -a doc_args; do
-  RUSTDOCFLAGS="-D warnings" CARGO_TARGET_DIR="${target}" cargo ${toolchain} doc --locked \
+  RUSTDOCFLAGS="-D warnings" CARGO_TARGET_DIR="${target}" "${cargo_command[@]}" doc --locked \
     --no-deps "${overlay[@]}" "${doc_args[@]}"
 done
 
 # Unpack exactly what would be uploaded.
 declare -A version
 for crate in "${crates[@]}"; do
-  archive=$(ls "${target}/package/${crate}"-[0-9]*.crate | sort -V | tail -1)
+  archives=("${target}/package/${crate}"-[0-9]*.crate)
+  if [[ ${#archives[@]} -ne 1 || ! -f "${archives[0]}" ]]; then
+    echo "expected exactly one verified archive for ${crate}" >&2
+    exit 1
+  fi
+  archive="${archives[0]}"
   tar -xzf "${archive}" -C "${work}/packages"
   base=$(basename "${archive}" .crate)
   version[${crate}]="${base#"${crate}"-}"
@@ -128,8 +142,8 @@ cp scripts/release-consumer/user_path.rs "${consumer}/src/bin/user_path.rs"
 echo 'fn main() {}' > "${consumer}/src/main.rs"
 for crate in "${crates[@]}"; do
   [[ ${crate} == csgrs-ffi ]] && continue
-  readme="crates/${crate}/README.md"
-  [[ ${crate} == csgrs ]] && readme="readme.md"
+  readme="${work}/packages/${crate}-${version[${crate}]}/README.md"
+  [[ ${crate} == csgrs ]] && readme="${work}/packages/csgrs-${version[csgrs]}/readme.md"
   python3 - "${readme}" "${consumer}/src/bin/quickstart_${crate//-/_}.rs" <<'EOF'
 import re, sys
 text = open(sys.argv[1]).read()
@@ -141,18 +155,20 @@ EOF
 done
 
 echo "== building the consumer against packaged sources"
-(cd "${consumer}" && CARGO_TARGET_DIR="${target}/consumer" cargo ${toolchain} build --bins)
+(cd "${consumer}" && CARGO_TARGET_DIR="${target}/consumer" "${cargo_command[@]}" build --bins)
 
 # Every released crate must resolve from the unpacked packages, never from
 # the repository.
-python3 - "${consumer}" "${root}" "${crates[@]}" <<'EOF'
+python3 - "${consumer}" "${root}" "${toolchain}" "${crates[@]}" <<'EOF'
 import json, os, subprocess, sys
-consumer, root, crates = sys.argv[1], os.path.realpath(sys.argv[2]), set(sys.argv[3:])
+consumer, root, toolchain = sys.argv[1], os.path.realpath(sys.argv[2]), sys.argv[3]
+crates = set(sys.argv[4:])
+cargo = ["cargo"] + ([toolchain] if toolchain else [])
 # The lock file the build just wrote fixes the resolution. Metadata reads
 # every locked package's manifest, including packages for other platforms
 # that the build never downloaded, so it may fetch them.
 meta = json.loads(subprocess.check_output(
-    ["cargo", "metadata", "--format-version", "1", "--locked"], cwd=consumer))
+    cargo + ["metadata", "--format-version", "1", "--locked"], cwd=consumer))
 packages = os.path.realpath(os.path.join(consumer, "..", "packages"))
 for package in meta["packages"]:
     path = os.path.realpath(package["manifest_path"])
@@ -170,7 +186,7 @@ patches=()
 for crate in "${crates[@]}"; do
   patches+=(--config "patch.crates-io.${crate}.path=\"${work}/packages/${crate}-${version[${crate}]}\"")
 done
-(cd "${ffi}" && CARGO_TARGET_DIR="${target}/ffi" cargo ${toolchain} build "${patches[@]}" --lib)
+(cd "${ffi}" && CARGO_TARGET_DIR="${target}/ffi" "${cargo_command[@]}" build "${patches[@]}" --lib)
 cc -std=c11 -Wall -Wextra -Werror -I "${ffi}/include" scripts/release-consumer/ffi_smoke.c \
   "${target}/ffi/debug/libcsgrs_ffi.a" -lm -lpthread -ldl -o "${work}/ffi_smoke"
 
