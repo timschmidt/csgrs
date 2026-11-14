@@ -7033,6 +7033,61 @@ separate qualification before it adopts reuse. ODE noise propagation, wider
 wrapping/adoption, unresolved migration costs, embedded/HIL and coordinated
 release gates remain open. No phase completion, push or publication is claimed.
 
+## 2026-11-14 — Adaptive order sharing: experiment not retained
+
+The explicit lazy shared-preparation candidate extends already demanded Taylor
+coefficient prefixes while preserving the original adaptive search and proof
+history. It prepares no unrequested maximum order and caches no failed extension.
+The owning Hyperdynamics recurrence remains the single mathematical authority.
+Both candidate implementations remain isolated; no production changes from this
+experiment are integrated. Automatic-controller preparation reuse remains open.
+
+Macro source `62ecffb2c` matched the complete baseline artifacts, but a controlled
+comparison measured about 3.5% slower existing order-three preparation; the
+extraction-only control measured about 3.1% slower. Typed replacement source
+`c6c574909fe42990512ef76f89e39a85906a01ba` passed 150 owner tests across 19 suite
+summaries, strict all-feature/all-target Clippy, formatting and the example on
+Rust 1.95.0. Its complete default reports, structural/native work and dispatch
+traces match the original 373,388-byte artifact exactly. Inverse source checks
+preserve the original recurrence/controller statement and predicate order.
+These correctness checks do not establish performance or binary preservation.
+
+The typed four-sweep comparison used one executable path, disabled ASLR and pinned
+CPU affinity. It covered 35 Criterion rows in seven existing benchmark programs,
+plus four manual adaptive rows per sweep. Seven rows met the recorded adverse
+separation screen, including about 3.13% slower exponential order-three
+preparation. This is an observational screen, not a simultaneous statistical
+proof or universal causal claim. Several existing raw executables grew by 8–72
+bytes; executable text totals did not increase. Symbol-string and exception-table
+differences are recorded. Both implementations fail retention gates; no existing
+assertion, policy or performance requirement was weakened.
+
+The new strategy's three complete adaptive workloads include demanded preparation,
+verification, quality checks, history materialization and destruction, excluding
+only common source/controller setup. Independent/shared mean 95% intervals in
+microseconds were 159.741–159.904 / 164.807–165.106 for constant flow,
+415.162–416.263 / 411.636–412.222 for exponential flow and
+1579.907–1581.952 / 1546.819–1555.263 for Riccati flow. Constant flow is slower
+and structural work rises 949→957. Exponential work falls 2390→2338 and retained
+requested bytes 53568→52224; Riccati work falls 10225→9669 and retained requested
+bytes 156200→148280. Native arithmetic work is unchanged within each pair.
+Requested allocation bytes exclude allocator overhead and common inputs; they
+are not whole-process memory bounds. No general speedup is established.
+
+Evidence commit `41ca8e6ca5d860487642a1185b4c72625ce0ec07`, record
+`docs/evidence/2026-11-14-interval-adaptive-order-sharing`: 1,830 files,
+32,217,725 bytes, SHA-256
+`3b127ca7dd22fd52ffce1a5f349e496ee5fefb9466a45d1ac39fdfd32dc9c168`.
+The record preserves both source deltas, the extraction-only control, golden
+artifacts, binary hashes/sections/symbols, all raw timing campaigns and allocation
+measurements. `STATUS.md`, `QUALIFICATION.json` and `REPRODUCE.md` state limits.
+All 42 earlier frozen stages verified unchanged. Main's 41 staged extraction
+paths, Interface's eight pending paths and firmware are unchanged. Stable,
+package-only replay, full downstream, WASM, fuzz, coverage and full pre-push
+qualification were not rerun after rejection. No phase completion, push or
+publication is claimed. Do not repeat these rejected transformations without a
+concrete change addressing the failed gates.
+
 ## Priority order and non-negotiable rules (verbatim from plan)
 
 
