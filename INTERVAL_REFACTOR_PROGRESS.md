@@ -55,7 +55,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | automatic frame/QR evolution control, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
-| 14 release | not started | coordinated CI, packaging and clean consumers |
+| 14 release | Interface native/browser lint and local production packaging checks pass on the combined checkout | coordinated clean-checkout CI/reproducibility, hosted/HIL consumers and remaining package gates |
 
 ## Executed checks
 
@@ -6685,6 +6685,85 @@ sharing, competitive external portfolios, remaining migrations/adoption, Phase 1
 extraction regressions, embedded flash/whole-call stack/cycles/HIL, outstanding
 Interface Clippy issues and coordinated release remain open. No push occurred.
 The full fifteen-phase goal remains active.
+
+## Interface validation and production packaging (2026-11-14)
+
+Phase 8/14 downstream qualification repairs are retained in Alumina Interface at
+`b4a15bd0c281cb63ecc3c1d3d451144041c85f91`. The current client reproduced two
+strict Clippy failures; the browser root independently reproduced three more.
+The complete bounded scan payload now uses owned indirection in `NetworkUpdate`;
+all native wire fields, retained scans, transaction checks, retry identity, typed
+errors, Debug and worker JSON remain intact. This intentionally changes the
+unpublished Rust `Scan` payload to `Box<NetworkScanResult>` and removes `Copy`,
+with deep independent `Clone`. `docs/CLIENT-MIGRATIONS.md` records that contract;
+it is not a source-compatible performance-only refactor. Other variants remain
+allocation-free. No lint exemption or validation-policy relaxation was added.
+
+The snapshot Boolean simplification consumes already-evaluated bools and preserves
+validation order. Three new tests cover full scan ownership after reset, invalid
+response retry identity, and 4,536 phase/identity/authorization/summary cases using
+an independent presence-count oracle. Baseline and candidate semantic transcripts
+are byte-identical, including all snapshot rows and full scan wire/JSON/Debug.
+A redundant browser Ok-pattern is collapsed after its original retry arm. Two
+private helpers extract the exact capability-transfer and network-scan UI bodies;
+formatted dedented body hashes match, preserving validation, same Ui/scope,
+widget/action order, diagnostics and secret erasure. No mathematical predicate,
+policy, certainty receipt or cache sequence changes.
+
+All 398 workspace tests pass both in the isolated candidate and primary checkout.
+Strict workspace native all-target and browser WASM Clippy, warnings-denied client
+docs, formatting and the source-policy audit pass in both locations. Compilation
+and body identity do not establish interactive browser execution or latency.
+
+The release workflow required three gzip artifacts that the existing post-build
+hook never emitted. The unchanged hook reproduces their absence on valid minimal
+fixtures while its Brotli assets round-trip. Added deterministic `gzip -9 -n` streams
+preserve optimized originals and existing Brotli outputs. Two candidate fixture
+runs yield nine byte-identical assets. The actual Trunk 0.21.14 release build passes,
+as do all five configured production artifact checks. All six production gzip/Brotli
+files also decompress to their exact generated originals. The WASM is 10,735,302
+bytes, gzip 4,582,684 and Brotli 3,520,029; output hashes are archived. The initial
+Trunk invocation rejected inherited `NO_COLOR=1` before compiling; setting the
+boolean environment value to `true` resolved it without source/tool bypasses.
+This is a combined local-checkout build, not clean-checkout release reproducibility.
+
+Twelve CPU0/ASLR-disabled same-executable-path runs alternate baseline/candidate/
+candidate/baseline three times after all builds and installations finish. Each
+case measures one million complete operations after 32 warmups, including retained
+state/full payload checks, event materialization and destruction. Median ns/op:
+
+| Case | Baseline | Candidate |
+| --- | ---: | ---: |
+| status accept | 170 | 147 |
+| status clone | 27 | 14 |
+| full scan accept | 884 | 931 |
+| scan clone | 49 | 61 |
+
+The 5.3% scan-accept and 24.5% scan-clone increases are explicit costs of the
+ownership migration that restores strict validation, not a general speedup or
+regression-free refactor claim. Event/Result layout shrinks 368 to 80 bytes; machine
+layout remains 576. Accepted scans and scan clones each add one 368-byte allocation;
+status paths add none. All measured drops return to zero incremental live heap.
+Preexisting state/response objects and allocator overhead are excluded. The probe
+binary grows 2,344 bytes, including 2,288 .text bytes. Browser helper latency and a
+baseline/candidate production-size delta were not independently measured. Raw
+samples, initial colder observations, adverse results and original failures remain.
+
+Only seven intended Interface paths were committed. Its eight pending migration
+paths remain byte-identical (`ba4ca466d9de22d1b299756ab815a6df0d9849753ce41776385b52bc9ebc605a`),
+and its index is clean. CSGRS's 41 staged extraction paths remain byte-identical
+(`7402c446dd98a3c94a6cca38ad4620fc4d8b8d20929ace044afd9ceda8b68b40`). Firmware is
+unchanged. All 36 previous frozen stages verify. New record
+`docs/evidence/2026-11-14-interval-interface-validation` contains 152 files /
+3,501,621 bytes, SHA-256
+`c514cfaa499ad943a26efbbb49c83c97a037a5048feae3a09548b4f2da5e4277`, archive commit
+`11a05b8237190b4570e60089ee510eda6786a285`. Its committed blobs and addition-only
+scope verify; reproduction requires copying frozen drivers into a mutable stage.
+
+Machine-profile/schedule migration retention, wider browser/HIL coverage, Phase 11
+performance regressions, remaining consumers and coordinated clean release remain
+open. No full CSGRS pre-push, fuzz/coverage/sanitizer, hosted deployment or live device
+qualification is claimed. No push occurred. The fifteen-phase goal remains active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
