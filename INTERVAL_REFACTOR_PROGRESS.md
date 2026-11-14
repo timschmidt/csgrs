@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | automatic frame/QR evolution control, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | higher-utility automatic frame strategies, independent-noise/sensitivity retention, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local production packaging checks pass on the combined checkout | coordinated clean-checkout CI/reproducibility, hosted/HIL consumers and remaining package gates |
 
 ## Executed checks
@@ -6764,6 +6764,78 @@ Machine-profile/schedule migration retention, wider browser/HIL coverage, Phase 
 performance regressions, remaining consumers and coordinated clean release remain
 open. No full CSGRS pre-push, fuzz/coverage/sanitizer, hosted deployment or live device
 qualification is claimed. No push occurred. The fifteen-phase goal remains active.
+
+## 2026-11-14 automatic QR evolution: bounded selection retained with explicit costs
+
+Source `0603beace59f538e581d14dcf31dc237a39c42c4` adds the opt-in
+`qr-evolution` feature and `CoordinateField::integrate_qr`. Each finite window
+proposes an exact midpoint-Jacobian Euler basis, delegates certification to
+existing QR and direct chart transport, and runs both the proposed and incoming
+charts through existing Picard or trajectory Taylor integration. Both branches
+must finish. Exact maximum source-endpoint diameter selects the smaller result;
+ties select the recentered proposal. The selected native chart endpoint becomes
+the next input, while both proofs, proposals, coefficients, projections and
+comparison remain inspectable. Whole-request success and provisional stages
+remain separate; original failures are not hidden by a fallback.
+
+The missing method was reproduced on the parent before implementation. Twelve
+new tests cover exact flows/relations, rational-series rotation oracles,
+uncertain inputs, subsequent operations, empty/unit/invalid cases, limits,
+cancellation/retry, budget cutoffs, fresh-process replay, zero-dispatch getters
+and a tilted equilibrium whose selected frames certify two steps instead of
+four. The latter returns exact zero in both modes and is a step-capacity witness,
+not a speedup. Forced Picard/QR and unconditional Taylor/QR candidates failed
+unchanged width obligations and were rejected. Their sources and failures remain
+archived. A defective coarse-bracket oracle was corrected with independent exact
+series bounds while preserving the original input, horizon, cap and width limit.
+
+Final isolated qualification passed128 owner tests, nine downstream physics
+compatibility tests, strict all-feature/all-target Clippy, warnings-denied docs,
+disabled-feature and WASM checks, and formatting. Combined main qualification
+passed139 owner tests, the same nine physics tests, strict Clippy, formatting
+and the repository budget. Existing QR, transport and evolution modules are
+byte-identical; existing coordinate method bodies are unchanged. This is a new
+strategy, not a behavior-preserving kernel refactor.
+
+The maintained three-fixture benchmark includes per-operation preparation,
+source output materialization, exact analytic/width checks and destruction:
+
+| Fixture | Fixed / automatic median ms | Fixed / automatic allocated bytes |
+| --- | ---: | ---: |
+| Constant uncertain line |4.252397 /8.854451|2283256 /4808920|
+| Rotating uncertain line |13.561274 /34.745927|6131872 /21441244|
+| Tilted exact equilibrium |2.742795 /25.760872|1506082 /12742237|
+
+Automatic costs are2.08x/2.56x/9.39x runtime, with identical endpoint widths on
+these fixtures. Both complete branch proofs are retained. Separate fresh-process
+cold/warm measurements, allocation retention/drop epochs and all adverse rows
+are archived. The strategy is retained for automatic certified selection and
+composition; no general narrowing, optimality or runtime advantage is claimed.
+
+Six existing QR controls, baseline/default/enabled then reversed, showed ratios
+0.9914–1.0027 without the feature and0.9853–1.00595 with it. Exact completion
+transcripts agree. Default allocated ELF sections/addresses match except build ID,
+while raw binary size grows24bytes. Enabling the feature grows old-control .text
+6816bytes and raw size12544bytes. These are focused workload/size observations,
+not universal regression or firmware-size claims.
+
+The41 pending extraction paths are preserved by alternate-index integration and
+exact reversal. Their diff changes only blob IDs/hunk offsets; pending SHA256 is
+`7fb21ee90a685a7050b0336331cf4f1b2c5e40c3c2f8d41e358efa54f3b66009`.
+Interface's8 pending paths and Firmware's clean state are unchanged. All37 prior
+frozen evidence stages match. No push or complete pre-push/release run occurred.
+
+Evidence: `docs/evidence/2026-11-14-interval-qr-evolution`, archive commit
+`1cd0dfd4642ae5683dcf927483e9d685765544e0`,509 files/6106302 bytes, SHA256
+`2355d47c8eceae40a2e92a00788050810a238f95fb320cbc7c186a4a77503a27`.
+The record contains contract, source/integration patches, commands, raw timing
+samples, allocator and section records, fresh-process drivers, failed candidates,
+review, STATUS and reproduction instructions. Committed blobs were verified and
+the archive commit adds only this record. Exact scalar payload/refinement, nested
+proof graphs, total heap and within-scalar cancellation remain outside the
+structural/native budget. Better useful-work frame strategies, independent-noise
+retention, wider adoption, competitive qualification, remaining migrations,
+Phase11 costs, embedded hardware gates and coordinated release remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
