@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | not started | proof/cost/trace admission |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, fixed state charts/Picard transport and native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | adaptive ODE wrapping/QR, arithmetic on existing nonlinear remainder models, wider adoption and competitive completed-workload benchmarks remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -5120,6 +5120,74 @@ are clean. Other primitives, piecewise fields, adaptive subdivision, wider
 consumers, wrapping/QR and release obligations remain open. No full workflow,
 root/browser/firmware/hardware or coverage/fuzz campaign is claimed. No push
 occurred. Phase 13 and the full fifteen-phase goal remain active.
+
+## 2026-11-13: Adaptive native SDF covers with unresolved leaves
+
+Previous turn: progress, retaining affine SDF source closure. Source
+`f3f1fd56a7951c508f7b4c6877b6c0e99fdfa36e` adds `SdfProgram::subdivide` after
+reproducing the missing API. It reuses Hyperlattice's exact widest-axis selection
+and midpoint bisection, activated through the existing optional enclosure feature.
+Every parent and child retains its native source-bound enclosure. Immutable
+axis/child records establish a complete closed cover with shared facets; this
+is not a disjoint-volume model or a mesh. Original source/metric qualification
+and existing image/compilation paths remain intact.
+
+Only unresolved signs refine. Requested depth and singleton stops produce
+explicit unresolved leaves. Native domain, graph/arithmetic, cell-capacity and
+cancellation failures abort without publishing a partial cover. Graph work and
+dyadic accounting are shared across the traversal; the separate capacity bounds
+all retained records, including parents. Scalar refinement/payload, allocator
+spare capacity and heap-byte exclusions remain explicit. Exact 48/47 graph-entry
+thresholds, one-less work/arithmetic failures, actual capacity limits, minimum-grid
+bisection overflow and clean retries are maintained assertions.
+
+The dependency fixture's natural range [-3/8,5/8] becomes six exact leaves whose
+ranges are all strictly negative, proving the complete original query inside.
+Its independent endpoints and eleven-record split tree preserve coverage. The
+supplemental 3D witness checks all eight octants, exact image bounds and X/Y/Z
+split order. Empty queries, zero fields, coarse unresolved singletons, boundary
+contacts, generated affine spheres, subsequent leaf-image queries and fresh
+process reconstruction retain their distinct meanings. A successful cover may
+contain unresolved leaves; it is not counted as resolved geometric classification.
+
+Final qualification passes 150 owner tests plus four replay children, 114
+default tests, strict all-target/all-feature Clippy, strict rustdoc, WASM,
+workspace formatting and diff checks. Focused ASan/leak checking passes 35
+enclosure tests plus four replay children; its standard-library sysroot is not
+instrumented. Main acceptance/formatting and indexed repository-budget checks
+pass after the final 3D test edit. The external consumer's initial locked build
+failure and offline lock update are retained; repository Cargo.lock is unchanged.
+
+Default benchmark files are 8,102,576/8,102,600 bytes, with identical
+4,467,244-byte function unions and identical loaded code/data sections except
+the build-ID note. All 46 smoke cases pass. The original byte-identity assumption
+was rejected and the exact metadata difference recorded without rewriting any
+artifact. All 21 optional legacy definition/result/allocation rows match exactly.
+A controlled local CBBC run has no separated adverse batch ranges; the trig
+compile median ratio 1.0003 has overlapping ranges. No speedup or universal
+no-regression claim follows. The optional executable/function union grows
+2,712/450 bytes; all samples and dependency states remain archived.
+
+The dependency cover completes at local median 55.358 microseconds, with eleven
+records, six certified leaves, 668 graph work units and 13,576 temporary peak
+bytes. The affine-sphere cover takes 456.635 microseconds, with 23 records,
+12 leaves, four explicit unresolved leaves, 7,012 work units and 29,464 peak
+bytes. Success/drop and separate late-exhaustion/capacity epochs end with zero
+signed live-byte delta. These are warmed instrumented completion/resource
+observations, not cold-cache, competitive dynamics or universal bounds.
+
+Evidence commit `d794e74164e2b8772d31c48d2acadc2de3eb5590`, record
+`docs/evidence/2026-11-13-interval-sdf-subdivision`: 131 files, 9,241,691 bytes,
+SHA-256 `75802cc38a3909dbe534b662466c0d081fe6ea3eba6b264d4851a866f3fdaa0e`. Scoped verification and all fifteen preceding
+immutable-stage checks pass. The 41-path staged extraction patch remains
+unchanged at SHA-256
+`3a94cc96a5288b72ca3b90087996ff8c3c3d4f06e3fe0b7a18178f255ac726dd`;
+Interface's eight pending edits are unchanged, and firmware/the isolated source
+tree are clean. Piecewise/other primitive lowering, domain/Taylor refinement
+portfolios, wider adoption, wrapping/QR and release obligations remain open.
+No new full workflow, root/browser/firmware/hardware, coverage/fuzz or
+successive_operations campaign is claimed. No push occurred. Phase 13 and the
+full fifteen-phase objective remain active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
