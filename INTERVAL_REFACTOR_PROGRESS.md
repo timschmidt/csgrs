@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers and a measured three-strategy dynamics corpus, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6165,6 +6165,96 @@ Committed blobs and parent diff scope verify; all previous registry rows are
 preserved. The new stage is frozen. No push occurred. Phase 11 cost failures,
 automatic order/frame control, remaining migrations/adoption, embedded
 qualification and coordinated release remain open under the full goal.
+
+## Qualify existing regridded reachability in the dynamics portfolio (2026-11-14)
+
+Source `2fa15af0fc55a1183a34fe158ec10bdcd7bc402e` extends the maintained completed-flow comparison
+and acceptance corpus. Current source review found that existing reachability
+already controls the dyadic growth exposed by ordinary Picard. Reuse that
+implementation: no production source, public API, algorithm, dependency/default
+policy or predicate sequence changes. Only the benchmark, its required-feature
+list and reachability tests change. Nine existing benchmark helpers remain
+byte-identical, and the complete previous test file remains an unchanged prefix.
+The full fifteen-phase objective remains active.
+
+The retained hard-case witness reproduces ordinary Picard's default scalar-size
+exhaustion for x'=x, x(0)=1, horizon 1/2 and cap 2^-12. Existing reachability
+completes all 2,048 prefixes under default resources with one cell/evolution and
+no partition/time-refinement search. Every transport inclusion, policy grid,
+continuation, horizon and endpoint width is checked. Independent rational series
+bracket exp(1/2); the resulting endpoint feeds a Taylor evolution to 3/4 with
+another independent bracket. Default and larger-budget outputs and spent work
+agree. No exhaustion is counted as geometric completion.
+
+A finite cap probe rejects 2^-8, 2^-9 and 2^-10 at the unchanged width <=1/512
+contract and completes at 2^-11 and 2^-12. A second regression retains the failed
+512-segment control and successful 1,024-segment case. The benchmark uses 2^-11,
+the coarsest successful cap among those probes, while preserving the 2,048-step
+growth regression. This is not a globally optimal cap or automatic selector.
+
+Final isolated qualification passes 106 Hyperdynamics tests in 14 test/doc groups
+and 11 minimal-reachability tests, strict all-feature/all-target Clippy,
+warning-denied docs, disabled features, WASM and formatting. Main's combined
+extraction passes 117 tests, 11 minimal-feature tests, strict Clippy,
+formatting and repository budget. The initial new-test assign-op Clippy finding
+and copied probe's unused-helper warnings were fixed; original logs/draft remain.
+No existing assertion or endpoint-quality threshold was weakened. Full pre-push,
+release, platform, sanitizer/fuzz and external-solver qualification are not claimed.
+
+The completed portfolio compares ordinary Picard, existing reachability and
+Taylor on the same source/initial set/horizon/endpoint-quality contract. Reachability
+also retains a single-box epsilon-cover certificate, every native prefix and
+checked outward transport. Proposal padding and transport both differ from ordinary
+Picard; this is not an ablation attributing all effects exclusively to rounding.
+The constant flow x'=2, x(0)=0 still returns exact singleton one after horizon 1/2
+in two segments/four attempts for every strategy. It preserves unfavorable overhead.
+Three trials give median microseconds:
+
+| Workload | Minimum | Maximum |
+| --- | ---: | ---: |
+| constant/picard | 30.888 | 31.353 |
+| constant/prepare_taylor3 | 10.644 | 10.857 |
+| constant/reachability | 40.856 | 41.736 |
+| constant/taylor | 127.156 | 127.715 |
+| exponential/picard | 113788.458 | 120606.745 |
+| exponential/prepare_taylor3 | 22.111 | 23.125 |
+| exponential/reachability | 23520.364 | 23565.227 |
+| exponential/taylor | 253.977 | 254.515 |
+
+Every method uses the same benchmark envelope: precision -64, scalar stage limit
+1,048,576 bits, 10^14 native work and default graph limits. Reachability's default
+completion is separately qualified. Complete reports, proofs, required output and
+destruction are measured; common source preparation is excluded and Taylor
+preparation is separate. All 24 trial workloads complete their independent checks.
+The observer matches maintained operation bodies and dependency versions/features.
+The six earlier warm allocation/retained/work rows reproduce exactly; this does
+not assert cross-revision timing or arbitrary-platform invariance.
+
+For the exponential fixture, reachability allocates 9,894,080 bytes, retains
+5,200,760 and peaks at 5,200,768, versus ordinary Picard's 493,194,344 allocated,
+123,685,072 retained and 123,732,912 peak, and Taylor's 80,132 / 22,224 / 26,256.
+Reachability uses graph/native work 107,526/126,125,643 and 1,024 prefixes/2,048
+native attempts. Constant-flow reachability allocates 20,180 bytes, retains
+13,640 and peaks at 13,648, with work 212/140,878. Every warm construction/drop
+epoch returns to zero incremental live heap. All other rows remain in the archive.
+These completed fixture results do not establish general resource closure,
+zero cold-cache growth, a universal speedup or external competitive performance.
+Existing scalar payload/refinement/predicate, vector-capacity and within-scalar
+cancellation exclusions remain. Preexisting source/coefficient storage and stack
+are outside query heap epochs; zero native preparation work excludes exact Real
+arithmetic. No whole nested-proof-graph or heap bound is inferred.
+
+Alternate-index application and exact reversal recover the complete original
+pending tree. Exactly 41 extraction paths remain staged, SHA-256
+`676e5d602a1fbdcc3fc7ff0d15bfb62692ef03f69a5a62f957aa7c7b6697b359`.
+Interface's eight edits and Firmware's clean state remain unchanged. All 30 prior
+frozen stages verify. Evidence `docs/evidence/2026-11-14-interval-dynamics-portfolio-cost`
+at archive `0036f24108fc524548b3e902f141d866db7b9a3a` contains 284 files,
+668,093 bytes, SHA-256 `c64e0e17f50022cf08709ab58dbf6a45a8047ddc8c3265b94b2b909de817b439`.
+Committed blobs and parent diff scope verify; all previous registry rows are
+preserved. The new stage is frozen. No push occurred. Phase 11 cost failures,
+remaining migrations, automatic order/frame selection, wider adoption, external
+competitive qualification, embedded work and coordinated release remain open.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
