@@ -553,3 +553,73 @@ fn mixed_terms_preserve_unsorted_binding_order_and_all_output_residuals() {
         &[d(35, 35, -4), d(-35, -35, -4)]
     );
 }
+
+#[test]
+fn outer_center_need_not_match_or_lie_inside_the_inner_image() {
+    use hyperreal::{Rational, Real};
+    let x = Expr::anonymous_symbol(SymbolId(7));
+    let inner = model(Expr::int(1) + x, SymbolId(7), d(0, 0, 0), d(-1, 1, -2), 1);
+    let u = Expr::anonymous_symbol(SymbolId(20));
+    // Center 3/2 is outside the input image [3/4,5/4], but inside the certified
+    // outer domain. Composition must preserve this supplied expansion.
+    for (order, constant, slope) in [
+        (0, Rational::from(2) / Rational::from(3), None),
+        (
+            1,
+            Rational::from(8) / Rational::from(9),
+            Some(Rational::from(-4) / Rational::from(9)),
+        ),
+        (
+            2,
+            Rational::from(26) / Rational::from(27),
+            Some(Rational::from(-20) / Rational::from(27)),
+        ),
+    ] {
+        let outer = model(
+            Expr::int(1) / u.clone(),
+            SymbolId(20),
+            d(3, 3, -1),
+            d(3, 7, -2),
+            order,
+        );
+        let result = inner
+            .clone()
+            .compose(outer.clone(), &mut g(), &mut a())
+            .unwrap();
+        assert!(Arc::ptr_eq(result.model_map(0).unwrap(), &outer));
+        assert_eq!(
+            result.terms(0).unwrap().get(&vec![]),
+            Some(&Real::from(constant))
+        );
+        assert_eq!(
+            result
+                .terms(0)
+                .unwrap()
+                .get(&vec![(SymbolId(7), 1)])
+                .cloned(),
+            slope.map(Real::from)
+        );
+        // The exact value at x=0 is one, even though the retained polynomial
+        // constant is different. The outer residual must remain authoritative.
+        assert_ne!(result.terms(0).unwrap().get(&vec![]), Some(&Real::one()));
+        assert_eq!(
+            result
+                .enclose_on(&[d(0, 0, 0)], &mut g(), &mut a())
+                .unwrap()
+                .bounds(),
+            &[d(1, 1, 0)]
+        );
+        for (point, exact) in [
+            (d(-1, -1, -2), Rational::from(4) / Rational::from(3)),
+            (d(1, 1, -2), Rational::from(4) / Rational::from(5)),
+        ] {
+            let bounds = result
+                .enclose_on(&[point], &mut g(), &mut a())
+                .unwrap()
+                .bounds()[0]
+                .to_rational(&mut a())
+                .unwrap();
+            assert!(bounds.lower().unwrap() <= &exact && &exact <= bounds.upper().unwrap());
+        }
+    }
+}
