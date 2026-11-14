@@ -440,3 +440,9 @@ fn constant_compilation_does_not_reserve_unrelated_linear_expansion() {
 
 #[path = "support/enclosure_primitives.rs"]
 mod primitive_acceptance;
+
+#[path = "support/uncertainty.rs"]
+mod uncertainty;
+
+#[path = "support/enclosure_affine.rs"]
+mod affine_acceptance;

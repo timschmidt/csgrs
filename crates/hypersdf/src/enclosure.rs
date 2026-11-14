@@ -61,9 +61,13 @@ impl From<TaylorError> for SdfProgramError {
 ///
 /// Coordinates are always bound as x,y,z. Supported forms are constants,
 /// coordinates, linear fields, add/subtract/multiply, sqrt, sin/cos/tan,
-/// complement, offset, translation, and polynomial plane/sphere/torus fields.
-/// Their original strict parameter checks remain mandatory. Other primitive,
-/// piecewise and affine nodes return `Unsupported`; existing SDF APIs remain available.
+/// complement, offset, translation, affine transforms, and polynomial
+/// plane/sphere/torus fields. Their original strict parameter checks remain
+/// mandatory. Other primitive and piecewise nodes return `Unsupported`;
+/// existing SDF APIs remain available.
+/// Affine nodes consume the retained inverse's first three rows, exactly as
+/// `SdfTransform::inverse_point` does; compilation does not certify that a
+/// manually assembled transform's matrices are mutually inverse.
 /// No metric-distance or zero-set topology guarantee follows from compilation.
 /// Replay by compiling the original SDF again, never by adopting serialized
 /// generated nodes or flags as proof of their association with that SDF.
@@ -286,11 +290,12 @@ fn compile(
                     transform: SdfTransform::Translation { .. },
                     ..
                 } => 7,
+                SdfExpr::Transform {
+                    transform: SdfTransform::Affine { .. },
+                    ..
+                } => 31,
                 SdfExpr::Primitive(p) => primitive::entries(p),
-                SdfExpr::Union(..)
-                | SdfExpr::Intersection(..)
-                | SdfExpr::Abs(_)
-                | SdfExpr::Transform { .. } => 0,
+                SdfExpr::Union(..) | SdfExpr::Intersection(..) | SdfExpr::Abs(_) => 0,
             },
             Task::Unary(_) => 1,
             Task::Binary(_) => 0,
@@ -365,8 +370,15 @@ fn compile(
                     return Err(SdfProgramError::Unsupported("intersection"));
                 }
                 SdfExpr::Abs(_) => return Err(SdfProgramError::Unsupported("absolute value")),
-                SdfExpr::Transform { .. } => {
-                    return Err(SdfProgramError::Unsupported("affine transform"));
+                SdfExpr::Transform {
+                    child,
+                    transform: SdfTransform::Affine { inverse, .. },
+                } => {
+                    let mut moved = xyz;
+                    for (i, row) in inverse.0[..3].iter().enumerate() {
+                        moved[i] = b.linear([&row[0], &row[1], &row[2]], &row[3], xyz)?;
+                    }
+                    tasks.push(Task::Visit(child, moved));
                 }
             },
             Task::Unary(op) => {

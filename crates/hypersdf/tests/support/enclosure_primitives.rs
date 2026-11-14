@@ -2,8 +2,6 @@ use super::*;
 use hyperlimit::{Plane3, PredicatePolicy, compare_reals};
 use hypersdf::{SdfCoordinate, SdfEvaluationError};
 use std::error::Error;
-#[path = "uncertainty.rs"]
-mod uncertainty;
 
 #[test]
 fn polynomial_primitives_match_independent_integer_geometry_on_every_axis() {

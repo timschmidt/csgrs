@@ -12,6 +12,10 @@ Initial release.
   parameter admission, retains algebraic centers and exact squares, and remains
   consumable by native Jacobian/Taylor proofs and subsequent composition.
 
+- Affine enclosure compilation consumes the retained inverse coordinates and
+  preserves source qualification, parameter guards and native Taylor composition.
+  Nested frames retain shared graph coordinates without expanding source trees.
+
 Hypersdf provides signed-distance and implicit-field expressions for the
 Hyper geometry stack. It retains expression structure and exact parameters so
 that inside, boundary, and outside questions are answered from the field
