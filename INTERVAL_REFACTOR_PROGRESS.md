@@ -50,7 +50,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | production clock, Q30 and servo interval delegation retained after local exactness/cost qualification | MCU cycles/stack/HIL, final firmware image and remaining audit/release gates |
+| 9 firmware | clock/Q30/servo delegation retained; five-board Xtensa links and image comparisons reproduced | 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -5590,6 +5590,72 @@ Interface HEAD and its eight pending edits are unchanged. Source budget before
 this ledger update: 4,180 files / 143,218,006 bytes. STATUS.md, CONTRACT.md,
 REPRODUCE.md, source patches, exact observers, raw timings and artifacts retain
 the qualification scope and limitations. The new evidence stage is frozen.
+
+## Xtensa images, frame observations and board build repair (2026-11-14)
+
+Installed a pinned Espressif compiler/linker and reproduced baseline and current
+release builds through the repository's xtask. Firmware bdee397 (before all
+three arithmetic migrations) and 558df6d both initially failed: main called a
+TinyBee-only UART diagnostic method on every board. The same one-line TinyBee/
+TinyBee-4mb feature guard normalizes both comparisons. It preserves their UART
+behavior and adds no methods or hardware configuration to other boards. The
+repair is retained as Firmware `b9ecf8df54723e532a42867a1d3c549f827d5f6d`;
+the qualified candidate tree was checked equal to that commit. The untouched
+baseline is not claimed to build.
+
+All ten release builds pass: baseline/current MKS FOC, TinyBee 8 MiB,
+TinyBee 4 MiB, T-Deck Pro and T-LoRa Pager. Toolchain identities are Rust
+1.90.0-nightly abf50ae2e (1.90.0.0), GCC 14.2.0_20241119 and Xtensa LLVM
+20.1.1_20250829; official espup/espflash binary hashes are retained. The two
+existing target dead-code warnings occur on both revisions, so these are not
+warning-free target Clippy results. Portable default members pass 601 tests/
+doctests and strict all-target Clippy on Rust 1.88; target formatting passes.
+All capability JSON is byte-identical, digest validation passes and boards stay
+non-armable. Hyperinterval's embedded graph enables only integer/fixed.
+
+Summed allocated file-backed section bytes and executable-byte changes are:
+
+| Board | Baseline | Current | Executable delta |
+| --- | ---: | ---: | ---: |
+| MKS FOC | 4,189,417 | 4,188,057 | -1,376 |
+| TinyBee 8 MiB | 4,289,065 | 4,287,793 | -1,328 |
+| TinyBee 4 MiB | 4,289,069 | 4,287,789 | -1,336 |
+| T-Deck Pro | 4,095,065 | 4,093,585 | -1,480 |
+| T-LoRa Pager | 4,049,997 | 4,048,493 | -1,504 |
+
+These are section measurements, not inferred flash layouts. NOBITS totals and
+linker stack capacities are unchanged. espflash 4.7.0 save-image, with each
+board's chip/flash capacity and the tool's default partition layout, saves
+TinyBee 8 MiB (4,353,440 bytes), T-Deck Pro (4,159,232) and T-LoRa Pager
+(4,114,144); all shrink from baseline. This does not validate a board-declared
+partition map. Both 4 MiB configurations fail on both revisions. The current
+MKS FOC app exceeds the default 4,128,768-byte partition by 59,392 bytes;
+TinyBee-4mb exceeds by 159,136. Baseline excesses are 60,752 and 160,416.
+These pre-existing flash-fit failures remain open; a linked ELF is not a
+passing packaged-image gate. No assets or flash declarations were weakened.
+
+Static frame observations accept only entry instructions at ELF Function-symbol
+starts; interior encodings and unknown prologues are not treated as frames or
+zero. Q30 multiply frames fall 368 to 96 bytes on ESP32 and to 80 on S3;
+square falls 128 to 96/80. ESP32 RotorCalibration::observe grows 144 to 160,
+and cosine_first_octant 80 to 96. The +16-byte local changes are explicitly
+unresolved at the whole-call-stack level; smaller callees do not prove a lower
+live peak. Maximal recognized local frames are unchanged (28,032 MKS FOC,
+27,968 TinyBee, 27,760 S3), but do not bound nested calls, interrupts, window
+spills or vendor tasks. MCU cycles, runtime stack/register-pressure and HIL
+remain unmeasured. No serial fixture/probe runner was visible and no hardware
+was used or flashed.
+
+Evidence `docs/evidence/2026-11-14-interval-embedded-qualification` is verified
+at archive `0abb33372171fb1a1006b38f29b02d5e023074b6`: 141 files,
+122,353,043 bytes, SHA-256
+`8c07771a8fb09f57a162aaf40d81f2c51de9b76b56c20d48d9dd3fe31d391b60`.
+It retains original failures, normalization patch, tool identities, complete
+logs, ELF/packaged artifacts, sections/symbols/disassembly and scoped frame
+comparisons. All 23 prior frozen stages verify. The 41 staged extraction paths
+and eight Interface pending edits are preserved. No push occurred. Whole-stack
+release, flash-fit/hardware qualification, Phase 11 costs and the full goal
+remain active; no phase is marked complete.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
