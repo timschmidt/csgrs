@@ -623,3 +623,6 @@ pub use taylor::{
 mod coordinates;
 #[cfg(feature = "coordinate-program")]
 pub use coordinates::{CoordinateChange, CoordinateError, CoordinateProgram};
+
+mod composition;
+pub use composition::{CompositionError, CompositionProgram};

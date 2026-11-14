@@ -62,6 +62,16 @@ symbolic-Jacobian example with:
 cargo run -p hypersolve --features expression-program --example owned_program
 ```
 
+`ExpressionProgram::compose` binds an outer program's input slots to selected
+inner output slots, preserving shared nodes and independent identifier scopes.
+Its executable retains every inner output before the composed values so ignored
+inputs cannot erase domain checks. Use `CompositionProgram::composed_output` to
+locate results after evaluating or certifying the complete program. Repeated
+composition retains these guard outputs; replay rebuilds both original sources
+and their binding selection. Taylor output projection can select final values
+while retaining the full source proof; the existing regularity restrictions still
+apply to every retained output.
+
 `interval-program` adds `eval_dyadic` over input boxes, retaining the exact
 definition and refusing partial-domain images. Graph work and dyadic arithmetic
 have separate budgets; Hyperreal constant refinement is outside their total-work

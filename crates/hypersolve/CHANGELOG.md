@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Add source-bound nonlinear program composition with explicit binding selection,
+  shared nodes, retained inner domain checks and original-source replay. Existing
+  Jacobian/Taylor consumers retain the guard prefix when certifying final values.
+
 - Add opt-in fixed-size Jacobian projections retaining source/domain evidence,
   checked rectangular shapes and shared graph/native copy budgets.
 
