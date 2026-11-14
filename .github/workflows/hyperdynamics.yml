@@ -1,0 +1,91 @@
+name: hyperdynamics
+
+on:
+  push:
+    paths:
+      - "crates/hyperdynamics/**"
+      - "crates/hypersolve/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlattice-interval/**"
+      - "crates/hyperinterval/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - ".cargo/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperdynamics.yml"
+  pull_request:
+    paths:
+      - "crates/hyperdynamics/**"
+      - "crates/hypersolve/**"
+      - "crates/hyperlattice/**"
+      - "crates/hyperlattice-interval/**"
+      - "crates/hyperinterval/**"
+      - "crates/hyperlimit/**"
+      - "crates/hyperreal/**"
+      - ".cargo/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/hyperdynamics.yml"
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  quality:
+    name: Feature and runtime checks (Rust ${{ matrix.rust }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.95.0", "stable"]
+    env:
+      DYNAMICS_RUST: ${{ matrix.rust }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install Rust and feature driver
+        run: |
+          rustup toolchain install "$DYNAMICS_RUST" --profile minimal --component clippy --component rustfmt
+          cargo +"$DYNAMICS_RUST" install cargo-hack --version 0.6.46 --locked
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+        with:
+          key: dynamics-${{ matrix.rust }}
+      - name: Check formatting
+        run: |
+          cargo +"$DYNAMICS_RUST" fmt -p hyperdynamics -- --check
+          rustfmt +"$DYNAMICS_RUST" --edition 2024 --check crates/hyperdynamics/fuzz/fuzz_targets/*.rs
+      - name: Check every feature independently
+        run: cargo +"$DYNAMICS_RUST" hack check --locked -p hyperdynamics --each-feature --all-targets
+      - name: Test without optional features
+        run: cargo +"$DYNAMICS_RUST" test --locked -p hyperdynamics --no-default-features
+      - name: Test all targets and features
+        run: cargo +"$DYNAMICS_RUST" test --locked -p hyperdynamics --all-targets --all-features
+      - name: Test optimized library and integration suites
+        run: cargo +"$DYNAMICS_RUST" test --locked -p hyperdynamics --release --lib --tests --all-features
+      - name: Test documentation
+        run: cargo +"$DYNAMICS_RUST" test --locked -p hyperdynamics --doc --all-features
+      - name: Lint both feature boundaries
+        run: |
+          cargo +"$DYNAMICS_RUST" clippy --locked -p hyperdynamics --all-targets --no-default-features -- -D warnings
+          cargo +"$DYNAMICS_RUST" clippy --locked -p hyperdynamics --all-targets --all-features -- -D warnings
+      - name: Compile and lint fuzz targets
+        run: |
+          cargo +"$DYNAMICS_RUST" check --locked --manifest-path crates/hyperdynamics/fuzz/Cargo.toml --bins
+          cargo +"$DYNAMICS_RUST" clippy --locked --manifest-path crates/hyperdynamics/fuzz/Cargo.toml --bins -- -D warnings
+      - name: Build documentation
+        env:
+          RUSTDOCFLAGS: -D warnings
+        run: cargo +"$DYNAMICS_RUST" doc --locked -p hyperdynamics --no-deps --all-features
