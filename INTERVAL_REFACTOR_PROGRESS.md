@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers and a measured three-strategy dynamics corpus, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, direct exact chart transport, certified QR frame construction, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings, retained after local qualification | automatic Taylor order/step-growth and frame/QR evolution control, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
 | 14 release | not started | coordinated CI, packaging and clean consumers |
 
 ## Executed checks
@@ -6399,6 +6399,98 @@ SHA-256 `5154a6d9d351df6bd5db024a8064fc0d488ffc671f10043875f78d5c8c9a6d34`,
 archive commit `96c5c0259f27b62e8fe84ff423ff41153a252971`. Committed blob digest and
 addition-only archive scope are verified. The record includes reproduction
 instructions; copy frozen drivers to new mutable stages before running them.
+
+## Circuit residual/Jacobian consumer (2026-11-14)
+
+Phase 13 gains opt-in Hypercircuit `interval-residuals`, retained at
+`83b608d92c7d5fdaec1dd1e146709948f33e1348`. A missing-consumer compiler witness
+was reproduced before implementation. `CircuitResidualProgram` retains exact
+Hypersolve residual definitions, ordered circuit unknowns, component parameter
+nominal values/units/provenance and equation labels. Input symbols/counts and
+physical identities are validated; duplicate bindings cannot silently become
+independent tolerances. Repeated occurrences share one symbol. Dependent physical
+parameters require shared latent-input expressions. Metadata remains an authored
+association, not verification of external circuit equations or dimensional units.
+
+`LinearMnaSystem::residual_program` snapshots its existing exact matrix/RHS and
+unknown order into that same carrier. It does not restamp or solve the circuit,
+change point replay, or invent original stamp provenance absent from the matrix.
+The source remains unchanged if public MNA fields are later mutated. Hypersolve
+owns all derivative and full-domain continuity/C1 proofs; Hyperinterval owns native
+bounds; Hyperlattice owns matrix projections and subsequent arithmetic. The adapter
+adds no scalar, derivative or geometry kernel.
+
+Reports retain source, arguments, precision, circuit metadata, residuals and every
+input's derivative column, including parameter sensitivities. `Excluded` proves
+one residual cannot vanish anywhere in the box; `NotExcluded` proves neither root
+existence nor uniqueness. Empty products, unit products, invalid inputs, guard
+failures and exhausted/cancelled attempts remain distinct. Domains are explicitly
+supplied dyadic products; no silent conversion of an exact physical tolerance occurs.
+
+The final combined checkout passes 117 core circuit tests in 48 groups, including
+11 new cases. Independent expectations cover resistor tolerances, all linear stamp
+families, algebraic coefficients/positive-square isolation, exact corner derivatives,
+source snapshots, duplicate/shape failures, shared parameters, generated derivative
+sources used as subsequent inputs, downstream matrix/norm operations, empty/unit/zero
+rows, nonlinear inverse-Shockley domain guards, typed causes, resource limits,
+one-unit-short final work, cancellation/retry, fresh-process definition replay,
+invalid source references and zero-dispatch getters. Strict all-feature/all-target
+Clippy passes isolated and combined checkouts. Warning-denied docs, disabled-feature
+and WASM builds, formatting and repository budget also pass. The earlier isolated
+core run had 116 tests before the final algebraic-source witness was added.
+
+An initial test incorrectly assumed a minimal quotient-derivative hull. Existing
+Hypersolve generates R/R² for the V partial of V/R, enclosing [1/4,2] on R in [1,2]
+although the analytical image is [1/2,1]. The final test retains the original
+source/domain, asserts the conservative result, independently requires containment
+of the analytical range and checks exact point derivatives. No lower-layer rule,
+policy, predicate order or existing test changed. Initial logs and fixture API
+corrections remain archived; no tightest-hull or exponential-node claim is made.
+
+Three isolated CPU0/ASLR-disabled trials each complete 10,000 operations per mode
+on V/R-1 with V in [3,4], R in [1,2] and precision -16. Full residual/Jacobian/source
+and metadata evidence and result destruction are included. Both strategies require
+the same materialized bounds and exclusion. Mean microseconds per operation:
+preparation 7.245–7.262, prepared query 14.808–14.845, preparation plus query
+27.287–27.305. This demonstrates prepared reuse on this contract, not a universal
+or one-off cold-call speedup.
+
+The external observer copies the maintained benchmark body with dependency versions
+matched to the workspace. Preparation/query/preparation-plus-query allocate
+8,985 / 3,740 / 12,725 bytes per completed operation and peak at
+2,876 / 1,984 / 3,612 incremental live bytes. A retained query uses 656 bytes and
+101 graph / 21,676 native work units; preparation adds 1,628 retained bytes over the
+already-held original source/metadata. All measured drops return to zero incremental
+live heap. Preexisting source/cache memory and allocator/platform overhead are excluded.
+Graph and native budgets do not bound metadata strings, exact scalar payload/refinement,
+total heap or cancellation within scalar/native operations.
+
+The default existing MNA benchmark is byte-identical to baseline, 3,223,768 bytes,
+SHA-256 `84c6acdc7de86472da7b53d31367a7d446a68c1e9a04c9afc9f4f452b0037304`.
+Enabling the feature adds 21,408 executable bytes and 80 .text bytes, with unchanged
+.rodata size. Five established workloads complete in six controls with no adverse
+min/max separation; visible timing drift limits that screen and is not a speedup
+claim. The optional feature's memory/code cost is explicit.
+
+Alternate-index application and exact reversal recover the original pending tree.
+All 41 staged extraction changes remain. Adding the optional lockfile dependency
+changes only their diff blob IDs/hunk offsets: normalized patch content is identical.
+The new pending SHA-256 is
+`e52d18c6c53a33a3037b977bb3f718eca60ff766f474b024748897b7ffef4273`;
+the original was `676e5d602a1fbdcc3fc7ff0d15bfb62692ef03f69a5a62f957aa7c7b6697b359`.
+Interface's eight edits and Firmware's clean state are unchanged; all 33 prior
+frozen stages verify. New frozen record `docs/evidence/2026-11-14-interval-circuit-residual-enclosures` contains
+88 files / 1,485,121 bytes, SHA-256
+`408947e45b5459e1cb26ffb6029fc3e02622718ca0a39e71ec3561e7d2214dbe`, archive commit
+`861b707f7313f24c54b1f77c7e6703c910575217`. Committed blob digest and addition-only
+archive scope are verified; reproduction instructions require copying frozen drivers.
+
+Automatic device lowering, nonlinear root/existence/uniqueness proofs, transient
+circuit reachability and other consumers remain open, alongside automatic
+Taylor/frame evolution, Phase 11 extraction costs, embedded gaps and release.
+No all-feature geometry integration test campaign, full pre-push matrix,
+coverage/fuzz/sanitizer campaign, hosted-platform or HIL qualification is claimed.
+No push occurred. The full fifteen-phase goal remains active.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
