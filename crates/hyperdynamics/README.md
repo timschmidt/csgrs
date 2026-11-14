@@ -155,6 +155,26 @@ With `coordinate-transition`, `CoordinateField::transition_to` prepares direct e
 
 With `qr-coordinates`, `ExpressionField::in_qr_coordinates` constructs an exact orthonormal state chart from a basis and origin without a supplied inverse. The retained factorization and chart support existing Picard, Taylor, finite-horizon and direct endpoint-transport APIs. Frame selection remains caller-controlled.
 
+With `qr-evolution`, `CoordinateField::integrate_qr` selects and certifies a new
+frame proposal for each bounded window. For the incoming map `x=c+A*y`, it proposes
+`A*(I+h*M)` from midpoint Jacobian data and recenters at `c+A*midpoint(initial)`.
+The midpoint is only a proposal: existing exact QR, direct chart transport and
+trajectory verification establish every consumed result. `QrEvolutionOptions`
+chooses window/native limits and an optional trajectory Taylor order (default3).
+Taylor windows retain the existing analytic-domain and full-remainder contract;
+`None` selects Picard endpoints. No failed frame or Taylor proof silently falls
+back to a weaker success. Original source, selections, relations, native attempts,
+coefficients and projections remain inspectable. Both the proposed and retained charts must complete. An exact comparison of their
+source-coordinate maximum diameters selects the smaller result (ties select the
+recentered proposal); both proofs and the comparison remain available. This local
+criterion is not a whole-horizon optimality claim. Only whole-request success
+exposes `source_end_enclosure`; stopped windows and certified prefixes are separate.
+Replay the original chart, request, options and policy. Frame changes can increase
+cost or enclosure width, and a singular Euler-basis proposal stops explicitly.
+Exact scalar payload/refinement, nested proof graphs and total heap remain outside
+the shared structural/native-arithmetic resource bounds.
+
+
 The optional `taylor-evolution` feature composes validated trajectory Taylor endpoints over a finite dyadic horizon. It retains each bounded Picard search and the full Taylor remainder, feeds refined endpoints into subsequent steps, and distinguishes a certified prefix from whole-horizon completion.
 
 The optional `adaptive-taylor` feature adds

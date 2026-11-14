@@ -2,6 +2,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in automatic finite-window QR evolution with exact frame/transport proofs,
+  explicit Picard or trajectory Taylor endpoints, retained attempts and typed failure.
+
 - Add opt-in bounded adaptive trajectory Taylor order/step selection, with exact
   local remainder limits and retained native searches, rejected quality and proofs.
 

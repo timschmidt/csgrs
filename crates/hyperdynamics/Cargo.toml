@@ -16,6 +16,7 @@ all-features = true
 [features]
 default = []
 coordinates = ["field", "hypersolve/coordinate-program"]
+qr-evolution = ["qr-coordinates", "reachability", "taylor-evolution"]
 qr-coordinates = ["coordinate-transition", "hypersolve/qr-coordinates"]
 coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
@@ -90,3 +91,8 @@ required-features = ["taylor-evolution", "reachability"]
 name = "adaptive_taylor"
 harness = false
 required-features = ["adaptive-taylor", "taylor-evolution"]
+
+[[bench]]
+name = "qr_evolution"
+harness = false
+required-features = ["qr-evolution"]

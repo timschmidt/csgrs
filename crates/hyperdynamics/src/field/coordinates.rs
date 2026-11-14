@@ -77,7 +77,7 @@ struct CoordinateData<const N: usize> {
 /// A box of new coordinates represents the exact correlated original set c+A*Y.
 /// `source_enclosure` explicitly projects it to a Cartesian outer enclosure;
 /// that box never replaces the authoritative chart in this object or its proofs.
-/// Time is unchanged. This supplies fixed coordinates, not adaptive QR selection.
+/// Time is unchanged. This carrier retains one chart; frame evolution is a separate operation.
 #[derive(Clone, Debug)]
 pub struct CoordinateField<const N: usize> {
     data: Arc<CoordinateData<N>>,
@@ -304,3 +304,7 @@ pub use transition::{CoordinateFieldTransition, CoordinateTransport, CoordinateT
 mod qr;
 #[cfg(feature = "qr-coordinates")]
 pub use qr::{QrCoordinateField, QrFieldError};
+
+/// Finite-window automatic QR selection with retained transport and native proofs.
+#[cfg(feature = "qr-evolution")]
+pub mod qr_evolution;
