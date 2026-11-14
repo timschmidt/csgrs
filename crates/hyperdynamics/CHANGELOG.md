@@ -2,6 +2,8 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in exact QR coordinate construction with orthogonality and reconstruction evidence.
+
 - Add opt-in exact source-bound coordinate transitions for direct chart transport.
 
 - Add optional trajectory Taylor enclosures over certified Picard tubes, with

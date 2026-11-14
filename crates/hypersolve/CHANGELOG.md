@@ -2,6 +2,8 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in exact QR coordinate construction with orthogonality and reconstruction evidence.
+
 - Add opt-in exact source-bound coordinate transitions for direct chart transport.
 
 - Add opt-in polynomial output maps over existing Taylor models, retaining exact

@@ -331,3 +331,8 @@ fn affine_row(
 mod transition;
 #[cfg(feature = "coordinate-transition")]
 pub use transition::{CoordinateTransition, CoordinateTransitionError};
+
+#[cfg(feature = "qr-coordinates")]
+mod qr;
+#[cfg(feature = "qr-coordinates")]
+pub use qr::{QrCoordinateError, QrCoordinateProgram, QrCoordinateRequest};

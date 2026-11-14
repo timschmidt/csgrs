@@ -16,6 +16,7 @@ all-features = true
 [features]
 default = []
 coordinates = ["field", "hypersolve/coordinate-program"]
+qr-coordinates = ["coordinate-transition", "hypersolve/qr-coordinates"]
 coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-flow = ["taylor-model"]
@@ -72,3 +73,8 @@ required-features = ["taylor-flow"]
 name = "coordinate_transition"
 harness = false
 required-features = ["coordinate-transition"]
+
+[[bench]]
+name = "qr_coordinates"
+harness = false
+required-features = ["qr-coordinates"]

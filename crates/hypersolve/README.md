@@ -679,3 +679,5 @@ regenerate the evidence. Graph limits do not bound exact scalar/predicate payloa
 work, total heap bytes or cancellation inside one scalar/predicate stage.
 
 The opt-in `coordinate-transition` feature composes two validated charts of the same source into an exact affine map, retaining both inverse proofs. Interval evaluation can then project that map without first projecting through source coordinates.
+
+The opt-in `qr-coordinates` feature constructs exact unpivoted QR frames from a square basis. It retains positive residual-norm decisions, the source-bound orthogonality proof and all reconstruction residual decisions; dependent and undecided columns remain distinct failures.

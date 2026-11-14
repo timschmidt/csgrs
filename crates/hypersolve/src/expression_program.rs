@@ -635,3 +635,6 @@ pub use taylor::{
 
 #[cfg(feature = "coordinate-transition")]
 pub use coordinates::{CoordinateTransition, CoordinateTransitionError};
+
+#[cfg(feature = "qr-coordinates")]
+pub use coordinates::{QrCoordinateError, QrCoordinateProgram, QrCoordinateRequest};

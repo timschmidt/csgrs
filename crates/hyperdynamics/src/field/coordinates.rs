@@ -299,3 +299,8 @@ impl<const N: usize> CoordinateStep<N> {
 mod transition;
 #[cfg(feature = "coordinate-transition")]
 pub use transition::{CoordinateFieldTransition, CoordinateTransport, CoordinateTransportError};
+
+#[cfg(feature = "qr-coordinates")]
+mod qr;
+#[cfg(feature = "qr-coordinates")]
+pub use qr::{QrCoordinateField, QrFieldError};

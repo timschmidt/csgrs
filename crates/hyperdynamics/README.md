@@ -152,3 +152,5 @@ field definition, order and proposal. This is a forward-step verifier, not an
 automatic order/step controller or adaptive wrapping algorithm.
 
 With `coordinate-transition`, `CoordinateField::transition_to` prepares direct endpoint transport between two validated charts of the same field. `enclose` retains the exact relation and input beside its outer box, which can enter the destination chart’s next step. Frame selection and QR wrapping control remain separate work.
+
+With `qr-coordinates`, `ExpressionField::in_qr_coordinates` constructs an exact orthonormal state chart from a basis and origin without a supplied inverse. The retained factorization and chart support existing Picard, Taylor, finite-horizon and direct endpoint-transport APIs. Frame selection remains caller-controlled.

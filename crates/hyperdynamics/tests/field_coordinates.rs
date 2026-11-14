@@ -499,3 +499,7 @@ use hyperdynamics::field::coordinates::CoordinateFieldDefinition;
 #[cfg(feature = "coordinate-transition")]
 #[path = "field_coordinates/transition.rs"]
 mod transition;
+
+#[cfg(feature = "qr-coordinates")]
+#[path = "field_coordinates/qr.rs"]
+mod qr;
