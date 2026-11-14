@@ -1,4 +1,7 @@
 //! Exact state charts consumed by the existing field and Picard owners.
+mod evolution;
+pub use evolution::{CoordinateEvolution, CoordinateEvolutionStatus, CoordinateSegment};
+
 use super::{
     picard::{PicardFailure, PicardProposal, PicardReport, PicardStatus},
     *,

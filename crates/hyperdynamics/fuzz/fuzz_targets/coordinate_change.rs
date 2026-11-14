@@ -1,7 +1,10 @@
 #![no_main]
 use hyperdynamics::field::{
     EnclosedVectorField, EnclosureBudget, EnclosurePolicy, ExpressionField, FieldDefinition,
-    coordinates::{CoordinateField, CoordinateFieldDefinition, CoordinateStatus},
+    coordinates::{
+        CoordinateEvolutionStatus, CoordinateField, CoordinateFieldDefinition, CoordinateStatus,
+    },
+    evolution::{EvolutionOptions, EvolutionRequest},
     picard::PicardProposal,
 };
 use hyperinterval::DyadicInterval;
@@ -148,4 +151,33 @@ fuzz_target!(|data: &[u8]| {
         proof.source_end_enclosure().unwrap().lanes(),
         Some(&[d(x + p, x + p), d(y + q, y + q)])
     );
+    let steps = 1 + i64::from(data[0] % 4);
+    let evolution = field.integrate(
+        EvolutionRequest {
+            start: d(0, 0),
+            end: d(steps, steps),
+            initial: BoxN::new([d(a, a), d(bv, bv)]).unwrap(),
+        },
+        EvolutionOptions {
+            maximum_step: Some(d(1, 1)),
+            ..EvolutionOptions::default()
+        },
+        &mut b(),
+    );
+    assert!(matches!(
+        evolution.status(),
+        CoordinateEvolutionStatus::Completed
+    ));
+    assert_eq!(evolution.segments().len(), steps as usize);
+    for (index, segment) in evolution.segments().enumerate() {
+        let t = i64::try_from(index + 1).unwrap();
+        assert_eq!(
+            segment.source_end_enclosure().lanes(),
+            Some(&[d(x + t * p, x + t * p), d(y + t * q, y + t * q)])
+        );
+        assert_eq!(
+            segment.native().end_enclosure().unwrap().lanes(),
+            Some(&[d(a + t * da, a + t * da), d(bv + t * q, bv + t * q)])
+        );
+    }
 });

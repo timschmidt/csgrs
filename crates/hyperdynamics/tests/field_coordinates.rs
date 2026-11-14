@@ -13,6 +13,9 @@ use hypersolve::{
 const T: SymbolId = SymbolId(9);
 const X: SymbolId = SymbolId(0);
 const Y: SymbolId = SymbolId(1);
+
+#[path = "field_coordinates/whole_horizon.rs"]
+mod whole_horizon;
 fn budget() -> EnclosureBudget {
     EnclosureBudget::new(EnclosurePolicy::default())
 }

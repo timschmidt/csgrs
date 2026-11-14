@@ -5,7 +5,8 @@ Eight bytes select a unimodular shear, translation, polynomial evaluation point,
 time and constant velocity. Independent integer formulas check transformed
 nonlinear values and Jacobians. Each input also rejects a wrong inverse and a
 short graph budget, replays the field/chart, and certifies then transports a
-constant-flow step with an independent exact endpoint. All selected cases must
+constant-flow step and one to four whole-horizon segments with independent exact
+endpoints in both coordinate systems. All selected cases must
 complete; deliberate failure controls do not count as geometric success.
 
 ```sh
