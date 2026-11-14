@@ -295,3 +295,37 @@ the focused regression, all-feature tests, and strict Clippy.
 Extensions follow the stack-wide [admission protocol](../../docs/admission.md).
 It defines the exactness, certainty, boundary, cache, validation, and evidence
 requirements shared by the Hyper crates.
+
+## Certified point-mass motion
+
+The optional `certified-flow` feature adds `dynamics::PointMassDynamics3` for
+`x' = v, v' = F(t,x,v)/m`, with a fixed strictly positive exact mass. A
+`ForceFieldDefinition3` supplies three exact force expressions, explicit time and
+position/velocity symbol mappings, and source provenance. The force grammar is
+Hypersolve's existing grammar; supplied units and frame consistency remain authored
+assumptions. `ForceAccumulator3::dynamics` snapshots constant contributions through
+the existing force accumulator and retains every source/vector.
+
+`certify_step` accepts a Hyperdynamics `PicardProposal<6>`. State lanes are
+`[x,y,z,vx,vy,vz]`, allowing uncertain initial boxes. The returned physical report
+retains the model and native source/proposal/policy/evidence. Only successful native
+statuses expose a certified tube and endpoint. `integrate` retains the full attempt
+history and distinguishes a certified prefix from whole-horizon completion. These
+reports certify continuous trajectories; existing Euler methods still replay their
+original discrete updates. Derived endpoint boxes can feed later operations.
+
+Hypersolve owns expression validation and differentiation, Hyperinterval/Hyperlattice
+own enclosure arithmetic, and Hyperdynamics owns existence/uniqueness and evolution
+verification. The physical adapter introduces no second integrator. Original force
+guards, exact mass and its full strict positivity receipt remain available. Invalid
+or unresolved mass, invalid source/bindings, failed enclosures and exhausted/cancelled
+attempts retain typed outcomes. Empty state sets do not bypass model/time validation.
+
+Pass one `EnclosureBudget` through construction and subsequent calls. Its bounded
+graph view shares the configured counter without exposing a reset/replacement path.
+Scalar positivity/refinement, payload/source strings, total heap bytes and cancellation
+within scalar operations or constant-force accumulation remain outside a whole-resource
+claim. Replay the mass, full original force graph, symbol mappings, provenance and
+requests through constructors; serialized success flags are not certificates.
+Variable/uncertain mass, rotations, contacts/impulses and coupled bodies need separate
+contracts. This feature does not certify physical correctness of an authored force law.

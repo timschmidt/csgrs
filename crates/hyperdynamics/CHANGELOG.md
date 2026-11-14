@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- `EnclosureBudget::graph_budget` exposes a bounded view for domain-adapter
+  source validation/compilation and bookkeeping. It shares the existing work
+  counter and limits without exposing mutable counter replacement.
+
 - Add optional whole-horizon trajectory Taylor evolution with retained native search history and complete remainders.
 
 - Add opt-in exact QR coordinate construction with orthogonality and reconstruction evidence.

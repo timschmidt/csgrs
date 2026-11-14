@@ -12,6 +12,8 @@
 
 pub mod body;
 pub mod contact;
+#[cfg(feature = "certified-flow")]
+pub mod dynamics;
 pub mod em;
 pub mod error;
 pub mod fluid;

@@ -488,3 +488,6 @@ pub mod coordinates;
 /// Source-bound trajectory Taylor enclosures over certified Picard tubes.
 #[cfg(feature = "taylor-flow")]
 pub mod taylor_flow;
+
+mod budget_adapter;
+pub use budget_adapter::EnclosureGraphBudget;

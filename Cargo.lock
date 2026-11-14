@@ -2717,7 +2717,10 @@ dependencies = [
 name = "hyperphysics"
 version = "0.3.0"
 dependencies = [
+ "hyperdynamics",
+ "hyperinterval",
  "hyperlattice",
+ "hyperlattice-interval",
  "hyperlimit",
  "hypermesh",
  "hyperreal",

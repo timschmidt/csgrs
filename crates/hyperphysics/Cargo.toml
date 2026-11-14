@@ -19,6 +19,7 @@ all-features = true
 
 [features]
 default = []
+certified-flow = ["dep:hyperdynamics", "hyperdynamics/field"]
 dispatch-trace = [
     "hyperreal/dispatch-trace",
     "hyperlattice/hyperreal-dispatch-trace",
@@ -27,6 +28,7 @@ dispatch-trace = [
 ]
 
 [dependencies]
+hyperdynamics = { version = "0.1.0", path = "../hyperdynamics", default-features = false, optional = true }
 # Cargo uses these paths in the workspace and retains the version requirements
 # in the published manifest.
 hyperlattice = { version = "0.7.0", path = "../hyperlattice" }
@@ -36,8 +38,15 @@ hyperreal = { version = "0.14.0", path = "../hyperreal" }
 hypersolve = { version = "0.4.0", path = "../hypersolve" }
 
 [dev-dependencies]
+hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["dyadic"] }
+hyperlattice-interval = { version = "0.1.0", path = "../hyperlattice-interval", default-features = false, features = ["dyadic"] }
 proptest = "1.7.0"
 
 [[bench]]
 name = "mass_properties"
 harness = false
+
+[[bench]]
+name = "certified_flow"
+harness = false
+required-features = ["certified-flow"]

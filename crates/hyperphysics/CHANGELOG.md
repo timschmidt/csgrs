@@ -2,6 +2,12 @@
 
 ## [0.3.0] - Unreleased
 
+- Opt-in `certified-flow` builds source-bound Newtonian force fields for fixed
+  exact mass, retaining strict mass evidence and original force provenance.
+  `ForceAccumulator3::dynamics` supplies constant-force models; physical step and
+  horizon reports retain Hyperdynamics certificates and typed rejected attempts.
+  Existing discrete Euler replay is unchanged.
+
 ### Breaking
 
 - `PhysicsError` gains `TriangleIndexOutOfBounds` and `IntegrationPolicy`
