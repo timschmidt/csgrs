@@ -462,3 +462,7 @@ impl<const N: usize> FlowTaylorProgram<N> {
         Ok(FlowTaylorStatus::Certified)
     }
 }
+
+/// Whole-horizon composition of certified trajectory Taylor endpoints.
+#[cfg(feature = "taylor-evolution")]
+pub mod evolution;

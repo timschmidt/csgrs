@@ -154,3 +154,5 @@ automatic order/step controller or adaptive wrapping algorithm.
 With `coordinate-transition`, `CoordinateField::transition_to` prepares direct endpoint transport between two validated charts of the same field. `enclose` retains the exact relation and input beside its outer box, which can enter the destination chart’s next step. Frame selection and QR wrapping control remain separate work.
 
 With `qr-coordinates`, `ExpressionField::in_qr_coordinates` constructs an exact orthonormal state chart from a basis and origin without a supplied inverse. The retained factorization and chart support existing Picard, Taylor, finite-horizon and direct endpoint-transport APIs. Frame selection remains caller-controlled.
+
+The optional `taylor-evolution` feature composes validated trajectory Taylor endpoints over a finite dyadic horizon. It retains each bounded Picard search and the full Taylor remainder, feeds refined endpoints into subsequent steps, and distinguishes a certified prefix from whole-horizon completion.

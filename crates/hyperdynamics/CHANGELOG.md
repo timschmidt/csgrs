@@ -2,6 +2,8 @@
 
 ## 0.1.0 (unreleased)
 
+- Add optional whole-horizon trajectory Taylor evolution with retained native search history and complete remainders.
+
 - Add opt-in exact QR coordinate construction with orthogonality and reconstruction evidence.
 
 - Add opt-in exact source-bound coordinate transitions for direct chart transport.
