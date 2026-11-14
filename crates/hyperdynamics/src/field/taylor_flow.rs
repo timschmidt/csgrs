@@ -466,3 +466,7 @@ impl<const N: usize> FlowTaylorProgram<N> {
 /// Whole-horizon composition of certified trajectory Taylor endpoints.
 #[cfg(feature = "taylor-evolution")]
 pub mod evolution;
+
+/// Bounded automatic order and duration selection with local remainder limits.
+#[cfg(feature = "adaptive-taylor")]
+pub mod adaptive;

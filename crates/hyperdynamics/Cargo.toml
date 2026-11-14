@@ -21,6 +21,7 @@ coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-flow = ["taylor-model"]
 taylor-evolution = ["taylor-flow"]
+adaptive-taylor = ["taylor-flow"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
 taylor-polynomial = ["taylor-model", "hypersolve/taylor-polynomial"]
 reachability = ["field"]
@@ -84,3 +85,8 @@ required-features = ["qr-coordinates"]
 name = "taylor_evolution"
 harness = false
 required-features = ["taylor-evolution", "reachability"]
+
+[[bench]]
+name = "adaptive_taylor"
+harness = false
+required-features = ["adaptive-taylor", "taylor-evolution"]

@@ -156,3 +156,28 @@ With `coordinate-transition`, `CoordinateField::transition_to` prepares direct e
 With `qr-coordinates`, `ExpressionField::in_qr_coordinates` constructs an exact orthonormal state chart from a basis and origin without a supplied inverse. The retained factorization and chart support existing Picard, Taylor, finite-horizon and direct endpoint-transport APIs. Frame selection remains caller-controlled.
 
 The optional `taylor-evolution` feature composes validated trajectory Taylor endpoints over a finite dyadic horizon. It retains each bounded Picard search and the full Taylor remainder, feeds refined endpoints into subsequent steps, and distinguishes a certified prefix from whole-horizon completion.
+
+The optional `adaptive-taylor` feature adds
+`field.adaptive_taylor(AdaptiveTaylorOptions::default()).integrate(request, budget)`.
+It tries a finite ascending range of Taylor orders on each original certified Picard
+proposal, checking every coordinate's **absolute endpoint remainder contribution**
+against its exact nonnegative singleton limit. The first satisfactory order advances
+the state. If all orders fail quality, bounded exact halving retries; accepted durations
+may double for the next proposal, capped by the configured maximum and exact horizon.
+Native existence-search and quality-search halving limits remain separate.
+
+The report retains all prepared programs, native searches, Taylor evidence, failed
+quality comparisons and accepted choices. Only a completed run exposes the whole-horizon
+endpoint; a stopped prefix remains separately queryable. Native/Taylor domain or resource
+failures stop with their original cause. Empty and identity cases validate configuration
+and time first. Limits concern local truncation contributions, not global solution error,
+initial-state uncertainty or equality with the exact reachable set. Selection does not
+claim optimal order, minimum runtime or adaptive frame/QR control.
+
+Pass one budget through construction and integration. Program preparation is lazy and
+cached once per distinct order within a run; preparing different orders still uses the
+existing coefficient generator independently. Structural record checks and original
+graph/native counters are shared; exact scalar payload/refinement, nested retained graph
+size, vector capacity, whole heap and within-scalar cancellation remain outside a total
+resource claim. Replay the field definition, request and all selection options to rebuild
+proofs; serialized statuses and cached enclosures are not certificates.
