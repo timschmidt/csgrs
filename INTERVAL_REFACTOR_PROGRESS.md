@@ -55,7 +55,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence, retained after local qualification | higher-utility automatic frame strategies, independent-noise/sensitivity retention, cross-order preparation sharing, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local production packaging checks pass on the combined checkout | coordinated clean-checkout CI/reproducibility, hosted/HIL consumers and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -6836,6 +6836,47 @@ proof graphs, total heap and within-scalar cancellation remain outside the
 structural/native budget. Better useful-work frame strategies, independent-noise
 retention, wider adoption, competitive qualification, remaining migrations,
 Phase11 costs, embedded hardware gates and coordinated release remain open.
+
+## 2026-11-14 — Packaged interval release admission
+
+Retained source `2611ab263ba58c5ce928374127d4bf2cc25e2c6d` adds Hyperinterval,
+Hyperlattice Interval and Hyperdynamics to coordinated packaging. The original
+release command reproduced a missing-package resolution failure. The repaired
+script validates 21 packages, takes quickstarts from their actual archives and
+uses the selected toolchain for metadata. Scalar typed rejection, Cartesian
+composition and two source-bound certified flow horizons are executable README
+examples. Only five tooling/documentation files changed; production kernels,
+fixtures, manifests and predicate order are unchanged.
+
+Full release runs passed on Rust 1.95 and stable 1.99.0, then on a fresh clean
+Rust 1.95 checkout without dirty/no-verify flags: 21 verified archives, 21 workspace
+docs.rs configurations, archive-only resolution and 26 client checks per run.
+The clients include 20 README programs, modeling user path, C/C++, Python, Go and
+TypeScript compilation. Go was 1.27.4; no browser runtime or HIL result is inferred.
+All 21 clean archives reproduced byte-for-byte in a second clean checkout. That
+second artifact-only generation used --no-verify; mandatory first-run verification
+was retained. Dirty/clean lock checksum changes were traced to actual upstream
+archive hashes, preserving all other lock structure and package source bytes.
+
+The three interval crates passed archive-derived all-feature check, strict Clippy
+and documentation, plus 42 locked individual feature configurations. The fixed
+scalar/lattice subset passed Rust 1.88 native programs and ARM/WASM no_std checks.
+Main formatting, shell lint/syntax, diff and repository-budget checks passed.
+The original failure, rejected first example, interrupted obsolete candidate and
+harness mistakes remain in evidence. No performance improvement is claimed.
+
+Evidence commit `af7e90818a8fe92f9d50f5dc4778468cae533c27`, record
+`docs/evidence/2026-11-14-interval-interval-release`: 169 files, 6,423,935 bytes,
+SHA-256 `45654aed4f6abf169c0e9a4a45db5fd718fe9834806f3c5af5bf44ab71cbec8b`.
+`STATUS.md`, `REPRODUCE.md`, `QUALIFICATION.json` and raw logs define the scope.
+All 38 earlier frozen stages remained unchanged. Integration preserved the 41
+pending extraction paths and Interface's eight pending files; these do not become
+accepted by this release result.
+
+Phase 14 remains open: full coordinated workflow/feature/platform qualification,
+registry/docs.rs publication, application/HIL and remaining plan gates still apply.
+The optional hypervoxel/voxelis publication blocker persists. No push or publication
+was performed; the pre-push validation suite has not been claimed complete.
 
 ## Priority order and non-negotiable rules (verbatim from plan)
 
