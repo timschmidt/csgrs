@@ -666,6 +666,20 @@ This does not implement division, transcendental model maps, or combination of
 independently centered models. Use `taylor-affine` when composing linear maps
 against the original residual coordinates is the intended operation.
 
+Enable `taylor-composition` to compose certified Taylor maps through
+`Arc<TaylorModel>::compose` or `TaylorPolynomialModel::compose`. The inner image
+must fit every outer input domain, including unused inputs. The inner parameter
+center/domain/order stay fixed; existing polynomial propagation accounts for all
+truncated terms and residual cross-products, then adds the outer model's entire
+remainder. Both original certificates remain shared, and generated output accepts
+further polynomial or certified-model maps. Result coefficients describe a
+polynomial plus residual, not necessarily the derivatives of the exact composite
+at the inner center. `model_map` exposes the retained outer certificate;
+`polynomial_map` supplies node indices for product evidence. Replay each original
+definition/request and the ordered map sequence. Existing stage resource limits
+and scalar/whole-heap exclusions apply; this does not merge independently based
+parameter models or automatically select centers, orders or subdivisions.
+
 ### Exact coordinate programs
 
 The opt-in `coordinate-program` feature certifies finite exact state charts

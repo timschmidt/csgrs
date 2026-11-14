@@ -85,21 +85,30 @@ struct Value {
 #[derive(Debug)]
 struct Stage {
     map: ExpressionProgram,
+    #[cfg(feature = "taylor-composition")]
+    model: Option<Arc<TaylorModel>>,
     // Flat retained proof nodes share repeated map edges. Stages have no owning
     // parent link, so long composition chains do not recursively destroy parents.
     values: Vec<Option<Arc<Value>>>,
     outputs: Vec<Arc<Value>>,
 }
-/// A finite sequence of exact polynomial output maps over a retained Taylor model.
+/// A retained polynomial/remainder representation transported through exact maps.
 ///
 /// The original model supplies source guards, regularity, domain, center, order
 /// and grid. Each map binds its variables, in order, to all immediate input
-/// outputs. Supported reached nodes are constants, variables, negation, addition,
+/// outputs. Raw expression maps support constants, variables, negation, addition,
 /// subtraction and multiplication. Unreached nodes are not evaluated. No new
 /// derivatives are constructed. All truncated monomials and residual cross terms
 /// remain evidence; residual intervals never assert independence or equality.
 ///
 /// Replay the original model definition/request and each `maps()` definition.
+/// With `taylor-composition`, `compose` also accepts certified Taylor maps. Their
+/// original definitions are exposed by `maps`, their certificates by `model_map`,
+/// and their generated polynomial graphs by `polynomial_map`. Retain each outer
+/// definition/request when replaying those stages. The resulting coefficients
+/// define an exact polynomial plus residual; they need not be the derivatives
+/// of the exact composite at the original center.
+///
 /// These private certificates are not deserialized as proof. Shared stages retain
 /// exact sources and generated objects without expanding them into expression
 /// trees. A transform copies only the flat list of shared stage handles.
@@ -137,9 +146,15 @@ impl TaylorPolynomialModel {
     }
     /// Exact map definitions in application order; bindings refer to immediate outputs.
     pub fn maps(&self) -> impl Iterator<Item = &ExpressionProgram> {
-        self.stages.iter().map(|s| &s.map)
+        self.stages.iter().map(|s| {
+            #[cfg(feature = "taylor-composition")]
+            if let Some(model) = &s.model {
+                return model.source();
+            }
+            &s.map
+        })
     }
-    /// Number of retained polynomial maps.
+    /// Number of retained map stages.
     pub fn stage_count(&self) -> usize {
         self.stages.len()
     }
@@ -163,7 +178,8 @@ impl TaylorPolynomialModel {
             .get(output)
             .map(|v| &v.remainder)
     }
-    /// Multiplication evidence at an original map node; absent for other/unreached nodes.
+    /// Multiplication evidence at a polynomial graph node; absent for other/unreached nodes.
+    /// For a composed-model stage, use `polynomial_map` to obtain those node indices.
     pub fn product(&self, stage: usize, node: usize) -> Option<&TaylorPolynomialProduct> {
         let stage = self.stages.get(stage)?;
         if !matches!(
@@ -312,6 +328,8 @@ impl TaylorPolynomialModel {
         let mut stages = self.stages.to_vec();
         stages.push(Arc::new(Stage {
             map,
+            #[cfg(feature = "taylor-composition")]
+            model: None,
             values,
             outputs,
         }));
@@ -327,7 +345,7 @@ impl TaylorPolynomialModel {
         context.graph.charge(0)?;
         Ok(())
     }
-    /// Enclose a certified subdomain. Retain every global residual and original grid.
+    /// Enclose a certified subdomain using retained global residuals and grids.
     /// The source domain is validated even for constant or zero-output maps.
     pub fn enclose_on(
         &self,
@@ -352,12 +370,36 @@ impl TaylorPolynomialModel {
                 previous = vec![DyadicInterval::empty(); outputs];
                 continue;
             }
-            let independent = stage.map.eval_dyadic(
-                &previous,
-                self.source.request.precision,
-                graph,
-                arithmetic,
-            )?;
+            #[cfg(feature = "taylor-composition")]
+            let model = stage.model.as_ref();
+            #[cfg(not(feature = "taylor-composition"))]
+            let model: Option<&Arc<TaylorModel>> = None;
+            let independent = if let Some(model) = model {
+                // The full-range inclusion was proved at composition. Intersect
+                // query enclosures with that retained domain before evaluation.
+                let mut inputs = Vec::new();
+                graph.check_entries(&[shifts.len(), previous.len(), outputs, previous.len()])?;
+                for (slot, (input, domain)) in
+                    previous.iter().zip(&model.request.domain).enumerate()
+                {
+                    graph.charge(1)?;
+                    let input = input.intersection(domain, arithmetic)?;
+                    if input.is_empty() {
+                        return Err(TaylorError::InconsistentEnclosure { output: slot }.into());
+                    }
+                    inputs.push(input);
+                }
+                model
+                    .source
+                    .eval_dyadic(&inputs, model.request.precision, graph, arithmetic)?
+            } else {
+                stage.map.eval_dyadic(
+                    &previous,
+                    self.source.request.precision,
+                    graph,
+                    arithmetic,
+                )?
+            };
             let mut result = Vec::new();
             for (output, (value, natural)) in stage.outputs.iter().zip(independent).enumerate() {
                 graph.charge(1)?;
@@ -610,3 +652,6 @@ fn bound(
     }
     Ok(result)
 }
+
+#[cfg(feature = "taylor-composition")]
+mod composition;

@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Add opt-in certified Taylor model composition, preserving both source proofs,
+  full outer-domain inclusion, generated polynomial/cross-remainder evidence and
+  the complete outer residual. Generated results accept subsequent model maps.
+
 - Add opt-in exact QR coordinate construction with orthogonality and reconstruction evidence.
 
 - Add opt-in exact source-bound coordinate transitions for direct chart transport.
