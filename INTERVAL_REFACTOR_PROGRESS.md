@@ -7378,3 +7378,86 @@ REMAINING-GAPS.md delimit the result. Archive-only documentation, dependency
 resolution reproducibility, the optional-voxel publication blocker, HyperBrep
 release, wider feature/platform/HIL coverage and the remaining implementation
 goal stay open. No phase completion, push or publication is claimed.
+
+## Correlated trajectory endpoints: opt-in flow-noise retained
+
+Owner: Hyperdynamics trajectory/proof composition, Hypersolve finite parameter
+Taylor/affine/noise authority, Hyperlattice/Hyperinterval range arithmetic.
+P1, P5–P10, P17–P20 and P36/P37; Phases 12/13. Final source
+`ee9699cacc902c1363db112910f560ba14f9f573` adds `FlowNoiseState` and proposed-step
+`certify_noise_step`. It retains shared initial columns, complete parameter and
+time remainders, distinct fresh residual inputs and immutable field/proof history.
+The entire relaxed affine image supplies the next Picard check. An independently
+narrower endpoint box cannot silently restrict parameter combinations. This is
+a certified outer endpoint set, not equality with the exact reachable set.
+
+The pre-edit witness reproduces Cartesian loss under forward/reverse shears;
+its adverse [-3/2,3/2] x bound remains tested. Fourteen focused tests cover
+repeated generated input, exact sqrt(2) coefficients, omitted-column accounting,
+nonlinear residuals, Riccati/oscillator controls, full-image admission, guards,
+empty/invalid/N=0 cases, exhaustion/cancellation/retry, final publication,
+512-state iterative destruction with a shared intermediate state, the actual
+example and fresh-process replay. No old production function body, predicate
+order, default feature, dependency version or existing assertion changes.
+
+The clean isolated owner suite reports 153 passes in 19 harness summaries and
+Hyperphysics 83 in 16. Strict all-feature/all-target Clippy, docs, disabled
+features, the example, formatting and WASM library compilation pass. After
+integration, the pending-extraction worktree reports 164 owner passes in 22
+summaries and the same 83 downstream passes; strict Clippy, format, diff and
+repository budget also pass. These are harness counts, not universal coverage
+or acceptance of the previously staged extraction's costs.
+
+Seven archives verify at implementation revision
+`d97e1a968a37eca11d3666d4cecb7f96fb43c8f2`. Rust 1.95 and stable 1.99 each pass the
+unchanged archived example, final fourteen-test client including fresh-process
+replay, archive-only owner all-feature documentation and archive path audit.
+Later changes add only the algebraic acceptance test and remove one accidental
+README blank line; measured/packaged production Rust, manifests, dependencies,
+example bytes and substantive README text are unchanged. This is a seven-crate
+qualification, not a new full 21-crate coordinated release or hosted-docs claim.
+
+Costs compare complete certified identity endpoints at x-width limits 2+1/M,
+with y width 2. The box baseline partitions initial y into M cells; the new
+path retains two columns. Both keep every proof, materialize output and include
+output destruction. Thirty alternating pairs per case/preparation mode run on
+CPU 8 without known compiler/test workers. Each process retains its first run
+separately and summarizes five subsequent rounds. Cold includes Taylor-program
+preparation, not fresh scalar caches in those subsequent rounds. Common field
+ingestion is excluded; other host activity is uncontrolled.
+
+| Workload | Cold noise/box time | Warm noise/box time | Warm peak tracked bytes: box → noise |
+| --- | --- | --- | --- |
+| Constant identity, no correlation benefit | 5.691 | 6.526 | 17656 → 95392 |
+| Shear identity, M=8 | 0.959 | 0.965 | 151760 → 118200 |
+| Shear identity, M=32 | 0.250 | 0.245 | 598160 → 118200 |
+| Shear identity, M=128 | 0.063 | 0.062 | 2383760 → 118200 |
+
+The near-break-even coarse case, slower constant control and all raw samples
+remain. The linked probe grows 3,554,816 → 3,813,408 bytes (+7.27%); ELF text
+grows 2,681,158 → 2,889,406 (+7.77%). Named linked symbol totals are separate,
+not universal monomorphized-code bounds. These results support an optional
+correlation strategy; they do not support replacing the existing flow API.
+
+Twenty repeated allocation workloads show no growth after the first, but
+post-source requested retention is 0, 104, 208 or 312 bytes depending on mode.
+Existing small-rational caches are consistent with this result, not precise
+attribution or leak-freedom proof. The original failed zero-retention assertion
+is preserved. Tracking headers, allocator overhead, RSS and stack are excluded.
+Structural/native budgets still exclude scalar refinement/CPU, coefficient
+payload, total heap and within-scalar cancellation.
+
+Integration proves exact reverse application and preserves all 41 pending
+extraction paths apart from blob IDs/hunk metadata. The initial alternate-index
+conflict was caused by a stray README blank line; no main state changed before
+its isolated correction. Both Alumina repositories retain their original states.
+All 46 previous frozen stages verify unchanged. Evidence record
+`docs/evidence/2026-11-14-interval-flow-noise`, commit `078e775834cf1881b96878c5a9860d1a88f52b65`:
+626 files / 4,072,543 bytes, SHA-256
+`218186d773da3af3d2ca99f07b9c66bb355cd195382de0e6bd817d5cba82107f`.
+
+STATUS.md, CAPABILITIES.json and REMAINING-GAPS.md delimit the result. Automatic
+noise-aware horizon control, wider nonlinear/deep-chain and platform costs,
+resource exclusions, cost-rejected migrations, staged extraction, embedded/HIL
+and coordinated release remain open. No phase/full-goal completion, full
+pre-push matrix, push or publication is claimed.
