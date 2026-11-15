@@ -8433,3 +8433,59 @@ No push/publication occurred.
 Evidence `docs/evidence/2026-11-15-interval-interface-machine-fuzz`, local archive commit
 `693cf4038c69be4550d73b7bf59cf010d308ff07`: 639 files / 880,428 bytes,
 SHA-256 `1681f93512b7d12d128f9c565fe1cb3dec69ceb1b17f9593e1b076494305bc29`.
+
+
+## 2026-11-15: reject static-arity machine interval products
+
+Phase 8 is rechecked on accepted CSGRS `b51440ab08eef4a140822dc7e8650af4a661934a`, Interface
+`f5341f36803ad77c856313315d67ac8b3bb63f9a` and unchanged firmware
+`b9ecf8df54723e532a42867a1d3c549f827d5f6d`, excluding the pending extraction.
+The distinct hypothesis is that the rejected positive-product helper's runtime
+slice loses the known four-factor transmission shape at its shared API boundary.
+A generic AsRef argument preserves array type through monomorphization while
+retaining runtime slices/vectors. It uses the identical product body, arithmetic
+order and positivity checks. No inlining/unrolling directive, degree/factor limit,
+compiler option, dependency version or acceptance threshold changes.
+
+The missing positive-chain API is reproduced before edits. The previous dynamic
+candidate is rebuilt as a control, not a retention attempt. It passes 11 owner
+tests. The static candidate passes 12 across three harnesses: retained independent
+625-case corner enumeration, a large-rational GMP oracle, generated output as input,
+invalid/empty refinements, fresh-process original/dynamic/static dispatch equality,
+and new independently checked static/runtime products of lengths 0,1,2,4,8,16.
+Strict all-feature/all-target owner Clippy passes. An initial unsupported usize
+conversion in the new test is corrected to u128; the failure remains recorded.
+No existing assertion is removed or weakened.
+
+All seven complete native profile/identity/allocation transcripts match baseline.
+All seven WASM transcripts match their native counterpart, reject invalid indices,
+and make zero host calls. These are consumer comparisons, not an independent
+full-profile or canonical schedule proof.
+
+| Artifact | Baseline bytes | Dynamic control | Static candidate |
+| --- | ---: | ---: | ---: |
+| Native profile executable | 810416 | 811296 | 811296 |
+| WASM profile module | 1069027 | 1069992 | 1069992 |
+
+Both static artifacts are byte-identical to their dynamic controls. The +880-byte
+native and +965-byte WASM size failures reproduce. This API-boundary change has
+no effect on these configured artifacts; it neither explains compiler internals
+nor identifies the remaining cost cause. The candidate is rejected and fully
+removed. No timing, owner-wide code-size, full-profile both-policy trace, full
+schedule/browser, sanitizer, coverage or pre-push campaign follows the decisive
+size rejection. Build duration and WASM fuel are not performance evidence.
+
+Restored native/WASM builds reproduce baseline hashes byte for byte and complete
+native output. Restored owner tests and both workspace formatting checks pass.
+The three isolated source worktrees are clean. Primary's 41 staged paths and
+Interface's eight pending edits remain byte-identical; firmware is unchanged.
+All 64 previous frozen stages verify. The full goal remains active, including
+machine arithmetic/error composition, other rejected migrations, extraction cost
+gates, whole-resource closure, hardware and coordinated release. No source from
+this experiment is retained or pushed.
+
+Evidence `docs/evidence/2026-11-15-interval-profile-static-products`, local archive commit
+`45bbdbd247556273f926334a4d5954ebe9ba5373`: 73 files / 747,732 bytes,
+SHA-256 `8a4be98432a778397ef84eeaea1b321b7c4d0ea472a5a283eda19ef55d140a9f`. Complete patches, source, locks, initial failures,
+full transcripts and restoration receipts are retained. Do not repeat the
+static-arity variant without evidence distinguishing it from this result.
