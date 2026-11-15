@@ -8208,3 +8208,53 @@ pre-push, MCU/HIL, timing speedup, push or publication claim is made.
 Evidence `docs/evidence/2026-11-15-interval-lattice-support-facts`, local archive commit
 `cf37b5f152ebb0ffe652fb5609a350b6705abda7`: 70 files / 338,764 bytes,
 SHA-256 `26196061d3bfcf4d24513b35b682773cd97a6169ff282f3f1aa77878568cf330`.
+
+
+## 2026-11-15: preserve exact cell identity across SDF-to-voxel handoff
+
+Source `87cd2481f23a3713ba945bef2370b64a2f7c240d` repairs the existing optional Hypersdf
+adapter, a prerequisite for phase-13 conservative voxel adoption. Before editing,
+the current revision accepted a Filled negative-x source cell with an unrelated
+positive-x target origin. The regression's required rejection failed: address
+validity alone did not preserve the physical cell certified by the source.
+
+The adapter now requires matching declared units, positive source dimensions
+within target capacity, valid source indices, and certified exact equality of
+all origin/pitch coordinates. It reuses Hypersdf's existing strict construction
+predicate. Mismatch is typed invalid input; undecided equality is UnknownOrdering
+with its axis. Rectangular and partial batches still support sparse intake;
+complete exact storage admission stays in Hypervoxel. This does not authenticate
+caller-forged public occupancy labels or add an implicit transform/unit conversion.
+
+Ten feature-enabled regressions cover the original witness, all five units,
+2^-60 origin/pitch mismatches on each axis, independent algebraic equality,
+undecided exact-zero identities, invalid/empty source batches, source indices,
+retry, literal physical cell bounds, partial/unknown intake and fresh-process
+materialization. Rational admission asserts exactly six strict comparisons and
+zero approximation events. Original tests and fixtures remain unchanged. Stable
+all-feature owner tests pass 172, no-default 122, Rust 1.95 adapter tests nine,
+and the separate Hypervoxel workspace's affected intake/path/grid tests 35.
+Strict all-target Clippy, rustdoc, formatting and Rust 1.95 WASM compilation pass.
+Primary regression, format, diff and repository-budget checks pass. Initial test
+fixture Result mistakes and the wrong downstream workspace command are retained
+with their corrected successful runs.
+
+Twenty isolated CPU0/ASLR-disabled same-path probe runs retain identical valid
+payload digests and allocation counts/bytes for complete conversion, exact sparse
+materialization and drop at 1/8/512/4096 cells. Median candidate/baseline time ratios
+are 1.0265/1.0140/0.9789/0.9869; overlapping short samples do not establish a
+speedup or no regression. The executable grows 2,320,560 to 2,619,616 bytes
+(+299,056) when certified comparison becomes reachable. These costs are accepted
+for the exactness repair; this is not a behavior-preserving refactor, and the old
+adapter fails the repaired contract. No application-wide size or total-resource
+claim follows. Raw binaries, samples, probe and validation logs are retained.
+
+All 41 staged extraction paths and Interface's eight edits remain exact; firmware
+is unchanged and all 60 prior frozen stages verify. Native-enclosure voxel intake,
+remaining migration cost/resource gates, hardware qualification and coordinated
+release remain open. No phase/goal completion, full pre-push, push or publication
+is claimed.
+
+Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-frame`, local archive commit
+`efe5493aa245b2a901202e649c99e25e63b8c228`: 61 files / 5,077,995 bytes,
+SHA-256 `a0dc818a168e3cf93506605ab9775ebcd83be67fff9955a9c40dfe2c5c486291`.
