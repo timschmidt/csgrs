@@ -289,7 +289,9 @@ fn fresh_process_reconstructs_native_controls_and_replays_range_proof() {
         let data: Vec<i32> = encoded.split(',').map(|x| x.parse().unwrap()).collect();
         assert_eq!(data.len() % 3, 0);
         let source = RationalBezier2::from_homogeneous_controls(
-            data.chunks_exact(3)
+            data.as_chunks::<3>()
+                .0
+                .iter()
                 .map(|c| {
                     HomogeneousControl2::new(Real::from(c[0]), Real::from(c[1]), Real::from(c[2]))
                 })

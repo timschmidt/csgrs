@@ -6490,6 +6490,90 @@ fn square_region(min_x: i8, min_y: i8, max_x: i8, max_y: i8) -> CurveRegion2 {
     .into_value()
 }
 
+#[test]
+fn authored_carrier_adjacency_matches_partitioned_cycles_without_numeric_dispatch() {
+    for policy in [
+        crate::PredicatePolicy::STRICT,
+        crate::PredicatePolicy::APPROXIMATE_512,
+    ] {
+        let outcome = crate::evaluate_under(policy, || {
+            let region = square_region(0, 0, 2, 2);
+            let seed = build_parameterized_carrier(
+                &region.boundary_loops()[0].fragments()[0],
+                CurveRegionBooleanOperand2::First,
+                0,
+                0,
+                true,
+            );
+            for count in 1..=8 {
+                let mut cycle_edges = Vec::new();
+                let mut carriers = Vec::new();
+                for (operand, loop_index, length) in [
+                    (CurveRegionBooleanOperand2::First, 0, count),
+                    (CurveRegionBooleanOperand2::First, 3, count + 1),
+                    (CurveRegionBooleanOperand2::Second, 0, count + 2),
+                    (CurveRegionBooleanOperand2::Second, 3, count + 3),
+                ] {
+                    for fragment_index in 0..length {
+                        cycle_edges.push((
+                            operand,
+                            loop_index,
+                            fragment_index,
+                            (fragment_index + 1) % length,
+                        ));
+                        let mut carrier = seed.clone();
+                        carrier.operand = operand;
+                        carrier.loop_index = loop_index;
+                        carrier.fragment_index = fragment_index;
+                        carriers.push(carrier);
+                    }
+                }
+                for reverse_storage in [false, true] {
+                    if reverse_storage {
+                        carriers.reverse();
+                    }
+                    let check = || {
+                        for first in &carriers {
+                            for second in &carriers {
+                                let expected = first.operand == second.operand
+                                    && first.loop_index == second.loop_index
+                                    && cycle_edges.iter().any(
+                                        |&(operand, loop_index, start, end)| {
+                                            operand == first.operand
+                                                && loop_index == first.loop_index
+                                                && ((first.fragment_index, second.fragment_index)
+                                                    == (start, end)
+                                                    || (
+                                                        second.fragment_index,
+                                                        first.fragment_index,
+                                                    ) == (start, end))
+                                        },
+                                    );
+                                assert_eq!(
+                                    authored_carriers_are_adjacent_in_set(&carriers, first, second),
+                                    expected,
+                                    "count={count}, reversed storage={reverse_storage}",
+                                );
+                            }
+                        }
+                    };
+                    #[cfg(feature = "dispatch-trace")]
+                    {
+                        hyperreal::dispatch_trace::reset();
+                        hyperreal::dispatch_trace::with_recording(check);
+                        let trace = hyperreal::dispatch_trace::take_trace();
+                        assert!(trace.dispatch.is_empty());
+                        assert_eq!(trace.rational, Default::default());
+                    }
+                    #[cfg(not(feature = "dispatch-trace"))]
+                    check();
+                }
+            }
+        });
+        assert_eq!(outcome.certainty(), crate::CurveCertainty::Certified);
+    }
+}
+
 fn half_point(x: i8, y: i8) -> Point2 {
     let half = (Real::one() / Real::from(2_i8)).expect("nonzero denominator");
     Point2::new(Real::from(x) * &half, Real::from(y) * &half)
