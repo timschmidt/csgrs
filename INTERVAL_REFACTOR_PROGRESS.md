@@ -8258,3 +8258,61 @@ is claimed.
 Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-frame`, local archive commit
 `efe5493aa245b2a901202e649c99e25e63b8c228`: 61 files / 5,077,995 bytes,
 SHA-256 `a0dc818a168e3cf93506605ab9775ebcd83be67fff9955a9c40dfe2c5c486291`.
+
+
+## 2026-11-15: consume native source-bound enclosures in voxel storage
+
+Source `cbc9dc9d2b84946994bc3abc65172668b1ff1daa` adds phase-13/Tier-3 native voxel intake behind
+both existing enclosure-program and hypervoxel-adapter features. The current
+base lacked SdfProgram::classify_voxel_grid; its missing-method witness is
+retained. Hypervoxel remains the exact frame/address authority. Outward native
+coordinate enclosures feed SdfProgram::image, and an immutable report keeps each
+original source-bound proof, address, frame units and options. Export reuses
+existing occupancy mapping and exact storage admission, with Unknown preserved.
+
+Thirteen new regressions demonstrate independent sin/cos whole-cell certification
+and exact materialization where the legacy path was Unknown; literal polynomial
+images and subsequent consumption; algebraic frames and transformed sources;
+source/metric identity; zero versus overlap; canonical empty storage; fresh-process
+source reconstruction; typed domain, capacity, work, entry, arithmetic, storage and
+cancellation failures with retry. Fresh reconstruction is not serialized proof
+replay. Cell limits, graph work/entries and shared dyadic arithmetic are distinct;
+frame scalar arithmetic, Hyperreal refinement, clone/drop and heap bytes retain
+native exclusions. Cancellation during scalar refinement is not established.
+
+Final stable owner tests pass: 181 main harness tests by --list, with fresh child
+executions additional. The earlier raw stdout totals interleave child output and
+are not canonical counts. No existing assertion was removed. Rust 1.95 new tests,
+strict stable/MSRV all-target Clippy, rustdoc, single-feature/default checks, WASM
+compilation and 35 downstream Hypervoxel intake/path/grid tests pass. A separate
+Rust 1.95 path client executes the example; this is not packaged-release evidence.
+Primary new tests, format, diff and repository-budget checks pass. Setup failures
+and the explicitly invalid Fresh candidate build are retained with corrections.
+
+The additive completeness gain is retained with measured costs, not presented as
+a behavior-preserving refactor or optimization. Full proof/intake/materialization/
+destruction probe medians: polynomial 1/8/512 cells 8.75 us / 63.22 us / 4.20 ms;
+trig 8/64 cells 0.946 / 8.218 ms; algebraic-frame eight-cell empty storage 81.00 us.
+Requested allocation bytes, work counters, source, raw samples and binaries are
+archived. Source/frame construction and compilation are outside that measurement.
+No speedup comparison to legacy Unknown or peak-memory claim follows.
+
+All 46 existing classification benchmarks completed in a pinned CPU0, ASLR-disabled,
+same-path B/C/C/B campaign. A longer repeat of the three largest adverse ratios
+confirmed AABB interval 1.02962, arithmetic Lipschitz 1.11833, and batch classification
+1.07006 candidate/baseline mean ratios, with separated adverse confidence intervals.
+The full screen and repeats, including unfavorable data, remain in the archive.
+Existing benchmark bytes grow 3344 and basic-example bytes 2920. Unchanged legacy
+mathematical bodies do not establish unchanged compiler output or runtime; emitted
+code/relocation differences were inspected, but no unique runtime cause is proved.
+These costs are explicitly accepted for demonstrated native evidence consumption
+under exactness > completeness > performance. No no-regression gate is claimed.
+
+The 41 staged primary extraction paths and eight Interface edits remain byte-identical;
+firmware is unchanged. All 61 prior frozen stages verified. Whole-resource closure,
+remaining migration cost gates, hardware and coordinated release remain open.
+This is not phase/goal completion; no full pre-push, push or publication occurred.
+
+Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-enclosures`, local archive commit
+`32f176a919814448030d0a585fb552d248a5fa4f`: 3,197 files / 58,398,912 bytes,
+SHA-256 `70662d68780559b476ebd4f0b7209ab72e1ba24432a04c21d3148d6ed392a401`.
