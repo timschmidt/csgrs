@@ -8724,3 +8724,44 @@ SHA-256 `d4d8df62bc8b4ec930a7b5408b181e1e4b6517e0a53e84af031b8d64fbef743c`. The 
 source-bound builds, fixture hashes, command outputs and integration receipt are
 archived. Test binaries remain external with paths and hashes; no archived-binary
 or reproducible timing equivalence claim is made.
+
+
+## 2026-11-15: current DRC arrangement and scalar cost attribution
+
+On accepted `e221a08381032ef42e588cca75d0f7b9212974be`, the prior source-qualified release test binary
+from `71377cb5f0007f1ff2ed03ec2a3c36ce99f95fb4` was checked by SHA-256 and
+sampled through the original KiCad smoke workload. The intervening commit changes
+only the ledger and manifest. Original tracked archive hashes verify unchanged.
+The debugger collected 63 worker-stack samples at a two-second period, exited
+cleanly and recorded the inferior's existing CPU-gate failure. Its 129-second
+instrumented duration is diagnostic, not a new acceptance timing. The prior
+uninstrumented 130.443995189/127.134745903-second failures against 120 remain open.
+
+Inclusive samples contain native contour admission 29 times, PCB region aggregation
+26, structural exact sign recognition 19, wide rational GCD 16, minimum copper-neck
+12, and unary candidate scheduling, pair preparation, split topology and fragment
+selection 10 each. Contour bounds occur in seven samples. These overlapping counts
+are not an exclusive time breakdown or a statistically established speedup.
+
+Targeted body/caller review confirms the workload already shares copper-layer
+construction through run_checks' OnceCell. BoardModel has public mutable sources;
+a persistent board cache cannot be justified without source binding and invalidation.
+The samples do not justify repeating the rejected nonzero-adjacency shortcut.
+Candidate preparation includes native-arc materialization and scalar recognition;
+further work should isolate temporary rational-curve promotion and classification
+cost while preserving the existing arithmetic and proof contracts. This is evidence
+constraining the next experiment, not acceptance of any cache or algorithm change.
+
+No implementation, test, fixture, numerical policy, dispatch order or dependency
+changes. No new owning/downstream test or full CI completion is claimed for this
+read-only investigation. Main's 41 staged paths and Interface's 8 pending paths
+remain byte-identical; firmware is clean. The full 15-phase objective remains
+active, including solver and Interface migrations, pending dynamics extraction,
+resource, performance, coordinated release and HIL gates. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-drc-arrangement-profile`, local archive commit
+`0bf6988be70e2ab599a3349ec6cbcf5acd05be96`: 13 files / 1,821,800 bytes,
+SHA-256 `aeb31e89a259b69d582a02a28d26c0c3f09c962a860eef4fa393357609971524`. Includes the bounded sampling script,
+raw debugger stream, all original stacks, inclusive attribution, executable and
+fixture hashes, reviewed-source hashes and preserved repository state. The binary
+remains external at its hash-bound path. Source inventory is not whole-file review.
