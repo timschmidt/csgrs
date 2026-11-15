@@ -2,6 +2,10 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in correlated Taylor flow endpoints with retained affine columns,
+  explicit fresh residual inputs, complete trajectory/parameter remainder proofs,
+  bounded column selection, checked continuation and replay from original inputs.
+
 - Share prepared trajectory coefficient graphs across lower polynomial orders,
   retaining the complete selected remainder stage and original source guards.
 

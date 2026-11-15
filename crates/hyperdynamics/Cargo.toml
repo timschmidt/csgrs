@@ -21,6 +21,7 @@ qr-coordinates = ["coordinate-transition", "hypersolve/qr-coordinates"]
 coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-flow = ["taylor-model"]
+flow-noise = ["taylor-flow", "taylor-noise"]
 taylor-evolution = ["taylor-flow"]
 adaptive-taylor = ["taylor-flow"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
@@ -47,6 +48,10 @@ serde_json = "1.0"
 [[example]]
 name = "expression_field"
 required-features = ["field"]
+
+[[example]]
+name = "flow_noise"
+required-features = ["flow-noise"]
 
 [[example]]
 name = "rk_proposal"

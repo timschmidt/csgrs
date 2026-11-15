@@ -473,3 +473,7 @@ pub mod adaptive;
 
 /// Reuse prepared coefficient graphs across polynomial orders.
 pub mod orders;
+
+/// Correlated affine endpoints with separately bounded fresh trajectory residuals.
+#[cfg(feature = "flow-noise")]
+pub mod noise;

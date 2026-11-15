@@ -138,6 +138,7 @@ cargo run -p hyperdynamics --features rk-proposal --example rk_proposal
 The default feature set is empty. `dispatch-trace` enables underlying exact
 arithmetic instrumentation when `field` is enabled.
 
+
 Enable `reachability` for `field.reach(request, policy, budget)`. The request gives
 an exact dyadic horizon, an initial box and nonnegative singleton `epsilon`.
 Only `end_cover()` on a completed report exposes a finite endpoint union `C`:
@@ -279,3 +280,24 @@ same-order requests share the whole array. No source term or guard is discarded.
 Run `cargo run -p hyperdynamics --features taylor-flow --example taylor_orders`.
 The adaptive controller still prepares each distinct order independently; callers
 can explicitly reuse a prepared higher order for their own finite portfolios.
+
+With `flow-noise`, `FlowNoiseState` retains an exact affine definition of an outer
+endpoint set. Pass it to `FlowTaylorProgram::certify_noise_step` with a proposed
+Picard tube, end time and retained-column capacity. A complete result can enter
+the next step with its shared uncertainty intact. Hypersolve certifies the finite
+endpoint polynomial's parameter Taylor model and selects its retained columns;
+discarded contributions and the trajectory remainder remain explicit residuals.
+Those residuals become distinct independent inputs on the next step. The state
+retains the original box and every field/proof association through shared history.
+
+The affine set encloses the reachable set; it does not assert equality with it.
+The next Picard check covers every affine parameter combination, even when a
+separate endpoint proof supplies a narrower Cartesian box. Failed or exhausted
+attempts expose their partial evidence but no new state. This API uses explicit
+proposed steps, not an automatic noise-aware horizon controller. The existing
+budget exclusions for scalar refinement, total heap and within-scalar
+cancellation still apply.
+
+```sh
+cargo run -p hyperdynamics --features flow-noise --example flow_noise
+```
