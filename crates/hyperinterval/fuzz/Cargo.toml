@@ -132,3 +132,11 @@ required-features = ["rational"]
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "conversions"
+path = "fuzz_targets/conversions.rs"
+required-features = ["rational"]
+test = false
+doc = false
+bench = false
