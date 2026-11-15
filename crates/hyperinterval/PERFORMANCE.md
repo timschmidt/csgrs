@@ -534,3 +534,28 @@ interval completion. Wide/unbounded sources prove complete branch coverage;
 no undecided denominator is counted as whole-range success. These are costs
 for new capabilities, not speedup claims. Actual allocation/heap-byte bounds,
 cancellation, embedded cycles and full downstream qualification remain open.
+
+## Directed dyadic quotient sharing: rejected size tradeoff
+
+At `4d4e22a31`, `scaled_quotient` computes floor and ceiling with two backend
+magnitude divisions. Two single-division candidates preserved exact outputs and
+work/error contracts in focused tests. A same-source-path external consumer
+exercised 15 completed division, conversion, root and elementary-function cases;
+canonical outputs and domain qualifications matched, with no allocation-request
+increase. This is not a completed timing or downstream qualification campaign.
+
+Neither candidate passed all required size gates. With the workspace-derived
+lock (num-bigint 0.4.6), a signed quotient/remainder candidate grew the executable
+by 432 bytes; retaining unsigned magnitudes until directed output construction
+reduced it by 1,224 bytes. With the external resolver's lock (num-bigint 0.4.8),
+the corresponding changes were +1,008 and +104 bytes. Function-address unions
+also grew for both external candidates. Both locks and all adverse results are
+retained in the evidence record linked by the root interval progress ledger.
+No dependency range, size gate, precision, fixture or work weight was narrowed.
+
+Production arithmetic is restored. Independent directed-quotient tests retain
+small signed-integer expectations, large-limb multiplication inequalities,
+resource-admission precedence and a zero Hyperreal-dispatch assertion. The
+original double division remains until sharing can satisfy the unchanged cost
+gates across the demonstrated dependency configurations. No speedup or phase
+completion is claimed from these tests or the rejected experiments.

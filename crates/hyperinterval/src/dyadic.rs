@@ -1060,3 +1060,7 @@ impl DyadicInterval {
         crate::ieee::BINARY64.dyadic_point(bits, budget)
     }
 }
+
+#[cfg(test)]
+#[path = "dyadic_quotient_tests.rs"]
+mod quotient_tests;
