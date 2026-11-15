@@ -8562,3 +8562,60 @@ Evidence `docs/evidence/2026-11-15-interval-profile-codegen-attribution`, local 
 `726c24d55a9f704c21ee3bf1df85e82383f52a42`: 96 files / 6,514,571 bytes,
 SHA-256 `363df0c84750b94853059462f44d659a605743e45acf2eb22f182410fb50c2f2`. Source variants, maps, disassembly, commands,
 full transcripts, rejected attempt and restoration receipts are retained.
+
+
+## 2026-11-15: reject generic final construction for machine interval migration
+
+Phase 8 remains open. On accepted CSGRS `94459e71e26c06d42cb2ad79101b4771523e200c`, Interface
+`f5341f36803ad77c856313315d67ac8b3bb63f9a` and firmware
+`b9ecf8df54723e532a42867a1d3c549f827d5f6d`, a distinct private generic-finalizer
+experiment tests whether construction of final domain objects within validated
+scalar ingress removes intermediate Result overhead. The preceding combined-ingress
+prototype remains the control. Hyperinterval owns exact interval arithmetic;
+Interface owns nominal values, units, identities and typed physical-fact errors.
+Original lookup, conversion, validation, predicate and arithmetic order is retained.
+No compiler hints, configuration changes or assertion weakening are introduced.
+
+The missing helper witness fails with E0425 before implementation. It passes after
+implementation, checking one finalizer call on success and none after missing facts
+or nonpositive lower bounds. All19 machine-profile unit tests and14 owner tests
+across four harnesses pass. The latter retain independent endpoint/corner and GMP
+oracles, full-width uncertainty, output-as-input and fresh-process dispatch tests.
+Strict owner all-feature/all-target Clippy and Interface core default-feature
+all-target Clippy pass. Complete consumer both-policy trace qualification remains
+unclaimed.
+
+Baseline and control native/WASM binaries reproduce their prior hashes. All seven
+full native profile/identity/allocation transcripts match baseline, and WASM outputs
+match native with invalid indices rejected and zero host calls. Locked harnesses,
+absolute dependency paths, Rust1.95.0, release profile and CSGRS build cwd are fixed.
+These comparisons supplement independent owner oracles; they do not establish
+full-profile or full-canonical-corpus correctness by themselves.
+
+| Source | Native bytes | Delta | WASM bytes | Delta |
+| --- | ---: | ---: | ---: | ---: |
+| Baseline | 810416 | 0 | 1069027 | 0 |
+| Combined-ingress control | 810608 | +192 | 1069527 | +500 |
+| Generic final construction | 811424 | +1008 | 1070423 | +1396 |
+
+The candidate fails both size gates and is rejected. Its linker-map build reproduces
+the normal stripped native binary exactly. Native .text grows736 bytes (mapped
+symbol union and normalized family delta sum +737; padding differs by one byte),
+and unwind sections grow248/32 bytes. Positive scalar wrappers are405 bytes each,
+versus275/69 in the preceding control. Constructor/refinement functions also become
+separate emitted functions. This is artifact attribution, not a runtime or universal
+compiler claim. No broad timing, whole-owner code-size, full browser/schedule,
+sanitizer, coverage or pre-push campaign follows rejection.
+
+All experimental source is removed. Restored owner tests and both workspace format
+checks pass. Fresh native/WASM artifacts and full native output reproduce baseline
+byte for byte. Three isolated worktrees are clean. The primary41 and Interface8
+pending patches, firmware and all66 previous frozen stages remain unchanged.
+No production implementation is retained and no phase is marked complete. The goal
+remains active with migration, extraction, resource, hardware and coordinated
+release work unresolved. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-profile-final-construction`, local archive commit
+`d94336575bf3bf300c913b3a23620b1fc72b144e`: 66 files / 3,148,345 bytes,
+SHA-256 `0bb39825d350fa3199182fd0aafdac63b6efc773404c5c49f670fbbb517808d2`. Candidate source, missing witness,
+commands, raw maps, complete transcripts and restoration receipts are retained.
