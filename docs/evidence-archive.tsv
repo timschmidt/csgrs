@@ -579,3 +579,4 @@ docs/evidence/2026-11-14-interval-sqrt-endpoint-migration	47	1641347	06bfb0059a3
 docs/evidence/2026-11-15-interval-workspace-qualification	137	172230791	24a5df0d14c1cc9dd1ec80dcad258de9aca345cbd6ad0c5e733adcd577a9b2d4
 docs/evidence/2026-11-15-interval-flow-noise-evolution	426	7717756	f8782a79d00119ff4bc14a40372c6797d4dd0103a0cf2d296dd92c684964cd3e
 docs/evidence/2026-11-15-interval-wasm-float-qualification	304	40877079	542eeec3955e1a1feb68aef57bbe55c6ea217f883a0f6834686f66a7633702be
+docs/evidence/2026-11-15-interval-ieee-dyadic-egress	589	86109543	7f7c8843bfebb923ef3aacb841ceac2825cfde3d17f234d4cdab6e2df5d8930f

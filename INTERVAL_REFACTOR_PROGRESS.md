@@ -8103,3 +8103,69 @@ No full pre-push, push, publication or full-goal completion is claimed.
 Evidence `docs/evidence/2026-11-15-interval-wasm-float-qualification`, local archive commit
 `52a9ce3f00e56527dc11d1a25819211f66b47fbc`: 304 files / 40,877,079 bytes,
 SHA-256 `542eeec3955e1a1feb68aef57bbe55c6ea217f883a0f6834686f66a7633702be`.
+
+## Directed dyadic-to-IEEE conversion closure (2026-11-15)
+
+Phases 3/4/14, plan sections 3.5/3.12; Hyperinterval owns scalar directed
+conversion. Baseline `f9ca2901e92c7fd5471cb60ba262a71469c21ee5` reproduces the
+missing public API. Source `d51c7bb4d9298c913e3149cb5a478e98dbd318d0` adds
+`F32Enclosure::from_dyadic` and `F64Enclosure::from_dyadic`: the tightest finite
+IEEE enclosure of a borrowed exact dyadic interval. This closes explicit
+IEEE → dyadic arithmetic → IEEE enclosure chains. Off-grid endpoints widen;
+containment does not claim equality with the retained source. Overflow,
+unsupported environments and resource exhaustion remain typed. Empty is valid.
+
+A private arbitrary-mantissa bridge reuses the existing IEEE encoder and sign
+authority. Bit length selects the target grid; retained significand and a checked
+discarded tail establish floor/ceiling without native floating arithmetic.
+Extreme exponents never cause exponent-sized shifts. Both endpoints share the
+caller’s DyadicBudget, reserving before limb inspection/allocation. Existing
+arithmetic bodies, predicate order and production dependencies are unchanged.
+The documented deterministic work/bit accounting is not a heap-byte or
+cancellation guarantee.
+
+Stable owner tests pass 238 cases, Hyperlattice interval 90, and the Rust 1.88
+primitive/serde configuration 192. Eight new optimized tests and the release
+MXCSR test pass; the latter executes 56 literal boundary cases in each of 16
+isolated rounding/FTZ/DAZ modes. Independent GMP/MPFR checks compare tight bits
+for 12,000 arbitrary-mantissa intervals. Separate tests exercise every finite
+exponent field, subnormal/normal/extreme boundaries, huge mantissas, i32 exponent
+limits, shared-budget failures/retry, immutability, replay and further arithmetic.
+Strict owner Clippy, docs, formatting and ARM no_std compilation pass.
+
+The maintained 14-command WASM driver passes on Rust 1.88, 1.95 and stable 1.99,
+including the existing 55,802 scalar cases, 8,836 property queries and downstream
+vector chains. A separate allocating dyadic consumer executes all 56 exact
+boundary cases in Node and Chromium on each compiler; its complete generated
+module has no native floating arithmetic/conversion or imports. The original
+float-only module remains separately allocation-free. The expanded sanitizer-
+backed strict-float fuzz target completes 100,000 runs without failure. Coverage
+of the new private module is 38/38 lines and 85/87 regions, not whole-owner or
+branch coverage.
+
+The existing native float-only control remains byte-identical: 499,936 bytes,
+SHA-256 `876d177a67283fead193fe45c111426318ab5881eb5d49c8acbf041c5438f69d`.
+A separate allocation probe requests two allocations totaling 32 bytes for each
+successful 65-, 4,097- and 1,000,001-bit mantissa fixture. Rejected size-budget
+calls and i32 extreme-exponent fixtures allocate zero temporary bytes. Input
+construction, allocator overhead and peak RSS are excluded; no timing speedup
+or whole-application size claim is made.
+
+Clean-source packages verify on Rust 1.95 and reproduce byte-identical archives.
+External archive-only consumers pass native/WASM builds, strict Clippy, Node,
+Chromium and dependency metadata checks on Rust 1.88 and stable. Original
+validation diagnostics remain: cargo-fuzz was outside PATH, llvm-cov initially
+received an incorrect positional object, and one successful browser execution
+failed during raced profile cleanup. Explicit tool lookup, corrected export
+arguments and bounded cleanup retries resolve them; no assertion was weakened.
+
+Integration proves exact index-tree preservation of all 41 pending extraction
+paths. The primary checkout passes the eight new tests, formatting, Zizmor,
+diff and repository-budget checks. Interface’s eight paths and firmware remain
+unchanged; all 58 earlier frozen stages verify unchanged. No full pre-push,
+hosted OS/MCU/HIL, complete resource, whole-goal, push or publication claim is
+made. Existing migration cost and coordinated-release gates remain open.
+
+Evidence `docs/evidence/2026-11-15-interval-ieee-dyadic-egress`, local archive commit
+`97a51a509d6fcd497580a9feee8d1c5671226fbb`: 589 files / 86,109,543 bytes,
+SHA-256 `7f7c8843bfebb923ef3aacb841ceac2825cfde3d17f234d4cdab6e2df5d8930f`.
