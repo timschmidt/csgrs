@@ -8374,3 +8374,62 @@ hardware and coordinated release are not complete. No push/publication occurred.
 Evidence `docs/evidence/2026-11-15-interval-voxel-affine-enclosures`, local archive commit
 `0bb2d1329f98eabcbde4b31f9578ceac706e9c2b`: 141 files / 12,040,903 bytes,
 SHA-256 `3cc6a550c09b8ef63734319ccecd06837f01a186bb0046630cadd6c17992a90c`.
+
+
+## 2026-11-15: machine-profile and firmware-lowering fuzz targets
+
+Interface source `f5341f36803ad77c856313315d67ac8b3bb63f9a` adds the missing plan-14.3 targets in
+an unpublished standalone fuzz workspace. The baseline is Interface73cc71b,
+CSGRSd78473b and firmwareb9ecf8d. Only 31 new fuzz/ paths are committed: harness,
+canonical configuration/provenance, 20 seeds, deterministic regressions, replay
+utility, manifests and documentation. Production arithmetic, validation, policies,
+canonical encodings and existing assertions remain unchanged.
+
+Structured inputs cover both axes, 1–32 microsteps and exact uncertainty fractions
+0–7 over 1–4. The calibration arm scales uncertainty to ppm; nonzero microstep
+uncertainty remains an invalid configuration under the existing integer contract.
+A raw single-wire-byte mutation arm recomputes the content digest. Independent
+exact command-density formulae and fresh profile reconstruction check accepted
+profiles. Bounded exact straight paths pass through actual scheduling, lowering,
+canonical packaging, stepper preflight/cached execution and evidence replay.
+Successful output preserves configuration identity, tick/segment invariants and
+deterministic evidence bytes; altered evidence is rejected with either digest.
+
+Five final Rust1.95 tests pass, including every one of 4,096 structured profile
+combinations and fresh-process lowering. Strict all-target/all-feature Clippy,
+rustdoc and formatting pass. Nightly address-instrumented builds and bounded
+campaigns pass: 22,647 profile and 205 lowering invocations, with requested
+60-second campaigns, 10-second input timeout and 8GiB RSS limits. Peak reported
+instrumented RSS is 410/586MiB; these are observations, not internal resource bounds.
+Saved-corpus replay distinguishes 95 completed profiles, 272 invalid configurations
+and 32 invalid profiles. Lowering replay completes 72 cached executions, with
+7 budget, 10 configuration and 5 lowering rejections. Saved-corpus counts do not
+represent every fuzz invocation. No universal coverage or performance claim.
+
+The first campaigns found a new harness bug: unreduced zero/nonzero fractions
+were passed to canonical wire constructors. Original source/inputs/logs remain;
+Hyperreal normalization and named permanent regressions now preserve exact values.
+An initial regression expected nonzero microstep uncertainty to reach profile
+validation; the existing configuration integer guard correctly rejects it earlier.
+The final test asserts that precise rejection and adds valid calibration coverage.
+The earlier zero-nominal encoder panic and Clippy correction are recorded too.
+No production defect was established or validator relaxed. Nightly emits an
+existing alumina-runtime fetch_update deprecation warning; Rust1.95 strict checks
+are warning-free. An accidental +1.95 alias install is recorded; subsequent commands
+use +1.95.0. No CI workflow changed, and no hosted, WASM, embedded or hardware
+qualification is inferred from these host-only fuzz targets.
+
+Separate isolated compatibility testing applies the unchanged pending 41-path
+CSGRS and eight-path Interface patches. The locked invocation rejects the changed
+dependency graph; offline resolution adds 11 Hyperdynamics lock lines and all five
+tests then pass. That provisional lock delta is retained separately, and both
+isolated worktrees are restored clean. The committed fuzz lock targets accepted
+revisions. This compatibility result does not accept the migrations or resolve
+their runtime/size gates. Both primary pending patches remain byte-identical,
+firmware unchanged, and all 63 previous frozen stages verify. The full plan remains
+active; broader migration, resource, hardware and coordinated release gates remain.
+No push/publication occurred.
+
+Evidence `docs/evidence/2026-11-15-interval-interface-machine-fuzz`, local archive commit
+`693cf4038c69be4550d73b7bf59cf010d308ff07`: 639 files / 880,428 bytes,
+SHA-256 `1681f93512b7d12d128f9c565fe1cb3dec69ceb1b17f9593e1b076494305bc29`.

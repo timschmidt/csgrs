@@ -584,3 +584,4 @@ docs/evidence/2026-11-15-interval-lattice-support-facts	70	338764	26196061d3bfcf
 docs/evidence/2026-11-15-interval-sdf-voxel-frame	61	5077995	a0dc818a168e3cf93506605ab9775ebcd83be67fff9955a9c40dfe2c5c486291
 docs/evidence/2026-11-15-interval-sdf-voxel-enclosures	3197	58398912	70662d68780559b476ebd4f0b7209ab72e1ba24432a04c21d3148d6ed392a401
 docs/evidence/2026-11-15-interval-voxel-affine-enclosures	141	12040903	3cc6a550c09b8ef63734319ccecd06837f01a186bb0046630cadd6c17992a90c
+docs/evidence/2026-11-15-interval-interface-machine-fuzz	639	880428	1681f93512b7d12d128f9c565fe1cb3dec69ceb1b17f9593e1b076494305bc29
