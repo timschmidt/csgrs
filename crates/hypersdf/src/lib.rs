@@ -50,6 +50,10 @@ pub use gradient_contour::{
 };
 #[cfg(feature = "hypervoxel-adapter")]
 pub use hypervoxel_adapter::{SdfHypervoxelAdapterError, continuous_field_batch_from_sdf};
+#[cfg(all(feature = "hypervoxel-adapter", feature = "enclosure-program"))]
+pub use hypervoxel_adapter::{
+    SdfVoxelEnclosureBatch, SdfVoxelEnclosureCell, SdfVoxelEnclosureError, SdfVoxelEnclosureOptions,
+};
 pub use interval::{SdfInterval, SdfIntervalReport};
 pub use lipschitz::SdfLipschitzReport;
 pub use mesh::{

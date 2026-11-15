@@ -221,6 +221,22 @@ finite gradients, or shader evaluation into exact topology.
   undecided equality return errors. Source dimensions and row indices must fit.
   Partial batches can use sparse intake; exact materialization additionally
   requires a complete target-frame cover without unknown or lossy cells.
+- With both `enclosure-program` and `hypervoxel-adapter`,
+  `SdfProgram::classify_voxel_grid` accepts a Hypervoxel `GridFrame` and retains
+  every native range proof, its source, cell address and frame units in an
+  immutable `SdfVoxelEnclosureBatch`. Its `continuous_field_batch` method
+  exports occupancy while the report keeps the source evidence. Outward
+  coordinate bounds support algebraic frames. Zero-containing ranges remain
+  unknown, and exact materialization rejects them. Cell capacity, graph
+  work/cancellation and dyadic arithmetic budgets are separate; scalar frame
+  construction, Hyperreal refinement and heap bytes retain the native budget
+  exclusions.
+
+Run the native voxel example from a source checkout:
+
+```sh
+cargo run -p hypersdf --features enclosure-program,hypervoxel-adapter --example voxel_enclosures
+```
 
 ## Precision and guarantees
 

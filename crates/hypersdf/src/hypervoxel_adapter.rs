@@ -16,6 +16,13 @@ use hypervoxel::{
 use crate::policy::compare_reals_for_construction;
 use crate::{SdfVoxelBatch, SdfVoxelLengthUnit, SdfVoxelOccupancy};
 
+#[cfg(feature = "enclosure-program")]
+mod enclosure;
+#[cfg(feature = "enclosure-program")]
+pub use enclosure::{
+    SdfVoxelEnclosureBatch, SdfVoxelEnclosureCell, SdfVoxelEnclosureError, SdfVoxelEnclosureOptions,
+};
+
 /// Converts an SDF voxel batch into a `hypervoxel` continuous-field batch.
 ///
 /// The target must have exactly the source origin, cell pitches and declared

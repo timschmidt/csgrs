@@ -4,6 +4,12 @@
 
 Initial release.
 
+- Native `SdfProgram` voxel classification now retains whole-cell range proofs
+  alongside exact Hypervoxel addresses and frames. Algebraic coordinate
+  enclosures, source transforms, unresolved signs and metric qualification are
+  preserved through conservative intake; capacity/work/cancellation failures
+  return no partial batch. Requires both existing enclosure and voxel features.
+
 - Reject SDF voxel handoffs to a different origin, pitch or declared unit,
   and reject rows outside their source grid. Exact frame comparisons remain
   strict; undecided equality cannot authorize relocation of occupancy evidence.
