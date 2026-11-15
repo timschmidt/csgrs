@@ -46,6 +46,7 @@ jobs:
           - hyperpack
           - hyperevolution
           - hyperbrep
+          - hyperbrep-io
           - hypersdf
           - hyperparts
           - hypercircuit
