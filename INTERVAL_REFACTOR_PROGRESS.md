@@ -7965,3 +7965,77 @@ open; no push or publication occurs.
 
 Evidence `docs/evidence/2026-11-15-interval-workspace-qualification`, local archive commit `ee8790064afd94ee089a865e2061b9510a17ae46`:
 137 files / 172,230,791 bytes, SHA-256 `24a5df0d14c1cc9dd1ec80dcad258de9aca345cbd6ad0c5e733adcd577a9b2d4`.
+
+## Automatic affine-noise horizon candidate and retained dispatch regression (2026-11-15)
+
+Phases 12/13, plan sections 10.7/10.8; Hyperdynamics owns finite-horizon
+composition, while Hypersolve retains Taylor/noise proof authority. Base
+`2bf1c6481f68ea7cdb0c696f768c22264deaa36a` is tested without the 41 pending
+extraction paths. The missing witness is automatic consumption of a retained
+`FlowNoiseState` through a bounded horizon without independent Cartesian demotion.
+The proposed controller reuses accepted native Picard proofs, retains complete
+Taylor/noise evidence and the full affine input domain, and exposes only explicit
+certified prefixes after failure. Scalar refinement/payload and total-heap
+accounting exclusions remain explicit. No controller implementation is retained.
+
+The first shared endpoint-helper extraction passes 163 owner tests and unchanged
+manual dispatch/work/allocation controls but fails pinned performance controls:
+16 paired batches show mean shear ratios 1.005424 cold and 1.007430 warm, with
+paired bootstrap intervals above one. It is rejected despite smaller binaries.
+A revised private generic proof-source interface preserves the original manual
+proof boundary and one endpoint/publication implementation. No forced inlining,
+predicate reordering or arbitrary layout variants are used. Its pinned shear
+ratios are 0.996934 cold and 0.996865 warm, with intervals containing parity;
+this is no detected regression on those controls, not a proven speedup.
+
+The revised candidate's four cold/warm constant/shear allocation, cleanup and
+work-count controls match exactly. All eight final owner benchmark smoke runs
+pass. Six existing benchmark executables are byte-identical to the baseline.
+The QR evolution executable grows 7,542,040 -> 7,542,056 bytes. Code, read-only
+and writable data, and unwind sections match byte for byte. The extra 16 bytes
+are in nonallocated symbol strings; build-ID and symbol-table contents also
+change. This still fails the unchanged raw binary-size gate. The candidate is
+rejected without a waiver or further source-layout variants. Constant timing,
+full owner timing, monomorphized-size, successive_operations, package-consumer,
+WASM, fuzz and full pre-push qualification are not completed for it.
+
+After the revised edit, stable and Rust 1.95 independent feature matrices pass
+all 21 configurations. Stable and MSRV owner tests each pass 163 cases in 21
+summaries; stable release lib/tests pass 163 in 20 summaries. Strict all-target
+Clippy passes on both compilers with all features, and on stable without default
+features. Stable workspace formatting, strict docs, minimal-feature tests and
+doctests pass; the latter two execute zero assertions and are not behavioral
+coverage. Hyperphysics all-feature tests pass 83 cases in 16 summaries. The
+candidate witnesses include exact reversible shear, nonlinear Riccati and
+time-dependent solutions, empty/unit inputs, prefix continuation, final
+publication exhaustion, cancellation/retry and fresh-process replay. These
+finite results do not establish universal closure, complete resource accounting
+or delivered capability.
+
+Source `0a3b609e008e28344db393dbb66564b2d3545b4f` retains only a dispatch-count
+regression for the existing shipped manual affine-noise example and its
+accepted-base fixture. The fixture was generated and confirmed on the original
+accepted implementation and required unchanged for both candidates. The primary
+pending-extraction tree passes the new test, strict owner all-target/all-feature
+Clippy and formatting. Temporary-index tree equality and patch hashes preserve
+all 41 staged extraction paths, Interface's eight pending paths and firmware.
+The rejected production/API changes are removed after snapshotting. Both
+restored manual probe binaries reproduce baseline hashes byte for byte. Final
+restored-source owner tests pass 154 cases in 20 summaries; workspace formatting
+passes. All 56 earlier frozen stages verify unchanged.
+
+The evidence preserves two diagnostic corrections. An objcopy section dump
+rewrote earlier baseline/candidate QR files; rebuilding matching source recovered
+the original hashes before original-file comparison. Manual timing/allocation
+binaries and the revised QR binary were unaffected. A control-driver selection
+mistake initially reran the earlier benchmark list; all eight revised smokes
+were subsequently run from the correct saved binaries. Original failures and
+literal command records remain, rather than being overwritten.
+
+Evidence `docs/evidence/2026-11-15-interval-flow-noise-evolution`, local archive
+commit `77526600bc4fc390e9db37800c78f8d0ed8aa4b0`: 426 files / 7,717,756 bytes,
+SHA-256 `f8782a79d00119ff4bc14a40372c6797d4dd0103a0cf2d296dd92c684964cd3e`.
+This stage retains a regression test, not the automatic controller. Broader
+wrapping/resource support, the extraction and other existing cost gates,
+platform/HIL and coordinated release remain open. No push, publication or
+full-goal completion is claimed.
