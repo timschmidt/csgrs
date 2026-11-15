@@ -16,6 +16,7 @@ all-features = true
 [features]
 default = []
 fixed = ["hyperinterval/fixed"]
+hyperreal = ["dyadic", "hyperinterval/hyperreal"]
 dyadic = ["hyperinterval/dyadic"]
 rational = ["hyperinterval/rational"]
 float-enclosure = ["hyperinterval/float-enclosure"]

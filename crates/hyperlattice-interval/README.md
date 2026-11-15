@@ -28,6 +28,8 @@ Build and test with `cargo test -p hyperlattice-interval --features fixed`.
 No scalar backend is enabled by default. `fixed` and `float-enclosure` require
 no allocator. `dyadic` uses allocation with explicit Hyperinterval work/size
 accounting. `rational` enables Hyperreal, std and its Rust 1.95 requirement.
+`hyperreal` enables the native certified Real-to-dyadic conversion bridge,
+including std and the same Rust 1.95 requirement.
 `serde` validates scalar endpoints, dimensions and fixed scales on replay.
 
 Implemented: canonical empty/unit products, component hull/intersection and

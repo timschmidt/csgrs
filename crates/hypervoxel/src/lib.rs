@@ -18,6 +18,8 @@
 mod aabb;
 mod address;
 mod affine;
+#[cfg(feature = "interval-enclosure")]
+mod affine_enclosure;
 mod aggregate;
 mod batch;
 mod cell;
@@ -67,6 +69,8 @@ mod voxelize;
 pub use aabb::{ExactAabb3, GridAabbHandoff, LatticeAabbHandoff};
 pub use address::{CellBounds, VoxelAddress};
 pub use affine::ExactAffineTransform;
+#[cfg(feature = "interval-enclosure")]
+pub use affine_enclosure::AffineBoundsEnclosure;
 pub use aggregate::{AggregateCertainty, VoxelAggregateFacts, VoxelOccupancyInterval};
 pub use batch::{VoxelEdit, VoxelEditBatch};
 pub use cell::{

@@ -41,9 +41,14 @@ proptest = "1.7.0"
 
 [features]
 default = []
+interval-enclosure = ["hyperlattice/interval-hyperreal"]
 dispatch-trace = ["hyperreal/dispatch-trace"]
 hypermesh-adapter = ["dep:hypermesh"]
 legacy-voxelis = ["dep:voxelis", "dep:glam"]
+
+[[example]]
+name = "affine_enclosure"
+required-features = ["interval-enclosure"]
 
 [[bench]]
 name = "grid_frame"

@@ -354,6 +354,8 @@ requirements shared by the Hyper crates.
 
 Enable `interval-fixed`, `interval-dyadic`, `interval-rational`, or
 `interval-float-enclosure` for `IntervalVector`, `IntervalMatrix` and `BoxN`.
+`interval-hyperreal` additionally exposes certified exact-Real-to-dyadic
+conversion through the same scalar re-export.
 These are Cartesian enclosures with explicit empty sets, checked scalar
 arithmetic and shared dyadic budgets. Scalar backends are available under
 `hyperlattice::interval::hyperinterval`. The same implementation is available

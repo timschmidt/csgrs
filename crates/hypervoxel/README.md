@@ -34,6 +34,20 @@ This README describes `hypervoxel` version `0.3.0`.
 | `VoxelizationReport`, `VoxelPredicateCertificateReport` | Classification and exact-readiness evidence |
 | `VoxelSideTables` | Material, field-sample, and process-state domain records |
 
+## Conservative transformed bounds
+
+The optional `interval-enclosure` feature adds
+`ExactAffineTransform::enclose_bounds`. It returns an immutable
+`AffineBoundsEnclosure` containing a certified dyadic Cartesian box and the
+original exact transform and source endpoints. It can succeed when exact term
+ordering is undecided. The box is conservative; it does not establish occupancy
+or the exact correlated image. Native conversion and lattice arithmetic share
+one dyadic budget, with Hyperreal refinement and exact clone/drop excluded.
+
+```sh
+cargo run --manifest-path crates/hypervoxel/Cargo.toml -p hypervoxel --features interval-enclosure --example affine_enclosure
+```
+
 ## Install
 
 ```toml

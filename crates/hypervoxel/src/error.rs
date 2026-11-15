@@ -8,6 +8,9 @@ pub type HypervoxelResult<T> = Result<T, HypervoxelError>;
 /// Validation failures surfaced before a grid can be treated as exact.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum HypervoxelError {
+    /// Native transformed-box enclosure failure with the original scalar cause.
+    #[cfg(feature = "interval-enclosure")]
+    IntervalEnclosure(hyperlattice::IntervalLatticeError),
     /// A grid depth exceeded the current bounded integer address model.
     DepthTooLarge { depth: u8, max_supported: u8 },
     /// A grid cell axis was structurally non-positive.
@@ -54,6 +57,8 @@ pub enum HypervoxelError {
 impl fmt::Display for HypervoxelError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            #[cfg(feature = "interval-enclosure")]
+            Self::IntervalEnclosure(error) => write!(f, "affine enclosure: {error}"),
             Self::DepthTooLarge {
                 depth,
                 max_supported,
@@ -111,4 +116,26 @@ impl fmt::Display for HypervoxelError {
     }
 }
 
-impl std::error::Error for HypervoxelError {}
+impl std::error::Error for HypervoxelError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        #[cfg(feature = "interval-enclosure")]
+        if let Self::IntervalEnclosure(error) = self {
+            return Some(error);
+        }
+        None
+    }
+}
+
+#[cfg(feature = "interval-enclosure")]
+impl From<hyperlattice::IntervalLatticeError> for HypervoxelError {
+    fn from(error: hyperlattice::IntervalLatticeError) -> Self {
+        Self::IntervalEnclosure(error)
+    }
+}
+
+#[cfg(feature = "interval-enclosure")]
+impl From<hyperlattice::interval::hyperinterval::IntervalError> for HypervoxelError {
+    fn from(error: hyperlattice::interval::hyperinterval::IntervalError) -> Self {
+        Self::IntervalEnclosure(error.into())
+    }
+}
