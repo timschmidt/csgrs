@@ -459,3 +459,6 @@ impl Format {
         crate::DyadicInterval::point(mantissa.into(), exponent)
     }
 }
+
+#[cfg(all(feature = "dyadic", feature = "float-enclosure"))]
+mod dyadic;

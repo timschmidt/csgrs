@@ -24,6 +24,28 @@ macro_rules! exercise {
         if let (Ok(x), Ok(y)) = (x, y) {
             let aa = Rational::$from(a).unwrap();
             let bb = Rational::$from(b).unwrap();
+            let mut budget = hyperinterval::DyadicBudget::new(8192, 1_000_000_000);
+            let dx = x.to_dyadic(&mut budget).unwrap();
+            let dy = y.to_dyadic(&mut budget).unwrap();
+            for (exact, expected) in [
+                (
+                    dx.add(&dy, &mut budget).unwrap(),
+                    oracle::$round(&Rational::from(&aa + &bb)),
+                ),
+                (
+                    dx.mul(&dy, &mut budget).unwrap(),
+                    oracle::$round(&Rational::from(&aa * &bb)),
+                ),
+            ] {
+                let image = $interval::from_dyadic(&exact, &mut budget);
+                assert_eq!(
+                    image.map(|value| {
+                        let (lo, hi) = value.bounds().unwrap();
+                        (lo.to_bits(), hi.to_bits())
+                    }),
+                    expected
+                );
+            }
             let affine = if let Some(cc) = Rational::$from(c) {
                 oracle::$round(&(Rational::from(&aa * &bb) + cc))
             } else {

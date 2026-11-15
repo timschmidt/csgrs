@@ -1,5 +1,9 @@
 # Changelog
 
+- Add budgeted, tight outward dyadic-to-F32/F64 enclosure conversion, preserving
+  finite overflow and unsupported-environment diagnostics. Qualify exact output
+  bits, retry, native rounding-mode independence and actual WASM execution.
+
 ## 0.1.0 (unreleased)
 
 - Qualify the allocation-free integer IEEE enclosure backend on

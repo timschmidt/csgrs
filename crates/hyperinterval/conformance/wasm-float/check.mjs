@@ -55,11 +55,21 @@ export async function verifyLattice(bytes, corpus) {
   return { floating_chains: floating, fixed_chains: fixed, seed: corpus.seed };
 }
 
+export async function verifyEgress(bytes) {
+  const module = await WebAssembly.compile(bytes);
+  const imports = WebAssembly.Module.imports(module);
+  if (imports.length) throw new Error(`Unexpected bridge imports: ${JSON.stringify(imports)}`);
+  const { exports: api } = await WebAssembly.instantiate(module);
+  const cases = api.verify_dyadic_egress();
+  if (cases !== 56) throw new Error(`Expected all 56 exact conversion cases, got ${cases}`);
+  return { dyadic_egress_cases: cases, imports };
+}
+
 if (typeof process !== "undefined" && process.argv[1]?.endsWith("check.mjs")) {
   const fs = await import("node:fs/promises");
   const [wasm, corpus, mode] = process.argv.slice(2);
   if (!wasm || !corpus) throw new Error("Usage: node check.mjs MODULE.wasm CORPUS.json");
-  const run = mode === "--lattice" ? verifyLattice : verify;
+  const run = mode === "--egress" ? verifyEgress : mode === "--lattice" ? verifyLattice : verify;
   const report = await run(await fs.readFile(wasm), JSON.parse(await fs.readFile(corpus, "utf8")));
   console.log(JSON.stringify({ ...report, node: process.version, versions: process.versions }, null, 2));
 }

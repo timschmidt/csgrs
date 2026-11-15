@@ -968,3 +968,36 @@ fn midpoint_radius_enclosures_ignore_native_modes() {
         );
     }
 }
+
+#[cfg(all(feature = "dyadic", target_arch = "x86_64", not(target_env = "msvc")))]
+#[path = "support/dyadic_egress_cases.rs"]
+mod dyadic_egress_cases;
+
+#[cfg(all(feature = "dyadic", target_arch = "x86_64", not(target_env = "msvc")))]
+#[test]
+fn dyadic_egress_ignores_native_modes() {
+    const KEY: &str = "HYPERINTERVAL_EGRESS_MXCSR";
+    if let Ok(mode) = std::env::var(KEY) {
+        with_mxcsr(mode.parse().unwrap(), || {
+            assert_eq!(dyadic_egress_cases::verify(), 56);
+        });
+        return;
+    }
+    for mode in 0..16 {
+        let output = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "dyadic_egress_ignores_native_modes",
+                "--nocapture",
+            ])
+            .env(KEY, mode.to_string())
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "mode={mode}: {} {}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+}

@@ -539,6 +539,34 @@ let enclosure: F64Enclosure = proposal.into();
                 }
             }
 
+            /// Tight finite IEEE enclosure of an exact dyadic source interval.
+            ///
+            /// Endpoints round outward, including to zero/minimum subnormal on
+            /// underflow. Off-grid bounds widen; this is containment, not exact
+            /// equality with the borrowed source. If no finite enclosure exists,
+            /// returns Overflow instead of infinity or saturation. Empty maps to
+            /// empty without work; nonempty input requires backend qualification.
+            ///
+            /// Both endpoint conversions share the caller's DyadicBudget. Each
+            /// reserves three linear stages of max(input magnitude bits, IEEE
+            /// significand bits plus one), before limb inspection/allocation.
+            /// Extreme exponents do not cause exponent-sized shifts. Budget
+            /// accounting excludes actual heap bytes and cancellation as usual.
+            /// Failure publishes no partial interval and leaves the source intact.
+            #[cfg(feature = "dyadic")]
+            pub fn from_dyadic(
+                source: &crate::DyadicInterval,
+                budget: &mut crate::DyadicBudget,
+            ) -> Result<Self, IntervalError> {
+                let Some((a, b, exponent)) = source.bounds() else {
+                    return Ok(Self::empty());
+                };
+                qualify()?;
+                let lower = $format.enclose_dyadic(a, exponent, budget)?.0;
+                let upper = $format.enclose_dyadic(b, exponent, budget)?.1;
+                Self::from_bits(lower, upper)
+            }
+
             /// Exact common-scale dyadic conversion. Mantissa construction and
             /// scale alignment share the caller's size/work budget.
             #[cfg(feature = "dyadic")]

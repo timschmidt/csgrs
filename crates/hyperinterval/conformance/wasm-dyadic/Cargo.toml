@@ -1,0 +1,19 @@
+[package]
+name = "interval-dyadic-wasm-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hyperinterval = { path = "../..", default-features = false, features = ["float-enclosure", "dyadic"] }
+num-bigint = { version = "0.4.6", default-features = false }
+
+[workspace]
+
+[profile.release]
+panic = "abort"
+overflow-checks = true

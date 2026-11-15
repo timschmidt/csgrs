@@ -14,6 +14,15 @@ no strict-float platform qualification or Hyperreal dependency. `0.1_f64` remain
 its binary value, not 1/10; importing numerical estimates does not certify their
 relationship to an earlier source.
 
+With `dyadic` and `float-enclosure`, `F32Enclosure::from_dyadic` and
+`F64Enclosure::from_dyadic` return tight outward finite IEEE bounds. The borrowed
+exact source remains available: off-grid endpoints widen, tiny values enclose
+between zero and the minimum subnormal, and finite overflow is a typed error.
+Both endpoints consume one caller-owned dyadic work/size budget. This enables
+exact IEEE → dyadic arithmetic → explicit IEEE enclosure chains without native
+floating arithmetic. The conversion uses allocation; float-only arithmetic does
+not acquire that dependency.
+
 Finite integer, fixed, rational, dyadic and qualified IEEE carriers provide
 exact `abs`, `min_image` and `max_image`. Min/max are images over independently
 chosen operand members, so either empty operand gives empty. Absolute value

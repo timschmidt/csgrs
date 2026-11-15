@@ -76,7 +76,7 @@ try {
   const result = await call("Runtime.evaluate", {
     expression: `(async () => {
       const api = await import('/check.mjs');
-      return api[${JSON.stringify(mode === "--lattice" ? "verifyLattice" : "verify")}](new Uint8Array(await (await fetch('/module.wasm')).arrayBuffer()), await (await fetch('/corpus.json')).json());
+      return api[${JSON.stringify(mode === "--egress" ? "verifyEgress" : mode === "--lattice" ? "verifyLattice" : "verify")}](new Uint8Array(await (await fetch('/module.wasm')).arrayBuffer()), await (await fetch('/corpus.json')).json());
     })()`,
     awaitPromise: true,
     returnByValue: true,
@@ -91,5 +91,6 @@ try {
     await new Promise(resolve => browser.once("exit", resolve));
   }
   await new Promise(resolve => server.close(resolve));
-  await fs.rm(profile, { recursive: true, force: true });
+  // Chromium helpers may finish profile writes just after the parent exits.
+  await fs.rm(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
 }
