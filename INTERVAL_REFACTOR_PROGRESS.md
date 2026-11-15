@@ -8169,3 +8169,42 @@ made. Existing migration cost and coordinated-release gates remain open.
 Evidence `docs/evidence/2026-11-15-interval-ieee-dyadic-egress`, local archive commit
 `97a51a509d6fcd497580a9feee8d1c5671226fbb`: 589 files / 86,109,543 bytes,
 SHA-256 `7f7c8843bfebb923ef3aacb841ceac2825cfde3d17f234d4cdab6e2df5d8930f`.
+
+
+## 2026-11-15: matrix support candidate rejected; rectangular regressions retained
+
+Source `0157d6b9bcb344ba60e1badfd0a2d2ff400aa655` extends only the companion's Cartesian tests.
+A phase-6 / section-5.3 experiment added an opt-in borrowed exact-zero support
+mask and reused the existing ordered dot kernel. Focused tests passed for
+fixed, rational, dyadic and qualified IEEE inputs, including budget retry,
+no-allocation and fresh-process source replay. It is not a retained API.
+
+The same-path release control `centered_cost` grew from 1,696,312 to
+1,696,320 bytes, failing the experiment's predeclared unchanged-size condition.
+Code, allocated data and unwind sections are byte-identical; the growth is
+seven symbol-string bytes plus padding. The candidate was removed without a
+size waiver or layout/name/inlining variants. No timing campaign or complete
+candidate qualification was run. Raw source, focused results, hashes and
+section comparisons are archived so this rejection need not be rediscovered.
+
+Four retained regression tests check 512 rectangular 2x3-by-3x2 products per
+scalar configuration across six configurations, output columns, subsequent
+signed-diagonal products, and empty/unit shapes. Exact integer endpoint-corner
+expectations are independent of interval arithmetic. All prior test contents
+remain a byte-identical prefix; no production or public API changes remain.
+Stable owner tests pass 94 cases, no-default five, Rust 1.88 primitive/serde 80,
+and downstream Hyperlattice interval surface seven. Strict all-target Clippy
+passes on stable/all-features and Rust 1.88 primitives; its initial divisibility
+style diagnostic was fixed and checks rerun. Formatting and primary-checkout
+Cartesian tests, diff and repository budget pass. All eight old example
+executables are byte-identical to baseline after candidate removal.
+
+Integration preserves the 41-path staged extraction patch exactly. Interface's
+eight edits and firmware remain unchanged; all 59 prior frozen stages verify.
+Object-fact reuse, migration cost gates, resource completeness and coordinated
+qualification remain open. This is not phase or goal completion. No full
+pre-push, MCU/HIL, timing speedup, push or publication claim is made.
+
+Evidence `docs/evidence/2026-11-15-interval-lattice-support-facts`, local archive commit
+`cf37b5f152ebb0ffe652fb5609a350b6705abda7`: 70 files / 338,764 bytes,
+SHA-256 `26196061d3bfcf4d24513b35b682773cd97a6169ff282f3f1aa77878568cf330`.
