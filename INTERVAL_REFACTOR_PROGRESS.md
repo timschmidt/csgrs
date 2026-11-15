@@ -8619,3 +8619,61 @@ Evidence `docs/evidence/2026-11-15-interval-profile-final-construction`, local a
 `d94336575bf3bf300c913b3a23620b1fc72b144e`: 66 files / 3,148,345 bytes,
 SHA-256 `0bb39825d350fa3199182fd0aafdac63b6efc773404c5c49f670fbbb517808d2`. Candidate source, missing witness,
 commands, raw maps, complete transcripts and restoration receipts are retained.
+
+
+## 2026-11-15: retain interval boundary composition witnesses
+
+Source `36a091faed15475b730af9b1601ce7ef185e72f0` retains nine tests on accepted parent
+`2e6787fb61b4339cd864b34d18112cc668229f8d`. Hyperinterval production source, manifest,
+workspace lock and existing assertions remain unchanged. Current instrumentation
+identified missing witnesses before edits; no behavior repair is claimed.
+
+The new tests cover owned rational bounds and exact reconstruction, positive empty
+products/quotients with invalid counterparts, empty integer products at every
+storage width, fixed empty rescaling/reflection with scale and zero-denominator
+validation, affine proposal/strict-float empty results with nonfinite arguments,
+exact neighboring versus touching floats, split/extended empty and singleton
+function chains, empty rational trig at extreme grids and zero budget, and distinct
+public diagnostics retaining the typed scalar source. Independent set identities,
+integer/rational expectations and zero/one function values support the assertions.
+All original assertions and hard cases remain.
+
+Fresh Rust1.95.0 all-feature library/integration instrumentation has the same
+production denominator before and after the additions:
+
+| Production metric | Baseline | New witnesses |
+| --- | ---: | ---: |
+| Lines | 4658/4740 (98.270%) | 4688/4740 (98.903%) |
+| Regions | 9270/9891 (93.722%) | 9320/9891 (94.227%) |
+| Reported functions | 493/494 | 494/494 |
+
+Raw reports retain every Hyperinterval src file. Only the two cfg(test) modules
+are separated in the explicitly named production subtotal; no uncovered production
+path is excluded. LLVM diagnostic dumps identify all16 mismatch warnings as Rug
+OptRational::parts/hash0 outside that denominator. Fifty-two production lines remain
+reported uncovered. No branch counters are available. Macro/generic instantiations
+and individual LCOV line counts do not have identical denominators; both original
+reports remain. Reported function coverage is not universal/API/branch completion.
+
+Ten qualification commands pass: all-target/all-feature tests, no-default tests,
+strict Clippy at both boundaries, release witnesses, warning-denying docs,
+examples/benches, workspace formatting, Rust1.88 primitive witnesses and stable1.99
+all-feature witnesses. Seven independent feature runs pass for integer, fixed,
+proposal/strict float, dyadic, rational and rational+dyadic. Integrated main-tree
+witnesses, formatting and repository budget pass. One test-only wrong type-name
+import produced E0432 before correction; the original failed log is retained.
+
+Production source hashes are identical, so no executable algorithm, predicate order,
+dependency or consumer is changed. No new downstream performance, fuzz, HIL,
+full-platform or pre-push claim is made. Timings are command durations, not benchmark
+results. No CI change, push or publication occurs. Main's41 staged paths and
+Interface's8 pending paths remain byte-identical; firmware remains clean. All67
+preceding frozen stages verify. Full coverage and the entire15-phase goal remain
+open, including unresolved implementation, resource, migration and release gates.
+
+Evidence `docs/evidence/2026-11-15-interval-coverage-closure`, local archive commit
+`cd8f9b7977102e187676bd401ac986cb566a504d`: 70 files / 7,576,352 bytes,
+SHA-256 `489259f892188e071c9715aef8d385ea40686e9a100069729a8efa9355a27f32`. Exact commands, aggregate profiles,
+compressed exports, raw diagnostic logs, source patch and integration receipts are
+retained. Bulky unmerged profiles remain external with paths/hashes; the aggregate
+profile and source/build commands support replay without claiming archived binaries.
