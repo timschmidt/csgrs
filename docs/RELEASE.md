@@ -118,8 +118,13 @@ Run these after the last change, in addition to the
    to native bounds, and consumption by the native nonoverlap predicate.
 
    Before unpacking, it also builds each crate's documentation from the
-   workspace with its docs.rs feature configuration and `-D warnings`. This
-   is not an archive-only documentation check. Add `--toolchain 1.95.0` to repeat
+   workspace with its docs.rs feature settings, per-crate `rustdoc-args` and
+   `-D warnings`. Arguments retain their boundaries (including spaces); flags
+   cannot leak between crates or be overridden by ambient rustdoc flags. A
+   compiled two-crate regression fixture checks these properties on the selected
+   compiler. Missing packages and metadata keys that the local helper does not
+   implement fail explicitly. This is a local workspace check, not an archive-only
+   check or the hosted docs.rs target, nightly-toolchain and environment matrix. Add `--toolchain 1.95.0` to repeat
    everything on the minimum supported compiler. The `release` job of
    `.github/workflows/rust.yml` runs it on stable and on 1.95.0.
 
