@@ -7759,3 +7759,55 @@ Evidence `docs/evidence/2026-11-14-interval-interface-browser-execution`, local 
 142 files / 3,373,703 bytes, SHA-256 `70e6efb5545e018acbee4abd2cce74ce0c0d5b69c2a144241cfe31a4c5cdaac9`.
 Broader migration, performance, platform/HIL and release requirements remain
 open. No full pre-push matrix, push or publication occurred.
+
+## Current interval sanitizer campaigns and conversion admission
+
+Phases 3/5/14, plan §14.3, Hyperinterval and independent test-side GMP oracles,
+P1/P3–P6/P17–P20/P27/P36/P37. Source `14f78d34d392880d07ebf1b893d6dae9a2ab3678` adds a maintained
+conversion fuzz target, its rational feature requirement, a bounded sanitizer CI
+invocation and its input-domain documentation. The initial fifteen targets did
+not directly exercise rational/dyadic conversion, exact-grid admission or IEEE
+binary64-to-dyadic ingress. Existing deterministic regressions remain unchanged.
+No production arithmetic, predicate order, policy, budget, dependency or lockfile
+changes; the four changed paths are test/build configuration and documentation.
+
+Generated signed 64-bit numerators/nonzero unsigned denominators, empty/singleton/
+interval sources and grids -128 through 128 are checked against existing GMP
+rational-transfer and directed-grid oracles. Output is serialized, reconstructed,
+materialized as exact rational endpoints and consumed on another grid. Exact-grid
+admission is checked against the original rational values. Exact observed work
+thresholds, one-unit-short exhaustion, fresh-budget retry, reversed endpoints and
+extreme-grid size refusal remain explicit. Arbitrary IEEE bits exercise finite
+exact ingress and nonfinite rejection before budget use. This is not arbitrary
+coefficient-size coverage or a total-work proof.
+
+All fifteen existing ASan campaigns pass (867,644 libFuzzer runs); conversions
+passes 79,026 more, totaling 946,670 engine runs. Trigonometry and conversions
+end successfully at their campaign time limits before their requested run counts.
+No crash artifacts or sanitizer diagnostics occur. Engine counts include rejected
+arbitrary inputs; sancov counts include dependencies and are not a source-coverage
+percentage. No production defect or universal correctness result is claimed.
+
+Cargo-fuzz 0.13.2 and rustc 1.101.0-nightly (8006091eb, LLVM 23.1.4) build the
+instrumented binaries. Existing targets use all fuzz features; the new target uses
+rational. Direct native invocations retain the workflow's seed/run/length/time
+settings plus explicit 30-second per-input, 2,048-MiB RSS, leak-detection and outer
+deadline controls. None of those failure limits fires. This all-feature campaign
+is not a claim that every hosted/feature-isolated workflow command ran. Original
+and generated corpora, source/binary hashes, lockfile, commands and raw logs remain
+in the evidence archive; GMP/MPFR C instrumentation is not claimed.
+
+All 229 owner tests/doctests pass in 42 summaries, none ignored. Both fuzz feature
+checks, strict all-feature fuzz-target Clippy, fuzz/workspace formatting, integrated
+target checks, diffs and repository retention checks pass. Because CI changed,
+repository-wide pedantic strict-collection Zizmor runs in both isolated and main
+checkouts and reports no findings. Temporary-index tree equality proves source
+integration while all 41 staged extraction paths remain byte-identical. Interface's
+eight pending paths and firmware state remain unchanged; all 53 previous frozen
+stages verify unchanged.
+
+Evidence `docs/evidence/2026-11-14-interval-interval-fuzz-current`, local archive commit `4be983d4534316a1224790a21420aebdba6e4707`:
+2465 files / 436,694 bytes, SHA-256 `6c2c9c8f22e633230472a8e1e76d32d39556c5f7ac0ead06ea67d122f96cd581`. Broader
+migrations, source coverage, platform/HIL and coordinated release obligations
+remain open. No performance gain, full pre-push matrix, push or publication is
+claimed; the complete goal remains active.
