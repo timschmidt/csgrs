@@ -7661,3 +7661,47 @@ unchanged. All 50 prior frozen stages verify unchanged. Evidence record
 1,346,990 bytes, SHA-256 `0485a5d397e6ed60eb4a9f415d7fad7c93ba9d2444bff3942a3a9d2286a80419`. Broader migrations, dynamics
 acceptance, platform/HIL and release obligations remain open; no full pre-push
 matrix, push or publication is claimed.
+
+## Directed dyadic quotient sharing: rejected candidates, retained regressions
+
+Owner: Hyperinterval, P1/P4/P6/P10/P18–P20/P36/P37, Phases 3/5 and their
+consumers. Source `d8d524297ca55fb802e0b2ca2e985e4f72e2276f` retains three independent private-kernel
+acceptance tests and a performance disposition. Every production arithmetic body
+is byte-identical to `4d4e22a31`; dyadic.rs adds only a cfg(test) module inclusion.
+
+The existing scaled_quotient performs floor and ceiling divisions separately.
+Two single-division candidates passed focused frozen-legacy comparisons of bounds,
+errors and budget state, plus independent small integer expectations. Signed
+quotient/remainder increased executable size by 432 bytes with workspace-derived
+dependencies (num-bigint 0.4.6) and 1,008 with the external resolver's dependencies
+(0.4.8). Retaining unsigned quotient/remainder until directed output construction
+reduced the pinned executable by 1,224 bytes and function-address union by 446,
+but increased the external executable by 104 bytes and function-address union by
+254. Both candidates are rejected under the unchanged refactoring gates; the
+favorable pinned result does not justify narrowing supported dependency versions.
+
+Fifteen completed public-operation probes per lock compare exact serialized
+outputs, domain qualification, work and allocation requests for signed/large/exact
+division, rational conversion, square roots, elementary functions, rational powers
+and split division. The magnitude candidate matches output/work in all cases and
+does not increase allocation requests. These single probes are not a completed
+statistical timing, policy-report, owner benchmark or successive_operations
+campaign; later gates were not run after decisive size rejection. Both restored
+native probe executables are byte-identical to their respective baselines.
+
+The retained tests cover 11,390 small signed integer cases and 880 large-limb
+multiplication-inequality cases, exact work/size thresholds, failure precedence,
+huge-shift refusal, fresh-budget retry and zero Real-dispatch counts. The copied
+legacy algorithm remains only in archived evidence. Full owner tests/doctests
+report 229 passes in 42 summaries, none ignored. Strict all-feature/all-target
+Clippy, no-default-feature tests, formatting and diffs pass. The main worktree's
+three focused tests, formatting, staged/unstaged diffs and retention budget pass.
+No new fuzz, coverage, platform, downstream runtime or performance gain is claimed.
+
+All 41 pending extraction paths remain byte-identical, as do Interface's eight
+pending paths and firmware's clean state. All 51 previous frozen stages verify
+unchanged. Evidence `docs/evidence/2026-11-14-interval-dyadic-quotient-sharing`, local commit `1701779269dcacfaddb307e3e0d00cbb6112cd78`:
+73 files / 1,668,127 bytes, SHA-256 `099a79dd7e9ef8e3036d03500153aa00b93cca0534d57858289366e74061a8f6`. The shared
+quotient optimization remains unaccepted; broader migrations, performance,
+platform/HIL and release requirements remain open. No full pre-push matrix,
+push or publication occurred.
