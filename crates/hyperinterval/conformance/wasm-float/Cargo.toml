@@ -1,0 +1,18 @@
+[package]
+name = "interval-float-wasm-conformance"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.88"
+publish = false
+
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+hyperinterval = { path = "../..", default-features = false, features = ["float-enclosure"] }
+
+[profile.release]
+panic = "abort"
+overflow-checks = true

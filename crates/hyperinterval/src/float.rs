@@ -4,7 +4,10 @@ use crate::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
 use core::cmp::Ordering;
 
 fn qualify() -> Result<(), IntervalError> {
-    if cfg!(target_arch = "x86_64") {
+    if cfg!(any(
+        target_arch = "x86_64",
+        all(target_arch = "wasm32", target_os = "unknown")
+    )) {
         Ok(())
     } else {
         Err(IntervalError::UnqualifiedEnvironment)
@@ -31,8 +34,8 @@ macro_rules! enclosure {
         ///
         /// Basic arithmetic computes outward bounds with integer IEEE kernels,
         /// independent of ambient float rounding and FTZ/DAZ. No native float
-        /// arithmetic or allocation occurs. Nonempty ingress is initially
-        /// qualified on x86_64; other architectures return
+        /// arithmetic or allocation occurs. Nonempty ingress is
+        /// qualified on x86_64 and wasm32-unknown-unknown; other targets return
         /// `UnqualifiedEnvironment`. Empty is valid on every target.
         /// Overflow is an error, never saturation or an infinite endpoint.
         /// Both input zero signs represent the same canonical real zero.
@@ -123,7 +126,10 @@ let enclosure: F64Enclosure = proposal.into();
             /// Whether the integer IEEE backend is qualified on this target.
             /// This does not query or change ambient rounding state.
             pub const fn backend_supported() -> bool {
-                cfg!(target_arch = "x86_64")
+                cfg!(any(
+                    target_arch = "x86_64",
+                    all(target_arch = "wasm32", target_os = "unknown")
+                ))
             }
 
             /// Exact finite IEEE ingress, validating both endpoints and order.

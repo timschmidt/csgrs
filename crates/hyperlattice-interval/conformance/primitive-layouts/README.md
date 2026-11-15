@@ -3,7 +3,7 @@
 This unpublished, standalone package compares Hyperlattice's Cartesian vector
 with private separate lower/upper arrays. Both use Hyperinterval scalar kernels;
 there is no SIMD or duplicate arithmetic. It covers i32/i64 fixed-point and
-x86_64-qualified f32/f64 enclosures, empty sets, zero-dimensional unit products,
+qualified f32/f64 enclosures, empty sets, zero-dimensional unit products,
 addition, subtraction, hull, intersection, dot products, and repeated chains.
 
 Reconstruction validates through existing constructors. Canonical replay uses
@@ -30,7 +30,9 @@ storage and returns the same scalar endpoint enclosure. Each chain performs
 four add/subtract pairs, intersection, hull, and dot. Exact outputs are compared
 before timing, and every measured path asserts zero allocations.
 
-The Wasm consumer exports full fixed-point result endpoints. IEEE ingress on
-Wasm remains explicitly unqualified. The execution ledger and evidence archive
+The Wasm consumer exports full fixed-point result endpoints and IEEE endpoint
+bits for the same chains. Its original `float_qualification` probe reports which
+IEEE backends reject ingress; it returns zero on qualified wasm32-unknown-unknown.
+The execution ledger and evidence archive
 hold the independent Wasm oracle, raw measurements, adverse results, and the
 adoption decision. Timing probes do not establish general performance bounds.

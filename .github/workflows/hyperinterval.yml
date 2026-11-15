@@ -5,14 +5,18 @@ on:
     branches: ["**"]
     paths:
       - "crates/hyperinterval/**"
+      - "crates/hyperlattice-interval/**"
       - "scripts/check_interval_float_codegen.py"
+      - "scripts/check_interval_wasm.py"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/hyperinterval.yml"
   pull_request:
     paths:
       - "crates/hyperinterval/**"
+      - "crates/hyperlattice-interval/**"
       - "scripts/check_interval_float_codegen.py"
+      - "scripts/check_interval_wasm.py"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/hyperinterval.yml"
@@ -72,6 +76,13 @@ jobs:
       - name: Inspect strict float release code
         if: matrix.os == 'ubuntu-latest'
         run: python3 scripts/check_interval_float_codegen.py --toolchain "$INTERVAL_RUST" --output "$RUNNER_TEMP/interval-float-codegen"
+      - name: Execute strict float WebAssembly conformance
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          rustup target add --toolchain "$INTERVAL_RUST" wasm32-unknown-unknown
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y binaryen nodejs
+          python3 scripts/check_interval_wasm.py --toolchain "$INTERVAL_RUST" --output "$RUNNER_TEMP/interval-float-wasm"
       - name: Verify firmware dependency closure
         run: |
           cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt

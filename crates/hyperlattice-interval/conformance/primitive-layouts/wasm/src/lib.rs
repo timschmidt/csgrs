@@ -56,3 +56,32 @@ pub extern "C" fn float_qualification() -> u32 {
         | (u32::from(F64Enclosure::new(0.0, 1.0) == Err(IntervalError::UnqualifiedEnvironment))
             << 1)
 }
+
+/// Complete IEEE endpoint bits for the same retained vector chain. The original
+/// qualification probe still reports which backends refuse ingress (now none
+/// on wasm32-unknown-unknown), rather than silently changing that probe's meaning.
+#[unsafe(no_mangle)]
+pub extern "C" fn floating(soa: u32, wide: u32, dimension: u32, seed: u32, upper: u32) -> u64 {
+    assert!(soa <= 1 && wide <= 1 && upper <= 1);
+    macro_rules! dimension {
+        ($n:literal) => {
+            if wide == 0 {
+                u64::from(endpoint::<F32Enclosure, $n>(soa == 1, seed, upper == 1).to_bits())
+            } else {
+                endpoint::<F64Enclosure, $n>(soa == 1, seed, upper == 1).to_bits()
+            }
+        };
+    }
+    match dimension {
+        0 => dimension!(0),
+        1 => dimension!(1),
+        2 => dimension!(2),
+        3 => dimension!(3),
+        4 => dimension!(4),
+        16 => dimension!(16),
+        64 => dimension!(64),
+        256 => dimension!(256),
+        1024 => dimension!(1024),
+        _ => panic!("invalid fixture dimension"),
+    }
+}

@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Qualify the allocation-free integer IEEE enclosure backend on
+  `wasm32-unknown-unknown`, with exact-bit oracle execution and generated-code
+  checks. Other previously unsupported targets still fail closed. Proposal
+  intervals remain non-authoritative; native arithmetic and rounding are unchanged.
+
 - Normalize temporary dyadic product exponents when the exact hull endpoints fit
   the storage format, using the same budgeted normalization as squares/powers.
   Previously rejected exponent sums can now succeed or reach a declared size/work

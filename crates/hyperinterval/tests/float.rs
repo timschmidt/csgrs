@@ -21,7 +21,13 @@ macro_rules! cases {
 
             #[test]
             fn target_gate_and_empty_are_explicit() {
-                assert_eq!($interval::backend_supported(), cfg!(target_arch = "x86_64"));
+                assert_eq!(
+                    $interval::backend_supported(),
+                    cfg!(any(
+                        target_arch = "x86_64",
+                        all(target_arch = "wasm32", target_os = "unknown")
+                    ))
+                );
                 assert!($interval::empty().is_empty());
                 let root = $interval::empty().sqrt().unwrap();
                 assert!(root.range.is_empty());
