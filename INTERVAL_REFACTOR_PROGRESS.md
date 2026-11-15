@@ -7329,3 +7329,52 @@ interval Newton integration, wider wrapping/adoption, unresolved migration
 costs, embedded/HIL and coordinated release remain open. No phase or full-goal
 completion, push or publication is claimed.
 
+
+## Maintained packaged curve-range consumer: retained after release qualification
+
+Owner: release pipeline, P36/P37, Phase 14. Source revision
+`90bf46b37b73b88938090012db1d563c7eca2cd6` enables Hypercurve's
+`interval-ranges` feature in the existing external consumer, copies the exact
+`examples/interval_ranges.rs` from its archive, and executes it alongside all
+26 previous clients. No production Rust source, example, repository manifest,
+version, release eligibility or workflow file changed. Documentation now
+explicitly identifies the existing documentation gate as a workspace feature
+check, not archive-only docs.rs verification.
+
+The missing-feature witness was reproduced before production edits. Its
+initial minimal consumer also lacked dependent solver features; all original
+diagnostics remain archived. A focused control matches the solver features
+already enabled by Hyperdynamics field, isolates the missing Hypercurve
+feature, then compiles successfully when it is enabled. These negative controls
+use workspace library sources; archive qualification comes from the full runs.
+
+On the clean committed candidate, both commands passed:
+
+- `bash scripts/release-check.sh --toolchain 1.95.0`
+- `bash scripts/release-check.sh --toolchain stable` (Rust 1.99.0)
+
+Each verified 21 packages, completed 21 workspace documentation builds with
+`-D warnings`, audited all 21 external dependencies as archive sources, and
+passed all 27 clients. The unchanged new example was separately rerun from
+each built binary: four parameter cells, retained source/tangent evidence,
+native bounds and native nonoverlap consumption. Both captured consumer
+manifests preserve every prior dependency declaration except the new Hypercurve
+feature. Syntax, ShellCheck, formatting, diff and repository budget checks
+passed before and after integration. The full pre-push matrix was not run.
+
+The release runs took 1266.905 s and
+1182.195 s respectively and ran concurrently;
+these are validation observations, not comparative performance evidence.
+QUALIFICATION.json records absolute debug executable sizes and hashes.
+Integration preserves all 41 staged extraction paths and their patch bytes
+exactly; both Alumina repository states are unchanged.
+
+Evidence: `docs/evidence/2026-11-14-interval-release-curve-consumer`,
+archive commit `ffc69225bdba97e570f7af423ca21bbcdde8e71a`,
+112 files / 571,939 bytes, SHA-256
+`d87b876e2fe9cadcb089cf31b6862d763be0bc8239099cc37736b368aa9cdf71`.
+All 45 earlier frozen stages verify unchanged. COMPLETION.md and
+REMAINING-GAPS.md delimit the result. Archive-only documentation, dependency
+resolution reproducibility, the optional-voxel publication blocker, HyperBrep
+release, wider feature/platform/HIL coverage and the remaining implementation
+goal stay open. No phase completion, push or publication is claimed.
