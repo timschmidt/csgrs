@@ -107,6 +107,12 @@ Layer tests verify flattened 2D geometry checks:
   extract a small Gerber outline subset when present so package
   extraction and Gerber loading stay covered without turning the fixture into a
   long-running full-board DRC job.
+  Native workspace CI sets `HYPERDRC_REQUIRE_COMPLEX_FIXTURES=1` so missing
+  archives fail these app-level smoke tests. Presence of this environment
+  variable enables required-fixture mode, regardless of its value. Package-only
+  tests may omit the variable because the published crate excludes the fixture
+  archives. An existing archive that is corrupt or cannot be extracted always
+  fails, including when `unzip` is unavailable.
 - Copper-overlap and exposed-copper tests assert violation coordinates are
   preserved so reports can point to the actual intersection.
 - Layer-sanity tests inject empty geometry, huge area, malformed contours, holes,
