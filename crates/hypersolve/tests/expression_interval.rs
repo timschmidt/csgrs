@@ -438,3 +438,26 @@ fn shared_dag_outputs_and_failure_order_follow_the_source() {
         [d(0, 0, 0)]
     );
 }
+
+#[test]
+fn normalized_product_extremes_feed_subsequent_expression_programs() {
+    let product = compile(&[x() * y()], &[SymbolId(0), SymbolId(1)]);
+    let next = compile(&[-x()], &[SymbolId(0)]);
+    for (left, right, expected) in [
+        (d(1, 2, i32::MAX), d(1, 1, 1), d(2, 4, i32::MAX)),
+        (
+            d(-1, 2, -1_073_741_824),
+            d(-1, 2, -1_073_741_825),
+            d(-1, 2, i32::MIN),
+        ),
+    ] {
+        let output = product
+            .eval_dyadic(&[left, right], -32, &mut graph(), &mut arithmetic())
+            .unwrap();
+        assert_eq!(output, vec![expected.clone()]);
+        let negated = next
+            .eval_dyadic(&output, -32, &mut graph(), &mut arithmetic())
+            .unwrap();
+        assert_eq!(negated, vec![expected.neg(&mut arithmetic()).unwrap()]);
+    }
+}

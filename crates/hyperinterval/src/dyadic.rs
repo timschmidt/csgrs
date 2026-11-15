@@ -520,7 +520,9 @@ impl DyadicInterval {
         Self::new(-b, -a, e)
     }
 
-    /// Exact product hull. Exponent overflow is a storage failure, never wrapping.
+    /// Exact product hull. Temporary exponent overflow is normalized when the
+    /// endpoints are representable, with mantissa growth reserved before shifting.
+    /// Resource admission may fail before endpoint representability is decided.
     pub fn mul(&self, other: &Self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {
         let (Some((a, b, e)), Some((c, d, f))) = (self.bounds(), other.bounds()) else {
             return Ok(Self::empty());
@@ -528,12 +530,15 @@ impl DyadicInterval {
         if self.signs() == SignSet::Zero || other.signs() == SignSet::Zero {
             return Self::point(BigInt::zero(), 0);
         }
-        let exponent = e.checked_add(f).ok_or(IntervalError::Overflow)?;
+        let exponent = e.checked_add(f);
         budget.reserve(self.bits().saturating_add(other.bits()), 4, true)?;
         let products = [a * c, a * d, b * c, b * d];
         let lower = products.iter().min().expect("four products").clone();
         let upper = products.into_iter().max().expect("four products");
-        Self::new(lower, upper, exponent)
+        match exponent {
+            Some(exponent) => Self::new(lower, upper, exponent),
+            None => Self::from_wide_exponent(lower, upper, i64::from(e) + i64::from(f), budget),
+        }
     }
 
     /// Exact pointwise square, preserving dependence across zero.

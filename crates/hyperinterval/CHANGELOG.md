@@ -2,6 +2,11 @@
 
 ## 0.1.0 (unreleased)
 
+- Normalize temporary dyadic product exponents when the exact hull endpoints fit
+  the storage format, using the same budgeted normalization as squares/powers.
+  Previously rejected exponent sums can now succeed or reach a declared size/work
+  limit; genuinely unrepresentable lower endpoints still return `Overflow`.
+
 - Share exact primitive lattice midpoint arithmetic between integer and fixed
   intervals, retaining all rounding modes and full unsigned widths. Fixed
   accessors avoid widened arithmetic and remain allocation-free.

@@ -1132,3 +1132,22 @@ Cargo builds identify themselves as unattributed. Use
 [`scripts/successive-operations.py`](../scripts/successive-operations.py) for
 source/compiler attribution, actual executable hashes and interruption status.
 Historical timing records retain their original, weaker attribution.
+
+## Dyadic product exponent normalization (2026-11-14)
+
+`DyadicInterval::mul` now normalizes an out-of-range temporary exponent using
+exact common factors or a budgeted mantissa shift, as squares and powers already
+do. For example, `2^i32::MAX * 2` succeeds with mantissa `2` at exponent
+`i32::MAX`. The original upper-boundary regression is retained with this exact
+expectation. A lower-boundary hull `[-2,4] * 2^(i32::MIN-1)` likewise succeeds as
+`[-1,2] * 2^i32::MIN`; an odd endpoint at that lower exponent remains `Overflow`.
+
+This intentionally extends the former failure contract. Callers must not use
+exponent-sum `Overflow` as a proxy for unrepresentability or as a resource guard.
+For these formerly rejected inputs, product and normalization reservations may
+now return `SizeExhausted` or `WorkExhausted` before representability is decided.
+Use an explicit `DyadicBudget` and retain its typed outcome. Normalization growth
+is charged before shifting; a fresh budget permits retry. These accounting units
+do not bound actual CPU time or heap bytes. Previously successful in-range
+products retain their exact bounds and work accounting. Empty/zero shortcuts and
+serialized interval format are unchanged. No public name or feature changes.

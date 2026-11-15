@@ -411,7 +411,11 @@ fn coarsening_is_outward_and_huge_scales_fail_before_allocation() {
         Err(IntervalError::SizeExhausted)
     );
     assert_eq!(
-        d(1, 1, i32::MAX).mul(&d(1, 1, 1), &mut budget()),
+        d(1, 1, i32::MAX).mul(&d(1, 1, 1), &mut budget()).unwrap(),
+        d(2, 2, i32::MAX)
+    );
+    assert_eq!(
+        d(1, 1, i32::MIN).mul(&d(1, 1, -1), &mut budget()),
         Err(IntervalError::Overflow)
     );
     assert_eq!(
