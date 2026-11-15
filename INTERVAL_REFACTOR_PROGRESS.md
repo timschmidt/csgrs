@@ -8677,3 +8677,50 @@ SHA-256 `489259f892188e071c9715aef8d385ea40686e9a100069729a8efa9355a27f32`. Exac
 compressed exports, raw diagnostic logs, source patch and integration receipts are
 retained. Bulky unmerged profiles remain external with paths/hashes; the aggregate
 profile and source/build commands support replay without claiming archived binaries.
+
+
+## 2026-11-15: require DRC smoke fixtures and reproduce the native CPU blocker
+
+Source `71377cb5f0007f1ff2ed03ec2a3c36ce99f95fb4` retains a qualification repair on accepted parent
+`29e0e82f37b29b3f825aed25f3b2e2e52e842c78`. The current original KiCad smoke suite fails
+at 130.443995189 worker seconds against its unchanged 120-second
+limit. Both original tracked archives are present with recorded SHA-256 hashes;
+this baseline excludes the pending 41-path extraction. The prior performance
+blocker is reproduced on the current revision, not inferred from older evidence.
+
+Before the repair, two new tests fail because the app smoke fixture helper silently
+skips missing required archives, unavailable unzip, and corrupt archives. Workspace
+CI now sets HYPERDRC_REQUIRE_COMPLEX_FIXTURES=1. Presence of that variable, including
+an empty value, requires archive existence. Extraction errors for present archives
+always fail. Optional missing archives remain skippable for package-only use, whose
+manifest excludes the assets. Five fresh child-process cases cover required and
+optional absence, empty flag value, and unavailable extraction in both modes; a
+corrupt archive and exact valid payload are separate controls. The tests avoid
+process-global environment mutation. Existing smoke bodies, original fixtures,
+120-second limits, production geometry and predicate ordering remain unchanged.
+
+The two regression tests pass after repair, as do all 41 app tests with required
+mode enabled, the original Gerber smoke suite, release all-target/all-feature
+Clippy with -D warnings, workspace formatting and whole-repository
+zizmor --pedantic --strict-collection. The unchanged real KiCad smoke suite still
+fails at 127.134745903 worker seconds. The timing gate is not
+waived; no performance improvement or full native CI completion is claimed.
+Integrated-source fixture witnesses, formatting and repository budget also pass.
+All executed commands, failures and successful controls are retained separately.
+
+This is a test/CI qualification repair, not an interval arithmetic or geometry
+optimization. The separate layer-level unzip fixture helper remains unchanged;
+this stage does not claim to harden every individually filtered fixture test or
+establish that all packaged-crate tests pass without assets. Full-board minimum
+copper-neck qualification, the full pre-push/platform matrix, outstanding costs,
+resource contracts, migrations and release/HIL gates remain open. No push or
+publication occurs. Main's 41 staged paths and Interface's 8 pending paths remain
+byte-identical; firmware remains clean. All 68 preceding frozen stages verify.
+The entire 15-phase goal remains active.
+
+Evidence `docs/evidence/2026-11-15-interval-drc-current-admission`, local archive commit
+`84304984a69084d9ebf849e7d0ef0e064f766468`: 49 files / 1,471,494 bytes,
+SHA-256 `d4d8df62bc8b4ec930a7b5408b181e1e4b6517e0a53e84af031b8d64fbef743c`. The source patch, negative witness logs,
+source-bound builds, fixture hashes, command outputs and integration receipt are
+archived. Test binaries remain external with paths and hashes; no archived-binary
+or reproducible timing equivalence claim is made.
