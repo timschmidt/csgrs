@@ -7521,3 +7521,50 @@ All 47 prior frozen stages verify unchanged. Evidence record
 `7dee7993e0f04d606012d1598ec5dbaa14aab221b89efbb2ede78671c58c1cf8`. COMMANDS.json distinguishes execution-time argv from
 reconstructed reproduction recipes; raw logs establish the reported outcomes.
 Phase 8 and the overall fifteen-phase goal remain open. No push or publication.
+
+## Release documentation argument transport: retained
+
+Owner: repository release tooling; P36/P37, Phase 14. Source
+`f8641a319fa943642b7d8c62551cc454a5eaa778` repairs a reproduced omission in the actual release
+loop: docs.rs feature settings were applied but `rustdoc-args` were discarded,
+including HyperDRC's `--cfg docsrs`. Before edits, the old loop fails an offline
+Rust fixture whose documentation requires that cfg.
+
+The maintained helper forwards per-package arguments through Cargo's encoded
+rustdoc flags, preserves whitespace and keeps `-D warnings`. Each package gets
+its own environment; ambient rustdoc flags cannot override this check. Missing
+packages, unsupported metadata keys and invalid argument values fail explicitly.
+The complete selection is validated before documentation begins. Supported keys
+are `all-features`, `no-default-features`, `features` and `rustdoc-args`; this is
+local workspace configuration validation, not hosted docs.rs emulation.
+
+A compiled two-crate fixture checks actual cfg consumption, all/selected features,
+default-feature suppression, a header filename containing spaces, rendered HTML,
+flag isolation, warning rejection and preflight failure. It passes on Rust 1.95
+and stable 1.99, in both full release runs and in the combined main worktree.
+The initial shellcheck invocation without `-x` reports only the existing source
+include; corrected source-following lint passes. No production Rust, manifest,
+lockfile, kernel predicate, canonical format or CI configuration changes.
+
+Both complete release checks pass from clean source without `--allow-dirty` or
+`--no-verify`: 21 verified archives, 21 local documentation configurations and
+27 client checks per compiler. These include 20 archived README programs, the
+modeling user path, packaged curve ranges, C/C++, Python, Go and TypeScript.
+TypeScript is compilation, not browser runtime. All released dependencies resolve
+from unpacked archives, with no workspace source paths. Captured documentation
+commands show HyperDRC receiving its declared cfg and every crate retaining the
+warning gate. Archive digests and clean VCS revisions are retained; no new
+byte-reproducibility or runtime performance campaign is claimed.
+
+Exact patch reversal and integration preserve all 41 staged extraction paths
+byte for byte, Interface's eight pending paths and firmware's clean revision.
+The integrated fixture, shell lint/syntax, formatting, diff and repository-budget
+checks all pass. All 48 previous frozen stages verify unchanged. Evidence record
+`docs/evidence/2026-11-14-interval-release-docs-arguments`, local commit `ff166be4931ef6081139483a016c5c708178857b`:
+116 files / 606,907 bytes, SHA-256
+`28d1c14b9280e084168bddd0a976cad794d6aa1d0f816837f0bc84a048bd8ab8`.
+
+Hosted docs.rs nightly/target/environment qualification, archive-only documentation,
+wider platform/HIL and release gates, the optional Hypervoxel publication blocker,
+rejected migrations and pending extraction remain open. No phase/full-goal
+completion, full pre-push matrix, push or publication is claimed.
