@@ -7811,3 +7811,44 @@ Evidence `docs/evidence/2026-11-14-interval-interval-fuzz-current`, local archiv
 migrations, source coverage, platform/HIL and coordinated release obligations
 remain open. No performance gain, full pre-push matrix, push or publication is
 claimed; the complete goal remains active.
+
+## One-sided rational square-root migration: rejected
+
+Phase 7, Hyperinterval arithmetic ownership and Hypersolve proof/fallback
+ownership, P1/P4/P6/P10/P17–P20/P35–P37. At `a8eef70bbd5e07c7cecfee92f06852415b61657c`, a distinct
+candidate relocates the existing one-sided rational grid square-root kernel,
+without changing its nonnegative rational/nonpositive precision domain, eager
+sign/div_rem/root/square check order or solver fallback. Typed owner errors map
+to the original Option. The existing two-sided budgeted API stays unchanged;
+the candidate explicitly preserves the legacy lack of total-work/heap accounting.
+No new unbudgeted API is retained.
+
+Twelve same-path Rust 1.95 release cases match in 4,506 bytes of native exact
+endpoint JSON and downstream STRICT/APPROXIMATE_512 comparison reports. They
+cover rational/symbolic radicands, clipped/empty domains, zero, exact squares,
+positive/nonpositive or absent grid requests and large coefficients. The external
+lock pins num-bigint 0.4.6; adding the production Hyperinterval dependency changes
+no registry version. This is preliminary finite equivalence evidence, not complete
+math/status/certainty/dispatch qualification.
+
+The executable grows 3,029,720 → 3,029,792 bytes (+72), failing the unchanged
+refactoring gate. Named function-size multisets and the 1,403,058-byte function
+address union match. ELF exception tables grow 20 bytes; padding and other metadata
+also change. Identical function lengths or lower aggregate data usage do not waive
+binary growth or establish instruction/performance equivalence. No arbitrary
+inlining/layout variants, timing/allocation campaign, owner benchmark or downstream
+successive_operations campaign follows this decisive rejection.
+
+All candidate bodies and dependencies are removed. Restoring source and lock
+reproduces the baseline executable byte for byte; fresh-process output also
+matches. Review commit `006e9060531d470951b374dbecd3f94638ded610` changes only one inventory row and
+the existing adapter audit to record this outcome. Temporary-index tree equality
+and patch hashes preserve all 41 staged extraction paths, Interface's eight pending
+paths and firmware state. All 54 previous frozen stages verify unchanged.
+Main diffs, retention and the restored probe pass; no full test/Clippy/platform
+matrix is inferred from an early rejected candidate.
+
+Evidence `docs/evidence/2026-11-14-interval-sqrt-endpoint-migration`, local archive commit `4b1102536d8b779f98901cca5582b093fafa7a9f`:
+47 files / 1,641,347 bytes, SHA-256 `06bfb0059a3c964b310c88bb476259aba662739b94bba0de90b3fa1f222f91e3`. This migration,
+broader performance/resource requirements, platform/HIL and coordinated release
+remain open. No push, publication or full-goal completion is claimed.
