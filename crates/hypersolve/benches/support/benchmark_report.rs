@@ -478,6 +478,9 @@ mod tests {
                 "expression_program",
                 "representations",
                 "retained_fuzz",
+                "taylor_composition",
+                "taylor_noise",
+                "taylor_polynomial",
             ]
         );
         let expressions = suites
@@ -486,6 +489,15 @@ mod tests {
             .unwrap();
         assert!(expressions.criterion);
         assert_eq!(expressions.required_features, ["expression-program"]);
+        for (name, feature) in [
+            ("taylor_composition", "taylor-composition"),
+            ("taylor_noise", "taylor-noise"),
+            ("taylor_polynomial", "taylor-polynomial"),
+        ] {
+            let suite = suites.iter().find(|suite| suite.name == name).unwrap();
+            assert!(suite.criterion);
+            assert_eq!(suite.required_features, [feature]);
+        }
         assert!(suites.iter().any(|suite| suite.name == "competitive"));
         assert!(suites.iter().any(|suite| !suite.criterion));
     }
