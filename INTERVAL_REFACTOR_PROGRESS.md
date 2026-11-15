@@ -45,7 +45,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
-| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 qualification passed | full surface/coverage, further targets and shipped consumers |
+| 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; local x86_64 and WASM qualification passed | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
@@ -8039,3 +8039,67 @@ This stage retains a regression test, not the automatic controller. Broader
 wrapping/resource support, the extraction and other existing cost gates,
 platform/HIL and coordinated release remain open. No push, publication or
 full-goal completion is claimed.
+
+## Strict IEEE enclosures on WebAssembly (2026-11-15)
+
+Phases 4/14, plan section 3.12; Hyperinterval owns finite IEEE endpoint
+qualification. Base `8d9b0d30c3515cd6c191f872f95b32d86059b1d0` reproduces
+nonempty binary32/binary64 ingress rejection in a real no_std WASM module.
+Source `0ba14a211b54ce01026a2ba40b8869554524820f` extends the two qualification
+cfg guards to wasm32-unknown-unknown. Integer arithmetic kernels, rounding,
+representations, predicate order and typed error semantics are unchanged.
+Other unsupported targets retain rejection. This is a capability extension,
+not an arithmetic refactor or a claim that all platform work is complete.
+
+An independent integer/Fraction oracle checks full endpoint bits and typed
+outcomes: finite ingress, every exponent class, subnormals, extrema, empty and
+invalid inputs, arithmetic/domain failures, exact root inequalities, set and
+width properties, and output-as-input composition. Each final module passes
+55,802 arithmetic cases and 8,836 property queries. Rust 1.88, 1.95 and stable
+1.99 artifacts each execute successfully in Node 22.23.5 and Chromium 155.
+Hyperlattice downstream runs additionally pass 612 IEEE and 612 fixed chains
+per artifact/engine, spanning nine dimensions, 17 seeds and native/SoA storage.
+The maintained CI driver builds, lints, executes and inspects generated code;
+local Chromium runs are separate from the hosted Node workflow.
+
+Complete scalar modules contain no imports, memory.grow, native floating
+arithmetic or floating conversions; bit reinterpretation remains permitted.
+The no_std consumer links without a global allocator and has only Hyperinterval
+as its normal dependency. The lattice fixture uses exact small native dyadics
+for input construction and is not covered by that scalar instruction-scan claim.
+Unsupported thumbv7em support flags are const-proved false; there is no MCU
+runtime or HIL qualification. Finite corpus success is not exhaustive IEEE proof.
+
+Native owner tests pass 229 cases, downstream lattice tests 90, and MSRV
+primitive/serde tests 184. Release alternate-rounding/FTZ/DAZ controls pass.
+Strict owner Clippy, docs, workspace/nested formatting and final repository-wide
+pedantic strict Zizmor pass. Saved native baseline/candidate codegen controls
+are byte-identical: 499,936 bytes, SHA-256
+`876d177a67283fead193fe45c111426318ab5881eb5d49c8acbf041c5438f69d`.
+No timing improvement or whole-application cost claim follows.
+
+Clean-source packages build and verify on Rust 1.95; repeated archive creation
+reproduces both hashes. An external no_std consumer uses the unpacked
+Hyperinterval archive without workspace library dependencies. Rust 1.88 and
+stable builds, strict Clippy, Node and Chromium pass the full scalar corpus.
+Metadata confirms the two-node consumer/library dependency graph. This validates
+local packaged delivery, not registry publication or every feature combination.
+
+Original diagnostic failures remain in the evidence: a missing Zizmor PATH
+entry, Cargo lock-wait stderr contaminating a dependency listing, an unnecessary
+package patch warning, and an overstrong expectation of Thumb IR constant
+folding. Explicit-path Zizmor, separated stderr, a fresh minimal consumer and
+compile-time support assertions provide the stated final evidence. No oracle
+expectation or acceptance gate was weakened.
+
+The integrated primary checkout passes the complete stable WASM driver, all 22
+native float tests, formatting, Zizmor, diff and repository-budget checks.
+Temporary-index equality and final patch hashes preserve all 41 staged
+extraction paths and Interface's eight pending paths; firmware is unchanged.
+All 57 earlier frozen stages verify unchanged. Extraction, broader wrapping and
+resource support, hosted platform/HIL and coordinated-release work remain open.
+No full pre-push, push, publication or full-goal completion is claimed.
+
+Evidence `docs/evidence/2026-11-15-interval-wasm-float-qualification`, local archive commit
+`52a9ce3f00e56527dc11d1a25819211f66b47fbc`: 304 files / 40,877,079 bytes,
+SHA-256 `542eeec3955e1a1feb68aef57bbe55c6ea217f883a0f6834686f66a7633702be`.
