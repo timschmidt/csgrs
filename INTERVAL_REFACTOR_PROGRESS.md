@@ -7612,3 +7612,52 @@ SHA-256 `e71d80fcbfaffaaaddfb27c20db53739d40262b10ca84e5b811702231e4c1db2`. The 
 explicit; they do not complete Phases 0/7 or the whole goal. Broader ownership,
 implementation, cost, platform/HIL and release obligations remain open. No full
 pre-push matrix, push or publication is claimed.
+
+## Dyadic products: exact normalization at exponent storage limits
+
+Owner: Hyperinterval, with Hypersolve expression and Hyperlattice interval
+consumers. P1/P6/P18–P20/P36/P37, Phases 3/6. Source `efee9bbe3e4007fb81d24ebccffb53ac54d88426`
+extends multiplication to representable temporary exponent overflows, using the
+existing square/power normalization authority. Two acceptance witnesses failed
+with `Overflow` on baseline `a7ea9382f`: `2^MAX * 2` now returns mantissa 2 at MAX,
+and a lower-boundary hull `[-2,4] * 2^(MIN-1)` becomes `[-1,2] * 2^MIN`.
+Genuinely unrepresentable lower endpoints still fail. The original upper hard
+case is retained with its exact success expectation. `docs/MIGRATIONS.md` records
+the intentional failure-contract extension and resource-admission precedence.
+
+The ordinary successful path retains the four corner products, predicate order,
+canonical endpoint construction and work accounting. No duplicated normalization
+kernel, interval fitting, policy demotion, public name, feature or format changes.
+Independent integer expectations exercise 12,150 boundary pairs in both operand
+orders and 6,075 ordinary pairs/scales. Tests cover exact size/work thresholds,
+real overflow, huge growth rejection, fresh-budget retry, empty/zero identities,
+subsequent exact operations, canonical serialization and zero Real-dispatch counts.
+Two generated results replay and feed later operations in a fresh process.
+
+Owner all-feature tests/doctests report 226 passes in 42 summaries; Hyperlattice
+reports 90 in 24; Hypersolve library/integration tests report 1,520 in 63. None are
+ignored. New downstream tests consume normalized products through expression
+programs and vector dot/scale. Strict all-feature/all-target Clippy for all three
+crates, native and WASM no_std checks, strict owner rustdoc and formatting pass.
+Integrated focused tests report 28 passes; diff and retention checks also pass.
+These finite witnesses are not a universal closure or full-plan completion claim.
+
+Matched external native probes materialize the same ordinary products and compare
+canonical output, serialization, work and allocation requests: all agree across
+five cases, each with 24 alternating samples per build. Observed median time ratios
+are 1.0045–1.0295; executable size grows 2,568 bytes and the mul symbol 81 bytes.
+This measured cost is retained for a concrete completeness gain, not described as
+a performance-only refactor or speed improvement. The unpinned shared-host probe
+has its own retained dependency lockfile; workspace tests use the workspace lock.
+No peak-heap, whole-application, WASM runtime, MCU-cycle or firmware qualification
+is inferred. DyadicBudget still bounds declared reservations/accounting units,
+not total instructions or actual heap; no new cancellation contract is claimed.
+
+Exact forward/inverse tree checks preserve all 41 staged extraction paths. The
+migration file's pending additions remain identical; only patch blob identifiers
+change. Interface's eight pending paths and firmware's clean revision are
+unchanged. All 50 prior frozen stages verify unchanged. Evidence record
+`docs/evidence/2026-11-14-interval-dyadic-product-exponents`, local commit `264c8052e49aafc00e534bf8b06a2665004ae335`: 57 files /
+1,346,990 bytes, SHA-256 `0485a5d397e6ed60eb4a9f415d7fad7c93ba9d2444bff3942a3a9d2286a80419`. Broader migrations, dynamics
+acceptance, platform/HIL and release obligations remain open; no full pre-push
+matrix, push or publication is claimed.
