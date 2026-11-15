@@ -4,6 +4,11 @@
 
 Initial release.
 
+- Reject SDF voxel handoffs to a different origin, pitch or declared unit,
+  and reject rows outside their source grid. Exact frame comparisons remain
+  strict; undecided equality cannot authorize relocation of occupancy evidence.
+  Valid rectangular and partial batches retain their sparse-intake behavior.
+
 - Optional `enclosure-program` supplies source-bound whole-cell and Taylor
   enclosures for smooth scalar expressions and translations. It retains original
   field identity, domain errors, full remainders, distance qualification and

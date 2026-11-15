@@ -216,7 +216,11 @@ finite gradients, or shader evaluation into exact topology.
 - `Sdf::classify_voxel_grid` returns one conservative `SdfVoxelCell` per cell
   in an `SdfVoxelBatch`; `is_complete` and `has_unknown` summarize it.
 - With `hypervoxel-adapter`, `continuous_field_batch_from_sdf` lowers that
-  batch into Hypervoxel’s continuous-field intake records.
+  batch into Hypervoxel’s continuous-field intake records. The target frame
+  must have the same exact origin, cell pitches and units; mismatches and
+  undecided equality return errors. Source dimensions and row indices must fit.
+  Partial batches can use sparse intake; exact materialization additionally
+  requires a complete target-frame cover without unknown or lossy cells.
 
 ## Precision and guarantees
 
