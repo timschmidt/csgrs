@@ -138,3 +138,38 @@ execution outcomes. No direct named RealInterval benchmark was found in the
 Hypersolve/Hypercurve benchmark source search; that search is not a cost study.
 A future migration still needs complete owner/downstream dispatch, allocation,
 latency, code/binary size and supported-composition qualification.
+
+
+## One-sided square-root relocation: rejected on 2026-11-14
+
+At `a8eef70bbd5e07c7cecfee92f06852415b61657c`, a separate candidate moved the
+existing one-sided rational grid square-root algorithm to Hyperinterval. This
+kept its nonnegative rational/nonpositive precision domain, eager integer
+`div_rem`/root/square-exactness order and original solver fallback. Typed owner
+errors mapped to the existing `None`; the two-sided budgeted API was unchanged.
+The candidate explicitly retained the old absence of a total-work/heap budget;
+it did not add a synthetic limit or establish resource closure.
+
+A same-path Rust 1.95 release probe exercises twelve public `RealInterval`
+square-root cases: rational/symbolic inputs, clipped/empty real domains, exact
+squares, nonpositive and positive requested grids, no requested grid and large
+coefficients. Native endpoint JSON and downstream comparison reports under
+`STRICT` and `APPROXIMATE_512` match in all 4,506 output bytes. This is preliminary
+finite equivalence evidence, not a full solver-status, dispatch or math oracle
+qualification. The external lock pins num-bigint 0.4.6; the candidate adds only
+the new production Hyperinterval dependency and no registry version changes.
+
+The executable grows from 3,029,720 to 3,029,792 bytes (+72). Named function
+sizes and the 1,403,058-byte function-address union match. ELF exception tables
+grow 20 bytes; other section/padding changes are retained in raw evidence.
+Identical function sizes do not waive the binary-size gate or prove identical
+instructions/performance. No timing, allocation, owner benchmark or downstream
+successive-operations campaign follows that decisive rejection.
+
+The candidate is removed completely. Rebuilding the restored source and lock
+produces a byte-identical baseline executable. No public endpoint helper,
+production dependency, arithmetic body or error change is retained. Raw source,
+lockfiles, commands, outputs, binaries' hashes and ELF measurements are recorded
+in `docs/evidence/2026-11-14-interval-sqrt-endpoint-migration` in the evidence
+archive. This kernel remains unqualified for migration; a future attempt needs
+a distinct supported hypothesis rather than arbitrary inlining/layout retries.
