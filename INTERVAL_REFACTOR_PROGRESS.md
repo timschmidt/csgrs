@@ -7461,3 +7461,63 @@ noise-aware horizon control, wider nonlinear/deep-chain and platform costs,
 resource exclusions, cost-rejected migrations, staged extraction, embedded/HIL
 and coordinated release remain open. No phase/full-goal completion, full
 pre-push matrix, push or publication is claimed.
+
+## Positive transmission interval chain: rejected at native and WASM size gates
+
+Owner: Hyperinterval checked rational arithmetic/strict positivity; Hyperreal's
+scalar reducer is unchanged. Alumina Interface retains units, nominal values,
+configuration identity and typed physical-fact errors. P1, P3–P6, P8–P10,
+P17–P20, P27, P31–P33, P36/P37; Phase 8. Targets are clean committed CSGRS
+`9ee4375ed568e434bc81838199fd9fda765bead4` and Interface
+`b4a15bd0c281cb63ecc3c1d3d451144041c85f91`, excluding their pending edits.
+
+The distinct hypothesis combines unsigned-radius ingress with a retained
+nonempty positive interval proof, the complete four-factor transmission product
+and its positive quotient. It preserves five original positivity checks, nominal
+calculation and lower-before-upper arithmetic order, with no new product/quotient
+predicates. Zero factors give [1,1]; one factor copies its bounds. The public
+Interface interval layout and general empty/signed interval semantics stay fixed.
+No scalar implementation, dependency version or compiler profile is changed.
+
+Before production edits, the missing owner API failed compilation on the target.
+The final candidate reports eleven passing tests across three owner harnesses,
+including 625 independent integer-corner chains, a large-rational GMP oracle,
+generated output consumed again, invalid refinement and fresh-process original/new
+small/large cold/warm dispatch equality. Strict all-feature/all-target Clippy
+passes after renaming the new consuming method to `quotient`. The original
+negative source subsequently grew; the archive preserves the original diagnostics
+and final source without claiming they reproduce identical diagnostic counts.
+
+Seven full native profiles and identities, including one expected invalid input,
+and all seven warmed allocation/deallocation/reallocation/byte/peak/live rows
+match baseline. All seven WASM transcript hashes match native, invalid selectors
+are rejected and the module makes no host calls. This consumer agreement is not
+an independent mathematical proof or a completed migration.
+
+| Artifact | Baseline bytes | Final candidate bytes | Change |
+| --- | ---: | ---: | ---: |
+| Native profile executable | 810576 | 811456 | +880 |
+| WASM profile module | 1069062 | 1070027 | +965 |
+
+Both required size gates fail. GNU size's text/read-only-data column grows by
+824 bytes; its aggregate dec falls by eight because other sections change.
+That aggregate does not waive executable or code growth. Initial and final lint-
+corrected candidate binaries are byte-identical. No matched timing campaign,
+monomorphized function attribution, whole-profile both-policy dispatch comparison,
+full schedule/browser suite or full pre-push matrix follows this early rejection.
+Build durations and WASM fuel are not performance claims.
+
+The isolated candidate is removed completely. Restored owner tests (three reports),
+strict Clippy, both worktrees' formatting and diff checks pass. Fresh native/WASM
+rebuilds match baseline artifact hashes byte for byte; complete native output also
+matches. Both isolated worktrees are clean. CSGRS's 41 staged extraction paths,
+Interface's eight pending paths and firmware's clean revision remain unchanged.
+The candidate's full patches, source, locks, initial harness failures and outputs
+are retained only as rejected evidence. No production API is integrated.
+
+All 47 prior frozen stages verify unchanged. Evidence record
+`docs/evidence/2026-11-14-interval-profile-positive-products`, local commit `8c43d0fcec53718bb7ec46ada0753111fcb61bae`:
+85 files / 2,657,197 bytes, SHA-256
+`7dee7993e0f04d606012d1598ec5dbaa14aab221b89efbb2ede78671c58c1cf8`. COMMANDS.json distinguishes execution-time argv from
+reconstructed reproduction recipes; raw logs establish the reported outcomes.
+Phase 8 and the overall fifteen-phase goal remain open. No push or publication.
