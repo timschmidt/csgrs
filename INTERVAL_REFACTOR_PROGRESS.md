@@ -7568,3 +7568,47 @@ Hosted docs.rs nightly/target/environment qualification, archive-only documentat
 wider platform/HIL and release gates, the optional Hypervoxel publication blocker,
 rejected migrations and pending extraction remain open. No phase/full-goal
 completion, full pre-push matrix, push or publication is claimed.
+
+## Symbolic endpoint adapter: source audit and migration boundary tests
+
+Owner: Hypersolve's strict symbolic endpoint adapter; Hyperinterval owns generic
+scalar interval arithmetic. P1/P4/P6/P8–P10/P17–P20/P27/P36/P37, Phases 0/7.
+Source `2480e611ab3e00913eb9cef9354f9db3b3aecdaf` retains tests and a scoped ownership audit,
+with no production migration. All 490 lines and 19 declarations in
+`real_interval.rs` were read. The audit records exact source hashes, selected
+complete caller bodies and one partial call context separately. Exhaustive
+caller and whole-inventory review remain open.
+
+Three lexical inventory rows are updated and sixteen missed declarations added;
+all unrelated rows, including earlier rejected dispositions, remain byte-identical.
+`docs/research/interval-real-adapter-audit.md` explains the retained strict
+comparison/predicate order, public endpoint preconditions, optional failure,
+polynomial proof ownership and resource gaps. The generic directed square-root
+endpoint helper remains an unqualified Hyperinterval migration candidate.
+
+The missing witness reproduces an observable difference: symbolic multiplication
+of [-1,1] by [-1,1] returns [-2,2], while the tight rational carrier returns [-1,1].
+Squaring those generated results gives [0,4] versus [0,1]. Both product enclosures
+are valid; a tighter bound does not establish identical-output refactoring.
+Five new tests cover independent integer-corner extrema for 784 interval pairs
+(81 wider symbolic products), generated-result composition, sqrt(2) endpoints,
+quotient exclusions and independent quadratic Bernstein sign expectations.
+
+The all-feature Hypersolve library/integration command reports 1,519 passes in
+63 summaries and zero ignored reports; these are harness reports, not universal
+coverage. Strict all-feature/all-target Clippy passes. Three unchanged Hypercurve
+filters each run and pass one regression: strict-only uncertainty, polynomial
+boundary-zero/Bernstein fallback and unused radical terms. The five focused tests
+also pass on the combined main worktree, followed by formatting, unstaged/staged
+diff and repository-budget checks. No production function, manifest, lockfile,
+existing fixture or predicate order changes; no runtime/size improvement or new
+migration cost/trace/serialization qualification is inferred.
+
+Exact integration preserves all 41 staged extraction paths byte for byte, plus
+Interface's eight pending paths and firmware's clean revision. All 49 previous
+frozen stages verify unchanged. Evidence record `docs/evidence/2026-11-14-interval-real-interval-boundary`, local commit
+`e3a53fbfba7cddd70a43757b057152a88d31e376`: 37 files / 244,016 bytes,
+SHA-256 `e71d80fcbfaffaaaddfb27c20db53739d40262b10ca84e5b811702231e4c1db2`. The audit and tests make the next migration contract
+explicit; they do not complete Phases 0/7 or the whole goal. Broader ownership,
+implementation, cost, platform/HIL and release obligations remain open. No full
+pre-push matrix, push or publication is claimed.
