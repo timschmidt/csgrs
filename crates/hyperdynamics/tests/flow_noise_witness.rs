@@ -145,6 +145,62 @@ mod closure {
     }
 
     #[test]
+    fn algebraic_shear_coefficients_cancel_without_scalar_demotion() {
+        let time = SymbolId(10);
+        let x = SymbolId(20);
+        let y = SymbolId(30);
+        let coefficient = hyperreal::Real::from(2).sqrt().unwrap();
+        let mut budget = budget();
+        let initial = BoxN::new([interval(-1, 1, 0), interval(-1, 1, 0)]).unwrap();
+        let mut state =
+            Arc::new(FlowNoiseState::new(interval(0, 0, 0), initial.clone(), &mut budget).unwrap());
+        for (step, sign) in [(0, 1), (1, -1)] {
+            let source = ExpressionProgram::compile(
+                &[
+                    Expr::int(sign) * Expr::real(coefficient.clone()) * Expr::anonymous_symbol(y),
+                    Expr::int(0),
+                ],
+                &[y, time, x],
+                &mut ExpressionBudget::new(100_000, 1_000_000),
+            )
+            .unwrap();
+            let field = ExpressionField::<2>::from_definition(
+                FieldDefinition {
+                    source: source.definition().clone(),
+                    time,
+                    state: vec![x, y],
+                },
+                &mut budget,
+            )
+            .unwrap();
+            let report = field
+                .flow_taylor(1, &mut budget)
+                .unwrap()
+                .certify_noise_step(
+                    state,
+                    FlowNoiseRequest {
+                        end: interval(step + 1, step + 1, -2),
+                        candidate: BoxN::new([interval(-2, 2, 0), interval(-1, 1, 0)]).unwrap(),
+                        maximum_noise: 2,
+                    },
+                    &mut budget,
+                );
+            assert!(
+                matches!(report.status(), FlowNoiseStatus::Certified),
+                "{:?}",
+                report.status()
+            );
+            state = report.end_state().unwrap().clone();
+        }
+        // (x + sqrt(2)y/4) - sqrt(2)y/4 = x for every point of the box.
+        assert_eq!(state.enclosure(), &initial);
+        assert_eq!(
+            state.residual(),
+            Some(&[interval(0, 0, 0), interval(0, 0, 0)])
+        );
+    }
+
+    #[test]
     fn zero_capacity_charges_all_columns_to_the_residual() {
         let mut budget = budget();
         let mut state = Arc::new(
