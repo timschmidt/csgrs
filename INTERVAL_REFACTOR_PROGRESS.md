@@ -8489,3 +8489,76 @@ Evidence `docs/evidence/2026-11-15-interval-profile-static-products`, local arch
 SHA-256 `8a4be98432a778397ef84eeaea1b321b7c4d0ea472a5a283eda19ef55d140a9f`. Complete patches, source, locks, initial failures,
 full transcripts and restoration receipts are retained. Do not repeat the
 static-arity variant without evidence distinguishing it from this result.
+
+
+## 2026-11-15: attribute interval migration code growth and reduce adapter cost
+
+Phase 8 is investigated on accepted CSGRS `7168a68127e04233141f0baa4c5a9468e0a2c41c`, Interface
+`f5341f36803ad77c856313315d67ac8b3bb63f9a` and firmware
+`b9ecf8df54723e532a42867a1d3c549f827d5f6d`. No candidate is retained. Linker maps
+for baseline and each candidate reproduce the corresponding qualified stripped
+native binaries byte for byte, so the maps describe those actual emitted artifacts.
+Original frozen harnesses are read-only with locked dependencies and output outside
+the record. Exact paths, profiles and the admitted CSGRS build cwd remain fixed.
+
+The rejected dynamic helper increases .text by416 bytes and the mapped symbol
+union by415. Normalized symbol-family changes sum to that union delta; padding is
+separate. The transmission derive shrinks87 bytes. New positive-proof/component
+adapters and changed result boundaries dominate code growth. Disassembly retains
+an empty/null check and unreachable panic after an algebraically nonempty nominal
+uncertainty construction. Extra rodata, relocations and unwind sections are recorded.
+NOBITS/relro-padding reductions do not waive executable growth. This attribution is
+not a runtime measurement, a universal compiler explanation or full-owner code-size
+qualification.
+
+Two evidence-directed variants are tested. The first transports construction
+nonemptiness through a native checked NonEmptyRationalInterval, sharing Bounds and
+the original positive comparison; general empty/signed semantics remain unchanged.
+It eliminates the impossible-empty consumer branch. The missing carrier is reproduced
+before edits. The second combines canonical fact lookup and scalar-set construction
+in one private helper, matching the baseline's single result boundary instead of
+the candidate's two. It removes only the unused private forwarding constructor.
+Lookup, conversions, validation, predicates and arithmetic retain their order;
+Interface retains nominal values, units, identities and physical-fact errors.
+No inlining, unrolling, layout directive or compiler-policy change is introduced.
+
+Fourteen final owner tests across four harnesses pass, including independent
+integer/rational endpoint oracles, large-rational GMP products, full-width radius
+cases, nonempty/general transport, generated output as input, invalid/empty
+refinements and fresh-process original/shared/nonempty dispatch comparisons.
+Strict all-feature/all-target owner Clippy passes. The final Interface-only regrouping
+does not modify that owner code. All seven complete native profile/identity/allocation
+transcripts match baseline. WASM profiles match native, reject invalid indices and
+make zero host calls. These consumer comparisons are not independent full-profile
+or canonical schedule proofs; full Interface both-policy traces remain unclaimed.
+
+| Variant | Native bytes | Native delta | WASM bytes | WASM delta |
+| --- | ---: | ---: | ---: | ---: |
+| Baseline | 810416 | 0 | 1069027 | 0 |
+| Dynamic control | 811296 | +880 | 1069992 | +965 |
+| Nonempty transport | 810864 | +448 | 1069649 | +622 |
+| Combined fact ingress | 810608 | +192 | 1069527 | +500 |
+
+Both interventions reduce overhead but still fail the required size gates. The
+final .text remains80 bytes larger (mapped symbol union +73), with unwind
+.eh_frame/.eh_frame_hdr +104/+16. No timing, full owner/downstream code-size,
+complete schedule/browser, sanitizer, coverage or pre-push campaign follows
+rejection. Build duration and WASM fuel are not performance claims.
+
+An initial combined-ingress run used Interface's cwd, whose configuration adds
+WASM rustflags. Its confirmed process group was stopped and the incomplete attempt
+discarded; both builds were repeated under a distinct controlled label from the
+original CSGRS cwd. The runner now rejects another cwd. Raw logs and the rejected
+attempt remain. No altered flags are used for acceptance.
+
+All experimental source is removed. Restored owner tests and both workspace
+format checks pass; fresh native/WASM artifacts and full native output reproduce
+baseline byte for byte. Three isolated worktrees are clean. The primary41 and
+Interface8 pending patches remain unchanged, as does firmware. All65 previous
+frozen stages verify. The complete goal remains active, with migration, extraction,
+resource, hardware and coordinated release requirements unresolved. No push.
+
+Evidence `docs/evidence/2026-11-15-interval-profile-codegen-attribution`, local archive commit
+`726c24d55a9f704c21ee3bf1df85e82383f52a42`: 96 files / 6,514,571 bytes,
+SHA-256 `363df0c84750b94853059462f44d659a605743e45acf2eb22f182410fb50c2f2`. Source variants, maps, disassembly, commands,
+full transcripts, rejected attempt and restoration receipts are retained.
