@@ -8316,3 +8316,61 @@ This is not phase/goal completion; no full pre-push, push or publication occurre
 Evidence `docs/evidence/2026-11-15-interval-sdf-voxel-enclosures`, local archive commit
 `32f176a919814448030d0a585fb552d248a5fa4f`: 3,197 files / 58,398,912 bytes,
 SHA-256 `70662d68780559b476ebd4f0b7209ab72e1ba24432a04c21d3148d6ed392a401`.
+
+
+## 2026-11-15: retain exact definitions behind transformed voxel boxes
+
+Source `3366c48c36eb48c30613f9facffdf6e05b6f5b3d` adds the optional Hypervoxel interval-enclosure
+feature for phase-13/Tier-3 transformed conservative bounds. Before editing, a
+finite certified enclosure of a sine-addition identity still left exact affine
+term ordering undecided. The new enclose_bounds method succeeds without asserting
+that ordering: native scalar conversion and Hyperlattice matrix/vector arithmetic
+produce a containing Cartesian box and retain the exact original transform and
+source endpoints in an immutable AffineBoundsEnclosure. Existing exact map_bounds
+arithmetic and comparison order remain unchanged.
+
+Reversed endpoint pairs denote their closed hull; singleton sources and singular
+maps are supported. The report is not the correlated image, occupancy or topology.
+One dyadic budget covers conversion and arithmetic; scalar refinement, exact
+clone/drop and heap bytes retain native exclusions. Typed native errors preserve
+their source chain. Explicit Hyperlattice/interval-hyperreal and companion/hyperreal
+feature forwarding reuses the existing dependency graph. The root lockfile and
+primitive defaults remain unchanged; the separate voxel lockfile is updated.
+
+Six self-contained regressions preserve the original blocker and new success,
+17 generated integer maps checked against independent eight-corner extrema,
+rational/algebraic coefficients, reversed/degenerate inputs, source mutation
+isolation, subsequent native interval mapping, exact-budget/one-unit-short failures,
+size failure/retry and fresh-process reconstruction. Reconstruction is not serialized
+proof replay. The final owner suite passes 84 tests. Strict stable/MSRV all-target
+Clippy, rustdoc, default checks, Rust 1.95 native tests and WASM compilation pass.
+Native lattice bridge tests and 13 downstream SDF voxel tests pass. An independent
+Rust 1.95 path client consumes the transformed enclosure in a source-bound SDF
+whole-cell inside proof; both original source associations remain available.
+The primitive fixed backend passes Rust 1.88 ARM compilation. A Rust 1.95 ARM
+attempt lacked its installed target and is not claimed successful. Primary
+regression, formatting, diff and repository-budget checks pass.
+
+Pinned CPU0/ASLR-disabled warm release probes include full report production and
+destruction, excluding authored input construction. Native integer/rational/
+algebraic/undecided reports have median times 8.762/9.131/12.218/12.457 us and
+requested allocations/bytes 90/720, 96/912, 129/1896, 138/1968. These are not peak
+or retained-memory bounds. Eight same-path baseline/candidate exact-mapping runs
+retain identical allocation counts/bytes and independent literal outputs. Their
+median candidate/baseline ratios are 0.99935/1.00023/1.00624 for integer/rational/
+algebraic cases. The legacy all-feature probe grows 15,832 bytes. These short
+measurements are not a speedup or global no-regression claim. Costs are accepted
+for the demonstrated new enclosure completion; the old exact output lacks the
+retained-source report and cannot complete the undecided-order witness.
+
+All raw failures and corrections remain recorded, including array inference,
+the initially invalid tightest-rounding fixture assumption, unavailable ARM target,
+and a probe literal inference error. No existing assertion or policy was weakened.
+The 41 staged extraction paths and eight Interface edits remain byte-identical;
+firmware is unchanged and all 62 prior frozen stages verify. The full plan remains
+active: migration cost gates, whole-resource closure, broader required adoption,
+hardware and coordinated release are not complete. No push/publication occurred.
+
+Evidence `docs/evidence/2026-11-15-interval-voxel-affine-enclosures`, local archive commit
+`0bb2d1329f98eabcbde4b31f9578ceac706e9c2b`: 141 files / 12,040,903 bytes,
+SHA-256 `3cc6a550c09b8ef63734319ccecd06837f01a186bb0046630cadd6c17992a90c`.
