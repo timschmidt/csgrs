@@ -7852,3 +7852,116 @@ Evidence `docs/evidence/2026-11-14-interval-sqrt-endpoint-migration`, local arch
 47 files / 1,641,347 bytes, SHA-256 `06bfb0059a3c964b310c88bb476259aba662739b94bba0de90b3fa1f222f91e3`. This migration,
 broader performance/resource requirements, platform/HIL and coordinated release
 remain open. No push, publication or full-goal completion is claimed.
+
+## Native workspace qualification and maintained validation repairs (2026-11-15)
+
+Phase 14 and current Hypersolve coverage; workspace CI routing and the
+Hypersolve benchmark-report fixture own these changes. The input domain is the
+existing maintained native corpus and its documented feature configurations,
+not universal geometry closure. Base `fed4183e8ca77a043867d6c7177058fc696238e8` plus the exact
+41-path pending dynamics extraction is tested in an isolated worktree. The
+extraction's performance acceptance remains open.
+
+The workspace check passes for all 24 members and targets. Thirteen of fourteen
+original qualification commands pass, including the separately nested Hypervoxel
+crate. The DRC release suite fails its unchanged full-board worker-CPU cost gate;
+this stage does not qualify the complete native workflow.
+This exercises default configurations, with DRC in release mode, on installed
+stable Rust 1.99.0 / LLVM 23.1.1. It does not execute every dedicated workflow,
+platform, feature or hosted job. Per-command raw logs and terminal records retain
+all run limits and filtering; compilation is distinguished from test execution.
+
+| Command group | Harness passes | Failures | Summaries | Outcome |
+| --- | ---: | ---: | ---: | --- |
+| hyperlimit-tests | 367 | 0 | 24 | passed |
+| hyperpack-tests | 154 | 0 | 5 | passed |
+| hyperevolution-tests | 25 | 0 | 5 | passed |
+| hypersdf-tests | 122 | 0 | 12 | passed |
+| hyperparts-tests | 23 | 0 | 5 | passed |
+| hypercircuit-tests | 105 | 0 | 48 | passed |
+| hyperpath-tests | 443 | 0 | 6 | passed |
+| hyperphysics-tests | 72 | 0 | 16 | passed |
+| hyperbrep-tests | 860 | 0 | 84 | passed |
+| hyperdrc-tests | 1,560 | 1 | 1 | failed; later targets not reached |
+| hypervoxel-tests | 116 | 0 | 4 | passed |
+| hyperbrep-io-tests | 127 | 0 | 28 | passed |
+
+
+Source `efd2d65329800667fb4e6afe1c9d3b034fc84213` adds the missing
+`hyperbrep-io` matrix entry. Before the edit, the all-workspace check compiled its
+tests but no workflow ran them. The new unchanged default-feature command passes
+127 tests/doctests in 28 summaries, within its 30-minute limit. All 24 members now
+have a test route through a dedicated workflow or the shared matrix; routing is
+not proof that every such workflow ran here. Existing matrix entries and limits
+are unchanged. Repository-wide pedantic strict-collection Zizmor passes in both
+isolated and primary worktrees with no findings (default offline mode).
+
+The original complete Hypersolve coverage attempt exits 101 before calculating
+coverage: the benchmark-catalog parser correctly discovers ten registered targets,
+while the example test still expects seven. The original log and raw profiles
+remain archived. A focused invocation reproduces the same failure on the target
+source. Source `70d6325cf606f00dccc0d0c18040c7fff0b7b759` preserves every old
+expected name and assertion, adds the three already registered Taylor targets,
+and checks each target's Criterion status and required feature. All twelve added
+lines are inside the existing test module. No parser, kernel, benchmark workload,
+policy or production body changes.
+
+The focused catalog test passes with all features and with default features
+disabled. Strict owner all-feature/all-target Clippy and final workspace formatting
+pass. A fresh full coverage script run passes: 54,802 / 63,329 production lines
+(86.54%), above the unchanged 85% threshold. Its three configurations report
+4,427 harness passes in 194 summaries, zero failures/ignored tests and 18 filtered
+instances; these include repeated configurations, not unique tests. The existing
+Criterion test-mode and custom benchmark workloads execute as configured. Their
+instrumented timings, overlapping other correctness work, are not performance
+comparisons. The merged profile, annotated report, object identities and full logs
+are retained; compiled objects remain outside the evidence archive.
+
+The DRC library reports 1,560 passes and one failure: the KiCad smoke suite
+uses 132.445845432 seconds of worker CPU against its existing 120-second limit.
+Cargo initially stops before its remaining targets. Separate final release
+integration and doctest commands pass 108 tests in eight summaries and three
+doctests in two summaries, with no ignored tests. These do not turn the failed
+library cost gate into a complete DRC qualification.
+The saved binary reproduces the failure. Removing only the pending extraction
+in the isolated checkout and rebuilding on the same path yields an accepted-tree
+control that also fails at 127.253439273 seconds; the saved pending binary fails
+near 127.3 seconds with no other owned tests/builds. This demonstrates that the
+failure does not require the extraction, without establishing performance
+equivalence or accepting that extraction. Both original board archives and every
+check, assertion and deadline remain unchanged.
+
+A 64-sample debugger probe observes repeated unary arrangement construction.
+The investigated structural adjacency shortcut returns false before a full
+metadata scan when a nonconsecutive pair contains no fragment zero. Its DRC
+binary grows 392 bytes, including 48 bytes of text, and the unchanged smoke test
+still fails at 125.969343863 worker seconds. The candidate is rejected and its
+production source restored byte for byte. No arbitrary layout/inlining variants
+or speedup claim follows; raw samples, symbols, binaries' digests and failures
+remain in the archive.
+
+Source `72a281c18aa5630ab7c60b6b44f25368688727ff` adds an independent cyclic-
+adjacency regression: differently sized operand/loop partitions, all ordered
+pairs and reversed storage under both policies, with zero numeric dispatch
+asserted when tracing is enabled. The final combined checkout passes that test
+with all features and no default features, strict all-target/all-feature owner
+Clippy, formatting and diff checks. Clippy first reproduces a current-toolchain
+lint in the unchanged interval-range replay test. The same source commit replaces
+its constant chunks_exact iterator with fixed-size as_chunks iteration, preserving
+the divisibility assertion, coordinate order, child-process reconstruction and
+proof comparison. The final fresh-process replay test passes. A separate finite
+standard-library probe compiles and passes on Rust 1.95; it is not a full owner
+MSRV qualification. The original lint failure is retained. No production
+geometry body is retained.
+The original workspace runs remain valid for unchanged production paths; the
+new test is checked separately, not credited as a rerun of every suite.
+
+Temporary-index tree equality verifies all three integrations. All 41 staged extraction
+paths, Interface's eight pending paths and firmware state remain unchanged. All
+55 prior frozen stages verify unchanged. Diff and retention checks pass. No performance improvement,
+full pre-push, complete platform/HIL or full-goal completion claim
+follows from these checks. The rejected migration and extraction gates remain
+open; no push or publication occurs.
+
+Evidence `docs/evidence/2026-11-15-interval-workspace-qualification`, local archive commit `ee8790064afd94ee089a865e2061b9510a17ae46`:
+137 files / 172,230,791 bytes, SHA-256 `24a5df0d14c1cc9dd1ec80dcad258de9aca345cbd6ad0c5e733adcd577a9b2d4`.
