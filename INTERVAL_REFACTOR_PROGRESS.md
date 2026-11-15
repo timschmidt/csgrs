@@ -7705,3 +7705,57 @@ unchanged. Evidence `docs/evidence/2026-11-14-interval-dyadic-quotient-sharing`,
 quotient optimization remains unaccepted; broader migrations, performance,
 platform/HIL and release requirements remain open. No full pre-push matrix,
 push or publication occurred.
+
+## Current Interface browser execution and canonical replay
+
+Phases 8/14, Interface browser/client and firmware simulator consumers,
+P6/P8/P9/P19/P27/P31–P37. Interface source `73cc71b1bc426cafca0ee829e2fbc40961a45054` repairs a
+reproduced stale browser harness: it expected schema 13 while the release worker
+emitted 15. All six harness command sites and strict receive validation now use
+one explicit version 15 constant. A client-owned regression checks alignment with
+WORKER_SCHEMA_VERSION. The production protocol is unchanged; the Rust addition
+is cfg(test) only. Current schema documentation is corrected.
+
+The release bundle was rebuilt from Interface b4a15bd plus its pending migration,
+CSGRS e232d00 plus its 41 staged extraction paths, and firmware b9ecf8d. The
+harness repair followed that build. Offline packaging initially missed the cached
+matching wasm-bindgen executable; correcting PATH completed the unchanged build.
+WASM validation and six compressed-asset round trips pass. Initial browser DNS
+isolation incorrectly blocked loopback; that setup failure is preserved separately
+from the reproduced application-level schema mismatch.
+
+Chromium 155/SwiftShader and two loopback simulator actors pass four maintained
+cases without weakening assertions or deadlines: clock qualification; attended
+cached-job completion (531 snapshots); fresh-worker reattachment on the same
+actors (seven snapshots); and completion after both applied job-confirm responses
+were dropped (531 snapshots, exactly two confirming failure observations).
+Each participant consumes 127,264 canonical bytes. Reattachment preserves both
+exact local start cycles while leaving the unavailable original UI epoch absent.
+This is combined-checkout qualification, not acceptance of the pending migrations,
+all browser fault scenarios or physical-device behavior.
+
+The actual CAD/CAM page renders with a ready worker and zero connected MCUs.
+Browser exports of a 2,064-byte ALMCFG06 configuration and 476-byte ALMEVD03
+evidence file replay in a fresh browser process/profile. The configuration is
+transactionally reconstructed and evidence verified against that reconstruction.
+A truncated evidence file is rejected; subsequent exports remain byte-identical
+to both originals. Files, digests, screenshots and terminal results are archived.
+Deterministic serialization is not treated as a universal semantic-equality proof.
+
+The first UI observation reaches two animation frames after the Trunk event at
+3,141.2 ms, with a 19,988,480-byte main-realm WASM buffer. After replay a separate
+process uses 23,789,568 bytes. Seven browser processes sum to 375,753 KiB PSS at
+blank-page observation and 621,815 KiB at rendered UI; these are shared-host
+snapshots with software rendering, not peak allocation or portable requirements.
+The raw report distinguishes main-realm memory, worker exclusions, instrumentation
+limits and warm host caches. No startup/file-replay window errors were observed.
+
+All 90 client tests pass, none ignored. Strict all-feature/all-target Clippy,
+workspace formatting, integrated schema regression, diff and retention checks
+pass. All owned service process groups are stopped after terminal capture. The
+41 staged CSGRS paths and eight pending Interface paths remain byte-identical;
+firmware remains clean. All 52 previous frozen stages remain unchanged.
+Evidence `docs/evidence/2026-11-14-interval-interface-browser-execution`, local archive commit `9b6fbd62171d6ae53311abab552f45df9655862c`:
+142 files / 3,373,703 bytes, SHA-256 `70e6efb5545e018acbee4abd2cce74ce0c0d5b69c2a144241cfe31a4c5cdaac9`.
+Broader migration, performance, platform/HIL and release requirements remain
+open. No full pre-push matrix, push or publication occurred.
