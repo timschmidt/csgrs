@@ -14,6 +14,51 @@ fn interval(a: i64, b: i64) -> RationalInterval {
 }
 
 #[test]
+fn owned_bounds_reconstruct_exact_values_and_preserve_empty() {
+    assert_eq!(RationalInterval::empty().into_bounds(), None);
+    for (a, b) in [(-7, -2), (-3, 4), (0, 0), (1, 8)] {
+        let source = interval(a, b);
+        let (lower, upper) = source.clone().into_bounds().unwrap();
+        assert_eq!((lower.clone(), upper.clone()), (r(a, 3), r(b, 3)));
+        let restored = RationalInterval::new(lower, upper).unwrap();
+        assert_eq!(restored, source);
+        assert_eq!(restored.add(&interval(1, 2)), interval(a + 1, b + 2));
+        assert!(!restored.interior_subset_of(&RationalInterval::empty()));
+    }
+}
+
+#[test]
+fn positive_empty_products_and_quotients_do_not_hide_invalid_operands() {
+    let empty = RationalInterval::empty();
+    let positive = interval(1, 7);
+    for (a, b) in [(&empty, &positive), (&positive, &empty), (&empty, &empty)] {
+        let product = a.positive_product(b).unwrap();
+        let quotient = a.positive_quotient(b).unwrap();
+        assert_eq!(product, empty);
+        assert_eq!(quotient, empty);
+        assert_eq!(product.positive_quotient(&positive).unwrap(), empty);
+        assert_eq!(quotient.hull(&positive), positive);
+    }
+    for invalid in [
+        interval(-3, -1),
+        interval(-1, 1),
+        interval(0, 0),
+        interval(0, 1),
+    ] {
+        for (a, b) in [(&empty, &invalid), (&invalid, &empty)] {
+            assert_eq!(
+                a.positive_product(b),
+                Err(IntervalError::NonPositiveLowerBound)
+            );
+            assert_eq!(
+                a.positive_quotient(b),
+                Err(IntervalError::NonPositiveLowerBound)
+            );
+        }
+    }
+}
+
+#[test]
 fn rational_product_matches_independent_four_corner_oracle_and_legacy() {
     let numerators = [-13, -7, -1, 0, 1, 7, 13];
     let endpoints = numerators.map(|n| r(n, 6));
