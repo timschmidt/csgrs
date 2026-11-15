@@ -138,7 +138,6 @@ cargo run -p hyperdynamics --features rk-proposal --example rk_proposal
 The default feature set is empty. `dispatch-trace` enables underlying exact
 arithmetic instrumentation when `field` is enabled.
 
-
 Enable `reachability` for `field.reach(request, policy, budget)`. The request gives
 an exact dyadic horizon, an initial box and nonnegative singleton `epsilon`.
 Only `end_cover()` on a completed report exposes a finite endpoint union `C`:
