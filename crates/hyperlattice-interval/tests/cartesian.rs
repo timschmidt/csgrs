@@ -473,3 +473,131 @@ fn vector_scale_shares_work_across_coordinates_and_retries() {
         expected
     );
 }
+
+fn rectangular_products_and_composition<I: IntervalArithmetic + core::fmt::Debug + PartialEq>(
+    scalar: impl Fn(i32, i32) -> I,
+    mut context: impl FnMut() -> I::Context,
+) {
+    let mut seed = 0x1234_87ab_c992_u64;
+    for case in 0..512 {
+        let mut range = || {
+            seed ^= seed << 13;
+            seed ^= seed >> 7;
+            seed ^= seed << 17;
+            if seed.is_multiple_of(3) {
+                (0, 0)
+            } else {
+                let a = (seed % 7) as i32 - 3;
+                (a, a + ((seed >> 16) % 4) as i32)
+            }
+        };
+        let aa: [[(i32, i32); 3]; 2] = core::array::from_fn(|_| core::array::from_fn(|_| range()));
+        let bb: [[(i32, i32); 2]; 3] = core::array::from_fn(|_| core::array::from_fn(|_| range()));
+        let a = IntervalMatrix::new(aa.map(|row| row.map(|(a, b)| scalar(a, b)))).unwrap();
+        let b = IntervalMatrix::new(bb.map(|row| row.map(|(a, b)| scalar(a, b)))).unwrap();
+        let expected = IntervalMatrix::new(core::array::from_fn(|r| {
+            core::array::from_fn(|k| {
+                let col = bb.map(|row| row[k]);
+                let (lo, hi) = dot_bounds(&aa[r], &col);
+                scalar(lo, hi)
+            })
+        }))
+        .unwrap();
+        let actual = a.mul_matrix(&b, &mut context()).unwrap();
+        assert_eq!(actual, expected, "case {case}");
+        let rebuilt = a.clone();
+        assert_eq!(rebuilt.mul_matrix(&b, &mut context()).unwrap(), actual);
+        for column in 0..2 {
+            let v = b.column(column, &mut context()).unwrap();
+            let actual = a.mul_vector(&v, &mut context()).unwrap();
+            assert_eq!(actual, expected.column(column, &mut context()).unwrap());
+            // Consume generated output, with independent signed-diagonal bounds.
+            let next =
+                IntervalMatrix::new([[scalar(1, 1), scalar(0, 0)], [scalar(0, 0), scalar(-1, -1)]])
+                    .unwrap();
+            let col = bb.map(|row| row[column]);
+            let (lo0, hi0) = dot_bounds(&aa[0], &col);
+            let (lo1, hi1) = dot_bounds(&aa[1], &col);
+            let transformed = IntervalVector::new([scalar(lo0, hi0), scalar(-hi1, -lo1)]).unwrap();
+            assert_eq!(
+                next.mul_vector(&actual, &mut context()).unwrap(),
+                transformed,
+                "composed case {case}, column {column}"
+            );
+        }
+    }
+    let unit = IntervalMatrix::<I, 2, 0>::new([[], []]).unwrap();
+    let unit_vector = IntervalVector::<I, 0>::new([]).unwrap();
+    assert_eq!(
+        unit.mul_vector(&unit_vector, &mut context())
+            .unwrap()
+            .lanes(),
+        Some(&[scalar(0, 0), scalar(0, 0)])
+    );
+    let zero_rows = IntervalMatrix::<I, 0, 2>::new([]).unwrap();
+    let vector = IntervalVector::new([scalar(1, 1), scalar(2, 2)]).unwrap();
+    assert_eq!(
+        zero_rows
+            .mul_vector(&vector, &mut context())
+            .unwrap()
+            .lanes(),
+        Some(&[])
+    );
+    let empty = IntervalMatrix::<I, 2, 2>::empty().unwrap();
+    assert!(
+        empty
+            .mul_vector(&vector, &mut context())
+            .unwrap()
+            .is_empty()
+    );
+    assert!(empty.mul_matrix(&empty, &mut context()).unwrap().is_empty());
+    assert!(
+        unit.mul_vector(&IntervalVector::empty().unwrap(), &mut context())
+            .unwrap()
+            .is_empty()
+    );
+}
+
+#[cfg(feature = "fixed")]
+#[test]
+fn rectangular_fixed_products() {
+    use hyperlattice_interval::hyperinterval::FixedInterval;
+    rectangular_products_and_composition(|a, b| FixedInterval::<i32, 0>::new(a, b).unwrap(), || ());
+    rectangular_products_and_composition(
+        |a, b| FixedInterval::<i64, 16>::new(i64::from(a) << 16, i64::from(b) << 16).unwrap(),
+        || (),
+    );
+}
+#[cfg(feature = "float-enclosure")]
+#[test]
+fn rectangular_ieee_products() {
+    use hyperlattice_interval::hyperinterval::{F32Enclosure, F64Enclosure};
+    if F32Enclosure::backend_supported() {
+        rectangular_products_and_composition(
+            |a, b| F32Enclosure::new(a as f32, b as f32).unwrap(),
+            || (),
+        );
+        rectangular_products_and_composition(
+            |a, b| F64Enclosure::new(f64::from(a), f64::from(b)).unwrap(),
+            || (),
+        );
+    }
+}
+#[cfg(feature = "rational")]
+#[test]
+fn rectangular_rational_products() {
+    use hyperlattice_interval::hyperinterval::RationalInterval;
+    rectangular_products_and_composition(
+        |a, b| RationalInterval::new(a.into(), b.into()).unwrap(),
+        || (),
+    );
+}
+#[cfg(feature = "dyadic")]
+#[test]
+fn rectangular_dyadic_products() {
+    use hyperlattice_interval::hyperinterval::{DyadicBudget, DyadicInterval};
+    rectangular_products_and_composition(
+        |a, b| DyadicInterval::new(a.into(), b.into(), 0).unwrap(),
+        || DyadicBudget::new(1024, 10_000_000),
+    );
+}
