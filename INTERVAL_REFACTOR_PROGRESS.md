@@ -9784,3 +9784,43 @@ subrecord: 608 files / 857,548,059 bytes, SHA-256
 `7f94dd7541f665d233bb8d41494e2a278d38fe3531c79dcebb5a5728c1583395`.
 All 91 earlier frozen stages remain unchanged. Stage 92's remaining coordinated
 checks, the certainty defect, and all fifteen phases remain active. No push.
+
+
+## 2026-11-16: Horner requalification rejects persistent stack growth
+
+The [current Horner admission](docs/research/horner-working-interval-admission.md)
+records three unaccepted working-interval variants. Consuming translation passes
+focused exact-output, dispatch, allocation and prospective size checks, but the
+first cold tensor chain grows 80 stack bytes. A targeted inline experiment
+removes its 64-byte adapter frame and still grows 16 bytes. Each persistent
+increase appears in all eight processes of a 12,800-observation-per-variant
+campaign. Outcomes match; no memory exception or cross-case offset is applied.
+Both source worktrees are restored clean. No timing samples, production source
+or size account is retained. Source snapshots, original failures and diagnostic
+attribution are preserved.
+
+Review commit `834d7d4785dd1e13d680878c74b22138dc12732f`; evidence commit
+`4d0e306d02fbafdd0e9a52e4a8c8274b3ff7aa71`: 380 files / 195,329,447 bytes,
+SHA-256 `54113bb2b11dc6d0488873a3f196390736d2a0cfcafd78a78a00d7755f7a559a`.
+The Phase 7 migration and full goal remain open.
+
+## 2026-11-16: strict Clippy coverage extended to workflow-derived configurations
+
+The [matrix qualification](docs/research/strict-clippy-matrix-closure.md) records
+46 additional successful strict-Clippy commands on clean `834d7d4785dd`:
+ten workflow/script combinations, thirty release feature/target combinations,
+and six generated consumer manifests. All 42 docs.rs compiler/package feature
+configurations map to successful all-target lints. Fresh release, spatial README
+and packaged FFI consumers preserve authored source and locked registry inputs;
+no library-only or feature-superset result substitutes for the required scope.
+No production source, policy, assertion or account changes are introduced.
+
+Evidence commit `c15dd5c97d462dc65686ee9ff2014263dd50e427`: 2,904 files /
+89,084,530 bytes, SHA-256
+`8ae8dd43ec18ecd17cd625e0e3608046bf99ebb5c57ab73f470003e300102b14`.
+The original default-root job on controlled CI revision `955593aa9e25` also
+passes in 15,550.03 seconds under its unchanged 21,600-second watchdog; the
+all-feature root job has started. Those root results remain in active Stage 92,
+separate from this frozen lint subrecord. All 54 accounts and earlier frozen
+records are preserved. Other CI, DRC CPU, implementation and embedded obligations
+remain open; the fifteen-phase goal is active and no push is claimed.
