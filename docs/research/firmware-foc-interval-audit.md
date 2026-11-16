@@ -127,3 +127,16 @@ The generic ownership gap remains open. Restored portable tests (602), release
 FOC tests (88), strict Clippy and formatting pass; all five measured artifacts
 are byte-identical to baseline. No hardware or firmware-image qualification is
 claimed for the rejected candidate.
+
+
+## Current widening experiment on 16 November 2026
+
+The [current-sample widening experiment](current-widening.md) preserves complete
+calibration/observation/replay/Clarke results, but its shared-addition delegation
+exceeds the unchanged Rust 1.88 consumer file cap and has adverse host timing.
+Production arithmetic is restored. Firmware `dd2b8f9` retains one independent
+252-case widening witness after full portable/release FOC tests, Clippy, fmt,
+exact production-artifact comparisons and per-section size accounting. It adds
+account 46 while preserving the prior 45 accounts and fixed program baseline.
+No production ownership migration, firmware image or hardware qualification is
+credited to this test-only retention.

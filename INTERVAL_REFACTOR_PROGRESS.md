@@ -57,7 +57,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; earlier five-board Xtensa links and image comparisons reproduced | whole-image requalification after the clock fix, 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
+| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; earlier five-board Xtensa links and image comparisons reproduced | whole-image requalification after the clock fix, 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | unaccepted prototypes archived and removed from active worktrees; extraction remains open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -9729,3 +9729,28 @@ The full fifteen-phase goal remains active. No push or publication.
 Review commit `59d1b3f6416b480b5a725c17b1403d111308808d`. Evidence archive commit
 `55f99b524042bf8caaaf16e6b328dc5cc8406ea6`: 352 files / 21,273,567 bytes,
 SHA-256 `40bcfaa2fe4394c74a78dc70295d5401cff7ebb4ab0cb7e3c9e6835dd59bb780`.
+
+
+## 2026-11-16: current widening witness retained; delegation rejected
+
+Phase 9, P1/P3/P6/P19/P27/P31–P33/P35–P39. The
+[current-widening experiment](docs/research/current-widening.md) replaces manual
+widening with the existing exact Minkowski-sum adapter while retaining negative
+error and endpoint overflow behavior. All 4,108 complete sample/replay/Clarke
+rows match on Rust 1.88 and 1.95, including full identities and explicit errors.
+The MSRV consumer adds 4,184 file bytes, exceeding its unchanged 4,096-byte cap;
+one eight-block host timing screen also shows adverse successful-case costs.
+The production candidate is preserved at firmware snapshot
+`518a1450d138d16761c642e2a42659abd95e71a5` and restored. No arbitrary layout,
+inlining, cap or predicate-order change is attempted.
+
+Firmware commit `dd2b8f987ae6440dbec696836f65f1cee55c5602` retains only an independent
+252-case direct widening test. All 603 portable tests and 89 release FOC tests
+pass, along with strict Clippy and formatting. Both native consumer executables
+and the existing Q30 integration executable reproduce baseline bytes. The new
+test executable adds 24,384 file bytes and 1,600 complete text bytes within its
+predeclared test allowance; every growing data section meets unchanged caps.
+Account 46 leaves 8,384 cumulative file bytes while preserving the prior 45
+accounts and fixed program baseline. All 90 earlier frozen stages remain
+unchanged. Phase 9 and the full fifteen-phase goal remain active; this witness
+does not establish production migration or firmware/HIL qualification. No push.
