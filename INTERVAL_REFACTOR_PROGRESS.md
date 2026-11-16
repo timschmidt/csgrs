@@ -8877,3 +8877,63 @@ No push or publication.
 Evidence `docs/evidence/2026-11-15-interval-profile-typed-fraction`, local archive commit
 `224455e99bb2a6846e9ce9d1f35718cbc44bc969`: 91 files / 1,593,253 bytes,
 SHA-256 `cae451f595416064198ca8f131c1441e2fc98ba944a9d0f5df005b8238f5f9f7`.
+
+## 2026-11-15: retained machine interval ownership rejected on complete-consumer size
+
+Phase 8, P1/P4/P6/P10/P25/P27/P36. At accepted CSGRS
+`217bdda844c040be8c6909bce503686744cb1915`, Interface
+`f5341f36803ad77c856313315d67ac8b3bb63f9a` and firmware
+`b9ecf8df54723e532a42867a1d3c549f827d5f6d`, a distinct isolated candidate retains
+shared nonempty interval storage inside the physical `ExactInterval` wrapper.
+Positive products and quotients transport the same bounds into that owner instead
+of unpacking them after temporary construction. A scalar-owned positive rational
+witness lets nominal and shared bound divisions consume one converted nonzero
+integer, preserving nominal/lower/upper order. Nominal values and physical identity
+remain in Interface; the core interval has no nominal value. The rejected typed
+fraction API and generic finalizers are not reintroduced.
+
+The missing witness first fails with E0432. Final tests pass: 19 interval tests,
+including original independent exact/GMP expectations, a new 1,200-digit repeated
+division oracle, and 70 complete division-dispatch comparisons; one full-width
+scalar witness; one Interface Debug/size/const-getter/scaling witness; all 18
+existing machine-profile tests. Both owners pass Rust 1.95 all-feature/all-target
+Clippy with `-D warnings`, and both workspace format checks pass. Existing
+assertions, validation guards and operation order remain intact.
+
+| Complete seven-profile consumer | Baseline bytes | Candidate bytes | Delta |
+| --- | ---: | ---: | ---: |
+| Native | 810416 | 810864 | +448 |
+| WASM | 1069027 | 1069760 | +733 |
+
+Native profile, configuration identity and allocation transcripts are byte-identical.
+WASM replays native fields and invalid cases with zero host calls. These finite
+comparisons do not establish full policy/canonical schedule/browser equivalence.
+Both artifacts fail the no-growth gate; neither the ownership migration nor its
+positive-scalar API is retained.
+
+A candidate native link map reproduces the measured executable exactly. The prior
+baseline map is reused only after its executable SHA matches the current baseline.
+Native `.text` grows 352 bytes, the mapped function-address union grows 360 and
+unwind sections grow 104. The largest growth lies in separated scalar-ingress
+helpers. The main derivation symbol shrinks 95 bytes; manual Debug grows 31,
+insufficient alone to explain the failed whole-consumer gate. Relro padding shrinks
+448 bytes; this is not a heap-memory improvement. Native size equals the previous
+rejected nonempty prototype but contents differ; WASM is 111 bytes larger. No
+runtime benefit, instruction-level cost attribution, or zero cost for inlined
+operations is inferred. No speculative Debug/layout/inlining variation follows.
+Full owner runtime, successive-operation, whole-owner monomorphized-size and
+policy/schedule/browser campaigns do not follow the decisive early rejection.
+
+All 13 changed source files and reapplicable patches are preserved. Restored
+worktrees are clean; all 18 original machine-profile tests, five rational interval
+tests and both format checks pass. Fresh restored native/WASM artifacts and native
+output reproduce baseline byte for byte. The primary 41 staged and Interface 8
+pending paths remain byte-identical; firmware is clean. All 72 prior frozen stages
+verify unchanged. Phase 8 and the complete fifteen-phase objective remain open.
+A separate read-only review identifies repeated coefficient-prefix preparation in
+the adaptive Taylor controller as a concrete remaining Phase 13 investigation;
+no implementation or cost claim is made for it. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-profile-owned-intervals`, local archive commit
+`3114a7190c1dd122167ba1f62caf6bca38443bda`: 108 files / 3,765,395 bytes,
+SHA-256 `850f1cb8f6d68ad01d20702c1a2d4d0b4b9102ba799afb4a643ddcf9cc9f517f`.
