@@ -6,7 +6,11 @@ import json
 import math
 from pathlib import Path
 
-CASES = [(kind, box) for kind in ("constant", "exponential", "riccati", "oscillator")
+if not __debug__:
+    raise RuntimeError("validation requires Python assertions enabled")
+
+CASES = [(kind, box) for kind in ("constant", "exponential", "riccati", "oscillator",
+                                "time_growth", "turnaround", "noncommuting", "two_rate")
          for box in (False, True)]
 END_WIDTH = Q(1, 64)
 TUBE_WIDTH = Q(1)
@@ -53,7 +57,7 @@ def oracle(kind, box):
     elif kind == "riccati":
         end = [(a / (1 - t * a), b / (1 - t * b))]
         tube = [(a, end[0][1])]
-    else:
+    elif kind == "oscillator":
         initial.append((-radius, radius))
         cl, cu = series("cos", t)
         sl, su = series("sin", t)
@@ -63,6 +67,32 @@ def oracle(kind, box):
         # y decreases throughout [0,T] for this entire initial rectangle.
         tube = [(end[0][0], sqrt_bounds(b * b + radius * radius)[1]),
                 (end[1][0], radius)]
+    elif kind == "time_growth":
+        lo, hi = series("exp", t*t/2)
+        end = [(a*lo, b*hi)]
+        tube = [(a, end[0][1])]
+    elif kind == "turnaround":
+        end = initial.copy()  # t-4t² = 0 at T=1/4.
+        tube = [(a, b+Q(1, 16))]  # Interior maximum at t=1/8.
+    elif kind == "noncommuting":
+        initial += [(-radius, radius), (a, b)]
+        end = [(a-t*radius+t**3*a/6, b+t*radius+t**3*b/6),
+               (-radius+t*t*a/2, radius+t*t*b/2), (a, b)]
+        # The lower x envelope decreases until sqrt(2r/a), then increases.
+        # At this root its value is a-(2/3)r*sqrt(2r/a). An upper sqrt bound
+        # gives a certified lower bound on that minimum. Other extrema are monotone.
+        assert 0 <= 2*radius/a <= t*t
+        minimum = a-Q(2, 3)*radius*sqrt_bounds(2*radius/a)[1]
+        tube = [(minimum, end[0][1]), (-radius, end[1][1]), (a, b)]
+    elif kind == "two_rate":
+        initial.append((a, b))
+        end = []
+        for rate in (1, 8):
+            lo, hi = series("exp", rate*t)
+            end.append((a/hi, b/lo))
+        tube = [(value[0], b) for value in end]
+    else:
+        raise ValueError(f"unknown IVP: {kind}")
     return initial, end, tube
 
 
@@ -94,7 +124,7 @@ def validate(rows):
         assert len(times) == row["pieces"] + 1
         assert times[0] == (0, 0) and times[-1] == (Q(1, 4), Q(1, 4))
         for left, right in zip(times, times[1:]):
-            assert 0 < right[0] - left[1] <= right[1] - left[0] <= Q(1, 16)
+            assert 0 < right[0] - left[1] <= right[1] - left[0] <= (Q(1, 64) if kind == "two_rate" else Q(1, 16))
         initial, expected_end, expected_tube = oracle(kind, box)
         assert [decode(row, v) for v in row["initial"]] == initial
         widths = {}

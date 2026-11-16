@@ -21,27 +21,43 @@ static void vector(const capd::IVector& value) {
   }
   std::cout << ']';
 }
+static const char* definition(const std::string& name) {
+  if (name == "constant") return "var:x;fun:2;";
+  if (name == "exponential") return "var:x;fun:x;";
+  if (name == "riccati") return "var:x;fun:x*x;";
+  if (name == "oscillator") return "var:x,y;fun:y,-x;";
+  if (name == "time_growth") return "time:t;var:x;fun:t*x;";
+  if (name == "turnaround") return "time:t;var:x;fun:1-8*t;";
+  if (name == "noncommuting") return "time:t;var:x,y,z;fun:y,t*z,0;";
+  if (name == "two_rate") return "var:x,y;fun:-x,-8*y;";
+  throw std::runtime_error("unknown IVP: " + name);
+}
+static unsigned dimension(const std::string& name) {
+  if (name == "noncommuting") return 3;
+  return name == "oscillator" || name == "two_rate" ? 2 : 1;
+}
+static double stepCap(const std::string& name) {
+  return name == "two_rate" ? 1.0 / 64.0 : 1.0 / 16.0;
+}
 struct Prepared {
   capd::IMap field;
   capd::IOdeSolver solver;
   capd::ITimeMap integrate;
   explicit Prepared(const std::string& name)
-      : field(name == "constant" ? "var:x;fun:2;"
-            : name == "exponential" ? "var:x;fun:x;"
-            : name == "riccati" ? "var:x;fun:x*x;" : "var:x,y;fun:y,-x;"),
+      : field(definition(name)),
         solver(field, 12), integrate(solver) {
-    solver.setMaxStep(1.0 / 16.0);
+    solver.setMaxStep(stepCap(name));
   }
 };
 struct AuditedCurve : capd::ITimeMap::SolutionCurve {
   AuditedCurve() : capd::ITimeMap::SolutionCurve(0) {}
   const Domain& timeDomains() const { return domain; }
-  void checkStepCap() const {
+  void checkStepCap(double cap) const {
     if (domain.size() != getNumberOfPieces() + 1)
       throw std::runtime_error("missing piece domain");
     for (unsigned i = 1; i < domain.size(); ++i) {
       const auto duration = domain[i] - domain[i - 1];
-      if (duration.leftBound() <= 0 || duration.rightBound() > 1.0 / 16.0)
+      if (duration.leftBound() <= 0 || duration.rightBound() > cap)
         throw std::runtime_error("invalid piece duration or exceeded step cap");
     }
   }
@@ -49,21 +65,25 @@ struct AuditedCurve : capd::ITimeMap::SolutionCurve {
 struct Outcome {
   capd::IVector initial, end, tube;
   AuditedCurve solution;
-  Outcome(Prepared& prepared, bool oscillator, bool uncertain)
-      : initial(oscillator ? 2 : 1), end(oscillator ? 2 : 1),
-        tube(oscillator ? 2 : 1) {
+  Outcome(Prepared& prepared, const std::string& name, bool uncertain)
+      : initial(dimension(name)), end(dimension(name)), tube(dimension(name)) {
     const double radius = uncertain ? 1.0 / 1024.0 : 0;
-    initial[0] = capd::interval(1 - radius, 1 + radius);
-    if (oscillator) initial[1] = capd::interval(-radius, radius);
+    for (unsigned i = 0; i < initial.dimension(); ++i) {
+      const double center = i == 0 || name == "two_rate" || (name == "noncommuting" && i == 2) ? 1 : 0;
+      initial[i] = center == 0 ? capd::interval(-radius, radius)
+                               : capd::interval(1 - radius, 1 + radius);
+    }
     capd::C0Rect2Set set(initial, 0);
     // TimeMap replaces the solver's maxStep with the remaining horizon.
     // Exact checkpoints enforce the common cap without disabling adaptation.
-    for (unsigned checkpoint = 1; checkpoint <= 4; ++checkpoint)
-      end = prepared.integrate(capd::interval(checkpoint / 16.0), set, solution);
+    const double cap = stepCap(name);
+    const unsigned checkpoints = name == "two_rate" ? 16 : 4;
+    for (unsigned checkpoint = 1; checkpoint <= checkpoints; ++checkpoint)
+      end = prepared.integrate(capd::interval(checkpoint * cap), set, solution);
     if (solution.getLeftDomain() != 0 || solution.getRightDomain() != 0.25)
       throw std::runtime_error("incomplete horizon");
     tube = solution(capd::interval(0, 0.25));
-    solution.checkStepCap();
+    solution.checkStepCap(cap);
   }
 };
 static void record(const std::string& name, bool uncertain, const Outcome& result) {
@@ -93,10 +113,9 @@ static bool same(const capd::IVector& a, const capd::IVector& b) {
 }
 static void benchmark(const std::string& name, bool uncertain, unsigned iterations, unsigned samples) {
   Prepared prepared(name);
-  const bool oscillator = name == "oscillator";
-  capd::IVector referenceEnd(oscillator ? 2 : 1), referenceTube(oscillator ? 2 : 1);
+  capd::IVector referenceEnd(dimension(name)), referenceTube(dimension(name));
   {
-    Outcome expected(prepared, oscillator, uncertain);
+    Outcome expected(prepared, name, uncertain);
     record(name, uncertain, expected);
     referenceEnd = expected.end;
     referenceTube = expected.tube;
@@ -105,10 +124,10 @@ static void benchmark(const std::string& name, bool uncertain, unsigned iteratio
     auto run = [&] {
       if (mode == "fresh") {
         Prepared fresh(name);
-        Outcome result(fresh, oscillator, uncertain);
+        Outcome result(fresh, name, uncertain);
         asm volatile("" : : "g"(&result) : "memory");
       } else {
-        Outcome result(prepared, oscillator, uncertain);
+        Outcome result(prepared, name, uncertain);
         asm volatile("" : : "g"(&result) : "memory");
       }
     };
@@ -123,9 +142,9 @@ static void benchmark(const std::string& name, bool uncertain, unsigned iteratio
                 << "\",\"sample\":" << sample << ",\"iterations\":" << iterations
                 << ",\"total_ns\":" << elapsed << "}\n";
     }
-    Outcome repeated(prepared, oscillator, uncertain);
+    Outcome repeated(prepared, name, uncertain);
     Prepared fresh(name);
-    Outcome recreated(fresh, oscillator, uncertain);
+    Outcome recreated(fresh, name, uncertain);
     if (!same(repeated.end, referenceEnd) || !same(repeated.tube, referenceTube)
         || !same(recreated.end, referenceEnd) || !same(recreated.tube, referenceTube))
       throw std::runtime_error("history-dependent output: " + name);
@@ -138,7 +157,7 @@ int main(int argc, char** argv) {
     const unsigned samples = argc == 3 ? std::stoul(argv[2]) : 0;
     if (iterations < 1 || iterations > 100000 || samples > 100)
       throw std::runtime_error("invalid measurement bounds");
-    for (const std::string name : {"constant", "exponential", "riccati", "oscillator"})
+    for (const std::string name : {"constant", "exponential", "riccati", "oscillator", "time_growth", "turnaround", "noncommuting", "two_rate"})
       for (bool uncertain : {false, true}) benchmark(name, uncertain, iterations, samples);
   } catch (const std::exception& error) {
     std::cerr << error.what() << '\n';

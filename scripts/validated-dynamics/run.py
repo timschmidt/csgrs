@@ -11,9 +11,22 @@ import statistics
 import subprocess
 import time
 
-from validate import validate
+from validate import CASES, validate
 
 CAPD_REVISION = "37057e5899bccaa6cd5701057b7e6ea5e232ef8b"
+
+
+def validate_samples(rows, solver, cases, iterations, samples):
+    """Require every completed case/mode/sample exactly once before aggregation."""
+    expected = {(case, mode, sample) for case in cases
+                for mode in ("reuse", "fresh") for sample in range(samples)}
+    assert len(rows) == len(expected), "missing/duplicate timing records"
+    assert {(r["case"], r["mode"], r["sample"]) for r in rows} == expected
+    for row in rows:
+        assert row["kind"] == "timing" and row["solver"] == solver
+        assert type(row["sample"]) is int and type(row["iterations"]) is int
+        assert row["iterations"] == iterations
+        assert type(row["total_ns"]) is int and row["total_ns"] > 0
 
 
 def main():
@@ -93,7 +106,7 @@ def main():
         assert certificates == accepted[name], "measurement changed certified outputs"
         validate(certificates)
         samples = [row | {"block": block} for row in rows if row["kind"] == "timing"]
-        assert len(samples) == 8 * 2 * args.samples
+        validate_samples(samples, name, [r["case"] for r in accepted[name]], args.iterations, args.samples)
         timing.extend(samples)
     (output / "raw-timing.json").write_text(json.dumps(timing, indent=2) + "\n")
     summary = []
@@ -106,7 +119,7 @@ def main():
                                 "samples": len(values), "median_ns": statistics.median(values),
                                 "min_ns": min(values), "max_ns": max(values)})
     (output / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
-    print(f"Validated all 16 outcomes; saved {len(timing)} timing samples to {output}")
+    print(f"Validated all {len(CASES) * len(executables)} outcomes; saved {len(timing)} timing samples to {output}")
 
 
 if __name__ == "__main__":

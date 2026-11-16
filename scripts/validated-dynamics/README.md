@@ -5,11 +5,14 @@ finite IVP, endpoint and whole-horizon tube contract. CAPD is an external proces
 it is not a Hyper stack dependency or a replacement for its exact source/proof
 receipts. No third-party implementation is vendored here.
 
-The corpus has four autonomous fields: `x'=2`, `x'=x`, `x'=x²`, and
-`(x',y')=(y,-x)`. Each uses a point initial state and a box initial state.
-The scalar state starts at `1`, or `1±2^-10`; the oscillator starts at `(1,0)`,
-or that point plus `[-2^-10,2^-10]²`. The horizon is exactly `[0,1/4]`.
-All input values have identical exact meanings in both backends.
+The corpus has eight fields, each with a point and a box initial state. The
+original four are `x'=2`, `x'=x`, `x'=x²`, and `(x',y')=(y,-x)`, starting at
+`1` or `(1,0)`. The additions are `x'=t*x`, `x'=1-8t`,
+`(x',y',z')=(y,t*z,0)` starting at `(1,0,1)`, and `(x',y')=(-x,-8y)` starting
+at `(1,1)`. Every box adds independent coordinate uncertainty `[-2^-10,2^-10]`.
+The horizon is exactly `[0,1/4]`. All input values have identical exact meanings
+in both backends. The two-rate case exercises different decay scales; it is not
+a general stiff-system qualification.
 
 Success requires the complete certified horizon, an endpoint enclosure of width
 at most `1/64` per coordinate, and a whole-horizon tube hull of width at most `1`
@@ -20,15 +23,19 @@ tail bound; sine/cosine use alternating-series bounds; Riccati has an exact
 rational solution. Oscillator extrema over the complete initial rectangle and
 time interval are checked, including the interior maximum of the first coordinate.
 Square-root bounds for that extremum use integer square roots with exact rational
-verification. Every actual endpoint and tube width is recorded.
+verification. The time-dependent growth uses `exp(t²/2)`, and decay uses
+reciprocal positive-exponential bounds. The turnaround field has its maximum
+at `t=1/8`; the uncertain three-dimensional field has an algebraic interior
+minimum. Their tubes must cover those extrema. Every actual endpoint and tube
+width is recorded.
 
 Hyperdynamics uses prepared order 3 with the existing default enclosure policy.
 CAPD uses order 12, `IOdeSolver`, `C0Rect2Set`, and an interval `SolutionCurve`.
-Both cap a step at `1/16`. These are explicit configurations, not a claim of
+Both cap a step at `1/16`, or `1/64` for the two-rate case. These are explicit configurations, not a claim of
 optimal tuning or identical internal algorithms. Both must pass the same quality
 limits; stronger output is reported rather than rounded to the limit.
 CAPD's `TimeMap` replaces its solver's maximum-step setting, so its adapter
-advances through four exact checkpoints. Both adapters check every retained
+advances through exact checkpoints at the prescribed step cap. Both adapters check every retained
 piece duration, and the independent validator checks the published time domains.
 
 `reuse` excludes source parsing/compilation and solver/coefficient preparation.
@@ -77,6 +84,7 @@ python3 scripts/validated-dynamics/run.py \
   --capd-source "$CAPD_SOURCE" --capd-build "$CAPD_BUILD" \
   --cargo-target "$COMPARISON_TARGET" --output "$COMPARISON_OUTPUT" \
   --iterations 100 --samples 5
+python3 -m unittest discover -s scripts/validated-dynamics -p 'test_*.py'
 python3 scripts/validated-dynamics/check_rejections.py \
   "$COMPARISON_OUTPUT/hyperdynamics-preflight.log"
 cargo +1.95.0 clippy --locked --manifest-path scripts/validated-dynamics/Cargo.toml \
@@ -87,7 +95,9 @@ The runner keeps CAPD's required `-frounding-math` and native interval definitio
 uses external headers as system headers, and compiles the adapter with warnings
 denied. Separate processes isolate CAPD's rounding environment. It pins one CPU,
 disables ASLR, and runs Hyperdynamics/CAPD/CAPD/Hyperdynamics blocks. Each block
-validates the complete corpus before accepting its samples. Avoid other workloads
+validates the complete sixteen-case corpus before accepting its samples, then
+requires every case/mode/sample exactly once with the configured iteration count.
+Optimized Python is rejected because it would disable assertion checks. Avoid other workloads
 during measurement. The runner records compiler versions, source/binary hashes,
 CPU information, affinity, commands, raw samples and exact certificate transcripts.
 

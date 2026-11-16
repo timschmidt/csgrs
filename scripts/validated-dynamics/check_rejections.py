@@ -26,6 +26,24 @@ mutations = {
     "oversized_step": lambda r: (r[0].__setitem__("pieces", 2), r[0].__setitem__(
         "time_domains", [["0", "0", 0], ["1", "1", -3], ["1", "1", -2]])),
 }
+def case(records, name):
+    return next(row for row in records if row["case"] == name)
+
+
+mutations.update({
+    "turnaround_endpoint_as_tube": lambda r: case(r, "turnaround_point").__setitem__(
+        "tube", copy.deepcopy(case(r, "turnaround_point")["end"])),
+    "noncommuting_missed_interior_minimum": lambda r: case(r, "noncommuting_box")["tube"].__setitem__(
+        0, ["1023", "1040", -10]),
+    "noncommuting_assumed_commutativity": lambda r: case(r, "noncommuting_point")["end"].__setitem__(
+        0, ["257", "257", -8]),
+    "noncommuting_wrong_dimension": lambda r: case(r, "noncommuting_point")["end"].pop(),
+    "time_growth_ignored_time": lambda r: case(r, "time_growth_point")["end"].__setitem__(0, ["1", "1", 0]),
+    "two_rate_wrong_initial": lambda r: case(r, "two_rate_point")["initial"].__setitem__(1, ["0", "0", 0]),
+    "two_rate_oversized_step": lambda r: (case(r, "two_rate_point").__setitem__("pieces", 4),
+        case(r, "two_rate_point").__setitem__("time_domains", [[str(i), str(i), -4] for i in range(5)])),
+    "stopped_with_endpoint": lambda r: case(r, "two_rate_box").__setitem__("status", "stopped"),
+})
 for name, mutate in mutations.items():
     incorrect = copy.deepcopy(rows)
     mutate(incorrect)

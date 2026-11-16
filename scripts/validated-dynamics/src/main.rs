@@ -27,15 +27,24 @@ fn prepare<const N: usize>(case: &str) -> FlowTaylorProgram<N> {
     let t = SymbolId(0);
     let x = SymbolId(1);
     let y = SymbolId(2);
+    let z = SymbolId(3);
     let v = Expr::anonymous_symbol(x);
     let outputs = match case {
         "constant" => vec![Expr::int(2)],
         "exponential" => vec![v],
         "riccati" => vec![v.clone() * v],
         "oscillator" => vec![Expr::anonymous_symbol(y), -v],
+        "time_growth" => vec![Expr::anonymous_symbol(t) * v],
+        "turnaround" => vec![Expr::int(1) - Expr::int(8) * Expr::anonymous_symbol(t)],
+        "noncommuting" => vec![
+            Expr::anonymous_symbol(y),
+            Expr::anonymous_symbol(t) * Expr::anonymous_symbol(z),
+            Expr::int(0),
+        ],
+        "two_rate" => vec![-v, Expr::int(-8) * Expr::anonymous_symbol(y)],
         _ => unreachable!(),
     };
-    let states = [x, y][..N].to_vec();
+    let states = [x, y, z][..N].to_vec();
     let bindings: Vec<_> = std::iter::once(t).chain(states.iter().copied()).collect();
     let source = ExpressionProgram::compile(
         &outputs,
@@ -61,14 +70,23 @@ struct Outcome<const N: usize> {
     graph_work: usize,
     scalar_work: u64,
 }
-fn complete<const N: usize>(program: &FlowTaylorProgram<N>, uncertain: bool) -> Outcome<N> {
+fn complete<const N: usize>(
+    program: &FlowTaylorProgram<N>,
+    case: &str,
+    uncertain: bool,
+) -> Outcome<N> {
     let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
     let radius = i64::from(uncertain);
     let initial = BoxN::new(std::array::from_fn(|i| {
-        let center = if i == 0 { 1024 } else { 0 };
+        let center = if i == 0 || case == "two_rate" || (case == "noncommuting" && i == 2) {
+            1024
+        } else {
+            0
+        };
         d(center - radius, center + radius, -10)
     }))
     .unwrap();
+    let step_exponent = if case == "two_rate" { -6 } else { -4 };
     let report = program.integrate(
         EvolutionRequest {
             start: d(0, 0, 0),
@@ -76,7 +94,7 @@ fn complete<const N: usize>(program: &FlowTaylorProgram<N>, uncertain: bool) -> 
             initial: initial.clone(),
         },
         EvolutionOptions {
-            maximum_step: Some(d(1, 1, -4)),
+            maximum_step: Some(d(1, 1, step_exponent)),
             ..Default::default()
         },
         &mut budget,
@@ -99,7 +117,7 @@ fn complete<const N: usize>(program: &FlowTaylorProgram<N>, uncertain: bool) -> 
                 .end
                 .sub(&time, &mut publication)
                 .unwrap()
-                .subset_of(&d(0, 1, -4), &mut publication)
+                .subset_of(&d(0, 1, step_exponent), &mut publication)
                 .unwrap()
         );
         time = proposal.end.clone();
@@ -131,16 +149,16 @@ fn record<const N: usize>(case: &str, uncertain: bool, out: &Outcome<N>) -> Valu
 }
 fn benchmark<const N: usize>(case: &str, uncertain: bool, iterations: usize, samples: usize) {
     let prepared = prepare::<N>(case);
-    let expected = record(case, uncertain, &complete(&prepared, uncertain));
+    let expected = record(case, uncertain, &complete(&prepared, case, uncertain));
     println!("{expected}");
     for mode in ["reuse", "fresh"] {
         let run = || {
             if mode == "fresh" {
                 let program = prepare::<N>(black_box(case));
-                drop(black_box(complete(&program, uncertain)));
+                drop(black_box(complete(&program, case, uncertain)));
                 drop(black_box(program));
             } else {
-                drop(black_box(complete(&prepared, uncertain)));
+                drop(black_box(complete(&prepared, case, uncertain)));
             }
         };
         for _ in 0..8 {
@@ -161,11 +179,15 @@ fn benchmark<const N: usize>(case: &str, uncertain: bool, iterations: usize, sam
         }
         // Exact outputs must remain stable across warm reuse and fresh preparation.
         assert_eq!(
-            record(case, uncertain, &complete(&prepared, uncertain)),
+            record(case, uncertain, &complete(&prepared, case, uncertain)),
             expected
         );
         assert_eq!(
-            record(case, uncertain, &complete(&prepare::<N>(case), uncertain)),
+            record(
+                case,
+                uncertain,
+                &complete(&prepare::<N>(case), case, uncertain)
+            ),
             expected
         );
     }
@@ -179,9 +201,20 @@ fn main() {
     let iterations = args.first().map_or(1, |s| s.parse::<usize>().unwrap());
     let samples = args.get(1).map_or(0, |s| s.parse::<usize>().unwrap());
     assert!((1..=100000).contains(&iterations) && samples <= 100);
-    for case in ["constant", "exponential", "riccati", "oscillator"] {
+    for case in [
+        "constant",
+        "exponential",
+        "riccati",
+        "oscillator",
+        "time_growth",
+        "turnaround",
+        "noncommuting",
+        "two_rate",
+    ] {
         for uncertain in [false, true] {
-            if case == "oscillator" {
+            if case == "noncommuting" {
+                benchmark::<3>(case, uncertain, iterations, samples);
+            } else if case == "oscillator" || case == "two_rate" {
                 benchmark::<2>(case, uncertain, iterations, samples);
             } else {
                 benchmark::<1>(case, uncertain, iterations, samples);

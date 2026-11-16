@@ -1,10 +1,12 @@
 # External validated-dynamics comparison
 
 The maintained [runner and acceptance contract](../../scripts/validated-dynamics/README.md)
-compare Hyperdynamics with CAPD::DynSys on eight exact initial-value problems.
+compare Hyperdynamics with CAPD::DynSys on sixteen exact initial-value problems.
 Both complete every case and enclose the independent analytic endpoint and
-whole-horizon extrema. In the recorded configuration, CAPD has a lower median
-latency in every row and narrower nonconstant point enclosures. This establishes
+whole-horizon extrema. The original eight-case campaign is recorded first; the
+extended campaign below adds explicit time dependence, noncommuting Jacobians
+and different decay rates. CAPD has lower median latency throughout the extended
+campaign; enclosure quality depends on the case. This establishes
 a concrete performance gap for the current Hyperdynamics path, not general
 superiority across representations, resource contracts or dynamical systems.
 
@@ -109,3 +111,96 @@ the compared programs implement different proof/report formats. Broader competit
 workloads, profiling the measured Hyperdynamics costs, and the remaining plan phases
 are still open. The archive row for `2026-11-15-interval-external-dynamics` in
 `docs/evidence-archive.tsv` binds the source, logs and raw measurements.
+
+## Extended nonautonomous comparison — 2026-11-15
+
+The expanded corpus preserves the original eight IVPs, certificates, resource
+settings and quality thresholds. Each backend's original eight certificate
+records match the same-revision baseline byte-for-byte, including Hyperdynamics
+work counters and CAPD's signed IEEE zero. Mathematical kernels at
+`0a4a09c6c11fe2bdf37cc6d59c4b9db393519bd4` remain unchanged. The archive binds
+the extended adapter sources by hash; no new production dependency is introduced.
+
+Each additional field has both point and box inputs, with the same independent
+coordinate radius `2^-10`, horizon `[0,1/4]`, endpoint width limit `1/64` and tube
+width limit `1`. The Taylor orders remain Hyperdynamics 3 and CAPD 12. Actual
+steps are at most `1/16`, except the prespecified two-rate cap of `1/64`.
+
+| Field | Point initial state | Independent exact solution |
+| --- | --- | --- |
+| `x' = t*x` | `1` | `x(t) = x₀ exp(t²/2)` |
+| `x' = 1-8t` | `1` | `x(t) = x₀+t-4t²` |
+| `(x',y',z') = (y,t*z,0)` | `(1,0,1)` | `x = x₀+t*y₀+t³*z₀/6`, `y = y₀+t²*z₀/2`, `z = z₀` |
+| `(x',y') = (-x,-8y)` | `(1,1)` | `x = x₀ exp(-t)`, `y = y₀ exp(-8t)` |
+
+The independent oracle bounds positive exponentials by a rational series and
+geometric tail, then reciprocates these positive bounds for decay. It verifies
+continuous extrema as well as endpoints. The turnaround field attains its
+maximum at `t=1/8` and returns to its initial set at `t=1/4`, so an endpoint-only
+tube is wrong. For the noncommuting field, the lower x envelope over box inputs
+is `1-r-r*t+(1-r)*t³/6`. Its minimum occurs at `sqrt(2r/(1-r))`, inside the
+horizon, and equals `1-r-(2/3)*r*sqrt(2r/(1-r))`. Exact integer-square-root bounds
+enclose that event. Other coordinate extrema follow monotonicity.
+The Jacobians satisfy `A(s)A(t)=t*E₁₃` and `A(t)A(s)=s*E₁₃`; replacing ordered
+composition with an exponential of the integrated Jacobian gives the wrong
+`T³/4` coefficient instead of `T³/6`. A corrupted-output control checks this case.
+
+The final campaign uses the same host, CPU 0 affinity, disabled ASLR, compiler
+versions and Hyperdynamics/CAPD/CAPD/Hyperdynamics block order as above. Ten
+samples of 100 completed operations per solver/case/mode produce 640 samples
+and 64,000 timed integrations. Every block independently validates the full
+sixteen-case corpus before any timing summary is accepted. Preparation modes,
+native evidence retention, materialization and destruction have the same cost
+boundary as the original campaign. The table reports microseconds per operation.
+
+| Case | Hyper reuse (us) | CAPD reuse (us) | Hyper fresh (us) | CAPD fresh (us) |
+| --- | ---: | ---: | ---: | ---: |
+| time growth point | 760.035 | 35.876 | 852.567 | 67.324 |
+| time growth box | 759.204 | 35.574 | 850.962 | 67.242 |
+| turnaround point | 603.497 | 29.869 | 672.231 | 63.603 |
+| turnaround box | 598.580 | 29.887 | 672.276 | 63.962 |
+| noncommuting point | 1760.247 | 79.852 | 2126.705 | 130.127 |
+| noncommuting box | 1714.107 | 80.097 | 2075.937 | 130.364 |
+| two rate point | 5015.614 | 229.668 | 5182.361 | 304.534 |
+| two rate box | 5014.972 | 228.958 | 5183.075 | 303.040 |
+
+The largest endpoint-coordinate widths are shown below, rounded only for
+display. Exact rational widths and every positive contiguous time domain remain
+in the raw records. All results meet the unchanged quality contract.
+
+| Case | Hyper endpoint width | CAPD endpoint width | Hyper / CAPD pieces |
+| --- | ---: | ---: | ---: |
+| time growth point | 3.3006697e-07 | 2.6645353e-15 | 4 / 4 |
+| time growth box | 0.0020154543 | 0.0020151238 | 4 / 4 |
+| turnaround point | 0 | 0 | 4 / 4 |
+| turnaround box | 0.001953125 | 0.001953125 | 4 / 4 |
+| noncommuting point | 5.2939559e-23 | 8.8817842e-16 | 4 / 4 |
+| noncommuting box | 0.0024464925 | 0.0024464925 | 4 / 4 |
+| two rate point | 4.1398904e-05 | 3.3306691e-15 | 16 / 16 |
+| two rate box | 0.014473501 | 0.0015210953 | 16 / 16 |
+
+Hyperdynamics gives the tighter noncommuting point enclosure. Its uncertain
+two-rate endpoint width is about `0.01447`, near the `0.015625` limit and wider
+than CAPD's result. This identifies a concrete wrapping-control workload; it does
+not establish a general stiff-system envelope or a resource-equivalence claim.
+No threshold or initial uncertainty was reduced after measuring the results.
+
+Validation includes nine maintained Python tests, 1,500 exact square-root
+controls, the original nine corrupted-corpus controls plus eight new controls,
+MSRV Rust Clippy with warnings denied, formatting, C++ warnings-as-errors, and
+all 42 pinned CAPD native tests. New controls reject missed interior extrema,
+assumed commutativity, wrong dimensions or time dependence, the wrong initial
+state, the two-rate step-cap violation, and stopped results with an endpoint.
+The runner requires every case/mode/sample exactly once, the configured iteration
+count, and positive integer timing values. Optimized Python is refused because
+it would disable assertion-based validation. Both runner gaps were reproduced
+before their fixes.
+
+The initial extension pilot is retained separately: its CAPD oscillator initial
+zero serialized as `+0` rather than the original `-0`. Both denote the same
+coordinate, but the adapter now preserves the original bytes. Only the corrected
+`campaign` supplies the extended tables. All original fixtures and thresholds
+remain present. The archive row `2026-11-15-interval-external-dynamics-extended`
+in `docs/evidence-archive.tsv` binds the sources, commands, checks and raw results.
+Full-stack, hosted/HIL and the remaining plan qualification are not established
+by this benchmark extension.
