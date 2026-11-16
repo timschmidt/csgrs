@@ -9413,3 +9413,46 @@ Retained test/account commit `89d4fac48e5bba5ab538e4bf1b84c486383ff438`.
 Evidence `docs/evidence/2026-11-16-interval-matrix-scale-reconsideration`, local archive commit
 `3ecedc632cc6b4e92c14be86af9e539a13c6110e`: 607 files / 6,137,767 bytes,
 SHA-256 `9ba4a6d94479521f114da38de1dc1c0015848b5640bee23807e08d650d5ca7cd`.
+
+
+## 2026-11-16: Taylor scheduling reconsideration rejected on local stack
+
+Phases 4/13, Hypersolve demanded-coefficient scheduling, P1/P4/P5/P6/P8-P10/
+P18-P20/P36. Fresh review on `924bef144` reproduced the previously rejected
+clone-removal candidate under the bounded size policy. The
+[Taylor scheduling report](docs/research/taylor-scheduling-reconsideration.md)
+records current measurements and the remaining qualification limits.
+
+All 448 exact/resource/both-policy trace and receipt records and 36 wrapping
+records match. One 200-byte allocation per coefficient construction is saved,
+with peak/live heap unchanged. Four pinned ABBA blocks show roughly 1% faster
+complete construction/evaluation/classification/serialization under both
+policies. All 42 existing native artifacts and three standalone probes fit the
+existing individual/cumulative caps against fixed baseline `c9f1f9ac`.
+
+The candidate nevertheless increases the actual flow_noise derivative function's
+local stack reservation from 312 to 328 bytes, with identical saved-register
+pushes. Both coefficient probes independently reproduce the increase. This is
+not a whole-program stack measurement, but fails the unchanged local stack gate.
+The production patch is removed; no layout/inlining retry or new size budget is
+accepted. The original cumulative account remains untouched.
+
+A proposed in-repo trace assertion failed because its all-feature debug counts
+were not the same as the standalone release fixture. That test and fixture are
+also removed, with the full failure preserved. No existing assertion changed.
+The candidate run stopped after 940 passing tests and this one new failure;
+it is not reported as a complete passing run.
+
+After the final restoration, 1,676 owner/downstream tests and doctests in
+84 reported suites pass, as do strict owner/downstream all-target Clippy and
+whole-workspace formatting. All 42 restored final native artifacts are
+byte-identical to baseline. The candidate WASM and successive_operations builds
+completed; paired execution and broader timings were not performed after the
+independent rejection. No full CI, release, HIL or firmware flash-fit claim.
+
+All 82 earlier frozen evidence stages verify unchanged. The 41 staged extraction
+paths and 8 pending Interface paths remain byte-identical; user authority to
+commit/discard them is recorded and remains in effect. No push or publication.
+The full goal stays active. Next work should resolve the pending path-dynamics
+extraction against its current owner timing gates, rather than retrying this
+unchanged Taylor candidate.
