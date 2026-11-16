@@ -9408,3 +9408,8 @@ All 81 earlier frozen stages verify unchanged. No push/publication. The full
 15-phase goal remains active; next reconsideration is the previously rejected
 Taylor derivative child-scheduling clone removal, under fresh current checks
 and the same cumulative size baseline.
+
+Retained test/account commit `89d4fac48e5bba5ab538e4bf1b84c486383ff438`.
+Evidence `docs/evidence/2026-11-16-interval-matrix-scale-reconsideration`, local archive commit
+`3ecedc632cc6b4e92c14be86af9e539a13c6110e`: 607 files / 6,137,767 bytes,
+SHA-256 `9ba4a6d94479521f114da38de1dc1c0015848b5640bee23807e08d650d5ca7cd`.
