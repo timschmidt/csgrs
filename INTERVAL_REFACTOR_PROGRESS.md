@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; earlier five-board Xtensa links and image comparisons reproduced | whole-image requalification after the clock fix, 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
-| 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
+| 11 path dynamics | unaccepted prototypes archived and removed from active worktrees; extraction remains open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
@@ -9460,3 +9460,41 @@ unchanged Taylor candidate.
 Review commit `f7008cc03`. Evidence `docs/evidence/2026-11-16-interval-taylor-scheduling-reconsideration`, local archive commit
 `4b31e7d22673bce20812bd2aa952f11074595a0f`: 261 files / 2,412,029 bytes,
 SHA-256 `6f9f64f8e4ddc4ce74d3057b58ccacce2e4ec521d5bc2bb8f82e74bffafa4051`.
+
+
+## 2026-11-16: retire unaccepted path-dynamics prototypes; retain canonical witness
+
+Phase 11 review at e835617c freshly rebuilds the original baseline/extraction
+owner binaries byte-identically to earlier reviewed artifacts. The
+[current admission report](docs/research/path-dynamics-current-admission.md)
+records the former size-only shared-error alternative under the owner's bounded
+exception. Its 614 owner tests/doctests pass. New matched ABBA/BAAB timing confirms
+pad-clearance, 256-record parser and exact-import regressions (about 1.4–2.8%).
+Hodograph separation does not confirm in reverse order; all observations remain.
+The proposed per-benchmark file-cap revision is not adopted. No inlining/layout
+retry, compiler-policy change or unrelated algorithm adjustment follows.
+
+Under explicit user authority to manage even user edits, the original 41 staged
+CSGRS paths and eight pending Interface paths are archived as exact patches and
+recoverable refs/interval-unaccepted/path-dynamics-20261116 snapshots. The
+unaccepted production migration is removed from active worktrees. This corrects
+the current phase table; it does not satisfy Phase 11 or weaken its contract.
+Restored Hyperpath/Hyperdynamics pass 599 tests/doctests, strict all-feature/
+all-target Clippy, and workspace formatting.
+
+The independent Interface canonical digest assertion is retained at
+`32a59de0d69436427e5b97297c4929fd908bf326`. Its original 41,795-byte transcript/digest supplements all existing
+exact axis, bottleneck, replay and terminal-step assertions. All 201 core tests/
+doctests and 199 configured-release tests pass, plus strict core Clippy and fmt.
+The actual configured release test binary adds 432 bytes and complete .text adds
+224 bytes. Both per-target byte/percentage caps pass against fixed c9f1f9ac /
+Interface f5341f3 / firmware 2d68e82. A symbol-preserving diagnostic changes code
+and is excluded; the stricter code allowance bounds ALL final .text instead.
+The cumulative account gains this test artifact while preserving every one of
+its 43 previous accounts and baseline. No production size exception is accepted.
+
+All 83 prior frozen stages verify unchanged. No full owner timing portfolio,
+whole release/CI, browser, HIL, firmware flash-fit, push or publication is claimed.
+The full fifteen-phase goal remains active; the unresolved extraction must not
+be silently restored or declared complete. Further work needs a distinct
+supported implementation approach or another required plan capability.

@@ -1,8 +1,8 @@
 {
   "program": "interval-refactor-2026-11",
   "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
-  "change": "array-construction-lifecycle-tests",
-  "scope": "Retained test-only change. Production matrix API and builder experiments have been removed. This is not acceptance of the rejected matrix client or its proposed larger allowance.",
+  "change": "cumulative-test-witnesses",
+  "scope": "Retained array-lifecycle and Interface canonical-digest assertions only. No production matrix or path-dynamics extraction is accepted.",
   "policy": "docs/admission.md#bounded-code-and-binary-size-exceptions",
   "existing_artifacts": {
     "native_final_file_and_allocated_sections": {
@@ -44,19 +44,31 @@
       "cumulative_percent": 4
     }
   },
-  "rationale": "Two new callbacks/destructor-order tests instantiate test-only observers, assertions and failure diagnostics. Allow up to eight 4096-byte native pages in this test executable and four pages of code, additionally limited to 4%. This is test coverage of first-error publication and owned cleanup, not source reduction. Production code/data/unwind section hashes for all 41 other measured artifacts remain unchanged. Existing artifact caps stay strict and are accounted separately.",
-  "prior_accepted_exceptions": [],
+  "rationale": "Two new callbacks/destructor-order tests instantiate test-only observers, assertions and failure diagnostics. Allow up to eight 4096-byte native pages in this test executable and four pages of code, additionally limited to 4%. This is test coverage of first-error publication and owned cleanup, not source reduction. Production code/data/unwind section hashes for all 41 other measured artifacts remain unchanged. Existing artifact caps stay strict and are accounted separately. The Interface canonical-digest assertion uses the unchanged native file caps and applies the stricter native code cap to the entire final .text section because its configured release artifact is stripped. Its fixed/current baseline artifacts are byte-identical; earlier artifact accounts remain untouched.",
+  "prior_accepted_exceptions": [
+    "array-construction-lifecycle-tests"
+  ],
   "cumulative_rule": "Future exceptions reuse this fixed goal-wide baseline and each artifact account; new artifacts require baseline measurements at this revision or an explicitly documented equivalent completed control. No baseline resets or cross-target offsets.",
-  "flash": "not applicable: no firmware dependency on hyperlattice-interval and no firmware source/image change; no flash-size allowance granted",
+  "flash": "not applicable to retained test-only changes; no firmware production source/image change or flash-size allowance",
   "matrix_size_budget_revision_proposal": "not adopted",
-  "evidence": "docs/evidence/2026-11-16-interval-matrix-scale-reconsideration",
-  "status": "retained tests pass the declared bounds; no matrix implementation accepted",
+  "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission",
+  "status": "Two test-only changes retained within separate target caps; matrix and path-dynamics production variants rejected.",
   "accepted_changes": [
     {
       "id": "array-construction-lifecycle-tests",
       "benefit": "independent first-error callback order and nested ownership cleanup witnesses",
       "source": "crates/hyperlattice-interval/src/lib.rs",
-      "production_implementation_changed": false
+      "production_implementation_changed": false,
+      "evidence": "docs/evidence/2026-11-16-interval-matrix-scale-reconsideration"
+    },
+    {
+      "id": "canonical-diagonal-planner-digest",
+      "benefit": "preserve the pre-extraction canonical transcript length and digest alongside existing independent exact axis, bottleneck, replay and terminal-step assertions",
+      "repository": "alumina-interface",
+      "commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "source": "crates/alumina-interface-core/src/machine_profile.rs",
+      "production_implementation_changed": false,
+      "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission"
     }
   ],
   "accounts": [
@@ -3234,6 +3246,64 @@
           "passes_both_caps": true
         }
       }
+    },
+    {
+      "artifact": "alumina-interface/crates/alumina-interface-core/src/lib.rs#release-tests",
+      "role": "additional canonical digest assertion in existing test",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "profile": "Interface configured release test executable: opt-level=z, fat LTO, codegen-units=1, overflow checks, symbols stripped",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "alumina-interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "alumina-firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "baseline_sha256": "c72224caf0bf93d5ac453fc6da2cfca602e6aad8545958a8a9d7ef5a32ae0bb3",
+      "retained_sha256": "9ea7fbf064a2a3e08a2e12f2ee0b61e91366c548c1424c38776fe5f22d7f1bfe",
+      "code_metric": "complete final .text including emitted monomorphized code; no named-symbol claim for stripped artifact",
+      "diagnostic_exclusion": "symbol-preserving companion changed code and is excluded; code bounds apply to ALL configured-release .text bytes",
+      "metrics": {
+        "file": {
+          "baseline": 12912864,
+          "previous_retained": 12912864,
+          "retained": 12913296,
+          "incremental_growth_bytes": 432,
+          "incremental_growth_percent": 0.0033455010445397706,
+          "net_growth_bytes": 432,
+          "growth_percent": 0.0033455010445397706,
+          "accepted_positive_growth_bytes": 432,
+          "remaining_cumulative_bytes": 15952,
+          "remaining_cumulative_percent": 1.9966544989554602,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 9562322,
+          "previous_retained": 9562322,
+          "retained": 9562546,
+          "incremental_growth_bytes": 224,
+          "incremental_growth_percent": 0.002342527264821243,
+          "net_growth_bytes": 224,
+          "growth_percent": 0.002342527264821243,
+          "accepted_positive_growth_bytes": 224,
+          "remaining_cumulative_bytes": 3872,
+          "remaining_cumulative_percent": 0.9976574727351788,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission"
     }
-  ]
+  ],
+  "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed"
 }
