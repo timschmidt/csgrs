@@ -9358,3 +9358,7 @@ All 80 prior frozen stages verify unchanged. Primary 41 staged and Interface
 eight pending paths remain protected by exact patch hashes. No push/publication
 or phase completion; the full goal remains active. Next implementation review
 will begin with the size-only matrix-scaling candidate under explicit caps.
+
+Evidence `docs/evidence/2026-11-16-interval-foc-inventory`, local archive commit
+`3c7205433a65b97d09e78478cdaddc338c6c9ff8`: 14 files / 836,893 bytes,
+SHA-256 `4bc0348e1c7488f4ac3f6521f9354eebe2e27a436529ee0c3a11cbbe30e69912`.
