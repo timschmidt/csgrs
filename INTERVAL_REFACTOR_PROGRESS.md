@@ -1660,7 +1660,7 @@ coordinates). Structural equality and deterministic replay are separate from
 equality of geometric images. There is no general image-membership or Boolean
 claim for this numerical carrier.
 
-Enclosure uses `B(Ax+b)+c=(BA)x+(Bb+c)`, pulling coefficient bounds to the
+Enclosure uses `B(Ax+b)+c=(B A)x+(Bb+c)`, pulling coefficient bounds to the
 original source before interval evaluation. Rational/dyadic arithmetic yields
 the exact coordinate hull on successful completion; fixed/strict-float scalar
 rounding can widen it. A rounded enclosure remains an explicit projection and
