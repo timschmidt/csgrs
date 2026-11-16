@@ -9503,3 +9503,29 @@ Review/account commit `a3629dcac0ff81606d0e862154c95f0d082dbf20`. Evidence
 `docs/evidence/2026-11-16-interval-path-dynamics-current-admission`, local archive commit `373fad71f6a875589c59db2fc3b79b24283be560`:
 301 files / 22,253,496 bytes, SHA-256
 `26a6964a2e716d408e16e73fec695e36afdcb85a464644f7799922a8cf1d9910`.
+
+
+## 2026-11-16: affine-noise controller reconsideration rejected on owner runtime
+
+Phases 12/13, P6/P8–P11/P17–P20/P31/P35–P39. The
+[reconsideration report](docs/research/flow-noise-reconsideration.md) replays the
+former size-only generic proof-provider candidate on da19d12ef. The automatic
+controller passes its original witnesses and the preserved sixteen-step
+continuous two-rate point/box contract. Existing manual dispatch/work/allocation
+controls match, and all 42 existing native artifacts fit the fixed cumulative
+caps. No size account changes or budget is consumed.
+
+The full seven-executable owner portfolio nevertheless confirms ten existing
+case regressions in ABBA and BAAB blocks (about 0.2–2.2%). Manual control gains
+cannot offset those higher-priority losses. The complete eight-path candidate,
+including the new continuous witness, is archived at recoverable unaccepted ref
+refs/interval-unaccepted/flow-noise-20261116, commit 3dc973c69a0d146bb2b75ad13c6806cd90da279f,
+and removed from the active worktree. No layout/inlining retry follows.
+
+After restoration, 238 owner/Hyperphysics tests and doctests, strict all-feature/
+all-target Clippy and workspace formatting pass. All 42 final native artifacts
+and two manual probes are byte-identical to baseline. All 84 prior frozen stages
+remain unchanged. Automatic retained-noise horizon evolution is still open;
+this disposition does not complete phases 12/13 or the full goal. Further work
+requires a distinct implementation approach or another required capability,
+not another timing run of this unchanged candidate. No push or publication.
