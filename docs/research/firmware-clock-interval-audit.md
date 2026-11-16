@@ -3,8 +3,9 @@
 This Phase 0/9 audit covers the clock interval path at firmware commit
 `2d68e82b7341db7b747b20e4ad1455a4c1113a00`, source `crates/alumina-clock/src/lib.rs`,
 SHA-256 `343434a6947fcf91aef655cba8e36a4788d03d43b7dee9bc063ae1512e94fa50`. It updates two old lexical clock inventory rows
-and adds eleven omitted state/report/operation declarations. The other 50 original
-firmware candidates remain unreviewed in the inventory. This is not completion
+and adds eleven omitted state/report/operation declarations. This record originally left 50 firmware candidates unreviewed. The later
+[FOC audit](firmware-foc-interval-audit.md) and
+[remaining-entry audit](firmware-remaining-interval-audit.md) classify those entries. This is not completion
 of the firmware audit, migration, HIL qualification or interval plan.
 
 ## Authority and ownership

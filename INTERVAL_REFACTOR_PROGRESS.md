@@ -9842,3 +9842,22 @@ Current final-image measurements are now present; flash fit, declared partitions
 reserves, whole-call stack, MCU cycles, HIL and the full plan remain open.
 No production source or any of the 54 cumulative size accounts changes. Frozen
 evidence is registered in `docs/evidence-archive.tsv`; no push is claimed.
+
+## Remaining firmware inventory entries — 2026-11-16
+
+[The current source review](docs/research/firmware-remaining-interval-audit.md)
+classifies the 23 firmware entries still provisional in the authoritative
+inventory: 14 named tests and nine owner/host declarations. Earlier clock/FOC
+reviews and all 1,509 other rows are preserved. All 70 currently inventoried
+firmware entries have dispositions; exhaustive source coverage and migration
+completion are not inferred from this finite list.
+
+Independent recurrence stepping checks 21,952 sequences / 362,208 values against
+the original machine-IR discrete-extrema helper on each of Rust 1.88 and 1.95.
+The 23 existing owner tests also pass on each compiler; 30 xtask tests and strict
+all-target owner/xtask Clippy pass on 1.88. The qualification patch is archived
+and removed from the isolated checkout, not claimed as new CI regression coverage.
+No production source, fixture, policy, size account or hardware claim changes.
+Source locators, exact commands, scope and the preserved mechanical-check failure
+are archived and registered in `docs/evidence-archive.tsv`. The full goal remains
+active; no phase completion or push is claimed.

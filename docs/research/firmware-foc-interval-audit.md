@@ -4,7 +4,8 @@ This Phase 0/9 inventory audit reviews the 27 original `alumina-foc` search
 matches at firmware `2d68e82b7341db7b747b20e4ad1455a4c1113a00`. Fifteen are
 production carriers/helpers, eleven are tests, a test oracle or a layout gate,
 and one helper has already been removed. Seven omitted point/component carriers
-are added. The other 23 original firmware candidates remain lexical/unreviewed.
+are added. The other 23 original candidates were subsequently classified by the
+[remaining-entry audit](firmware-remaining-interval-audit.md).
 This is a source ownership audit, not completion of firmware migration or the
 interval plan. No production code, test, policy or fixture changes accompany it.
 
