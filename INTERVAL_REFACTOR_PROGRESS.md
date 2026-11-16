@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on eight validated point/box IVPs | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -8988,3 +8988,61 @@ remain open. No push or publication.
 Evidence `docs/evidence/2026-11-15-interval-adaptive-stage-ownership`, local archive commit
 `3b6b05b722c87740871f81dbe7e6d7a9b75c15c1`: 87 files / 17,444,948 bytes,
 SHA-256 `c4d79b079bc26bc2575abe1c7932241326bb0b3b07471f24004f7325047e70b7`.
+
+## 2026-11-15: external validated-dynamics comparison retained
+
+Phase 13, P1/P6/P8/P19/P27/P35-P37. Production commit
+`1ed29262bf80d2059f0d296dfa3fe46a5987d60d` adds a maintained standalone benchmark
+and [comparison report](docs/research/validated-dynamics-comparison.md), without
+changing production mathematics. Clean accepted source `e4d12c6f9` supplies
+Hyperdynamics; the pending extraction is excluded. Official CAPD 6.1.0 source
+`37057e5899bccaa6cd5701057b7e6ea5e232ef8b` is a separate-process comparator,
+using native intervals. No third-party source or binary becomes a dependency
+of the Hyper stack or is copied into the evidence archive.
+
+Both solvers complete all eight constant/exponential/Riccati/oscillator point/box
+IVPs on exact horizon [0,1/4]. Inputs, positive contiguous time and every retained
+step <=1/16 are checked. Independent rational analytic expectations certify the
+endpoint and continuous tube extrema, including the oscillator's interior maximum.
+Both meet the unchanged per-coordinate endpoint width 1/64 and whole-tube width 1
+limits. Full native evidence, materialized output and destruction remain in timed
+work; fresh preparation and prepared reuse are measured separately. No sampled
+path or solver-to-solver agreement supplies the oracle.
+
+CPU0/ASLR-disabled ABBA sweeps record 320 samples of 100 integrations each. All 16
+outcomes remain exactly unchanged within each adapter across fresh/reused and
+measured runs. CAPD has a lower median latency in every configuration and narrower
+nonconstant point enclosures. For example, oscillator-point prepared reuse is
+1191.731 us Hyperdynamics / 55.738 us CAPD, while fresh work is 1333.611 us / 100.494 us.
+The report preserves every row, actual widths, step counts, raw samples and
+configuration limits. This identifies a concrete current cost gap; it does not
+establish universal competitiveness, equal proof serialization, or memory/resource
+API equivalence. Hyperdynamics order 3 and CAPD order 12 are explicit configurations,
+not a claim of optimal tuning.
+
+The acceptance audit caught and fixed a comparator-adapter error: CAPD TimeMap
+overrides the solver's maximum-step setting. Six earlier two-piece outputs could
+not satisfy the declared cap. Those runs remain archived as ineligible; only the
+corrected exact-checkpoint/per-piece-audit campaign supplies reported timings.
+Pre-fix source reconstruction matches measured SHA-256. A metadata key collision
+was also fixed. No workload, width threshold or assertion was weakened.
+
+All 42 upstream CAPD tests pass after its complete build; an earlier link/test race
+is retained separately. Upstream's static-array test emits a GCC copy warning,
+which is recorded and not claimed fixed. The final C++ adapter passes warnings as
+errors with external headers designated system headers. Rust 1.95 standalone Clippy,
+formatting, workspace formatting and repository budget pass. Nine corrupted-corpus
+controls reject wrong inputs/endpoints/tubes, oversized steps, missing/duplicate
+cases and width/horizon failures. Exact square-root controls cover 1500 rational
+values and three series identities pass. No full fuzz/coverage/platform/HIL or
+allocation comparison is claimed for these benchmark-only additions.
+
+Main/isolated committed trees match. Measured runtime source hashes match the
+committed files. Primary 41 staged and Interface 8 pending paths remain byte-identical;
+firmware and isolated worktrees are clean. All 74 previous frozen stages verify
+unchanged. Wider/stress portfolios, profiling this measured cost gap and all other
+remaining plan gates stay open. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-external-dynamics`, local archive commit
+`27ae2575dffb0281865a3a45b65fc4c276476a62`: 92 files / 664,056 bytes,
+SHA-256 `d550132d0ba9470f62905965c65665e3b48fcfaf0e89314a2ea772af7b26e54f`.
