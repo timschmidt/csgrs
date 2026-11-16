@@ -88,3 +88,8 @@ timing samples, section/symbol records and restoration checks are retained in
 Labels `retained` and `final` in experimental files denote intermediate
 test-only candidates; the final disposition is rejected, and `restored`
 records are the accepted baseline restoration.
+
+
+Review commit `59d1b3f6416b480b5a725c17b1403d111308808d`. Evidence archive commit
+`55f99b524042bf8caaaf16e6b328dc5cc8406ea6`: 352 files / 21,273,567 bytes,
+SHA-256 `40bcfaa2fe4394c74a78dc70295d5401cff7ebb4ab0cb7e3c9e6835dd59bb780`.
