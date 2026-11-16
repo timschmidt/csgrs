@@ -9759,3 +9759,28 @@ does not establish production migration or firmware/HIL qualification. No push.
 Review commit `a64c0e58cdeaf3123d979ea243882a289c25fa2f`. Evidence archive commit
 `2abaec72ada24ca1c61f4c382b63235e66b57739`: 147 files / 26,976,291 bytes,
 SHA-256 `58c812f5e452dfa60e269f80e997c9685237038f6effee2bdb19d1859e5c8255`.
+
+
+## 2026-11-16: Interface compiler/display repair retained
+
+The [Interface admission](docs/research/interface-compiler-display-admission.md)
+records commit `5b532c803af86dd9e3d7a66f3651163fd2f7c68b`: fixed-size byte
+iteration, preserved compiler-compatible assertions and finite display
+midpoints. The original overflow witness fails before the repair and passes
+with exact-bit checks afterward. Stable/MSRV tests and strict native/WASM
+Clippy, 109 release UI tests, final builds and exact canonical fixture replays
+pass. All 2,496 completed-workload samples are retained; no adverse CPU effect
+is statistically resolved, and matched peak RSS is unchanged. Source allocation
+review and shipped native unwind-frame summaries support the memory review.
+
+Final desktop/file growth is 64 bytes, delivered WASM 17 bytes and gzip 26
+bytes. Every artifact/section meets the recorded caps, with explicit padding
+budget revisions preserving the original failures. Hosted Brotli headroom is
+688,115 bytes. Eight new accounts bring the total to 54; prior core-test growth
+remains charged despite smaller new-layout measurements. No flash claim.
+
+Evidence commit `efc1e26c633fa6e7004d583b4981b94876afde18` freezes the Interface
+subrecord: 608 files / 857,548,059 bytes, SHA-256
+`7f94dd7541f665d233bb8d41494e2a278d38fe3531c79dcebb5a5728c1583395`.
+All 91 earlier frozen stages remain unchanged. Stage 92's remaining coordinated
+checks, the certainty defect, and all fifteen phases remain active. No push.

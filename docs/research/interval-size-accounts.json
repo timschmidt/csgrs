@@ -1,8 +1,8 @@
 {
   "program": "interval-refactor-2026-11",
   "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
-  "change": "cumulative-test-witnesses-and-catalog-correction",
-  "scope": "Retained array-lifecycle and Interface canonical-digest assertions, plus the existing ratio_parts GMP API catalog classification. No production matrix, path-dynamics extraction or machine-profile ownership migration is accepted. The FOC current-widening witness is retained separately; its production delegation is rejected.",
+  "change": "cumulative-test-witnesses-catalog-and-interface-display-repair",
+  "scope": "Retained array-lifecycle and Interface canonical-digest assertions, plus the existing ratio_parts GMP API catalog classification. No production matrix, path-dynamics extraction or machine-profile ownership migration is accepted. The FOC current-widening witness is retained separately; its production delegation is rejected. The separately qualified Interface compiler/display repair is retained with eight host/hosted artifact accounts and explicit existing core-test requalification; it is not acceptance of a previously rejected interval delegation.",
   "policy": "docs/admission.md#bounded-code-and-binary-size-exceptions",
   "existing_artifacts": {
     "native_final_file_and_allocated_sections": {
@@ -85,6 +85,16 @@
       "production_implementation_changed": false,
       "evidence": "docs/evidence/2026-11-16-interval-current-widening",
       "source_commit": "dd2b8f987ae6440dbec696836f65f1cee55c5602"
+    },
+    {
+      "id": "interface-compiler-display",
+      "benefit": "finite display midpoint overflow repair, strict stable compiler compatibility, and independent extreme-coordinate regression",
+      "repository": "alumina-interface",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "production_implementation_changed": true,
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "scope": "Eight new host/hosted artifact accounts and an explicit matched-layout requalification of the existing core test account. All prior accepted positive charges remain.",
+      "commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
     }
   ],
   "accounts": [
@@ -3318,7 +3328,702 @@
           "passes_both_caps": true
         }
       },
-      "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission"
+      "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission",
+      "matched_layout_requalifications": [
+        {
+          "change": "interface-compiler-display",
+          "scope": "Same-layout fixed-goal, previously retained and final candidate core lib-test executable comparison; preserve the existing Rust1.95 artifact account and all earlier accepted growth. Root UI code is not built into this crate target. Dependency test-only changes are not compiled.",
+          "baseline_repositories": {
+            "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+            "alumina-interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+            "alumina-firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+          },
+          "source_artifacts": {
+            "fixed": {
+              "bytes": 12912128,
+              "sha256": "e5b83a808531979bb39ce56069893ed69c1055ac09e8bed74f75620162d9e907",
+              "text_bytes": 9561682,
+              "text_sha256": "226536add7c61e1b617035f0345e938931bf718f855d15fc81f63c7b507b5e2b"
+            },
+            "previous": {
+              "bytes": 12912528,
+              "sha256": "e89013e486d85d0971e40834f79825a77faf7f1d486d124d8f130f2df1e20bf0",
+              "text_bytes": 9561906,
+              "text_sha256": "f3dae6dd073ff711de090a41afc18e874a2c98f49f5d6534c1eab492e0a8ecf4"
+            },
+            "candidate": {
+              "bytes": 12912480,
+              "sha256": "be5b8932ad0688813624dd50983522c61ba9f581908ae7e193cf8207e910dc57",
+              "text_bytes": 9561858,
+              "text_sha256": "13ceac6233b2baf82887747bd0c3411496eb218c69d4fa5386050167d932e377"
+            }
+          },
+          "comparisons": {
+            "incremental": {
+              "file": {
+                "baseline": 12912528,
+                "candidate": 12912480,
+                "delta_bytes": -48,
+                "delta_percent": -0.0003717320109586597,
+                "absolute_cap_bytes": 4096,
+                "percentage_cap": 1,
+                "passes_both_caps": true,
+                "remaining_absolute_bytes": 4096
+              },
+              "text": {
+                "baseline": 9561906,
+                "candidate": 9561858,
+                "delta_bytes": -48,
+                "delta_percent": -0.0005019919668735501,
+                "absolute_cap_bytes": 1024,
+                "percentage_cap": 0.5,
+                "passes_both_caps": true,
+                "remaining_absolute_bytes": 1024
+              },
+              "allocated_sections": {
+                ".bss": {
+                  "baseline": 252,
+                  "candidate": 252,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".data": {
+                  "baseline": 197744,
+                  "candidate": 197744,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".data.rel.ro": {
+                  "baseline": 336968,
+                  "candidate": 336968,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".dynamic": {
+                  "baseline": 464,
+                  "candidate": 464,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".dynstr": {
+                  "baseline": 1855,
+                  "candidate": 1855,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".dynsym": {
+                  "baseline": 3024,
+                  "candidate": 3024,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".eh_frame": {
+                  "baseline": 1198088,
+                  "candidate": 1198088,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".eh_frame_hdr": {
+                  "baseline": 126532,
+                  "candidate": 126532,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".fini": {
+                  "baseline": 9,
+                  "candidate": 9,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 1024,
+                  "percentage_cap": 0.5,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 1024
+                },
+                ".fini_array": {
+                  "baseline": 8,
+                  "candidate": 8,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".gcc_except_table": {
+                  "baseline": 749836,
+                  "candidate": 749836,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".gnu.hash": {
+                  "baseline": 28,
+                  "candidate": 28,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".gnu.version": {
+                  "baseline": 252,
+                  "candidate": 252,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".gnu.version_r": {
+                  "baseline": 384,
+                  "candidate": 384,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".got": {
+                  "baseline": 1136,
+                  "candidate": 1136,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".got.plt": {
+                  "baseline": 40,
+                  "candidate": 40,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".init": {
+                  "baseline": 23,
+                  "candidate": 23,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 1024,
+                  "percentage_cap": 0.5,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 1024
+                },
+                ".init_array": {
+                  "baseline": 16,
+                  "candidate": 16,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".interp": {
+                  "baseline": 28,
+                  "candidate": 28,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".note.ABI-tag": {
+                  "baseline": 32,
+                  "candidate": 32,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".note.gnu.build-id": {
+                  "baseline": 36,
+                  "candidate": 36,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".plt": {
+                  "baseline": 48,
+                  "candidate": 48,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 1024,
+                  "percentage_cap": 0.5,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 1024
+                },
+                ".rela.dyn": {
+                  "baseline": 329400,
+                  "candidate": 329400,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".rela.plt": {
+                  "baseline": 48,
+                  "candidate": 48,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".relro_padding": {
+                  "baseline": 1808,
+                  "candidate": 1856,
+                  "delta_bytes": 48,
+                  "delta_percent": 2.6548672566371683,
+                  "absolute_cap_bytes": 2287,
+                  "percentage_cap": 150,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 2239,
+                  "original_caps_passed": false,
+                  "total_section_ceiling_bytes": 4095
+                },
+                ".rodata": {
+                  "baseline": 400672,
+                  "candidate": 400672,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".tbss": {
+                  "baseline": 1320,
+                  "candidate": 1320,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".tdata": {
+                  "baseline": 561,
+                  "candidate": 561,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".text": {
+                  "baseline": 9561906,
+                  "candidate": 9561858,
+                  "delta_bytes": -48,
+                  "delta_percent": -0.0005019919668735501,
+                  "absolute_cap_bytes": 1024,
+                  "percentage_cap": 0.5,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 1024
+                },
+                ".tm_clone_table": {
+                  "baseline": 0,
+                  "candidate": 0,
+                  "delta_bytes": 0,
+                  "delta_percent": null,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                }
+              }
+            },
+            "cumulative": {
+              "file": {
+                "baseline": 12912128,
+                "candidate": 12912480,
+                "delta_bytes": 352,
+                "delta_percent": 0.002726119195844403,
+                "absolute_cap_bytes": 16384,
+                "percentage_cap": 2,
+                "passes_both_caps": true,
+                "remaining_absolute_bytes": 16032
+              },
+              "text": {
+                "baseline": 9561682,
+                "candidate": 9561858,
+                "delta_bytes": 176,
+                "delta_percent": 0.001840680332184233,
+                "absolute_cap_bytes": 4096,
+                "percentage_cap": 1,
+                "passes_both_caps": true,
+                "remaining_absolute_bytes": 3920
+              },
+              "allocated_sections": {
+                ".bss": {
+                  "baseline": 252,
+                  "candidate": 252,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".data": {
+                  "baseline": 197744,
+                  "candidate": 197744,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".data.rel.ro": {
+                  "baseline": 336896,
+                  "candidate": 336968,
+                  "delta_bytes": 72,
+                  "delta_percent": 0.02137158054711246,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16312
+                },
+                ".dynamic": {
+                  "baseline": 464,
+                  "candidate": 464,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".dynstr": {
+                  "baseline": 1855,
+                  "candidate": 1855,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".dynsym": {
+                  "baseline": 3024,
+                  "candidate": 3024,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".eh_frame": {
+                  "baseline": 1198088,
+                  "candidate": 1198088,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".eh_frame_hdr": {
+                  "baseline": 126532,
+                  "candidate": 126532,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".fini": {
+                  "baseline": 9,
+                  "candidate": 9,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".fini_array": {
+                  "baseline": 8,
+                  "candidate": 8,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".gcc_except_table": {
+                  "baseline": 749836,
+                  "candidate": 749836,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".gnu.hash": {
+                  "baseline": 28,
+                  "candidate": 28,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".gnu.version": {
+                  "baseline": 252,
+                  "candidate": 252,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".gnu.version_r": {
+                  "baseline": 384,
+                  "candidate": 384,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".got": {
+                  "baseline": 1136,
+                  "candidate": 1136,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".got.plt": {
+                  "baseline": 40,
+                  "candidate": 40,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".init": {
+                  "baseline": 23,
+                  "candidate": 23,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".init_array": {
+                  "baseline": 16,
+                  "candidate": 16,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".interp": {
+                  "baseline": 28,
+                  "candidate": 28,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".note.ABI-tag": {
+                  "baseline": 32,
+                  "candidate": 32,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".note.gnu.build-id": {
+                  "baseline": 36,
+                  "candidate": 36,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".plt": {
+                  "baseline": 48,
+                  "candidate": 48,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 4096
+                },
+                ".rela.dyn": {
+                  "baseline": 329328,
+                  "candidate": 329400,
+                  "delta_bytes": 72,
+                  "delta_percent": 0.021862702229995628,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16312
+                },
+                ".rela.plt": {
+                  "baseline": 48,
+                  "candidate": 48,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".relro_padding": {
+                  "baseline": 2216,
+                  "candidate": 1856,
+                  "delta_bytes": -360,
+                  "delta_percent": -16.24548736462094,
+                  "absolute_cap_bytes": 1879,
+                  "percentage_cap": 100,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 1879,
+                  "original_caps_passed": true,
+                  "total_section_ceiling_bytes": 4095
+                },
+                ".rodata": {
+                  "baseline": 400640,
+                  "candidate": 400672,
+                  "delta_bytes": 32,
+                  "delta_percent": 0.007987220447284345,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16352
+                },
+                ".tbss": {
+                  "baseline": 1320,
+                  "candidate": 1320,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".tdata": {
+                  "baseline": 561,
+                  "candidate": 561,
+                  "delta_bytes": 0,
+                  "delta_percent": 0.0,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                },
+                ".text": {
+                  "baseline": 9561682,
+                  "candidate": 9561858,
+                  "delta_bytes": 176,
+                  "delta_percent": 0.001840680332184233,
+                  "absolute_cap_bytes": 4096,
+                  "percentage_cap": 1,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 3920
+                },
+                ".tm_clone_table": {
+                  "baseline": 0,
+                  "candidate": 0,
+                  "delta_bytes": 0,
+                  "delta_percent": null,
+                  "absolute_cap_bytes": 16384,
+                  "percentage_cap": 2,
+                  "passes_both_caps": true,
+                  "remaining_absolute_bytes": 16384
+                }
+              }
+            }
+          },
+          "cumulative_accounting": {
+            "prior_file_positive_growth_still_charged_bytes": 432,
+            "prior_text_positive_growth_still_charged_bytes": 224,
+            "additional_file_positive_growth_bytes": 0,
+            "additional_text_positive_growth_bytes": 0,
+            "rule": "Historical file/text metrics remain unchanged. Current-layout fixed-to-candidate and previous-to-candidate comparisons are supplemental; no layout credit or reduction resets the prior charges. Allocated-section comparisons and separate padding revision retain both incremental and fixed-baseline values."
+          },
+          "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+          "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-core-padding-budget-revision.json",
+          "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+        }
+      ]
     },
     {
       "artifact": "crates/hyperreal/tests/gmp_api_coverage.rs#release-tests",
@@ -3623,6 +4328,3141 @@
       "headroom": "Host-only test artifact 6151280 bytes; predeclared cumulative file allowance leaves 8384 bytes and 3.60201707 percentage points, both binding. No firmware production source/image or flash allowance. This is not an arbitrary-input memory/stack bound.",
       "evidence": "docs/evidence/2026-11-16-interval-current-widening",
       "retained_source_commit": "dd2b8f987ae6440dbec696836f65f1cee55c5602"
+    },
+    {
+      "artifact": "alumina-interface#desktop",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "b88ec61225d13fc1ed0818ea46f2250aa050528afbb6f01a29928d1c3b6f496e",
+      "retained_sha256": "edbe27148158de702243e3fc4ec54d12cd9e4f5aedc7813410050728f7f3efbd",
+      "metrics": {
+        "file": {
+          "baseline": 13764936,
+          "previous_retained": 13764936,
+          "retained": 13765000,
+          "incremental_growth_bytes": 64,
+          "incremental_growth_percent": 0.00046494949195550203,
+          "net_growth_bytes": 64,
+          "growth_percent": 0.00046494949195550203,
+          "accepted_positive_growth_bytes": 64,
+          "remaining_cumulative_bytes": 8128,
+          "remaining_cumulative_percent": 0.09953505050804451,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 9457543,
+          "previous_retained": 9457543,
+          "retained": 9457607,
+          "incremental_growth_bytes": 64,
+          "incremental_growth_percent": 0.000676708527785705,
+          "net_growth_bytes": 64,
+          "growth_percent": 0.000676708527785705,
+          "accepted_positive_growth_bytes": 64,
+          "remaining_cumulative_bytes": 4032,
+          "remaining_cumulative_percent": 0.0993232914722143,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".bss": {
+          "baseline": 7788,
+          "previous_retained": 7788,
+          "retained": 7788,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data": {
+          "baseline": 208584,
+          "previous_retained": 208584,
+          "retained": 208584,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data.rel.ro": {
+          "baseline": 291832,
+          "previous_retained": 291832,
+          "retained": 291832,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynamic": {
+          "baseline": 464,
+          "previous_retained": 464,
+          "retained": 464,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynstr": {
+          "baseline": 2026,
+          "previous_retained": 2026,
+          "retained": 2026,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynsym": {
+          "baseline": 3576,
+          "previous_retained": 3576,
+          "retained": 3576,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame": {
+          "baseline": 1220028,
+          "previous_retained": 1220028,
+          "retained": 1220028,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame_hdr": {
+          "baseline": 151076,
+          "previous_retained": 151076,
+          "retained": 151076,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini_array": {
+          "baseline": 8,
+          "previous_retained": 8,
+          "retained": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gcc_except_table": {
+          "baseline": 5736,
+          "previous_retained": 5736,
+          "retained": 5736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.hash": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version": {
+          "baseline": 298,
+          "previous_retained": 298,
+          "retained": 298,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version_r": {
+          "baseline": 432,
+          "previous_retained": 432,
+          "retained": 432,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got": {
+          "baseline": 1360,
+          "previous_retained": 1360,
+          "retained": 1360,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got.plt": {
+          "baseline": 40,
+          "previous_retained": 40,
+          "retained": 40,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init": {
+          "baseline": 23,
+          "previous_retained": 23,
+          "retained": 23,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init_array": {
+          "baseline": 16,
+          "previous_retained": 16,
+          "retained": 16,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".interp": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".note.ABI-tag": {
+          "baseline": 32,
+          "previous_retained": 32,
+          "retained": 32,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".note.gnu.build-id": {
+          "baseline": 36,
+          "previous_retained": 36,
+          "retained": 36,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.dyn": {
+          "baseline": 342960,
+          "previous_retained": 342960,
+          "retained": 342960,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".relro_padding": {
+          "baseline": 4016,
+          "previous_retained": 4016,
+          "retained": 3952,
+          "incremental_growth_bytes": -64,
+          "incremental_growth_percent": -1.593625498007968,
+          "net_growth_bytes": -64,
+          "growth_percent": -1.593625498007968,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rodata": {
+          "baseline": 2072736,
+          "previous_retained": 2072736,
+          "retained": 2072736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tbss": {
+          "baseline": 1408,
+          "previous_retained": 1408,
+          "retained": 1408,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tdata": {
+          "baseline": 2673,
+          "previous_retained": 2673,
+          "retained": 2673,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".text": {
+          "baseline": 9457463,
+          "previous_retained": 9457463,
+          "retained": 9457527,
+          "incremental_growth_bytes": 64,
+          "incremental_growth_percent": 0.0006767142520145202,
+          "net_growth_bytes": 64,
+          "growth_percent": 0.0006767142520145202,
+          "accepted_positive_growth_bytes": 64,
+          "remaining_cumulative_bytes": 4032,
+          "remaining_cumulative_percent": 0.09932328574798549,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tm_clone_table": {
+          "baseline": 0,
+          "previous_retained": 0,
+          "retained": 0,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#native-library",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "2a55f9ab01c7960546809218afe09fc6092efd3171c3a61c9c6a76dcbad53606",
+      "retained_sha256": "2a55f9ab01c7960546809218afe09fc6092efd3171c3a61c9c6a76dcbad53606",
+      "metrics": {
+        "file": {
+          "baseline": 313184,
+          "previous_retained": 313184,
+          "retained": 313184,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 227619,
+          "previous_retained": 227619,
+          "retained": 227619,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".bss": {
+          "baseline": 142,
+          "previous_retained": 142,
+          "retained": 142,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data": {
+          "baseline": 2560,
+          "previous_retained": 2560,
+          "retained": 2560,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data.rel.ro": {
+          "baseline": 5664,
+          "previous_retained": 5664,
+          "retained": 5664,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynamic": {
+          "baseline": 448,
+          "previous_retained": 448,
+          "retained": 448,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynstr": {
+          "baseline": 861,
+          "previous_retained": 861,
+          "retained": 861,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynsym": {
+          "baseline": 1272,
+          "previous_retained": 1272,
+          "retained": 1272,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame": {
+          "baseline": 19380,
+          "previous_retained": 19380,
+          "retained": 19380,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame_hdr": {
+          "baseline": 3988,
+          "previous_retained": 3988,
+          "retained": 3988,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini_array": {
+          "baseline": 8,
+          "previous_retained": 8,
+          "retained": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gcc_except_table": {
+          "baseline": 13340,
+          "previous_retained": 13340,
+          "retained": 13340,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.hash": {
+          "baseline": 36,
+          "previous_retained": 36,
+          "retained": 36,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version": {
+          "baseline": 106,
+          "previous_retained": 106,
+          "retained": 106,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version_r": {
+          "baseline": 256,
+          "previous_retained": 256,
+          "retained": 256,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got": {
+          "baseline": 2128,
+          "previous_retained": 2128,
+          "retained": 2128,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got.plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init": {
+          "baseline": 23,
+          "previous_retained": 23,
+          "retained": 23,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init_array": {
+          "baseline": 16,
+          "previous_retained": 16,
+          "retained": 16,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".note.gnu.build-id": {
+          "baseline": 36,
+          "previous_retained": 36,
+          "retained": 36,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".plt": {
+          "baseline": 64,
+          "previous_retained": 64,
+          "retained": 64,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.dyn": {
+          "baseline": 13320,
+          "previous_retained": 13320,
+          "retained": 13320,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.plt": {
+          "baseline": 72,
+          "previous_retained": 72,
+          "retained": 72,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".relro_padding": {
+          "baseline": 3128,
+          "previous_retained": 3128,
+          "retained": 3128,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rodata": {
+          "baseline": 18803,
+          "previous_retained": 18803,
+          "retained": 18803,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tbss": {
+          "baseline": 40,
+          "previous_retained": 40,
+          "retained": 40,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tdata": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".text": {
+          "baseline": 227523,
+          "previous_retained": 227523,
+          "retained": 227523,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tm_clone_table": {
+          "baseline": 0,
+          "previous_retained": 0,
+          "retained": 0,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#fixture-driver",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "81dc2b0c35a9c6c3826687f0f0099c08b5506f936af3ac144a7ebb945b72b8aa",
+      "retained_sha256": "b967d005d07209d0372935fcaaba23fcef05d05107ae3bfdb37bd10d0521f830",
+      "metrics": {
+        "file": {
+          "baseline": 6861952,
+          "previous_retained": 6861952,
+          "retained": 6861936,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.00023316980357775745,
+          "net_growth_bytes": -16,
+          "growth_percent": -0.00023316980357775745,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 5464343,
+          "previous_retained": 5464343,
+          "retained": 5464327,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.00029280738782320217,
+          "net_growth_bytes": -16,
+          "growth_percent": -0.00029280738782320217,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".bss": {
+          "baseline": 204,
+          "previous_retained": 204,
+          "retained": 204,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data": {
+          "baseline": 197792,
+          "previous_retained": 197792,
+          "retained": 197792,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".data.rel.ro": {
+          "baseline": 129928,
+          "previous_retained": 129928,
+          "retained": 129928,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynamic": {
+          "baseline": 464,
+          "previous_retained": 464,
+          "retained": 464,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynstr": {
+          "baseline": 1023,
+          "previous_retained": 1023,
+          "retained": 1023,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".dynsym": {
+          "baseline": 1704,
+          "previous_retained": 1704,
+          "retained": 1704,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame": {
+          "baseline": 637812,
+          "previous_retained": 637812,
+          "retained": 637812,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame_hdr": {
+          "baseline": 77076,
+          "previous_retained": 77076,
+          "retained": 77076,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".fini_array": {
+          "baseline": 8,
+          "previous_retained": 8,
+          "retained": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gcc_except_table": {
+          "baseline": 3736,
+          "previous_retained": 3736,
+          "retained": 3736,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.hash": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version": {
+          "baseline": 142,
+          "previous_retained": 142,
+          "retained": 142,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version_r": {
+          "baseline": 304,
+          "previous_retained": 304,
+          "retained": 304,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got": {
+          "baseline": 656,
+          "previous_retained": 656,
+          "retained": 656,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".got.plt": {
+          "baseline": 40,
+          "previous_retained": 40,
+          "retained": 40,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init": {
+          "baseline": 23,
+          "previous_retained": 23,
+          "retained": 23,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".init_array": {
+          "baseline": 16,
+          "previous_retained": 16,
+          "retained": 16,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".interp": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".note.ABI-tag": {
+          "baseline": 32,
+          "previous_retained": 32,
+          "retained": 32,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".note.gnu.build-id": {
+          "baseline": 36,
+          "previous_retained": 36,
+          "retained": 36,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.dyn": {
+          "baseline": 140904,
+          "previous_retained": 140904,
+          "retained": 140904,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".relro_padding": {
+          "baseline": 2640,
+          "previous_retained": 2640,
+          "retained": 2656,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.6060606060606061,
+          "net_growth_bytes": 16,
+          "growth_percent": 0.6060606060606061,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 1439,
+          "remaining_cumulative_percent": 99.39393939393939,
+          "caps": {
+            "incremental_bytes": 1455,
+            "incremental_percent": 100.0,
+            "cumulative_bytes": 1455,
+            "cumulative_percent": 100.0
+          },
+          "passes_both_caps": true,
+          "total_section_ceiling_bytes": 4095
+        },
+        ".rodata": {
+          "baseline": 201984,
+          "previous_retained": 201984,
+          "retained": 201984,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tbss": {
+          "baseline": 1248,
+          "previous_retained": 1248,
+          "retained": 1248,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tdata": {
+          "baseline": 472,
+          "previous_retained": 472,
+          "retained": 472,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".text": {
+          "baseline": 5464263,
+          "previous_retained": 5464263,
+          "retained": 5464247,
+          "incremental_growth_bytes": -16,
+          "incremental_growth_percent": -0.00029281167469428175,
+          "net_growth_bytes": -16,
+          "growth_percent": -0.00029281167469428175,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        ".tm_clone_table": {
+          "baseline": 0,
+          "previous_retained": 0,
+          "retained": 0,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#wasm-raw",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "6a2115e07b0446a76cd3480f805d04ab6be297e54fc2765971cb7f7ac7dfbeb5",
+      "retained_sha256": "f6290bdf31068ea4ee5d09f05d0c9509d15d62bb9d33704cf8b11612c76bda0b",
+      "metrics": {
+        "file": {
+          "baseline": 13459061,
+          "previous_retained": 13459061,
+          "retained": 13459079,
+          "incremental_growth_bytes": 18,
+          "incremental_growth_percent": 0.0001337388990212616,
+          "net_growth_bytes": 18,
+          "growth_percent": 0.0001337388990212616,
+          "accepted_positive_growth_bytes": 18,
+          "remaining_cumulative_bytes": 8174,
+          "remaining_cumulative_percent": 0.09986626110097874,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 10514997,
+          "previous_retained": 10514997,
+          "retained": 10515015,
+          "incremental_growth_bytes": 18,
+          "incremental_growth_percent": 0.00017118407166449975,
+          "net_growth_bytes": 18,
+          "growth_percent": 0.00017118407166449975,
+          "accepted_positive_growth_bytes": 18,
+          "remaining_cumulative_bytes": 4078,
+          "remaining_cumulative_percent": 0.09982881592833551,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "0": {
+          "baseline": 595039,
+          "previous_retained": 595039,
+          "retained": 595039,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "1": {
+          "baseline": 2307,
+          "previous_retained": 2307,
+          "retained": 2307,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "10": {
+          "baseline": 10514997,
+          "previous_retained": 10514997,
+          "retained": 10515015,
+          "incremental_growth_bytes": 18,
+          "incremental_growth_percent": 0.00017118407166449975,
+          "net_growth_bytes": 18,
+          "growth_percent": 0.00017118407166449975,
+          "accepted_positive_growth_bytes": 18,
+          "remaining_cumulative_bytes": 4078,
+          "remaining_cumulative_percent": 0.09982881592833551,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "11": {
+          "baseline": 2021512,
+          "previous_retained": 2021512,
+          "retained": 2021512,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "2": {
+          "baseline": 21516,
+          "previous_retained": 21516,
+          "retained": 21516,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "3": {
+          "baseline": 35239,
+          "previous_retained": 35239,
+          "retained": 35239,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "4": {
+          "baseline": 7,
+          "previous_retained": 7,
+          "retained": 7,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "5": {
+          "baseline": 3,
+          "previous_retained": 3,
+          "retained": 3,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "6": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "7": {
+          "baseline": 262237,
+          "previous_retained": 262237,
+          "retained": 262237,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "9": {
+          "baseline": 6150,
+          "previous_retained": 6150,
+          "retained": 6150,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#wasm-final",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "4b0d323af8d79ae9f0a0ea1d28d199ab20b830cd81322e22c3326e51844dd01f",
+      "retained_sha256": "94da10fb89c5dd6214146e14710c32684b8c7dc99a50cf4d698d80efad22e387",
+      "metrics": {
+        "file": {
+          "baseline": 10660301,
+          "previous_retained": 10660301,
+          "retained": 10660318,
+          "incremental_growth_bytes": 17,
+          "incremental_growth_percent": 0.00015947016880667815,
+          "net_growth_bytes": 17,
+          "growth_percent": 0.00015947016880667815,
+          "accepted_positive_growth_bytes": 17,
+          "remaining_cumulative_bytes": 8175,
+          "remaining_cumulative_percent": 0.09984052983119333,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 8632393,
+          "previous_retained": 8632393,
+          "retained": 8632410,
+          "incremental_growth_bytes": 17,
+          "incremental_growth_percent": 0.00019693264660216466,
+          "net_growth_bytes": 17,
+          "growth_percent": 0.00019693264660216466,
+          "accepted_positive_growth_bytes": 17,
+          "remaining_cumulative_bytes": 4079,
+          "remaining_cumulative_percent": 0.09980306735339783,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "0": {
+          "baseline": 72,
+          "previous_retained": 72,
+          "retained": 72,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "1": {
+          "baseline": 2166,
+          "previous_retained": 2166,
+          "retained": 2166,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "10": {
+          "baseline": 8632393,
+          "previous_retained": 8632393,
+          "retained": 8632410,
+          "incremental_growth_bytes": 17,
+          "incremental_growth_percent": 0.00019693264660216466,
+          "net_growth_bytes": 17,
+          "growth_percent": 0.00019693264660216466,
+          "accepted_positive_growth_bytes": 17,
+          "remaining_cumulative_bytes": 4079,
+          "remaining_cumulative_percent": 0.09980306735339783,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "11": {
+          "baseline": 1979622,
+          "previous_retained": 1979622,
+          "retained": 1979622,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "12": {
+          "baseline": 2,
+          "previous_retained": 2,
+          "retained": 2,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "2": {
+          "baseline": 22545,
+          "previous_retained": 22545,
+          "retained": 22545,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "3": {
+          "baseline": 17401,
+          "previous_retained": 17401,
+          "retained": 17401,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "4": {
+          "baseline": 7,
+          "previous_retained": 7,
+          "retained": 7,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "5": {
+          "baseline": 3,
+          "previous_retained": 3,
+          "retained": 3,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "6": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "7": {
+          "baseline": 511,
+          "previous_retained": 511,
+          "retained": 511,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        },
+        "9": {
+          "baseline": 5526,
+          "previous_retained": 5526,
+          "retained": 5526,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 8192,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 8192,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 8192,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#wasm-gzip",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "8141af57086ddceecf8a739e73a266653d01759f21e70dbda0167225c42fa1fd",
+      "retained_sha256": "2f687a22f7ece1a724eff02008d64ad120c7c6a6cfe50ee730f3575d120845de",
+      "metrics": {
+        "file": {
+          "baseline": 4561750,
+          "previous_retained": 4561750,
+          "retained": 4561776,
+          "incremental_growth_bytes": 26,
+          "incremental_growth_percent": 0.0005699567052118156,
+          "net_growth_bytes": 26,
+          "growth_percent": 0.0005699567052118156,
+          "accepted_positive_growth_bytes": 26,
+          "remaining_cumulative_bytes": 4070,
+          "remaining_cumulative_percent": 0.09943004329478819,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#wasm-brotli",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "e887b8755e23616ee262539215661b5ad84b96c1ee56214940238430fe88e583",
+      "retained_sha256": "c57768880e82260281140c3abc5d318e9a349d6d6fc98b5658e71de97dbf4216",
+      "metrics": {
+        "file": {
+          "baseline": 3506515,
+          "previous_retained": 3506515,
+          "retained": 3506189,
+          "incremental_growth_bytes": -326,
+          "incremental_growth_percent": -0.009296980049992656,
+          "net_growth_bytes": -326,
+          "growth_percent": -0.009296980049992656,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 0.1,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 0.1,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 0.1
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": {
+        "brotli_asset_ceiling_bytes": 4194304,
+        "minimum_headroom_bytes": 524288,
+        "measured_headroom_bytes": 688115
+      },
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "alumina-interface#ui-release-tests",
+      "role": "finite display midpoint correctness and strict compiler compatibility",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "stable as pinned by archived tool inventory and build records",
+      "profile": "Interface configured release; final linked artifact and all emitted code, including monomorphizations",
+      "baseline_repositories": {
+        "csgrs": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+        "interface": "f5341f36803ad77c856313315d67ac8b3bb63f9a",
+        "firmware": "2d68e82b7341db7b747b20e4ad1455a4c1113a00"
+      },
+      "equivalent_control_commit": "32a59de0d69436427e5b97297c4929fd908bf326",
+      "baseline_equivalence": "Archived interface-fixed-control.json and interface-ui-fixed-control.json verify source/build equivalence for this artifact; separate core tests are not included.",
+      "baseline_sha256": "00b5243cce777d8fdd4cb2e83c2d8d8320b1289330949f05f157479d1e6ef72b",
+      "retained_sha256": "e71f80ecd1b7f03143a9ed320abd32b3705eb007b1906d75623af208bc6242a3",
+      "metrics": {
+        "file": {
+          "baseline": 14076904,
+          "previous_retained": 14076904,
+          "retained": 14079528,
+          "incremental_growth_bytes": 2624,
+          "incremental_growth_percent": 0.01864046241986164,
+          "net_growth_bytes": 2624,
+          "growth_percent": 0.01864046241986164,
+          "accepted_positive_growth_bytes": 2624,
+          "remaining_cumulative_bytes": 128448,
+          "remaining_cumulative_percent": 0.9813595375801384,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        "emitted_code": {
+          "baseline": 9387975,
+          "previous_retained": 9387975,
+          "retained": 9390455,
+          "incremental_growth_bytes": 2480,
+          "incremental_growth_percent": 0.026416772520165423,
+          "net_growth_bytes": 2480,
+          "growth_percent": 0.026416772520165423,
+          "accepted_positive_growth_bytes": 2480,
+          "remaining_cumulative_bytes": 128592,
+          "remaining_cumulative_percent": 0.9735832274798346,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".bss": {
+          "baseline": 300,
+          "previous_retained": 300,
+          "retained": 300,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".data": {
+          "baseline": 197880,
+          "previous_retained": 197880,
+          "retained": 197880,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".data.rel.ro": {
+          "baseline": 292832,
+          "previous_retained": 292832,
+          "retained": 293136,
+          "incremental_growth_bytes": 304,
+          "incremental_growth_percent": 0.10381379084253087,
+          "net_growth_bytes": 304,
+          "growth_percent": 0.10381379084253087,
+          "accepted_positive_growth_bytes": 304,
+          "remaining_cumulative_bytes": 130768,
+          "remaining_cumulative_percent": 0.8961862091574692,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".dynamic": {
+          "baseline": 464,
+          "previous_retained": 464,
+          "retained": 464,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".dynstr": {
+          "baseline": 1950,
+          "previous_retained": 1950,
+          "retained": 1950,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".dynsym": {
+          "baseline": 3312,
+          "previous_retained": 3312,
+          "retained": 3312,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame": {
+          "baseline": 1190796,
+          "previous_retained": 1190796,
+          "retained": 1191068,
+          "incremental_growth_bytes": 272,
+          "incremental_growth_percent": 0.022841863761719053,
+          "net_growth_bytes": 272,
+          "growth_percent": 0.022841863761719053,
+          "accepted_positive_growth_bytes": 272,
+          "remaining_cumulative_bytes": 130800,
+          "remaining_cumulative_percent": 0.977158136238281,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".eh_frame_hdr": {
+          "baseline": 132228,
+          "previous_retained": 132228,
+          "retained": 132268,
+          "incremental_growth_bytes": 40,
+          "incremental_growth_percent": 0.030250778957558157,
+          "net_growth_bytes": 40,
+          "growth_percent": 0.030250778957558157,
+          "accepted_positive_growth_bytes": 40,
+          "remaining_cumulative_bytes": 131032,
+          "remaining_cumulative_percent": 0.9697492210424419,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".fini": {
+          "baseline": 9,
+          "previous_retained": 9,
+          "retained": 9,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".fini_array": {
+          "baseline": 8,
+          "previous_retained": 8,
+          "retained": 8,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".gcc_except_table": {
+          "baseline": 695092,
+          "previous_retained": 695092,
+          "retained": 695296,
+          "incremental_growth_bytes": 204,
+          "incremental_growth_percent": 0.02934863298671255,
+          "net_growth_bytes": 204,
+          "growth_percent": 0.02934863298671255,
+          "accepted_positive_growth_bytes": 204,
+          "remaining_cumulative_bytes": 130868,
+          "remaining_cumulative_percent": 0.9706513670132875,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.hash": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version": {
+          "baseline": 276,
+          "previous_retained": 276,
+          "retained": 276,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".gnu.version_r": {
+          "baseline": 432,
+          "previous_retained": 432,
+          "retained": 432,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".got": {
+          "baseline": 1256,
+          "previous_retained": 1256,
+          "retained": 1256,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".got.plt": {
+          "baseline": 40,
+          "previous_retained": 40,
+          "retained": 40,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".init": {
+          "baseline": 23,
+          "previous_retained": 23,
+          "retained": 23,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".init_array": {
+          "baseline": 16,
+          "previous_retained": 16,
+          "retained": 16,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".interp": {
+          "baseline": 28,
+          "previous_retained": 28,
+          "retained": 28,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".note.ABI-tag": {
+          "baseline": 32,
+          "previous_retained": 32,
+          "retained": 32,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".note.gnu.build-id": {
+          "baseline": 36,
+          "previous_retained": 36,
+          "retained": 36,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".rela.dyn": {
+          "baseline": 311640,
+          "previous_retained": 311640,
+          "retained": 311880,
+          "incremental_growth_bytes": 240,
+          "incremental_growth_percent": 0.07701193685021178,
+          "net_growth_bytes": 240,
+          "growth_percent": 0.07701193685021178,
+          "accepted_positive_growth_bytes": 240,
+          "remaining_cumulative_bytes": 130832,
+          "remaining_cumulative_percent": 0.9229880631497882,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".rela.plt": {
+          "baseline": 48,
+          "previous_retained": 48,
+          "retained": 48,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".relro_padding": {
+          "baseline": 840,
+          "previous_retained": 840,
+          "retained": 2312,
+          "incremental_growth_bytes": 1472,
+          "incremental_growth_percent": 175.23809523809524,
+          "net_growth_bytes": 1472,
+          "growth_percent": 175.23809523809524,
+          "accepted_positive_growth_bytes": 1472,
+          "remaining_cumulative_bytes": 1783,
+          "remaining_cumulative_percent": 224.76190476190476,
+          "caps": {
+            "incremental_bytes": 3255,
+            "incremental_percent": 400.0,
+            "cumulative_bytes": 3255,
+            "cumulative_percent": 400.0
+          },
+          "passes_both_caps": true,
+          "total_section_ceiling_bytes": 4095
+        },
+        ".rodata": {
+          "baseline": 1856624,
+          "previous_retained": 1856624,
+          "retained": 1855712,
+          "incremental_growth_bytes": -912,
+          "incremental_growth_percent": -0.04912141607562975,
+          "net_growth_bytes": -912,
+          "growth_percent": -0.04912141607562975,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".tbss": {
+          "baseline": 1312,
+          "previous_retained": 1312,
+          "retained": 1312,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".tdata": {
+          "baseline": 505,
+          "previous_retained": 505,
+          "retained": 505,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".text": {
+          "baseline": 9387895,
+          "previous_retained": 9387895,
+          "retained": 9390375,
+          "incremental_growth_bytes": 2480,
+          "incremental_growth_percent": 0.026416997633654828,
+          "net_growth_bytes": 2480,
+          "growth_percent": 0.026416997633654828,
+          "accepted_positive_growth_bytes": 2480,
+          "remaining_cumulative_bytes": 128592,
+          "remaining_cumulative_percent": 0.9735830023663452,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        },
+        ".tm_clone_table": {
+          "baseline": 0,
+          "previous_retained": 0,
+          "retained": 0,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 131072,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 131072,
+            "incremental_percent": 1.0,
+            "cumulative_bytes": 131072,
+            "cumulative_percent": 1.0
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host/hosted artifact; no firmware image or flash partition. Artifact-specific remaining byte/percentage allowance is recorded in each metric.",
+      "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
+      "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
+      "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
+      "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",
