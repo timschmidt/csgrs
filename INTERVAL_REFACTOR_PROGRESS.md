@@ -50,7 +50,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | clock/Q30/servo delegation retained; five-board Xtensa links and image comparisons reproduced | 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
+| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; earlier five-board Xtensa links and image comparisons reproduced | whole-image requalification after the clock fix, 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -9241,3 +9241,61 @@ implemented manual propagation from open automatic orchestration/global sensitiv
 Evidence `docs/evidence/2026-11-15-interval-flow-wrapping-diagnostic`, local archive commit
 `af19ca2bbcbc7737547a94ff53fa69b17fd25e1d`: 202 files / 2,429,217 bytes,
 SHA-256 `c1553e9b5ffc9a118a4c6462f503c4a645c74674f9240cee78d088d65bc9c385`.
+
+## 2026-11-15: clock inventory review fixes partial publication on count exhaustion
+
+Phases 0/9, alumina-clock owner, P6/P19/P27/P31-P37. Firmware implementation
+`2d68e82b7341db7b747b20e4ad1455a4c1113a00`; inventory/audit implementation
+`182b9d072c28d3121e99228d5b21e09f2446e1d5`. The previous turn was progress;
+this turn returns to the required source inventory and produces a correctness fix.
+All 52 original firmware inventory entries were still lexical/unreviewed. Body
+review of the clock owner found a concrete failure: at accepted_samples=u32::MAX,
+`observe` returns Arithmetic after replacing the retained model's newest sample
+identity/timestamps. The pre-edit regression reproduces this on `b9ecf8df5`.
+The Interface client updates its latest heartbeat only after successful observation,
+so that partial estimator update breaks its source/report publication boundary.
+
+The fix checks the prospective count after all original validation/intersection,
+before assigning any model field. The last legal increment still succeeds;
+earlier boot/policy errors retain precedence and diagnostic counter behavior.
+The regression checks entire-state and published-estimate preservation, repeated
+failure and explicit reset/reconstruction. No saturation, guessed result, new
+error classification or dependency is introduced. This repairs erroneous failure
+behavior; it is not presented as an identical-behavior arithmetic refactor.
+
+The [clock ownership report](docs/research/firmware-clock-interval-audit.md) and
+inventory now cover 13 source-located declarations: the two original clock rows
+plus eleven omitted state/report/operation declarations. Generic integer range
+intersection, affine arithmetic and directed quotient authority remain in
+Hyperinterval; boot, causality, health/deadline policy and proof reports remain
+in alumina-clock. `scaled_offset` is exact point arithmetic, not a duplicate
+interval carrier. Selected Interface and simulator consumers were read. A
+mechanical verifier checks source hashes/locators and proves all 1,512 non-clock
+original rows unchanged. The other 50 original firmware entries remain open;
+no full firmware inventory or phase completion is claimed.
+
+Validation: Rust 1.88 native firmware tests/doctests pass (602, 55 suites), strict
+all-target Clippy and workspace formatting pass; Interface client tests/doctests
+pass on Rust 1.95 (90, 3 suites), as does its WASM check. Clock builds pass for
+WASM/Thumb with Rust 1.88 and Xtensa ESP32 with ESP Rust 1.90. The normal dependency
+tree remains no_std protocol plus integer-only Hyperinterval. Existing 24-case
+clock-probe output/wire/query/rejection records (481) and zero-allocation records
+are byte-identical. Its host binary stays 423,712 bytes / 267,100 .text bytes;
+observe shrinks by 7 host bytes, 48 Thumb bytes and 34 Xtensa bytes. Local frames
+stay 408 Thumb / 464 Xtensa bytes. Target assembly was assembled to measure real
+code symbols; GNU nm could not supply symbols from the original LTO bitcode.
+
+Eight CPU-0, ASLR-disabled ABBA blocks measure 960 samples / 5,898,240 completed
+clock-probe operations. Medians 586.094 ns before / 584.945 ns after show no observed
+median regression, not a speedup or MCU-cycle claim. Builds completed before the
+timing campaign; subsequent WASM builds started later, as recorded timestamps
+confirm. Full images/flash-fit, callee/interrupt stack and HIL remain unverified
+for this fix and remain release work. No push, deployment or hardware safety claim.
+
+All 79 earlier frozen records verify unchanged. Main's 41 staged and Interface's
+eight pending paths remain protected by exact patch hashes. Only reviewed local
+commits are brought forward; the full interval-plan goal remains active.
+
+Evidence `docs/evidence/2026-11-15-interval-firmware-interval-inventory`, local archive commit
+`c390ef8e50da1f274ce5b1217f83a3e0bf4bdcac`: 121 files / 4,544,975 bytes,
+SHA-256 `0431237cb8e36eb53b0f86ed882f11a5a551f5a539ecd870cf25a5cdc3978cb6`.
