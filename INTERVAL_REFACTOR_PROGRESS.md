@@ -9655,3 +9655,38 @@ No push or publication.
 Review commit `2f463ef2830ab36a15585e66066105db6e759207`. Evidence archive commit
 `c25f14ce87dfe51b40203f122e49e94e0770dbd8`: 269 files / 3,082,821 bytes,
 SHA-256 `c26a51ee3419e79d1b7922a99b84c7de8c98e07b02d36e03c991f3cac7198a2d`.
+
+
+## 2026-11-16: one-sided sqrt relocation fits initial size screen but regresses runtime
+
+Phase 7, P1/P4/P6/P10/P17–P20/P35–P39. The
+[current reconsideration](docs/research/sqrt-endpoint-reconsideration.md) revisits
+the earlier size-only rejection under the bounded allowance. It relocates the
+original one-sided rational/grid arithmetic unchanged, retaining solver
+clipping, comparisons, fallback and evidence. A missing owner API is reproduced;
+new tests verify domain order, exact squares and 3,315 independent tight-grid
+cases. The owner suite reports 1,770 passing completions including subprocess
+fixtures; 199 Interface tests, owner strict Clippy and formatting pass.
+
+Exact endpoints, subsequent squaring, both-policy receipts, full scalar traces
+and allocation/live/peak records match across twelve public cases. Native/WASM
+Interface replay also matches. Initial screening finds no owner file-cap
+exceedance; native sqrt probes shrink 24 bytes, Interface adds 128 file/32 text
+bytes, and WASM file/code sizes remain unchanged. No complete cumulative
+admission is claimed after the independent runtime rejection.
+
+Two eight-block matched timing campaigns consistently regress fractional
+rational and exact-square bounds, while large-coefficient cases improve. Full
+favorable/adverse samples remain. An initial hash-check failure caused by an
+objcopy inspection is preserved; no measured block had run. All four original
+binaries are reproduced exactly before fresh timing. No threshold, cap, test,
+policy or assertion is weakened, and no layout/inlining retry follows.
+
+Unaccepted ref refs/interval-unaccepted/sqrt-endpoint-20261116 preserves CSGRS
+4878c0fcddc1b005b667aa8c7d7dd4d46851942b and Interface
+6a8f9eb07dd93f0bcc9c7defdde73e76538c4ecc. All seven candidate paths are
+restored. The final owner suite reports 1,768 passing completions and Interface
+passes 199 tests; strict Clippy/formatting pass. All 61 measured binaries are
+byte-identical to baseline, with matching transcripts and replay. All 88 earlier
+frozen stages and all 45 size accounts remain unchanged. Phase 7 kernel
+migration and the full fifteen-phase goal remain open. No push or publication.

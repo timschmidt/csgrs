@@ -173,3 +173,13 @@ lockfiles, commands, outputs, binaries' hashes and ELF measurements are recorded
 in `docs/evidence/2026-11-14-interval-sqrt-endpoint-migration` in the evidence
 archive. This kernel remains unqualified for migration; a future attempt needs
 a distinct supported hypothesis rather than arbitrary inlining/layout retries.
+
+### Bounded-growth reconsideration, 2026-11-16
+
+The [current requalification](sqrt-endpoint-reconsideration.md) reproduces the
+same relocation at `c17761095`. Initial artifact screening now fits the existing
+allowance, with exact outputs, dispatch and allocations preserved. Two matched
+runtime campaigns nevertheless find repeated regressions for fractional
+rational and exact-square bounds. The candidate is again removed, without
+changing the historical evidence or size/runtime gates. This kernel remains
+unqualified for production migration.
