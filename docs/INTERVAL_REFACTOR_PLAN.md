@@ -982,6 +982,49 @@ Measure:
 
 No hot firmware path may regress materially without an explicit higher-priority correctness/completeness gain and user-approved acceptance note.
 
+## 9.7 Goal-authorized bounded code and binary growth
+
+The user has authorized bounded size growth to retain useful functionality and
+has explicitly permitted reconsideration of previously rejected refactors under
+the same exception. This applies across the goal's repositories and targets.
+It changes the size gate only. Exactness, supported behavior and composition,
+certainty/provenance, typed failure, dispatch and predicate order, performance,
+allocation, memory/stack, validation and release gates remain intact.
+
+For each candidate, record its concrete functionality or measured refactoring
+benefit. Before qualifying it, declare numerical incremental and cumulative size
+caps separately for each affected target and final artifact, with their rationale.
+This authorization is not an unlimited allowance or a numerical cap by itself.
+Reproduce an earlier candidate on the current revision and rerun its affected
+checks; a historical rejection or historical pass is not current qualification.
+
+Acceptance requires a size account containing:
+
+- Baseline and candidate revisions, target/board, features, toolchain, build and
+  link settings, final artifact identity and hashes.
+- Final release-binary file size and relevant executable/loaded sections. For
+  firmware, measure the actual packaged application/flash image and its partition
+  use; library, object or symbol sizes alone cannot establish final fit. For WASM
+  and native distribution, measure the actual delivered artifact as well.
+- Baseline and candidate sizes, signed delta, the predeclared incremental cap,
+  a fixed cumulative baseline and cap, total accepted positive growth, and net
+  growth from that baseline. Measure combined retained changes rather than only
+  adding isolated estimates. Do not reset the baseline to hide accumulated growth
+  or offset a regression in one target with savings in another.
+- For each firmware board/package, verified usable application capacity, reserved
+  space, required minimum free headroom and actual remaining headroom after the
+  candidate. Raw flash capacity is not application capacity. Mark flash headroom
+  inapplicable for non-firmware artifacts, rather than inventing a flash budget.
+- Results of every unchanged applicable gate and a retention decision explaining
+  why the benefit warrants the measured growth. Missing final measurements or
+  headroom evidence leave size acceptance open; a standalone build is insufficient.
+
+Record these accounts in the execution ledger with links to raw evidence. Preserve
+prior rejection records and append reconsideration outcomes. Size-only rejections
+are eligible for review; an independent latency, correctness or other gate failure
+still needs resolution. This documentation update consumes no growth allowance
+and assigns no numerical caps. It does not establish fit on any firmware target.
+
 ---
 
 # 10. Hyperdynamics extraction and implementation

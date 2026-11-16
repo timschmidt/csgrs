@@ -372,6 +372,12 @@ on the same completed contract:
 - no regression in the owning crate's benchmarks, `successive_operations`,
   monomorphized code size, or binary size.
 
+For the interval-refactor goal, the user authorizes bounded code/binary size
+growth, including reconsideration of previously rejected refactors, under
+[`docs/INTERVAL_REFACTOR_PLAN.md` section 9.7](docs/INTERVAL_REFACTOR_PLAN.md#97-goal-authorized-bounded-code-and-binary-growth).
+That exception requires per-target caps, final-binary measurements, firmware
+flash headroom and cumulative accounting. All other gates above remain intact.
+
 Keep the order of sign and predicate calls exactly as it is. That order
 decides which proofs are cached and reused (P4, P10). Reordering calls,
 evaluating a hook eagerly, or merging branches whose first predicates differ

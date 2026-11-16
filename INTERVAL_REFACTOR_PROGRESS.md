@@ -3,6 +3,13 @@
 Contract: [implementation plan](docs/INTERVAL_REFACTOR_PLAN.md). The full
 15-phase objective remains active. No phase is claimed complete.
 
+Current goal-specific size acceptance: the user permits bounded growth for useful
+functionality and reconsideration of rejected refactors, with per-target caps,
+final-binary measurements, firmware flash headroom and cumulative accounting.
+[Plan section 9.7](docs/INTERVAL_REFACTOR_PLAN.md#97-goal-authorized-bounded-code-and-binary-growth)
+records this exception. All other gates remain intact; historical rejection
+records below remain evidence of their original evaluations.
+
 ## Initial state and isolation
 
 - CSGRS HEAD: `1671894b4a896b091416503910e3720ecf233c82`.
@@ -9299,3 +9306,55 @@ commits are brought forward; the full interval-plan goal remains active.
 Evidence `docs/evidence/2026-11-15-interval-firmware-interval-inventory`, local archive commit
 `c390ef8e50da1f274ce5b1217f83a3e0bf4bdcac`: 121 files / 4,544,975 bytes,
 SHA-256 `0431237cb8e36eb53b0f86ed882f11a5a551f5a539ecd870cf25a5cdc3978cb6`.
+
+## 2026-11-16: audit FOC ownership and authorize bounded size reconsideration
+
+Phase 0/9 source review at firmware `2d68e82b7` replaces 27 lexical FOC
+inventory dispositions: 15 production/support declarations, 11 tests/oracles/
+layout gates, and the removed `ratio_bounds` helper. Seven omitted point and
+component carriers are added. The [FOC audit](docs/research/firmware-foc-interval-audit.md)
+distinguishes existing Q30/wide-Clarke/servo delegations from still-manual
+min/max, expansion, ADC scalar-image and encoder quotient paths. Domain units,
+angle/calibration/encoder evidence and controller saturation retain their owners.
+The full-width position-error carrier remains widened; i64 substitution would
+lose supported differences. The configuration wire ingress is explicitly recorded.
+
+No production code or test changes. Post-edit mechanical validation checks
+33 live source locators, one removed symbol, source hashes and byte preservation
+of all 1,498 unrelated original rows. The 23 other original firmware lexical
+rows remain open. The normal FOC feature tree is protocol plus fixed-only
+Hyperinterval, without arbitrary precision. Existing 602 firmware tests/doctests,
+including 86 FOC unit and two Q30 contract tests, strict Clippy and formatting
+were executed in the prior clock stage at this same firmware revision. Source
+and log checks tie those results to this audit; they are reused evidence, not
+new runtime measurements. No new performance, allocation, final-image or HIL
+claim follows from inventory review.
+
+During this work the user authorized useful functionality to justify bounded
+size growth with per-target caps, final-binary measurements, flash headroom and
+cumulative accounting, then explicitly permitted reconsideration of previously
+rejected refactors under that exception. Plan section 9.7 and AGENTS.md now
+record the allowance. Exactness, behavior, provenance/certainty, dispatch/order,
+performance, allocation, memory/stack and other validation gates remain intact.
+No numerical cap is assigned and no growth is charged by this documentation
+change. Historical candidate results are preserved; none is automatically retained.
+
+Initial reconsideration priorities from the recorded evidence:
+
+| Candidate | Prior result / remaining work under the new rule |
+| --- | --- |
+| Matrix scaling API (stage 77) | Size-only rejection: two old native files grew 8/24 bytes in string tables; owner/downstream correctness corpus passed. Reproduce on current revision, declare target caps, qualify final consumers and unchanged cost gates. |
+| Taylor child-scheduling clone removal (stage 79) | Saves one 200-byte allocation per coefficient witness; 48-byte text growth in affected consumers. Current reproduction and full owner/successive latency gates remain necessary. |
+| Global sensitivity prototype (stage 77) | Size rejection plus unfinished noncommuting/nonlinear/resource/replay/consumer corpus. Useful functionality is eligible, but the incomplete correctness corpus remains a blocker. |
+| Fine-grid canonical regrid (stage 76) | Independent repeated owner logarithm latency regression. The size exception does not resolve it. |
+
+Firmware flash allowance must use each actual packaged application's usable
+partition and reserve. Existing firmware documentation reports a historical
+4 MiB package overflow; it is not current headroom evidence and cannot establish
+fit. Any affected firmware candidate still needs a current final-image comparison.
+The audit itself changes no firmware image.
+
+All 80 prior frozen stages verify unchanged. Primary 41 staged and Interface
+eight pending paths remain protected by exact patch hashes. No push/publication
+or phase completion; the full goal remains active. Next implementation review
+will begin with the size-only matrix-scaling candidate under explicit caps.
