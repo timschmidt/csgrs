@@ -9885,3 +9885,45 @@ any of the 54 cumulative accounts changes. Frozen evidence commit
 SHA-256 `d6882e5ab9b8738c8eb7e1b8210e52878a8f03c9f61139a7fe1344d1d372bda3`.
 Earlier archive records remain unchanged. Automatic noise-controller admission,
 coordinated CI and the fifteen-phase goal remain open; no push is claimed.
+
+
+## 2026-11-16: shared dyadic quotient reconsidered and rejected on stack
+
+Owner Hyperinterval `scaled_quotient`, Phases 3/5 and affected consumers;
+P1/P4/P6/P10/P18–P20/P35–P39. The prior size-only rejection was reproduced
+on `17522b4eb` under the bounded exception. Candidate `3c3252832` shares the
+unsigned division while preserving guards, scaling, work charges and public
+predicate order. The three existing independent quotient tests pass before and
+after the change. No production migration is retained.
+
+Across two exact dependency locks, 1,656 fresh processes preserve 5,520 paired
+serialized-output/work rows and 2,208 full traces. Allocation event/byte totals,
+retained payload and peak do not increase; separate reallocation increases are
+reported. External-lock maximum stack use nevertheless rises 16 bytes in twelve
+completed cases. Its local helper reservation grows `0x118` to `0x128` with
+unchanged register saves, whereas the pinned configuration shrinks by 16 bytes.
+The [owner performance record](crates/hyperinterval/PERFORMANCE.md) explains why
+this independent stack gate rejects retention despite favorable heap results.
+
+Candidate qualification passes 247 owner completions on each full-feature
+compiler, 73 dyadic-only completions on Rust 1.88 and 1.95, 96 lattice and 1,521
+solver completions, strict Clippy, WASM library Clippy and formatting. All 21
+fixed/current native artifact controls are byte-identical. Candidate file/code
+initial caps pass; linker-padding section flags remain explicit. No complete
+size exception, runtime improvement or firmware deployment claim is made.
+
+The isolated checkout is restored clean to `17522b4eb`; all 21 restored final
+artifacts reproduce baseline hashes. Restored owner tests, Clippy and formatting
+pass. Snapshot `refs/interval-unaccepted/dyadic-quotient-current-20261116` retains
+`3c32528322afa3278e944815786ebc8fbe10dc0b`. No timing was queued or run after
+rejection; the existing 23-command quiet plan and all 54 size accounts remain
+unchanged. No layout/inlining retry, push or publication occurred.
+
+One missing helper row is added to the actual tracked inventory, preserving its
+1,532 prior rows byte for byte. Its 1,533 current rows remain a partial inventory,
+not exhaustive coverage; older ledger totals are not a substitute for inspecting
+the current file. All fifteen phases and the full goal remain open.
+
+Evidence `docs/evidence/2026-11-16-interval-dyadic-quotient-reconsideration`, commit `2de86748da8a00595cca3bbeffa3e399401ee2a9`:
+1,865 files / 9,864,610 bytes, SHA-256
+`1cd43363d05afc82015a5bd23b3bacac5e60767fa28fef41bb17397f493a245e`. Every previous archive path and manifest row is preserved.

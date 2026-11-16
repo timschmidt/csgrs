@@ -559,3 +559,27 @@ resource-admission precedence and a zero Hyperreal-dispatch assertion. The
 original double division remains until sharing can satisfy the unchanged cost
 gates across the demonstrated dependency configurations. No speedup or phase
 completion is claimed from these tests or the rejected experiments.
+
+
+### Current reconsideration: stack regression in the external configuration
+
+On `17522b4eb`, the unsigned sharing candidate `3c3252832` was rechecked under
+bounded size admission. Exact serialized outputs, work charges and full traces
+match across two dependency locks and 23 public-operation cases. The 1,656 fresh
+resource processes show no growth in total requested allocation traffic,
+retained payload or peak payload. Reallocation-only increases remain recorded.
+
+The external lock nevertheless increases maximum observed stack use by 16 bytes
+in twelve completed cases. Its helper's local reservation grows from `0x118` to
+`0x128`, with unchanged register saves; the pinned lock instead shrinks its
+reservation by 16 bytes. Both locks retain all supported dependency versions.
+The bounded size exception does not waive stack admission, so the candidate is
+rejected without timing or layout/inlining retries.
+
+Full owner and affected solver/lattice tests, strict Clippy, portable dyadic
+checks and WASM library Clippy pass. All 21 fixed/current native artifact
+controls are byte-identical. File/code initial caps pass for the candidate;
+separate per-section checks flag linker padding growth. No complete size
+exception, cumulative account, firmware fit or runtime improvement is claimed.
+Production is restored; the root progress ledger links the complete evidence
+and restoration receipts. Earlier size-only rejection records remain unchanged.
