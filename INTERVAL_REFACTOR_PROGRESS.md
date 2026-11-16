@@ -9582,3 +9582,37 @@ release, complete stack, firmware flash-fit, push or publication claim.
 Review commit `270eefdc6`. Evidence `docs/evidence/2026-11-16-interval-profile-owned-reconsideration`, local archive commit
 `491d20ddfd2ffb256e2e6aa3ac037ed776406f20`: 337 files / 6,789,565 bytes,
 SHA-256 `5cf531276f57325dd73ecf4e92f1008b750fb8858b6b64d17d734dcbbf38c67d`.
+
+
+## 2026-11-16: exact radius composition preserves semantics but fails cost admission
+
+Phase 8 section 8.3, P1/P4/P6/P8–P11/P19/P25–P27/P31–P33/P36–P39. The
+[named-budget experiment](docs/research/budget-radius-composition.md) introduces
+private-payload rational/Real radius proofs in an isolated candidate, preserving
+native norms, validation order, named fields and the final strict decision.
+The actual seven-case budget consumer preserves complete scalar dispatch,
+serialized definitions, identities, allocation/live/peak records and native/WASM
+replay. Owner checks report 253 passing completions including subprocess
+fixtures; all 199 Interface tests pass, with owner strict Clippy and formatting.
+
+Eight warmed ABBA/BAAB confirmation blocks show successful budgets modestly
+faster, while immediate rejection adds about 4.6–4.9 ns per call. Nine existing
+owner executables also exceed the predeclared +4,096-byte file cap, adding
+4,144–4,488 bytes, dominated by +3,192-byte exception tables. No cap revision,
+performance exception, strip-policy change or layout/inlining retry is adopted.
+Full favorable/adverse data and the cache-sensitive legacy-versus-legacy trace
+control remain in evidence. Complete trace assertions now use matched fresh
+processes; no count assertion is loosened.
+
+The candidate is preserved at refs/interval-unaccepted/budget-radius-20261116,
+CSGRS 36316830cad23d4e56c52c9109fbb51a6950b755 and
+Interface 2ce31a651e8ba18ff75302ed1714c9b51ba316e9. All production, feature,
+proposed-test and documentation changes are removed. The new API is not retained
+without its intended named-budget consumer. All 45 cumulative accounts and the
+fixed program baseline remain unchanged. Restored interval checks report 247
+passing completions (including subprocess fixtures), and all 199 Interface
+tests, strict Clippy and formatting pass. All 41 owner executables, both budget
+artifacts and the trace executable are byte-identical to baseline, with matching
+transcripts and replay. All 86 earlier frozen stages verify unchanged.
+This does not complete Phase 8 or the full
+fifteen-phase goal. No push or publication.
