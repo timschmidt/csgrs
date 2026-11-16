@@ -125,3 +125,8 @@ Raw evidence: `docs/evidence/2026-11-16-interval-budget-radius-composition` in t
 evidence repository, including exact patches, commands, full dispatch records,
 all timing samples and warmups, artifact hashes, failed witnesses and restoration
 receipts.
+
+
+Review commit `dc9e33712a3f24e1bdfe97f4205fc9992768641d`. Evidence archive commit
+`c0e98b7bc4e9f810ed5226f8eca64aff55b14693`: 294 files / 3,439,487 bytes,
+SHA-256 `e5c9452e59707f718315c92c25b4f4766b46d704a4bf2b23b57da1a192c1852f`.
