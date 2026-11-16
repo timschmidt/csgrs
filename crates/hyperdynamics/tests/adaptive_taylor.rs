@@ -16,6 +16,11 @@ use hypersolve::{
     Expr, SymbolId,
     expression_program::{ExpressionBudget, ExpressionProgram},
 };
+
+#[path = "support/exponential_oracle.rs"]
+mod exponential_oracle;
+use exponential_oracle::exp_bounds;
+
 const T: SymbolId = SymbolId(10);
 const X: SymbolId = SymbolId(20);
 fn d(l: i64, u: i64, e: i32) -> DyadicInterval {
@@ -168,16 +173,6 @@ fn quality_halves_at_last_order_then_regrows_and_caps_exact_horizon() {
                 .unwrap()
         );
     }
-}
-fn exp_bounds(t: Q) -> (Q, Q) {
-    let mut term = Q::from(1);
-    let mut lower = term.clone();
-    for k in 1..=12 {
-        term = &term * &t / Q::from(k);
-        lower = lower + &term;
-    }
-    let upper = &lower + (&term * &t / Q::from(13)) / (Q::from(1) - &t / Q::from(14));
-    (lower, upper)
 }
 #[test]
 fn exponential_uncertainty_and_generated_endpoint_have_independent_bounds() {

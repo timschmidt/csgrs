@@ -204,3 +204,39 @@ remain present. The archive row `2026-11-15-interval-external-dynamics-extended`
 in `docs/evidence-archive.tsv` binds the sources, commands, checks and raw results.
 Full-stack, hosted/HIL and the remaining plan qualification are not established
 by this benchmark extension.
+
+## Manual affine-noise wrapping qualification
+
+The existing `FlowNoiseState` / `certify_noise_step` path also completes the
+point and box two-rate cases at order 3, with sixteen steps of `1/64` and two
+retained noise columns. The Cartesian integrator supplies candidate boxes only;
+each noise step independently re-certifies its actual incoming affine outer
+state. The original initial data, horizon and common width limits above remain
+unchanged. This is an existing manual composition capability, not an automatic
+noise-controller implementation.
+
+| Input | Coordinate | Cartesian endpoint width | Noise endpoint width |
+| --- | --- | ---: | ---: |
+| point | x | 6.37146198e-10 | 4.98832206e-10 |
+| point | y | 4.13989040e-5 | 3.51031049e-6 |
+| box | x | 0.00250786278 | 0.00152109578 |
+| box | y | 0.01447350104 | 0.000267950531 |
+
+The maintained `flow_noise_witness` test checks every generated endpoint and
+continuous segment against independent rational exponential bounds. Both
+coordinates decrease from positive initial intervals, so the bounds cover all
+times between the segment endpoints. It materializes the hull of all sixteen
+tubes, checks the full-horizon width limit, and requires stricter noise endpoint
+widths: `(2^-29, 2^-17)` for the point input and `(2^-9, 2^-11)` for the box.
+Source/proof identity, nonzero residuals, fresh residual inputs and subsequent
+step consumption remain explicit. The rational series oracle is shared with
+the existing adaptive-Taylor tests; their original assertions remain intact.
+
+The noise chain consumes 625,855 graph-work units / 658,480,044 scalar-work units
+for the point input and 625,821 / 734,947,748 for the box. Those counters cover
+one shared noise-chain budget; preparation, Cartesian proposal generation and
+tube publication have separate budgets. They are not a total CPU or heap bound.
+An exploratory profile motivates further preparation/arithmetic work, but this
+qualification does not supply a matched wall-clock comparison with the tables
+above. Automatic noise orchestration, global sensitivity and wider workload
+qualification remain open.
