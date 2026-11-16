@@ -9927,3 +9927,53 @@ the current file. All fifteen phases and the full goal remain open.
 Evidence `docs/evidence/2026-11-16-interval-dyadic-quotient-reconsideration`, commit `2de86748da8a00595cca3bbeffa3e399401ee2a9`:
 1,865 files / 9,864,610 bytes, SHA-256
 `1cd43363d05afc82015a5bd23b3bacac5e60767fa28fef41bb17397f493a245e`. Every previous archive path and manifest row is preserved.
+
+
+## 2026-11-16: envelope result ownership rejected above its native code cap
+
+Owner Hypervoxel `FieldEnvelopeFacts::from_envelopes`, Phase 13;
+P6/P8/P9/P19/P35–P39. Public inverted bounds and malformed tensor dimensions
+can currently produce certified aggregate facts. Validation candidate `644732fdf`
+repairs those witnesses but adds stack even for empty input. Candidate
+`200a3ecf9` constructs the result in place to remove that avoidable cost. Neither
+candidate is admitted; original source `17522b4eb` and the fixed cumulative
+baseline `c9f1f9ac5` remain the comparison anchors.
+
+The initial 162-process screen reproduces the original stack increase. Another
+594 fresh processes cover eleven cases, including failure after both vector and
+tensor state hold symbolic clones. Compared with 644, all 528 allocation records,
+528 full traces, outcomes and input-drop cleanup records match; all 264 paired
+stack observations are nonincreasing. Empty and ordinary rational maxima fall
+32 bytes below original. Added symbolic validation/cache costs remain explicit;
+this does not prove a universal bound. A repository-pinned resource lock was
+prepared but not run after the later size failure; only the external lock has
+this resource evidence.
+
+Final-source owner suites report 92 passes each on Rust 1.95 and stable;
+Hypersdf reports 186 passing test reports, including nested output. Strict
+owner/downstream Clippy, docs, WASM library Clippy and formatting pass. Expanded
+native/WASM consumers check 225 independent rational hulls and subsequent use,
+four malformed outcomes including dimension overflow, and zero-dimensional
+composition. All fifteen final builds/functional runs pass, including restored
+controls and 80 WASM calls. These are source consumers, not shipped packages.
+
+The decisive native consumer grows 7,344 file bytes, 4,464 executable-code bytes
+and 4,421 named-code bytes against both original and fixed baselines. Percentages
+remain below 1%, but the shared 4,096-byte code cap fails by 368 and 325 bytes.
+Benchmark growth is 1,360 file / 480 code bytes cumulatively; WASM grows
+758 / 564. Savings elsewhere cannot offset a failed target. The earlier narrower
+consumer measurement cannot replace this expanded completed-workload evidence.
+No cap or account is changed, and no performance improvement is claimed.
+
+The isolated checkout is restored clean; 12 original field/path tests, strict
+Clippy and formatting pass. All three restored final binaries reproduce original
+hashes. The unaccepted ref retains the patch; the old unstarted 644 owner timing
+job is withdrawn with its previous plan preserved, leaving 22 queued commands.
+The original root all-features CI command separately passed in 16,700 seconds
+at `955593aa9`; adversarial validation continues. This is not full qualification
+of the current revision. All fifteen phases remain open; no push occurred.
+
+One missing reviewed method row is appended to the partial inventory, preserving
+all 1,533 prior rows. Evidence `docs/evidence/2026-11-16-interval-voxel-envelope-state` at commit
+`070189df831d97d142d3c369b20b625762c42d89` contains 904 files / 7,644,811 bytes,
+SHA-256 `7f2065bd836e15fb9f624da28af619b78f55134caadfde9517d07761c38fb05e`. Earlier archive paths and rows are unchanged.
