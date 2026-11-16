@@ -8765,3 +8765,63 @@ SHA-256 `aeb31e89a259b69d582a02a28d26c0c3f09c962a860eef4fa393357609971524`. Incl
 raw debugger stream, all original stacks, inclusive attribution, executable and
 fixture hashes, reviewed-source hashes and preserved repository state. The binary
 remains external at its hash-bound path. Source inventory is not whole-file review.
+
+
+## 2026-11-15: borrowed quadratic promotion rejected on repeated owner cost
+
+On accepted source parent `54e6337fe42ea4ac92f5585cde27349e1f7ad79c`, an isolated
+candidate added borrowed rational-quadratic promotion and removed an intermediate
+quadratic clone in native arc preparation. Owned promotion forwarded to the same
+conversion body. Constructor decisions, exact controls, endpoints and retained
+conic identities were preserved in the finite acceptance corpus.
+
+The candidate is rejected. In the unchanged complete arc benchmark, sparse path
+intersection over 256 arcs was slower in five of six initial controlled pairs.
+A further 20 balanced pairs, with ten of each order shuffled using seed 20261115
+and all runs pinned to CPU 2, found the candidate slower in 19 pairs. The median
+paired ratio was 1.0170898908727681; mean paired ratio was 1.0174315890365915.
+All non-timing output matches. Total arc CPU averaged about 1.3% lower, but that
+aggregate and smaller binaries do not satisfy the owning-workload no-regression
+gate. The initial overall arc and cached-decomposition concerns did not reproduce
+in the larger series and are not the rejection rationale. No instruction-level
+cause is established; no arbitrary layout or inline tuning is attempted.
+
+Formatting, owner all-target/all-feature strict Clippy, both-policy promotion and
+arc witnesses, and Rust 1.95 no-default controls pass. Full Hypercurve release
+validation reports 3263 passes, zero failures and 37 ignored tests across 128
+suites. Strict/approximate dispatch transcripts and full fixed-input DRC reports
+match; an earlier path-dependent report mismatch and its corrected control remain
+retained. All 20 downstream successive-operation tests, including long ignored
+chains, pass. These finite checks are not a universal closure proof.
+
+The initial owner portfolio completed 48 successful executions; both full editing
+executions reached their actual 900-second external measurement limit. They are
+incomplete measurements, not geometry failures or completed-workload evidence.
+The native 100 MB pathological pair reports 268 decided Boolean outcomes and zero
+blockers under STRICT, with matching counts and checksums. Its flattened comparison
+is separate. Five comparative calibration iteration counts and rounded build RSS
+observations of 86.6/86.7 MiB remain explicit rather than being masked.
+
+The native CLI and all 25 owner benchmark artifacts show no file/text/named-text
+growth. Paired WASM shrinks by 101 bytes; the attributed successive executable by
+11360 bytes, including 20080 fewer text-section bytes. No size result is used to
+waive the repeated runtime regression. All six KiCad timings still fail the
+unchanged 120-worker-second gate (baseline/candidate means 127.6513528107 and
+128.1120260313 seconds). No DRC speedup or release qualification is claimed.
+Prepared larger-budget editing retries and full successive runtime comparisons
+were not run after rejection; their acceptance obligations are not marked passed.
+
+The isolated candidate is restored clean, with the rejected patch, final source,
+all actual attempts and commands retained. Main's 41 staged paths and Interface's
+eight pending paths remain byte-identical; firmware remains clean. All 70 prior
+frozen stages verify unchanged. The full interval plan, pending migrations and
+extraction, resource, performance, coordinated release and HIL gates remain open.
+No push or publication occurs.
+
+Evidence `docs/evidence/2026-11-15-interval-drc-borrowed-promotion`, local archive commit
+`c7aa15fae3b5b5b7ec0f872afb167a40ed1f8d61`: 533 files / 19,117,162 bytes,
+SHA-256 `022fcda07edb594db9d0a96175a62d1926061b495d62101f08db52f00e585773`. Includes raw timing series, failures, source-bound builds,
+reports, witnesses, dispatch records, restoration receipts and losslessly compressed
+symbol maps. Executables remain external at hash-bound paths. The earlier superseded
+build helper and prepared unexecuted retries are identified separately from executed
+work; source observations are not treated as implementation or performance proof.
