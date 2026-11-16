@@ -8937,3 +8937,54 @@ no implementation or cost claim is made for it. No push or publication.
 Evidence `docs/evidence/2026-11-15-interval-profile-owned-intervals`, local archive commit
 `3114a7190c1dd122167ba1f62caf6bca38443bda`: 108 files / 3,765,395 bytes,
 SHA-256 `850f1cb8f6d68ad01d20702c1a2d4d0b4b9102ba799afb4a643ddcf9cc9f517f`.
+
+## 2026-11-15: adaptive coefficient ownership rejected on existing binary size
+
+Phase 13, P1/P4/P5/P6/P8-P10/P17-P20/P27/P36. Accepted source
+`d17bd974757330dd739a23556d409539e8e9d7cb` reproduces the missing complete
+coefficient-association sharing witness: restricting a generated Taylor stage
+copies its association payload. The prior adaptive-order-sharing experiment was
+found during history review; its rejected extraction and timing results remain
+binding. This candidate tests a distinct ownership change, wrapping each immutable
+coefficient association in one Arc, together with that explicit shared preparation
+strategy. Source-only zero-order extension uses the existing fresh preparation;
+no generated prefix is lost. Existing predicate order and logical-work charges
+stay intact. No eager maximum order or alternate differentiation kernel is added.
+
+Twenty candidate tests pass across four binaries, including the original exact
+coefficient, full history, resource/cancellation/retry and preserved hard-case
+checks. Two observers match all 373,388 baseline graph/report, dispatch and work
+artifact bytes for constant, exponential and Riccati fields. Owner Rust 1.95
+Clippy with adaptive-taylor/dispatch-trace and all targets passes with -D warnings.
+These are finite strict-enclosure comparisons, not full two-policy geometry
+qualification. The stage layout shrinks from 104 to 48 bytes for one state
+component, but the new association allocation prevents inferring a total-memory
+benefit from that number.
+
+| Existing release executable | Raw byte delta | .text delta |
+| --- | ---: | ---: |
+| adaptive_taylor | +4264 | +1664 |
+| taylor_orders | +544 | +144 |
+| taylor_flow | +1528 | +272 |
+| taylor_evolution | +240 | +112 |
+| qr_evolution | -8048 | -2032 |
+| hyperdynamics, coordinate_transition, qr_coordinates | 0 | 0 |
+
+Four existing executables fail the no-growth gate. Reductions in other binaries
+or named owner symbols do not waive that result. The combined ownership/reuse
+candidate is rejected; no allocation or runtime benefit is claimed. Full runtime,
+successive-operation, downstream, coverage, fuzz and WASM campaigns do not follow
+this decisive early rejection. No speculative layout or inlining variation is
+used to evade it.
+
+All five tracked edits and seven experiment-only files are saved in the archive.
+The isolated checkout is restored clean. Original adaptive tests (9), order tests
+(8), and workspace formatting pass; all eight rebuilt benchmark binaries reproduce
+the baseline SHA-256 and sizes exactly. Primary 41 staged and Interface 8 pending
+paths remain byte-identical; firmware stays clean. All 73 prior frozen stages
+verify unchanged. Automatic cross-order reuse and the full fifteen-phase goal
+remain open. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-adaptive-stage-ownership`, local archive commit
+`3b6b05b722c87740871f81dbe7e6d7a9b75c15c1`: 87 files / 17,444,948 bytes,
+SHA-256 `c4d79b079bc26bc2575abe1c7932241326bb0b3b07471f24004f7325047e70b7`.
