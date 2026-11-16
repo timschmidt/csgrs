@@ -9861,3 +9861,27 @@ No production source, fixture, policy, size account or hardware claim changes.
 Source locators, exact commands, scope and the preserved mechanical-check failure
 are archived and registered in `docs/evidence-archive.tsv`. The full goal remains
 active; no phase completion or push is claimed.
+
+## 2026-11-16: coefficient ownership reconsidered and rejected on retained memory
+
+The [current-revision reconsideration](docs/research/adaptive-stage-ownership-reconsideration.md)
+reopens the historical size-only rejection under the authorized bounded exception.
+The original missing sharing witness fails on `184faefa1`; combined candidate
+`6af61b53b1b5ab53b591448599d17f0d3b7a546c` passes all 20 focused tests and both
+observers match the complete 373,388-byte baseline output/work/dispatch artifact.
+
+Fresh allocation measurement is decisive: ordinary order-three preparation
+retains 16 extra bytes and makes three extra allocations in all 48 matched
+observations. Restriction and peak-memory improvements are preserved in the
+report, but do not waive that existing-workload gate. The full campaign contains
+288 matched pairs across three fields and preparation/restriction compositions.
+No runtime or new size acceptance is inferred. No assertion or cap is weakened.
+
+The isolated checkout is restored clean; all 17 original order/controller tests
+and formatting pass, and the rebuilt allocation probe matches the baseline hash.
+The candidate and raw evidence remain available; no primary production source or
+any of the 54 cumulative accounts changes. Frozen evidence commit
+`cd6ef1cf2751ae30c6acc96fe1c22ca32d67b49d`: 125 files / 2,880,317 bytes,
+SHA-256 `d6882e5ab9b8738c8eb7e1b8210e52878a8f03c9f61139a7fe1344d1d372bda3`.
+Earlier archive records remain unchanged. Automatic noise-controller admission,
+coordinated CI and the fifteen-phase goal remain open; no push is claimed.
