@@ -9456,3 +9456,7 @@ commit/discard them is recorded and remains in effect. No push or publication.
 The full goal stays active. Next work should resolve the pending path-dynamics
 extraction against its current owner timing gates, rather than retrying this
 unchanged Taylor candidate.
+
+Review commit `f7008cc03`. Evidence `docs/evidence/2026-11-16-interval-taylor-scheduling-reconsideration`, local archive commit
+`4b31e7d22673bce20812bd2aa952f11074595a0f`: 261 files / 2,412,029 bytes,
+SHA-256 `6f9f64f8e4ddc4ce74d3057b58ccacce2e4ec521d5bc2bb8f82e74bffafa4051`.

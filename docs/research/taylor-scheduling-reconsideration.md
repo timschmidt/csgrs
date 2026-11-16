@@ -90,3 +90,7 @@ recorded separately: 940 passed and the one new unqualified test failed before
 the remaining Hypersolve suites ran. The existing cumulative size account is
 unchanged. Full-plan completion, automatic noise orchestration, and global
 sensitivity remain open; this review completes only this reconsideration.
+
+Raw evidence: `docs/evidence/2026-11-16-interval-taylor-scheduling-reconsideration` in local evidence archive commit
+`4b31e7d22673bce20812bd2aa952f11074595a0f`; manifest entry in
+[`docs/evidence-archive.tsv`](../evidence-archive.tsv).
