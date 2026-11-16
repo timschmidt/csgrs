@@ -9095,3 +9095,50 @@ optimization, push or publication is retained.
 Evidence `docs/evidence/2026-11-15-interval-dyadic-regrid`, local archive commit
 `14ce442c6a28e65a7d8083b8b64e00c8532a044b`: 351 files / 5,881,523 bytes,
 SHA-256 `14b9b7784a1ed4b2da11d8532f27f33fdef824364711732ebe455830619ba5f3`.
+
+## 2026-11-15: sensitivity and matrix scaling prototypes rejected on size
+
+Phases 6/13, Hyperlattice-interval and Hyperdynamics owners, P1/P5/P6/P8-P10/
+P17-P20/P27/P36/P37. Inspection at `c64758fbc` confirms manual affine flow-noise
+already exists. The new experiment instead reproduces missing public APIs for
+whole-horizon initial-state sensitivity and matrix scaling. Missing convenience
+methods do not imply that existing lower-level operations cannot express them.
+
+The sensitivity prototype consumes certified Picard C1/Jacobian evidence,
+encloses ordered variational-series terms plus a norm tail, and composes local
+transitions on the left. One four-segment uncertain-shear witness passes.
+This does not establish general sensitivity support: the planned noncommuting,
+nonlinear, resource/cancellation, replay and physical-consumer corpus was not
+completed before rejection. The combined prototype grows the existing
+flow_noise executable by 800 raw bytes / 496 .text bytes and qr_coordinates
+by 24 raw bytes / unchanged .text. Debug/drop symbol-size changes are retained.
+
+The matrix-only candidate uses existing scalar multiplication and the owner's
+fallible-array builder, with one row-major shared context. Its 92 owner tests
+and 1,674 Hypersolve/Hyperdynamics downstream tests pass. Acceptance includes
+independent endpoint oracles across families, generated product -> scale ->
+vector consumption, fixed rounding/overflow, empty/unit products, exact dyadic
+budget exhaustion/retry, zero primitive allocations and fresh-process replay.
+It nevertheless grows reachability by 8 raw bytes and qr_coordinates by 24.
+Only .strtab sizes grow (+14 and +26); named code-symbol sizes are unchanged,
+and inspected allocated sections differ only in build ID. This is a raw-size
+gate failure, not evidence of a runtime slowdown. No timing claim is made.
+
+Both prototypes and all candidate tests are archived and removed. No layout or
+inlining retry, stripped-size substitution or gate weakening follows. All 26
+restored release metadata captures match baseline hashes and sizes. The driver
+saved 25 distinct target names because taylor_orders is both an example and a
+benchmark; comparison by original executable path covers both metadata rows,
+while the overwritten physical artifact is explicitly recorded as a limitation.
+Restored owner tests (89), two fixed dispatch controls and owner/dynamics
+formatting pass. This is scoped validation, not full CI/MSRV/portable/fuzz,
+coverage, successive_operations or latency qualification of the rejected APIs.
+
+Primary 41 staged and Interface 8 pending paths remain byte-identical;
+firmware and the isolated checkout remain clean. All 76 prior frozen records
+verify unchanged. Neither extension nor any phase is marked complete, and no
+production/test change, push or publication is retained. The full goal stays active.
+
+Evidence `docs/evidence/2026-11-15-interval-flow-sensitivity`, local archive commit
+`867f9efa52d49677c1d0e1b17289a6fa77eca859`: 179 files / 6,810,194 bytes,
+SHA-256 `3765bdd254395fcad1627a2992ede2e67eee2972d3d56add521b9d7865265766`.
