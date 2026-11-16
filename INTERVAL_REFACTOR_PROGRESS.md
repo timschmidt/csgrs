@@ -57,7 +57,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
 | 7 solver | source-bound Jacobian matrix adapter qualified; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
-| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; earlier five-board Xtensa links and image comparisons reproduced | whole-image requalification after the clock fix, 4 MiB flash fit, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
+| 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | unaccepted prototypes archived and removed from active worktrees; extraction remains open | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
@@ -9824,3 +9824,21 @@ all-feature root job has started. Those root results remain in active Stage 92,
 separate from this frozen lint subrecord. All 54 accounts and earlier frozen
 records are preserved. Other CI, DRC CPU, implementation and embedded obligations
 remain open; the fifteen-phase goal is active and no push is claimed.
+
+## Current firmware final images — 2026-11-16
+
+[Final-image qualification](docs/research/firmware-current-image-qualification.md)
+measures current firmware `7e0d5a4` against a same-path diagnostic snapshot
+restoring only the pre-fix clock source. All ten board release links pass;
+three boards package on each revision. Final executable bytes/addresses,
+section sizes and normalized local frames match. Diagnostic source locations
+and ELF-derived package hashes differ and are exactly attributed, not discarded.
+
+The unchanged 4 MiB default app partition rejects MKS FOC by 59,648 bytes and
+TinyBee-4mb by 159,424 bytes on both revisions. Successful partitions are decoded
+and their app payloads checked independently. All board flash-region declarations
+remain empty; the explicit 64 KiB diagnostic reserve is not board qualification.
+Current final-image measurements are now present; flash fit, declared partitions/
+reserves, whole-call stack, MCU cycles, HIL and the full plan remain open.
+No production source or any of the 54 cumulative size accounts changes. Frozen
+evidence is registered in `docs/evidence-archive.tsv`; no push is claimed.
