@@ -4,9 +4,10 @@
     feature = "dyadic",
     feature = "float-enclosure"
 ))]
+#[cfg(any(feature = "fixed", feature = "dyadic"))]
+use hyperlattice_interval::IntervalLatticeError;
 use hyperlattice_interval::{
-    AffineChain, AffineMap, CenteredVector, IntervalArithmetic, IntervalLatticeError,
-    IntervalMatrix, IntervalVector,
+    AffineChain, AffineMap, CenteredVector, IntervalArithmetic, IntervalMatrix, IntervalVector,
 };
 
 #[cfg(all(feature = "fixed", feature = "serde"))]
