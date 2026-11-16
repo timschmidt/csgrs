@@ -64,7 +64,7 @@ fuzz_target!(|data: &[u8]| {
     }
     let policy = PredicatePolicy::STRICT;
     let controls: Vec<Point2> = data[..8]
-        .chunks_exact(2)
+        .as_chunks::<2>().0.iter().map(|pair| pair.as_slice())
         .map(|pair| Point2::new(coordinate(pair[0]), coordinate(pair[1])))
         .collect();
     let split = (Real::from(i32::from(data[8] % 15) + 1) / Real::from(16)).unwrap();
