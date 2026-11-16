@@ -1,8 +1,8 @@
 {
   "program": "interval-refactor-2026-11",
   "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
-  "change": "cumulative-test-witnesses",
-  "scope": "Retained array-lifecycle and Interface canonical-digest assertions only. No production matrix or path-dynamics extraction is accepted.",
+  "change": "cumulative-test-witnesses-and-catalog-correction",
+  "scope": "Retained array-lifecycle and Interface canonical-digest assertions, plus the existing ratio_parts GMP API catalog classification. No production matrix, path-dynamics extraction or machine-profile ownership migration is accepted.",
   "policy": "docs/admission.md#bounded-code-and-binary-size-exceptions",
   "existing_artifacts": {
     "native_final_file_and_allocated_sections": {
@@ -44,15 +44,16 @@
       "cumulative_percent": 4
     }
   },
-  "rationale": "Two new callbacks/destructor-order tests instantiate test-only observers, assertions and failure diagnostics. Allow up to eight 4096-byte native pages in this test executable and four pages of code, additionally limited to 4%. This is test coverage of first-error publication and owned cleanup, not source reduction. Production code/data/unwind section hashes for all 41 other measured artifacts remain unchanged. Existing artifact caps stay strict and are accounted separately. The Interface canonical-digest assertion uses the unchanged native file caps and applies the stricter native code cap to the entire final .text section because its configured release artifact is stripped. Its fixed/current baseline artifacts are byte-identical; earlier artifact accounts remain untouched.",
+  "rationale": "Two new callbacks/destructor-order tests instantiate test-only observers, assertions and failure diagnostics. Allow up to eight 4096-byte native pages in this test executable and four pages of code, additionally limited to 4%. This is test coverage of first-error publication and owned cleanup, not source reduction. Production code/data/unwind section hashes for all 41 other measured artifacts remain unchanged. Existing artifact caps stay strict and are accounted separately. The Interface canonical-digest assertion uses the unchanged native file caps and applies the stricter native code cap to the entire final .text section because its configured release artifact is stripped. Its fixed/current baseline artifacts are byte-identical; earlier artifact accounts remain untouched. The existing ratio_parts representation accessor requires explicit classification in the unchanged GMP coverage guard. Its optimized test executable adds 64 file bytes and zero code bytes; a separate test-only account applies the existing caps to file/code and each growing allocated section, without offsetting growth against reduced padding.",
   "prior_accepted_exceptions": [
-    "array-construction-lifecycle-tests"
+    "array-construction-lifecycle-tests",
+    "canonical-diagonal-planner-digest"
   ],
   "cumulative_rule": "Future exceptions reuse this fixed goal-wide baseline and each artifact account; new artifacts require baseline measurements at this revision or an explicitly documented equivalent completed control. No baseline resets or cross-target offsets.",
   "flash": "not applicable to retained test-only changes; no firmware production source/image change or flash-size allowance",
   "matrix_size_budget_revision_proposal": "not adopted",
-  "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission",
-  "status": "Two test-only changes retained within separate target caps; matrix and path-dynamics production variants rejected.",
+  "evidence": "docs/evidence/2026-11-16-interval-profile-owned-reconsideration",
+  "status": "Three test-only changes retained within separate target caps; matrix, path-dynamics and retained machine-profile production variants rejected.",
   "accepted_changes": [
     {
       "id": "array-construction-lifecycle-tests",
@@ -69,6 +70,13 @@
       "source": "crates/alumina-interface-core/src/machine_profile.rs",
       "production_implementation_changed": false,
       "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission"
+    },
+    {
+      "id": "gmp-api-ratio-parts-classification",
+      "benefit": "repair the independently reproduced GMP API catalog failure for an existing noncanonical storage/cache-preservation accessor; preserve API enumeration and both assertions",
+      "source": "crates/hyperreal/tests/gmp_api_coverage.rs",
+      "production_implementation_changed": false,
+      "evidence": "docs/evidence/2026-11-16-interval-profile-owned-reconsideration"
     }
   ],
   "accounts": [
@@ -3303,6 +3311,138 @@
         }
       },
       "evidence": "docs/evidence/2026-11-16-interval-path-dynamics-current-admission"
+    },
+    {
+      "artifact": "crates/hyperreal/tests/gmp_api_coverage.rs#release-tests",
+      "role": "restore required classification of an existing representation accessor without changing coverage enumeration or assertions",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "hyperreal --all-features",
+      "profile": "CSGRS configured release test executable: opt-level=3, debug=false, debug assertions=false, overflow checks=false; unchanged default unwind and symbol policy",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "equivalent_control_commit": "3bea0ac90d8e25796d93fd34953afd0a0195a85f",
+      "baseline_equivalence": "Hyperreal source/tests, Cargo manifests/lock/config and dependencies are unchanged from fixed program baseline; the only production-tree diff is unrelated cfg(test) Hyperlattice-interval witnesses. Same absolute source path and Cargo profile for both actual test executables.",
+      "baseline_sha256": "9e2144286d89e08172a2dfc29994f0527417f448d2c04e6b98f68124328e52a5",
+      "retained_sha256": "245d7f48189af9ee8ec0b3a15d4a7e7e1a3520c7157ce90846dcbcd47160265f",
+      "code_metric": "complete final .text plus address-deduplicated named text union, both unchanged",
+      "metrics": {
+        "file": {
+          "baseline": 1109056,
+          "previous_retained": 1109056,
+          "retained": 1109120,
+          "incremental_growth_bytes": 64,
+          "incremental_growth_percent": 0.005770673437590167,
+          "net_growth_bytes": 64,
+          "growth_percent": 0.005770673437590167,
+          "accepted_positive_growth_bytes": 64,
+          "remaining_cumulative_bytes": 16320,
+          "remaining_cumulative_percent": 1.9942293265624098,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 631956,
+          "previous_retained": 631956,
+          "retained": 631956,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 623226,
+          "previous_retained": 623226,
+          "retained": 623226,
+          "incremental_growth_bytes": 0,
+          "incremental_growth_percent": 0.0,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1.0,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        },
+        ".rela.dyn": {
+          "baseline": 59856,
+          "previous_retained": 59856,
+          "retained": 59880,
+          "incremental_growth_bytes": 24,
+          "incremental_growth_percent": 0.040096230954290296,
+          "net_growth_bytes": 24,
+          "growth_percent": 0.040096230954290296,
+          "accepted_positive_growth_bytes": 24,
+          "remaining_cumulative_bytes": 16360,
+          "remaining_cumulative_percent": 1.9599037690457097,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        ".rodata": {
+          "baseline": 59076,
+          "previous_retained": 59076,
+          "retained": 59092,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.027083756517028913,
+          "net_growth_bytes": 16,
+          "growth_percent": 0.027083756517028913,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 16368,
+          "remaining_cumulative_percent": 1.972916243482971,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        ".data.rel.ro": {
+          "baseline": 34416,
+          "previous_retained": 34416,
+          "retained": 34432,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.046490004649000466,
+          "net_growth_bytes": 16,
+          "growth_percent": 0.046490004649000466,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 16368,
+          "remaining_cumulative_percent": 1.9535099953509996,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host-only test artifact, 1109120 bytes; predeclared cumulative file cap leaves 16320 bytes. No firmware deployment/flash change. Qualification host reports 143663259648 bytes available RAM; this is not a guaranteed arbitrary-input resource bound.",
+      "evidence": "docs/evidence/2026-11-16-interval-profile-owned-reconsideration"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed"

@@ -9534,3 +9534,46 @@ not another timing run of this unchanged candidate. No push or publication.
 Review commit `b8aa7109b`. Evidence `docs/evidence/2026-11-16-interval-flow-noise-reconsideration`, local archive commit
 `d14d110932ae8e548d4a3773020962e5b5a5ab6b`: 2,645 files / 9,032,213 bytes,
 SHA-256 `abfa3ac4e8f36fa895cccb7f09d7c79b88a63dbdec02e4bdc7e08aeebbdb5680`.
+
+
+## 2026-11-16: retained machine interval ownership fails current runtime gate
+
+Phase 8, P1/P4/P6/P10/P25/P27/P31–P33/P36–P39. The
+[reconsideration report](docs/research/profile-owned-reconsideration.md) replays
+the earlier size-only retained-owner candidate on 3bea0ac90 / Interface 32a59de0.
+Current native/WASM transcripts and allocation records match. Final native
+file/text grow 448/352 bytes; WASM file/code grow 733/729 bytes. Those preliminary
+metrics fit local caps, but no cumulative exception is accepted or consumed.
+
+Warmed ABBA/BAAB confirmation finds all six successful complete profile cases
+1.2–1.85% slower and the typed invalid case about 2.4% slower. Initial warmup
+drift and every timing transcript remain recorded. No layout/inlining retry
+follows. CSGRS and Interface snapshots are preserved outside active history at
+refs/interval-unaccepted/profile-owned-20261116, commits
+6b6b2ad259b83a10cc032bd33c26020edda36b81 and
+c2c3b8b95f88a49bfaae992d1c2736652a403597 respectively. The production migration
+and candidate-only tests are removed.
+
+The candidate passes 200 Interface tests and owner/consumer Clippy, formatting,
+minimal/isolated features, fixed-only thumb MSRV and documentation checks. Its
+broad scalar/interval suite is intentionally stopped after the independent
+runtime rejection: 70 completed result lines report 1,437 passes (including
+nested subprocess fixtures), with four more tests completed before SIGTERM.
+That command is incomplete, not reported as passing.
+
+The accepted revision independently fails its GMP API coverage catalog on the
+existing ratio_parts storage view. Retain its four-line classification repair;
+keep API enumeration and missing/stale-classification assertions unchanged.
+Remove candidate-only accessor classifications with their rejected types. No
+production arithmetic or numeric benchmark coverage changes.
+
+After restoration, interval checks report 247 passing test completions (with
+nested subprocess fixtures), scalar library/catalog checks pass 1,053 tests,
+and Interface passes 199 tests. Strict Clippy and formatting pass. All 41 owner
+artifacts and both native/WASM profile executables are byte-identical to their
+baselines; native transcripts and WASM replay match. All 85 prior frozen stages
+verify unchanged. The independent catalog repair adds 64 file bytes and zero
+code bytes to its optimized test executable; account 45 records that correction
+under the existing caps, preserving all 44 previous accounts and fixed baseline.
+Shared machine profile ownership and the full fifteen-phase goal remain open. No full CI,
+release, complete stack, firmware flash-fit, push or publication claim.
