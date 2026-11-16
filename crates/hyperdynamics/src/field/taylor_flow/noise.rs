@@ -303,34 +303,57 @@ impl<const N: usize> FlowTaylorProgram<N> {
         request: FlowNoiseRequest<N>,
         budget: &mut EnclosureBudget,
     ) -> FlowNoiseReport<N> {
-        let mut evidence = FlowNoiseEvidence {
-            program: self.clone(),
-            initial,
-            request,
-            flow: None,
-            polynomial: None,
-            composition: None,
-            inputs: Vec::new(),
-            noise: None,
-            status: FlowNoiseStatus::Empty,
-        };
-        let result = advance(&mut evidence, budget);
-        evidence.status = match &result {
-            Ok((None, _)) => FlowNoiseStatus::Empty,
-            Ok(_) => FlowNoiseStatus::Certified,
-            Err(e) => FlowNoiseStatus::Rejected(e.clone()),
-        };
-        let evidence = Arc::new(evidence);
-        let end = result.ok().map(|(form, enclosure)| {
-            Arc::new(FlowNoiseState {
-                time: evidence.request.end.clone(),
-                form,
-                enclosure,
-                evidence: Some(evidence.clone()),
-            })
-        });
-        FlowNoiseReport { evidence, end }
+        certify_from(self, initial, request, budget, |e, budget| {
+            Ok(e.program.certify_step(
+                PicardProposal {
+                    start: e.initial.time.clone(),
+                    end: e.request.end.clone(),
+                    initial: e.initial.enclosure.clone(),
+                    candidate: e.request.candidate.clone(),
+                },
+                budget,
+            ))
+        })
     }
+}
+
+fn certify_from<const N: usize>(
+    program: &FlowTaylorProgram<N>,
+    initial: Arc<FlowNoiseState<N>>,
+    request: FlowNoiseRequest<N>,
+    budget: &mut EnclosureBudget,
+    prove: impl FnOnce(
+        &FlowNoiseEvidence<N>,
+        &mut EnclosureBudget,
+    ) -> Result<FlowTaylorReport<N>, FlowNoiseError>,
+) -> FlowNoiseReport<N> {
+    let mut evidence = FlowNoiseEvidence {
+        program: program.clone(),
+        initial,
+        request,
+        flow: None,
+        polynomial: None,
+        composition: None,
+        inputs: Vec::new(),
+        noise: None,
+        status: FlowNoiseStatus::Empty,
+    };
+    let result = advance(&mut evidence, budget, prove);
+    evidence.status = match &result {
+        Ok((None, _)) => FlowNoiseStatus::Empty,
+        Ok(_) => FlowNoiseStatus::Certified,
+        Err(e) => FlowNoiseStatus::Rejected(e.clone()),
+    };
+    let evidence = Arc::new(evidence);
+    let end = result.ok().map(|(form, enclosure)| {
+        Arc::new(FlowNoiseState {
+            time: evidence.request.end.clone(),
+            form,
+            enclosure,
+            evidence: Some(evidence.clone()),
+        })
+    });
+    FlowNoiseReport { evidence, end }
 }
 
 fn zero() -> DyadicInterval {
@@ -443,6 +466,10 @@ fn endpoint_polynomial<const N: usize>(
 fn advance<const N: usize>(
     e: &mut FlowNoiseEvidence<N>,
     budget: &mut EnclosureBudget,
+    prove: impl FnOnce(
+        &FlowNoiseEvidence<N>,
+        &mut EnclosureBudget,
+    ) -> Result<FlowTaylorReport<N>, FlowNoiseError>,
 ) -> Result<(Option<Form<N>>, BoxN<DyadicInterval, N>), FlowNoiseError> {
     budget.graph.charge(0)?;
     budget.graph.check_entries(&[N, N, N])?;
@@ -451,15 +478,7 @@ fn advance<const N: usize>(
             .and_then(|v| v.checked_add(2))
             .ok_or(ExpressionError::SizeExhausted)?,
     )?;
-    e.flow = Some(e.program.certify_step(
-        PicardProposal {
-            start: e.initial.time.clone(),
-            end: e.request.end.clone(),
-            initial: e.initial.enclosure.clone(),
-            candidate: e.request.candidate.clone(),
-        },
-        budget,
-    ));
+    e.flow = Some(prove(e, budget)?);
     let flow = e.flow.as_ref().expect("stored attempt");
     match flow.status() {
         FlowTaylorStatus::Rejected(error) => return Err(FlowNoiseError::Flow(error.clone())),
@@ -707,3 +726,7 @@ fn enclose_coefficients<const N: usize>(
         native.try_into().expect("N coefficients"),
     )?)
 }
+
+/// Automatic bounded horizons retaining affine endpoint uncertainty.
+#[cfg(feature = "flow-noise-evolution")]
+pub mod evolution;

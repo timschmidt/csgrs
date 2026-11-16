@@ -22,6 +22,7 @@ coordinate-transition = ["coordinates", "hypersolve/coordinate-transition"]
 taylor-model = ["field", "hypersolve/taylor-model"]
 taylor-flow = ["taylor-model"]
 flow-noise = ["taylor-flow", "taylor-noise"]
+flow-noise-evolution = ["flow-noise"]
 taylor-evolution = ["taylor-flow"]
 adaptive-taylor = ["taylor-flow"]
 taylor-affine = ["taylor-model", "hypersolve/taylor-affine"]
@@ -120,3 +121,12 @@ required-features = ["taylor-flow"]
 name = "taylor_orders"
 harness = false
 required-features = ["taylor-flow"]
+
+[[example]]
+name = "flow_noise_evolution"
+required-features = ["flow-noise-evolution"]
+
+[[bench]]
+name = "flow_noise_evolution"
+harness = false
+required-features = ["flow-noise-evolution", "taylor-evolution"]

@@ -1022,6 +1022,119 @@ mod two_rate {
             );
         }
     }
+
+    #[test]
+    #[cfg(feature = "flow-noise-evolution")]
+    fn automatic_two_rate_noise_horizon_preserves_full_tubes_and_residuals() {
+        use hyperdynamics::field::taylor_flow::noise::evolution::{
+            FlowNoiseEvolutionOptions, FlowNoiseEvolutionStatus,
+        };
+        let (time, x, y) = (SymbolId(0), SymbolId(1), SymbolId(2));
+        let source = ExpressionProgram::compile(
+            &[
+                -Expr::anonymous_symbol(x),
+                Expr::int(-8) * Expr::anonymous_symbol(y),
+            ],
+            &[time, x, y],
+            &mut ExpressionBudget::new(1_000_000, 100_000_000),
+        )
+        .unwrap();
+        let mut preparation = EnclosureBudget::new(EnclosurePolicy::default());
+        let program = ExpressionField::<2>::from_definition(
+            FieldDefinition {
+                source: source.definition().clone(),
+                time,
+                state: vec![x, y],
+            },
+            &mut preparation,
+        )
+        .unwrap()
+        .flow_taylor(3, &mut preparation)
+        .unwrap();
+        for radius in [0, 1] {
+            let initial = BoxN::new([
+                interval(1024 - radius, 1024 + radius, -10),
+                interval(1024 - radius, 1024 + radius, -10),
+            ])
+            .unwrap();
+            let mut budget = EnclosureBudget::new(EnclosurePolicy::default());
+            let mut previous = Arc::new(
+                FlowNoiseState::new(interval(0, 0, 0), initial.clone(), &mut budget).unwrap(),
+            );
+            let report = program.integrate_noise(
+                previous.clone(),
+                interval(1, 1, -2),
+                FlowNoiseEvolutionOptions {
+                    maximum_noise: 2,
+                    native: EvolutionOptions {
+                        maximum_step: Some(interval(1, 1, -6)),
+                        ..Default::default()
+                    },
+                },
+                &mut budget,
+            );
+            assert!(
+                matches!(report.status(), FlowNoiseEvolutionStatus::Completed),
+                "{:?}",
+                report.status()
+            );
+            assert_eq!(report.segments().len(), 16);
+            let mut tube = initial.lanes().unwrap().clone();
+            for (index, segment) in report.segments().enumerate() {
+                let evidence = segment.evidence();
+                assert!(Arc::ptr_eq(evidence.initial(), &previous));
+                let flow = evidence.flow().unwrap();
+                assert!(matches!(flow.status(), FlowTaylorStatus::Certified));
+                assert_eq!(&flow.picard().proposal().initial, previous.enclosure());
+                assert_eq!(&flow.picard().proposal().start, previous.time());
+                let next = segment.end_state().unwrap();
+                assert!(Arc::ptr_eq(next.evidence().unwrap(), evidence));
+                assert_eq!(
+                    next.time(),
+                    &interval(index as i64 + 1, index as i64 + 1, -6)
+                );
+                assert!(next.columns().unwrap().len() <= 2);
+                for (lane, rate) in [1, 8].into_iter().enumerate() {
+                    if index > 0 {
+                        assert!(evidence.inputs().contains(&FlowNoiseInput::Residual(lane)));
+                    }
+                    let (end_lo, end_hi) = bounds(index as i64 + 1, rate, radius);
+                    let (_, start_hi) = bounds(index as i64, rate, radius);
+                    contains(&next.enclosure().lanes().unwrap()[lane], &end_lo, &end_hi);
+                    let piece = &flow.tube().unwrap().lanes().unwrap()[lane];
+                    contains(piece, &end_lo, &start_hi);
+                    tube[lane] = tube[lane].hull(piece, &mut arithmetic()).unwrap();
+                    assert_ne!(next.residual().unwrap()[lane], interval(0, 0, 0));
+                }
+                previous = next.clone();
+            }
+            assert!(Arc::ptr_eq(report.end_state().unwrap(), &previous));
+            for (lane, rate) in [1, 8].into_iter().enumerate() {
+                let (end_lo, _) = bounds(16, rate, radius);
+                let (_, start_hi) = bounds(0, rate, radius);
+                contains(&tube[lane], &end_lo, &start_hi);
+                assert!(
+                    tube[lane]
+                        .width(&mut arithmetic())
+                        .unwrap()
+                        .subset_of(&interval(0, 1, 0), &mut arithmetic())
+                        .unwrap()
+                );
+                let exponent = if radius == 0 {
+                    [-29, -17][lane]
+                } else {
+                    [-9, -11][lane]
+                };
+                assert!(
+                    previous.enclosure().lanes().unwrap()[lane]
+                        .width(&mut arithmetic())
+                        .unwrap()
+                        .subset_of(&interval(0, 1, exponent), &mut arithmetic())
+                        .unwrap()
+                );
+            }
+        }
+    }
 }
 
 #[cfg(all(feature = "flow-noise", feature = "taylor-evolution"))]
