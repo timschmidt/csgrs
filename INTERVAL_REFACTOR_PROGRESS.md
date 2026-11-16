@@ -9142,3 +9142,48 @@ production/test change, push or publication is retained. The full goal stays act
 Evidence `docs/evidence/2026-11-15-interval-flow-sensitivity`, local archive commit
 `867f9efa52d49677c1d0e1b17289a6fa77eca859`: 179 files / 6,810,194 bytes,
 SHA-256 `3765bdd254395fcad1627a2992ede2e67eee2972d3d56add521b9d7865265766`.
+
+## 2026-11-15: sixteen-case external dynamics corpus qualified
+
+Phase 13, standalone benchmark/validation owners, P1/P6/P8/P19/P27/P35-P37.
+Implementation `17fbc05837920ce39891beb8bd903c250c9699b9` adds point and box
+cases for `x'=t*x`, `x'=1-8t`, `(x',y',z')=(y,t*z,0)`, and
+`(x',y')=(-x,-8y)`. Independent analytic bounds include the turnaround's
+interior maximum and the noncommuting system's algebraic interior minimum.
+The fixtures were specified before implementation: horizon `[0,1/4]`, radius
+`2^-10`, endpoint width `1/64`, tube width `1`, actual step cap `1/16` except
+`1/64` for the two-rate case. Existing Taylor orders remain 3 and 12.
+All original eight IVPs and each solver's exact certificate bytes are preserved.
+
+All 32 solver/case outcomes complete and pass independent exact rational
+containment, width and continuous-time checks. The CPU-0, ASLR-disabled ABBA
+campaign records 640 samples and 64,000 completed integrations, including native
+evidence, endpoint/tube materialization and destruction. CAPD has lower median
+latency in all 32 matched case/mode configurations. Hyperdynamics has the tighter
+noncommuting point endpoint, about `5.29e-23` versus `8.88e-16`. Its uncertain
+two-rate endpoint width is `0.014473501`, below but near the unchanged `0.015625`
+limit, versus CAPD's `0.0015210953`. This supplies a concrete wrapping workload;
+it does not establish universal stiffness, long-time or resource guarantees.
+
+Two reproduced benchmark-validation gaps are fixed: optimized Python could
+silently disable oracle assertions, and timing collection checked only total
+record count. The oracle now refuses optimized Python; the runner requires
+every case/mode/sample exactly once, matching solver/iteration counts and
+positive integer timing values. Nine Python tests pass, including 1,500 exact
+square-root controls. All 17 corrupted-corpus controls pass (the original nine
+plus eight new controls), as do Rust 1.95 Clippy with warnings denied, formatting,
+C++ warnings-as-errors, all 42 pinned CAPD native tests, diff and repository-budget
+checks. The first extension pilot's CAPD signed-zero serialization difference
+is retained and corrected; only the final `campaign` supplies published tables.
+
+The [comparison report](docs/research/validated-dynamics-comparison.md) records
+all new latency/quality rows and limits. Measured sources and binaries match the
+committed implementation. No production mathematical library or feature changed.
+Main 41 staged and Interface 8 pending paths remain byte-identical; firmware,
+CAPD and the isolated checkout are clean. All 77 earlier frozen records verify
+unchanged. Full-stack/hosted/HIL and remaining plan gates stay open; neither a
+phase nor the full goal is marked complete. No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-external-dynamics-extended`, local archive commit
+`701e672ceb746e72fe5914eab720f21fd2d5e8ab`: 93 files / 649,328 bytes,
+SHA-256 `bee040027bb858af8ee74f5b5da8040dc6139204d16af4985402d6537c090d64`.
