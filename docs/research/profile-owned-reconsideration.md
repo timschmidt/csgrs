@@ -121,3 +121,8 @@ Raw evidence: `docs/evidence/2026-11-16-interval-profile-owned-reconsideration`
 in the evidence repository. It retains commands, toolchains, artifact hashes,
 all timing and allocation records, source patches, failures and restoration
 receipts.
+
+
+Review commit `270eefdc6`. Evidence `docs/evidence/2026-11-16-interval-profile-owned-reconsideration`, local archive commit
+`491d20ddfd2ffb256e2e6aa3ac037ed776406f20`: 337 files / 6,789,565 bytes,
+SHA-256 `5cf531276f57325dd73ecf4e92f1008b750fb8858b6b64d17d734dcbbf38c67d`.
