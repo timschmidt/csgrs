@@ -305,6 +305,59 @@ a speedup; a short probe is not a cross-library performance claim. An isolated
 favorable measurement cannot justify retaining an optimization while concealing
 supported-corpus regressions.
 
+### Bounded code and binary size exceptions
+
+Policy migration (15 November 2026, requested by the repository owner): the
+default for behavior-preserving refactors remains no growth in monomorphized
+code or binary size. A small, explicitly budgeted increase may be retained for
+demonstrated functionality, correctness, completeness, performance, or memory
+benefits. Source reduction or abstract future usefulness alone does not qualify.
+This amends only the size gate in the [agent rules](../AGENTS.md) and applicable
+programs; historical dispositions remain historical. It grants no exception to
+exactness, certainty, provenance, dispatch/predicate order, performance,
+memory/stack, resource handling, or required validation.
+
+Each exception must satisfy all of the following before retention:
+
+1. **Name the benefit and scope.** Identify the owning layer, property, affected
+   targets/features, and acceptance witnesses. A behavior-preserving refactor
+   still meets every other refactoring gate. New functionality or a correctness
+   repair is classified separately: preserve the previously supported contract,
+   reproduce the missing/failing witness, and demonstrate the added behavior.
+   Compare costs on the same completed baseline workload and report added
+   workloads separately; an earlier unsupported outcome is not a cost baseline
+   for successful completion.
+2. **Declare a bounded allowance.** Before judging the candidate for retention,
+   record a fixed baseline revision and numerical absolute-byte and percentage
+   growth caps for each affected target/artifact and measured code-size metric.
+   Both caps must hold. Justify the small allowance against the benefit and
+   target capacity; there is no automatic percentage allowance. State minimum
+   required deployment headroom, including applicable flash partitions and
+   reserved update/boot space. Hard platform limits remain binding.
+3. **Measure the shipped cost.** Retain reproducible baseline/candidate build
+   configurations, toolchains, dependencies, flags, features, and raw evidence.
+   Report absolute and percentage changes in monomorphized code, relevant
+   sections, and final linked native, firmware, or WASM artifacts as applicable.
+   For firmware, report actual flash occupancy and remaining headroom using the
+   deployment layout. Object files, symbol sizes, and host probes may diagnose
+   growth but do not establish final firmware fit. Missing final-artifact or
+   capacity evidence leaves the affected exception open, not accepted.
+4. **Account cumulatively.** Link the exception in the change's admission/idea
+   ledger, recording its benefit, caps, baseline, measurements, remaining
+   allowance, and checks. Measure both the individual change and cumulative
+   growth against the fixed baseline for the target's named release or program
+   budget. Successive exceptions share that budget; do not reset it per change
+   or net growth on one target against savings on another. A changed baseline
+   or enlarged cap requires a separately recorded budget revision retaining
+   prior growth and its justification, never a silent reset to make a check pass.
+
+No existing size assertion may simply be loosened to obtain a pass. A concrete
+assertion or configured limit changes only as a documented implementation of a
+qualifying exception with the evidence above. Exceeding either cap, violating
+headroom, or missing required evidence blocks retention under this exception.
+This policy does not itself qualify any implementation or reopen a rejected
+change without fresh review on its target revision.
+
 ## 7. Complete the admission record
 
 An admission record links the contract, implementation, tests, raw evidence,

@@ -370,13 +370,10 @@ on the same completed contract:
 - identical `dispatch-trace` counts on every path it touches. Add a count
   assertion where none exists, and never loosen an existing one;
 - no regression in the owning crate's benchmarks, `successive_operations`,
-  monomorphized code size, or binary size.
-
-For the interval-refactor goal, the user authorizes bounded code/binary size
-growth, including reconsideration of previously rejected refactors, under
-[`docs/INTERVAL_REFACTOR_PLAN.md` section 9.7](docs/INTERVAL_REFACTOR_PLAN.md#97-goal-authorized-bounded-code-and-binary-growth).
-That exception requires per-target caps, final-binary measurements, firmware
-flash headroom and cumulative accounting. All other gates above remain intact.
+  monomorphized code size, or binary size by default. A bounded code/binary-size
+  exception requires the evidence and per-target budgets in
+  [the admission protocol](docs/admission.md#bounded-code-and-binary-size-exceptions).
+  Source reduction alone does not qualify; all other refactoring gates remain.
 
 Keep the order of sign and predicate calls exactly as it is. That order
 decides which proofs are cached and reused (P4, P10). Reordering calls,

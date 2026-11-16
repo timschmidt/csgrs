@@ -175,8 +175,11 @@ completed contract:
    must stay unchanged. Add a count assertion for any path the package touches
    that has none.
 3. **No regression in benchmarks or binary size.** Cover the owning crate's
-   `PERFORMANCE.md` benches, `successive_operations` and the size harnesses. A
-   source reduction that grows monomorphized code or a payload fails P36.
+   `PERFORMANCE.md` benches, `successive_operations` and the size harnesses.
+   Code/binary-size growth requires a
+   [bounded exception](../admission.md#bounded-code-and-binary-size-exceptions);
+   source reduction alone does not qualify. All other gates remain unchanged.
+   This prospective policy amendment does not revise historical package outcomes.
 
 The order of sign and predicate calls must not change. That order decides which
 proofs are cached and reused (P4, P10). A refactor that reorders calls,
