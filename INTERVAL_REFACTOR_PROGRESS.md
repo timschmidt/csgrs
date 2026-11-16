@@ -54,7 +54,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
 | 11 path dynamics | complete extraction candidate implemented; retention gate open | reproduced owner timing regressions; preserve exact reports, dispatch and canonical lowering while resolving costs |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
-| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on eight validated point/box IVPs | higher-utility automatic frame strategies, ODE fresh-noise propagation and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
+| 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
 | 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow locally qualified | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
@@ -9187,3 +9187,57 @@ phase nor the full goal is marked complete. No push or publication.
 Evidence `docs/evidence/2026-11-15-interval-external-dynamics-extended`, local archive commit
 `701e672ceb746e72fe5914eab720f21fd2d5e8ab`: 93 files / 649,328 bytes,
 SHA-256 `bee040027bb858af8ee74f5b5da8040dc6139204d16af4985402d6537c090d64`.
+
+## 2026-11-15: continuous two-rate noise chains qualified; clone candidate restored
+
+Phase 13, Hyperdynamics/Hypersolve owners, P1/P4/P5/P6/P8-P10/P18-P20/P36/P37.
+Implementation `e139885a6e44b553a031fd114ff0615c0c1d4c52` qualifies existing
+manual affine-noise propagation on both accepted two-rate point/box IVPs.
+Each chain completes sixteen order-3 steps of `1/64`, retaining two noise
+columns. Native Cartesian candidates are untrusted proposals: every noise step
+re-certifies the actual incoming outer state. The maintained witness checks
+every endpoint and continuous segment against independent rational exponential
+bounds, materializes the whole tube, and preserves original source/proof identity,
+nonzero residuals and fresh residual inputs through subsequent operations.
+The existing adaptive-Taylor series helper moves into shared test support;
+all original assertions remain. No mathematical production code is retained.
+
+Final noise endpoint widths are `(4.98832206e-10, 3.51031049e-6)` for the point
+input and `(0.00152109578, 0.000267950531)` for the box, versus Cartesian box
+widths `(0.00250786278, 0.01447350104)`. Every continuous tube and the full hull
+pass independent extrema checks. Maintained noise endpoint limits are stricter
+than the unchanged external comparison contract: `(2^-29,2^-17)` for the point
+and `(2^-9,2^-11)` for the box. These measurements establish this finite workload,
+not general stiffness/wrapping closure or an automatic noise controller.
+The [comparison report](docs/research/validated-dynamics-comparison.md) separates
+noise-chain work counters from preparation, proposal and publication budgets.
+No matched competitive noise latency or total CPU/heap bound is claimed.
+
+Profiling identifies repeated Taylor construction as a substantial cost. One
+candidate removes the node clone used only to schedule derivative children,
+preserving visit order and every logical resource charge. Its 448 coefficient
+control records (exact graph/output, both-policy receipts/dispatch, work and size
+boundaries) and 36 wrapping records excluding timing are identical. The named
+coefficient witness saves one 200-byte allocation per construction, with unchanged
+peak/live bytes. Nevertheless `derive` grows from `0xc85` to `0xcb5` bytes, and
+multiple old consumers gain 48 .text bytes and raw-file bytes. The candidate is
+rejected without layout/inlining retries or stripped-size substitution. All 42
+restored release artifacts match baseline hashes, with distinct source-path keys
+for colliding example/benchmark names. Whole-process Callgrind instructions fall
+465,881,247 -> 464,748,970; that does not establish a latency improvement or
+supersede the failed gate. Full benchmarks/successive_operations were not run
+for the rejected candidate.
+
+Validation passes: 1,676 Hyperdynamics/Hypersolve tests and doctests in 84 suites,
+zero failures/ignored cases; Rust 1.95 strict Clippy with all features/targets;
+whole-workspace formatting; noise-only (13), adaptive-only (8), and composed-noise
+(14) feature witnesses; diff and repository-budget checks. No full CI, new fuzz/
+coverage campaign, hosted target, HIL, or broader release qualification is claimed.
+All 78 prior evidence stages verify unchanged. Main's 41 staged and Interface's
+eight pending paths remain protected by exact patch hashes. No push/publication,
+phase completion or full-goal completion. The status table now distinguishes
+implemented manual propagation from open automatic orchestration/global sensitivity.
+
+Evidence `docs/evidence/2026-11-15-interval-flow-wrapping-diagnostic`, local archive commit
+`af19ca2bbcbc7737547a94ff53fa69b17fd25e1d`: 202 files / 2,429,217 bytes,
+SHA-256 `c1553e9b5ffc9a118a4c6462f503c4a645c74674f9240cee78d088d65bc9c385`.
