@@ -112,3 +112,18 @@ size/stack improvement or hardware safety result is claimed by this documentatio
 change. Further migrations require owner and consumer correctness/cost evidence.
 Final firmware images, MCU cycles, callee/interrupt stack and HIL remain separate
 release gates. No tests or policies were weakened to close an inventory item.
+
+
+## Order-image experiment on 16 November 2026
+
+The [current delegation experiment](foc-order-images.md) reproduces the two
+manual helpers on firmware `2d68e82` and checks them through complete modulation.
+Exact output fields, errors, layout and measured allocation remain unchanged,
+but two matched campaigns on each of Rust 1.88 and 1.95 reproduce runtime
+regressions. The candidate is preserved in an unaccepted ref and restored.
+A separate test-only proposal fits its file/code allowance but exceeds the
+unchanged `.data.rel.ro` percentage cap; it is also preserved and restored.
+The generic ownership gap remains open. Restored portable tests (602), release
+FOC tests (88), strict Clippy and formatting pass; all five measured artifacts
+are byte-identical to baseline. No hardware or firmware-image qualification is
+claimed for the rejected candidate.

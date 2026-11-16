@@ -9695,3 +9695,32 @@ migration and the full fifteen-phase goal remain open. No push or publication.
 Review commit `e8a3d4e16595ac8b7e98c2bdc60be156ada2c309`. Evidence archive commit
 `12d5c1d22714f9abca6dff94f848a80f66c35b1f`: 459 files / 10,966,221 bytes,
 SHA-256 `c01b12f6f809ac391c3afea734ee16fd68ac98c2bf9dd4c6d4fe2886f11149dc`.
+
+
+## 2026-11-16: FOC order-image delegation fails current runtime admission
+
+Phase 9, P1/P3/P6/P19/P27/P31–P33/P35–P39. The
+[order-image experiment](docs/research/foc-order-images.md) delegates two private
+Q30 min/max helpers without changing modulation checks or caller order. Two new
+independent witnesses pass before/after delegation; 4,108 complete result/error
+rows match on native Rust 1.88/1.95 and WASM, with zero measured allocations in
+twelve named cases. A separately strengthened test-only candidate passes 604
+portable tests, 90 release FOC tests, strict Clippy and formatting.
+
+The production candidate is rejected on two eight-block campaigns per compiler:
+successful nonzero cases regress about 2% on Rust 1.88 and 0.6–0.9% on Rust 1.95;
+several typed rejection paths regress more. All raw samples and noisy controls
+are preserved. Positive host/WASM size growth does not excuse runtime cost;
+final board-image/flash/stack/HIL qualification was not pursued after rejection.
+The test-only proposal fits its declared file/code allowance but adds 824 bytes
+(1.0871%) to `.data.rel.ro`, exceeding its unchanged 1% incremental cap. No
+retroactive cap increase or layout/inlining retry is adopted.
+
+Firmware refs preserve production snapshot `15dc920214c971554caccd7a64d1cbc05594f11a`
+and tests-only snapshot `52d629964e3f5e1402bd0185bcd7df2b13a65df1`. Both paths are
+restored at `2d68e82`. The restored portable suite passes 602 tests, release FOC
+passes 88, and strict Clippy/formatting pass. All five measured artifacts are
+byte-identical to baseline, with matching complete transcripts and replay.
+All 89 earlier frozen stages and 45 size accounts remain unchanged. Two
+inventory rows now record this current rejection; no migration is credited.
+The full fifteen-phase goal remains active. No push or publication.
