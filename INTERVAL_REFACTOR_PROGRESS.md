@@ -8825,3 +8825,55 @@ reports, witnesses, dispatch records, restoration receipts and losslessly compre
 symbol maps. Executables remain external at hash-bound paths. The earlier superseded
 build helper and prepared unexecuted retries are identified separately from executed
 work; source observations are not treated as implementation or performance proof.
+
+## 2026-11-15: reject typed fraction ingress in the complete machine-profile consumer
+
+Phase 8 is rechecked on accepted CSGRS `97713a6102d2b7bb090d6c7ce33e6e156f816588`,
+Interface `f5341f36803ad77c856313315d67ac8b3bb63f9a`, and firmware
+`b9ecf8df54723e532a42867a1d3c549f827d5f6d` in clean isolated checkouts. The scalar
+owner lacked typed unsigned primitive fraction ingress despite the consumer's
+validated nonzero denominator. The missing witness first reproduces E0277.
+Properties P1, P4, P6, P10, P25, P27 and P36 govern this experiment.
+
+The candidate adds `From<(u64, NonZeroU64)>` at Hyperreal's existing fraction
+reducer without changing signed fallible fraction or reduction order. It reapplies
+the previously rejected nonempty/positive interval migration and removes impossible
+error transport from its unsigned radius factory. No earlier experimental API is
+assumed accepted. The consumer retains its validation guards, nominal values,
+physical identity, operation order and original fixtures.
+
+Both scalar tests pass: 240 full-u64 pairs match independent canonical components
+and quotient identities; 390 fresh-process construction traces match the historical
+signed-fraction domain, including all rational statistics. Display/debug and serde
+bytes match there. Sixteen interval tests pass with independent exact/GMP oracles,
+empty/invalid distinctions, subsequent arithmetic and unchanged dispatch assertions.
+Rust 1.95 all-feature/all-target Clippy with `-D warnings` passes for both owners;
+both workspace format checks pass.
+
+| Complete profile consumer | Baseline bytes | Candidate bytes | Delta |
+| --- | ---: | ---: | ---: |
+| Native | 810416 | 810752 | +336 |
+| WASM | 1069027 | 1069529 | +502 |
+
+The seven-case native profile, identity and allocation transcripts are byte-identical.
+WASM replays match native, retain invalid-case behavior and make zero host calls.
+These finite comparisons are supplemental; they are not an independent full-profile
+proof or complete canonical schedule/policy qualification. Both artifacts fail the
+no-growth gate, so the combined candidate and its scalar API are rejected. No
+instruction-level cause or runtime speedup is established. Build duration and WASM
+fuel are not performance evidence. Full Interface policy/schedule/browser, owner
+runtime, successive-operation, monomorphized-size and pre-push campaigns do not follow
+this early rejection; no arbitrary layout/inlining tuning or weakened gate is used.
+
+All eleven changed source files and reapplicable patches are retained as evidence.
+The isolated worktrees are restored clean. Restored scalar tests (23), rational
+interval tests (5), and both format checks pass. Fresh restored native/WASM artifacts
+and native output reproduce baseline byte for byte. The primary 41 staged and
+Interface 8 pending paths remain byte-identical; firmware stays clean. All 71 prior
+frozen stages verify unchanged. The full goal remains active; Phase 8's remaining
+arithmetic, retained-proof ownership and named-budget work are not declared complete.
+No push or publication.
+
+Evidence `docs/evidence/2026-11-15-interval-profile-typed-fraction`, local archive commit
+`224455e99bb2a6846e9ce9d1f35718cbc44bc969`: 91 files / 1,593,253 bytes,
+SHA-256 `cae451f595416064198ca8f131c1441e2fc98ba944a9d0f5df005b8238f5f9f7`.
