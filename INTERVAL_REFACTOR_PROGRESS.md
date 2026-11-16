@@ -9529,3 +9529,8 @@ remain unchanged. Automatic retained-noise horizon evolution is still open;
 this disposition does not complete phases 12/13 or the full goal. Further work
 requires a distinct implementation approach or another required capability,
 not another timing run of this unchanged candidate. No push or publication.
+
+
+Review commit `b8aa7109b`. Evidence `docs/evidence/2026-11-16-interval-flow-noise-reconsideration`, local archive commit
+`d14d110932ae8e548d4a3773020962e5b5a5ab6b`: 2,645 files / 9,032,213 bytes,
+SHA-256 `abfa3ac4e8f36fa895cccb7f09d7c79b88a63dbdec02e4bdc7e08aeebbdb5680`.
