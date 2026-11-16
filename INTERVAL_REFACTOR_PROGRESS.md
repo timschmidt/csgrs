@@ -9046,3 +9046,52 @@ remaining plan gates stay open. No push or publication.
 Evidence `docs/evidence/2026-11-15-interval-external-dynamics`, local archive commit
 `27ae2575dffb0281865a3a45b65fc4c276476a62`: 92 files / 664,056 bytes,
 SHA-256 `d550132d0ba9470f62905965c65665e3b48fcfaf0e89314a2ea772af7b26e54f`.
+
+## 2026-11-15: profiled finer-grid regridding rejected on scalar latency
+
+Phases 3/13, Hyperinterval owner, P1/P4-P6/P10/P19/P27/P36. The unchanged
+accepted external consumer at `f21444763` completes its eight-IVP diagnostic
+profile with 612,282,606 instructions. Its transcript matches the prior qualified
+corpus and passes the independent analytic oracle. Regridding accounts for
+63,028,733 inclusive instructions; inclusive attribution overlaps and this whole
+process includes warmup, replay, serialization and destruction.
+
+A missing allocation witness reproduces avoidable fine-grid mantissa expansion:
+[-7,9]*2^-3 regridded to -67 allocates 48 bytes versus 16 for a source clone.
+The candidate shares the existing alignment reservation calculation and copies
+an already canonical interval for equal/finer grids. Exact outputs, conservative
+charges, typed failures and call ordering remain unchanged. All 18 allocation
+cases match clone costs. The exact identity includes zero/empty and the i32::MAX
+normalization cap; it does not change coarse-grid rounding or budget semantics.
+
+The candidate passes 2,020 core tests, 10 B-rep interval tests, one native curve
+consumer, 186 SDF tests, 448 physics/circuit tests, 87 Rust 1.88 tests, strict
+all-target core Clippy, no_std WASM/Thumb compilation and formatting. Complete
+preparation/report/dispatch/work artifacts match all 373,388 baseline bytes;
+new direct regrid/alignment count assertions remain zero. All 25 measured
+binaries, .text sections and named code-symbol totals are nonincreasing, and
+successive_operations is byte-identical. These scoped checks do not establish
+full hosted/HIL, fuzz, coverage or pre-push qualification.
+
+Rejected under the unchanged owning-benchmark performance gate. The external
+ABBA run records 640 samples of 100 integrations with unchanged exact outputs;
+all 16 fresh/prepared medians improve 3.6–13.1%. Whole-process instructions fall
+7.23%. However, the owner campaign preserves all 380 exact/checksum/work rows
+and exposes slower logarithms. At precision -256, dyadic wide log rises from
+439.183 us to 454.986 us (+3.60%). Independent focused ABBA confirmation gives
+439.030 us to 455.263 us (+3.70%); the partial-domain row rises 3.99%. Other
+unfavorable observations remain in the full summaries. The native latency cause
+is not established; smaller binaries and consumer wins do not waive the gate.
+No arbitrary inlining/layout retry, threshold change or weakened fixture follows.
+
+Both tracked edits and both experimental test files are archived and removed
+from the isolated checkout. Original owner tests (247) and formatting pass;
+all 25 rebuilt binaries match baseline bytes, and restored dynamics certificates
+again match and pass the analytic oracle. Primary 41 staged and Interface 8
+pending paths remain byte-identical; firmware and isolated worktrees are clean.
+The allocation issue and all remaining plan gates stay open. No production
+optimization, push or publication is retained.
+
+Evidence `docs/evidence/2026-11-15-interval-dyadic-regrid`, local archive commit
+`14ce442c6a28e65a7d8083b8b64e00c8532a044b`: 351 files / 5,881,523 bytes,
+SHA-256 `14b9b7784a1ed4b2da11d8532f27f33fdef824364711732ebe455830619ba5f3`.
