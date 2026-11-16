@@ -9621,3 +9621,32 @@ fifteen-phase goal. No push or publication.
 Review commit `dc9e33712a3f24e1bdfe97f4205fc9992768641d`. Evidence archive commit
 `c0e98b7bc4e9f810ed5226f8eca64aff55b14693`: 294 files / 3,439,487 bytes,
 SHA-256 `e5c9452e59707f718315c92c25b4f4766b46d704a4bf2b23b57da1a192c1852f`.
+
+
+## 2026-11-16: borrowed budget-radius proofs remain outside cost admission
+
+Phase 8 section 8.3, P1/P4/P6/P8–P11/P19/P25–P27/P31–P33/P36–P39. The
+[borrowed-radius experiment](docs/research/budget-borrowed-radius.md) keeps
+rational input storage in the caller and transports a lifetime-bound proof.
+It reproduces the missing API, preserves original validation and scalar order,
+and passes original-storage/lifetime witnesses, full scalar traces, native/WASM
+exact transcripts, serialization and allocation/live/peak records. Hyperinterval
+reports 255 passing completions including nested subprocess fixtures; all 199
+Interface tests and owner strict Clippy/formatting pass.
+
+The candidate is rejected: nine owner binaries exceed the +4,096-byte file cap
+with 4,128–4,488 bytes growth. Eight warmed ABBA/BAAB blocks retain faster
+successful calculations and a repeatable 2.63–2.66% negative-source rejection
+regression, 2.87–2.91 ns per call. No cap revision, performance exception or
+layout/inlining retry is adopted. CSGRS snapshot
+73e6669222e2d176045fd3126bd60f46bb3dd9d6 and Interface snapshot
+40b731946a8f2743274dbe71c55e9a83e9659e9d remain recoverable through
+refs/interval-unaccepted/budget-borrowed-radius-20261116.
+
+All eight proposed paths are restored; no API is retained without its intended
+consumer. Restored Hyperinterval reports 247 passing completions, Interface
+passes 199 tests, and strict Clippy/formatting pass. All 44 measured artifacts
+are byte-identical to baseline, with matching consumer transcripts and replay.
+All 87 earlier frozen stages and all 45 cumulative size accounts remain
+unchanged. This is not completion of Phase 8 or the full fifteen-phase goal.
+No push or publication.
