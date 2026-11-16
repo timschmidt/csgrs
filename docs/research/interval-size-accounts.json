@@ -1,0 +1,3239 @@
+{
+  "program": "interval-refactor-2026-11",
+  "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+  "change": "array-construction-lifecycle-tests",
+  "scope": "Retained test-only change. Production matrix API and builder experiments have been removed. This is not acceptance of the rejected matrix client or its proposed larger allowance.",
+  "policy": "docs/admission.md#bounded-code-and-binary-size-exceptions",
+  "existing_artifacts": {
+    "native_final_file_and_allocated_sections": {
+      "incremental_bytes": 4096,
+      "incremental_percent": 1,
+      "cumulative_bytes": 16384,
+      "cumulative_percent": 2
+    },
+    "native_monomorphized_text_sum": {
+      "incremental_bytes": 1024,
+      "incremental_percent": 0.5,
+      "cumulative_bytes": 4096,
+      "cumulative_percent": 1
+    },
+    "wasm_final_file_and_code": {
+      "incremental_bytes": 1024,
+      "incremental_percent": 5,
+      "cumulative_bytes": 4096,
+      "cumulative_percent": 10
+    }
+  },
+  "new_lattice_test_harness": {
+    "file": {
+      "incremental_bytes": 32768,
+      "incremental_percent": 4,
+      "cumulative_bytes": 32768,
+      "cumulative_percent": 4
+    },
+    "text": {
+      "incremental_bytes": 16384,
+      "incremental_percent": 4,
+      "cumulative_bytes": 16384,
+      "cumulative_percent": 4
+    },
+    "named_text": {
+      "incremental_bytes": 16384,
+      "incremental_percent": 4,
+      "cumulative_bytes": 16384,
+      "cumulative_percent": 4
+    }
+  },
+  "rationale": "Two new callbacks/destructor-order tests instantiate test-only observers, assertions and failure diagnostics. Allow up to eight 4096-byte native pages in this test executable and four pages of code, additionally limited to 4%. This is test coverage of first-error publication and owned cleanup, not source reduction. Production code/data/unwind section hashes for all 41 other measured artifacts remain unchanged. Existing artifact caps stay strict and are accounted separately.",
+  "prior_accepted_exceptions": [],
+  "cumulative_rule": "Future exceptions reuse this fixed goal-wide baseline and each artifact account; new artifacts require baseline measurements at this revision or an explicitly documented equivalent completed control. No baseline resets or cross-target offsets.",
+  "flash": "not applicable: no firmware dependency on hyperlattice-interval and no firmware source/image change; no flash-size allowance granted",
+  "matrix_size_budget_revision_proposal": "not adopted",
+  "evidence": "docs/evidence/2026-11-16-interval-matrix-scale-reconsideration",
+  "status": "retained tests pass the declared bounds; no matrix implementation accepted",
+  "accepted_changes": [
+    {
+      "id": "array-construction-lifecycle-tests",
+      "benefit": "independent first-error callback order and nested ownership cleanup witnesses",
+      "source": "crates/hyperlattice-interval/src/lib.rs",
+      "production_implementation_changed": false
+    }
+  ],
+  "accounts": [
+    {
+      "artifact": "crates/hyperlattice-interval/src/lib.rs",
+      "role": "test harness with two new tests",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "35d4353b1676a7a750927a0ead48bb987be9a5dbaa0d9ef27bc9a3e098f71231",
+      "retained_sha256": "41e85f3f03f10d53d75f0edf66d77bd6cb6dc9e98bbbb5adcef011120dd2ba9b",
+      "selected_runtime_sections_identical": false,
+      "metrics": {
+        "file": {
+          "baseline": 1051288,
+          "retained": 1076136,
+          "net_growth_bytes": 24848,
+          "growth_percent": 2.3635768695162507,
+          "accepted_positive_growth_bytes": 24848,
+          "remaining_cumulative_bytes": 7920,
+          "remaining_cumulative_percent": 1.6364231304837493,
+          "caps": {
+            "incremental_bytes": 32768,
+            "incremental_percent": 4,
+            "cumulative_bytes": 32768,
+            "cumulative_percent": 4
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 599684,
+          "retained": 611892,
+          "net_growth_bytes": 12208,
+          "growth_percent": 2.0357388224464885,
+          "accepted_positive_growth_bytes": 12208,
+          "remaining_cumulative_bytes": 4176,
+          "remaining_cumulative_percent": 1.9642611775535115,
+          "caps": {
+            "incremental_bytes": 16384,
+            "incremental_percent": 4,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 4
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 591406,
+          "retained": 603321,
+          "net_growth_bytes": 11915,
+          "growth_percent": 2.0146904157211796,
+          "accepted_positive_growth_bytes": 11915,
+          "remaining_cumulative_bytes": 4469,
+          "remaining_cumulative_percent": 1.9853095842788204,
+          "caps": {
+            "incremental_bytes": 16384,
+            "incremental_percent": 4,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 4
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/linear_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "c40cf42cb4281afdf3029a89f9fd81fad7cf28ecaeca485b9c3d8eaa8e2a7da2",
+      "retained_sha256": "9a25409d978df283c6bb932343da980aad66278b9501c2efedf931a72787cfb1",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1331440,
+          "retained": 1331448,
+          "net_growth_bytes": 8,
+          "growth_percent": 0.0006008532115604158,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.9993991467884396,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 543911,
+          "retained": 543911,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 537280,
+          "retained": 537280,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/affine_chain_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "41433ea47f5fb5b722a20914ae4ee56b2bce2458a1427c6136a4db479b15d728",
+      "retained_sha256": "90f714b4d85ed0f44b7b5fa9373981faf83805be359126f354934baecd3b931f",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1384048,
+          "retained": 1384064,
+          "net_growth_bytes": 16,
+          "growth_percent": 0.001156029270661133,
+          "accepted_positive_growth_bytes": 16,
+          "remaining_cumulative_bytes": 16368,
+          "remaining_cumulative_percent": 1.9988439707293388,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 579639,
+          "retained": 579639,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 572430,
+          "retained": 572430,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/examples/fixed_affine.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "5f2d96661ee76b2ca66cd866cd3b4eb8423e329a70627b427641770f1e914c13",
+      "retained_sha256": "5f2d96661ee76b2ca66cd866cd3b4eb8423e329a70627b427641770f1e914c13",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 449544,
+          "retained": 449544,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 252899,
+          "retained": 252899,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 249519,
+          "retained": 249519,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/norm_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "2e49c2e036c525b2ec40017ca081f63ed6302b6ed80e6ff9dd10ee1862388dc5",
+      "retained_sha256": "a0e00cd5a22b2f4a387865e29b6e40d142f5645e9cbf86bbe48a9f05981af908",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1404064,
+          "retained": 1404064,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 608807,
+          "retained": 608807,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 602071,
+          "retained": 602071,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/midpoint_radius_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "e6e85d9d049bf615d9fcdd0d0a3f24ce89237d39cdfdf30690bef3111645d55f",
+      "retained_sha256": "f284cb6b86a70a38065385dea7205695232e6d4ef24bab0f458cab4409bc1625",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1354920,
+          "retained": 1354920,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 567959,
+          "retained": 567959,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 561367,
+          "retained": 561367,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/affine_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "472ca31b7e99789b2520f213f10bf954fc3663e5b6b40864fc311c1133b6744a",
+      "retained_sha256": "55a26f20d4b24144e606d244f52f0915b1dd81c76fd946178827560fec7b59f6",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1439752,
+          "retained": 1439728,
+          "net_growth_bytes": -24,
+          "growth_percent": -0.0016669537531463752,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 626439,
+          "retained": 626439,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 619095,
+          "retained": 619095,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/centered_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "08a543517a9c36570e55126c37e2d4cfad84122e432390276f2fd4796996974b",
+      "retained_sha256": "42ce807ad51b50041122054aef047028b56d5612a41212e3a0d0d17bc145778c",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1673104,
+          "retained": 1673088,
+          "net_growth_bytes": -16,
+          "growth_percent": -0.0009563063623062284,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 800391,
+          "retained": 800391,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 791438,
+          "retained": 791438,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/width_cost.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "default",
+        "dyadic",
+        "fixed",
+        "float-enclosure",
+        "hyperreal",
+        "rational",
+        "serde"
+      ],
+      "baseline_sha256": "b2f7e56c64c270d600bc0090c4029c2aa264820ad14de9a67daf89bbd98b4192",
+      "retained_sha256": "6423e2e6ba5c7dc1a9ce10bc5a9c735549e280c2888980442a2dc66b4c4d9b42",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1201944,
+          "retained": 1201944,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 463390,
+          "retained": 463390,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 458024,
+          "retained": 458024,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/src/lib.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "0a3a7829ddc49f69598a1bf41ba0972a9aa8beacc1afb9388f69f0bf2bc10b4e",
+      "retained_sha256": "e151a1242d64210228d57fd94a41ebf27440b726404a2a806b519461b15a9d73",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 13379232,
+          "retained": 13379288,
+          "net_growth_bytes": 56,
+          "growth_percent": 0.00041855915197524043,
+          "accepted_positive_growth_bytes": 56,
+          "remaining_cumulative_bytes": 16328,
+          "remaining_cumulative_percent": 1.9995814408480248,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 8616327,
+          "retained": 8616327,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 8549430,
+          "retained": 8549430,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/examples/enclosed_program.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "c719f4ef05b143355e411b9fd10653961df98d543799fedae6d5c28030e5561c",
+      "retained_sha256": "d5a9927015729ad15ab57e557247ca755ffa80b992f2ad595d23258a7ec8f5ab",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3471136,
+          "retained": 3471136,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1704199,
+          "retained": 1704199,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1689113,
+          "retained": 1689113,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/taylor_polynomial.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "b5dec7095caa30cce94490846a3f52954494f9f1f3651889fd3083655d1d37dc",
+      "retained_sha256": "a7756447fc0ca1474a41e6cc81251169b9acd4a89a91411b3650c83edd25e01a",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7607384,
+          "retained": 7607384,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3696055,
+          "retained": 3696055,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3653856,
+          "retained": 3653856,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/examples/owned_program.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "9eba24c4007737a0124e17f5d5e51466c0443ff1b9fb8995e548a5737a96694c",
+      "retained_sha256": "c00b7dcd0ec4a90e3cbeef948b79e871f640186a2e299836131a67c134f51904",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3349464,
+          "retained": 3349456,
+          "net_growth_bytes": -8,
+          "growth_percent": -0.00023884418521888875,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1580871,
+          "retained": 1580871,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1565778,
+          "retained": 1565778,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/algebraic_fiber.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "146ee233cd891e9af5d5c557789ef2cff710fbb0fcc383c38ce94d0e1f3e6866",
+      "retained_sha256": "275be58e4f587097eab7e64c9638e02c13788159478135d90942e4cf780a6da2",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 4410792,
+          "retained": 4410792,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 2388151,
+          "retained": 2388151,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 2366560,
+          "retained": 2366560,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/examples/allocation_profile.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "591df462984d08f1e91075d3697b6b629079e4da3ce2eb08e7137819e389888b",
+      "retained_sha256": "a909ae8352b95066679606a8a110e2948dddb18d718b7bd8eed31e5822891b73",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 4268768,
+          "retained": 4268768,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 2288535,
+          "retained": 2288535,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 2268623,
+          "retained": 2268623,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/dispatch_trace.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "6bc34c439a2be322f0e9df7581fd134b4ed7cc97bf872fbbb338110c60cbba2b",
+      "retained_sha256": "bbb7c9e0fd2dfeedc136d4ee440ae80dcec3c3efdd51cf0d46f0ceca8e67e665",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 5518480,
+          "retained": 5518480,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3237127,
+          "retained": 3237127,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3209271,
+          "retained": 3209271,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/src/lib.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "b2401fce5f03f360b2b23e0800a880cf548317bfaa84ced39261a8c0d3490824",
+      "retained_sha256": "b2401fce5f03f360b2b23e0800a880cf548317bfaa84ced39261a8c0d3490824",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 1051272,
+          "retained": 1051272,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 599684,
+          "retained": 599684,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 591406,
+          "retained": 591406,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/taylor_noise.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "6b71d41deaf5b41227359fc3719c5f16a45a654c45494e0cd4b14530cf8ec1cb",
+      "retained_sha256": "59ad45fc465cfe668bcb9a6e31dbab98ec5f28ae8a423350a8b6d34e701f1d96",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7618208,
+          "retained": 7618208,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3736391,
+          "retained": 3736391,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3694651,
+          "retained": 3694651,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/certification.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "893088139393e21beee3bfb8a79b85e1f3d06efdef2a1756f4d795aee76b1d6a",
+      "retained_sha256": "34a4e2ac31a162720c2b7564d442ce08a01386a8378f39c5baad7dcf866613dd",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 16946904,
+          "retained": 16946904,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 11042967,
+          "retained": 11042967,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 10954511,
+          "retained": 10954511,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/expression_program.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "86dc0919defb1dc35fd898630cc2161617b7b89293feeee9893d484c781931a7",
+      "retained_sha256": "b03c3a1dd0cb3716e505caa0888006ddcdac716407b0d74bd05e60547290b9b4",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7114776,
+          "retained": 7114776,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3338167,
+          "retained": 3338167,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3299408,
+          "retained": 3299408,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/representations.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "a01741282dc07fdff53485f2d3c5e564b83b91e44ab398e7dfa96056364a4e3a",
+      "retained_sha256": "8655f6266c20a1cb6a15b13d4e99d917ed498feb2c34eebc2712ac5112a551d2",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7964376,
+          "retained": 7964376,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3991111,
+          "retained": 3991111,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3947158,
+          "retained": 3947158,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/taylor_composition.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "3af04e517affdfc1466966d35638a32c090bdf47496d0ebb09dc8249e5db85d5",
+      "retained_sha256": "bdc6ebb77665774bbd14b3a06d0d32898f2a55f4219391619525eb322ac7766f",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7830360,
+          "retained": 7830360,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3890407,
+          "retained": 3890407,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3847283,
+          "retained": 3847283,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/retained_fuzz.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "ba886b53325f74383877a4905e409fcc4f62cae41829724e13cdf028e021b8ec",
+      "retained_sha256": "c851761b6f20b246e264e72d2e30ef4a26c3b0ff807bf0e6e295810b31ddae00",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 9377016,
+          "retained": 9377016,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 5061927,
+          "retained": 5061927,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 5009904,
+          "retained": 5009904,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/examples/write_benchmarks_md.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "d9d2c7b0ef9ec3d586bcfe782efc95ebf4f57a37b8cfa333385d6325f5f4daba",
+      "retained_sha256": "d9d2c7b0ef9ec3d586bcfe782efc95ebf4f57a37b8cfa333385d6325f5f4daba",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 680992,
+          "retained": 680992,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 404131,
+          "retained": 404131,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 398799,
+          "retained": 398799,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/benches/competitive.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "d236da89156dc7399c11e2126627ed9aa67e163ca0d4676771202444fe621e2c",
+      "retained_sha256": "85619f6e75bd388ee29ba49b0585bf28823b1a333369a28712edd6a6942d6a39",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7713488,
+          "retained": 7713488,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3783911,
+          "retained": 3783911,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3741000,
+          "retained": 3741000,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/taylor_noise.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "48c668d6125fdff002c01702a24319d1b5a8d565e3bdcc065f95759f8d2e7c41",
+      "retained_sha256": "7bdb58ac821b7f494f7d811fa541f6df270e4cd6e9662fd583fd9d2ec19c5fb9",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3913256,
+          "retained": 3913256,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1984567,
+          "retained": 1984567,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1965267,
+          "retained": 1965267,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/expression_field.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "2de3d3bcc5abefdca027c8e173764065f15ed4f7eb3ddee9f5c830cb51f4f389",
+      "retained_sha256": "00c81e2d39f469bb07873f50e1369a371adba5ec5c8da8a298289db21a19b36f",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3677768,
+          "retained": 3677760,
+          "net_growth_bytes": -8,
+          "growth_percent": -0.00021752323691978396,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1820551,
+          "retained": 1820551,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1803102,
+          "retained": 1803102,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/taylor_orders.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "0a15eb795eac35f51c104cf34ebe91f2f230545871e782ce8939bbad36bb66b9",
+      "retained_sha256": "dc785f952f7966fcf6d722ef0c95b4dfa7c11c3032a8a4ccd8d6b50836cac563",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7593232,
+          "retained": 7593232,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3671943,
+          "retained": 3671943,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3629064,
+          "retained": 3629064,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/reachability.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "9c548254e54bab1557f357e0beea5528623dc48021700e3e7848100c3d753550",
+      "retained_sha256": "4f2ca8b2c0723cfa0847c6f6d65a2b01000a20f308844664015528915bfdac78",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3623360,
+          "retained": 3623360,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1788775,
+          "retained": 1788775,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1772064,
+          "retained": 1772064,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/taylor_evolution.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "8d28eb2444109ccad64b2b7a00b6f56258259e371cf16e924dc6f8f698d22e22",
+      "retained_sha256": "6955ae090af1cdbc007e9396079bda4a500ee6ee0e666786def648f40bfe9f64",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7676256,
+          "retained": 7676264,
+          "net_growth_bytes": 8,
+          "growth_percent": 0.00010421747268460041,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.9998957825273154,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3746711,
+          "retained": 3746711,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3704113,
+          "retained": 3704113,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/taylor_model.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "777c9bc2fcb5ad7bcee54e805f7312f3de7337ab8af98fa489056dfb902b0ab2",
+      "retained_sha256": "2c0a73e593771b06f027d4f8cb36495e06e17fab18a2923e7346ba18ad5a5140",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3721280,
+          "retained": 3721288,
+          "net_growth_bytes": 8,
+          "growth_percent": 0.00021497979189956143,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.9997850202081005,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1847559,
+          "retained": 1847559,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1829717,
+          "retained": 1829717,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/rk_proposal.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "1d83537dd09492bf02f04701f360611546fd3f699fcfe7b5611eb4b3060842be",
+      "retained_sha256": "c20ef05b61b84d9cb3b7c5c82695ffae40ffc53b25c2d5ce29ec873f83cc6ba5",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3714192,
+          "retained": 3714192,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1826023,
+          "retained": 1826023,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1807702,
+          "retained": 1807702,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/taylor_flow.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "96c8105ae04a40c33edf3707dcc5710d3dbc6acf99066153c67dbc82074d5690",
+      "retained_sha256": "24a1c81b6dfcf75c8ae2d759faf4e87987e3affc769f417c913e8bb79995857e",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7568664,
+          "retained": 7568672,
+          "net_growth_bytes": 8,
+          "growth_percent": 0.00010569897144330888,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.9998943010285566,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3678263,
+          "retained": 3678263,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3636559,
+          "retained": 3636559,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/adaptive_taylor.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "7af318406862b5b8106ff56af2f2c0903291adea043541a2d97f4a0d53dabc1f",
+      "retained_sha256": "c45fb7c4939ad2312ffd7220cedd119f0086e572a5b870a132ed013e832328a8",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3764104,
+          "retained": 3764136,
+          "net_growth_bytes": 32,
+          "growth_percent": 0.0008501359154794873,
+          "accepted_positive_growth_bytes": 32,
+          "remaining_cumulative_bytes": 16352,
+          "remaining_cumulative_percent": 1.9991498640845204,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1898839,
+          "retained": 1898839,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1881326,
+          "retained": 1881326,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/flow_noise.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "a4bcd0de2eb8b9fbd5a3630ad2a40ca6b5f038b3392a6848fc5799ec18aa4c4b",
+      "retained_sha256": "24bd357f132f6999e721ab5c3c0b40a4649b5811112569d79f22dad1000d8e49",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 4023440,
+          "retained": 4023440,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 2051511,
+          "retained": 2051511,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 2031083,
+          "retained": 2031083,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/qr_evolution.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "cd0c930beb71498a09c19e6daaccbbb634d7243ea874e6b8918ac85d788002f4",
+      "retained_sha256": "2be8ff815491532931f460407cf632518bfb3625a4e7e5ee25150e484b9d441a",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 8186008,
+          "retained": 8186000,
+          "net_growth_bytes": -8,
+          "growth_percent": -9.77277324918324e-05,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 4131783,
+          "retained": 4131783,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 4085514,
+          "retained": 4085514,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/taylor_affine.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "3278459773b4df2b6f35ec7f4d2c5586a339545a584962a1ac74c6ce158ffb61",
+      "retained_sha256": "67efcd370880492c8de993ad2d7d7b9b325d0f1d0d52517da50d39e41907ef04",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3830968,
+          "retained": 3830968,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1940055,
+          "retained": 1940055,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1921710,
+          "retained": 1921710,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/taylor_orders.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "e0ce4ddae252fd011f1cc274d4fcdeae83a344521f5ebf4a87a9843dcbd38787",
+      "retained_sha256": "082af39146ae7256b173f8092324b6e5bd24d720f0113b7f2cfe4aaa0a47ebe9",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3740696,
+          "retained": 3740696,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1859527,
+          "retained": 1859527,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1841462,
+          "retained": 1841462,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/examples/coordinates.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "63503792a7c2e0e62c406caa9887fa1bbf7a27035a4f44ee5bdea9d90de801f1",
+      "retained_sha256": "bb0620154425a1564b189a70c7943d144c80b2f13ab41e1c66be6944c2b82176",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 4035568,
+          "retained": 4035568,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 2100295,
+          "retained": 2100295,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 2080667,
+          "retained": 2080667,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/qr_coordinates.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "44a6f2d24a22a1832a20567e736ab6e9d5144755bcbedb89a8722ac94697bcb6",
+      "retained_sha256": "77528cedf186665dab9ed0be54cb44f56aad38ce71d1cfa1c28e8758db98caac",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7918616,
+          "retained": 7918624,
+          "net_growth_bytes": 8,
+          "growth_percent": 0.00010102775535522874,
+          "accepted_positive_growth_bytes": 8,
+          "remaining_cumulative_bytes": 16376,
+          "remaining_cumulative_percent": 1.9998989722446447,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3948471,
+          "retained": 3948471,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3904459,
+          "retained": 3904459,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperdynamics/benches/coordinate_transition.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "adaptive-taylor",
+        "coordinate-transition",
+        "coordinates",
+        "default",
+        "dispatch-trace",
+        "field",
+        "flow-noise",
+        "qr-coordinates",
+        "qr-evolution",
+        "reachability",
+        "rk-proposal",
+        "serde",
+        "taylor-affine",
+        "taylor-evolution",
+        "taylor-flow",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "e0bc11f4399abf8fba33cebe9fee06ea2c5ef54e9b194cddb0a2cc9459c7b0dc",
+      "retained_sha256": "aeee34506668c1c389d4c244998f1d34b344da2ec562b6f077976bfcf51e18fb",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 7680112,
+          "retained": 7680112,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 3799159,
+          "retained": 3799159,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 3757244,
+          "retained": 3757244,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hypersolve/examples/basic.rs",
+      "role": "unchanged completed-workload executable",
+      "target": "x86_64-unknown-linux-gnu",
+      "features": [
+        "coordinate-program",
+        "coordinate-transition",
+        "default",
+        "dispatch-trace",
+        "expression-program",
+        "float-proposal-program",
+        "interval-lattice",
+        "interval-program",
+        "qr-coordinates",
+        "serde",
+        "taylor-affine",
+        "taylor-composition",
+        "taylor-model",
+        "taylor-noise",
+        "taylor-polynomial"
+      ],
+      "baseline_sha256": "cc0fe548b32c31f8e35ad3363bc6d2563cca1534c475cf62171da2e9b28808ee",
+      "retained_sha256": "dbc10f0c4884cc322e1f878b4b5c472754a188da9ec60f897aba5e156df14dfb",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 3467248,
+          "retained": 3467248,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "text": {
+          "baseline": 1699127,
+          "retained": 1699127,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 16384,
+          "remaining_cumulative_percent": 2,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1683935,
+          "retained": 1683935,
+          "net_growth_bytes": 0,
+          "growth_percent": 0.0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 1,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 0.5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 1
+          },
+          "passes_both_caps": true
+        }
+      }
+    },
+    {
+      "artifact": "crates/hyperlattice-interval/conformance/centered-wasm",
+      "role": "unchanged completed-workload WASM boundary",
+      "target": "wasm32-unknown-unknown",
+      "features": [
+        "fixed",
+        "float-enclosure"
+      ],
+      "baseline_sha256": "b4e71aaafbddcdbbe2fb3b89839526860c70bc914a594f30bcc37375ab68bb6d",
+      "retained_sha256": "b4e71aaafbddcdbbe2fb3b89839526860c70bc914a594f30bcc37375ab68bb6d",
+      "selected_runtime_sections_identical": true,
+      "metrics": {
+        "file": {
+          "baseline": 44640,
+          "retained": 44640,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 10,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        },
+        "code": {
+          "baseline": 32060,
+          "retained": 32060,
+          "net_growth_bytes": 0,
+          "growth_percent": 0,
+          "accepted_positive_growth_bytes": 0,
+          "remaining_cumulative_bytes": 4096,
+          "remaining_cumulative_percent": 10,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        }
+      }
+    }
+  ]
+}

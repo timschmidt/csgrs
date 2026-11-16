@@ -9362,3 +9362,49 @@ will begin with the size-only matrix-scaling candidate under explicit caps.
 Evidence `docs/evidence/2026-11-16-interval-foc-inventory`, local archive commit
 `3c7205433a65b97d09e78478cdaddc338c6c9ff8`: 14 files / 836,893 bytes,
 SHA-256 `4bc0348e1c7488f4ac3f6521f9354eebe2e27a436529ee0c3a11cbbe30e69912`.
+
+## 2026-11-16: matrix scaling reconsidered under bounded size policy
+
+The owner authorized managing all pending changes, including their own. The four
+policy edits are committed coherently in `c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb`;
+the admission protocol owns the exception, with plan and agent-rule links. The
+41 staged extraction and eight Interface paths remain unchanged while their own
+implementation/qualification remains pending.
+
+The [matrix reconsideration report](docs/research/matrix-scale-reconsideration.md)
+records a fresh missing-API reproduction and current qualification of stage 77's
+matrix-only candidate. Its existing-consumer growth fits the new bounded rule,
+but a completed five-backend scalar-control comparison exposes an independent
+latency gap (8.45–29.26%). A single-pass builder and one targeted public-wrapper
+inline experiment preserve correctness but do not resolve that gap. All three
+production candidates are removed; the proposed larger first-use client size
+allowance is not adopted. No policy, fixture or performance gate is weakened.
+
+The initial candidate passed 2,022 native tests/doctests in 133 suites, strict
+Clippy/docs/fmt, MSRV and portable checks; a linked WASM client passed 243 cases
+per binary against independent integer endpoint expectations. Native comparisons
+include 128 ABBA runs / 72,640 samples / 10,731,520 completed operations, unchanged
+output/allocation controls and Callgrind attribution. Missing Rust 1.95 Thumb
+support was installed and the failed checks retried successfully. Raw failures,
+proposals, controls and all unfavorable timing observations are retained.
+
+Two independent first-error callback/drop-order tests remain on the original
+fallible-array helper. Final owner tests/doctests (96), existing dispatch controls,
+Rust 1.88 no-feature unit tests (2), strict Clippy and workspace formatting pass.
+The retained test executable grows 24,848 file bytes / 12,208 text bytes / 11,915
+named text bytes within its explicitly recorded 32,768/16,384/16,384-byte and 4%
+caps. All 41 other measured native artifacts have identical code/data/unwind
+sections, with raw-file increases no larger than 56 bytes; the 44,640-byte existing
+WASM boundary remains byte-identical. No production function changes remain.
+
+[The size account](docs/research/interval-size-accounts.json) records these test
+coverage costs against a fixed goal-wide baseline, preserving both byte and
+percentage remaining allowances per artifact. It does not accept the rejected
+matrix client or grant firmware growth. Firmware and Interface normal graphs
+exclude the owner crate. Full successive timing, fuzz/coverage, hosted CI and
+release qualification of the rejected API remain unexecuted; no completion claim.
+
+All 81 earlier frozen stages verify unchanged. No push/publication. The full
+15-phase goal remains active; next reconsideration is the previously rejected
+Taylor derivative child-scheduling clone removal, under fresh current checks
+and the same cumulative size baseline.
