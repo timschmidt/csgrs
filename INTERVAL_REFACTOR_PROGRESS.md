@@ -10293,3 +10293,34 @@ Frozen review evidence: `docs/evidence/2026-11-17-interval-residual-certainty-re
 `ae36f8d84f038d5789b690e41b0615c5929b7ca5`; 138 files / 2,686,921 bytes, SHA-256
 `a5ce2987cfdc4ae978cbe44cc1cbbc3c85b61e8105819a93f80dfd8a9ab8ef20`. Prior archive records and manifest rows are preserved.
 No push.
+
+## Residual-certainty resource qualification
+
+The isolated residual-certainty repair has completed 105,144 resource processes,
+including 519,936 full-owned operation/cleanup cycles. The 113-case corpus covers
+196 policy configurations across direct reports, interval-box consumers and
+failed-constraint diagnostics. Original and repeated reports/traces agree on
+unchanged completed contracts; corrected approximate outcomes remain separate.
+
+Initial operation and lifetime campaigns exceed prospective caps in 113 and
+68 accounts, respectively. Fresh repetitions reproduce within-binary allocation
+and stack variation; all original positive charges and baseline drift remain
+reserved. No persistent payload growth occurs after cycle two in the measured
+lifetime campaigns. Instrumented final binaries pass their size caps. See the
+[resource qualification](docs/research/residual-certification-ownership-review.md#finite-memory-qualification).
+
+Only two stack configurations have a new unadopted proposal: 128 bytes AND 2%,
+with cumulative charges of 80 and 104 bytes and unchanged total/headroom limits.
+Temporary allocation failures remain open. Runtime, complete consumer capacity,
+public/WASM artifacts, packaging, cancellation/retry and combination with the
+four earlier repairs remain required. No primary production source, inventory
+row, accepted account or existing gate changes. The 1,611-row inventory remains
+partial, all 57 size accounts and zero memory accounts remain intact, and all
+fifteen plan phases remain active. No push.
+
+Frozen finite resource evidence: `docs/evidence/2026-11-17-interval-residual-certainty-resources`, local commit
+`d62cded53e3df97f5c77ada6a040df93cda848c0`; 13 archive files / 134,998,864 bytes, SHA-256
+`5e6547a66f1263debda2a5f5a794ccaef9aec58034c1de61b570926a80de2dc6`. The verified split archive contains 109,301 files /
+2,875,171,645 uncompressed bytes, including all fourteen instrumented binaries.
+The live admission stage remains mutable; later work is not sealed by this
+snapshot. Prior archive records and manifest rows are unchanged. No push.
