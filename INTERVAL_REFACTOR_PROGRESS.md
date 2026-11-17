@@ -10757,3 +10757,31 @@ commit `3cc14e7745bec36f5c6a0eebbf17587600aea49e`; 917 files / 4,824,326 bytes,
 SHA-256 `e1c880a1930c61cdd0c3a8ddd4b7d62a6a68020ef9d1740a70f1c3caf66b7800`.
 All source/stored/committed hashes and three images are verified; previous
 archive records remain unchanged.
+
+## 2026-11-17: trace key storage and event-time qualification
+
+Three isolated trace candidates preserve all 276 complete outputs and pass their
+nine owner tests, strict owner/consumer Clippy and formatting. Exact preallocation
+repairs the canonical table's 32 retained-report failures; all 184 local memory
+accounts then pass. A separate 384-control runtime screen rejects it: all 96
+active pairs are slower, and 32 KiB labels add about 701–727 milliseconds per
+16,384-event workload. See the [review](docs/research/trace-key-representations.md).
+
+Borrowed report keys preserve event-recording code and reduce temporary bytes,
+but three original allocation/free accounts fail by one. A diagnostic passes
+identical label addresses to both collectors: all 552 actual iteration vectors,
+full reports and allocation/free/reallocation counts match. All 1,104 paired
+local accounts pass. Original failures and positive charges remain; this does
+not establish full lifetime, stack, runtime, geometry or distribution admission.
+
+Two zero-control diagnostic harness failures and their corrections are retained
+within the original execution budget. All producers and independent verifiers
+are terminal; the source worktree is restored to control. No production source
+is merged. Accepted totals remain 57 size / zero memory, inventory 1,644 rows;
+the full goal stays active, queue held and original watcher terminal. No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-trace-key-representations`,
+commit `5fd724d2341e4ad19fed277370f27e2bb66ccf0b`; 2,011 files / 19,028,727 bytes,
+SHA-256 `f39d6584b892a9d999a06cafaf00e4b3922f14d35346987b6201af07cf279e9c`.
+All source/stored/committed hashes and six validated native images are verified;
+previous archive paths are unchanged.

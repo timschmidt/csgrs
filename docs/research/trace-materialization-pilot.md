@@ -86,6 +86,10 @@ log, correction and original deadline remain preserved. Geometry is not rerun.
 
 ## Next investigation
 
+The [trace-key follow-up](trace-key-representations.md) now records the canonical
+table runtime rejection and a borrowed-key alternative, with its remaining
+original failures and controlled shared-input evidence.
+
 The batch regression arises because the live table distinguishes addresses while
 the public report merges textual labels. A content-keyed recording table could
 avoid that temporary expansion and the second aggregation structure. Such a
