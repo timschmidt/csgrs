@@ -10375,3 +10375,33 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-packaged`
 `db4865f495af7e3c0ee640cea890e6edca344d5a`; 253 files / 56,808,003 bytes, SHA-256
 `295c4976b18427b073f9990d010e4510f7b333d4f584c746b6106ae6bbfd2407`. All earlier archive paths and index rows remain unchanged.
 Both package attempts and the review snapshot are frozen. No push.
+
+## Residual-certainty owner images and trace allocation
+
+The isolated repair now has 35 measured owning-crate release images and 5,264
+passing functional checks across fixed/current/candidate revisions, no-default
+and all-feature configurations. Strict Clippy and formatting pass; full dispatch
+reports and existing test identities/outcomes are preserved. Six retained-fuzz
+images are explicitly metadata-only, not executed fuzz workloads. See the
+[owner and allocation review](docs/research/residual-certainty-owner-and-trace-review.md).
+
+The no-default unit file has one original cap failure: 15,456 bytes of positive
+growth exceed its 4 KiB incremental cap. Other metrics and declared reserves
+pass. A separate, unadopted proposal would allow this correctness change to use
+the existing 16 KiB cumulative file budget in one increment, preserving the
+charge and 928 bytes of remaining allowance. No accepted account changes.
+
+A 108-process diagnostic attributes the sampled active-trace 632-byte variation
+to snapshot B-tree allocation in the original binaries. Full output/trace
+strings agree; passive controls remain constant. This finite attribution does
+not remove any historical charge or explain passive stack variation. Memory,
+complete-consumer, runtime, cancellation/retry and combined-admission gates
+remain open. No production or inventory change; all fifteen phases remain
+active and the 1,644-row inventory remains partial.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-owner`, local commit
+`1da0eebf99e52060d5f08dd1f7c80cf8e28def6d`; 548 files / 149,749,754 bytes, SHA-256
+`984f4104fc268c76d6c94dcbc0e74b98741f43fbc8b6c436614807a21b3f6cef`. Earlier records and index rows are preserved.
+The raw-log archive rejection and metadata collector error remain recorded
+with their corrected verification; all source/output bytes are preserved.
+Source stages are frozen. No push.
