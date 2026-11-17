@@ -10143,3 +10143,34 @@ runtime, size and downstream qualification. The Jacobian context repair is also
 eligible for review of its measured 32-byte increase; no prior runtime failure
 or other gate is waived. Unchanged rejected designs with unrelated failures
 remain rejected on those grounds.
+
+## Domain-certification certainty review
+
+Current revision `425c28eeb` reproduces a separate proof-qualification defect:
+the domain preflight adapter discards predicate certainty and counts approximate
+answers as exact domain certificates. All 532 lines and 15 declarations were
+reviewed. Two lexical inventory rows are updated and thirteen missing
+declarations added; all other rows remain unchanged. The inventory now has
+1,578 rows and remains partial. Scalar unit-domain membership belongs in the
+Hypersolve adapter, not in a new interval arithmetic kernel.
+
+Twelve exact boundary/offset controls pass under both policies. Twelve public
+acceptance witnesses fail across all ten domain-check kinds, including a
+positive denominator reported `CertifiedInvalid` and a negative square-root
+operand reported `CertifiedValid`. Hyperlimit explicitly marks the contributing
+terminal equality as approximate; strict policy remains unknown. The independent
+angle-addition identity and exact signed dyadic offsets establish the intended
+domains. The initial square-root witness and harness constructor compile failure
+are preserved separately. Both final harnesses pass strict Clippy and formatting.
+
+No production repair, new repository test or resource allowance is adopted.
+See [the review](docs/research/solver-domain-certainty-review.md). The frozen
+review record is `docs/evidence/2026-11-17-interval-domain-certainty-review`;
+its digest is registered in the evidence manifest. Runtime, full-owner,
+resource and downstream qualification are not claimed by this audit.
+
+The unaccepted alpha, Jacobian and non-finite linear candidates remain separate.
+Their guarded runtime queue is unchanged; their proposed resource budgets do
+not become independent cumulative allowances for shared final artifacts.
+All 57 size accounts and zero adopted memory accounts remain unchanged.
+All fifteen phases remain active. No push.
