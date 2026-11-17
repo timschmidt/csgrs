@@ -10405,3 +10405,29 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-owner`, l
 The raw-log archive rejection and metadata collector error remain recorded
 with their corrected verification; all source/output bytes are preserved.
 Source stages are frozen. No push.
+
+## Residual-certainty allocator usable-byte attribution
+
+A finite 146-process review now reconciles one passive memory configuration's
+usable-byte variation against the original fixed/current/candidate binaries.
+All complete outputs and traces agree. The 73 instrumented processes have
+identical request sequences and reconcile 219 operation and cleanup epochs;
+73 corresponding event positions receive differing usable sizes despite
+identical requests. Plain processes reproduce usable variation on each binary,
+while requested traffic, peak and retained operation payload remain constant.
+See the [usable-allocation review](docs/research/residual-certainty-usable-allocation-review.md).
+
+This is attribution for one STRICT cold rebuilt-input case, not a general
+allocator model, unchanged instrumented cost, or runtime evidence. Original
+failures and positive charges remain; no cap or accepted account changes.
+The isolated repair's remaining memory, capacity, runtime, cancellation/retry,
+validation and combined-composition gates stay open. Production and the partial
+1,644-row inventory are unchanged. The original quiet watcher resumes with its
+unchanged finite horizon. All fifteen plan phases remain active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-residual-usable-allocation`,
+local commit `d2842b8b326d916d541a670ada9a604ab9453e9a`; 171 files /
+2,662,214 bytes, SHA-256
+`fae97e7a8a16aebbd67440cf3f4a5ab665fcffbe42a845df79f431ec648bcb9e`.
+Original bytes are preserved with source/stored digests; earlier archive paths
+and index rows remain unchanged. The diagnostic stage is frozen. No push.
