@@ -10460,3 +10460,35 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-composition`, lo
 are preserved with lossless gzip encoding and source/stored digests. Earlier
 archive paths and manifest rows remain unchanged. The qualification and initial
 formatting-attempt stages are frozen. No push.
+
+
+## 2026-11-17: five-repair complete-consumer resource controls
+
+The unaccepted five-repair source passes 516 controls and reproduces eight
+expected failures on the four-repair baseline. The additional consumer retains
+all original inputs/assertions and consumes residual-ball reports in diagnostics.
+Complete output/trace text agrees within 132 feature configurations; all four
+strict Clippy configurations pass. See the [resource-control review](docs/research/solver-five-repair-resource-controls.md).
+
+All 38 images are preserved; initial final-image budgets pass. Whole-owned
+controls complete 8,256 cycles with no tracked persistent growth after cycle two.
+All initial lifetime total caps pass, but ten growth metrics in four active-trace
+configurations fail. Their charges and original fixed denominators remain;
+no cap is revised and no account or source is admitted. The initial collector
+failure and corrected feature separation preserve every output/assertion and
+the original total deadline.
+
+Repeated-process/stack measurements, reused-input whole-owned lifetime,
+quiet runtime, successive-operation, distribution and resource/cancellation
+qualification remain open. Payload observations do not establish RSS or
+firmware fit. The 35 old residual-owner images now have verified RAM copies at
+stable symlink paths, with immutable archived bytes and a recovery recipe.
+No queued artifact changed. Inventory remains 1,644 rows; accepted accounts
+remain 57 size and zero memory. Earlier failures and the fifteen-phase goal
+remain active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-controls`, local commit
+`b2dde626edd2ca1a4b4e5030192c3108d345b32a`; 843 files / 73,745,748 bytes, SHA-256
+`c4339cb5da9ec04d23673a74dc20d2fdae210ebcdd59b3408af76f4c88b571d9`. Raw logs, collector attempts, recovery records and all
+38 final executable images are preserved losslessly with source/stored digests.
+Previous archive paths and index rows are unchanged.
