@@ -10619,3 +10619,22 @@ SHA-256 `bb953e6601ba5c953b9b1d00172a45e431f4cf753f22a8761525b610ad276ab7`.
 Frozen package evidence: `docs/evidence/2026-11-17-interval-five-repair-packaged`,
 commit `2e30fed7f1350d6483eb1c329e95f6c4e4907db8`; 140 files / 11,295,447 bytes,
 SHA-256 `dff37ca2318f78975a34c2bda4e38818bc486072c866b82b5dabb09036485ced`.
+
+## 2026-11-17: cancellation publication boundary
+
+Isolated candidate `9457d39b8` adds a final cancellation check before a cancellable
+scope publishes its callback value. Original controls reproduce the documented
+old behavior. All 1,321 candidate test invocations, the public native witness and
+three WASM cases pass, with affected strict Clippy, docs and formatting. The
+intentional contract extension preserves ordinary work-budget and Hypercurve
+adapter code. See the [publication review](docs/research/solver-cancellation-publication.md).
+
+Complete-consumer cost, distribution, quiet timing and remaining admission are
+still open. Earlier failures and positive charges remain; no memory or size
+account is admitted. Accepted totals stay at 57 size and zero memory, inventory
+at 1,644 rows. The queue remains held and the original watcher terminal. The full
+fifteen-phase goal remains active. No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-boundary`,
+commit `6b9666fe36a5affa1bc289457d843b13f8a9f93f`; 79 files / 571,103 bytes,
+SHA-256 `963fbacbf2f8aec16d500627514e2990071e4b1886639b17743d599cebdb33c2`.
