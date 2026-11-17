@@ -10023,3 +10023,37 @@ Archive commit `4844da1d38ddc5e38970d92416deb64871651aa4` contains 177 files /
 `1698b22b10740be2121cbe597765b889665cb47250e181787d5ed710dc544764`. Prior archive records and manifest rows are unchanged.
 Both original-source adversarial CI commands separately pass; the 22-command
 quiet queue has not started under unrelated routing load. No push.
+
+
+## 2026-11-17 UTC: Jacobian context bug reproduced; repairs rejected on stack
+
+The required phase-7 body review reads all 136 original lines and six
+Jacobian declarations, plus context/residual evaluation and the immediate
+solver caller. These are solver-specific numerical proposal adapters, with
+no generic interval kernel to extract. Six reviewed rows are appended to the
+partial inventory, preserving all 1,534 previous rows; there are now 1,540.
+
+At `557a349f9`, a rebound context gives forward difference `-5` where the
+independent result is `7`; a weighted/fixed/unused/inactive case also fails.
+Three repairs pass their focused correctness witnesses. Candidate `9e88db0ca`
+also passes the full owner suite and strict local checks, but adds 32 stack
+bytes in every measured default/trace group. Single-entry variant `89b58eb57`
+reduces ordinary stack by 80 bytes but adds 128 for empty rows; owned-context
+variant `4bd27bdb9` reduces ordinary stack by 128 but adds 176 for empty rows.
+All three remain rejected. No size exception waives those stack results.
+
+Four campaigns run 1,536 fresh processes. All 768 paired output matrices and
+256 allocation/drop pairs match; the first candidate also preserves 64 full
+trace snapshots. No timing ran. The isolated checkout is restored clean;
+three original Jacobian tests, all-feature/all-target strict Clippy and
+formatting pass. Both restored resource binaries are byte-identical to baseline.
+No production code, new tests or size-account change is retained. The bug and
+separate numerical-adapter review questions remain open.
+
+See [the review](docs/research/solver-jacobian-context-review.md).
+Evidence `docs/evidence/2026-11-17-interval-jacobian-context`, commit `a099a4fd21fd8d106acfb874bb943dedc628794d`,
+contains 1,792 files / 1,280,121 bytes, SHA-256
+`33911caecf0a7cd0d30a440b434f9bbff6331f88c514a7a711b71a4dbaeb42ce`. Earlier archive paths and rows are unchanged.
+All 57 size accounts are unchanged. All fifteen goal phases remain active.
+The separate alpha repair is unaccepted pending its queued comparisons;
+24 quiet commands remain scheduled, with no Jacobian timing added. No push.
