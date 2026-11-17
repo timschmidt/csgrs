@@ -10258,3 +10258,38 @@ The live combined stage and queue remain mutable and are not sealed by this
 snapshot. Both archive-preparation failures are retained; prior archive records
 and manifest rows are unchanged. Final whitespace, spelling, source/account
 preservation and repository-budget checks qualify this documentation change.
+
+## Residual certification certainty review and isolated repair
+
+The full 446-line certification module is now mapped at `4192d8c726`: twenty
+declarations, two lexical rows updated and eighteen added, preserving the other
+1,591 inventory rows. The resulting 1,611-row inventory remains partial. This
+solver report/adapter stays in Hypersolve; it is not generic interval arithmetic.
+
+Eight public witnesses reproduce approximate ball receipts being counted as
+exact satisfaction, including nonzero equality residuals. The affine interval-box
+facade promotes those counts to `Certified`. Four new regression tests fail on
+the unchanged baseline and pass on isolated candidate `aad7409a59`, which keeps
+qualified receipts, excludes them from exact summary claims and transports
+their uncertainty into diagnostics. Exact controls and nonempty predicate
+traces remain identical. See
+[the review](docs/research/residual-certification-ownership-review.md).
+
+The candidate passed 1,524 all-feature owner tests, 839 no-default owner tests,
+strict Clippy, formatting, 444 Hyperpath tests and 155 Hyperdynamics tests. It
+remains unaccepted pending runtime, resource, packaging and composition checks.
+No primary production source, existing test, runtime gate or resource account
+changes. All 57 accepted size accounts and zero memory accounts remain intact.
+The earlier four solver repairs and all fifteen plan phases remain open.
+
+The existing quiet queue was held during these bounded builds. Its same finite
+host watcher was resumed afterwards without changing commands, cumulative
+budgets or the recorded DRC failures. A full system disk interrupted Cargo cache
+bookkeeping; a verified relocation of downloaded archives restored writable
+space. Initial warnings and relocation failures are retained, with every archive
+available through the original cache path. No push.
+
+Frozen review evidence: `docs/evidence/2026-11-17-interval-residual-certainty-review`, local commit
+`ae36f8d84f038d5789b690e41b0615c5929b7ca5`; 138 files / 2,686,921 bytes, SHA-256
+`a5ce2987cfdc4ae978cbe44cc1cbbc3c85b61e8105819a93f80dfd8a9ab8ef20`. Prior archive records and manifest rows are preserved.
+No push.
