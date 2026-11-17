@@ -143,6 +143,66 @@ fn compact_exact_roots_extreme_scales_and_arbitrary_exponents() {
 }
 
 #[test]
+fn compact_power_distinguishes_declared_size_from_unrepresentable_shift() {
+    let source = d(1, 1, i32::MAX);
+    let exponent = BigInt::from(1_u64 << 33);
+    // The exact positive shift is 2^64 - 2^33; quotient storage reserves
+    // one additional mantissa bit. Neither test expands that power of two.
+    let required_bits = ((i32::MAX as u64) << 33) + 1;
+    assert!(required_bits > i64::MAX as u64);
+    assert_eq!(
+        source.pow_rational(
+            &exponent,
+            &1.into(),
+            0,
+            &mut DyadicBudget::new(required_bits - 1, u64::MAX),
+        ),
+        Err(IntervalError::SizeExhausted)
+    );
+    for limit in [required_bits, u64::MAX] {
+        assert_eq!(
+            source.pow_rational(
+                &exponent,
+                &1.into(),
+                0,
+                &mut DyadicBudget::new(limit, u64::MAX),
+            ),
+            Err(IntervalError::Overflow)
+        );
+    }
+    let negative = -exponent;
+    assert_eq!(
+        source.pow_rational(
+            &negative,
+            &1.into(),
+            0,
+            &mut DyadicBudget::new(128, 100_000),
+        ),
+        Err(IntervalError::WorkExhausted)
+    );
+    // Reuse the maintained power-test work allowance; exponent normalization
+    // is charged even though the eventual mantissas stay compact.
+    let allowance = budget().remaining_work();
+    let mut work = DyadicBudget::new(128, allowance);
+    let tiny = source
+        .pow_rational(&negative, &1.into(), 0, &mut work)
+        .unwrap();
+    assert_eq!(tiny.domain, DomainCoverage::Complete);
+    assert_eq!(tiny.range.components(), &[E::from_finite(d(0, 1, 0))]);
+    let consumed = allowance - work.remaining_work();
+    assert!(consumed > 100_000);
+    let mut retry = DyadicBudget::new(128, consumed);
+    assert_eq!(
+        source
+            .pow_rational(&negative, &1.into(), 0, &mut retry)
+            .unwrap(),
+        tiny
+    );
+    assert_eq!(retry.remaining_work(), 0);
+    eprintln!("compact reciprocal-power completion: {consumed} work units");
+}
+
+#[test]
 fn shared_work_refusal_retry_and_continued_operations() {
     let source = d(-3, 5, 0);
     let completed = source
@@ -375,4 +435,41 @@ fn exact_replay_then_further_power_in_fresh_process() {
             .unwrap()
             .success()
     );
+}
+
+#[cfg(feature = "rational")]
+#[test]
+fn rational_empty_and_zero_power_keep_domain_validation_and_compose() {
+    use hyperinterval::RationalInterval;
+    use hyperreal::Rational;
+
+    let empty = RationalInterval::empty();
+    for (n, q) in [(1, 3), (-1, 3), (0, 7)] {
+        let mut no_work = DyadicBudget::new(0, 0);
+        let result = empty
+            .pow_rational(&n.into(), &q.into(), i32::MIN, &mut no_work)
+            .unwrap();
+        assert!(result.range.is_empty());
+        assert_eq!(result.domain, DomainCoverage::Complete);
+        assert_eq!(result.range.exp(i32::MIN, &mut no_work).unwrap(), result);
+        assert_eq!(no_work.remaining_work(), 0);
+    }
+    for n in [0, 1, -1] {
+        assert_eq!(
+            empty.pow_rational(&n.into(), &0.into(), i32::MIN, &mut DyadicBudget::new(0, 0)),
+            Err(IntervalError::ContainsZero)
+        );
+    }
+    let source = RationalInterval::new(
+        Rational::fraction(-2, 3).unwrap(),
+        Rational::fraction(5, 7).unwrap(),
+    )
+    .unwrap();
+    for (precision, expected) in [(-16, d(1, 1, 0)), (4, d(0, 1, 4))] {
+        let result = source
+            .pow_rational(&0.into(), &7.into(), precision, &mut budget())
+            .unwrap();
+        assert_eq!(result.domain, DomainCoverage::Complete);
+        assert_eq!(result.range.components(), &[E::from_finite(expected)]);
+    }
 }

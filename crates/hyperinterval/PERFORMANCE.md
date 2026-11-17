@@ -583,3 +583,27 @@ separate per-section checks flag linker padding growth. No complete size
 exception, cumulative account, firmware fit or runtime improvement is claimed.
 Production is restored; the root progress ledger links the complete evidence
 and restoration receipts. Earlier size-only rejection records remain unchanged.
+
+
+### Rounding and resource boundary conformance
+
+Test snapshot `6b54e0538` adds independent sine/cosine rounding-boundary,
+empty-composition and compact-power resource witnesses without changing
+production arithmetic. Exact-debit retries complete; one-unit-short rounding
+attempts fail before publishing output. The compact reciprocal needs 154,105
+work units under its existing accounting, with at most 128 reserved bits;
+these counters are not total CPU or heap bounds.
+
+On the same Rust 1.95 x86_64 all-feature coverage denominator, covered lines
+increase from 4,688/4,740 to 4,695/4,740 and regions from 9,320/9,891 to
+9,333/9,891. Branch coverage is unmeasured and 45 lines remain uncovered.
+Full owner suites pass on Rust 1.95/stable; affected dyadic suites pass on 1.88.
+Strict Clippy, documentation and formatting checks pass. The diagnostic record
+retains the external Rug profile warnings and all initial fixture failures.
+
+Final release test growth stays within each declared 32 KiB file / 16 KiB code
+AND 2% allowance against both fixed and current baselines. The production
+trig_cost binary is byte-identical; no runtime improvement is claimed. The
+root progress ledger and size accounts link the complete qualification at
+`docs/evidence/2026-11-16-interval-coverage-boundaries`. This is additional
+conformance coverage, not completion of the coverage or migration program.

@@ -52,8 +52,8 @@
   "cumulative_rule": "Future exceptions reuse this fixed goal-wide baseline and each artifact account; new artifacts require baseline measurements at this revision or an explicitly documented equivalent completed control. No baseline resets or cross-target offsets.",
   "flash": "not applicable to retained test-only changes; no firmware production source/image change or flash-size allowance",
   "matrix_size_budget_revision_proposal": "not adopted",
-  "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
-  "status": "Retained test witnesses, catalog correction and the separately qualified Interface compiler/display repair; 54 artifact accounts preserve fixed baselines and prior charges. Production matrix, path-dynamics, machine-profile and current-widening delegations remain rejected.",
+  "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
+  "status": "Retained test witnesses, catalog correction and qualified Interface compiler/display repair; 57 artifact accounts preserve fixed baselines and prior charges. New interval boundary tests affect three host test executables only. Rejected production delegations remain rejected.",
   "accepted_changes": [
     {
       "id": "array-construction-lifecycle-tests",
@@ -95,6 +95,18 @@
       "evidence": "docs/evidence/2026-11-16-interval-interface-compiler-display",
       "scope": "Eight new host/hosted artifact accounts and an explicit matched-layout requalification of the existing core test account. All prior accepted positive charges remain.",
       "commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "id": "interval-rounding-resource-boundary-witnesses",
+      "benefit": "Independently verify exact-source rounding retries, atomic work refusal/retry, dimension-free compact exponent overflow and empty-domain composition. Production code unchanged.",
+      "sources": [
+        "crates/hyperinterval/tests/trigonometry.rs",
+        "crates/hyperinterval/tests/tangent.rs",
+        "crates/hyperinterval/tests/fractional_power.rs"
+      ],
+      "production_implementation_changed": false,
+      "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
+      "source_snapshot": "6b54e0538456c2b574d5ee49fb318c09309caf94"
     }
   ],
   "accounts": [
@@ -7463,6 +7475,231 @@
       "source_snapshot": "0db15b4a749692cac610496ec4f1c1f8bdd73ee0",
       "padding_revision": "docs/evidence/2026-11-16-interval-interface-compiler-display/interface-ui-padding-budget-revision.json",
       "retained_source_commit": "5b532c803af86dd9e3d7a66f3651163fd2f7c68b"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/trigonometry.rs#release-tests",
+      "role": "independent rounding, empty-composition and resource-boundary acceptance witnesses",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust1.95.0",
+      "features": "hyperinterval --all-features",
+      "profile": "Configured release integration test: opt-level3, debug=false; unchanged unwind, symbol and link policy",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "equivalent_control_commit": "b8bcc1155498d018330cd00e7f987696bc4f85bd",
+      "baseline_equivalence": "Four fixed/current artifacts are byte-identical at one source path and dependency lock. No prior charges on these test artifacts. No production source changes.",
+      "baseline_sha256": "b813608524e9105947f4e71bf7b36f2a10d29655c6316c35efc14f6a24a32c26",
+      "retained_sha256": "fd151697c5ad9b1092ca75e44007e6367866932cd8550d6d595d535007e953fe",
+      "metrics": {
+        "file": {
+          "baseline": 2643320,
+          "previous_retained": 2643320,
+          "retained": 2653016,
+          "incremental_growth_bytes": 9696,
+          "incremental_growth_percent": 0.36681143410559447,
+          "net_growth_bytes": 9696,
+          "growth_percent": 0.36681143410559447,
+          "accepted_positive_growth_bytes": 9696,
+          "remaining_cumulative_bytes": 23072,
+          "remaining_cumulative_percent": 1.6331885658944056,
+          "caps": {
+            "incremental_bytes": 32768,
+            "cumulative_bytes": 32768,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "executable_code": {
+          "baseline": 1444423,
+          "previous_retained": 1444423,
+          "retained": 1451079,
+          "incremental_growth_bytes": 6656,
+          "incremental_growth_percent": 0.46080684120925797,
+          "net_growth_bytes": 6656,
+          "growth_percent": 0.46080684120925797,
+          "accepted_positive_growth_bytes": 6656,
+          "remaining_cumulative_bytes": 9728,
+          "remaining_cumulative_percent": 1.539193158790742,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1424777,
+          "previous_retained": 1424777,
+          "retained": 1431368,
+          "incremental_growth_bytes": 6591,
+          "incremental_growth_percent": 0.4625987084294595,
+          "net_growth_bytes": 6591,
+          "growth_percent": 0.4625987084294595,
+          "accepted_positive_growth_bytes": 6591,
+          "remaining_cumulative_bytes": 9793,
+          "remaining_cumulative_percent": 1.5374012915705406,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host test executable; no firmware deployment or flash allowance. Each metric retains its own remaining allowance.",
+      "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
+      "source_snapshot": "6b54e0538456c2b574d5ee49fb318c09309caf94"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/tangent.rs#release-tests",
+      "role": "independent rounding, empty-composition and resource-boundary acceptance witnesses",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust1.95.0",
+      "features": "hyperinterval --all-features",
+      "profile": "Configured release integration test: opt-level3, debug=false; unchanged unwind, symbol and link policy",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "equivalent_control_commit": "b8bcc1155498d018330cd00e7f987696bc4f85bd",
+      "baseline_equivalence": "Four fixed/current artifacts are byte-identical at one source path and dependency lock. No prior charges on these test artifacts. No production source changes.",
+      "baseline_sha256": "d9258b2d495800964f243bc1eb1e11cff5dc629dac64c7e269af61df1f6e22e9",
+      "retained_sha256": "f3be934de9ed9f26bf5ff6fb02f632aa5c659f5d3a4c9be6bf627b95c23009e5",
+      "metrics": {
+        "file": {
+          "baseline": 2714328,
+          "previous_retained": 2714328,
+          "retained": 2716024,
+          "incremental_growth_bytes": 1696,
+          "incremental_growth_percent": 0.06248323710325355,
+          "net_growth_bytes": 1696,
+          "growth_percent": 0.06248323710325355,
+          "accepted_positive_growth_bytes": 1696,
+          "remaining_cumulative_bytes": 31072,
+          "remaining_cumulative_percent": 1.9375167628967465,
+          "caps": {
+            "incremental_bytes": 32768,
+            "cumulative_bytes": 32768,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "executable_code": {
+          "baseline": 1486247,
+          "previous_retained": 1486247,
+          "retained": 1487655,
+          "incremental_growth_bytes": 1408,
+          "incremental_growth_percent": 0.09473526271205257,
+          "net_growth_bytes": 1408,
+          "growth_percent": 0.09473526271205257,
+          "accepted_positive_growth_bytes": 1408,
+          "remaining_cumulative_bytes": 14976,
+          "remaining_cumulative_percent": 1.9052647372879474,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1465809,
+          "previous_retained": 1465809,
+          "retained": 1467253,
+          "incremental_growth_bytes": 1444,
+          "incremental_growth_percent": 0.09851215267473457,
+          "net_growth_bytes": 1444,
+          "growth_percent": 0.09851215267473457,
+          "accepted_positive_growth_bytes": 1444,
+          "remaining_cumulative_bytes": 14940,
+          "remaining_cumulative_percent": 1.9014878473252654,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host test executable; no firmware deployment or flash allowance. Each metric retains its own remaining allowance.",
+      "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
+      "source_snapshot": "6b54e0538456c2b574d5ee49fb318c09309caf94"
+    },
+    {
+      "artifact": "crates/hyperinterval/tests/fractional_power.rs#release-tests",
+      "role": "independent rounding, empty-composition and resource-boundary acceptance witnesses",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust1.95.0",
+      "features": "hyperinterval --all-features",
+      "profile": "Configured release integration test: opt-level3, debug=false; unchanged unwind, symbol and link policy",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "equivalent_control_commit": "b8bcc1155498d018330cd00e7f987696bc4f85bd",
+      "baseline_equivalence": "Four fixed/current artifacts are byte-identical at one source path and dependency lock. No prior charges on these test artifacts. No production source changes.",
+      "baseline_sha256": "0d9e5026eaf7ab29b65b4bd25b8d1869c1eaba87c61518008df257a54f1b926d",
+      "retained_sha256": "ff8db76dab336b7b5db0f8442ace4678bf6a09ef325b1c26e42958de6b27c91f",
+      "metrics": {
+        "file": {
+          "baseline": 2709608,
+          "previous_retained": 2709608,
+          "retained": 2722584,
+          "incremental_growth_bytes": 12976,
+          "incremental_growth_percent": 0.47888845914242945,
+          "net_growth_bytes": 12976,
+          "growth_percent": 0.47888845914242945,
+          "accepted_positive_growth_bytes": 12976,
+          "remaining_cumulative_bytes": 19792,
+          "remaining_cumulative_percent": 1.5211115408575706,
+          "caps": {
+            "incremental_bytes": 32768,
+            "cumulative_bytes": 32768,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "executable_code": {
+          "baseline": 1479463,
+          "previous_retained": 1479463,
+          "retained": 1489063,
+          "incremental_growth_bytes": 9600,
+          "incremental_growth_percent": 0.6488840883482723,
+          "net_growth_bytes": 9600,
+          "growth_percent": 0.6488840883482723,
+          "accepted_positive_growth_bytes": 9600,
+          "remaining_cumulative_bytes": 6784,
+          "remaining_cumulative_percent": 1.3511159116517277,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        },
+        "named_text": {
+          "baseline": 1459373,
+          "previous_retained": 1459373,
+          "retained": 1468896,
+          "incremental_growth_bytes": 9523,
+          "incremental_growth_percent": 0.6525405088349586,
+          "net_growth_bytes": 9523,
+          "growth_percent": 0.6525405088349586,
+          "accepted_positive_growth_bytes": 9523,
+          "remaining_cumulative_bytes": 6861,
+          "remaining_cumulative_percent": 1.3474594911650413,
+          "caps": {
+            "incremental_bytes": 16384,
+            "cumulative_bytes": 16384,
+            "incremental_percent": 2,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "Host test executable; no firmware deployment or flash allowance. Each metric retains its own remaining allowance.",
+      "evidence": "docs/evidence/2026-11-16-interval-coverage-boundaries",
+      "source_snapshot": "6b54e0538456c2b574d5ee49fb318c09309caf94"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",

@@ -9977,3 +9977,49 @@ One missing reviewed method row is appended to the partial inventory, preserving
 all 1,533 prior rows. Evidence `docs/evidence/2026-11-16-interval-voxel-envelope-state` at commit
 `070189df831d97d142d3c369b20b625762c42d89` contains 904 files / 7,644,811 bytes,
 SHA-256 `7f2065bd836e15fb9f624da28af619b78f55134caadfde9517d07761c38fb05e`. Earlier archive paths and rows are unchanged.
+
+
+## 2026-11-16: interval rounding and resource boundary witnesses retained
+
+Hyperinterval owns these missing conformance witnesses, under P1/P5/P6/P18–P20
+and P35–P39, phases 3/5 and plan section 14. Qualified snapshot `6b54e0538`
+adds three tests and extends one existing test; all previous assertions remain.
+Production code, manifests, locks, APIs and predicate order are unchanged.
+
+Twelve independently bracketed dyadic sources straddle sine/cosine output 1/2
+at 64, 256 and 512 fractional bits. Directed MPFR/GMP expectations verify both
+tight endpoints. One-unit-short work fails without publishing a range; fresh
+exact-debit retry succeeds, and output enters subsequent squaring. Empty
+trigonometric and rational-power inputs retain complete empty results through
+composition, while a zero exponent denominator remains invalid. Compact powers
+distinguish a declared bit-limit failure from signed-shift overflow without
+materializing huge integers. Reciprocal completion consumes 154,105 declared
+work units; the original 100,000-unit fixture remains an exhaustion witness.
+Initial test-authoring failures are preserved, not credited as production fixes.
+
+Full owner tests/doctests pass on Rust 1.95 and stable; the three affected suites
+pass on Rust 1.88 with dyadic-only features. Strict Clippy passes all three
+configurations; strict docs, formatting and final release test executables pass.
+The same source selection yields 4,695/4,740 covered lines (99.05%), up from
+4,688, and 9,333/9,891 covered regions, up from 9,320. All 494 grouped functions
+execute. LLVM reports 27 code-bearing files from 28 selected paths; lib.rs has
+no records. No denominator decreases. Branch coverage was not instrumented;
+45 lines remain uncovered. The 26 external Rug zero-hash diagnostics persist
+identically and diagnostic production tables reproduce. These are finite
+configuration results, not universal completeness or full workflow validation.
+
+Final test executable growth against both fixed and current controls is
+9,696/1,696/12,976 file bytes, 6,656/1,408/9,600 executable-code bytes and
+6,591/1,444/9,523 named-code bytes for trigonometry/tangent/fractional_power.
+Each satisfies its predeclared 32 KiB file / 16 KiB code AND 2% caps. The
+production trig_cost executable is byte-identical; no timing comparison ran
+under unrelated routing load. Three host-test accounts bring the total to 57,
+preserving all 54 prior accounts and fixed baseline `c9f1f9ac5`. This adds no
+firmware or flash cost. All fifteen phases and broader validation remain open.
+
+Evidence: `docs/evidence/2026-11-16-interval-coverage-boundaries`.
+Archive commit `4844da1d38ddc5e38970d92416deb64871651aa4` contains 177 files /
+9,554,477 bytes, SHA-256
+`1698b22b10740be2121cbe597765b889665cb47250e181787d5ed710dc544764`. Prior archive records and manifest rows are unchanged.
+Both original-source adversarial CI commands separately pass; the 22-command
+quiet queue has not started under unrelated routing load. No push.

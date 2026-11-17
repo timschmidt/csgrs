@@ -33,6 +33,20 @@ fn exact_zero_empty_endpoint_limits_and_whole_branches() {
     for cot in [false, true] {
         let empty = E::<DyadicInterval>::empty();
         let mut no_work = DyadicBudget::new(0, 0);
+        let finite_empty = DyadicInterval::empty();
+        let finite_result = if cot {
+            finite_empty.cot(i32::MIN, &mut no_work)
+        } else {
+            finite_empty.tan(i32::MIN, &mut no_work)
+        }
+        .unwrap();
+        assert!(finite_result.range.is_empty());
+        assert_eq!(finite_result.domain, DomainCoverage::Complete);
+        assert_eq!(
+            finite_result.range.exp(i32::MIN, &mut no_work).unwrap(),
+            finite_result
+        );
+        assert_eq!(no_work.remaining_work(), 0);
         let result = if cot {
             empty.cot(i32::MIN, &mut no_work)
         } else {
