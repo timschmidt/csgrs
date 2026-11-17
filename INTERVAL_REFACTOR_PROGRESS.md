@@ -10556,3 +10556,18 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-reused-lifetime`
 `a41d45a26fdc8fbd0d155a0a8b715d80de7a0e3b0660531c03f7db05a199c458`. All 19 images and every compressed command/history log are
 preserved losslessly with byte counts, hashes, modes and a container-member
 inventory. Earlier archive paths and index rows remain unchanged.
+
+## 2026-11-17: fresh profile of the queued DRC failure
+
+The exact queued image at `955593aa` still fails the unchanged CPU gate. A
+bounded diagnostic collects 66 worker stacks, preserves the failure and verifies
+source, image, fixture and queue identity afterward. Debugger timing does not
+qualify a replay or establish a speedup. The old borrowed-promotion candidate
+remains rejected on runtime; the bounded-memory exception does not waive that
+gate. See the [diagnostic review](docs/research/queued-drc-profile.md).
+
+The workflow parent remains held, its original watcher terminal and 36 commands
+pending. No queue, budget, source or accepted account changes. The full goal
+remains active. Frozen evidence: `docs/evidence/2026-11-17-interval-queued-drc-profile`,
+archive commit `a2cd1f4732df9805b8ba6bfd3e70b8eeabf4f179`; 12 files / 200,433
+bytes, SHA-256 `e02a9ed79f7ff2c116f0156bd5b877d461a76831944f1d86d262f158fafba85a`.
