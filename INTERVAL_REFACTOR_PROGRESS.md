@@ -10785,3 +10785,33 @@ commit `5fd724d2341e4ad19fed277370f27e2bb66ccf0b`; 2,011 files / 19,028,727 byte
 SHA-256 `f39d6584b892a9d999a06cafaf00e4b3922f14d35346987b6201af07cf279e9c`.
 All source/stored/committed hashes and six validated native images are verified;
 previous archive paths are unchanged.
+
+## 2026-11-17: borrowed trace runtime and unwind cleanup
+
+The borrowed-key candidate completes 1,344 source-runtime controls and 672 full
+output comparisons. Large unique-label snapshots have median paired CPU increases
+of about 6–7%; a 192-pair shared-input diagnostic preserves equal actual iteration
+and full reports but still shows higher medians in those domains. Non-regression
+remains unproven, so the implementation is not retained. Raw variability and
+contrary samples remain; no universal slowdown or hardware cause is claimed.
+See the [runtime review](docs/research/trace-borrowed-runtime.md).
+
+An independent debug regression now verifies that aggregation unwind clears the
+live counters, restores the recording scope and permits a later fresh report.
+All ten affected tests pass on both implementations; strict owner Clippy and
+formatting pass. Both production prefixes remain unchanged. Only this regression
+is retained on primary; candidate-plus-test `024e1c1db` remains isolated.
+
+Both timing producers and the test producer fit their original execution/count
+limits. Offline verifiers pass. An archive whitespace failure is preserved; the
+intentional test-fragment separator is stored losslessly compressed without
+changing source or measurements. No charge, cap, fixture or policy is weakened.
+All task producers are terminal, source control restored, queue held and original
+watcher terminal. Accepted size/memory totals remain 57/0; inventory 1,644. The
+full goal remains active. No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-trace-borrowed-runtime`,
+commit `0bb075b062f09e0df09727529becfd1f43c3d6ab`; 1,645 files / 10,550,284 bytes,
+SHA-256 `0dd304266c9fdd74b8b04985f7034ef8f7e96eaffcb0dfaf331b68d882dc075a`.
+All source/stored/committed hashes and three native timing images are verified;
+previous archive paths are unchanged.

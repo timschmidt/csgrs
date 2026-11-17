@@ -831,6 +831,52 @@ mod tests {
         assert!(snapshot().is_empty());
     }
 
+    #[cfg(debug_assertions)]
+    #[test]
+    fn take_clears_counts_and_restores_scope_after_aggregation_unwinds() {
+        static LABELS: [[u8; 4]; 2] = [*b"same"; 2];
+        let first = std::str::from_utf8(&LABELS[0]).unwrap();
+        let second = std::str::from_utf8(&LABELS[1]).unwrap();
+        assert!(!std::ptr::eq(first, second));
+        reset();
+
+        let result = std::panic::catch_unwind(|| {
+            with_recording(|| {
+                // Reach aggregation overflow without an unbounded event stream.
+                TRACE_STATE.with(|state| {
+                    let mut state = state.borrow_mut();
+                    for (path, count) in [(first, u64::MAX), (second, 1)] {
+                        state.counts.insert(
+                            ActiveDispatchKey {
+                                layer: "test",
+                                operation: "unwind",
+                                path,
+                            },
+                            count,
+                        );
+                    }
+                    assert_eq!(state.counts.len(), 2);
+                });
+                drop(take());
+            });
+        });
+        assert!(result.is_err());
+        assert!(snapshot().is_empty());
+        record("test", "unwind", "outside");
+        assert!(snapshot().is_empty());
+        with_recording(|| record("test", "unwind", "fresh"));
+        assert_eq!(
+            take(),
+            vec![DispatchCount {
+                layer: "test",
+                operation: "unwind",
+                path: "fresh",
+                count: 1,
+            }]
+        );
+        assert!(take().is_empty());
+    }
+
     #[test]
     fn sign_refinement_trace_records_attempt_and_decision_precision_buckets() {
         reset();

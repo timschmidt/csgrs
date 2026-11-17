@@ -12,6 +12,9 @@ P4/P10/P36 and the unchanged admission gates. The control is
 plus the independent trace regression retained in primary `3fa808111`.
 No production change from these new candidates is merged into the primary tree.
 
+The [runtime follow-up](trace-borrowed-runtime.md) now records the large-report
+non-regression gap and a retained unwind-cleanup witness.
+
 ## Source candidates and local memory
 
 Each source runs the original 276-case collector corpus, with independent ordered
@@ -128,12 +131,12 @@ original watcher remains terminal. No prior account, cap, fixture or charge is
 changed. Accepted totals stay 57 size accounts and zero memory exceptions;
 inventory stays 1,644 rows. No push; the full fifteen-phase goal remains active.
 
-Next, qualify borrowed report keys on whole recording/materialization/reset
-lifetimes and original whole-call stack measurements, then meaningful-duration
-event/collector runtime, owning benchmarks and `successive_operations`. Affected
-full geometry chains still require both policies, exact traces/certainty,
-fixed-baseline cumulative costs and final native/WASM/package measurements.
-Collector-only results and this diagnostic do not satisfy those gates.
+Further borrowed-key qualification is deferred while the runtime follow-up is
+unresolved. Whole recording/materialization/reset lifetimes, original whole-call
+stack, owning benchmarks, `successive_operations`, both-policy geometry chains,
+exact traces/certainty, fixed-baseline cumulative costs and final native/WASM/
+package measurements remain required before retention. Collector-only results
+and shared-input diagnostics do not satisfy those gates.
 
 Frozen evidence: `docs/evidence/2026-11-17-interval-trace-key-representations`,
 archive commit `5fd724d2341e4ad19fed277370f27e2bb66ccf0b`; 2,011 files / 19,028,727 bytes,
