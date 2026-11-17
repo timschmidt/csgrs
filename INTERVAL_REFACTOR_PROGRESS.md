@@ -10085,3 +10085,33 @@ Evidence: `docs/evidence/2026-11-17-interval-linear-adapter-review`, local commi
 22files / 853,986bytes, SHA-256
 `03745adae57d4258bd9ac21cc8fee79a63b8c9a72111b24b7f300f9c783c3210`. This stage is frozen. Every previous archive path and
 manifest row is preserved. No push.
+
+## Non-finite linear proposal repair rejected on stack
+
+Baseline `a32805da2`; isolated candidate `0caf282ad` adds distinct invalid-input
+and non-finite-arithmetic errors, checks overflowed norms before clipping, and
+carries those reasons through the nonlinear solver. Three original failures
+reproduce before editing; twelve standalone cases and four new owner tests pass
+after repair. Strict all-feature/all-target owner Clippy and workspace fmt pass.
+The initial fixture constructor error and its correction remain in the logs.
+
+An external caller of the full Hypersolve crate preserves 384 paired outputs and
+128 allocation/drop pairs over 768 fresh processes. The 32 stack groups include both
+warm states, two fill patterns and four repetitions. Ordinary dogleg grows 16 bytes,
+BFGS 48 bytes, and a zero-width normal system 24 bytes; other normal/singular groups fall 16 bytes.
+Empty dogleg/BFGS paths cross the probe exclusion window, whose zero readings
+are censored rather than actual zero stack. The uncensored increases alone
+reject retention. No timing or size allowance was adopted. See
+[the review](docs/research/solver-linear-adapter-review.md).
+
+Original source is restored clean; the rebuilt external binary is identical to
+baseline. Six original solver controls, strict Clippy and fmt pass. The build
+barrier is released. Candidate `0caf282ad` remains on an unaccepted ref; no production,
+test or migration change is retained. 1,565 inventory rows and 57 accounts remain
+unchanged. Full owner tests, stable/WASM qualification, runtime and size gates
+were not continued after resource rejection. All 15 phases remain active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-linear-finite-rejection`, local commit `d84e75a0e2c50a41daf74a5e982e9cf86e15c417`;
+998files / 894,283bytes, SHA-256
+`73555446eddb99a781d02abf3005dbd6c09c5a02a5c3657ba277041f22caef03`. Every prior archive path and manifest row is preserved.
+No push.

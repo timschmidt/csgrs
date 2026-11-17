@@ -62,3 +62,38 @@ The archive record and digest are registered in `docs/evidence-archive.tsv` as
 module, source identity, harness, commands, passing controls, failing witnesses,
 caller snapshots and reviewed dispositions. Production source and all 57 size
 accounts remain unchanged. The full 15-phase goal remains active.
+
+## Isolated finite-arithmetic repair
+
+Candidate `0caf282ad` adds distinct non-finite input/arithmetic errors and
+preserves them through new unit convergence-reason variants. It also checks
+norm overflow before clipping can publish an incorrect zero direction. The
+three original failures reproduce again at `a32805da2`; all twelve standalone
+cases and four new owner tests pass with the candidate. Strict all-feature,
+all-target owner Clippy and workspace formatting pass. A fixture initially
+used a nonexistent constructor; its failed compile log and correction to the
+existing `Expr::real` constructor are preserved.
+
+The candidate is rejected on the unchanged stack gate. An external caller of
+the actual Hypersolve crate exercises sixteen unchanged cases in 768 fresh
+processes. All 384 paired complete outputs and 128 allocation/drop pairs agree.
+Across cold and explicit-warm groups, normal and singular cases reduce their
+measured maxima by 16 bytes, but dogleg adds 16 bytes, BFGS adds 48 bytes and a
+zero-width normal system adds 24 bytes. Empty dogleg/BFGS paths newly cross the
+measurement window; their baseline zero readings are censored and must not be
+reported as zero actual stack. The ordinary increases independently reject
+retention. No timing or final-size admission was attempted afterward.
+
+The baseline is restored clean, and its rebuilt external artifact is
+byte-identical to the original. Six existing solver controls, strict owner
+Clippy and formatting pass. The candidate remains under
+`refs/interval-unaccepted/linalg-finite-20261117`; no repair, new test or proposed
+API migration is adopted by the primary branch. The non-finite failures remain
+open. No full-owner test suite, stable/WASM qualification, universal resource
+bound or completed-goal claim follows from this experiment.
+
+The immutable record is
+`docs/evidence/2026-11-17-interval-linear-finite-rejection`, registered in
+`docs/evidence-archive.tsv`. It includes the rejected patch, test logs, both
+resource probes, all campaign records and restoration evidence. The inventory
+remains at 1,565 rows and all 57 size accounts are unchanged.
