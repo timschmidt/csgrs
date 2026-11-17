@@ -188,3 +188,7 @@ archive paths and index rows remain unchanged. No push.
 A separate [complete-chain trace diagnostic](solver-five-trace-attribution.md)
 attributes requested allocation variation in case zero with warm reused input.
 It preserves all earlier charges and does not explain every failed metric.
+
+The complete consumer subsequently passes [native/WASM source and extracted-package qualification](solver-five-repair-portable-and-packaged.md).
+This closes that finite distribution check while preserving every resource
+failure and the remaining broader release requirements.

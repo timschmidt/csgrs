@@ -10592,3 +10592,30 @@ continues separately, and the full fifteen-phase goal remains active.
 Frozen evidence: `docs/evidence/2026-11-17-interval-five-trace-attribution`, local
 archive commit `8a2190d1a0f35ec794d8539fde0b209b240c77ab`; 129 files / 306,365
 bytes, SHA-256 `21c21fcdc02ca3244204f681749cfffe4710524a7f3ff00ef14e0e2ab811ad1a`.
+
+## 2026-11-17: complete native/WASM source and package consumer
+
+The isolated five-repair source completes 2,064 successful configurations across
+38 images, reproduces 32 expected baseline failures, and passes 1,800 full
+output/trace comparisons. Eight strict Clippy configurations and formatting pass.
+Six actual packages verify against 452 committed source files. Eight extracted
+package images pass another 528 controls, each matching its source output and
+trace, plus eight strict Clippy configurations and formatting.
+
+All fourteen prospective image accounts pass, including positive packaging
+charges added to every original source charge. No savings are netted. WASM
+output ownership and bounds checks pass; its observed linear capacity is not a
+retained-memory or RSS measurement. See the [distribution review](docs/research/solver-five-repair-portable-and-packaged.md).
+
+No implementation or account is admitted. Earlier memory failures, quiet runtime,
+resource/cancellation, broader release and full applicable validation remain.
+Accepted accounts stay at 57 size and zero memory; inventory stays at 1,644 rows.
+The original watcher remains terminal and its workflow parent held. The full
+fifteen-phase goal stays active. No push.
+
+Frozen source evidence: `docs/evidence/2026-11-17-interval-five-repair-portable`,
+commit `f71d0b053690f057fdd173fe873726c4f0392809`; 309 files / 42,478,380 bytes,
+SHA-256 `bb953e6601ba5c953b9b1d00172a45e431f4cf753f22a8761525b610ad276ab7`.
+Frozen package evidence: `docs/evidence/2026-11-17-interval-five-repair-packaged`,
+commit `2e30fed7f1350d6483eb1c329e95f6c4e4907db8`; 140 files / 11,295,447 bytes,
+SHA-256 `dff37ca2318f78975a34c2bda4e38818bc486072c866b82b5dabb09036485ced`.

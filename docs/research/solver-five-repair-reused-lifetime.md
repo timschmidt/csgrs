@@ -111,8 +111,10 @@ remain. Fresh evidence and review are needed before resuming that queue.
 All old candidate revisions and queued artifacts remain unchanged. Primary
 production source, the partial 1,644-row inventory and accepted accounts remain
 unchanged: 57 size accounts and zero memory exceptions. Failed growth limits,
-quiet runtime, successive-operation, package/WASM, resource/cancellation and
-complete applicable validation still prevent admission. Finite measured
+quiet runtime, successive-operation, resource/cancellation, broader distribution
+and complete applicable validation still prevent admission. The complete
+consumer's [native/WASM source and extracted-package checks](solver-five-repair-portable-and-packaged.md)
+subsequently pass without revising these memory accounts. Finite measured
 retention does not establish a universal bound for arbitrary inputs or depth.
 The full fifteen-phase goal remains active. No push.
 
