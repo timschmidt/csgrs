@@ -67,6 +67,10 @@ validation or an admission decision.
 
 ## Remaining admission
 
+The [complete-consumer cost campaign](solver-cancellation-consumer-cost.md)
+now supplies functional and lifetime evidence but fails initial stack and some
+active-trace growth caps. Those failures remain pending.
+
 Complete-consumer output and dispatch comparisons, complete-lifetime memory and
 stack evidence, final-image accounting, quiet performance, successive operations,
 distribution and applicable downstream validation remain. The prior five-repair

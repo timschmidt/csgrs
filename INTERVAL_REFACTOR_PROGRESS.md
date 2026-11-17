@@ -10638,3 +10638,25 @@ fifteen-phase goal remains active. No push.
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-boundary`,
 commit `6b9666fe36a5affa1bc289457d843b13f8a9f93f`; 79 files / 571,103 bytes,
 SHA-256 `963fbacbf2f8aec16d500627514e2990071e4b1886639b17743d599cebdb33c2`.
+
+## 2026-11-17: complete cancellation consumer cost
+
+The wrapper candidate completes 3,906 successful consumer processes and retains
+126 original publication failures. Full normal outputs/traces and added retry
+outputs match. The 252 complete lifetime histories cover 8,064 cycles. Four
+strict Clippy feature configurations, formatting and independent verification
+pass. See the [complete cost review](docs/research/solver-cancellation-consumer-cost.md).
+
+The 504 resource groups include 172 failures: normal operation stack grows
+848–1,104 bytes, and some active-trace peak, traffic and count comparisons also
+exceed their initial limits. All total capacities, cleanup/retention and initial
+image checks pass. No cap or accepted account changes. An isolated alternative
+will test a final check inside the scope function; this does not erase wrapper
+charges or earlier failures. Fixed-baseline cumulative accounting, quiet runtime,
+distribution and complete validation remain open. The full goal stays active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-consumer`,
+commit `0e2c1dad1ff7df5e9b8c9bea3a27227855ab7adc`; 14 files / 57,952,780 bytes,
+SHA-256 `f49b4b07ece73452600445c65339605e0e9f24ef3734530be3bb5375da5cb065`. The lossless container retains 4,143 members,
+all 24 images and recovery records for 26 relocated, previously archived images.
+The original watcher is terminal and its parent held. No push.
