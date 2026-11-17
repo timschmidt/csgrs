@@ -10726,3 +10726,34 @@ All 33,903 container members and committed parts are verified; earlier records
 are unchanged. The archive retains all 172 images and the storage recovery
 record. Documentation checks cover formatting, spelling, relative links,
 repository budget, whitespace and the new archive manifest row.
+
+## 2026-11-17: trace materialization tradeoffs and regression coverage
+
+Two isolated collector alternatives complete 828 native controls with exact
+independent outputs and 736 full comparisons. All nine owner tests and strict
+owner/consumer Clippy checks pass for each source. Batch sorting fails 68 of 92
+local accounts, including about 229 KiB peak growth with heavily aliased labels.
+Incremental sorted aggregation fails 88 accounts: peak never grows in this
+corpus, but traffic grows by up to 8,328 requested bytes and new reallocations
+remain. Both are rejected; prior charges and allowances are unchanged. See the
+[trace materialization review](docs/research/trace-materialization-pilot.md).
+
+The independent ordered/content-equal snapshot and clearing-take regression is
+retained on the primary worktree. Its nine affected owner tests, strict
+all-target/all-feature Clippy and formatting pass after the final source edit.
+The entire production prefix of the trace module is unchanged. Further work
+will examine a content-keyed recording table, including event-recording cost;
+collector-only evidence cannot qualify that change.
+
+All 868 pilot direct children fit the original execution/count limits. A verifier
+correction allows only two proven-identical Git revision reads sharing one log;
+both command records, hashes and the original failed verifier are preserved.
+No geometry rerun or deadline reset occurs. The full goal stays active, queue
+held and watcher terminal. Accepted size/memory totals remain 57/0; inventory
+remains 1,644. No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-trace-materialization`,
+commit `3cc14e7745bec36f5c6a0eebbf17587600aea49e`; 917 files / 4,824,326 bytes,
+SHA-256 `e1c880a1930c61cdd0c3a8ddd4b7d62a6a68020ef9d1740a70f1c3caf66b7800`.
+All source/stored/committed hashes and three images are verified; previous
+archive records remain unchanged.

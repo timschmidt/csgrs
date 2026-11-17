@@ -786,6 +786,52 @@ mod tests {
     }
 
     #[test]
+    fn dispatch_snapshot_preserves_order_and_counts_until_taken() {
+        static LABELS: [[u8; 4]; 2] = [*b"same"; 2];
+        let first = std::str::from_utf8(&LABELS[0]).unwrap();
+        let second = std::str::from_utf8(&LABELS[1]).unwrap();
+        assert!(!std::ptr::eq(first, second));
+        reset();
+        assert!(snapshot().is_empty());
+        with_recording(|| {
+            for (layer, operation, path, count) in [
+                ("z", "", "", 5),
+                ("a", "z", "", 3),
+                ("a", "", second, 7),
+                ("a", "", first, 2),
+                ("a", "", "", 11),
+            ] {
+                for _ in 0..count {
+                    record(layer, operation, path);
+                }
+            }
+        });
+        let expected: Vec<_> = [
+            ("a", "", "", 11),
+            ("a", "", "same", 9),
+            ("a", "z", "", 3),
+            ("z", "", "", 5),
+        ]
+        .into_iter()
+        .map(|(layer, operation, path, count)| DispatchCount {
+            layer,
+            operation,
+            path,
+            count,
+        })
+        .collect();
+        let retained = snapshot();
+        assert_eq!(retained, expected);
+        assert_eq!(snapshot(), expected);
+        assert_eq!(take(), expected);
+        assert!(take().is_empty());
+        with_recording(|| record("new", "", ""));
+        assert_eq!(take()[0].count, 1);
+        assert_eq!(retained, expected);
+        assert!(snapshot().is_empty());
+    }
+
+    #[test]
     fn sign_refinement_trace_records_attempt_and_decision_precision_buckets() {
         reset();
         with_recording(|| {

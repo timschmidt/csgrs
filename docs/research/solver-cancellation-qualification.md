@@ -170,3 +170,8 @@ The archive also retains verification and recovery instructions for 608 redundan
 checkout files (857,548,059 bytes) removed from an earlier record outside the
 evidence repository's sparse selection. Git blobs and index tree were unchanged.
 No active or queued input was removed.
+
+The subsequent [trace collector pilot](trace-materialization-pilot.md) tests
+batch sorting and incremental aggregation against unique and heavily aliased
+labels. Both preserve exact reports but fail cost checks; neither is retained.
+Its independent snapshot regression is retained, with production tracing unchanged.
