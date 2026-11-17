@@ -10351,3 +10351,27 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-failed-constraint-ownership`
 `ef3852c2547fec0b9019c3f552951d36f88d9819ff6b8244ee49eea74e7b8568`. All prior archive paths and manifest rows are
 preserved. The ownership review is frozen; the separate live residual admission
 stage remains mutable beyond this finite snapshot. No push.
+
+## Residual-certainty packaged consumers
+
+The isolated `aad7409a59` repair now passes the finite six-crate package boundary:
+eighteen normally verified upload archives, twelve native/WASM final images and
+12,960 full controls matching their workspace counterparts. Metadata rejects
+workspace or stale-source fallback. Strict Clippy on both features/targets and
+formatting pass. Original prospective image caps pass with every inherited and
+new positive charge retained. See the
+[packaged-consumer review](docs/research/residual-certainty-packaged-consumers.md).
+
+The original optional-patch warning and interrupted attempt remain preserved;
+the corrected harness keeps the same fixtures and total elapsed budget. Package
+exclusion notices remain explicit. This is no quiet-runtime or native-memory
+admission and does not qualify the complete stack release. Owner artifacts,
+complete consumer capacity, cancellation/retry, runtime and combined-repair
+qualification remain open. No production, inventory or accepted account changes.
+The inventory remains partial at 1,644 rows and all fifteen plan phases remain
+active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-residual-certainty-packaged`, local commit
+`db4865f495af7e3c0ee640cea890e6edca344d5a`; 253 files / 56,808,003 bytes, SHA-256
+`295c4976b18427b073f9990d010e4510f7b333d4f584c746b6106ae6bbfd2407`. All earlier archive paths and index rows remain unchanged.
+Both package attempts and the review snapshot are frozen. No push.
