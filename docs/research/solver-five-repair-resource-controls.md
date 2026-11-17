@@ -184,3 +184,7 @@ Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-re
 `8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
 18 unchanged executable images in the preceding immutable record. Earlier
 archive paths and index rows remain unchanged. No push.
+
+A separate [complete-chain trace diagnostic](solver-five-trace-attribution.md)
+attributes requested allocation variation in case zero with warm reused input.
+It preserves all earlier charges and does not explain every failed metric.

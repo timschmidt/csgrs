@@ -10571,3 +10571,24 @@ pending. No queue, budget, source or accepted account changes. The full goal
 remains active. Frozen evidence: `docs/evidence/2026-11-17-interval-queued-drc-profile`,
 archive commit `a2cd1f4732df9805b8ba6bfd3e70b8eeabf4f179`; 12 files / 200,433
 bytes, SHA-256 `e02a9ed79f7ff2c116f0156bd5b877d461a76831944f1d86d262f158fafba85a`.
+
+## 2026-11-17: complete-chain trace allocation attribution
+
+A separate 56-process diagnostic reproduces active-trace allocation variation
+on the original fixed/five-repair complete-consumer images. Full outputs and
+traces match in both recording domains. All captured size-632 allocations
+resolve to snapshot B-tree insertion; the measured operation contains six to
+nine such nodes. Each extra node corresponds to one allocation/deallocation
+and 632 requested peak/traffic bytes, with operation-retained requested payload
+unchanged at 10,381 bytes. Passive controls are constant. See the
+[complete-chain attribution review](docs/research/solver-five-trace-attribution.md).
+
+This finite attribution does not explain all historical charges, allocator-usable
+or passive-trace failures, or establish ASLR causality. Interposition is not an
+unchanged resource measurement or timing comparison. No source, cap or accepted
+account changes; earlier charges remain. Source/package portable qualification
+continues separately, and the full fifteen-phase goal remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-five-trace-attribution`, local
+archive commit `8a2190d1a0f35ec794d8539fde0b209b240c77ab`; 129 files / 306,365
+bytes, SHA-256 `21c21fcdc02ca3244204f681749cfffe4710524a7f3ff00ef14e0e2ab811ad1a`.
