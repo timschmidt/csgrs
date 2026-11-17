@@ -99,3 +99,10 @@ It retains raw observations, all six images, protocols, original failure and
 continuation, verifiers, source patch/commit and storage verification. Original
 and stored hashes, lengths, modes and compression are recorded. Earlier archive
 paths and index rows remain unchanged.
+
+The subsequent [complete qualification](solver-cancellation-qualification.md)
+adds full lifetime/cumulative, native/WASM and package evidence. Distribution
+and image checks pass; memory allowances remain open. A matching-launch study
+isolates one allocation confound while preserving historical failures. The
+original native runner also exceeded its command cap; the review records that
+limitation and the corrected runner's separate evidence.

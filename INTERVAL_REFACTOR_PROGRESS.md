@@ -10685,3 +10685,44 @@ inventory 1,644 rows. The full goal stays active; queue parent remains held.
 Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-scope`,
 commit `335b51a405c4fcb6be800aa41df4464a3c9d930e`; 968 files / 14,485,688 bytes,
 SHA-256 `e5f317e42656b088fb53d1cf3d90b440496cac806caf1825d2c1c16ea339a92f`. No push.
+
+## 2026-11-17: full cancellation qualification and matching launch names
+
+Scope-local candidate `ab81708aa` now has full native lifetime/cumulative,
+source native/WASM and packaged consumer evidence. Source distribution passes
+3,600 controls with 336 expected old failures/traps; all 864 package controls
+match their source outputs/traces. Six package archives match 452 source files.
+All 90 native resource-image and 42 source plus 42 package image metric accounts
+pass, including historical positive charges and required headroom. See the
+[qualification review](docs/research/solver-cancellation-qualification.md).
+
+The original native campaign has 264 failed resource accounts out of 648.
+An 18-process factorial diagnostic proves a launch-name confound for one
+23,168-byte usable-traffic discrepancy on unchanged executables. A full
+15,396-process matching-launch campaign preserves all successful outputs and
+traces, six expected failures, and 88,320 lifetime cycles. Its 267 failed accounts
+and 287 conservative failed accounts show that this confound does not explain
+all growth. Every legacy charge/failure remains; all total capacities, lifetime
+retention and headrooms pass. The 26 remaining wrapper-to-scope failed groups
+in the matching run all use active trace recording.
+
+The original runner omitted helper processes from its guard and exceeded its
+16,000-command ceiling by 41. This separate runner failure is preserved. Audited
+source/package totals fit their caps, although their guards also omit helpers.
+The matching runner counts all direct children and stays within its ceiling.
+Preflight failures, corrections and original deadlines are retained; no failed
+geometric attempt is silently replaced. Independent accounting/verification pass.
+
+No implementation or exception is admitted. Accepted totals remain 57 size and
+zero memory accounts; inventory remains 1,644. Quiet runtime, memory failures,
+broader release checks and complete admission remain open. The queue remains
+held, the original watcher terminal and the full fifteen-phase goal active.
+No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-qualification`,
+commit `e8bce8dcf528a98e2fad45f022fca70f93f84dfc`; 11 files / 199,940,791 bytes,
+SHA-256 `6a97f9ba7c481c85fccf1accbac053a36998e0a5edef538395c96cfcbb690b5e`.
+All 33,903 container members and committed parts are verified; earlier records
+are unchanged. The archive retains all 172 images and the storage recovery
+record. Documentation checks cover formatting, spelling, relative links,
+repository budget, whitespace and the new archive manifest row.
