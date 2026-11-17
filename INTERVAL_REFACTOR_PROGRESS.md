@@ -10324,3 +10324,30 @@ Frozen finite resource evidence: `docs/evidence/2026-11-17-interval-residual-cer
 2,875,171,645 uncompressed bytes, including all fourteen instrumented binaries.
 The live admission stage remains mutable; later work is not sealed by this
 snapshot. Prior archive records and manifest rows are unchanged. No push.
+
+## Failed-constraint diagnostic ownership
+
+The complete 826-line failed-constraint module now has 33 reviewed declaration
+rows, preserving the previous 1,611 inventory rows. The 1,644-row inventory remains
+partial. Diagnostic classification, rank redundancy and bounded removal searches
+stay in Hypersolve; they are report/proof consumers, not generic interval
+arithmetic. Source-row identity, uncertainty and current-candidate versus global
+satisfiability claims remain distinct. See the
+[ownership review](docs/research/failed-constraint-ownership-review.md).
+
+Removal cardinality and precision do not establish total-work, memory or stack
+bounds. Existing owner receipts and mapped tests remain evidence for their
+original scope; no new removal-search runtime result is claimed. The separate
+native/WASM residual consumer campaign completed fourteen final artifacts and
+16,096 checks, including 13,744 full report/trace comparisons. Strict Clippy and
+formatting pass. Original image caps pass: native accounts have no positive
+charge and both WASM configurations retain 310-byte cumulative file/code charges.
+Memory failures and the remaining owner/package/runtime/composition gates stay
+open. No production or accepted resource account changes; the broader plan
+remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-failed-constraint-ownership`, local commit
+`8bc1f0256c0d8fe919cd7c0fd182ac94341145ac`; 139 files / 55,660,343 bytes, SHA-256
+`ef3852c2547fec0b9019c3f552951d36f88d9819ff6b8244ee49eea74e7b8568`. All prior archive paths and manifest rows are
+preserved. The ownership review is frozen; the separate live residual admission
+stage remains mutable beyond this finite snapshot. No push.
