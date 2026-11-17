@@ -10492,3 +10492,30 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-control
 `c4339cb5da9ec04d23673a74dc20d2fdae210ebcdd59b3408af76f4c88b571d9`. Raw logs, collector attempts, recovery records and all
 38 final executable images are preserved losslessly with source/stored digests.
 Previous archive paths and index rows are unchanged.
+
+
+## 2026-11-17: repeated five-repair resource and stack qualification
+
+All 12,600 planned independent processes complete. Full output and trace text
+agrees across 10,248 matched source comparisons, with 211 original cold controls
+retained as supplementary cost observations. The 18 final images are unchanged.
+All total payload, stack-growth and headroom gates pass. Of 168 accounts, 22
+fail 52 heap/count growth metrics; every initial cap and positive charge remains.
+The earlier ten whole-owned lifetime failures remain separate obligations.
+
+The initial analysis timeout and single-pass parser correction are preserved;
+no geometry is rerun or assertion weakened. Independent verification checks
+all raw observations, source charges, full strings and capacity calculations.
+See the [complete consumer review](docs/research/solver-five-repair-resource-controls.md).
+
+Reused-input whole-owned lifetime, quiet runtime, successive-operation,
+distribution, cancellation/resource contracts and complete validation remain
+open. No implementation or account is admitted. Inventory remains 1,644 rows;
+accepted accounts remain 57 size and zero memory. The frozen queue, finite
+watcher horizon and full fifteen-phase goal remain intact.
+
+Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-measurements`, local commit
+`dbf779db93c6765fcdf1c349ab1f9330be864c3e`; 31 files / 33,237,852 bytes, SHA-256
+`8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
+18 unchanged executable images in the preceding immutable record. Earlier
+archive paths and index rows remain unchanged. No push.

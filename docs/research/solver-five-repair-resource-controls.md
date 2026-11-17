@@ -34,7 +34,7 @@ The first collector incorrectly compared distinct feature configurations. Its
 successful controls and failed comparison remain preserved; the correction
 separates configurations without normalizing outputs or changing the fixture.
 Both attempts finish within the original 3,600-second deadline, taking
-1,062.924 seconds through checkout restoration. These are execution records,
+about 1,063 seconds through checkout restoration. These are execution records,
 not quiet performance measurements.
 
 ## Initial budgets and observed charges
@@ -93,11 +93,11 @@ array. Original measurements and caps are unchanged; both parser versions and
 the correction record remain available.
 
 These are one fresh 32-cycle control history per source/configuration, with
-rebuilt inputs. Repeated-process cold/warm, reused/rebuilt input, operation/drop
-stack and reused-input whole-owned lifetime qualification remain open. Stack
-monitors are compiled but this stage does not measure stack or establish worker
-headroom. The protocol counts the full 2 MiB stack mapping in prospective
-worker capacity, separately from heap measurements. Debug serialization is
+rebuilt inputs. The subsequent repeated-process and stack campaign is recorded
+below. Reused-input whole-owned lifetime qualification remains open. This control
+stage does not itself measure stack or establish worker headroom. The protocol
+counts the full 2 MiB stack mapping in worker capacity, separately from heap
+measurements. Debug serialization is
 outside measured epochs. Requested/usable payload is not allocator-arena or RSS
 occupancy. Quiet runtime, successive-operation, package/WASM, cancellation,
 resource-contract and complete applicable release validation remain required.
@@ -118,3 +118,68 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-control
 `c4339cb5da9ec04d23673a74dc20d2fdae210ebcdd59b3408af76f4c88b571d9`. Raw logs, collector attempts, recovery records and all
 38 final executable images are preserved losslessly with source/stored digests.
 Previous archive paths and index rows are unchanged.
+
+
+## Repeated-process and guarded-stack campaign
+
+The subsequent campaign completes all 12,600 planned processes using 18 sealed
+resource images, with six independent process workers. Ordinary inputs cover
+all eight source boundaries, both policies, reused/rebuilt input, cold/warm
+state, three trace configurations and three repetitions. Added cases use only
+the final source. Each combination measures allocation/cleanup and operation
+and cleanup stacks with two fill patterns. The 211 matching original cold
+controls, including the first collector attempt's successful fixed control,
+remain supplementary observations in cost maxima.
+
+Warm allocation uses eight prior operations; warm stack uses the original
+monitor's one prior callback and includes output replacement. These histories
+remain separate. Full output and trace text agrees across 10,248 matched source
+comparisons. Independent verification reconstructs every raw numeric observation,
+paired cleanup peak, source-boundary charge and headroom calculation. All image
+bytes remain unchanged. No process hits its 60-second or 8 MiB output limit;
+the driver completes within its 7,200-second total deadline. These limits are
+external containment, not a claim of typed solver exhaustion or quiet runtime.
+
+Of 168 resource accounts, 22 fail 52 initial growth metrics. Fourteen failed
+configurations use active trace and eight use no trace. No measured total,
+stack-growth or headroom limit fails. Original caps remain unchanged.
+
+| Failed metric | Accounts | Cumulative positive charge range |
+| --- | ---: | ---: |
+| Requested traffic | 7 | 1,264–1,896 B |
+| Requested peak | 12 | 632–1,896 B |
+| Usable peak | 10 | 632–1,880 B |
+| Allocations | 4 | 2–3 |
+| Deallocations | 4 | 2–3 |
+| Usable traffic | 15 | 1,216–14,824 B |
+
+These failed charges are additional evidence, not replacements for the ten
+failed whole-owned lifetime metrics above or earlier consumer accounts. No cause
+is inferred from the numerical similarity to earlier trace/allocator findings.
+No savings, samples or denominator changes erase a positive charge.
+
+Maximum observed operation stack is 20,376 bytes; cleanup stack is 2,328 bytes.
+The minimum untouched worker stack is 2,066,408 bytes after accounting for the
+recorded caller and guard. Minimum qualification payload headroom is 6,145,856
+bytes, counting the full 2 MiB mapping plus heap peak. The monitor scans bytes
+below the callback boundary, includes the callee red zone, uses two fill patterns
+and records excluded caller frames. These finite observations do not establish
+an arbitrary-depth or deployment memory bound.
+
+The initial analysis exceeded its external 300-second limit. That attempt is
+preserved. A single-pass log parser replaces repeated full-log scans; 63 format
+comparisons agree, and the independent verifier checks every raw observation.
+The retry retains the same limit, all measurements, full strings and caps.
+The 2,032,006,901 raw output bytes remain losslessly represented by 85,156,317
+bytes of individual compressed logs, themselves bundled losslessly for archival.
+
+Reused-input whole-owned lifetime, quiet runtime, successive-operation,
+package/WASM, resource/cancellation and complete applicable release validation
+remain open. There is no source or account admission. The original watcher,
+queue, candidate revisions and earlier charges are preserved.
+
+Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-measurements`, local commit
+`dbf779db93c6765fcdf1c349ab1f9330be864c3e`; 31 files / 33,237,852 bytes, SHA-256
+`8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
+18 unchanged executable images in the preceding immutable record. Earlier
+archive paths and index rows remain unchanged. No push.
