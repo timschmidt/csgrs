@@ -10174,3 +10174,26 @@ Their guarded runtime queue is unchanged; their proposed resource budgets do
 not become independent cumulative allowances for shared final artifacts.
 All 57 size accounts and zero adopted memory accounts remain unchanged.
 All fifteen phases remain active. No push.
+
+## Selected polynomial enclosure inventory review
+
+The full 182-line bounds module and its immediate policy/work/consumer paths
+were reviewed at `ee4932b4c`. Nine declarations are now mapped: two lexical rows
+updated and seven missing rows added, preserving all other 1,576 rows. The
+inventory has 1,585 rows and remains partial. The selected value and its shared
+field authority make this a Hypersolve proof adapter/certificate, not a generic
+two-endpoint interval to extract. See
+[the ownership review](docs/research/selected-enclosure-ownership-review.md).
+
+Existing selected-bound, original second-chamfer and selected-replay receipts
+from composed candidate `f65589b44` are retained with exact source hashes;
+they are not presented as fresh primary-revision tests. Static coverage and
+preservation checks apply to this documentation/inventory change. No production
+source, predicate order, runtime gate or resource account changes. The earlier
+solver candidates remain unaccepted pending their quiet-host timing campaigns.
+All fifteen phases remain active; no phase is declared complete.
+
+Frozen ownership evidence: `docs/evidence/2026-11-17-interval-selected-enclosure-review`, local commit
+`3382575d943f9d7801fe56d185827120576a2420`; 15 files / 1,672,600 bytes, SHA-256
+`b05e1ff27456794dcbcb0432cbd77401e6cb7fbb45a8aab53ad30f413adb88c7`. Prior archive paths and manifest rows are preserved.
+No push.
