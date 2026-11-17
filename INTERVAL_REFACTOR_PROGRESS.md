@@ -10431,3 +10431,32 @@ local commit `d2842b8b326d916d541a670ada9a604ab9453e9a`; 171 files /
 `fae97e7a8a16aebbd67440cf3f4a5ab665fcffbe42a845df79f431ec648bcb9e`.
 Original bytes are preserved with source/stored digests; earlier archive paths
 and index rows remain unchanged. The diagnostic stage is frozen. No push.
+
+## Five-repair solver composition
+
+Isolated candidate `4a04dd9744bfecb578963b42fa3bffef5b7062b5` composes the four pending solver repairs
+with the unchanged residual-certainty repair. Four original residual regressions,
+eight public witnesses and the additive composed-chain witness first reproduce
+their failures on `f65589b44e1a010de75f8129b371ecbf503cc052`. The candidate
+passes all affected owner/public/downstream checks, including both owner feature
+configurations, strict Clippy, doctests and strict docs. Full owner dispatch
+reports, all 32 residual policy traces and eight exact-control outputs match
+the fresh baseline. See the [composition review](docs/research/solver-five-repair-composition.md).
+
+The new witness consumes alpha/domain-qualified context through residual-ball
+certification and diagnostics, including a return to STRICT with warmed caches.
+All existing assertions remain. The original formatting rejection is preserved;
+its correction changes only line wrapping and keeps the total deadline.
+
+Source and accounts remain unaccepted. Final five-repair resource, capacity,
+runtime, successive-operation, distribution and applicable validation evidence
+remain necessary; earlier costs and failures are not reset. Original queued
+artifacts/revisions and the finite watcher are preserved. The partial inventory
+stays at 1,644 rows and the full fifteen-phase plan remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-composition`, local commit
+`db6870e1c3109c4e540d084e3f34039dc412158f`; 122 files / 7,822,613 bytes, SHA-256
+`ca2012ee7e29ee64f569a2bf38e82cf71e917ca45c07dad2d5daef74329598e6`. Original observer executables, command outputs and patches
+are preserved with lossless gzip encoding and source/stored digests. Earlier
+archive paths and manifest rows remain unchanged. The qualification and initial
+formatting-attempt stages are frozen. No push.
