@@ -10220,3 +10220,41 @@ Frozen review evidence: `docs/evidence/2026-11-17-interval-selected-filter-revie
 `b62e9eb5ae819cd788a7b379f16ad52147bd950c`; 12 files / 1,539,709 bytes, SHA-256
 `071764eecb4a080fbdaafd15db2d365f14c8066fce643f711f39d04aab877b01`. Prior archive records and manifest rows are preserved.
 No push.
+
+## Successive-operation analysis and contended DRC replays
+
+At primary `5d74e2c1d`, the pending combined solver qualification gained a
+post-run analyzer for both original successive-operation histories. It checks
+all eight attributed processes, 21 chains and 200 steps, complete certified
+journals, unchanged geometric rows, artifact/driver/journal hashes and host
+boundary records. It retains per-step and per-chain comparisons, treats absent
+validation separately from zero, and never sums memory peaks across steps.
+Twenty-six synthetic controls passed, including incomplete/corrupt evidence,
+wrong attribution, external contention, zero baselines and an exact adverse
+runtime example. These are analyzer controls, not measured candidate performance
+or geometric qualification. The allocation columns cover step calls only and
+cannot establish a complete-lifetime memory exception.
+
+The external observer found 60 seconds without the watched workloads and the
+38-command queue began. Routing workers restarted about nine seconds after
+launch. Both predeclared DRC replays failed the unchanged 120-second worker-CPU
+assertion: 189.525596316 and 188.118210819 seconds. The first also overlapped the
+26.95-second synthetic-control campaign. Preserve both failures; neither run
+establishes exclusive-host performance, and no causal attribution or runtime
+waiver follows. The orchestrator is held before command three. A separate,
+six-hour observer may resume the remaining queue after a fresh quiet window;
+it never retries a command or resets its cumulative workload budget.
+
+Only this progress record and the archive index change in the primary tree.
+Measured baseline `ee4932b4c`, candidate `f65589b44`, all 57 accepted size
+accounts, zero accepted memory accounts and the partial 1,593-row inventory
+remain unchanged. All fifteen phases remain active. No production adoption or
+push follows from this record.
+
+Frozen finite evidence: `docs/evidence/2026-11-17-interval-successive-analysis-review`,
+local commit `56b05cf2010fa75d6ff3ce00ffd52503a75a2512`; 24 files / 1,336,955 bytes,
+SHA-256 `d084ca916a048e8bd10e79bd7930ee1c5b41c7d38620fb91074b08d082f79649`.
+The live combined stage and queue remain mutable and are not sealed by this
+snapshot. Both archive-preparation failures are retained; prior archive records
+and manifest rows are unchanged. Final whitespace, spelling, source/account
+preservation and repository-budget checks qualify this documentation change.
