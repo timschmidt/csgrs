@@ -10057,3 +10057,31 @@ contains 1,792 files / 1,280,121 bytes, SHA-256
 All 57 size accounts are unchanged. All fifteen goal phases remain active.
 The separate alpha repair is unaccepted pending its queued comparisons;
 24 quiet commands remain scheduled, with no Jacobian timing added. No push.
+
+## Required dense linear adapter ownership review
+
+At `15cf09783`, all445lines and25declarations in the required
+`hypersolve/src/linalg.rs` file were reviewed, including its manifest, public
+exports, report storage and immediate solver consumers. These are category4
+lossy numerical proposal routines and category5 diagnostics, with no interval
+carrier or enclosure kernel to extract. The original1540inventoryrows are
+preserved and25reviewedrows appended, for1565partialinventoryrows.
+
+Nine unchanged-source standalone controls pass under Rust1.95 with warnings
+denied, and strict Clippy passes. Three missing acceptance witnesses explicitly
+fail: normal equations and BFGS can return successful NaN steps from finite
+overflow inputs; normal equations also accept a NaN input. Exact commands,
+independent small-system expectations and failure diagnostics are preserved.
+These results establish current gaps, not corrected support. The full owner
+suite and cost/platform gates were not rerun for this source-unchanged audit.
+See [the ownership review](docs/research/solver-linear-adapter-review.md).
+
+No production or repository test changes are retained;57sizeaccounts remain
+unchanged. A temporary build dependency held the quiet lane during the
+standalone builds and was released afterward. All24queued commands are
+unchanged. Other pending candidate admissions and all15phases remain active.
+
+Evidence: `docs/evidence/2026-11-17-interval-linear-adapter-review`, local commit `8e85280f4f69874b21dc38bee78dbf879c7f6541`;
+22files / 853,986bytes, SHA-256
+`03745adae57d4258bd9ac21cc8fee79a63b8c9a72111b24b7f300f9c783c3210`. This stage is frozen. Every previous archive path and
+manifest row is preserved. No push.
