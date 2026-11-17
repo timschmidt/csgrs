@@ -10660,3 +10660,28 @@ commit `0e2c1dad1ff7df5e9b8c9bea3a27227855ab7adc`; 14 files / 57,952,780 bytes,
 SHA-256 `f49b4b07ece73452600445c65339605e0e9f24ef3734530be3bb5375da5cb065`. The lossless container retains 4,143 members,
 all 24 images and recovery records for 26 relocated, previously archived images.
 The original watcher is terminal and its parent held. No push.
+
+## 2026-11-17: scope-local cancellation alternative
+
+Isolated candidate `ab81708aa` moves the final cancellation check into the
+existing scope function using a private const flag. All 1,321 affected test
+invocations, native/WASM witnesses, 882 complete-consumer controls and 1,722 full
+output/trace comparisons pass. All 336 initial stack groups pass unchanged caps:
+operation delta versus five-repair is −160 to +160 bytes, versus wrapper −1,056
+to −944 bytes. Strict owner/consumer/downstream Clippy, docs and formatting pass.
+See the [qualified pilot review](docs/research/solver-cancellation-scope-pilot.md).
+
+The first pilot stopped at the disk reserve during archival; its 442 completed
+commands and stop are preserved. A reviewed continuation reused them without
+reruns or a deadline reset. All checks finish within the original execution
+budget. Older redundant sparse-checkout archive copies were removed only after
+verifying committed data, with materialization instructions retained.
+
+No source or account is admitted. Complete lifetime/resource, final-image,
+cumulative, distribution, quiet runtime and release checks remain open; earlier
+failures and positive charges remain. Accepted totals stay 57 size / zero memory,
+inventory 1,644 rows. The full goal stays active; queue parent remains held.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-scope`,
+commit `335b51a405c4fcb6be800aa41df4464a3c9d930e`; 968 files / 14,485,688 bytes,
+SHA-256 `e5f317e42656b088fb53d1cf3d90b440496cac806caf1825d2c1c16ea339a92f`. No push.

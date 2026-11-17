@@ -86,6 +86,10 @@ positive charges. The active-trace heap failures remain separate obligations.
 
 ## Images and remaining gates
 
+A [scope-local alternative](solver-cancellation-scope-pilot.md) subsequently
+passes the same initial stack limits. That pilot preserves this wrapper record
+and does not clear its other pending accounts or admission requirements.
+
 All initial native image caps and 16 MiB capacity/2 MiB reserve checks pass.
 Ordinary file deltas range from −12,096 to +9,168 bytes. Default resource allocated
 sections grow four bytes despite its smaller file. Trace allocated growth is
