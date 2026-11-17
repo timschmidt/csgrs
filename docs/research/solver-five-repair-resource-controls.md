@@ -94,7 +94,8 @@ the correction record remain available.
 
 These are one fresh 32-cycle control history per source/configuration, with
 rebuilt inputs. The subsequent repeated-process and stack campaign is recorded
-below. Reused-input whole-owned lifetime qualification remains open. This control
+below. The later [reused-input lifetime review](solver-five-repair-reused-lifetime.md)
+measures held-input payload and final teardown. This control
 stage does not itself measure stack or establish worker headroom. The protocol
 counts the full 2 MiB stack mapping in worker capacity, separately from heap
 measurements. Debug serialization is
@@ -173,9 +174,9 @@ The retry retains the same limit, all measurements, full strings and caps.
 The 2,032,006,901 raw output bytes remain losslessly represented by 85,156,317
 bytes of individual compressed logs, themselves bundled losslessly for archival.
 
-Reused-input whole-owned lifetime, quiet runtime, successive-operation,
-package/WASM, resource/cancellation and complete applicable release validation
-remain open. There is no source or account admission. The original watcher,
+Reused-input lifetime costs are measured in the [subsequent review](solver-five-repair-reused-lifetime.md).
+Quiet runtime, successive-operation, package/WASM, resource/cancellation and
+complete applicable release validation remain open. There is no source or account admission. The original watcher,
 queue, candidate revisions and earlier charges are preserved.
 
 Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-repair-resource-measurements`, local commit

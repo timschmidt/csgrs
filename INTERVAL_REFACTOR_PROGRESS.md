@@ -10519,3 +10519,40 @@ Frozen repeated-measurement evidence: `docs/evidence/2026-11-17-interval-five-re
 `8a2c2ed024609657d66fc211aa8444739477f40de9b9830e27eb8b63fa103063`. The archive inventories all 12,600 log members and references
 18 unchanged executable images in the preceding immutable record. Earlier
 archive paths and index rows remain unchanged. No push.
+
+
+## 2026-11-17: reused-input complete solver lifetimes
+
+The additional observer owns its input from construction through 32 operations
+and final destruction. All 726 successful histories complete 23,232 cycles;
+the four-repair source reproduces four expected qualified-receipt failures.
+Every original fixture assertion and allocator byte is preserved. Full histories
+agree across 660 additional comparisons, and every first-cycle output matches
+its archived cold control. Four strict Clippy configurations and formatting pass.
+
+No successful history has negative reconstructed payload or net retention change
+after cycle two. All total payload and image budgets pass. Final persistent
+usable payload reaches 25,064 bytes under the unchanged 32 KiB limit. Thirteen
+growth metrics fail across five accounts; original caps, charges and earlier
+failures remain. See the [reused-input review](docs/research/solver-five-repair-reused-lifetime.md).
+
+Twelve positive charges in earlier failed resource metrics occur between
+byte-identical images. Their original rows and image bytes are independently
+verified; this does not explain other boundaries or remove any charge.
+
+The original six-hour quiet watcher exits at its fixed horizon, leaving 36
+commands pending and the workflow parent held. Its terminal observation records
+one external routing process; no watcher, horizon or command budget is reset.
+Fresh evidence/review is required before queue resumption. All candidate
+revisions and queued artifacts remain intact.
+
+Source admission, remaining growth failures, quiet runtime, successive-operation,
+distribution, resource/cancellation and full applicable validation remain open.
+Inventory is still 1,644 rows; accepted accounts remain 57 size and zero memory.
+The full fifteen-phase goal remains active. No push.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-five-repair-reused-lifetime`, local commit
+`01de43682923e9910cfe5607bba3d16ffaf4fc22`; 54 files / 125,109,846 bytes, SHA-256
+`a41d45a26fdc8fbd0d155a0a8b715d80de7a0e3b0660531c03f7db05a199c458`. All 19 images and every compressed command/history log are
+preserved losslessly with byte counts, hashes, modes and a container-member
+inventory. Earlier archive paths and index rows remain unchanged.
