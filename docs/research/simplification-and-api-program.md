@@ -180,6 +180,10 @@ completed contract:
    [bounded exception](../admission.md#bounded-code-and-binary-size-exceptions);
    source reduction alone does not qualify. All other gates remain unchanged.
    This prospective policy amendment does not revise historical package outcomes.
+   Small memory/stack growth for demonstrated functionality additionally needs
+   the separate [memory exception](../admission.md#bounded-memory-growth-exceptions),
+   with per-target caps, complete-lifetime measurements, headroom and cumulative
+   accounting. Neither exception waives runtime or correctness gates.
 
 The order of sign and predicate calls must not change. That order decides which
 proofs are cached and reused (P4, P10). A refactor that reorders calls,

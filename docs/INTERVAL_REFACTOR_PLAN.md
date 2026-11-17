@@ -998,6 +998,19 @@ remain intact. Record each candidate's benefit and fresh qualification in the
 execution ledger, preserving historical dispositions. This rule alone assigns
 no numerical caps and qualifies no implementation.
 
+## 9.8 Goal-authorized bounded memory growth
+
+The user also permits small, bounded memory growth around new functionality
+and reconsideration of approaches previously rejected on memory or stack.
+Apply the separate [memory exception protocol](admission.md#bounded-memory-growth-exceptions):
+declare per-target temporary/retained heap and stack caps, measure complete
+consumer lifetimes, preserve deployment headroom and account cumulatively
+against a fixed baseline. Correctness repairs qualify as useful functionality.
+Runtime, exactness, certainty, provenance, dispatch order, no-alloc firmware,
+hard resource limits and required validation remain unchanged. Preserve earlier
+rejection evidence and reassess candidates on the current target revision.
+This authorization assigns no numerical allowance and admits no candidate.
+
 ---
 
 # 10. Hyperdynamics extraction and implementation

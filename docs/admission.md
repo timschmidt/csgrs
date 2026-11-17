@@ -312,10 +312,11 @@ default for behavior-preserving refactors remains no growth in monomorphized
 code or binary size. A small, explicitly budgeted increase may be retained for
 demonstrated functionality, correctness, completeness, performance, or memory
 benefits. Source reduction or abstract future usefulness alone does not qualify.
-This amends only the size gate in the [agent rules](../AGENTS.md) and applicable
-programs; historical dispositions remain historical. It grants no exception to
-exactness, certainty, provenance, dispatch/predicate order, performance,
-memory/stack, resource handling, or required validation.
+This amends the code/binary-size gate in the [agent rules](../AGENTS.md) and
+applicable programs; historical dispositions remain historical. It grants no
+exception to exactness, certainty, provenance, dispatch/predicate order,
+performance, resource handling, or required validation. Memory and stack growth
+require the separate bounded exception below.
 
 Each exception must satisfy all of the following before retention:
 
@@ -357,6 +358,62 @@ qualifying exception with the evidence above. Exceeding either cap, violating
 headroom, or missing required evidence blocks retention under this exception.
 This policy does not itself qualify any implementation or reopen a rejected
 change without fresh review on its target revision.
+
+### Bounded memory growth exceptions
+
+Policy migration (17 November 2026 UTC, requested by the repository owner):
+small, bounded increases in temporary memory, retained memory or stack may be
+retained for demonstrated new functionality, correctness or completeness.
+Previously rejected approaches may be reconsidered under this exception.
+Source reduction or abstraction alone does not qualify. The governing priority
+order and every other gate remain intact, including runtime, exactness,
+certainty, provenance, predicate/dispatch order and required validation.
+Historical measurements and rejection decisions remain preserved.
+
+Before retention, each exception must:
+
+1. **Identify the benefit and affected scope.** Reproduce the missing or failing
+   witness on the target revision. Compare the same completed baseline
+   workloads; measure added functionality separately. Name targets, features,
+   call chains, input sizes and supported concurrency. A smaller isolated
+   helper is not evidence of the complete consumer's memory cost.
+2. **Declare small numerical caps.** Bound incremental and cumulative positive
+   growth separately for temporary heap bytes, retained heap bytes and stack
+   bytes wherever affected. Specify absolute caps, relative caps with their
+   stated denominators, total peak limits and required deployment headroom.
+   Both applicable absolute and relative caps must pass. For zero or censored
+   baselines, obtain a usable measurement or explicitly justify a new-workload
+   allowance against an independently declared target capacity; do not invent
+   a percentage increase or treat an unobserved value as zero. There is no
+   automatic global allowance. Allocation/reallocation counts and allocator
+   overhead remain measured; this exception does not waive their runtime or
+   resource effects.
+3. **Measure complete lifetimes.** Include required output materialization,
+   retained proofs/caches, cleanup, retries, cold/warm state and relevant
+   nested or concurrent calls. Separate requested bytes from allocator/RSS
+   measurements. Stack measurements must identify the call boundary, target,
+   thread/task limit, excluded frames, measurement resolution and any censored
+   values. A local frame estimate alone does not bound whole-call stack.
+   Publish the ordinary completion envelope and stress/resource envelope;
+   finite measurements do not establish an unbounded-input memory guarantee.
+4. **Account cumulatively.** Use a fixed program baseline and per-target,
+   per-workload accounts with every prior positive charge retained. Record
+   incremental changes, cumulative charges and remaining allowance. Do not
+   offset growth in one metric, target or workload against savings elsewhere.
+   A cap or baseline revision requires a separate documented justification
+   retaining prior charges, not an implicit reset after a failure.
+5. **Keep hard resource contracts.** No-alloc firmware remains allocation-free;
+   task stacks, RAM partitions, reservations and concurrency limits remain
+   binding. Existing work, memory and cancellation limits still produce typed
+   exhaustion before a completed result is published. Cleanup and later retry
+   must remain valid. Growth in a cache or construction graph needs an explicit
+   retention bound; this exception does not authorize unbounded retention.
+
+Missing capacity evidence, an exceeded cap or a failing unchanged gate blocks
+retention. Record accepted exceptions in the admission/idea ledger alongside
+their measurements and remaining budgets. Merely updating this policy does not
+admit an implementation. Code and binary growth still require their separate
+exception and accounting.
 
 ## 7. Complete the admission record
 

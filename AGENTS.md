@@ -373,7 +373,11 @@ on the same completed contract:
   monomorphized code size, or binary size by default. A bounded code/binary-size
   exception requires the evidence and per-target budgets in
   [the admission protocol](docs/admission.md#bounded-code-and-binary-size-exceptions).
-  Source reduction alone does not qualify; all other refactoring gates remain.
+  Bounded memory/stack growth for demonstrated functionality requires the
+  separate [memory exception](docs/admission.md#bounded-memory-growth-exceptions),
+  including per-target caps, complete-lifetime measurements, headroom and
+  cumulative accounting. Source reduction alone does not qualify; all other
+  refactoring gates remain.
 
 Keep the order of sign and predicate calls exactly as it is. That order
 decides which proofs are cached and reused (P4, P10). Reordering calls,

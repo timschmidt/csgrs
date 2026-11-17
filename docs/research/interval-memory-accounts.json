@@ -1,0 +1,16 @@
+{
+  "program": "interval-refactor-2026-11",
+  "policy": "docs/admission.md#bounded-memory-growth-exceptions",
+  "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+  "status": "Policy authorized; no memory-growth exception admitted yet",
+  "scope": "Temporary heap bytes, retained heap bytes and whole-call stack, separately by target, feature configuration and completed workload. Existing binary-size accounts remain independent.",
+  "cumulative_rule": "Before the first admission for a workload, measure the fixed baseline, current baseline and candidate. Preserve any prior positive growth and every subsequent positive charge. Do not net decreases against increases or transfer headroom between targets, metrics or workloads. Missing historical or equivalent completed controls require explicit evidence and a documented baseline decision, not an assumed zero charge.",
+  "default_allowance": null,
+  "accounts": [],
+  "limitations": [
+    "An empty ledger is not evidence that all historical memory use is unchanged or fully measured.",
+    "No allocation-free firmware or configured RAM/task-stack limit is relaxed.",
+    "Runtime, predicate/dispatch order, exact outputs and certainty remain separate gates.",
+    "No candidate is admitted solely by this policy record."
+  ]
+}

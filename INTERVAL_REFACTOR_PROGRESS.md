@@ -7,8 +7,12 @@ Current goal-specific size acceptance: the user permits bounded growth for usefu
 functionality and reconsideration of rejected refactors, with per-target caps,
 final-binary measurements, firmware flash headroom and cumulative accounting.
 [Plan section 9.7](docs/INTERVAL_REFACTOR_PLAN.md#97-goal-authorized-bounded-code-and-binary-growth)
-records this exception. All other gates remain intact; historical rejection
-records below remain evidence of their original evaluations.
+records this exception. The subsequent user authorization also permits small,
+bounded memory/stack growth for useful functionality, under
+[plan section 9.8](docs/INTERVAL_REFACTOR_PLAN.md#98-goal-authorized-bounded-memory-growth)
+and the separate memory admission protocol. Runtime and all other gates remain
+intact; historical rejection records below remain evidence of their original
+evaluations.
 
 ## Initial state and isolation
 
@@ -10115,3 +10119,27 @@ Frozen evidence: `docs/evidence/2026-11-17-interval-linear-finite-rejection`, lo
 998files / 894,283bytes, SHA-256
 `73555446eddb99a781d02abf3005dbd6c09c5a02a5c3657ba277041f22caef03`. Every prior archive path and manifest row is preserved.
 No push.
+
+## User-authorized bounded memory growth
+
+The user explicitly permits small bounded memory growth around new functionality
+and reconsideration of approaches previously rejected on that criterion. The
+admission protocol now requires separate temporary/retained heap and stack caps,
+complete-lifetime measurements, deployment headroom and cumulative accounting.
+Exactness, certainty, provenance, predicate order, runtime, hard resource limits
+and no-alloc firmware remain unchanged. This records the requested policy
+migration; it does not weaken a fixture or admit a candidate.
+
+The new `docs/research/interval-memory-accounts.json` uses the existing fixed
+program baseline `c9f1f9ac5`. It initially has no accepted accounts or blanket
+allowance. Earlier positive growth must be established and retained before a
+new account is admitted; missing history cannot be charged as zero. All 57
+binary-size accounts remain unchanged.
+
+The first fresh reconsideration is the non-finite linear repair `0caf282ad`.
+Its earlier stack rejection remains immutable. A new stage must resolve
+censored empty-path measurements, declare justified target caps and complete
+runtime, size and downstream qualification. The Jacobian context repair is also
+eligible for review of its measured 32-byte increase; no prior runtime failure
+or other gate is waived. Unchanged rejected designs with unrelated failures
+remain rejected on those grounds.
