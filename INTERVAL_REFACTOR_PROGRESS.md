@@ -10197,3 +10197,26 @@ Frozen ownership evidence: `docs/evidence/2026-11-17-interval-selected-enclosure
 `3382575d943f9d7801fe56d185827120576a2420`; 15 files / 1,672,600 bytes, SHA-256
 `b05e1ff27456794dcbcb0432cbd77401e6cb7fbb45a8aab53ad30f413adb88c7`. Prior archive paths and manifest rows are preserved.
 No push.
+
+## Selected polynomial sign-filter inventory review
+
+The complete 220-line filter module and its immediate sign/context/interval
+paths were reviewed at `478795e48`. Eleven declarations are mapped: three
+lexical rows updated and eight missing rows added, preserving all other 1,582
+rows. The inventory has 1,593 rows and remains partial. The review retains the
+selected-field authority, denominator guards, optional-filter fallback order
+and distinct coefficient-evaluation paths; it does not propose extracting a
+second generic interval kernel. See
+[the ownership review](docs/research/selected-filter-ownership-review.md).
+
+An existing frozen full-owner receipt contains 14 passing selected-field tests
+at `f65589b44`, with reviewed source identities checked. This is reused evidence,
+not a fresh test/benchmark run. Static inventory/source/documentation checks
+apply to this change. Source-only simplification does not qualify for the bounded
+memory exception. All source/resource proposals remain subject to their original
+runtime and other gates; all fifteen phases remain active.
+
+Frozen review evidence: `docs/evidence/2026-11-17-interval-selected-filter-review`, local commit
+`b62e9eb5ae819cd788a7b379f16ad52147bd950c`; 12 files / 1,539,709 bytes, SHA-256
+`071764eecb4a080fbdaafd15db2d365f14c8066fce643f711f39d04aab877b01`. Prior archive records and manifest rows are preserved.
+No push.
