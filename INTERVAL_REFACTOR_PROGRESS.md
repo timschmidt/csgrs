@@ -11077,3 +11077,49 @@ fit and hardware-in-the-loop qualification remain open.
 Verified archive commit `f21108ae036892f7832facaaab05079fdc4efb38` contains
 the logs, corpus, probe sources, output measurements and before/after images
 at `docs/evidence/2026-11-17-interval-fixed-host-conversions`.
+
+## Fused affine hulls for primitive integer ranges
+
+Plan §3.5 calls for an affine image. At `e42236cad` the new public witness
+failed to compile for `IntegerRange`. A checked scale followed by a checked
+translation can fail even when both final endpoints fit. Commit `06ebc9e55`
+implements the operation in Hyperinterval for all twelve signed and unsigned
+primitive families. It returns the smallest discrete interval containing the
+image, including skipped integers when the factor has magnitude above one.
+Empty and zero-factor images compose with subsequent affine operations.
+
+For P1, P5 and P6 the implementation bounds the unsigned displacement from
+the offset by the exact distance to the appropriate type limit. Any larger
+displacement is unrepresentable, even with cancellation. An admitted
+displacement gives an exact representable endpoint. Monotonicity in the
+factor's sign determines which source endpoint supplies each extremum.
+The implementation uses fixed-width arithmetic throughout, including i128.
+
+An independent widened-integer release oracle passed all 33,554,432 signed
+and unsigned byte singleton triples. Owner tests cover every endpoint family,
+enumerated nonsingleton images and full-width GMP comparisons. The GMP-backed
+sanitizer target completed 100,000 runs. The 32-bit WASM module passed 40,620
+calls on 17,484 JS BigInt cases across i128, u128, isize and usize, with
+5,784 representable hulls and 11,700 expected overflows. Its final 7,272-byte
+module has zero imports. The Thumb callable ELF linked with 5,502 text bytes
+and no unresolved symbols. MCU execution, timing and board flash fit remain
+open.
+
+Rust 1.95 passed 254 all-feature owner tests and doctests. Rust 1.88 passed
+the integer-only suite plus Thumb and WASM release builds. The eight Alumina
+clock release tests passed before and after. Both its native executable
+(4,610,432 bytes) and the all-feature interval order benchmark (969,152 bytes)
+matched their baselines byte for byte. Owner and fuzz Clippy, rustdoc,
+formatting, the workflow audit and the repository budget passed.
+
+Seven native workloads covering signed and unsigned success, cancellation,
+overflow and empty made zero allocation calls in 4,096 iterations apiece.
+Twelve warmed blocks of 262,144 calls per case on one pinned CPU measured
+median complete-call costs from 3.93 ns (empty) to 20.75 ns (full-width
+signed success). These are absolute observations for the new API.
+The source requires no new memory or binary exception for the measured
+existing callers.
+
+Verified archive commit `2ef71922b1f8bb6ad7b542ebea396d843eb7b4d0`
+contains the logs, exact checks, final corpus, caller images and raw samples
+at `docs/evidence/2026-11-17-interval-integer-affine`.
