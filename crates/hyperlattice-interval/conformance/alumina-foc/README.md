@@ -13,7 +13,12 @@ cargo +1.88.0 clippy --locked --manifest-path crates/hyperlattice-interval/confo
 cargo +1.88.0 run --locked --release --manifest-path crates/hyperlattice-interval/conformance/alumina-foc/Cargo.toml --bin cost
 cargo +1.88.0 check --locked --manifest-path crates/hyperlattice-interval/conformance/alumina-foc/Cargo.toml --lib --target thumbv7em-none-eabihf
 cargo +1.88.0 build --locked --release --manifest-path crates/hyperlattice-interval/conformance/alumina-foc/wasm/Cargo.toml --target wasm32-unknown-unknown
+node crates/hyperlattice-interval/conformance/alumina-foc/wasm/check.mjs
 ```
+
+The Node runner accepts an explicit Wasm file path when using a custom Cargo
+target directory. It checks cardinal Park endpoint digests, typed range
+outcomes and replay of all five transform actions in two fresh instances.
 
 The production dependency graph of Hyperinterval/Hyperlattice is unchanged. This
 client has its own lockfile and only four dependency packages, all local: Alumina
