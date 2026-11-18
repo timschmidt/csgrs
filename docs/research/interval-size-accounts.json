@@ -10096,5 +10096,61 @@
       }
     },
     "source": "fd4da5bb3ad3d62cf971dcab5514ee6f6f8a9fa7"
+  },
+  "firmware_q30_modulation_rounding_test": {
+    "benefit": "Exact integration test of every common-mode and duty endpoint, closed limits and ordered range failures. Catches one-bit upper duty under-enclosure missed by the preceding owner suite.",
+    "evidence": "docs/evidence/2026-11-18-interval-inverse-clarke",
+    "toolchain": "Rust 1.88.0 x86_64-unknown-linux-gnu, locked alumina-firmware release q30_contract test executable, debug=0. Same absolute build path for all revisions.",
+    "firmware": {
+      "fixed": "2d68e82b7341db7b747b20e4ad1455a4c1113a00",
+      "preceding": "96ac22cadef311f069d62bae4dfa5f3918cfc143",
+      "retained": "35d1b0da6fb3b106a71ad25f090aaee205d844e9"
+    },
+    "csgrs": {
+      "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "preceding_and_retained": "b4d7b78fc51446bf75cdb5672df392a1c168557e"
+    },
+    "caps": {
+      "incremental_bytes": 16384,
+      "incremental_percent": 1,
+      "cumulative_bytes": 32768,
+      "cumulative_percent": 2
+    },
+    "capacity_per_artifact": 67108864,
+    "required_free_per_artifact": 16777216,
+    "artifacts": {
+      "q30_contract": {
+        "sha256": {
+          "fixed": "6680be9b505dae99ea4751c84718b7f5c8ae038b0d9750616151491207a8ef57",
+          "preceding": "6680be9b505dae99ea4751c84718b7f5c8ae038b0d9750616151491207a8ef57",
+          "retained": "73ff6e8352d043d9fecd7b1c5402dea2f0b5cd686810de6e0bfa58970f13cba5"
+        },
+        "metrics": {
+          "file": {
+            "fixed": 940368,
+            "preceding": 940368,
+            "retained": 949648,
+            "incremental_charge": 9280,
+            "remaining_incremental_bytes": 7104,
+            "remaining_incremental_percent": 0.013152,
+            "cumulative_charge": 9280,
+            "remaining_cumulative_bytes": 23488,
+            "remaining_cumulative_percent": 1.013152
+          },
+          "text": {
+            "fixed": 564862,
+            "preceding": 564862,
+            "retained": 569372,
+            "incremental_charge": 4510,
+            "remaining_incremental_bytes": 11874,
+            "remaining_incremental_percent": 0.201575,
+            "cumulative_charge": 4510,
+            "remaining_cumulative_bytes": 28258,
+            "remaining_cumulative_percent": 1.201575
+          }
+        },
+        "free_bytes": 66159216
+      }
+    }
   }
 }

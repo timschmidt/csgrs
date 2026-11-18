@@ -12291,3 +12291,86 @@ budget passed locally. No production size or memory allowance was charged.
 Evidence commit `1bf538726` contains the linked images, checked call lists,
 per-instruction measurement code, comparison records and mutations.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 9 inverse Clarke through space-vector modulation
+
+Firmware commit `35d1b0da6` adds a public Q2.30 regression test for inverse
+Clarke, common-mode injection, the three centered phases, all duty endpoints
+and the order of range failures. Rounding a duty upper bound down by one bit
+passed the preceding 87 unit tests and both integration tests. The retained
+test caught 751,619,276 where the exact ceiling is 751,619,277. Its signed
+extreme also distinguishes an unrepresentable sum before halving from an
+invalid modulation limit. The owner is `alumina-foc`. Hyperinterval supplies
+the outward-rounded scalar operations.
+
+An independent integer oracle checked the public calls on all 30,492 products
+of two signed interval inputs and seven voltage limits. The fixed-point grid
+has 11 selected endpoint values, including both signed extremes. All six
+arithmetic implementations and preceding firmware produced identical endpoints
+and typed errors. There were 1,341 successful modulations, 16,900 arithmetic
+range errors and 12,251 modulation-range errors. At the inverse step, outward
+multiplication by positive one-half followed by negation equals outward
+division by positive two followed by negation on the entire signed grid.
+Halving makes both endpoints safely negatable. The combined candidate keeps
+the intermediate checked sum before applying this identity to common mode.
+
+| Firmware expression | Native probe .text | Transform WASM file | Transform Thumb .text | Thumb inverse instructions, 660 word reads |
+| --- | ---: | ---: | ---: | ---: |
+| Preceding | 260,092 B | 35,862 B | 20,080 B | 287,830 |
+| Divide by −2 | 260,076 B | 35,867 B | 20,028 B | 282,230 |
+| Multiply by −½ | 260,108 B | 35,908 B | 20,108 B | 299,710 |
+| Affine map with slope −½ | 260,108 B | 35,908 B | 20,108 B | 299,710 |
+| Chain fixed multiply and negate | 260,092 B | 35,874 B | 20,052 B | 287,830 |
+| Divide by two and negate in inverse Clarke | 260,076 B | 35,849 B | 20,028 B | 281,230 |
+| Divide by two and negate in both stages | 260,076 B | 35,849 B | 20,028 B | 281,230 |
+
+All 17,564 cold/warm transform calls matched the oracle-checked return values
+on each linked Cortex-M4 variant. Neither division-by-positive-two version
+increased an individual transform's simulated instruction count, stack or
+WASM fuel. The combined version also passed a separate 39,879-call complete
+modulation replay on both architectures. It checked every result tag and all
+seven interval words of each success. Each successful Thumb call consumed 25
+fewer instructions. Maximum stack use fell from 456 to 448 bytes on successes
+and from 392 to 384 bytes on both error classes. No individual call increased
+Thumb instructions, stack or WASM fuel. The complete modulation caller's Thumb
+code fell from 5,792 to 5,672 bytes and the linked WASM from 38,458 to 38,432
+bytes.
+
+Standalone native processes initially suggested that the inverse-only version
+sped up successful modulation by 1.6%. Chain timing varied from −2.70% to
++5.17% on the two cores. Repeating the comparison with both libraries in each
+process, alternating load and call order, gave a successful-modulation
+slowdown of 0.56–0.63% on all four cores. The combined version's medians for
+that case ranged from 0.00% to +0.04%. Inverse Clarke improved by 3.68–3.83%,
+overmodulation rejection improved by 0.95–1.23%, and the complete transform
+chain varied from −0.20% to +0.16%. These measurements cover 21,120 completed
+operations per timed block. They do not establish physical control-loop
+timing.
+
+The board-selected MKS ESP32 FOC V1 release ELF built for all three stages,
+with the same two existing unused network-member warnings. The preceding and
+inverse-only ELFs were byte-identical. The combined version differed only
+in `.debug_info` and `.debug_line`. Each build had 1,005,041 executable
+bytes. On all three, espflash 4.7.0 rejected the 4,190,800-byte application
+for the declared 4 MiB board's 4,128,768-byte partition. The isolated change
+cannot provide the missing 62,032 bytes. The production candidate is preserved
+at firmware `d77bafd74` on `interval-inverse-clarke-halves-review`. Physical
+cycles, interrupt-inclusive stack and HIL replay remain unqualified.
+
+Only the regression test entered the firmware work branch. Its final release
+executable grew from 940,368 to 949,648 bytes, with 4,510 bytes of additional
+code. The initial assertion formatting exceeded the 1% file cap. Keeping the
+same endpoint and error assertions within that cap left 66,159,216 bytes of the
+64 MiB host test slot free. The fixed and preceding measurements were equal.
+The separate host test account records both charges and their remaining
+allowances. Production memory and flash charges are zero.
+[Per-target size account](docs/research/interval-size-accounts.json)
+
+On the retained and combined revisions, Rust 1.88 passed 87 FOC unit tests,
+three FOC integration tests, 68 simulator unit tests and eight simulator
+integration tests. FOC all-target/all-feature Clippy with warnings denied
+and firmware formatting passed. The coordinated host conformance crate also
+passed all seven tests against retained firmware. Evidence commit `0d510b87f`
+contains all candidate patches, the mutation, oracles, linked guest images,
+raw comparisons, and per-stage board packaging logs.
+[Evidence index](docs/evidence-archive.tsv)
