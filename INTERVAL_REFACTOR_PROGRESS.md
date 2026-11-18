@@ -11421,3 +11421,44 @@ WASM library build. Four body and consumer reviews bring the inventory to
 allocator observations, section accounts and paired timings are stored under
 `2026-11-18-interval-translation-signal`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3 and 6 finite dyadic order, 18 November 2026
+
+The retained change at `0f50ed48f` checks closed containment, containment in
+the real interior, and strict left separation against independently scaled
+signed integers. It covers 19,600 ordered interval pairs (58,800 verdicts),
+shared endpoints, empty operands, exhausted work with retry, and 4,097-bit
+magnitudes with matching leading powers and distinct low bits. The arithmetic
+fuzz target now checks the same three relations. The budget documentation
+also records the existing one-unit minimum for a linear stage.
+[Maintained oracle](crates/hyperinterval/tests/dyadic_finite_inclusion.rs)
+
+| Reproduced gap on `68fd84f3a` | Candidate result | Admission decision |
+| --- | --- | --- |
+| Including a one-bit interval at the minimum exponent in one at the maximum exponent exhausts the common-grid reservation. | Six implementations were linked. The shared scalar comparator at `63e798155` also handles subdivision outputs as subsequent Cartesian operands. All four previously exhausted native and WASM fixture pairs completed. Both SDF covers and the reachability result replayed exactly. | The direct native file shrank 2,168 bytes and the WASM file shrank 2,124 bytes. The native `.relro_padding` section grew from 1,192 to 2,928 bytes, exceeding its individual cap. All six implementations exceeded at least one linked-image limit. |
+| Comparing two zero endpoints reports size exhaustion under a zero-bit magnitude cap, including when the work allowance would cover the answer. | `ff3632485` charges the actual width. `7cde9d615` handles zero on the failed size reservation. Both distinguish size from work exhaustion and preserve retry. The direct-width variant passed 28 ordered WASM calls across two fresh instances. | Direct-width comparison slowed the unchanged standalone ray workload by paired medians of 2.08% and 1.62% on two pinned CPUs. The recovery path slowed the same workload by 2.08% on both CPUs in the isolated rerun (18/18 and 17/18 pairs). A third variant using stored signs exceeded native section caps. |
+
+The memory evaluation applied the predeclared limits to individual workloads
+on a guarded 2 MiB native worker. Direct-width comparison added zero bytes to
+the peaks of all 25 workloads (seven zero-width cases, 15 finite/Cartesian
+cases, and three complete downstream reports). The newly successful all-zero
+membership and scalar order calls allocated no heap and used at most 960 bytes
+of measured callee stack. Across this campaign, the complete consumers
+retained zero heap after drop and left at least 2,056,824 bytes of worker
+headroom. The historical overlap query, full lifetime and allocator
+observations also matched the preceding revision under both dependency locks.
+The shared-comparator candidate passed all 18 of its measured workload caps.
+The previously charged production memory accounts carry forward without a new
+charge.
+
+On the retained revision, the direct native and WASM images and the native
+downstream measurement client were byte-identical to the preceding revision.
+The standalone oracle occupies 1,100,464 bytes as a release test executable.
+The four affected crates passed 715 all-feature tests and doctests. Rust 1.88
+passed 123 dyadic-only owner and lattice tests and doctests, plus bare WASM
+and Cortex-M library builds. Strict Clippy, rustdoc, formatting, the release
+oracle, the WASM consumer, inventory tests and 100,000 ASan fuzz executions
+passed. Hardware execution was outside this host qualification. The full
+extreme-scale and zero-bit success witnesses remain executable on the named
+review branches. The primary retains both implementation gaps.
+[Exact checks, candidate patches, per-workload costs and paired timings](docs/evidence-archive.tsv)

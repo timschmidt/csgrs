@@ -8876,5 +8876,18 @@
       "remaining_bytes": 62825160,
       "evidence": "docs/evidence/2026-11-18-interval-krawczyk-certainty"
     }
-  ]
+  ],
+  "new_finite_dyadic_inclusion_test_harness": {
+    "artifact": "crates/hyperinterval/tests/dyadic_finite_inclusion.rs",
+    "target": "x86_64-unknown-linux-gnu",
+    "toolchain": "Rust 1.95.0 release",
+    "features": "dyadic, no default features; workspace lock",
+    "source_snapshot": "0f50ed48fd44b64174355f94d350159f04ecfec7",
+    "file_bytes": 1100464,
+    "sha256": "483debc9edad77ee84a335afdb27a2dd53563bf61c570deac72e78bd280b869d",
+    "qualification_capacity_bytes": 67108864,
+    "required_free_bytes": 16777216,
+    "remaining_bytes": 66008400,
+    "evidence": "docs/evidence/2026-11-18-interval-finite-inclusion"
+  }
 }
