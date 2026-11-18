@@ -11344,3 +11344,80 @@ records. Raw observer sources, paired timings, section measurements, stack
 and allocation traces, all candidate patches, exact witnesses and WASM
 images are indexed under `2026-11-18-interval-real-ball-boundary`.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 14 translated enclosures, cancellation and retry, 18 November 2026
+
+Commit `3ad284efe` exercises the public Hyperreal-to-dyadic bridge on
+`sqrt(109) − 7/5`. The oracle translates both exported endpoints back, checks
+the positive branch and squares them independently against 109. A cancelled
+clone leaves the shared result cache cold. Another reader can refine it, the
+cancelled reader still reports unavailability, and a larger budget after
+cancellation permits a finer successful retry. Three native workers request
+different precisions from the shared expression while a fourth participant
+uses its own cancelled handle. The two release tests passed in 32 fresh
+processes.
+
+The bare-WASM client runs the same serial oracle twice in each of two fresh
+instances and requires zero imports. The existing interval runner detects
+the client's declared Rust version from Cargo metadata. On Rust 1.88 the
+existing float, lattice and dyadic clients still run. Rust 1.95 also runs
+the Real bridge. Stable Rust 1.99.0 passed the native tests and the same
+four WASM calls (module SHA-256
+`478f86c47d32204cdf8cd1c9cdbea703621358b45e8d6192bb23dc8eaa13485d`).
+All three toolchains passed the existing 55,802-case float corpus. An attempted cross-build of the native Cargo test targets still
+stops in the GMP development dependency; the standalone WASM client has
+no GMP dependency. Removing the scalar cancellation checks or collapsing
+the returned dyadic interval to its lower endpoint independently caused
+the maintained native tests to fail and the WASM client to trap.
+[Lifecycle tests](crates/hyperinterval/tests/real_dyadic_lifecycle.rs) · [WASM invocation](crates/hyperinterval/conformance/README.md#real-to-dyadic-cancellation-and-retry)
+
+**Open scalar defect.** On `8fe441513` a nonrational operand can lose its
+registered abort signal when translated by a nonzero rational. An exact
+arithmetic fold preserves the flag on an operand, but a new computable sum
+can acquire a root with no signal. Descendant evaluation takes the signal
+from that root. The cached `π−3` shortcut also returns a value without the
+caller's control. With an active signal, 24 ordered native records and 96
+WASM records returned scalar bounds, dyadic bounds and ball verdicts. Each
+returned bound and membership verdict agreed with the independent numerical
+expectation on these cases. The failure was publication during cancellation.
+Attaching the signal to the completed expression is the demonstrated
+working case on the primary.
+
+**Candidate disposition.** We compared four implementations for carrying the
+sole refining operand’s flag through a rational translation. The final candidate
+at `7e881ac12` on `interval-translation-signal-review` covers both orders of
+addition and subtraction, repeated shifts, cached constants, independent
+readers, retry and an independently signalled exact rational. All 24 native
+and 96 WASM controlled records rejected the active scalar, dyadic and ball
+requests and recovered after clearing the flag. The original failing ball
+witness passed. Two independently controlled nonrational operands are outside
+this qualification.
+
+All four candidates preserved the 20 ordinary native trace records and
+80 WASM control verdicts. The first exceeded native function-byte and WASM
+size limits. The next two passed the image limits but exceeded individual
+stack caps. The final candidate moved the folds into the shared sum
+constructor. It passed ordinary heap and stack caps and reduced the native
+client by 2,608 bytes and WASM by 1,494 bytes. The native client's
+`.relro_padding` grew from 1,336 to 3,264 bytes and the owner test image's
+from 2,688 to 3,200 bytes. Each exceeded its section limit. On the unchanged
+warm upper-endpoint query the median paired slowdown was 10.79% on both
+pinned CPUs, with all 18 pairs slower on each. The slower result was still
+`Unresolved` on both revisions.
+
+The controlled workloads with the repair returned zero retained bytes and
+peaked at 2,936 requested and 3,152 allocator-usable heap bytes. Peak callee
+stack reached 4,592 bytes with 2,082,960 bytes of measured headroom on a
+guarded 2 MiB worker. These runs include publication versus refusal followed
+by retry, so their raw resource differences are recorded separately from
+the unchanged controls. No candidate was admitted and the production
+resource accounts receive no charge.
+
+Primary validation passed 260 all-target/all-feature tests, 15 all-feature
+doctests and seven downstream tests and doctests, together with the
+no-default-feature suite, strict owner Clippy, rustdoc, formatting and the
+WASM library build. Four body and consumer reviews bring the inventory to
+245 review records. The candidate patches, expected failures, runner reports,
+allocator observations, section accounts and paired timings are stored under
+`2026-11-18-interval-translation-signal`.
+[Evidence index](docs/evidence-archive.tsv)
