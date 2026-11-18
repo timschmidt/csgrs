@@ -11213,3 +11213,14 @@ A second composition passed both native size gates but exceeded the existing
 WASM file/code caps and eight per-workload stack caps. The review covers the exact fixtures, attempted implementations,
 portable execution and linked measurements.
 [Phase 7 qualification](docs/research/interval-box-proof-scope.md#exact-extrema-qualification-and-composed-repair-review)
+
+## Phase 3 dyadic set-query review, 18 November 2026
+
+The primary branch now checks complete normalized components for 729 inputs,
+exact inclusion for 12,544 pairs and budgeted separation at opposite exponent
+limits. Four existing release cost executables stayed byte-identical.
+The full and finite-only named overlap APIs passed the measured linked-size
+caps. Both remain on local review branches after native mixed-client timing
+regressions. The finite version allocated zero heap bytes on the measured
+2,049-bit comparisons. The existing memory allowance and cumulative charges
+remain in force. [Dyadic overlap qualification](docs/research/interval-dyadic-overlap.md)
