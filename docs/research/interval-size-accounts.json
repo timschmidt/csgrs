@@ -9630,5 +9630,344 @@
       "remaining_bytes": 15174080,
       "sha256": "214f628205580d62d0281eac9068e0f2c56c01a781fd719c072b08db912e3fba"
     }
+  },
+  "binary32_proposal_radius": {
+    "source": "9ce30c35c89242e9b4cfa7ff38696978034708c6",
+    "replay": "c6d582c4915d35556a38d11d87309afd620ff38d",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "6b7b940ed",
+    "evidence": "docs/evidence/2026-11-18-interval-proposal-midpoint",
+    "benefit": "Return a finite, independently rounded binary32 proposal half-width, including subnormal intervals and the full finite range. The RK4 regression replays exact subnormal outputs through a second flow.",
+    "scope": "Rust 1.95 release native x86_64 Linux and bare wasm32 without default features, float-proposal. The client constructs the interval from IEEE bits and materializes its half-width. Native qualification slots are independent of firmware flash.",
+    "columns": [
+      "fixed_bytes",
+      "preceding_bytes",
+      "retained_bytes",
+      "incremental_charge_bytes",
+      "cumulative_charge_bytes",
+      "remaining_cumulative_bytes",
+      "remaining_cumulative_percent"
+    ],
+    "cap_columns": [
+      "incremental_bytes",
+      "incremental_percent",
+      "cumulative_bytes",
+      "cumulative_percent"
+    ],
+    "clients": {
+      "so": {
+        "metrics": {
+          "file": [
+            402008,
+            402008,
+            402024,
+            16,
+            16,
+            496,
+            1.99602
+          ],
+          "text": [
+            229683,
+            229683,
+            229699,
+            16,
+            16,
+            496,
+            1.993034
+          ],
+          "named_text": [
+            226779,
+            226779,
+            226795,
+            16,
+            16,
+            496,
+            1.992945
+          ],
+          "rodata": [
+            17816,
+            17816,
+            17816,
+            0,
+            0,
+            512,
+            2.0
+          ]
+        },
+        "caps": [
+          256,
+          1,
+          512,
+          2
+        ],
+        "capacity": 67108864,
+        "required_free": 16777216,
+        "free": 66706840
+      },
+      "wasm": {
+        "metrics": {
+          "file": [
+            1034,
+            1034,
+            1035,
+            1,
+            1,
+            255,
+            9.903288
+          ],
+          "code": [
+            475,
+            475,
+            476,
+            1,
+            1,
+            255,
+            9.789474
+          ]
+        },
+        "caps": [
+          128,
+          5,
+          256,
+          10
+        ],
+        "capacity": 65536,
+        "required_free": 16384,
+        "free": 64501
+      }
+    },
+    "tests": {
+      "proposal-test": {
+        "metrics": [
+          {
+            "artifact": "proposal-test",
+            "metric": "file",
+            "fixed": 1425704,
+            "previous": 1425792,
+            "retained": 1425816,
+            "increment": 24,
+            "cumulative": 112,
+            "caps": [
+              4096,
+              1,
+              16384,
+              2
+            ],
+            "remaining_absolute": 16272,
+            "passes": true,
+            "remaining_cumulative_percent": 1.992144
+          },
+          {
+            "artifact": "proposal-test-with-regressions",
+            "metric": "file",
+            "fixed": 1425704,
+            "previous": 1425816,
+            "retained": 1428208,
+            "increment": 2392,
+            "cumulative": 2504,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 30264,
+            "passes": true,
+            "remaining_cumulative_percent": 1.824367
+          },
+          {
+            "artifact": "proposal-test",
+            "metric": "text",
+            "fixed": 657668,
+            "previous": 657668,
+            "retained": 657668,
+            "increment": 0,
+            "cumulative": 0,
+            "caps": [
+              4096,
+              1,
+              16384,
+              2
+            ],
+            "remaining_absolute": 16384,
+            "passes": true,
+            "remaining_cumulative_percent": 2.0
+          },
+          {
+            "artifact": "proposal-test-with-regressions",
+            "metric": "text",
+            "fixed": 657668,
+            "previous": 657668,
+            "retained": 658996,
+            "increment": 1328,
+            "cumulative": 1328,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 31440,
+            "passes": true,
+            "remaining_cumulative_percent": 1.798074
+          },
+          {
+            "artifact": "proposal-test",
+            "metric": "named_text",
+            "fixed": 648100,
+            "previous": 648100,
+            "retained": 648100,
+            "increment": 0,
+            "cumulative": 0,
+            "caps": [
+              1024,
+              0.5,
+              4096,
+              1
+            ],
+            "remaining_absolute": 4096,
+            "passes": true,
+            "remaining_cumulative_percent": 1.0
+          },
+          {
+            "artifact": "proposal-test-with-regressions",
+            "metric": "named_text",
+            "fixed": 648100,
+            "previous": 648100,
+            "retained": 649406,
+            "increment": 1306,
+            "cumulative": 1306,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 31462,
+            "passes": true,
+            "remaining_cumulative_percent": 1.798488
+          }
+        ],
+        "capacity": 67108864,
+        "required_free": 16777216,
+        "free": 65680656
+      },
+      "rk_proposal-test": {
+        "metrics": [
+          {
+            "artifact": "rk_proposal-test",
+            "metric": "file",
+            "fixed": 5294344,
+            "previous": 5294408,
+            "retained": 5294400,
+            "increment": 0,
+            "cumulative": 64,
+            "caps": [
+              4096,
+              1,
+              16384,
+              2
+            ],
+            "remaining_absolute": 16320,
+            "passes": true,
+            "remaining_cumulative_percent": 1.998791
+          },
+          {
+            "artifact": "rk_proposal-test-with-regressions",
+            "metric": "file",
+            "fixed": 5294344,
+            "previous": 5294400,
+            "retained": 5302192,
+            "increment": 7792,
+            "cumulative": 7856,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 24912,
+            "passes": true,
+            "remaining_cumulative_percent": 1.851615
+          },
+          {
+            "artifact": "rk_proposal-test",
+            "metric": "text",
+            "fixed": 2764727,
+            "previous": 2764727,
+            "retained": 2764727,
+            "increment": 0,
+            "cumulative": 0,
+            "caps": [
+              4096,
+              1,
+              16384,
+              2
+            ],
+            "remaining_absolute": 16384,
+            "passes": true,
+            "remaining_cumulative_percent": 2.0
+          },
+          {
+            "artifact": "rk_proposal-test-with-regressions",
+            "metric": "text",
+            "fixed": 2764727,
+            "previous": 2764727,
+            "retained": 2770823,
+            "increment": 6096,
+            "cumulative": 6096,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 26672,
+            "passes": true,
+            "remaining_cumulative_percent": 1.779508
+          },
+          {
+            "artifact": "rk_proposal-test",
+            "metric": "named_text",
+            "fixed": 2733753,
+            "previous": 2733767,
+            "retained": 2733767,
+            "increment": 0,
+            "cumulative": 14,
+            "caps": [
+              1024,
+              0.5,
+              4096,
+              1
+            ],
+            "remaining_absolute": 4082,
+            "passes": true,
+            "remaining_cumulative_percent": 0.999488
+          },
+          {
+            "artifact": "rk_proposal-test-with-regressions",
+            "metric": "named_text",
+            "fixed": 2733753,
+            "previous": 2733767,
+            "retained": 2739842,
+            "increment": 6075,
+            "cumulative": 6089,
+            "caps": [
+              16384,
+              1,
+              32768,
+              2
+            ],
+            "remaining_absolute": 26679,
+            "passes": true,
+            "remaining_cumulative_percent": 1.777266
+          }
+        ],
+        "capacity": 67108864,
+        "required_free": 16777216,
+        "free": 61806672
+      }
+    },
+    "existing_consumers": "The sampled existing native .text, .rodata and .data sections, and every non-custom section of the legacy midpoint WASM client, matched the preceding release. Prior RK4 charges remain in their accounts. No memory or firmware exception was charged."
   }
 }

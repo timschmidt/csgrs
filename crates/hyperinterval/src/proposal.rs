@@ -212,7 +212,7 @@ impl F32ProposalInterval {
     /// Native estimate of the half-width, or `None` for empty.
     /// Taking the midpoint of the upper and negated lower endpoints keeps the
     /// full finite range representable. With gradual underflow and rounding
-    /// to nearest, a subnormal half-width rounds once to the nearest even value.
+    /// to nearest, a subnormal half-width rounds once, with ties to even.
     #[inline]
     pub fn radius_estimate(&self) -> Option<f32> {
         self.estimates().map(|(lo, hi)| (-lo).midpoint(hi))

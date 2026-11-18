@@ -12022,3 +12022,66 @@ also restored all four passes. Evidence commits `d56504756` and
 `73fedff86` preserve the measurements and isolated build logs.
 [Per-target accounts](docs/research/interval-size-accounts.json) ·
 [Raw observations and candidate patches](docs/evidence-archive.tsv)
+
+## Binary32 proposal half-width and exact subnormal RK4 replay
+
+Commit `9ce30c35c` adds `F32ProposalInterval::radius_estimate` to the Phase 4
+primitive proposal layer. It takes the native midpoint of the negated lower
+endpoint and the upper endpoint. With gradual underflow and round-to-nearest,
+the half-width of an interval spanning one to three minimum subnormal units is
+one unit. Separately halving the endpoints gave two. The half-width of the full
+finite binary32 range is representable, and an empty interval returns `None`.
+The result carries proposal certainty. [Public implementation](crates/hyperinterval/src/proposal.rs)
+
+An independent integer oracle checked 89,008 ordered inputs spanning all
+finite binary32 exponent classes. The previous formula disagreed on 4,760.
+The retained operation matched every expected half-width on x86-64 and in two
+fresh bare-WASM instances. A mutation restoring the earlier formula failed
+the maintained test on the interval from −31 to −30 minimum subnormal units.
+[Regression corpus](crates/hyperinterval/tests/proposal.rs)
+
+| Linked half-width client | Preceding | Retained | Cumulative charge | Free capacity |
+| --- | ---: | ---: | ---: | ---: |
+| Native file | 402,008 B | 402,024 B | 16 B | 66,706,840 B |
+| Bare-WASM file | 1,034 B | 1,035 B | 1 B | 64,501 B |
+
+Native code grew by 16 bytes and WASM code by one. The fixed and preceding
+half-width controls had the same sizes. The cold and warm native calls took
+120 bytes of stack for ordinary, subnormal and near-maximum intervals across
+both watermark patterns. No heap allocation occurred. Free worker space was
+2,088,520 bytes. All 24 measured ordinary/stress RK4 heap and stack rows also
+passed, including exhaustion, retry and cleanup. No production memory or
+firmware flash allowance was charged. In two quiet timing campaigns on four
+pinned cores, constructing the interval and returning its binary32 half-width
+took about 24% less time on the ordinary inputs. An earlier run overlapping
+compilation varied between −23.96% and +0.17%. The measured existing native
+text, read-only data and initialized data sections matched the preceding build.
+[Per-target charges, caps and remaining allowance](docs/research/interval-size-accounts.json)
+
+Commit `c6d582c49` exercises the Phase 12 proof boundary. Three subnormal
+initial sets pass through a stationary flow and then a translating flow. The
+test checks each exact endpoint against its dyadic closed interval. Replacing
+the original initial box with the numerical candidate gave [−4, −3] units
+where the first stationary endpoint should have been the singleton −3.
+The two release test executables have separate cumulative file charges of
+2,504 and 7,856 bytes, each within its 32 KiB and 2% limits.
+[Exact replay regression](crates/hyperdynamics/tests/rk_proposal.rs)
+
+The wider midpoint and RK4 repairs remain under review. Commit `90cc4e789`
+matched all 872,128 midpoint and half-width expectations on each runtime and
+all 35 ordinary RK4 records. It met the complete-lifetime memory caps. Its
+time-affine budget-one rejection slowed 6.6–6.7% on four cores. The separate
+joint binary32 operation in `ac68fef5a` improved the single-field timing but
+slowed the caller materializing both results. Commit `8e18908dd` withdrew it.
+A width-specific constructor recovered the packed-result time and passed the
+linked file and code caps, but repeated exact replay timings increased. The
+existing midpoint methods and RK4 numerical stages can still misround
+subnormal inputs. The retained RK4 regression qualifies original-source
+proof replay for the tested flows.
+
+The retained code passed both owning crates' all-feature tests and Clippy,
+Hyperinterval documentation and optimized floating-environment tests,
+Rust 1.88 proposal tests and the no-default-feature Thumb build. The strict
+WASM suite passed 55,802 cases, and native code inspection passed for 70
+strict symbols. Workspace formatting and the repository budget passed.
+[Commands, probes, raw observations and review patches](docs/evidence-archive.tsv)
