@@ -1,9 +1,100 @@
 # Rational Horner working-interval requalification
 
-The Phase 7 production migration remains **rejected**. Current qualification
-reproduces a downstream stack regression even though the proposed binary-size
-caps permit the measured growth. The bounded size exception does not waive the
-memory gate. No production source, dependency change, or size account is retained.
+## Reassessment under the bounded memory exception, 18 November 2026
+
+The targeted inline candidate fits the proposed native memory allowance on
+`79b183c51`. The previously adverse case constructs a tensor image, consumes
+the resulting root in a polynomial evaluation, and returns both reports.
+
+| Cold tensor stack on x86_64, Rust 1.99 release | Fixed program | Current branch | Targeted inline |
+| --- | ---: | ---: | ---: |
+| Through materialization of both reports | 11,784 B | 11,784 B | 11,800 B |
+| Through independent validation and destruction | 12,424 B | 12,424 B | 12,440 B |
+
+The 16 B increase in the complete call is 0.129%. Its incremental limit was
+32 B and 1%, its cumulative limit was 64 B and 2%, and its total limit was
+32 KiB. The peak leaves 2,080,616 B in the 2 MiB thread stack after the
+4,096 B guard. Each of the eight fresh processes reproduced the cold increase.
+The other 99 case and cache-state combinations stayed level or used less stack.
+Fixed `c9f1f9ac5` and current controls matched on every paired observation.
+
+Each implementation ran 12,800 measurements with the original stack probe and
+12,800 with the complete-lifetime probe. All original returned reports matched.
+The latter probe checked construction, the next operation where applicable,
+exact result validation and destruction on the measured thread. Caller-owned
+inputs were prepared before measurement. Allocation counts, deallocations,
+reallocations, total requested bytes, peak requested live bytes and final live
+bytes matched on every paired observation. The cold tensor case peaked at
+3,760 requested live bytes and retained up to 1,424 B after report destruction
+in both controls and the inline candidate. These figures cover the single-thread
+Rust allocator measurement. Deployment RSS, allocator metadata and additional
+concurrent callers require separate measurements.
+
+The alternative from `80337035e` uses the compiler's ordinary inline hint for
+the same two additions. Rebuilding it on the current branch reproduced the
+80 B increase on the cold tensor case. Complete-lifetime stack reached
+12,504 B. That exceeds both the 32 B incremental cap and the 64 B cumulative
+cap. Every returned report and requested allocation measurement still matched.
+The two alternatives therefore have different memory dispositions under the
+same allowance.
+
+On the candidate, six native solver differential tests and eight rational
+arithmetic and serialization tests passed. A further comparison exercised the
+**actual candidate production routines** and the frozen routines in both
+native x86_64 and WASI Preview 1 processes. All 1,404 polynomial-evaluation
+and 2,808 zero-exclusion windows matched, including ordered results and
+rational reducer counters. Both exact endpoint and exclusion tests passed in
+the guest.
+
+Two independent timing campaigns exercised the original nine completed solver
+workloads. Each used eight ABBA/BAAB blocks, 40 Criterion samples per case per
+invocation and a paired block bootstrap. The second reversed the variant order
+and rotated core assignments. The exact rational point took 0.990× control
+(95% interval 0.974–1.005) and 0.987× (0.968–1.007). No workload had a lower
+95% bound above one in either campaign. The exact normal constant was faster
+in both, by 1.4% and 1.2%. The archive preserves all nine results
+individually.
+
+The Rust 1.99 default-feature certification executable grew by 7,864 B in the
+file, 6,816 B in allocated executable sections and 6,855 B in deduplicated
+named code against the current branch. These increments fit that
+configuration's prospective screen. Against the fixed build the differences
+were 9,288 B, 7,024 B and 6,971 B respectively.
+
+The program's [existing release size accounts](interval-size-accounts.json)
+also cover Rust 1.95.0 with all features. The matched builds produced 42
+accounted executables per revision. Thirty-three kept their recorded package
+feature lists. Nine lattice executables had acquired a WASI feature since the
+fixed baseline and were excluded from the like-for-like budget comparison.
+Four Hypersolve artifacts exceeded their incremental caps.
+
+| Rust 1.95.0 release artifact | File increase | `.text` increase | Named code increase |
+| --- | ---: | ---: | ---: |
+| Certification benchmark | 38,880 B | 30,864 B | 30,583 B |
+| Dispatch trace benchmark | 16,000 B | 15,648 B | 15,498 B |
+| Retained fuzz benchmark | 28,072 B | 23,312 B | 23,047 B |
+| Solver unit tests | 8,592 B | 8,560 B | 8,489 B |
+| Existing incremental cap | 4,096 B and 1% | 4,096 B and 1% | 1,024 B and 0.5% |
+
+Only the unit test executable contains the two added production-dispatch tests.
+The certification benchmark alone exceeds even its 16,384 B cumulative file
+allowance with this increment. The migration remains **rejected on release
+binary size**. No new memory or binary allowance was charged. Downstream
+`successive_operations`, final Interface and firmware qualification were not
+run after these failures.
+
+The evidence record is `docs/evidence/2026-11-18-interval-horner-bounded-readmission`
+in csgrs-evidence commit `3051ef201beb2eb2f97230de13e85804a857f2cc`.
+It contains the two candidate patches, harnesses, all 102,400 memory probe
+rows, all 576 Criterion sample files, release artifact measurements, complete
+WASI production traces and replay commands. [Record digest](../evidence-archive.tsv)
+
+## Original assessment, 16 November 2026
+
+The production migration was rejected under the zero-growth stack gate in
+force at the time. The proposed binary-size caps permitted the measured
+growth. The production sources, dependency graph and size accounts retained
+their preceding state.
 
 Hyperinterval owns rational product hulls and scalar translation. Hypersolve owns
 Horner traversal, root selection, exclusion proofs and reports. P1, P4, P6, P10,

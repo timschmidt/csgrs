@@ -59,7 +59,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 4 proposals/float | proposal wrappers and strict integer IEEE core implemented; x86_64, bare WASM and opt-in ordinary WASI Preview 1 locally qualified | full surface/coverage, further targets and shipped consumers |
 | 5 elementary functions | abs/min/max, integer powers, square roots, exp/log/atan/sin/cos, split division, rational powers and tan/cot implemented on documented backends | final function/backend coverage, resource and consumer qualification |
 | 6 lattice | Cartesian/affine carriers, widths, center/radius forms, norm/contraction evidence, source-bound Jacobian projections and FOC/Krawczyk clients implemented | broader authored-form composition, facts/specialization and full consumer/performance gates |
-| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI interval solver acceptance, including 4,212 matched Horner dispatch windows; kernel migrations remain rejected | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
+| 7 solver | source-bound Jacobian matrix adapter qualified; native and WASI interval solver acceptance, including 4,212 matched Horner dispatch windows; targeted Horner fits the native stack allowance but exceeds four release size accounts | satisfy migration size/performance gates with unchanged statuses, certificates and dispatch |
 | 8 interface | BoundedMeasurement constructor delegates to Hyperinterval; local qualification passed | machine-profile arithmetic, named budgets, full browser/schedule and canonical-profile gates |
 | 9 firmware | clock/Q30/servo delegation retained; clock counter publication repaired; independent current-widening witness retained; current five-board final images and matched clock-fix comparison measured with unchanged executable bytes | 4 MiB flash fit, board partition/reserve declarations, whole-call stack (including +16-byte local changes), MCU cycles/HIL and remaining audit/release gates |
 | 10 predicate filters | initial native-stage experiments and exact admission corpus qualified; two placements rejected | useful native-stage proof/cost/trace admission and representative geometry workloads |
@@ -12706,3 +12706,23 @@ migration still requires the existing runtime and size gates. Evidence commit
 `b6c8d68f8` contains the transcripts, observed inventories, comparison
 controls, rejected fixture layouts and final-artifact measurements.
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3 and 7 rational Horner memory reassessment, 18 November 2026
+
+Rebuilt both consuming Horner prototypes on `79b183c51` and measured the fixed
+program control `c9f1f9ac5`. Through report construction, tensor-result reuse,
+validation and destruction, the cold stack peak was 12,424 B in both controls.
+The ordinary-inline form reached 12,504 B and exceeded the 32 B incremental
+and 64 B cumulative caps. Targeted inlining brought it to 12,440 B, within
+both caps. All reports and requested allocation measurements matched on every
+paired row. The other 99 case and cache-state combinations stayed within their
+stack allowances.
+
+On the targeted candidate all 4,212 actual production dispatch windows matched
+the frozen routines across native and WASI. Two nine-workload Criterion
+campaigns did not reproduce the earlier exact-point slowdown. The current
+default-feature binary fit its prospective size screen. Four existing Rust
+1.95.0 release accounts blocked retention. The certification executable alone
+grew 38,880 B against its 4,096 B incremental limit. Both prototypes remain
+outside production, with zero new charges to the size and memory accounts.
+[Horner measurements and disposition](docs/research/horner-working-interval-admission.md)
