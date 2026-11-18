@@ -11684,3 +11684,38 @@ The two native probes and the WASM client matched controls built from the
 previous source with the two missing lock edges restored locally. The
 unmodified previous locks had no successful linked result. Timing from the
 cost probe documents execution only. [FOC commands](crates/hyperlattice-interval/conformance/alumina-foc/README.md) · [Raw observations and reproduction material](docs/evidence-archive.tsv)
+
+## Phase 14 locked sibling sources and linked consumers
+
+Alumina Interface `fdb7b153` pins CSGRS `c1a5fdd17` and Alumina Firmware
+`96ac22cad` in its deployment workflow. The earlier audit accepted a second
+checkout with the same firmware package names and versions. It also returned
+success after rewriting an Interface lockfile that omitted a dependency.
+The revised audit checks the resolved Cargo manifest, source and version of
+each owned package, verifies that required packages are reachable from the
+consumer, and uses locked resolution throughout. The Interface native and
+browser license checks remain active.
+
+A clean local replay used only the three named checkouts. All nine target
+graphs across seven lockfiles passed. The alternate checkout and missing
+edges in the Interface, native FOC and WASM FOC lockfiles each failed.
+Every stale lockfile remained byte-identical across the failed audit. Both
+GPL-family and absent license declarations still failed their controls.
+
+The two standalone native conformance suites passed 12 tests and doctests.
+The FOC library passed its Cortex-M check. Two fresh WASM instances each ran
+825 transform cases and 147 range cases. The measurement runner independently
+checked 4,369 inputs per instance, including signed mixed fractions,
+64-bit extremes, negative uncertainty and a zero denominator. The archived
+Python Fraction oracle agreed on all inputs and recorded zero host calls.
+Independently replacing the upper endpoint with the lower one or substituting
+an unexpected-error sentinel for the negative-uncertainty result failed the
+linked runner. Full-value native tests accompany the WASM digest comparisons.
+
+All 400 Interface workspace tests and doctests, both strict Clippy runs,
+formatting, the strict local zizmor audit and the release browser build passed.
+The optimized browser WASM validated at 10,660,425 bytes, and all workflow
+compression checks passed. This change affects verification and adds no
+production memory charge. The revisions are committed locally. A hosted run
+requires the pinned sibling commits on GitHub. Board timing and physical
+hardware execution remain open. [Reproduction material and artifact hashes](docs/evidence-archive.tsv)
