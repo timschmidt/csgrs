@@ -72,3 +72,37 @@ It retains the failed baseline witness, complete candidate patch, original
 assertions, commands, raw allocation observations, exact comparisons and
 restoration proof. Earlier archive records and manifest rows are unchanged.
 No push or publication is claimed.
+
+## Reassessment under the bounded memory exception
+
+On `f402f67bd`, order-three preparation retains 16 extra requested bytes in
+each of 48 cases, at most 0.211% of the corresponding live preparation.
+This passes the proposed incremental limit of 32 bytes and 1%. Even carrying
+forward the earlier rejected candidate's 16 bytes as a separate positive
+charge gives 32 bytes, within the cumulative limit of 64 bytes and 2%.
+The other 240 observations reduce retained bytes. Peak requested memory
+decreases in every case and reaches at most 17,256 bytes. All post-drop
+observations agree with their controls, including the existing warm state.
+The extra three allocation calls during order-three preparation remain visible.
+
+The original sharing assertion failed on the control. The revised checkout
+passed 21 tests, and both candidate observers independently reproduced the
+baseline observer's 373,388 bytes of coefficients, reports, work and dispatch
+records. The final comparison uses 108 fresh processes and 864 observations
+across the fixed program revision, primary and candidate. The original probe
+excludes the input field and any existing higher-order program.
+
+The linked `adaptive_taylor` benchmark still exceeds two existing size caps
+on the target release configuration with `adaptive-taylor,taylor-evolution`.
+
+| x86_64 release metric | Fixed program | Primary | Candidate | Increment | Cap |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Final file bytes | 3,466,240 | 3,466,232 | 3,470,528 | +4,296 | 4,096 |
+| Defined function bytes, overlapping ranges counted once | 1,746,620 | 1,746,620 | 1,748,275 | +1,655 | 1,024 |
+
+The size gate keeps `a0018ebe4` on `interval-coefficient-sharing-memory-review`.
+This review admitted no memory or size charge for coefficient sharing. Full
+stack, allocator-usable bytes and runtime qualification remain open. Raw
+measurements, the proposed caps, build inputs, linked images and exact-output
+comparisons are archived at `2026-11-17-interval-coefficient-memory-recheck`
+in evidence commit `99d81e837`. [Evidence index](../evidence-archive.tsv)

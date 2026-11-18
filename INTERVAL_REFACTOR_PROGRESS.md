@@ -11123,3 +11123,60 @@ existing callers.
 Verified archive commit `2ef71922b1f8bb6ad7b542ebea396d843eb7b4d0`
 contains the logs, exact checks, final corpus, caller images and raw samples
 at `docs/evidence/2026-11-17-interval-integer-affine`.
+
+## Exact dyadic midpoint partition and consumer qualification
+
+Hyperinterval now splits a nonsingleton into two exact closed intervals
+on the coarsest common grid needed for the partition. For source mantissas
+`a,b`, an even sum gives midpoint `(a+b)/2` on the source grid. An odd
+sum requires the next finer grid with endpoints `2a,a+b,2b`. In the latter
+case the midpoint is odd. In the former case both outer endpoints are odd
+unless the existing exponent is maximal. These facts establish canonical
+children without revalidating or normalizing temporary intervals. Empty and
+singleton return no split. An unrepresentable half at the minimum exponent
+returns typed overflow. P1, P5, P6 and the Phase 6/13 shared work limits apply.
+
+The retained scalar API at `f402f67bd` splits `[-3,4] × 2^-20` into
+`[-6,1] × 2^-21` and `[1,8] × 2^-21` within four bits and 16 total
+work units. The existing box translates and clips the source, requiring 106
+units at 16 bits and reporting size exhaustion at four bits. Independent
+integer expectations cover exponent extrema, 8,192-bit input, repeated
+splits, empty and singleton sets, shared facets, exhaustion and retry.
+
+Rust 1.95 completed 554 owner, lattice, SDF, reachability and documentation
+tests. The dyadic-only Rust 1.88 tests, Thumb and WebAssembly release builds,
+100,000 sanitizer runs, strict owner and fuzz Clippy, and formatting passed.
+The 43,834-byte direct WebAssembly caller exercised every ordered pair from
+the bounded input grid at four exponents and the 16-unit split.
+The native and WASM box clients and two full native SDF covers preserve
+their original work, results and heap measurements on primary. Whole-call
+stack high-water measurements also agree across the fixed, current and
+retained revisions for both SDF sources and the reachability example.
+The three measured callbacks used at most 29,432 bytes on guarded 2 MiB
+stacks with cold and warm entry. These observations cover one x86_64 worker.
+
+The separate box migration at `921378c02` reproduced both complete cover
+definitions and the four-box Hyperdynamics reachability result. It reduces
+the dependency cover from 227,460 to 227,189 scalar work units and the affine
+sphere from 3,624,110 to 3,623,512. Both peaks and post-drop live bytes
+agree. Its release reachability executable is 1,856 bytes smaller, but its
+allocated RELRO padding grows from 560 to 1,880 bytes. Two assembly variants
+also crossed existing size gates. The migration remains isolated. The
+scalar-only change charges eight file bytes to the SDF client, sixteen to
+the reachability-only example and four unwind bytes per native SDF or
+reachability configuration. Measured native function bytes and existing
+box WASM file/code sizes hold. All prior charges are preserved in the
+[per-target accounts](docs/research/interval-size-accounts.json).
+
+The qualification archive includes controls, candidate and retained binaries,
+WASM execution, raw timing blocks, allocation and stack observers and the
+reproduced failures. Evidence commit `4db3f8e17`, record
+`2026-11-17-interval-bisection`. [Evidence index](docs/evidence-archive.tsv)
+
+## Taylor coefficient sharing under the memory allowance
+
+Order-three preparation's 16-byte increase fits the proposed retained-memory
+allowance with cumulative accounting. Two independently measured linked
+size metrics keep the candidate isolated. All 21 targeted tests and both
+complete output/trace comparisons passed. The historical rejection and
+original fixtures are preserved. [Reassessment and numerical gates](docs/research/adaptive-stage-ownership-reconsideration.md#reassessment-under-the-bounded-memory-exception)
