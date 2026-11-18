@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import { transforms, parkRange } from "./oracle.mjs";
 
 const file = process.argv[2] ?? new URL(
@@ -37,8 +37,19 @@ function outputDigest(tag, lanes) {
 }
 
 const previous = [];
+// Capture the exact calls accepted by the integer oracle for replay on Thumb.
+const replayFile = process.argv[3];
+const replay = [];
 for (let pass = 0; pass < 2; pass++) {
-  const { exports } = await WebAssembly.instantiate(module);
+  const instance = await WebAssembly.instantiate(module);
+  const calls = [];
+  const exports = replayFile ? Object.fromEntries(
+    ["conformance_probe", "output_word", "range_probe"].map(name => [name, (...args) => {
+      const value = instance.exports[name](...args);
+      calls.push([name, args, value.toString()]);
+      return value;
+    }]),
+  ) : instance.exports;
   // The sample interval centers repeat every 33 indices and the rotations every 5.
   for (let i = 0; i < 165; i++) {
     const index = pass === 0 ? i : 164 - i;
@@ -96,5 +107,7 @@ for (let pass = 0; pass < 2; pass++) {
   for (const [value, expected] of [[min, 1], [0, 0], [max, 1]]) {
     assert.equal(exports.range_probe(value, value, 4), expected);
   }
+  if (replayFile) replay.push(calls);
 }
+if (replayFile) await writeFile(replayFile, JSON.stringify(replay), { flag: "wx" });
 console.log("825 full transform outputs and 251 range checks passed in each of two fresh instances.");

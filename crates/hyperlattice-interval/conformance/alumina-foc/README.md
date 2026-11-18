@@ -17,8 +17,24 @@ node crates/hyperlattice-interval/conformance/alumina-foc/wasm/check.mjs
 ```
 
 The Node runner accepts an explicit Wasm file path when using a custom Cargo
-target directory. It checks cardinal Park endpoint digests, typed range
-outcomes and replay of all five transform actions in two fresh instances.
+target directory. It checks the integer oracle in two fresh instances.
+
+To execute the same calls as linked Cortex-M4 instructions, install the
+`thumbv7em-none-eabihf` and `wasm32-unknown-unknown` Rust 1.88.0 targets.
+With Node and `uv` on the host, run this command from the CSGRS root.
+
+```sh
+uv run crates/hyperlattice-interval/conformance/alumina-foc/check-thumb.py
+```
+
+The simulator builds both targets, replays every oracle-checked call on the
+Thumb ELF, and checks the return value, stack pointer and preserved registers
+at the function boundary. It measures touched stack bytes with two fill
+patterns on cold and warm runs. The fixture has a 64 KiB read-only image slot
+with 16 KiB reserved and an 8 KiB stack with a 4 KiB unmapped reserve.
+Pass `--output <new-directory>` to retain the ELF and the checked call list.
+The pinned Python dependencies are host tools. Physical board cycles,
+interrupt stack use and deployment flash fit require separate measurements.
 
 The production dependency graph of Hyperinterval/Hyperlattice is unchanged. This
 client has its own lockfile and only four dependency packages, all local: Alumina
@@ -46,5 +62,4 @@ The WASM host also reads each output tag and signed lane endpoint. Its BigInt
 oracle derives the two Clarke radical brackets and applies outward rounding
 at the specified Q30 operations through the complete five-transform chain.
 Noncardinal Park checks include both sides of the signed range boundary.
-These probes do not establish firmware cycle, stack, HIL or performance gates.
 Measurements and adoption decisions belong in the main progress/evidence ledger.
