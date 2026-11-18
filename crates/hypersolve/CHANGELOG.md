@@ -2,6 +2,10 @@
 
 ## [0.4.0] - Unreleased
 
+- Require a certified nonnegative radius for interval-box and Krawczyk
+  certificates. An unresolved radius sign returns the existing typed error
+  even when the caller permits approximate terminal predicates.
+
 - Compile native bivariate polynomial quotients into shared expression/Jacobian
   programs with exact coefficients, ordered bindings, original denominator guards
   and explicit graph/work budgets.

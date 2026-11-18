@@ -1365,7 +1365,8 @@ fn validate_variable_balls(
             }
             None => {}
         }
-        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
+        // Nonnegativity is a precondition for constructing any residual enclosure.
+        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
             Some(Ordering::Less) => {
                 return Err(AffineIntervalError::NegativeVariableRadius {
                     symbol: ball.symbol,
@@ -1423,7 +1424,7 @@ fn validate_quadratic_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, QuadraticKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
             Some(Ordering::Less) => {
                 return Err(QuadraticKrawczykStatus::NegativeVariableRadius {
                     symbol: ball.symbol,
@@ -1448,7 +1449,7 @@ fn validate_multivariate_quadratic_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, MultivariateQuadraticKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
             Some(Ordering::Less) => {
                 return Err(
                     MultivariateQuadraticKrawczykStatus::NegativeVariableRadius {
@@ -1817,7 +1818,7 @@ fn validate_krawczyk_variable_balls(
 ) -> Result<HashMap<SymbolId, Real>, AffineKrawczykStatus> {
     let mut radii = HashMap::new();
     for ball in variable_balls {
-        match compare_reals(&ball.radius, &Real::zero(), policy).value() {
+        match compare_reals(&ball.radius, &Real::zero(), policy.certified_only()).value() {
             Some(Ordering::Less) => {
                 return Err(AffineKrawczykStatus::NegativeVariableRadius {
                     symbol: ball.symbol,
