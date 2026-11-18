@@ -135,6 +135,14 @@ cargo run -p hyperdynamics --features field --example expression_field
 cargo run -p hyperdynamics --features rk-proposal --example rk_proposal
 ```
 
+From the workspace root, run `python3 scripts/interval_coverage.py --package hyperdynamics`
+with the active Rust toolchain's `llvm-tools-preview` component installed.
+The command runs the all-feature native library and integration tests, checks
+the source inventory, and writes a per-file report under the Cargo target
+directory. It exits unsuccessfully if an instrumented production metric is
+below 100%. For branch counts, use nightly Rust with
+`RUSTFLAGS=-Zcoverage-options=branch`.
+
 The default feature set is empty. `dispatch-trace` enables underlying exact
 arithmetic instrumentation when `field` is enabled.
 

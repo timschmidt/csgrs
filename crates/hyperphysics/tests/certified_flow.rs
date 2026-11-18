@@ -325,6 +325,44 @@ fn invalid_masses_shapes_empty_states_and_times_are_distinct() {
 }
 
 #[test]
+fn force_provenance_shares_the_graph_entry_limit_before_construction() {
+    let mut forces = definition(
+        &[Expr::int(0), Expr::int(0), Expr::int(0)],
+        &xyz(),
+        &mut budget(),
+    );
+    forces.provenance = (0..1024)
+        .map(|i| SourceSpec::new("force data", i.to_string()))
+        .collect();
+    // Seven variables, three constant nodes, three output references, seven
+    // added mass/velocity/quotient nodes, six state outputs and all citations.
+    let required = 7 + 3 + 3 + 7 + 6 + forces.provenance.len();
+    let policy = EnclosurePolicy {
+        graph_entries: required - 1,
+        ..EnclosurePolicy::default()
+    };
+    let mut small = EnclosureBudget::new(policy);
+    assert!(matches!(
+        PointMassDynamics3::new(Real::one(), forces.clone(), &mut small),
+        Err(DynamicsError::Expression(ExpressionError::SizeExhausted))
+    ));
+    assert_eq!(small.remaining_graph_work(), policy.graph_work);
+    assert_eq!(small.remaining_scalar_work(), policy.scalar_work);
+
+    let mut exact = EnclosureBudget::new(EnclosurePolicy {
+        graph_entries: required,
+        ..policy
+    });
+    let model = PointMassDynamics3::new(Real::one(), forces.clone(), &mut exact).unwrap();
+    assert_eq!(model.provenance(), forces.provenance);
+    assert_eq!(model.force_source().definition(), &forces.source);
+    assert_eq!(
+        model.field().image(&point(0), &zero(), &mut exact).unwrap(),
+        zero()
+    );
+}
+
+#[test]
 fn shared_graph_budget_construction_cutoffs_cancelled_attempts_and_retry() {
     let forces = force();
     let mut measured = budget();

@@ -5,7 +5,6 @@ use hyperdynamics::field::{
 };
 use hyperinterval::{DyadicBudget, DyadicInterval, IntervalError};
 use hyperlattice_interval::{BoxN, IntervalMatrix, IntervalVector};
-#[cfg(feature = "serde")]
 use hyperreal::Real;
 use hypersolve::{
     Expr, SymbolId,
@@ -23,6 +22,58 @@ fn d(a: i64, b: i64) -> DyadicInterval {
 }
 fn b() -> EnclosureBudget {
     EnclosureBudget::new(EnclosurePolicy::default())
+}
+
+#[test]
+fn graph_adapter_shares_entry_limits_and_work_across_source_replay() {
+    let policy = EnclosurePolicy {
+        graph_entries: 2,
+        graph_work: 8,
+        ..EnclosurePolicy::default()
+    };
+    let mut budget = EnclosureBudget::new(policy);
+    budget.graph_budget().check_entries(&[1, 1]).unwrap();
+    assert!(matches!(
+        budget.graph_budget().check_entries(&[1, 1, 1]),
+        Err(ExpressionError::SizeExhausted)
+    ));
+    budget.graph_budget().charge(1).unwrap();
+    // One output, two tree visits, then validation of one node and one output.
+    let program = budget.graph_budget().compile(&[Expr::int(7)], &[]).unwrap();
+    assert_eq!(budget.remaining_graph_work(), 2);
+    let definition = program.definition();
+    assert!(matches!(&definition.nodes[..], [ExpressionNode::Constant(v)] if *v == Real::from(7)));
+    assert_eq!(definition.outputs, [0]);
+    let stop = CancellationToken::new();
+    stop.cancel();
+    budget.set_cancellation(Some(stop));
+    assert!(matches!(
+        budget.graph_budget().validate(definition.clone()),
+        Err(ExpressionError::Cancelled)
+    ));
+    assert_eq!(budget.remaining_graph_work(), 2);
+    budget.set_cancellation(None);
+    let replay = budget.graph_budget().validate(definition.clone()).unwrap();
+    assert_eq!(replay.definition(), definition);
+    assert_eq!(budget.remaining_graph_work(), 0);
+    assert!(matches!(
+        budget.graph_budget().charge(1),
+        Err(ExpressionError::WorkExhausted)
+    ));
+    assert_eq!(budget.remaining_scalar_work(), policy.scalar_work);
+
+    let mut widest = EnclosureBudget::new(EnclosurePolicy {
+        graph_entries: usize::MAX,
+        ..policy
+    });
+    widest
+        .graph_budget()
+        .check_entries(&[usize::MAX, 0])
+        .unwrap();
+    assert!(matches!(
+        widest.graph_budget().check_entries(&[usize::MAX, 1]),
+        Err(ExpressionError::SizeExhausted)
+    ));
 }
 
 #[test]
