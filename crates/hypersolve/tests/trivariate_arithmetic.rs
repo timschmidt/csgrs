@@ -322,12 +322,31 @@ fn zero_tensors_report_shape_overflow_and_capacity_failure() {
         }
     }
     assert!(try_zero_trivariate_coefficients([usize::MAX, 2, 1]).is_none());
-    assert!(try_zero_trivariate_coefficients([1 << 40, 1 << 40, 1]).is_none());
-    // Each extent product fits in `usize`, but no reservation of that many
-    // planes, rows or coefficients can be satisfied.
-    assert!(try_zero_trivariate_coefficients([1 << 62, 1, 1]).is_none());
-    assert!(try_zero_trivariate_coefficients([1, 1 << 62, 1]).is_none());
-    assert!(try_zero_trivariate_coefficients([1, 1, 1 << 62]).is_none());
+    #[cfg(target_pointer_width = "64")]
+    {
+        assert!(try_zero_trivariate_coefficients([1 << 40, 1 << 40, 1]).is_none());
+        // Each extent product fits in `usize`, but no reservation of that many
+        // planes, rows or coefficients can be satisfied.
+        assert!(try_zero_trivariate_coefficients([1 << 62, 1, 1]).is_none());
+        assert!(try_zero_trivariate_coefficients([1, 1 << 62, 1]).is_none());
+        assert!(try_zero_trivariate_coefficients([1, 1, 1 << 62]).is_none());
+    }
+    #[cfg(not(target_pointer_width = "64"))]
+    {
+        let wide = 1_usize << (usize::BITS / 2 + 1);
+        let unreservable = 1_usize << (usize::BITS - 2);
+        for shape in [
+            [wide, wide, 1],
+            [unreservable, 1, 1],
+            [1, unreservable, 1],
+            [1, 1, unreservable],
+        ] {
+            assert!(
+                try_zero_trivariate_coefficients(shape).is_none(),
+                "{shape:?}"
+            );
+        }
+    }
 }
 
 #[test]

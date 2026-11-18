@@ -7731,7 +7731,7 @@ mod tests {
 
     #[test]
     fn polynomial_determinant_restores_wide_rational_row_scales() {
-        let matrix = vec![
+        let matrix: Vec<Vec<Real>> = vec![
             vec![],
             vec![real(1), real(1)],
             vec![real(2)],
