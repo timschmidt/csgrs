@@ -221,10 +221,24 @@ fn resource_retry_refinement_and_further_operations() {
 fn unbounded_sources_use_certified_limits() {
     use hyperinterval::ExtendedInterval as E;
     let (lo, hi) = oracle::half_pi();
-    for p in [-256, -64, 0, 1, i32::MAX] {
-        let image = E::<DyadicInterval>::entire()
-            .atan(p, &mut budget())
-            .unwrap();
+    // In grid units, pi/2 lies just above an integer at -189 and just
+    // below an integer at -645. The second case tests the retained upper
+    // endpoint of the ray when the first working enclosure straddles it.
+    for p in [-645, -256, -189, -64, 0, 1, i32::MAX] {
+        let source = E::<DyadicInterval>::entire();
+        let mut work = budget();
+        let initial = work.remaining_work();
+        let image = source.atan(p, &mut work).unwrap();
+        if matches!(p, -189 | -645) {
+            let debit = initial - work.remaining_work();
+            assert_eq!(
+                source.atan(p, &mut DyadicBudget::new(work.max_bits(), debit - 1)),
+                Err(hyperinterval::IntervalError::WorkExhausted)
+            );
+            let mut retry = DyadicBudget::new(work.max_bits(), debit);
+            assert_eq!(source.atan(p, &mut retry).unwrap(), image);
+            assert_eq!(retry.remaining_work(), 0);
+        }
         // Avoid oracle allocation at the deliberately extreme coarse grid.
         if p == i32::MAX {
             assert_eq!(image.range, d(-1, 1, p));

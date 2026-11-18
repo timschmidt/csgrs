@@ -265,6 +265,18 @@ cargo test -p hyperinterval --all-features
 cargo run -p hyperinterval --example fixed_bounds --features fixed
 ```
 
+From a workspace checkout, run the native production coverage gate with
+`python3 crates/hyperinterval/scripts/coverage.py`. It uses the active Rust
+toolchain's `llvm-tools-preview` component and runs the all-feature library
+and integration tests. The printed artifact directory contains per-file counts
+and the merged profile. If an instrumented metric falls below 100%, the
+command writes the annotated production source to `uncovered.txt` and exits
+with an error.
+For branch counts, run
+`RUSTUP_TOOLCHAIN=nightly RUSTFLAGS=-Zcoverage-options=branch python3 crates/hyperinterval/scripts/coverage.py`
+with that nightly toolchain’s LLVM tools installed. A toolchain with no branch
+counters reports branch coverage as unmeasured.
+
 See the [API proposal](../../docs/research/interval-api-design.md) and
 [progress record](../../INTERVAL_REFACTOR_PROGRESS.md) for acceptance evidence
 and the remaining implementation scope.

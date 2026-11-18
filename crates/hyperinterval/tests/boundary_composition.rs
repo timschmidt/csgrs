@@ -57,7 +57,7 @@ fn public_errors_remain_distinct_and_keep_their_typed_source() {
 
 #[cfg(feature = "integer")]
 #[test]
-fn empty_integer_products_compose_at_all_storage_widths() {
+fn empty_integer_products_and_differences_compose_at_all_storage_widths() {
     use hyperinterval::IntegerRange as I;
     macro_rules! check {
         ($($t:ty),*) => { $( {
@@ -68,6 +68,9 @@ fn empty_integer_products_compose_at_all_storage_widths() {
                 assert_eq!(result.bounds(), None);
                 assert_eq!(result.checked_add(&full).unwrap(), empty);
                 assert_eq!(result.hull(&full), full);
+                let difference = a.checked_sub(b).unwrap();
+                assert_eq!(difference.bounds(), None);
+                assert_eq!(difference.hull(&full), full);
             }
         } )* };
     }
