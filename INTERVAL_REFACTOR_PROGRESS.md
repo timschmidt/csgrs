@@ -11899,3 +11899,69 @@ No production binary or memory exception was charged by this experiment.
 The partial native coverage results above and the remaining interval-plan
 phases are still open.
 [Commands, proposal patch, linked section hashes and individual memory observations](docs/evidence-archive.tsv)
+
+## Direct binary32 scalar ingress
+
+Revision `551ea7a70` adds `DyadicInterval::from_f32` for the Phase 3/4 exact
+conversion boundary. Both float features use the same integer validation,
+decoding and budget reservation as existing dyadic ingress. Finite inputs
+produce exact singletons, including subnormals and canonical zero. NaNs and
+infinities fail before consuming work. A normal binary32 value needs 24
+significand bits and 48 work units. Widening `1.0_f32` and importing it through
+the existing binary64 constructor required 53 bits and 106 units.
+
+The maintained tests check independent rational values across all finite
+exponent classes, both signs, and every subnormal leading-bit position. They
+also check exact reservations, separate size/work errors, retry and exact
+addition of the returned point. Widening before import, bypassing finite
+validation and dropping the sign each failed a regression test. An early test
+underestimated the separate budget for exporting the result to rational form.
+The final test derives that allowance from the rational egress cost and keeps
+the binary32 import limit at 24 bits and 48 units.
+
+A separate Python oracle supplied 35,370 IEEE bit patterns. The native
+release client checked each materialized mantissa, exponent or typed failure
+in all 16 combinations of rounding mode, FTZ and DAZ on this x86_64 host.
+Bare WebAssembly and WASI Preview 1 each executed the same corpus in two
+fresh instances. Direct scalar ingestion works on Preview 1 independently of
+the strict arithmetic target gate. Both direct WASM modules on both locks
+contained no floating arithmetic or conversions. The widening controls used
+`f64.promote_f32`.
+
+| Rust 1.95 linked client | Workspace lock, widening → direct | Standalone lock, widening → direct |
+| --- | ---: | ---: |
+| Native shared library | 468,040 → 468,024 B | 493,584 → 493,560 B |
+| Bare WebAssembly | 80,691 → 80,639 B | 99,805 → 99,785 B |
+| WASI Preview 1 | 104,438 → 104,386 B | 123,568 → 123,548 B |
+
+On the native workspace lock, both paths peaked at 40 requested heap bytes,
+64 allocator-usable bytes and 848 bytes of touched stack. On the standalone
+lock both peaked at zero requested heap bytes and 896 bytes of touched stack.
+All calls released their allocations. Each lock kept the same stack and heap
+peaks for the direct size-denial, work-denial and successful-retry sequence.
+Bare-WASM guest-stack measurements were 284 bytes on the workspace lock and
+320 bytes on the standalone lock for direct import, compared with 284 and
+336 bytes for widening. The standalone bare direct client also avoided one
+64 KiB linear-memory growth during the corpus. Guest-stack observations
+exclude host memory and untouched frame reservations.
+
+In 48 alternating native release pairs, median direct/widening time ratios
+were 0.848 on the workspace lock and 0.805 on the standalone lock, for batches
+of 150,000 source values with materialized outputs. The inline prototype grew
+the standalone native file by 1,272 bytes, exceeding its 512-byte allowance.
+Keeping the same ordinary Rust call boundary as binary64 produced the retained
+sizes. The four existing bare-WASM modules and the native strict-float example
+were byte-identical to their preceding builds. The size ledger preserves the
+earlier eight-byte standalone native file charge. This change consumed no
+production memory exception. [Per-target accounts](docs/research/interval-size-accounts.json)
+
+Rust 1.95 passed 272 Hyperinterval all-target/all-feature tests, 15 doctests,
+98 downstream Hyperlattice tests/doctests and eight Hyperdynamics RK proposal
+tests. Both minimal feature combinations passed on Rust 1.88 and built for
+Thumb. Bare WASM and Preview 1 also executed direct import on Rust 1.88.
+Strict Clippy, rustdoc and formatting passed. A single-package offline build
+could not resolve Hyperreal 0.14 from the cached public index. Cargo then
+packaged and verified Hyperreal and Hyperinterval together. A clean external
+consumer of the unpacked Hyperinterval package passed the native and bare-WASM
+oracle on Rust 1.88. The full interval plan remains active.
+[Reproduction scripts, oracle and resource measurements](docs/evidence-archive.tsv)

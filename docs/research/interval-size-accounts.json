@@ -9458,5 +9458,164 @@
       "remaining_bytes": 65342760
     },
     "evidence": "docs/evidence/2026-11-18-interval-dyadic-affine"
+  },
+  "binary32_dyadic_scalar_ingress": {
+    "source": "551ea7a70",
+    "fixed": "c9f1f9ac5",
+    "preceding": "cc54dd856",
+    "evidence": "docs/evidence/2026-11-18-interval-binary32-dyadic-ingress",
+    "benefit": "Direct finite binary32 scalar import, including subnormals, with native significand admission under either float feature.",
+    "limits": {
+      "incremental_bytes": 512,
+      "incremental_percent_of_preceding": 0.5,
+      "cumulative_bytes": 512,
+      "cumulative_percent_of_fixed": 0.5,
+      "host_slot_bytes": 16777216,
+      "required_host_free_bytes": 4194304,
+      "wasm_slot_bytes": 2097152,
+      "required_wasm_free_bytes": 524288
+    },
+    "columns": [
+      "fixed widening",
+      "preceding widening",
+      "direct binary32"
+    ],
+    "artifacts": [
+      {
+        "num_bigint": "0.4.6",
+        "target": "x86_64-unknown-linux-gnu",
+        "file_bytes": [
+          468040,
+          468040,
+          468024
+        ],
+        "code_bytes": [
+          270995,
+          270995,
+          270979
+        ],
+        "function_union_bytes": [
+          267720,
+          267720,
+          267694
+        ],
+        "nonfile_relro_padding_bytes": [
+          280,
+          280,
+          296
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 0,
+        "remaining_cumulative_file_bytes": 512,
+        "remaining_image_bytes": 16309192
+      },
+      {
+        "num_bigint": "0.4.6",
+        "target": "wasm32-unknown-unknown",
+        "file_bytes": [
+          80691,
+          80691,
+          80639
+        ],
+        "code_bytes": [
+          62530,
+          62530,
+          62478
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 0,
+        "remaining_cumulative_file_bytes": 512,
+        "remaining_image_bytes": 2016513
+      },
+      {
+        "num_bigint": "0.4.6",
+        "target": "wasm32-wasip1",
+        "file_bytes": [
+          104438,
+          104438,
+          104386
+        ],
+        "code_bytes": [
+          79266,
+          79266,
+          79214
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 0,
+        "remaining_cumulative_file_bytes": 512,
+        "remaining_image_bytes": 1992766
+      },
+      {
+        "num_bigint": "0.4.8",
+        "target": "x86_64-unknown-linux-gnu",
+        "file_bytes": [
+          493576,
+          493584,
+          493560
+        ],
+        "code_bytes": [
+          291635,
+          291635,
+          291619
+        ],
+        "function_union_bytes": [
+          288260,
+          288260,
+          288238
+        ],
+        "nonfile_relro_padding_bytes": [
+          1520,
+          1520,
+          1536
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 8,
+        "remaining_cumulative_file_bytes": 504,
+        "remaining_image_bytes": 16283656
+      },
+      {
+        "num_bigint": "0.4.8",
+        "target": "wasm32-unknown-unknown",
+        "file_bytes": [
+          99805,
+          99805,
+          99785
+        ],
+        "code_bytes": [
+          79065,
+          79065,
+          78971
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 0,
+        "remaining_cumulative_file_bytes": 512,
+        "remaining_image_bytes": 1997367
+      },
+      {
+        "num_bigint": "0.4.8",
+        "target": "wasm32-wasip1",
+        "file_bytes": [
+          123568,
+          123568,
+          123548
+        ],
+        "code_bytes": [
+          95801,
+          95801,
+          95707
+        ],
+        "incremental_positive_file_or_code_bytes": 0,
+        "cumulative_file_charge_bytes": 0,
+        "remaining_cumulative_file_bytes": 512,
+        "remaining_image_bytes": 1973604
+      }
+    ],
+    "accounting": "The preceding eight-byte native file increase on the external lock stays charged. All code and function-union charges are zero. All six artifacts retain their full 512-byte incremental and code allowances. The 16-byte ELF NOBITS RELRO padding increase on each native lock is recorded separately. The occupied load pages, initialized writable sections, BSS and TLS sizes match.",
+    "new_release_test": {
+      "bytes": 1603136,
+      "capacity_bytes": 16777216,
+      "remaining_bytes": 15174080,
+      "sha256": "214f628205580d62d0281eac9068e0f2c56c01a781fd719c072b08db912e3fba"
+    }
   }
 }
