@@ -11843,3 +11843,59 @@ Against the preceding revision, the release arctangent test executable grew
 928 bytes and the boundary-composition executable grew 2,696 bytes. Both
 passed the fixed-baseline and incremental file and code-size limits.
 [Size accounts](docs/research/interval-size-accounts.json) · [Coverage reports, controls and commands](docs/evidence-archive.tsv)
+
+## Strict IEEE guest-stack measurements and WASI qualification attempt
+
+Revision `11d365f66` adds a guest-stack observation to the existing bare-WASM
+conformance run. For each of Rust 1.88.0, 1.95.0 and 1.99.0, two fresh instances
+each completed 55,802 arithmetic cases and 8,836 property cases twice. Both
+sentinels showed writes reaching 704 bytes below the initial stack pointer in
+cold and warm runs. The instance had 1,114,112 bytes of fixed linear memory
+and a 1,048,576-byte linker stack. This measures bytes touched during the
+completed corpus. Unwritten stack reservations and engine or host memory are
+outside the observation. Three malformed disassembly controls stopped the probe.
+
+The existing WebAssembly checks also passed 612 floating and 612 fixed lattice
+chains per compiler and 56 dyadic conversion cases. Each compiler meeting the
+Real bridge's Rust 1.95 minimum completed four cancellation/retry calls across
+two instances. Chromium executed the bare primitive corpus. Rust 1.95 passed
+270 all-target/all-feature Hyperinterval tests, 15 doctests and 98 downstream
+Hyperlattice interval tests/doctests. Strict Clippy, strict rustdoc, formatting
+and the strict workflow audit passed. All four retained Rust 1.95 bare-WASM
+modules match the preceding checkout byte for byte.
+
+### Preview 1 candidate
+
+On `101a905b4` a valid finite singleton returned `UnqualifiedEnvironment` for
+both widths on WASI Preview 1. A first guard using architecture, OS and ABI
+also admitted the threaded target on Rust 1.95. Its real module imports
+shared memory. A negative execution test caught that guard. An exact Cargo
+target-name guard passed on ordinary Preview 1 and retained typed refusal on
+the threaded ABI and `wasm32v1-none`. On ordinary Preview 1 all three compilers
+passed the arithmetic, property, lattice and dyadic suites. The primitive
+module required no imports, allocation, memory growth or floating arithmetic.
+The two newer compilers also passed the Real bridge. The 1.95 ordinary
+Preview 1 client touched 704 guest-stack bytes. Its previous refusal supplies
+no comparable successful-workload resource baseline.
+
+The experiment declared zero growth for the existing linked qualification
+artifacts. Each column below compares a Rust 1.95 release pair built in one
+physical checkout path, with the same compiler and lockfiles.
+
+| Bare module | Primary checkout file delta | Detached checkout file delta | Code-section size delta in both |
+| --- | ---: | ---: | ---: |
+| Primitive float | −4 B | +4 B | 0 B |
+| Lattice | −3 B | +2 B | 0 B |
+| Dyadic | +1 B | 0 B | 0 B |
+| Real bridge | +1 B | −1 B | 0 B |
+
+Only the function-name section changed length. Ordering and other section
+contents could differ at equal length. The native float example measured
+502,600 bytes on both revisions. The positive file deltas exceeded this
+experiment's raw-file limit. The exact-target candidate and both sets of
+measurements are archived. The retained CI check executes the current typed
+refusal, canonical empty and endpoint traps on both Preview 1 ABIs.
+No production binary or memory exception was charged by this experiment.
+The partial native coverage results above and the remaining interval-plan
+phases are still open.
+[Commands, proposal patch, linked section hashes and individual memory observations](docs/evidence-archive.tsv)
