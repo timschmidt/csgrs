@@ -13,6 +13,7 @@ import tempfile
 WORKSPACE = Path(__file__).resolve().parents[1]
 TEST_MODULES = {
     "hyperinterval": {"src/dyadic_quotient_tests.rs", "src/ieee_tests.rs"},
+    "hyperlattice-interval": {"src/tests.rs"},
     "hyperdynamics": set(),
 }
 METRICS = ("lines", "regions", "functions", "branches")

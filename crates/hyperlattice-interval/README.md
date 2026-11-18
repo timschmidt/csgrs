@@ -39,6 +39,15 @@ The affine image example carries one shared parameter through two maps and
 checks the exact relation `2x − y = −1`. Run it with
 `cargo run -p hyperlattice-interval --features fixed --example affine_image`.
 
+Measure native all-feature library and integration test coverage with
+`python3 scripts/interval_coverage.py --package hyperlattice-interval` from
+the workspace root. Install the active compiler's `llvm-tools-preview`.
+For branch counts, use nightly with `RUSTFLAGS=-Zcoverage-options=branch`.
+The report separates the test-only module from production sources and writes
+per-file counts and uncovered code under the Cargo target directory. Use a
+separate `CARGO_TARGET_DIR` for each checkout so LLVM's source paths match
+the revision being measured.
+
 Run the rectangular replay and multiplication tests with
 `cargo test -p hyperlattice-interval --features fixed,serde --test shape_replay`.
 From `crates/hyperinterval`, run the same oracle under libFuzzer with

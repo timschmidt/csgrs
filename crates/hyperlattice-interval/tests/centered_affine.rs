@@ -7,7 +7,8 @@
 #[cfg(any(feature = "fixed", feature = "dyadic"))]
 use hyperlattice_interval::IntervalLatticeError;
 use hyperlattice_interval::{
-    AffineChain, AffineMap, CenteredVector, IntervalArithmetic, IntervalMatrix, IntervalVector,
+    AffineChain, AffineMap, AffineSource, CenteredVector, IntervalArithmetic, IntervalMatrix,
+    IntervalVector,
 };
 
 #[cfg(all(feature = "fixed", feature = "serde"))]
@@ -83,6 +84,19 @@ fn translated_replay_revalidates_and_preserves_cancellation() {
     assert!(empty.is_empty());
     let retained: TranslatedBox<I, 1> = serde_json::from_str("[[[9,9]],null]").unwrap();
     assert!(retained.is_empty() && retained.center().is_some());
+    let constant_map = AffineMap::new(
+        IntervalMatrix::new([[p(0)]]).unwrap(),
+        IntervalVector::new([p(7)]).unwrap(),
+    )
+    .unwrap();
+    for source in [empty, retained] {
+        let image = constant_map.image(source);
+        assert!(image.parameter_domain().is_empty());
+        assert_eq!(
+            image.enclosure(&mut ()).unwrap(),
+            IntervalVector::empty().unwrap()
+        );
+    }
     let unit: TranslatedBox<I, 0> = serde_json::from_str("[[],[]]").unwrap();
     assert!(unit.enclosure(&mut ()).unwrap().is_singleton());
     assert!(
@@ -104,11 +118,11 @@ fn corpus<I: IntervalArithmetic + PartialEq + core::fmt::Debug>(
             let source = form.affine_source(&mut context()).unwrap();
             assert_eq!(source.center(), form.center());
             assert_eq!(
-                source.parameter_domain(),
+                AffineSource::parameter_domain(&source),
                 &IntervalVector::new([scalar(-r, r)]).unwrap()
             );
             assert_eq!(
-                source.enclosure(&mut context()).unwrap(),
+                AffineSource::enclosure(&source, &mut context()).unwrap(),
                 IntervalVector::new([scalar(c - r, c + r)]).unwrap()
             );
             let restriction = IntervalVector::new([scalar(0, 1)]).unwrap();
