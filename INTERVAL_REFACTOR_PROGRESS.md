@@ -11006,3 +11006,27 @@ replay and cleanup. The complete Alumina diagonal G1 fixture also passed on all
 three measured revisions. Resource and timing results, including adverse
 observations and remaining gates, are recorded in the
 [native projection review](docs/research/axis-projection-memory.md).
+
+## Dyadic atanh at the open domain limits
+
+Phase 5 owner qualification at `1051053ae` covers P6 and P11 for a finite
+closed dyadic source and the open domain (−1,1). On `13a8309ad`, the four
+existing inverse-function tests passed. Their one-sided atanh examples checked
+a finite endpoint of zero. The new regression checks the direction of each
+finite endpoint against 512-bit directed MPFR, grid membership, local coverage,
+the side of each infinite limit and the exact empty-domain outcome.
+
+The deterministic matrix passed all 448 combinations across four source grids
+and four output grids, including a source endpoint within 2^-60 of either pole.
+The new CI fuzz target completed 10,000 local ASan runs from an empty corpus
+with seed 20261126. The final run took 16 seconds. The inverse suite passed on
+Rust 1.88 with dyadic alone and on 1.95 with all features. All Hyperinterval
+all-feature tests and doctests and nine Hypersolve expression-interval consumer
+tests passed on 1.95. Strict owner and fuzz Clippy, both formatting checks,
+the locked fuzz build check and the pedantic workflow audit passed. These are
+native Linux results. Hosted workflow execution remains open.
+
+The change adds tests and CI coverage. The memory and binary growth accounts
+receive no charge. Archive commit `cfe9563cf6b5eb92f2a5b4af49720c839871811a`
+contains the final corpus, logs and commands at
+`docs/evidence/2026-11-17-interval-atanh-domain`.
