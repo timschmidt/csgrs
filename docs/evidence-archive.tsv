@@ -695,3 +695,4 @@ docs/evidence/2026-11-18-interval-scalar-wasi-oracles	2	173969	9e214a215262421ce
 docs/evidence/2026-11-18-interval-solver-wasi-dispatch	2	431452	a2529ea52afabe32607984efe97e29fa5b4e835b05ce9c6ede0c66bbe8b7bf43
 docs/evidence/2026-11-18-interval-horner-bounded-readmission	2	298820	667c8ac54eb98a5af70cd202b39e78214013b8c0b9b4ca84230c442f0ca112b3
 docs/evidence/2026-11-18-interval-rational-scale	2	93136	e6f60d74aee6d0a015e9648dad1215882762e399a35cf2c238e6b0c390605af1
+docs/evidence/2026-11-18-interval-dynamics-wasi	2	130388	3541f0b7a39af68781a52623c6fa141a729900881aae2ca21fef560c380ce691

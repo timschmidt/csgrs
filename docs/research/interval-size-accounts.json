@@ -10820,5 +10820,346 @@
       }
     },
     "firmware": "Alumina clock and FOC enable integer and fixed respectively. Rational requires std and is absent from both normal firmware dependency feature graphs."
+  },
+  "hyperdynamics_wasi_replays": {
+    "source": "973fb0cf8f71ba2db2fb87d736817a53ffca43c7",
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "c18d6e6d4",
+    "evidence": "docs/evidence/2026-11-18-interval-dynamics-wasi",
+    "benefit": "The original native replay parents check full results produced in fresh WASI guests. All numerical suites run under WASI Preview 1 on both supported compilers.",
+    "scope": "Locked release all features, 29 distinct artifacts per compiler and target, identified by Cargo kind and name. Nine shipped examples on each target retain their SHA-256. WASI controls need the target-specific Criterion development dependency to compile.",
+    "metrics": [
+      "file",
+      "code",
+      "functions"
+    ],
+    "measurement": "Code and functions are ELF .text and the union of named text address ranges, or the WASM code section and sum of function body payloads. The evidence member qualified-accounts.json records every absolute measurement, percentage and remaining effective allowance.",
+    "normal_caps": {
+      "incremental_bytes": 4096,
+      "incremental_percent": 1,
+      "cumulative_bytes": 8192,
+      "cumulative_percent": 2
+    },
+    "coordinator_caps": {
+      "incremental_bytes": 16384,
+      "incremental_percent": 2,
+      "initial_cumulative_cap_bytes": 16384,
+      "initial_cumulative_cap_percent": 2
+    },
+    "qualification_slot_bytes": 20971520,
+    "required_headroom_bytes": 4194304,
+    "charge_columns": [
+      "incremental_file",
+      "incremental_code",
+      "incremental_functions",
+      "cumulative_file",
+      "cumulative_code",
+      "cumulative_functions"
+    ],
+    "accounting": "The regular test accounts carry forward positive charges from the fixed baseline and registered prior accounts, including the Rust 1.95 expression-field and RK4 tests. A reduction gives no credit. The new native coordinator is measured against each matching ordinary test program. Its three columns are the initial positive file, code and function charges. Complete per-metric balances and hashes are archived.",
+    "targets": [
+      {
+        "target": "1.95.0-wasm32-wasip1",
+        "normal_positive_charges": {
+          "test/adaptive_taylor": [
+            15,
+            6,
+            6,
+            15,
+            6,
+            6
+          ],
+          "test/field_coordinates": [
+            81,
+            0,
+            0,
+            81,
+            0,
+            0
+          ],
+          "test/field_taylor_evolution": [
+            76,
+            0,
+            0,
+            76,
+            0,
+            0
+          ],
+          "test/field_taylor_model": [
+            36,
+            0,
+            0,
+            36,
+            0,
+            0
+          ],
+          "test/field_taylor_orders": [
+            60,
+            0,
+            0,
+            60,
+            0,
+            0
+          ],
+          "test/flow_noise_witness": [
+            84,
+            0,
+            0,
+            84,
+            0,
+            0
+          ],
+          "test/qr_evolution": [
+            0,
+            6,
+            6,
+            1,
+            6,
+            6
+          ],
+          "test/reachability": [
+            64,
+            0,
+            0,
+            64,
+            0,
+            0
+          ],
+          "test/rk_proposal": [
+            186,
+            102,
+            102,
+            6430,
+            5889,
+            5885
+          ]
+        },
+        "minimum_headroom_bytes": 17694057
+      },
+      {
+        "target": "1.95.0-x86_64-unknown-linux-gnu",
+        "normal_positive_charges": {
+          "test/adaptive_taylor": [
+            32,
+            0,
+            0,
+            64,
+            0,
+            14
+          ],
+          "test/rk_proposal": [
+            152,
+            0,
+            0,
+            8008,
+            6096,
+            6089
+          ]
+        },
+        "minimum_headroom_bytes": 15218480,
+        "new_coordinator_positive_charges": {
+          "test/adaptive_taylor": [
+            24,
+            0,
+            0
+          ],
+          "test/evolution": [
+            40,
+            0,
+            0
+          ],
+          "test/expression_field": [
+            128,
+            112,
+            97
+          ],
+          "test/field_coordinates": [
+            8,
+            0,
+            0
+          ],
+          "test/field_taylor_evolution": [
+            24,
+            0,
+            0
+          ],
+          "test/field_taylor_orders": [
+            0,
+            16,
+            11
+          ],
+          "test/reachability": [
+            72,
+            32,
+            31
+          ]
+        },
+        "minimum_coordinator_headroom_bytes": 15218472
+      },
+      {
+        "target": "stable-wasm32-wasip1",
+        "normal_positive_charges": {
+          "test/evolution": [
+            1,
+            0,
+            0,
+            5,
+            0,
+            0
+          ],
+          "test/expression_field": [
+            0,
+            2,
+            4,
+            5501,
+            3325,
+            3316
+          ],
+          "test/field_taylor_evolution": [
+            0,
+            17,
+            17,
+            4,
+            17,
+            17
+          ],
+          "test/field_taylor_flow": [
+            42,
+            6,
+            6,
+            42,
+            6,
+            6
+          ],
+          "test/field_taylor_model": [
+            2549,
+            869,
+            857,
+            2553,
+            869,
+            857
+          ],
+          "test/field_taylor_orders": [
+            19,
+            24,
+            24,
+            23,
+            24,
+            24
+          ],
+          "test/flow_noise_witness": [
+            40,
+            19,
+            19,
+            44,
+            19,
+            19
+          ],
+          "test/qr_evolution": [
+            55,
+            0,
+            0,
+            61,
+            0,
+            0
+          ],
+          "test/reachability": [
+            1564,
+            388,
+            381,
+            1568,
+            388,
+            381
+          ]
+        },
+        "minimum_headroom_bytes": 17596946
+      },
+      {
+        "target": "stable-x86_64-unknown-linux-gnu",
+        "normal_positive_charges": {
+          "test/expression_field": [
+            24,
+            0,
+            0,
+            7160,
+            2976,
+            2940
+          ],
+          "test/field_taylor_evolution": [
+            8,
+            0,
+            0,
+            8,
+            0,
+            0
+          ],
+          "test/flow_noise_witness": [
+            64,
+            0,
+            0,
+            64,
+            0,
+            0
+          ],
+          "test/qr_evolution": [
+            72,
+            0,
+            0,
+            72,
+            0,
+            0
+          ]
+        },
+        "minimum_headroom_bytes": 15037544,
+        "new_coordinator_positive_charges": {
+          "test/evolution": [
+            8,
+            0,
+            0
+          ],
+          "test/expression_field": [
+            48,
+            32,
+            13
+          ],
+          "test/field_coordinates": [
+            1952,
+            928,
+            967
+          ],
+          "test/field_taylor_evolution": [
+            0,
+            16,
+            20
+          ],
+          "test/field_taylor_flow": [
+            24,
+            0,
+            0
+          ],
+          "test/field_taylor_orders": [
+            40,
+            0,
+            0
+          ],
+          "test/flow_noise_witness": [
+            8,
+            0,
+            0
+          ],
+          "test/qr_evolution": [
+            0,
+            16,
+            21
+          ],
+          "test/reachability": [
+            0,
+            0,
+            4
+          ]
+        },
+        "minimum_coordinator_headroom_bytes": 15035592
+      }
+    ]
   }
 }

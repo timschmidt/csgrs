@@ -66,7 +66,7 @@ No existing arithmetic or predicate dispatch has been changed.
 | 11 path dynamics | earlier full prototypes retired; isolated affine-axis and Interface qualification; public lookahead oracle retained; full extraction exceeds the measured client stack caps | implement and qualify domain-neutral ownership while preserving exact reports, dispatch, canonical lowering and owner runtime |
 | 12 ODE/reachability | owned fields/Jacobians, Picard tubes/end enclosures, bounded native integration in retained exact state charts, rational clocks, RK proposals and finite epsilon endpoint covers implemented and locally qualified | wider reachability/wrapping, whole-resource closure and remaining platform/consumer qualification |
 | 13 Taylor/adoption | exact coefficients/remainder, source-bound affine forms and nonlinear program composition, polynomial arithmetic over existing Taylor proofs, certified composition of retained Taylor models, validated trajectory Taylor steps and fixed-order whole-horizon composition, bounded automatic order/duration selection with local remainder limits, direct exact chart transport, certified QR frame construction and bounded two-chart automatic evolution with exact endpoint-diameter selection, fixed state charts/Picard and whole-horizon transport, native SDF cell/Taylor enclosures for smooth expressions, polynomial primitives and affine frames, plus bounded adaptive covers, a measured three-strategy dynamics corpus and circuit residual/Jacobian enclosures with component tolerance bindings plus continuous point-mass flow with retained force/mass evidence and sensitivity-retained noise columns for static affine field-image queries and explicit sharing of prepared trajectory orders, retained after local qualification, plus a measured external CAPD comparison on sixteen validated point/box IVPs and manually composed affine-noise flow with continuous two-rate qualification | higher-utility automatic frame strategies, automatic ODE noise orchestration and global sensitivity, automatic-controller cross-order preparation reuse, general arithmetic across nonlinear remainder models, wider adoption and broader competitive completed-workload portfolio qualification remain open |
-| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests and the original scalar Rust and MPFR oracle suites locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
+| 14 release | Interface native/browser lint and local packaging; 21 packaged crates and 26 clients on Rust 1.95/stable, clean archive reproducibility, 42 interval feature checks, dedicated Hyperdynamics workflow, 65 Cartesian arithmetic/replay tests, the original scalar Rust and MPFR oracle suites, and Hyperdynamics numerical and fresh-process replay cases locally qualified on WASI Preview 1 | whole-stack CI/feature/platform qualification, hosted/HIL consumers, publication and remaining package gates |
 
 ## Executed checks
 
@@ -12784,3 +12784,58 @@ The evidence archive commit is `79eceffd89912fe260bf9f6e7566f5c900455dc2`,
 record `docs/evidence/2026-11-18-interval-rational-scale`. Its 569 members
 include both placements, negative controls, raw resource and timing rows,
 feature graphs and final-artifact measurements. [Record digest](docs/evidence-archive.tsv)
+
+## Phase 12–14 Hyperdynamics numerical suites and fresh WASI replay, 18 November 2026
+
+On the preceding revision, Criterion's default Rayon feature prevented the
+WASI test build. Commit `973fb0cf8` selects Criterion's single-threaded
+configuration for WASI and adds a cross-runtime test driver. Production
+dependencies resolve to the same graphs on Linux and WASI. All nine release
+examples retained their exact executable bytes on both targets under Rust
+1.95.0 and 1.99.0.
+
+On each compiler, the driver accounted for all 159 original library and
+integration tests. It ran 141 tests directly in WASI. For 17 fresh-process
+cases the native parents supplied their original inputs to 33 separate WASI
+children and applied the existing assertions to the results. These include
+source identities, Jacobians, rational clocks, Taylor and QR evidence and
+file-backed noise histories. The final case exercises destruction on a real
+64 KiB native thread. The guest reports unsupported thread creation.
+A changed guest that interchanged the image and Jacobian completed its child
+test, and the original native parent's equality assertion caught the change.
+
+| Measurement | Rust 1.95.0 | Rust 1.99.0 |
+| --- | ---: | ---: |
+| Complete warmed process-group memory peak | 114,257,920 B | 114,069,504 B |
+| Largest regular native test file increase | 152 B | 72 B |
+| Largest regular WASI test file increase | 186 B | 2,549 B |
+| Largest opt-in coordinator file increase over its ordinary test | 128 B | 1,952 B |
+
+The memory measurement includes Cargo's warm checks, native libtest, Python,
+Node, guest execution and cleanup in separate 1 GiB Linux cgroups with swap
+disabled. Each run finished with over 915 MiB of headroom and zero limit or
+OOM events. Cold compiler memory, firmware and other input corpora are
+outside that measurement. The run charges no production memory or stack
+allowance.
+
+The [per-target size accounts](docs/research/interval-size-accounts.json)
+retain the preceding charges, including 7,856 B previously charged to the
+Rust 1.95 native RK4 test file. Its 152 B increase brings that account to
+8,008 B of the 8,192 B campaign cap. Native regular-test executable code
+showed no increase. Every new charge fit its predeclared caps. The
+fixed and preceding WASI size controls use the Criterion manifest adjustment
+to make their unmodified test and example sources buildable.
+
+Local verification covered both compilers' independent feature matrix,
+minimal and all-feature tests, optimized suites, bench entry points,
+doctests, strict native and guest Clippy, strict rustdoc and fuzz-target
+checks. The reachability policy fuzzer completed 10,000 address-sanitized
+executions. Seven packages verified through Cargo's local registry and
+strict zizmor passed. The new CI job uses Node 24.22.3. Local Node 22.23.5
+terminated during the nonlinear reachability case. All eleven direct
+reachability cases completed on Node 24.22.3 and 26.13.1. Hosted execution and the remaining
+platform and release requirements stay open.
+
+The [evidence index](docs/evidence-archive.tsv) registers 509 observations
+and supporting files in archive commit `63d6c4e7ef3b7549d80726ed6c9059c12122084c`,
+record `docs/evidence/2026-11-18-interval-dynamics-wasi`.
