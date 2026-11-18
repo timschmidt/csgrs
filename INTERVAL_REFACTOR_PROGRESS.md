@@ -12099,3 +12099,37 @@ candidates and all 259 prior review records in their original order. Eight
 candidates are attributable to the scanner change. The refresh also includes
 two previously unrecorded declarations from the current source tree.
 [Scanner and regression tests](scripts/test-interval-inventory.py)
+
+## Fixed-point Cartesian WASM replay in coordinated validation
+
+Commit `700888155` wires the existing fixed-point Cartesian guest into
+the coordinated WASM runner. The seven exports exercise affine images and
+source correlation, chains through depth 32, matrix norms and measures,
+full-width intervals, midpoint/radius reconstruction and contraction margins.
+The earlier Wasmtime qualification and its per-call fuel observations remain
+in the evidence archive. The maintained Node runner now checks the returned
+values in forward and reverse input order, using two fresh module instances.
+It follows each of the four source corners step by step to obtain the
+affine-chain expectation. A mutation that preserved every guest bound check
+and changed only the returned depth-32 value produced −3091 where the host
+expected −3092. [Executable oracle](crates/hyperlattice-interval/conformance/fixed-wasm/check.mjs)
+
+The Rust 1.88.0 and 1.95.0 runs each passed 172,284 fixed-lattice calls and
+the 55,802 existing strict scalar cases. The fixed guest occupied 62,720 and
+62,676 linked bytes respectively. Both guests had zero imports, no floating
+arithmetic or memory-growth instruction, and a constant 1,114,112-byte
+linear memory in each instance. These are bare-WASM validation measurements.
+The four previously measured WASM images on Rust 1.95.0 matched their preceding
+SHA-256 hashes. The separate original-source Real bridge ran on 1.95.0, its
+declared minimum. The owner crate's all-feature, all-target tests and Clippy,
+workspace and standalone formatting, and the repository budget passed.
+[Coordinated runner](scripts/check_interval_wasm.py)
+
+The sibling firmware comparison also passed 825 transform cases and 147
+range cases in each of two Rust 1.88.0 WASM instances. The inventory now
+contains body reviews for the seven Cartesian probes and both firmware
+comparison exports. Naming the additional firmware entry in a review also
+allows the scanner to include it on subsequent refreshes. A clean refresh
+reproduced all 4,142 current lexical records and all 268 historical review
+records byte for byte. The interval plan remains active.
+[Inventory](interval-inventory.tsv) · [Evidence archive](docs/evidence-archive.tsv)

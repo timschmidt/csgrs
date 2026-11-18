@@ -683,3 +683,4 @@ docs/evidence/2026-11-18-interval-wasm-stack	2	65101	57cb3da02954e39626e8fbccc3f
 docs/evidence/2026-11-18-interval-binary32-dyadic-ingress	2	48713	745fdac9681d539bc9ead858a6c0b3773c1891b0ce2b3b8ea188027c0e30d3fa
 docs/evidence/2026-11-18-interval-affine-proof-replay	3	316523	69acda0ba5abcb6a5fa12d98e0133c4dcb0abe85cd03530f2c9b59cae8937b65
 docs/evidence/2026-11-18-interval-proposal-midpoint	3	764483	2f6ab9de81d3be4673074cdfd7f9f91dbe74bd123a52890549d493004e89213c
+docs/evidence/2026-11-18-interval-fixed-wasm-replay	2	11599	789bc68f3845c80d92a36b832634797aff3004a5fef3d219e0e742507002e34b
