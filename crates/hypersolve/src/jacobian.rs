@@ -17,6 +17,16 @@ impl Default for FiniteDifferenceConfig {
     }
 }
 
+/// Computes a forward-difference proposal from the active weighted residuals.
+/// Each fixed variable has a zero column. Its context binding still contributes
+/// to residuals used for the other columns.
+///
+/// The current implementation evaluates the baseline at the supplied bindings
+/// but adds the step to each free variable's model value. Rebinding a free
+/// variable independently can therefore give an incorrect column. For `x²`,
+/// a model value of 1, a binding of 3, and a step of 1 give −5 where the
+/// forward difference at 3 is 7. To evaluate at a new center, update the free
+/// model coordinates and their context bindings together.
 pub fn finite_difference_jacobian(
     problem: &Problem,
     context: &EvaluationContext,
