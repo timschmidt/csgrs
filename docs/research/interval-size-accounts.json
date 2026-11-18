@@ -117,6 +117,16 @@
       "production_implementation_changed": true,
       "source_snapshot": "f402f67bde54f0785b270fd8947170c8947a6c03",
       "evidence": "docs/evidence/2026-11-17-interval-bisection"
+    },
+    {
+      "id": "certified-variable-radius-domain",
+      "benefit": "Prevents a negative box radius from producing satisfaction or unique-root certificates under a terminal rounding policy.",
+      "sources": [
+        "crates/hypersolve/src/interval.rs"
+      ],
+      "production_implementation_changed": true,
+      "source_snapshot": "e45bb6b625f68970563ac824dcdbfbfd41134243",
+      "evidence": "docs/evidence/2026-11-18-interval-box-radius"
     }
   ],
   "accounts": [
@@ -7841,6 +7851,93 @@
       "evidence": "docs/evidence/2026-11-17-interval-bisection",
       "source_snapshot": "f402f67bde54f0785b270fd8947170c8947a6c03",
       "uncharged_metrics": "All other measured allocated sections and defined ELF function union have zero positive growth. Archive contains all three linked artifacts."
+    },
+    {
+      "artifact": "interval-box qualification/client",
+      "role": "Complete linked solver report client",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0",
+      "features": "dispatch-trace (see locked client manifest)",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "97fe4e072",
+      "source_snapshot": "e45bb6b625f68970563ac824dcdbfbfd41134243",
+      "baseline_sha256": "e6edf516a73695af5f441a3ddb7fc1a766a91e53275ea09d4359c616953b85b2",
+      "previous_sha256": "f7ff1ba5fb78b0070719dfa15caba806b3f6826d14bd4bc5f94d07b9478ec88f",
+      "retained_sha256": "9044d02677ead40640140e6d612b995c0ffb605fc835dc0d453c2ef7f70df9d0",
+      "metrics": {
+        "file": {
+          "baseline": 3790944,
+          "previous_retained": 3790984,
+          "retained": 3791000,
+          "incremental_growth_bytes": 16,
+          "incremental_growth_percent": 0.000422,
+          "accepted_positive_growth_bytes": 56,
+          "remaining_cumulative_bytes": 16328,
+          "remaining_cumulative_percent": 1.998523,
+          "caps": {
+            "incremental_bytes": 4096,
+            "incremental_percent": 1,
+            "cumulative_bytes": 16384,
+            "cumulative_percent": 2
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "63317864 bytes free in 64 MiB host qualification image allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-box-radius"
+    },
+    {
+      "artifact": "interval-box qualification/kraw.wasm",
+      "role": "Complete linked solver report client",
+      "target": "wasm32-unknown-unknown",
+      "toolchain": "Rust 1.95.0",
+      "features": "default",
+      "profile": "release",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "previous_commit": "97fe4e072",
+      "source_snapshot": "e45bb6b625f68970563ac824dcdbfbfd41134243",
+      "baseline_sha256": "d7e87f5b802bb7ffc4b49a07ab42e0d96cd14fbfd05f80b6c4166947e0b581ed",
+      "previous_sha256": "d7e87f5b802bb7ffc4b49a07ab42e0d96cd14fbfd05f80b6c4166947e0b581ed",
+      "retained_sha256": "9d81844880fe07f4d5e7b2ee170c35851bea9de040f2ac10b5e3b1e4113fc66a",
+      "metrics": {
+        "code": {
+          "baseline": 1569561,
+          "previous_retained": 1569561,
+          "retained": 1569586,
+          "incremental_growth_bytes": 25,
+          "incremental_growth_percent": 0.001593,
+          "accepted_positive_growth_bytes": 25,
+          "remaining_cumulative_bytes": 4071,
+          "remaining_cumulative_percent": 9.998407,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        },
+        "file": {
+          "baseline": 1765964,
+          "previous_retained": 1765964,
+          "retained": 1766030,
+          "incremental_growth_bytes": 66,
+          "incremental_growth_percent": 0.003737,
+          "accepted_positive_growth_bytes": 66,
+          "remaining_cumulative_bytes": 4030,
+          "remaining_cumulative_percent": 9.996263,
+          "caps": {
+            "incremental_bytes": 1024,
+            "incremental_percent": 5,
+            "cumulative_bytes": 4096,
+            "cumulative_percent": 10
+          },
+          "passes_both_caps": true
+        }
+      },
+      "headroom": "65342834 bytes free in 64 MiB host qualification image allowance, 16 MiB required.",
+      "evidence": "docs/evidence/2026-11-18-interval-box-radius"
     }
   ],
   "path_benchmark_file_budget_revision_proposal": "8192 bytes AND0.1%, not adopted or consumed",

@@ -661,3 +661,4 @@ docs/evidence/2026-11-17-interval-fixed-host-conversions	2	4059734	50900d38e324c
 docs/evidence/2026-11-17-interval-integer-affine	2	3021294	e967d460efba7d042818b1a9a3c8e28d6e12f247f4c3b8943ef06944c07b7c09
 docs/evidence/2026-11-17-interval-bisection	2	27588798	1f6113339f7869c7b60da7dd09ee7a5490155a633095fe4ec3fbfbf00148e000
 docs/evidence/2026-11-17-interval-coefficient-memory-recheck	2	8445957	b2ca5590424b01844195f470ccbbed41fb5155afe35a810f482376a9bfb44fac
+docs/evidence/2026-11-18-interval-box-radius	2	45625966	e6ac3d0dd8c1a5eeed4130defd273cb02dc2fddf183d6d0d968832fb827bbe3f

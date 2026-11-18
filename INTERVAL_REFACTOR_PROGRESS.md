@@ -11180,3 +11180,18 @@ allowance with cumulative accounting. Two independently measured linked
 size metrics keep the candidate isolated. All 21 targeted tests and both
 complete output/trace comparisons passed. The historical rejection and
 original fixtures are preserved. [Reassessment and numerical gates](docs/research/adaptive-stage-ownership-reconsideration.md#reassessment-under-the-bounded-memory-exception)
+
+## Phase 7 solver radius certification and bounded stack
+
+Hypersolve now requires a certified nonnegative radius in all three interval
+packages and all three Krawczyk packages. A negative input hidden by terminal
+rounding previously produced satisfaction and unique-root certificates.
+The owner suites passed 1,523 all-feature and 1,388 minimal-feature completions,
+and all 11 downstream reachability tests passed.
+
+The first native stack exception charges up to 32 bytes per completed workload
+and 48 bytes cumulatively. Requested heap remained within its previous peak,
+and individually measured native and WASM size growth fits the existing target
+caps. The separate center-replay and approximate-row aggregation defects remain
+open. Their broader repair exceeded the per-section binary-size gate.
+[Admission, measurements and remaining defects](docs/research/interval-box-proof-scope.md)

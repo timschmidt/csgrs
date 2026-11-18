@@ -2,13 +2,243 @@
   "program": "interval-refactor-2026-11",
   "policy": "docs/admission.md#bounded-memory-growth-exceptions",
   "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
-  "status": "Policy authorized; no memory-growth exception admitted yet",
+  "status": "One bounded native solver stack exception admitted. Each target and workload uses its own measured account.",
   "scope": "Temporary heap bytes, retained heap bytes and whole-call stack, separately by target, feature configuration and completed workload. Existing binary-size accounts remain independent.",
   "cumulative_rule": "Before the first admission for a workload, measure the fixed baseline, current baseline and candidate. Preserve any prior positive growth and every subsequent positive charge. Do not net decreases against increases or transfer headroom between targets, metrics or workloads. Missing historical or equivalent completed controls require explicit evidence and a documented baseline decision, not an assumed zero charge.",
   "default_allowance": null,
-  "accounts": [],
+  "accounts": [
+    {
+      "id": "certified-variable-radius-domain",
+      "source_snapshot": "e45bb6b625f68970563ac824dcdbfbfd41134243",
+      "previous_commit": "97fe4e072",
+      "baseline_commit": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "target": "x86_64-unknown-linux-gnu, Rust 1.95.0 release, System allocator, one guarded native worker",
+      "call_boundary": "Construct problem and radii, warm approximate predicate for opaque inputs, certify, inspect status and destroy complete report. Thread startup and caller frames excluded from stack; guard and caller included in headroom.",
+      "workload_key": "i = (0 report or 1 Krawczyk)*30 + (0 affine, 1 univariate quadratic, 2 multivariate quadratic)*10 + (0 STRICT or 1 APPROXIMATE_512)*5 + radius case (0 hidden negative, 1 one, 2 zero, 3 negative one, 4 opaque positive)",
+      "stack_caps": {
+        "incremental_bytes": 128,
+        "incremental_percent_of_previous": 1,
+        "cumulative_bytes": 256,
+        "cumulative_percent_of_fixed": 2,
+        "maximum_callee_stack_bytes": 16384,
+        "thread_capacity_bytes": 2097152,
+        "required_free_bytes": 1048576,
+        "minimum_observed_free_bytes": 2072776
+      },
+      "heap_caps": {
+        "incremental_peak_requested_bytes": 0,
+        "cumulative_peak_requested_bytes": 0,
+        "maximum_peak_requested_bytes": 16384,
+        "incremental_retained_bytes": 0,
+        "cumulative_retained_bytes": 0
+      },
+      "max_observed_peak_requested_bytes": 15036,
+      "retained_bytes_after_drop": 0,
+      "measurement": "Two sentinel patterns, cold and warm, 24 processes per revision. Positive differences between observed maxima charged separately even where individual samples vary. Full 120 rows in memory-rows.json in the archive. Zero-charge rows have full remaining allowance.",
+      "charged_stack_rows": [
+        {
+          "workload": 4,
+          "temperature": "cold",
+          "fixed": 9928,
+          "previous": 9952,
+          "retained": 9952,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.758259
+        },
+        {
+          "workload": 9,
+          "temperature": "cold",
+          "fixed": 9928,
+          "previous": 9976,
+          "retained": 9928,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 48,
+          "remaining_cumulative_bytes": 208,
+          "remaining_cumulative_percent": 1.516519
+        },
+        {
+          "workload": 14,
+          "temperature": "warm",
+          "fixed": 9928,
+          "previous": 9928,
+          "retained": 9952,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.758259
+        },
+        {
+          "workload": 15,
+          "temperature": "cold",
+          "fixed": 10968,
+          "previous": 11016,
+          "retained": 10976,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 48,
+          "remaining_cumulative_bytes": 208,
+          "remaining_cumulative_percent": 1.562363
+        },
+        {
+          "workload": 19,
+          "temperature": "warm",
+          "fixed": 9952,
+          "previous": 9928,
+          "retained": 9952,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.758842
+        },
+        {
+          "workload": 24,
+          "temperature": "cold",
+          "fixed": 9928,
+          "previous": 9928,
+          "retained": 9952,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.758259
+        },
+        {
+          "workload": 34,
+          "temperature": "cold",
+          "fixed": 9784,
+          "previous": 9808,
+          "retained": 9784,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.754702
+        },
+        {
+          "workload": 34,
+          "temperature": "warm",
+          "fixed": 9784,
+          "previous": 9784,
+          "retained": 9808,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.754702
+        },
+        {
+          "workload": 39,
+          "temperature": "cold",
+          "fixed": 9784,
+          "previous": 9808,
+          "retained": 9808,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.754702
+        },
+        {
+          "workload": 39,
+          "temperature": "warm",
+          "fixed": 9784,
+          "previous": 9784,
+          "retained": 9808,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.754702
+        },
+        {
+          "workload": 40,
+          "temperature": "cold",
+          "fixed": 11512,
+          "previous": 11464,
+          "retained": 11496,
+          "incremental_charge_bytes": 32,
+          "cumulative_charge_bytes": 32,
+          "remaining_cumulative_bytes": 224,
+          "remaining_cumulative_percent": 1.722029
+        },
+        {
+          "workload": 40,
+          "temperature": "warm",
+          "fixed": 11464,
+          "previous": 11464,
+          "retained": 11472,
+          "incremental_charge_bytes": 8,
+          "cumulative_charge_bytes": 8,
+          "remaining_cumulative_bytes": 248,
+          "remaining_cumulative_percent": 1.930216
+        },
+        {
+          "workload": 45,
+          "temperature": "warm",
+          "fixed": 14152,
+          "previous": 14200,
+          "retained": 11448,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 48,
+          "remaining_cumulative_bytes": 208,
+          "remaining_cumulative_percent": 1.660825
+        },
+        {
+          "workload": 54,
+          "temperature": "cold",
+          "fixed": 12824,
+          "previous": 12776,
+          "retained": 12800,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.812851
+        },
+        {
+          "workload": 54,
+          "temperature": "warm",
+          "fixed": 12776,
+          "previous": 12824,
+          "retained": 12800,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 48,
+          "remaining_cumulative_bytes": 208,
+          "remaining_cumulative_percent": 1.624296
+        },
+        {
+          "workload": 55,
+          "temperature": "cold",
+          "fixed": 12776,
+          "previous": 12824,
+          "retained": 11032,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 48,
+          "remaining_cumulative_bytes": 208,
+          "remaining_cumulative_percent": 1.624296
+        },
+        {
+          "workload": 59,
+          "temperature": "cold",
+          "fixed": 12824,
+          "previous": 12800,
+          "retained": 12824,
+          "incremental_charge_bytes": 24,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.812851
+        },
+        {
+          "workload": 59,
+          "temperature": "warm",
+          "fixed": 12800,
+          "previous": 12824,
+          "retained": 12800,
+          "incremental_charge_bytes": 0,
+          "cumulative_charge_bytes": 24,
+          "remaining_cumulative_bytes": 232,
+          "remaining_cumulative_percent": 1.8125
+        }
+      ],
+      "evidence": "docs/evidence/2026-11-18-interval-box-radius"
+    }
+  ],
   "limitations": [
-    "An empty ledger is not evidence that all historical memory use is unchanged or fully measured.",
     "No allocation-free firmware or configured RAM/task-stack limit is relaxed.",
     "Runtime, predicate/dispatch order, exact outputs and certainty remain separate gates.",
     "No candidate is admitted solely by this policy record."
