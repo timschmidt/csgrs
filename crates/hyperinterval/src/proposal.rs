@@ -207,14 +207,3 @@ let certified: RationalInterval = proposal.into();
 
 proposal!(F32ProposalInterval, f32, u32, BINARY32);
 proposal!(F64ProposalInterval, f64, u64, BINARY64);
-
-impl F32ProposalInterval {
-    /// Native midpoint and half-width estimates, or `None` for empty.
-    /// Each rounds independently. The full finite binary32 range has a finite
-    /// half-width. Neither estimate is a certified enclosure.
-    #[inline]
-    pub fn midpoint_radius_estimates(&self) -> Option<(f32, f32)> {
-        self.estimates()
-            .map(|(a, b)| (a.midpoint(b), (-a).midpoint(b)))
-    }
-}
