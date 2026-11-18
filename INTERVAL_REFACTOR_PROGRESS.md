@@ -11195,3 +11195,21 @@ and individually measured native and WASM size growth fits the existing target
 caps. The separate center-replay and approximate-row aggregation defects remain
 open. Their broader repair exceeded the per-section binary-size gate.
 [Admission, measurements and remaining defects](docs/research/interval-box-proof-scope.md)
+
+## Phase 7 quadratic proof corpus and whole-box replay
+
+The primary branch now checks 5,400 solver reports against independent
+polynomial extrema under both predicate policies. Both deliberate remainder
+omissions produced false sign certificates and failed the new tests. The
+restored source passed 1,525 owner tests and doctests, strict checks and all
+11 downstream reachability tests.
+
+The composed repair on `interval-box-proof-and-diagnostics-review` corrects
+the outer verdict, certification counts and failed-row diagnostics together.
+It passed 1,535 owner tests and doctests. On the 84-row client it changes
+24 verdicts while preserving all evidence, dispatch and allocation records.
+Two native allocated-section measurements prevent retention of that version.
+A second composition passed both native size gates but exceeded the existing
+WASM file/code caps and eight per-workload stack caps. The review covers the exact fixtures, attempted implementations,
+portable execution and linked measurements.
+[Phase 7 qualification](docs/research/interval-box-proof-scope.md#exact-extrema-qualification-and-composed-repair-review)

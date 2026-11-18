@@ -107,3 +107,94 @@ pay for another section's growth.
 The archived commands, fixed/control/candidate executables, failed fixtures,
 per-workload observations and raw timing samples are indexed under
 `2026-11-18-interval-box-radius`. [Qualification archive](../evidence-archive.tsv)
+
+## Exact extrema qualification and composed repair review
+
+On `67a8dfeaf`, four of the five whole-box regressions failed. Checking only
+the outer box status also leaves a false inner count: a real approximate
+ball receipt contributed one certified satisfied row and zero uncertain rows.
+Correcting those counters exposed an existing diagnostic regression that
+discarded the approximate row. The four regression tests from the standalone
+residual-certainty repair reproduce this difference. The composed review
+retains the original row receipt through the diagnostic.
+[Earlier residual-certainty qualification](residual-certification-ownership-review.md)
+
+The maintained test in `cf261b302` checks 4,800 univariate-polynomial box
+reports and 600 two-variable bilinear reports. For a quadratic it computes the
+exact endpoint values and includes the vertex whenever its derivative changes
+sign or vanishes at an endpoint. This includes a sole interior zero at 1/3.
+For a bilinear function, affinity in each coordinate puts the extrema at the
+corners of a rectangle, including rectangles of zero width on either axis.
+Each certified sign and its interpretation for equality, soft and both
+inequality directions must agree with the independent extrema. Singletons
+and large positive and negative shifts must produce decisions. Removing the
+quadratic remainder from either package made the test fail, and restoring
+each remainder restored the passing result. The corpus qualifies the retained
+polynomial packages on these cases. Point replay on unsupported residuals
+remains a separate open defect. [Extrema tests](../../crates/hypersolve/tests/interval_quadratic_extrema.rs)
+
+The composed candidate at `88beac671` produces summaries after residual-ball
+replay, distinguishes certified and approximate receipts in the owning row
+type, and checks whether each decisive row covers the supplied box. It keeps
+source order and the effective last radius for a repeated symbol. The native
+client corrected 24 of 84 verdicts. All 84 complete evidence/dispatch records
+and all 84 allocation records match the control. A variant that recomputed
+structural facts altered 42 traces. Another that carried a borrowed radius and
+its certified zero flag saved 128 peak requested bytes on every client case.
+The latter still exceeded the existing native size caps.
+
+Both native images of `88beac671` use fewer defined function bytes. Their
+allocated RELRO padding grows by 1,176 bytes in the replay client and 1,712
+bytes in the owner benchmark. Both exceed the existing per-section cap.
+The WebAssembly client shrinks by 10,155 file bytes and 8,720 code bytes
+against the previous primary. Each revision completed 384 ordered calls
+across two fresh instances, checking box status, inner counters and receipt
+certainty. The observation fixture explicitly verifies that the constant
+row has an affine enclosure and uses point replay in the quadratic packages.
+
+A further composition carries the validated radius by reference, including
+the certified zero flag, and counts each final replay row once. It passed
+*both* native image gates on the previously measured targets. On the 84-row
+observer it saved 128 peak requested bytes per case, retained all exact
+evidence and traces, and corrected the same 24 verdicts. The observer file
+grew by 896 bytes, its defined-function union by 517 bytes, and the owner
+benchmark file shrank by 3,928 bytes.
+
+Two other targets still block that composition at `305abbcdb`. The existing
+WASM interval/Krawczyk client passed all 240 calls, but its file grew from
+1,766,030 to 1,769,702 bytes and its code section from 1,569,586 to 1,572,612.
+Each exceeds the 1,024-byte incremental cap. Across the native lifetime
+client's 60 workloads, peak requested heap held or fell on every workload.
+Eight of 120 cold/warm stack accounts exceeded the previously declared 1%
+incremental cap. For example, a multivariate quadratic box call increased
+from 3,446 to 3,494 bytes (1.39%). Each workload used the maximum across
+24 processes and two sentinel patterns. No allowance was transferred from
+the workloads that used less stack. The composition is preserved on
+`interval-box-validated-radii-review`.
+
+Keeping the existing owned scalar map in the final-row implementation also
+passed all 240 calls in the existing WASM client. Its image shrank by 1,003
+bytes and its code section by 1,668 bytes. Its peak requested heap passed the
+previous limits on all 60 cases. On the native stack, 24 of 120 accounts
+exceeded the incremental relative cap and 16 of those exceeded the cumulative
+relative cap. For example, an affine report grew from 3,302
+to 3,350 bytes (1.45%). This variant also remains unadmitted.
+
+The earlier candidate remains on `interval-box-proof-and-diagnostics-review`. The individual size failures
+remain recorded even when a different image shrinks. The primary branch
+retains the independent extrema tests.
+
+The primary all-feature owner suite passed 1,525 tests and doctests. The
+isolated `88beac671` and `305abbcdb` suites each passed 1,535, including the
+5,400-case corpus and the diagnostic regressions. Strict owner Clippy passed
+on all three revisions. The
+primary also passed the minimal-feature extrema and radius tests, release
+execution of the new corpus, strict minimal-feature Clippy on the new
+target, workspace formatting, all-feature rustdoc and all 11 downstream
+reachability tests. The new test-only release runner occupies 4,388,536
+bytes. Production source is identical on the two primary revisions.
+
+The fixed, current and candidate WebAssembly images, reversible native ELF
+deltas, controls, failed mutants, 84-row differentials and source patches
+are recorded under `2026-11-18-interval-box-aggregation`.
+[Evidence index](../evidence-archive.tsv)
