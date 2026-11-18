@@ -39,8 +39,8 @@ eighth byte selects one of two independent integer oracles.
 
 Both families retry limited requests with the same field and remaining
 arithmetic budget. The ordinary integration suite exercises 126 deterministic
-configurations, including ties, signed time, and capped last steps. From
-`crates/hyperdynamics`, run the fixtures or the ASan campaign with:
+configurations, including ties, signed time, and capped last steps. Run the fixtures or the
+ASan campaign from `crates/hyperdynamics`.
 
 ```sh
 cargo test --locked --features reachability --test reachability_policy

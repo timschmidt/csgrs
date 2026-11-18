@@ -11462,3 +11462,44 @@ passed. Hardware execution was outside this host qualification. The full
 extreme-scale and zero-bit success witnesses remain executable on the named
 review branches. The primary retains both implementation gaps.
 [Exact checks, candidate patches, per-workload costs and paired timings](docs/evidence-archive.tsv)
+
+## Phase 12 and 14 reachability step and subdivision policies
+
+Revision `b5f2f6798` adds the ODE policy fuzz target required by §14.3.
+The preceding coordinate-change target integrated trajectories but did not
+call the finite cover search. The new target and two ordinary integration
+tests run the same independent integer oracle against `ExpressionField::reach`.
+[Oracle and fixtures](crates/hyperdynamics/tests/reachability_policy.rs) · [Fuzzing and reproduction](crates/hyperdynamics/fuzz/README.md#reachability-policies)
+
+| Generated family | Evidence checked through the public API |
+| --- | --- |
+| Two-dimensional constant flow from a nonpoint rectangle | Signed integer velocities translate each initial cell exactly. Check every native prefix and its transported box, the full widest-axis partition including ties, and every member of the final Cartesian grid with its multiplicity. Exact cell, depth, evolution and segment allowances complete. One-short limits produce the expected typed stop and withhold the cover. |
+| One-dimensional affine-in-time flow from a point | For `x' = a*t + b` the integral determines the endpoint, and the left and right rectangle sums determine the tight Picard interval on these fixtures. Check both endpoints after every step of every time-refinement attempt, including attempts too wide to supply the requested cover. Check refusal one refinement short and completion at the exact epsilon boundary. |
+
+The 126 deterministic configurations run in the normal Cargo suite. Two
+native ASan campaigns each executed 10,000 inputs (42 and 46 seconds). The
+second started from the two seeds configured in CI. Short inputs can be
+discarded by the fixed-width decoder; both final corpora contain all seven
+policy modes. The maintained tests independently detected a duplicated final leaf,
+premature acceptance of an over-wide root, and publication of a cover
+after a stopped search. The duplicate-leaf seed also failed
+in the compressed ASan client, with a file and line in the shared oracle.
+
+The first sanitizer image occupied 64,534,360 bytes and missed the 16 MiB
+free-space requirement in the 64 MiB qualification envelope. The Linux CI
+link now compresses ELF debug sections. The resulting 26,760,744-byte image
+retains line information and leaves 40,348,120 bytes free. The release test
+executable occupies 4,352,760 bytes. The release reachability example
+(3,323,936 bytes) and its complete output matched the preceding revision
+byte for byte. These qualification-only executables have individual size
+records. Production memory and binary charges are unchanged.
+[Size accounts](docs/research/interval-size-accounts.json)
+
+The local Hyperdynamics workflow matrix ran on Rust 1.95.0 and stable
+1.99.0. Each toolchain checked 20 feature combinations and passed 157 tests
+in both all-target debug and optimized suites. Formatting, strict Clippy at
+both feature boundaries, fuzz build and lint, documentation, inventory tests
+and the repository-wide strict zizmor audit passed. Hosted runners have yet
+to execute this workflow revision. The analytic oracles qualify the two
+specified field families; general nonlinear ODE coverage remains part of
+the wider plan. [Raw campaign, mutation and matrix evidence](docs/evidence-archive.tsv)

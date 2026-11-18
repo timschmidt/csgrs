@@ -8889,5 +8889,33 @@
     "required_free_bytes": 16777216,
     "remaining_bytes": 66008400,
     "evidence": "docs/evidence/2026-11-18-interval-finite-inclusion"
-  }
+  },
+  "new_reachability_policy_test_harnesses": [
+    {
+      "artifact": "crates/hyperdynamics/tests/reachability_policy.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "1.95.0",
+      "features": "all hyperdynamics features; workspace lock",
+      "source_snapshot": "b5f2f6798f719b2e3770f5bd556c88a767de4276",
+      "file_bytes": 4352760,
+      "sha256": "d50de34d90aa73eaf4924e006035e36a2ef783a0ece69c95dacd71ef7932572e",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 62756104,
+      "evidence": "docs/evidence/2026-11-18-interval-cover-policy"
+    },
+    {
+      "artifact": "crates/hyperdynamics/fuzz/fuzz_targets/reachability_policy.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "rustc 1.101.0-nightly (8006091eb 2026-10-17)",
+      "features": "standalone fuzz workspace lock; cargo-fuzz 0.13.2, address sanitizer, compressed ELF debug sections",
+      "source_snapshot": "b5f2f6798f719b2e3770f5bd556c88a767de4276",
+      "file_bytes": 26760744,
+      "sha256": "96ef85798368c823449aa5e5d5c54bc769de95d751766263557937f34c4b253e",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 40348120,
+      "evidence": "docs/evidence/2026-11-18-interval-cover-policy"
+    }
+  ]
 }
