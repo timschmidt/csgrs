@@ -1,5 +1,9 @@
 # Changelog
 
+- Add `F32ProposalInterval::midpoint_radius_estimates`. With gradual underflow
+  and round-to-nearest, an interval spanning one to three minimum subnormal
+  units returns a midpoint of two units and a half-width of one.
+
 - Add budgeted, tight outward dyadic-to-F32/F64 enclosure conversion, preserving
   finite overflow and unsupported-environment diagnostics. Qualify exact output
   bits, retry, native rounding-mode independence and actual WASM execution.

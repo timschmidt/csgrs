@@ -148,3 +148,47 @@ macro_rules! cases {
 
 cases!(binary32, F32ProposalInterval, f32, u32);
 cases!(binary64, F64ProposalInterval, f64, u64);
+
+#[test]
+fn binary32_midpoint_and_half_width_round_independently() {
+    let grid = |n: i32| {
+        let value = f32::from_bits(n.unsigned_abs());
+        if n < 0 { -value } else { value }
+    };
+    let half = |n: i32| {
+        let floor = n.div_euclid(2);
+        grid(floor + i32::from(n % 2 != 0 && floor % 2 != 0))
+    };
+    for lo in -32..=32 {
+        for hi in lo..=32 {
+            let span = F32ProposalInterval::new(grid(lo), grid(hi)).unwrap();
+            assert_eq!(
+                span.midpoint_radius_estimates(),
+                Some((half(lo + hi), half(hi - lo))),
+                "subnormal units [{lo}, {hi}]"
+            );
+        }
+    }
+    assert_eq!(
+        F32ProposalInterval::empty().midpoint_radius_estimates(),
+        None
+    );
+    let max = f32::MAX;
+    let prev = f32::from_bits(max.to_bits() - 1);
+    let near = f32::from_bits(f32::MIN_POSITIVE.to_bits() + 1);
+    for (lo, hi, expected) in [
+        (-max, max, (0.0, max)),
+        (prev, max, (prev, (max - prev) * 0.5)),
+        (-max, -prev, (-prev, (max - prev) * 0.5)),
+        (-max, prev, (-(max - prev) * 0.5, prev)),
+        (f32::from_bits(1), max, (max * 0.5, max * 0.5)),
+        (near, near, (near, 0.0)),
+    ] {
+        assert_eq!(
+            F32ProposalInterval::new(lo, hi)
+                .unwrap()
+                .midpoint_radius_estimates(),
+            Some(expected)
+        );
+    }
+}
