@@ -12232,3 +12232,62 @@ changed test and tooling code only. Evidence commit `f61f0aad9` contains the
 full per-source reports, annotated gaps, linked-image measurements, mutation
 controls and validation logs. [Size accounts](docs/research/interval-size-accounts.json) ·
 [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 9 Cortex-M4 execution of the firmware transform corpus
+
+Commit `7dc70b88c` links the existing Rust 1.88 Thumb probes as an ARM
+hard-float ELF and executes their C ABI in Unicorn's Cortex-M4 model. On
+`7a65d7a07` the maintained Thumb step compiled the conformance library.
+The new command first checks two fresh WASM instances against the integer
+oracle, then replays the checked calls on Thumb. Every pass includes the
+825 full transform digests, 3,315 output-word reads and 251 range outcomes.
+Forward and reverse orders, two stack fill patterns, and cold and warm calls
+produced 35,128 successful Thumb calls. The runner checks the return PC,
+callee-saved registers, restored SP and returned bits on every call.
+[Simulator command](crates/hyperlattice-interval/conformance/alumina-foc/README.md)
+
+Three ARM-only negative controls passed the WASM run. The simulator detected
+a one-unit error in the inverse-Clarke third lane, a call that exhausted its
+one-million-instruction allowance and a frame that wrote into the unmapped
+stack reserve. An initial loop using a processor hint encountered an unsupported
+simulator instruction. An ordinary branch loop independently exercised the
+instruction limit.
+
+The primary checkout's ELF occupied 23,860 bytes in the 64 KiB simulator
+image slot and left 41,676 bytes free against a 16 KiB reserve. The entire
+corpus touched at most 704 bytes of its 8 KiB stack. A separate hook sampled
+SP at every simulated instruction and confirmed the same peak, leaving
+7,488 bytes free. All four runs of the original 1,076 digest/range calls
+matched the fixed and preceding controls individually in return value,
+stack depth and instruction count. The longest call used 6,429 guest
+instructions. The historical lock needed its missing local dependency
+edge restored. With the same source path and corrected lock, all three
+two-export ELFs had equal file, load and code sizes. The preceding and
+retained three-export ELFs were byte-identical. Their longer embedded paths
+added 40 bytes of read-only data relative to the primary checkout.
+
+An isolated build read the same endpoints from the shared interval
+implementation. For each transform, the following totals cover 165 samples
+and four ABI reads per sample. Each read recomputes the transform. Both
+observers returned the same complete corpus.
+
+| Transform | Firmware instructions | Shared instructions | Firmware peak stack | Shared peak stack |
+| --- | ---: | ---: | ---: | ---: |
+| Clarke | 481,270 | 819,350 | 488 B | 640 B |
+| Park | 532,394 | 602,354 | 448 B | 604 B |
+| Inverse Park | 532,522 | 603,142 | 448 B | 604 B |
+| Inverse Clarke | 287,830 | 284,530 | 368 B | 352 B |
+| Complete chain | 1,599,758 | 2,413,198 | 488 B | 640 B |
+
+The complete shared chain used 50.8% more guest instructions and 152 more
+stack bytes in this fixture. Inverse Clarke used fewer of both. The firmware
+implementation stays in place. The comparison supplies simulated instruction
+counts. Physical board cycles, interrupt-inclusive stack, deployed flash
+headroom and HIL qualification remain open.
+
+The coordinated firmware and Interface suites, nine sibling-source graph
+audits, standalone Clippy with warnings denied, formatting and repository
+budget passed locally. No production size or memory allowance was charged.
+Evidence commit `1bf538726` contains the linked images, checked call lists,
+per-instruction measurement code, comparison records and mutations.
+[Evidence index](docs/evidence-archive.tsv)
