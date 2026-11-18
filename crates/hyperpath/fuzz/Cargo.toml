@@ -160,3 +160,10 @@ path = "fuzz_targets/hyperreal_representations.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "schedule_equivalence"
+path = "fuzz_targets/schedule_equivalence.rs"
+test = false
+doc = false
+bench = false
