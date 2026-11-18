@@ -11253,3 +11253,42 @@ Affine and univariate quadratic Krawczyk callers still require `STRICT` for
 root certificates. The full repair remains on `interval-krawczyk-proof-review`
 after a reproducible one-variable runtime regression.
 [Proof witnesses, costs and remaining scope](docs/research/interval-box-proof-scope.md#krawczyk-containment-contraction-and-elimination)
+
+## Phase 0 inventory refresh and review preservation, 18 November 2026
+
+At `703f86de6`, running the inventory command on a copy replaced all 230
+revision-specific reviews with lexical candidates. It missed the three
+public Krawczyk certifiers and the six dyadic overlap/disjoint methods.
+In 14 rows the inferred directory owner differed from the Cargo package.
+
+Commit `7d4687ae8` refreshes the live rows from the plan’s source modules,
+public declarations in the interval and dynamics crates, workspace-wide
+name matches, and names previously reviewed in the same file. Revision-specific
+reviews keep their original fields, including historical line numbers.
+A moved or repeated name acquires its own fresh candidate row. The command
+writes a temporary file and checks for intervening review edits before
+replacement. It reproduced the same TSV bytes both in place and in a fresh
+destination. From a named worktree its default CSGRS source is that checkout.
+
+The inventory contains **4,125 current declaration sites in 473 Rust files**
+(3,463 CSGRS, 337 Interface, 325 Firmware) and **239 review records**. Every
+current line was checked against its source and every package name against
+Cargo metadata, including four manifests outside the initial workspace
+metadata. Nine new records cover the six dyadic set queries and the three
+Krawczyk proof entry points. Ten dyadic and seven solver integration tests
+passed. Four negative witnesses from `0dcfb17ba` still fail on
+`703f86de6`, including an incorrect affine root coordinate and terminal
+equality promoted to a root certificate. The multivariate point-box result
+remains undecided on the same witness.
+
+Five generator regressions passed. Eight pinned process runs compared
+buffering and streaming the **same** completed inventory. Median elapsed
+time was 2.62 seconds for both. Observed peak RSS was 24,240–24,516 KiB
+with buffering and 21,912–22,112 KiB with streaming. This is host tooling;
+the geometry and firmware resource accounts have no new charge.
+
+Interface was at `5b532c803` and Firmware at `7e0d5a43d`. Live candidates
+still require body and consumer review. Macro expansions, reexports, and
+unnamed endpoint tuples need separate discovery. The raw checks and matched
+measurements are indexed under `2026-11-18-interval-inventory-refresh`.
+[Source inventory](interval-inventory.tsv) · [Evidence index](docs/evidence-archive.tsv)
