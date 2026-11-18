@@ -391,6 +391,18 @@ impl RationalInterval {
         self.mul(&Self::point(scale.clone()))
             .add(&Self::point(offset.clone()))
     }
+
+    /// Exact image under multiplication by one rational scalar.
+    ///
+    /// A negative factor reverses the endpoints. Zero maps every nonempty
+    /// interval to the singleton zero, and the empty interval stays empty.
+    #[inline]
+    pub fn scale(&self, factor: &Rational) -> Self {
+        self.bounds().map_or_else(Self::empty, |(a, b)| {
+            let (lower, upper) = product_hull(a, b, factor, factor);
+            Self::ordered(lower, upper)
+        })
+    }
 }
 
 // Preserve the sequence of signs, products and comparisons from Hypersolve's

@@ -190,7 +190,8 @@ initial encoding, not a migration of any domain's canonical evidence.
 
 The `rational` feature adds `RationalInterval` over Hyperreal's exact rationals
 and requires Rust 1.95. It supplies exact sum, difference, product hull,
-square, strict quotient, affine images and positive arithmetic helpers. The
+square, strict quotient, affine images and positive arithmetic helpers.
+`RationalInterval::scale` maps the interval by a borrowed rational factor. The
 `checked_pow(i64)` operation gives exact signed-integer images, rejecting zero
 in a negative-power domain. It inherits Hyperreal's eager-growth guard; scalar
 refusals retain the typed `Problem` in `IntervalError::Scalar` and `source()`.

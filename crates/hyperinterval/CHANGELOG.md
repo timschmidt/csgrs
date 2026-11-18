@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add `RationalInterval::scale` for exact scalar multiplication by a borrowed
+  rational, including negative and zero factors.
+
 - Add opt-in certified binary32 and binary64 enclosures on `wasm32-wasip1`
   through `float-enclosure-wasip1`. The threaded ABI retains typed refusal.
 
