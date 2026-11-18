@@ -65,6 +65,7 @@ impl<T: PartialOrd> Bounds<T> {
     // Callers must establish order algebraically before using this private
     // constructor. Public ingress always uses new().
     #[cfg(any(
+        feature = "dyadic",
         feature = "integer",
         feature = "fixed",
         feature = "rational",

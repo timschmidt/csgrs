@@ -241,6 +241,41 @@ impl DyadicInterval {
         self.measure(false, true, budget)
     }
 
+    /// Partitions a nonsingleton into two closed halves meeting at its exact midpoint.
+    /// Empty and singleton inputs return `None` after inspecting the stored bounds.
+    /// If the midpoint needs a grid finer than `2^i32::MIN`, returns `Overflow`.
+    ///
+    /// Arithmetic uses at most one extra magnitude bit. The budget covers the
+    /// endpoint sum, the two outer endpoints and the shared midpoint in both
+    /// results.
+    pub fn bisect(&self, budget: &mut DyadicBudget) -> Result<Option<[Self; 2]>, IntervalError> {
+        let Some((a, b, exponent)) = self.bounds() else {
+            return Ok(None);
+        };
+        if a == b {
+            return Ok(None);
+        }
+        let bits = self.bits().saturating_add(1);
+        budget.reserve(bits, 1, false)?;
+        let sum = a + b;
+        let finer = sum.is_odd();
+        let exponent = exponent
+            .checked_sub(i32::from(finer))
+            .ok_or(IntervalError::Overflow)?;
+        budget.reserve(bits, if finer { 3 } else { 4 }, false)?;
+        let midpoint = if finer { sum } else { sum >> 1usize };
+        let lower = a << usize::from(finer);
+        let upper = b << usize::from(finer);
+        // On a finer grid the midpoint is odd. On the original grid both
+        // outer endpoints are odd, unless the exponent is already maximal.
+        // Each child therefore already has the canonical common exponent.
+        let half = |lo, hi| Self {
+            bounds: Some(Bounds::ordered(lo, hi)),
+            exponent,
+        };
+        Ok(Some([half(lower, midpoint.clone()), half(midpoint, upper)]))
+    }
+
     /// Exact half-width as a singleton interval; empty for empty input.
     /// Like `midpoint`, this fails if the exact half cannot be represented.
     pub fn radius(&self, budget: &mut DyadicBudget) -> Result<Self, IntervalError> {

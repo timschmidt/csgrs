@@ -20,6 +20,13 @@ fuzz_target!(|data: [i16; 7]| {
     let radius = x.radius(&mut budget).unwrap();
     assert_eq!(midpoint, point(a + b, e - 1));
     assert_eq!(radius, point(b - a, e - 1));
+    let halves = (a < b).then(|| {
+        [
+            DyadicInterval::new((2 * a).into(), (a + b).into(), e - 1).unwrap(),
+            DyadicInterval::new((a + b).into(), (2 * b).into(), e - 1).unwrap(),
+        ]
+    });
+    assert_eq!(x.bisect(&mut budget).unwrap(), halves);
     let lower = midpoint.sub(&radius, &mut budget).unwrap();
     let upper = midpoint.add(&radius, &mut budget).unwrap();
     assert_eq!(lower.hull(&upper, &mut budget).unwrap(), x);

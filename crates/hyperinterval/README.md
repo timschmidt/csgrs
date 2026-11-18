@@ -36,6 +36,10 @@ arithmetic without allocation. Fixed-point upper rounding can return Overflow
 at maximal fractional scales. IEEE square roots include subnormal inputs and
 retain the certified backend's platform qualification gate.
 
+With `dyadic`, `DyadicInterval::bisect(&mut budget)` returns two closed halves
+sharing the exact midpoint. Empty and singleton inputs return `Ok(None)`. An
+unrepresentable midpoint on the minimum exponent grid returns `Overflow`.
+
 Rational and dyadic intervals provide `sqrt(precision, &mut budget)`, returning
 `RangeEnclosure<DyadicInterval>` with tight outward endpoints on the grid
 `2^precision`. Rational inputs require both features. Negative source points

@@ -6,6 +6,8 @@
 
 ## 0.1.0 (unreleased)
 
+- Add exact, budgeted midpoint bisection for closed dyadic intervals.
+
 - Add fused integer affine hulls for all primitive endpoint types. Signed
   cancellation can recover a representable result from an out-of-range product.
 
