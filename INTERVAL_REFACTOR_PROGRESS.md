@@ -52,7 +52,7 @@ No existing arithmetic or predicate dispatch has been changed.
 
 | Phase | State | Evidence still required |
 | --- | --- | --- |
-| 0 inventory/baseline | Hyperinterval native coverage is measured on Rust 1.95 and branch-instrumented nightly | audited source map, sibling states, remaining tests, cost/size/coverage/fuzz and hashes |
+| 0 inventory/baseline | Hyperinterval, Hyperdynamics and Hyperlattice Interval have native coverage measurements on Rust 1.95 and branch-instrumented nightly | audited source map, sibling states, remaining tests, cost/size/coverage/fuzz and hashes |
 | 1 skeleton/laws | local acceptance passed | hosted OS jobs remain unexecuted |
 | 2 integer/fixed | local correctness/cost probes passed, including exact fixed-point conversion to rational and dyadic intervals | firmware cycles/HIL and coordinated baseline gaps remain |
 | 3 rational/dyadic/ball | carriers, exact dyadic scalar maps and local acceptance implemented | solver kernel migration, full coverage and consumer cost gates |
@@ -12468,3 +12468,54 @@ formatting, strict zizmor and 10,000 address-sanitized native fuzz iterations
 passed. Evidence commit `db1b189a8` holds the linked measurements, full
 per-call fuel observations, allocator and stack probes, intermediate variants
 and regression controls. [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 0 and 6 Hyperlattice Interval coverage and translated sources, 18 November 2026
+
+Commit `00df0ab10` registers Hyperlattice Interval in the shared native
+coverage command. On the preceding revision the package selector rejected the
+owner before running a test. The collector now covers 14 production source
+files using 24 native test executables. The two array lifecycle tests moved
+verbatim to the private `tests` module so LLVM can attribute their counters
+separately. The collector's existing package behavior and thresholds are
+unchanged. Separate target directories are necessary when comparing
+checkouts, as LLVM records the physical source paths.
+
+The missing witness concerned the affine source's signed parameters, absolute
+enclosure and the image of an empty domain. The scalar oracle checks the
+translated source through the public trait on fixed, rational, dyadic and
+IEEE backends. A constant point map with value 7 must send both the canonical
+empty domain and an empty restriction with a retained center to the empty
+set. Three independent mutations passed all 93 previous owner tests. The new
+assertions detected returning the center as the parameter domain, returning
+offsets as the absolute enclosure, and publishing the singleton 7 for an
+empty input. The last mutation also failed the optimized release test.
+
+| Native all-feature production coverage | Before the witness | With the witness |
+| --- | --- | --- |
+| Rust 1.95 lines, regions, functions | 1367/1404, 1861/1970, 266/270 | 1377/1404, 1869/1970, 268/270 |
+| Nightly lines, regions, functions | 1352/1389, 1332/1434, 267/271 | 1362/1389, 1338/1434, 269/271 |
+| Nightly branches | 81/88 | 82/88 |
+
+Both comparisons exclude the unit-test module on each side. The nightly
+translated-source file reached 92/92 lines and 8/8 branches. The package's
+100% production gate still fails on both compilers. Rust 1.95 does not
+instrument branches in this configuration.
+
+Matched Rust 1.95 release builds used a single isolated checkout and cleaned
+the owner before each of the fixed, preceding and final builds. The unit-test
+executable shrank by 240 bytes, with identical code size. Its read-only data
+grew by 16 bytes, bringing measured cumulative growth in that section to
+864 bytes (1.58%). The centered-affine executable retained its preceding
+file and code sizes. The complete fixed-affine consumer executable matched the
+preceding build byte for byte. Prior lifetime-test charges remain in their
+original account. No production memory or firmware exception was used.
+[Per-target size accounts](docs/research/interval-size-accounts.json)
+
+Final local checks passed for the 93 all-feature owner tests, five doctests,
+seven minimal tests and doctests, 159 downstream Hyperdynamics tests, strict
+Clippy and rustdoc, and workspace formatting. Rust 1.88 passed the seven
+compatible focused tests. Both bare WASM and WASI Preview 1 repeated 55,802
+scalar oracle cases and the 172,284-call fixed-lattice replay on Rust 1.95.
+Evidence commit `80d0f8ac1` contains the per-file reports, annotated lines,
+mutation patches, linked measurements and validation logs.
+[Evidence index](docs/evidence-archive.tsv)

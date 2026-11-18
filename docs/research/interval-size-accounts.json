@@ -10395,5 +10395,91 @@
         ]
       }
     }
+  },
+  "lattice_coverage_translated_sources": {
+    "source_revision": "00df0ab1091471c67daa485e20c395ddc4a407d5",
+    "evidence": "docs/evidence/2026-11-18-interval-lattice-coverage",
+    "control_revisions": [
+      "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+      "19a93967f12e2a41f722d023403dc775216906cb"
+    ],
+    "scope": "x86_64-unknown-linux-gnu release, all features, Rust 1.95.0. Ordered values denote fixed, preceding and accepted. The existing array-construction account keeps all historical file and code charges. No refunds or cross-target offsets.",
+    "host_test_slot_bytes": 67108864,
+    "required_host_slot_reserve_bytes": 16777216,
+    "linked": {
+      "hyperlattice_interval": {
+        "file_bytes": [
+          1051288,
+          1076112,
+          1075872
+        ],
+        "text_bytes": [
+          599684,
+          611892,
+          611892
+        ],
+        "named_text_bytes": [
+          595365,
+          607280,
+          607280
+        ]
+      },
+      "centered_affine": {
+        "file_bytes": [
+          2302672,
+          2302760,
+          2302760
+        ],
+        "text_bytes": [
+          1114039,
+          1114039,
+          1114039
+        ],
+        "named_text_bytes": [
+          1116556,
+          1116549,
+          1116549
+        ]
+      },
+      "fixed_affine": {
+        "file_bytes": [
+          449544,
+          449544,
+          449544
+        ],
+        "text_bytes": [
+          252899,
+          252899,
+          252899
+        ],
+        "named_text_bytes": [
+          251991,
+          251991,
+          251991
+        ]
+      }
+    },
+    "unit_test_rodata": {
+      "bytes": [
+        54524,
+        55372,
+        55388
+      ],
+      "incremental_growth_bytes": 16,
+      "incremental_growth_percent": 0.028895470634977966,
+      "caps": {
+        "incremental_bytes": 4096,
+        "incremental_percent": 1,
+        "cumulative_bytes": 16384,
+        "cumulative_percent": 2
+      },
+      "observed_fixed_to_preceding_growth_bytes": 848,
+      "cumulative_growth_bytes": 864,
+      "cumulative_growth_percent": 1.584623285158829,
+      "remaining_cumulative_bytes_under_absolute_cap": 15520,
+      "remaining_cumulative_percentage_points": 0.4153767148411709,
+      "remaining_bytes_under_tighter_percentage_cap": 226
+    },
+    "result": "The centered-affine executable has identical final file and code sizes to its preceding control. The unit file shrank by 240 bytes with unchanged code size. Its only growing allocated section is read-only data. The linked fixed_affine example is byte-identical to the preceding build. No production flash or memory allowance was charged."
   }
 }
