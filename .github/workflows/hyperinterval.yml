@@ -163,3 +163,5 @@ jobs:
           cargo +nightly fuzz run conversions --features rational "$RUNNER_TEMP/interval-conversions" -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261125
           mkdir -p "$RUNNER_TEMP/interval-atanh"
           cargo +nightly fuzz run atanh "$RUNNER_TEMP/interval-atanh" -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261126
+          mkdir -p "$RUNNER_TEMP/interval-integer-affine"
+          cargo +nightly fuzz run integer_affine "$RUNNER_TEMP/interval-integer-affine" -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261127

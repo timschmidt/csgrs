@@ -147,7 +147,10 @@ interpreted as truncated real arithmetic. Exact width/radius and explicitly
 rounded midpoints support every primitive integer width, including i128/u128. Fixed and integer midpoints share the same exact numerator kernel;
 fixed widths retain the full unsigned endpoint distance.
 `scale` returns the smallest integer hull of multiplication by one exact
-scalar. With either `integer` or `fixed`, `integer_quotient_bounds` returns the
+scalar. `affine(factor, offset)` encloses the integer image in a single step
+and checks the final endpoints. For example, doubling the i8 range [62, 65]
+and adding −8 gives [116, 122], even though the intermediate 130 exceeds i8.
+With either `integer` or `fixed`, `integer_quotient_bounds` returns the
 integer floor and ceiling of an i128 ratio, with typed zero-denominator and
 overflow errors; it does not replace the ratio by a discrete integer set.
 

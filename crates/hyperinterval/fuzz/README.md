@@ -42,3 +42,12 @@ owner test also exercises intervals one grid step to either side of each pole.
 mkdir -p /tmp/hyperinterval-atanh
 cargo +nightly fuzz run atanh /tmp/hyperinterval-atanh -- -runs=10000 -max_len=8 -max_total_time=30 -seed=20261126
 ```
+
+`integer_affine` checks signed and unsigned 128-bit affine hulls against GMP,
+including cancellation after an overflowing product, range reversal and final
+endpoint overflow.
+
+```sh
+mkdir -p /tmp/hyperinterval-integer-affine
+cargo +nightly fuzz run integer_affine /tmp/hyperinterval-integer-affine -- -runs=100000 -max_len=64 -max_total_time=30 -seed=20261127
+```

@@ -147,3 +147,10 @@ path = "fuzz_targets/atanh.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "integer_affine"
+path = "fuzz_targets/integer_affine.rs"
+test = false
+doc = false
+bench = false

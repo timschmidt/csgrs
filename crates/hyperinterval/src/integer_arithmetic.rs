@@ -128,6 +128,40 @@ macro_rules! arithmetic {
                     None => Ok(Self::empty()),
                 }
             }
+
+            /// Smallest integer hull of `factor * x + offset` for members of this range.
+            ///
+            /// Returns `Overflow` only when a final endpoint is unrepresentable.
+            /// An out-of-range product can be brought back into range by the offset.
+            /// Empty maps to empty. When the factor has magnitude above one, the
+            /// hull also contains integers skipped between successive image values.
+            pub fn affine(&self, factor: $endpoint, offset: $endpoint) -> Result<Self, IntervalError> {
+                let Some((a, b)) = self.bounds() else {
+                    return Ok(Self::empty());
+                };
+                let reversed = factor.cmp(&0).is_lt();
+                let factor_magnitude = factor.abs_diff(0);
+                let image = |x: $endpoint| {
+                    // Any two representable values differ by at most the unsigned
+                    // maximum. A larger displacement cannot be rescued by any offset.
+                    let distance = x.abs_diff(0).checked_mul(factor_magnitude)
+                        .ok_or(IntervalError::Overflow)?;
+                    let subtract = x.cmp(&0).is_lt() != reversed;
+                    let limit = if subtract { <$endpoint>::MIN } else { <$endpoint>::MAX };
+                    if distance > offset.abs_diff(limit) {
+                        return Err(IntervalError::Overflow);
+                    }
+                    // The final mathematical value fits. Modular arithmetic applies
+                    // its displacement even when the signed distance itself cannot fit.
+                    Ok(if subtract {
+                        offset.wrapping_sub(distance as $endpoint)
+                    } else {
+                        offset.wrapping_add(distance as $endpoint)
+                    })
+                };
+                let (lower, upper) = if reversed { (b, a) } else { (a, b) };
+                Ok(Self::from_bounds(Bounds::ordered(image(lower)?, image(upper)?)))
+            }
         }
     )* };
 }
