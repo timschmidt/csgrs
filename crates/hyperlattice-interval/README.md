@@ -5,6 +5,9 @@ scalar arithmetic; this package owns Cartesian structure and linear products.
 Hyperlattice re-exports the same types for host consumers. This companion
 provides the Rust 1.88, allocation-free `no_std` dependency path for firmware.
 
+The optional `float-enclosure-wasip1` feature forwards ordinary WASI
+Preview 1 qualification to Hyperinterval for floating-point lattice operations.
+
 <!-- quickstart:start -->
 ```rust
 use hyperlattice_interval::hyperinterval::FixedInterval;

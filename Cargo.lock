@@ -2627,6 +2627,7 @@ dependencies = [
  "rug",
  "serde",
  "serde_json",
+ "target-tuple",
 ]
 
 [[package]]
@@ -4803,6 +4804,12 @@ dependencies = [
  "libc",
  "xattr",
 ]
+
+[[package]]
+name = "target-tuple"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876fef147edbcbddc8ac5cbbba92c7b86519e314e86638596c09673b2ed01e7f"
 
 [[package]]
 name = "tempfile"

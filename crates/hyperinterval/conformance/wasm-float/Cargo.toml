@@ -10,6 +10,9 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+float-enclosure-wasip1 = ["hyperinterval/float-enclosure-wasip1"]
+
 [dependencies]
 hyperinterval = { path = "../..", default-features = false, features = ["float-enclosure"] }
 

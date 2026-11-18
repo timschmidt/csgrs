@@ -50,10 +50,17 @@ The Node runner also executes the complete arithmetic and property corpus twice
 on each of two fresh instances with complementary stack sentinels. It records
 the fixed linear-memory size and the deepest changed byte below the linker's
 initial stack pointer. An unknown stack layout or a data segment inside that
-range stops the measurement. Untouched frame reservations, the engine stack
-and host memory are outside this measurement.
+range stops the measurement. A separately assembled copy records the minimum
+guest stack pointer on every write and checks that each exported call restores
+the initial pointer. It replays the same exact corpus cold and warm. The report
+gives both touched bytes and reserved bytes. Engine stack and host memory are
+outside these measurements. Both `wasm-dis` and `wasm-as` come from Binaryen.
 
-CI builds the same public client for both WASI Preview 1 targets and runs
+Pass `--target wasm32-wasip1` to the Python command to exercise the opt-in
+`float-enclosure-wasip1` feature. The no-allocator primitive reactor imports
+nothing. The standard-library clients receive only their listed Preview 1
+functions. CI also builds the client with its default features on both WASI
+Preview 1 targets, and with the opt-in feature on the threaded target, and runs
 `unqualified.mjs`. Each width must reject a finite singleton, preserve empty,
 and trap on requests for unavailable endpoints. The threaded ABI uses
 host-supplied shared memory.

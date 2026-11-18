@@ -26,6 +26,7 @@ def floating_operations(assembly):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--toolchain", default="stable")
+    parser.add_argument("--target", choices=("wasm32-unknown-unknown", "wasm32-wasip1"), default="wasm32-unknown-unknown")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
@@ -33,6 +34,9 @@ def main():
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     env = os.environ | {"CARGO_TARGET_DIR": str(output / "target"), "CARGO_TERM_COLOR": "never"}
+    target = args.target
+    runtime = ["--wasi-p1"] if target == "wasm32-wasip1" else []
+    ieee = ["--features", "float-enclosure-wasip1"] if runtime else []
     commands = []
 
     def run(name, command, *, timeout=900):
@@ -46,29 +50,31 @@ def main():
 
     run("compiler", ["rustc", f"+{args.toolchain}", "-vV"])
     run("oracle", ["python3", str(client / "oracle.py"), str(output / "corpus.json")])
-    run("build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(client / "Cargo.toml"), "--target", "wasm32-unknown-unknown"])
-    run("lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--target", "wasm32-unknown-unknown", "--", "-D", "warnings"])
+    run("build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(client / "Cargo.toml"), "--target", target, *ieee])
+    run("lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--target", target, *ieee, "--", "-D", "warnings"])
     binary = output / "interval_float.wasm"
-    shutil.copyfile(output / "target/wasm32-unknown-unknown/release/interval_float_wasm_conformance.wasm", binary)
-    run("execute", ["node", str(client / "check.mjs"), str(binary), str(output / "corpus.json")])
+    shutil.copyfile(output / "target" / target / "release/interval_float_wasm_conformance.wasm", binary)
+    run("execute", ["node", str(client / "check.mjs"), str(binary), str(output / "corpus.json"), *runtime])
     run("disassemble", ["wasm-dis", str(binary), "-o", str(output / "module.wat")])
     assembly = (output / "module.wat").read_text()
     forbidden = floating_operations(assembly)
     if forbidden or "memory.grow" in assembly or "(import " in assembly:
         raise SystemExit(f"Unexpected arithmetic, allocation/import path: {forbidden}")
     run("guest-stack", ["node", str(client / "stack.mjs"), str(binary), str(output / "module.wat"), str(output / "corpus.json")])
-    run("dependencies", ["cargo", f"+{args.toolchain}", "tree", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--edges", "normal", "--prefix", "none"])
+    run("dependencies", ["cargo", f"+{args.toolchain}", "tree", "--locked", "--manifest-path", str(client / "Cargo.toml"), "--edges", "normal", "--prefix", "none", "--target", target, *ieee])
     dependencies = (output / "dependencies.log").read_text().splitlines()
-    if len(dependencies) != 2 or not any(line.startswith("hyperinterval ") for line in dependencies):
+    expected = ["interval-float-wasm-conformance", "hyperinterval"]
+    if target == "wasm32-wasip1":
+        expected.append("target-tuple")
+    if [line.split()[0] for line in dependencies] != expected:
         raise SystemExit(f"Unexpected dependency closure: {dependencies}")
     lattice_manifest = root / "crates/hyperlattice-interval/conformance/primitive-layouts/wasm/Cargo.toml"
-    run("lattice-build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(lattice_manifest), "--target", "wasm32-unknown-unknown"])
-    run("lattice-lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(lattice_manifest), "--target", "wasm32-unknown-unknown", "--", "-D", "warnings"])
+    run("lattice-build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(lattice_manifest), "--target", target, *ieee])
+    run("lattice-lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(lattice_manifest), "--target", target, *ieee, "--", "-D", "warnings"])
     lattice_binary = output / "interval_layout.wasm"
-    shutil.copyfile(output / "target/wasm32-unknown-unknown/release/interval_layout_wasm.wasm", lattice_binary)
-    run("lattice-execute", ["node", str(client / "check.mjs"), str(lattice_binary), str(output / "corpus.json"), "--lattice"])
+    shutil.copyfile(output / "target" / target / "release/interval_layout_wasm.wasm", lattice_binary)
+    run("lattice-execute", ["node", str(client / "check.mjs"), str(lattice_binary), str(output / "corpus.json"), "--lattice", *runtime])
     fixed = root / "crates/hyperlattice-interval/conformance/fixed-wasm"
-    target = "wasm32-unknown-unknown"
     fixed_options = ["--locked", "--manifest-path", str(fixed / "Cargo.toml"), "--target", target]
     run("fixed-lattice-build", ["cargo", f"+{args.toolchain}", "build", "--release", *fixed_options])
     run("fixed-lattice-lint", ["cargo", f"+{args.toolchain}", "clippy", *fixed_options, "--", "-D", "warnings"])
@@ -81,18 +87,18 @@ def main():
         raise SystemExit("Unexpected floating arithmetic or memory growth in fixed lattice client")
     run("fixed-lattice-execute", ["node", str(fixed / "check.mjs"), str(fixed_binary)], timeout=60)
     dyadic_manifest = root / "crates/hyperinterval/conformance/wasm-dyadic/Cargo.toml"
-    run("dyadic-build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(dyadic_manifest), "--target", "wasm32-unknown-unknown"])
-    run("dyadic-lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(dyadic_manifest), "--target", "wasm32-unknown-unknown", "--", "-D", "warnings"])
+    run("dyadic-build", ["cargo", f"+{args.toolchain}", "build", "--locked", "--release", "--manifest-path", str(dyadic_manifest), "--target", target, *ieee])
+    run("dyadic-lint", ["cargo", f"+{args.toolchain}", "clippy", "--locked", "--manifest-path", str(dyadic_manifest), "--target", target, *ieee, "--", "-D", "warnings"])
     dyadic_binary = output / "interval_dyadic.wasm"
-    shutil.copyfile(output / "target/wasm32-unknown-unknown/release/interval_dyadic_wasm_conformance.wasm", dyadic_binary)
-    run("dyadic-execute", ["node", str(client / "check.mjs"), str(dyadic_binary), str(output / "corpus.json"), "--egress"])
+    shutil.copyfile(output / "target" / target / "release/interval_dyadic_wasm_conformance.wasm", dyadic_binary)
+    run("dyadic-execute", ["node", str(client / "check.mjs"), str(dyadic_binary), str(output / "corpus.json"), "--egress", *runtime])
     run("dyadic-disassemble", ["wasm-dis", str(dyadic_binary), "-o", str(output / "dyadic.wat")])
     dyadic_assembly = (output / "dyadic.wat").read_text()
     dyadic_floating = floating_operations(dyadic_assembly)
-    if dyadic_floating or "(import " in dyadic_assembly:
+    if dyadic_floating or (not runtime and "(import " in dyadic_assembly):
         raise SystemExit(f"Unexpected dyadic floating arithmetic or imports: {dyadic_floating}")
     report = json.loads((output / "execute.log").read_text())
-    report.update({"toolchain": args.toolchain, "binary_bytes": binary.stat().st_size,
+    report.update({"toolchain": args.toolchain, "target": target, "binary_bytes": binary.stat().st_size,
                    "binary_sha256": hashlib.sha256(binary.read_bytes()).hexdigest(),
                    "corpus_sha256": hashlib.sha256((output / "corpus.json").read_bytes()).hexdigest(),
                    "floating_arithmetic": forbidden, "memory_grow": False,
@@ -121,7 +127,7 @@ def main():
         run("real-bridge-lint", ["cargo", f"+{args.toolchain}", "clippy", *options, "--", "-D", "warnings"])
         binary_path = output / "interval_real_bridge.wasm"
         shutil.copyfile(output / "target" / target / "release/interval_real_bridge_wasm_conformance.wasm", binary_path)
-        run("real-bridge-execute", ["node", str(bridge / "check.mjs"), str(binary_path)])
+        run("real-bridge-execute", ["node", str(bridge / "check.mjs"), str(binary_path), *runtime])
         bridge_report.update(json.loads((output / "real-bridge-execute.log").read_text()))
         bridge_report.update(executed=True, binary_sha256=hashlib.sha256(binary_path.read_bytes()).hexdigest())
     report["real_bridge"] = bridge_report

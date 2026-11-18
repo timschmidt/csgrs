@@ -22,6 +22,7 @@ integer = []
 fixed = []
 float-proposal = []
 float-enclosure = []
+float-enclosure-wasip1 = ["float-enclosure", "dep:target-tuple"]
 bigint = ["alloc", "dep:num-bigint", "dep:num-traits", "dep:num-integer"]
 dyadic = ["bigint"]
 rational = ["std", "dep:hyperreal"]
@@ -29,6 +30,9 @@ hyperreal = ["rational", "dyadic"]
 real-ball = ["hyperreal"]
 serde = ["dep:serde", "hyperreal?/serde", "num-bigint?/serde"]
 dispatch-trace = ["hyperreal?/dispatch-trace"]
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "wasi"))'.dependencies]
+target-tuple = { version = "1", optional = true }
 
 [dependencies]
 serde = { version = "1.0", default-features = false, features = ["derive"], optional = true }

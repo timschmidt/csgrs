@@ -10,6 +10,9 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+float-enclosure-wasip1 = ["hyperlattice-interval/float-enclosure-wasip1"]
+
 [dependencies]
 interval-layout-conformance = { path = ".." }
 hyperlattice-interval = { path = "../../..", default-features = false, features = ["fixed", "float-enclosure"] }

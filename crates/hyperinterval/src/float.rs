@@ -3,11 +3,26 @@ use crate::ieee::{BINARY32, BINARY64};
 use crate::{DomainCoverage, IntervalError, RangeEnclosure, SignSet};
 use core::cmp::Ordering;
 
+// Cargo distinguishes the ordinary and threaded Preview 1 targets even on
+// compilers whose stable target cfgs coincide for the two ABIs.
+#[cfg(all(
+    target_arch = "wasm32",
+    target_os = "wasi",
+    feature = "float-enclosure-wasip1"
+))]
+const BACKEND_SUPPORTED: bool = matches!(target_tuple::TARGET.as_bytes(), b"wasm32-wasip1");
+#[cfg(not(all(
+    target_arch = "wasm32",
+    target_os = "wasi",
+    feature = "float-enclosure-wasip1"
+)))]
+const BACKEND_SUPPORTED: bool = cfg!(any(
+    target_arch = "x86_64",
+    all(target_arch = "wasm32", target_os = "unknown")
+));
+
 fn qualify() -> Result<(), IntervalError> {
-    if cfg!(any(
-        target_arch = "x86_64",
-        all(target_arch = "wasm32", target_os = "unknown")
-    )) {
+    if BACKEND_SUPPORTED {
         Ok(())
     } else {
         Err(IntervalError::UnqualifiedEnvironment)
@@ -35,7 +50,8 @@ macro_rules! enclosure {
         /// Basic arithmetic computes outward bounds with integer IEEE kernels,
         /// independent of ambient float rounding and FTZ/DAZ. No native float
         /// arithmetic or allocation occurs. Nonempty ingress is
-        /// qualified on x86_64 and wasm32-unknown-unknown; other targets return
+        /// qualified on x86_64 and wasm32-unknown-unknown. The optional
+        /// `float-enclosure-wasip1` feature also qualifies wasm32-wasip1. Other targets return
         /// `UnqualifiedEnvironment`. Empty is valid on every target.
         /// Overflow is an error, never saturation or an infinite endpoint.
         /// Both input zero signs represent the same canonical real zero.
@@ -126,10 +142,7 @@ let enclosure: F64Enclosure = proposal.into();
             /// Whether the integer IEEE backend is qualified on this target.
             /// This does not query or change ambient rounding state.
             pub const fn backend_supported() -> bool {
-                cfg!(any(
-                    target_arch = "x86_64",
-                    all(target_arch = "wasm32", target_os = "unknown")
-                ))
+                BACKEND_SUPPORTED
             }
 
             /// Exact finite IEEE ingress, validating both endpoints and order.

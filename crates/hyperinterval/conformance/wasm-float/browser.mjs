@@ -13,6 +13,7 @@ const files = new Map([
   ["/module.wasm", ["application/wasm", await fs.readFile(modulePath)]],
   ["/corpus.json", ["application/json", await fs.readFile(corpusPath)]],
   ["/check.mjs", ["text/javascript", await fs.readFile(fileURLToPath(new URL("check.mjs", import.meta.url)))]],
+  ["/instantiate.mjs", ["text/javascript", await fs.readFile(fileURLToPath(new URL("instantiate.mjs", import.meta.url)))]],
 ]);
 const server = createServer((request, response) => {
   const item = files.get(request.url);

@@ -8,6 +8,9 @@ publish = false
 [lib]
 crate-type = ["cdylib"]
 
+[features]
+float-enclosure-wasip1 = ["hyperinterval/float-enclosure-wasip1"]
+
 [dependencies]
 hyperinterval = { path = "../..", default-features = false, features = ["float-enclosure", "dyadic"] }
 num-bigint = { version = "0.4.6", default-features = false }

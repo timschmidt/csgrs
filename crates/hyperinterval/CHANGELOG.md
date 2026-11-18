@@ -9,6 +9,9 @@
 
 ## 0.1.0 (unreleased)
 
+- Add opt-in certified binary32 and binary64 enclosures on `wasm32-wasip1`
+  through `float-enclosure-wasip1`. The threaded ABI retains typed refusal.
+
 - Add exact binary32 scalar ingress to `DyadicInterval` with binary32 significand
   accounting under either float feature.
 

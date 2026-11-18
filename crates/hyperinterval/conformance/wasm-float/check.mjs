@@ -1,9 +1,10 @@
 // Shared Node/browser verifier. Expected endpoint bits come from oracle.py.
-export async function verify(bytes, corpus) {
+import { instantiate, stdFunctions } from "./instantiate.mjs";
+
+export async function verify(bytes, corpus, wasiPreview1 = false) {
   const module = await WebAssembly.compile(bytes);
   const imports = WebAssembly.Module.imports(module);
-  if (imports.length) throw new Error(`Unexpected module imports: ${JSON.stringify(imports)}`);
-  const { exports: api } = await WebAssembly.instantiate(module);
+  const { exports: api } = await instantiate(module, wasiPreview1);
   return { ...verifyInstance(api, corpus), imports };
 }
 
@@ -37,9 +38,9 @@ export function verifyInstance(api, corpus) {
   return { cases: corpus.cases.length, properties: corpus.properties.length, counts, statuses, seed: corpus.seed };
 }
 
-export async function verifyLattice(bytes, corpus) {
+export async function verifyLattice(bytes, corpus, wasiPreview1 = false) {
   const module = await WebAssembly.compile(bytes);
-  const { exports: api } = await WebAssembly.instantiate(module);
+  const { exports: api } = await instantiate(module, wasiPreview1, stdFunctions);
   if (api.float_qualification() !== 0) throw new Error("Lattice consumer still rejects IEEE ingress");
   let floating = 0, fixed = 0;
   for (const [width, dimension, seed, lower, upper, lo, hi] of corpus.lattice) {
@@ -59,11 +60,10 @@ export async function verifyLattice(bytes, corpus) {
   return { floating_chains: floating, fixed_chains: fixed, seed: corpus.seed };
 }
 
-export async function verifyEgress(bytes) {
+export async function verifyEgress(bytes, _corpus, wasiPreview1 = false) {
   const module = await WebAssembly.compile(bytes);
   const imports = WebAssembly.Module.imports(module);
-  if (imports.length) throw new Error(`Unexpected bridge imports: ${JSON.stringify(imports)}`);
-  const { exports: api } = await WebAssembly.instantiate(module);
+  const { exports: api } = await instantiate(module, wasiPreview1, stdFunctions);
   const cases = api.verify_dyadic_egress();
   if (cases !== 56) throw new Error(`Expected all 56 exact conversion cases, got ${cases}`);
   return { dyadic_egress_cases: cases, imports };
@@ -71,9 +71,9 @@ export async function verifyEgress(bytes) {
 
 if (typeof process !== "undefined" && process.argv[1]?.endsWith("check.mjs")) {
   const fs = await import("node:fs/promises");
-  const [wasm, corpus, mode] = process.argv.slice(2);
+  const [wasm, corpus, mode] = process.argv.slice(2).filter(arg => arg !== "--wasi-p1");
   if (!wasm || !corpus) throw new Error("Usage: node check.mjs MODULE.wasm CORPUS.json");
   const run = mode === "--egress" ? verifyEgress : mode === "--lattice" ? verifyLattice : verify;
-  const report = await run(await fs.readFile(wasm), JSON.parse(await fs.readFile(corpus, "utf8")));
+  const report = await run(await fs.readFile(wasm), JSON.parse(await fs.readFile(corpus, "utf8")), process.argv.includes("--wasi-p1"));
   console.log(JSON.stringify({ ...report, node: process.version, versions: process.versions }, null, 2));
 }

@@ -3,7 +3,7 @@
 Scalar sets with exact endpoint semantics for the Hyper stack. The current
 surface provides checked integer/fixed arithmetic, exact rational intervals,
 budgeted common-scale dyadic arithmetic, symbolic Real balls, and finite IEEE
-enclosures on x86_64 and wasm32-unknown-unknown. Empty sets, sign sets, and set
+enclosures on x86_64 and wasm32-unknown-unknown, with opt-in wasm32-wasip1 support. Empty sets, sign sets, and set
 relations are explicit.
 Elementary function enclosures remain under development.
 
@@ -239,8 +239,10 @@ product, quotient, square and fused affine images have tight outward finite
 bounds. Nonnegative integer powers accumulate outward rounding and may be
 wider; an unrepresentable intermediate or required endpoint returns Overflow.
 These operations preserve subnormals independently of native rounding modes
-and FTZ/DAZ. Nonempty ingress requires x86_64 or wasm32-unknown-unknown; other targets
-return UnqualifiedEnvironment. Optional serde validates endpoint bit pairs.
+and FTZ/DAZ. Nonempty ingress supports x86_64 and wasm32-unknown-unknown.
+Enable `float-enclosure-wasip1` to add ordinary wasm32-wasip1 support. Cargo's
+exact target name distinguishes it from the threaded Preview 1 ABI. Unqualified
+targets return `UnqualifiedEnvironment`. Optional serde validates endpoint bit pairs.
 Optional `rational` and `dyadic` features provide exact endpoint conversions;
 the dyadic bridge takes an explicit size/work budget. IEEE ingress preserves
 the exact binary value: `0.1_f64` is not 1/10.

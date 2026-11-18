@@ -81,10 +81,11 @@ jobs:
       - name: Execute strict float WebAssembly conformance
         if: matrix.os == 'ubuntu-latest'
         run: |
-          rustup target add --toolchain "$INTERVAL_RUST" wasm32-unknown-unknown
+          rustup target add --toolchain "$INTERVAL_RUST" wasm32-unknown-unknown wasm32-wasip1
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y binaryen nodejs
           python3 scripts/check_interval_wasm.py --toolchain "$INTERVAL_RUST" --output "$RUNNER_TEMP/interval-float-wasm"
+          python3 scripts/check_interval_wasm.py --toolchain "$INTERVAL_RUST" --target wasm32-wasip1 --output "$RUNNER_TEMP/interval-float-wasip1"
       - name: Exercise unqualified WASI targets
         if: matrix.os == 'ubuntu-latest' && matrix.rust == '1.95.0'
         run: |
@@ -93,6 +94,8 @@ jobs:
             cargo +"$INTERVAL_RUST" build --locked --release --target "$target" --target-dir "$RUNNER_TEMP/interval-wasi" --manifest-path crates/hyperinterval/conformance/wasm-float/Cargo.toml
             node crates/hyperinterval/conformance/wasm-float/unqualified.mjs "$RUNNER_TEMP/interval-wasi/$target/release/interval_float_wasm_conformance.wasm"
           done
+          cargo +"$INTERVAL_RUST" build --locked --release --target wasm32-wasip1-threads --target-dir "$RUNNER_TEMP/interval-wasi" --manifest-path crates/hyperinterval/conformance/wasm-float/Cargo.toml --features float-enclosure-wasip1
+          node crates/hyperinterval/conformance/wasm-float/unqualified.mjs "$RUNNER_TEMP/interval-wasi/wasm32-wasip1-threads/release/interval_float_wasm_conformance.wasm"
       - name: Verify firmware dependency closure
         run: |
           cargo +"$INTERVAL_RUST" tree --locked -p hyperinterval --no-default-features --features integer,fixed --edges normal --prefix none > interval-dependencies.txt
