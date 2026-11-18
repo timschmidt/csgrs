@@ -10927,3 +10927,41 @@ SHA-256 `8f3669c71dad32650f9a5fdc4be768c35af7c2c1ea551686009d33b57e65ca01`.
 The lossless payload contains 1,434 members / 33,176,529 raw bytes and
 four validated images. Original, decoded and committed hashes are verified;
 earlier archive paths are unchanged.
+
+## 2026-11-17: finish-borrow complete consumer resources
+
+The revised cancellation candidate now has fresh complete-consumer resource
+measurements across fixed baseline, primary, original publication and revised
+implementation. Thirty hash-verified images are reused and remeasured; twelve
+new images are built against unchanged consumer sources, observers, assertions
+and dependency lock. Four strict consumer lint configurations and formatting
+pass. See the [resource review](docs/research/cancellation-finish-resources.md).
+
+Collection completes 4,938 observations, with 4,932 successes and six expected
+primary failures. All 3,876 full output/trace and 4,404 output comparisons pass.
+888 complete histories cover 28,416 cycles. Fresh accounting has 14 failed
+accounts; historical charges raise that to 25. The unchanged byte proposal leaves
+15 failures, including counts, cumulative bytes and cleanup stack. All absolute
+capacities, headrooms, lifetime retention and final-image limits pass.
+
+Historical reconciliation verifies 3,288 matching full output/trace pairs and
+preserves original values, denominators, positive charges and verdicts across
+3,264 metric records. Its 744 positive entries include aggregate floors, not
+744 independent measurements. An independent fraction verifier confirms the
+accounting and unchanged gates. No additional cap increase or source admission
+follows; both publication implementations remain isolated.
+
+The producer uses 5,219 direct children / about 1,186 seconds within 6,500 /
+5,400. Three audits pass in one shared 300-second window, taking about 73 seconds.
+All producers/audits are terminal and source control is restored clean; queue
+held and original watcher terminal. Full runtime, distribution and platform
+qualification remain open. Primary production and accepted totals of 57 size /
+zero memory exceptions are unchanged; inventory remains 1,644 rows. No push;
+the full fifteen-phase goal remains active.
+
+Frozen evidence: `docs/evidence/2026-11-17-interval-cancellation-finish-consumer`,
+archive commit `11a20d85962cf35c577cad25b61e0b9d367941c1`; 3 files / 32,476,138 bytes,
+SHA-256 `e37499a3986a178c9c6c310691cc7e8a9d53f575c8ceaff0146241ec4338ee91`.
+The lossless payload contains 5,313 members / 323,661,870 raw bytes and
+42 validated images. Original, decoded and committed hashes are verified;
+earlier archive paths are unchanged.

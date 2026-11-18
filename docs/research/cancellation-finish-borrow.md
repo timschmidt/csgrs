@@ -6,6 +6,11 @@ admission. This follows the [allowance/runtime review](cancellation-allowance-ru
 under Hypersolve work-budget ownership, P5/P6/P20/P36 and plan 14.4. Earlier
 allocation-count charges and adverse runtime observations remain unchanged.
 
+The subsequent [complete resource review](cancellation-finish-resources.md)
+records fresh lifetimes, stack and final native images. Fifteen accounts remain
+outside the existing byte proposal after historical charges are retained; the
+candidate remains isolated.
+
 ## Contract and implementation
 
 The original publication candidate queried exhaustion after the callback and
