@@ -41,3 +41,35 @@ pair's worst-ever timing into `slow_performers.txt`, rotates the worst eligible
 offender into the 100-case `promoted_slow_offenders.txt` lexicase set, emits a
 dedicated Criterion row for every promoted case, and writes the suite's score,
 delta, and delta derivative into `benchmarks.md`.
+
+## Interval Krawczyk certificates
+
+The interval conformance workspace provides the opt-in
+`krawczyk_certificates` target. The oracle lives in Hypersolve and invokes
+the affine, univariate quadratic and coupled multivariate quadratic public
+certifiers under both predicate policies. Inputs use small integer coefficients
+and independent quarter-unit radii.
+
+The two-variable systems use `u = x + s*y` and `v = y - k*(u-p) - y₀`.
+An invertible integer matrix mixes two residuals. In the affine case those
+residuals are `u-p` and `v`. In the quadratic case they are `(u-p)*(u-q)`
+and `v`. The roots can therefore be enumerated in the original coordinates,
+including at box faces and on zero-width axes. The oracle also checks the
+reported Newton steps, quadratic remainder bounds and dimensionless derivative
+bounds by integer arithmetic and Cramer's rule. A box can contain a unique
+root while failing this sufficient certificate.
+
+Run the deterministic fixtures or Linux ASan campaign from `crates/hypersolve`.
+
+```sh
+cargo test --locked --test krawczyk_certificates
+RUSTFLAGS='-C link-arg=-Wl,--compress-debug-sections=zlib' \
+  cargo +nightly fuzz run krawczyk_certificates --fuzz-dir ../hyperinterval/fuzz \
+  --features solver-certificates -- -runs=10000 -max_len=8 -max_total_time=90 -seed=20261119
+```
+
+The checked-in eight-byte seeds in `tests/fixtures/krawczyk/` run in the
+native fixture suite and seed CI. They include both singular pivot positions
+and two inputs that ranked first and second by median native replay time on
+each of two pinned CPUs. To reproduce one input, pass its file path immediately
+after the fuzz target name in the command above.

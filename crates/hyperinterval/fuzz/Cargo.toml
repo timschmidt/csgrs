@@ -10,8 +10,11 @@ cargo-fuzz = true
 
 [features]
 rational = ["hyperinterval/rational", "dep:hyperreal"]
+solver-certificates = ["dep:hyperlimit", "dep:hyperreal", "dep:hypersolve"]
 
 [dependencies]
+hyperlimit = { path = "../../hyperlimit", default-features = false, optional = true }
+hypersolve = { path = "../../hypersolve", default-features = false, optional = true }
 libfuzzer-sys = "0.4"
 hyperinterval = { path = "..", features = ["integer", "fixed", "dyadic", "float-proposal", "float-enclosure", "serde"] }
 serde_json = "1.0"
@@ -154,3 +157,11 @@ path = "fuzz_targets/integer_affine.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "krawczyk_certificates"
+path = "fuzz_targets/krawczyk_certificates.rs"
+test = false
+doc = false
+bench = false
+required-features = ["solver-certificates"]

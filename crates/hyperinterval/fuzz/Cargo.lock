@@ -125,10 +125,27 @@ name = "hyperinterval-fuzz"
 version = "0.0.0"
 dependencies = [
  "hyperinterval",
+ "hyperlimit",
  "hyperreal",
+ "hypersolve",
  "libfuzzer-sys",
  "rug",
  "serde_json",
+]
+
+[[package]]
+name = "hyperlattice"
+version = "0.7.0"
+dependencies = [
+ "hyperreal",
+]
+
+[[package]]
+name = "hyperlimit"
+version = "0.5.0"
+dependencies = [
+ "hyperlattice",
+ "hyperreal",
 ]
 
 [[package]]
@@ -139,6 +156,16 @@ dependencies = [
  "num",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "hypersolve"
+version = "0.4.0"
+dependencies = [
+ "hyperlattice",
+ "hyperlimit",
+ "hyperreal",
+ "num",
 ]
 
 [[package]]
