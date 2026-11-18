@@ -13,7 +13,7 @@ members = ["."]
 
 [dependencies]
 libfuzzer-sys = "=0.4.12"
-hyperdynamics = { path = "..", features = ["coordinates", "serde"] }
+hyperdynamics = { path = "..", features = ["coordinates", "reachability", "serde"] }
 hypersolve = { path = "../../hypersolve", features = ["coordinate-program", "serde"] }
 hyperinterval = { path = "../../hyperinterval", features = ["hyperreal"] }
 hyperlattice-interval = { path = "../../hyperlattice-interval", features = ["dyadic"] }
@@ -23,6 +23,13 @@ serde_json = "1.0"
 [[bin]]
 name = "coordinate_change"
 path = "fuzz_targets/coordinate_change.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "reachability_policy"
+path = "fuzz_targets/reachability_policy.rs"
 test = false
 doc = false
 bench = false

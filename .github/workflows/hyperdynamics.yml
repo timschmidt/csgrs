@@ -89,3 +89,16 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
         run: cargo +"$DYNAMICS_RUST" doc --locked -p hyperdynamics --no-deps --all-features
+      - name: Fuzz reachability step and subdivision policies
+        if: matrix.rust == 'stable'
+        working-directory: crates/hyperdynamics
+        env:
+          RUSTFLAGS: -C link-arg=-Wl,--compress-debug-sections=zlib
+        run: |
+          rustup toolchain install nightly --profile minimal
+          cargo install cargo-fuzz --version 0.13.2 --locked
+          corpus="$RUNNER_TEMP/reachability-policy"
+          mkdir -p "$corpus"
+          printf '\374\005\003\001\005\376\006\004' > "$corpus/spatial"
+          printf '\372\001\001\002\002\376\002\201' > "$corpus/temporal"
+          cargo +nightly fuzz run reachability_policy "$corpus" -- -runs=10000 -max_len=8 -max_total_time=60 -seed=20261118
