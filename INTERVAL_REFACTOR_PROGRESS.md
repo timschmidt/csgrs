@@ -11586,3 +11586,36 @@ Clippy, rustdoc, formatting, inventory tests and the
 repository-wide strict zizmor audit passed. The inventory contains 4,129 scan
 sites and 252 review records. Hosted CI and hardware execution were outside
 this local run. [Raw campaigns, mutation patches, costs and timing samples](docs/evidence-archive.tsv)
+
+## Phase 6 and 14 rectangular interval replay
+
+Commit `8ad5c4c02` adds the vector and matrix shape fuzzer required by §14.3.
+The existing point-matrix fuzzer uses square 3D and 4D inputs. The new
+target consumes signed quarter-grid interval matrices through the public
+Serde decoder. Its dimensions are 0×0, 0×3, 3×0, 2×3, 3×2, 1×33 and 33×1.
+It checks row and column indices on empty and nonempty operands, transpose,
+the product with a vector, and multiplication by the transpose after the
+first output has been serialized and reloaded.
+[Owner test and fuzz commands](crates/hyperlattice-interval/README.md)
+
+The input edits independently specify which wires must fail. They include
+wrong lengths, a reversed endpoint pair after an empty entry, and an endpoint
+outside the scalar type. Valid zero-dimensional unit products and canonical
+empty sets have distinct wire images and multiplication results. For each
+nonempty row, four widened corner products per lane give the expected
+extrema. The oracle rounds each term outward to the quarter grid and checks
+every prefix sum for representability. The five retained inputs include a
+sum that overflows before later cancellation, and cases where only the
+second multiplication overflows, in a term or in an accumulated sum.
+
+| Qualification | Result |
+| --- | --- |
+| Native cases | All 6,615 combinations of shape, wire edits, index and endpoint encoding passed, along with the five named fixtures. Endpoint encodings cover small signed values, signed extrema and little-endian `i32` numerators. |
+| Final seeded ASan run | 10,000 executions in four seconds. The 338 retained inputs covered all seven shapes and all seven action outcomes, including rejection, empty, two completed products and all four overflow sites. A separate 100,000-execution run passed in 37 seconds. |
+| Mutation checks | The unmodified control passed. The native suite failed independently when a unit product was collapsed to empty, transpose reversed its rows, or an overflowing dot-product term was silently replaced by zero. |
+| Owner and consumers | Rust 1.88 passed 84 owner tests and doctests with fixed, Serde, dyadic and float-enclosure features. Rust 1.95 passed 98 with all features. The native fixtures passed on stable and in release. All seven Hyperlattice facade tests passed, along with the Cortex-M fixed/Serde check, strict Clippy, formatting, inventory tests and the strict repository-wide zizmor audit. |
+| Final images | The native qualification test occupied 1,582,528 bytes. The ASan target occupied 26,556,040 bytes, leaving 40,552,824 bytes in its 64 MiB envelope. The fixed-affine native and WASM example binaries matched their baseline builds byte for byte at 430,920 and 36,996 bytes. [Size accounts](docs/research/interval-size-accounts.json) |
+
+The change adds qualification executables and leaves the production memory
+accounts intact. The host runs cover fixed-point Cartesian products. Hardware timing and
+the resource behavior of other scalar backends require separate qualification. [Raw campaigns, corpus, mutation patches and image hashes](docs/evidence-archive.tsv)

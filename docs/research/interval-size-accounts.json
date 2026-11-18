@@ -8958,5 +8958,33 @@
       "remaining_bytes": 37321104,
       "evidence": "docs/evidence/2026-11-18-interval-krawczyk-fuzz"
     }
+  ],
+  "new_cartesian_shape_test_harnesses": [
+    {
+      "artifact": "crates/hyperlattice-interval/tests/shape_replay.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "all Hyperlattice interval features; workspace lock",
+      "source_snapshot": "8ad5c4c0244b5c5824509c64897077a30d9cb318",
+      "file_bytes": 1582528,
+      "sha256": "87af416f1e4d6aa9f12b14dbc9d0ee3bd1f8e1cb225309895b56588725726feb",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 65526336,
+      "evidence": "docs/evidence/2026-11-18-interval-cartesian-shapes"
+    },
+    {
+      "artifact": "crates/hyperinterval/fuzz/fuzz_targets/cartesian_shapes.rs",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "rustc 1.101.0-nightly (8006091eb 2026-10-17)",
+      "features": "lattice-shapes; ASan with libFuzzer; standalone interval fuzz lock",
+      "source_snapshot": "8ad5c4c0244b5c5824509c64897077a30d9cb318",
+      "file_bytes": 26556040,
+      "sha256": "abbefc7933c90b7f4d135e8edf24f5ac7ccc68f9e6d76a1c13003233a34a2103",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 40552824,
+      "evidence": "docs/evidence/2026-11-18-interval-cartesian-shapes"
+    }
   ]
 }
