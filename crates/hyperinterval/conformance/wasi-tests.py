@@ -9,9 +9,7 @@ import re
 import shlex
 import subprocess
 
-ROOT = Path(__file__).resolve().parents[3]
-RUNNER = ROOT / "crates/hyperlattice-interval/conformance/run-wasi-test.mjs"
-TARGET = "wasm32-wasip1"
+from wasi_libtest import ROOT, RUNNER, TARGET, build_tests, compare_dispatch, completed, execute, test_names
 
 # Probe these cases individually. A trap in one guest must not prevent the
 # remaining tests in its harness from running. If a probe succeeds on WASI
@@ -29,30 +27,6 @@ OS_PROBES = {
     "real_bridge": ("mpfr::real_bridges_enclose_independently_directed_mpfr_bounds", "failed to spawn thread:"),
     "real_dyadic_lifecycle": ("concurrent_readers_share_the_translated_root_while_a_cancelled_clone_retries", "failed to spawn thread:"),
 }
-
-
-def build_tests(cargo, selection, env):
-    output = subprocess.check_output([*cargo, *selection, "--no-run", "--message-format=json-render-diagnostics"],
-                                     env=env, cwd=ROOT, text=True)
-    executables = {}
-    for row in map(json.loads, output.splitlines()):
-        if row.get("executable") and row["profile"]["test"]:
-            name = row["target"]["name"]
-            if name in executables:
-                raise SystemExit(f"Duplicate test executable for {name}")
-            executables[name] = row["executable"]
-    return executables
-
-
-def completed(transcript, expected):
-    return (f"test result: ok. {len(expected)} passed; 0 failed; 0 ignored;" in transcript
-            and set(re.findall(r"^test (\S+) \.\.\. ", transcript, re.MULTILINE)) == expected)
-
-
-def execute(command, log):
-    result = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    log.write_text(result.stdout)
-    return result
 
 
 def missing_os_facility(transcript, target, reason):
@@ -113,8 +87,7 @@ def main():
     report = {"guest": {}, "host_required": {}}
     for target, binary in sorted(guests.items()):
         guest = ["node", str(RUNNER), binary]
-        listing = subprocess.check_output([*guest, "--list"], text=True, stderr=subprocess.PIPE)
-        names = set(re.findall(r"^(\S+): test$", listing, re.MULTILINE))
+        names = test_names(guest)
         case, reason = OS_PROBES.get(target, (None, None))
         probe = {case} & names
         options = ["--exact", "--test-threads=1", "--nocapture"]
@@ -144,8 +117,16 @@ def main():
     for target, case in required.items():
         if case not in report["guest"].get(target, []):
             raise SystemExit(f"Missing required guest oracle {target}::{case}")
-    if host_cases:
-        hosts = build_tests(cargo, [arg for target in host_cases for arg in ("--test", target)], host_env)
+    host_targets = set(host_cases)
+    if supports_real:
+        host_targets.add("rational")
+    if host_targets:
+        selection = [arg for target in sorted(host_targets) for arg in ("--test", target)]
+        hosts = build_tests(cargo, selection, host_env)
+        if supports_real:
+            case = OS_PROBES["rational"][0]
+            report["guest_dispatch"] = {"rational": compare_dispatch(
+                guests["rational"], hosts["rational"], case, "HYPERINTERVAL_TRACE_BACKEND", "TRACE", 450, output)}
         for target, case in host_cases.items():
             log = output / f"{target}-host.log"
             run = execute([hosts[target], "--exact", case, "--nocapture"], log)

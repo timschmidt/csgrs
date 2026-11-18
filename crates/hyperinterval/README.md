@@ -284,6 +284,20 @@ native process or thread. The runner probes those OS-dependent cases in the
 guest and executes the original case on the host when it encounters the
 documented OS error.
 
+With Hyperreal enabled, the runner also executes the rational product trace
+in fresh native and WASI processes. It compares all 450 ordered results and
+reducer snapshots for the frozen and shared implementations.
+
+The downstream solver check requires Rust 1.95 or newer, the
+`wasm32-wasip1` target and Node.js. It runs Hypersolve's interval, Jacobian
+and Krawczyk acceptance cases, tensor capacity checks, and both Horner
+migration comparisons. The output directory contains the per-case inventory
+and full dispatch transcripts.
+
+```sh
+python3 crates/hyperinterval/conformance/wasi-solver.py --toolchain stable --output /tmp/interval-solver-wasi
+```
+
 From a workspace checkout, run the native production coverage gate with
 `python3 crates/hyperinterval/scripts/coverage.py`. It uses the active Rust
 toolchain's `llvm-tools-preview` component and runs the all-feature library

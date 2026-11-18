@@ -6,6 +6,7 @@ on:
     paths:
       - "crates/hypersolve/**"
       - "crates/hyperinterval/**"
+      - "crates/hyperlattice-interval/conformance/run-wasi-test.mjs"
       - "crates/hyperlattice/**"
       - "crates/hyperlimit/**"
       - "crates/hyperreal/**"
@@ -16,6 +17,7 @@ on:
     paths:
       - "crates/hypersolve/**"
       - "crates/hyperinterval/**"
+      - "crates/hyperlattice-interval/conformance/run-wasi-test.mjs"
       - "crates/hyperlattice/**"
       - "crates/hyperlimit/**"
       - "crates/hyperreal/**"
@@ -40,6 +42,24 @@ defaults:
     working-directory: crates/hypersolve
 
 jobs:
+  wasi-interval:
+    name: Interval solver and Horner migration (WASI Preview 1, Rust ${{ matrix.rust }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.95.0", stable]
+    env:
+      HYPERSOLVE_RUST: ${{ matrix.rust }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Compare exact results and isolated dispatch traces
+        run: |
+          rustup toolchain install "$HYPERSOLVE_RUST" --profile minimal --target wasm32-wasip1
+          python3 ../hyperinterval/conformance/wasi-solver.py --toolchain "$HYPERSOLVE_RUST" --output "$RUNNER_TEMP/horner-wasi"
+
   quality:
     name: Tests, representations, fuzz build, lint, and docs
     runs-on: ubuntu-latest

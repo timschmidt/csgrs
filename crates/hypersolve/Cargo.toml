@@ -31,13 +31,21 @@ hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features
 hyperinterval = { version = "0.1.0", path = "../hyperinterval", default-features = false, features = ["rational"] }
 # Fresh-process selected-field replay exercises validated exact scalar interchange.
 hyperreal = { version = "0.14.0", path = "../hyperreal", default-features = false, features = ["serde"] }
-criterion = "0.5"
 # Competitive floating-point controls only. Production solving and proof
 # replay remain independent of these external numerical engines.
 nalgebra = { version = "0.35.0", default-features = false, features = ["std"] }
-proptest = "1.7.0"
 roots = "0.0.8"
 serde_json = "1.0.149"
+
+# Use the in-process property runner on WASI. Criterion also requires its
+# single-threaded backend there.
+[target.'cfg(all(target_arch = "wasm32", target_os = "wasi"))'.dev-dependencies]
+proptest = { version = "1.7.0", default-features = false, features = ["std", "bit-set"] }
+criterion = { version = "0.5", default-features = false, features = ["plotters", "cargo_bench_support"] }
+
+[target.'cfg(not(all(target_arch = "wasm32", target_os = "wasi")))'.dev-dependencies]
+proptest = "1.7.0"
+criterion = "0.5"
 
 [features]
 default = []
