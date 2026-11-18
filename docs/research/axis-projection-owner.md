@@ -24,7 +24,7 @@ API. Candidate `8f351042e1880a8d77b50606df8b387066522c45` moves the existing
 algorithm and reports behind `axis-projection`, with thirteen narrow error
 variants. A source comparison preserves all algorithm/report tokens except the
 error type. Deprecated Hyperpath wrappers map errors and return the same reports
-without copying them. Both root and routing-module legacy paths remain tested.
+without deep cloning them. The later stack measurement below identifies a return-slot copy. Both root and routing-module legacy paths remain tested.
 No arithmetic, sign-call order, dispatch choice or independent replay changed.
 
 Interface candidate `e5af3b4383d33c440d087e0d2b933fccde766b9c`, based on
@@ -147,3 +147,6 @@ lock comparisons are in evidence commit `803884ca5c88752269928634323026f258c30f9
 record `docs/evidence/2026-11-17-interval-axis-owner-cost`. The WASM replay
 above ran after archival using the existing interface-measurements Fraction
 oracle and the release module identified by its hash.
+
+The [native consumer memory and runtime review](axis-projection-memory.md) measures
+report movement through the legacy wrapper and qualifies the revised boundary.

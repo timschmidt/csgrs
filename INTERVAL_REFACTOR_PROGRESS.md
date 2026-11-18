@@ -10994,3 +10994,15 @@ the standalone dependency locks. Full runtime, memory and downstream size
 admission remain open. Primary commit `4e19d4d33` repairs the two stale Alumina
 measurement locks. Native tests pass and the release WASM module replays 4,369
 exact-oracle calls. [Measurements and evidence](docs/research/axis-projection-owner.md#matched-owner-timing-and-legacy-trace-repair).
+
+## Native projection memory and wrapper qualification
+
+The Hyperpath legacy adapter used 448 more stack bytes than baseline in 18
+workloads. Two targeted forwarding hints on isolated candidate `62bcec291`
+reduced the increase to 48 bytes throughout. The direct owner matched baseline.
+The revised owner benchmark is eight bytes smaller than the fixed baseline.
+Four-cycle histories covered rejection, planning, materialized independent
+replay and cleanup. The complete Alumina diagonal G1 fixture also passed on all
+three measured revisions. Resource and timing results, including adverse
+observations and remaining gates, are recorded in the
+[native projection review](docs/research/axis-projection-memory.md).
