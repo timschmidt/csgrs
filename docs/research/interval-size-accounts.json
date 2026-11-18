@@ -9072,5 +9072,20 @@
       "remaining_bytes": 65437384,
       "evidence": "docs/evidence/2026-11-18-interval-worked-proofs"
     }
+  ],
+  "new_jacobian_test_harnesses": [
+    {
+      "artifact": "finite_difference_proposals",
+      "target": "x86_64-unknown-linux-gnu",
+      "toolchain": "Rust 1.95.0 release",
+      "features": "hypersolve --all-features",
+      "source_snapshot": "3cd22cc869112063196ad1ce8e2c6c2b8078dc3f",
+      "file_bytes": 3857784,
+      "sha256": "bd7f265847661871f23c3b4cd826b467add381d32a3e28104a0b71e159dec413",
+      "qualification_capacity_bytes": 67108864,
+      "required_free_bytes": 16777216,
+      "remaining_bytes": 63251080,
+      "evidence": "docs/evidence/2026-11-18-interval-jacobian-memory"
+    }
   ]
 }

@@ -55,3 +55,78 @@ Evidence: `docs/evidence/2026-11-17-interval-jacobian-context`, local commit
 SHA-256 `33911caecf0a7cd0d30a440b434f9bbff6331f88c514a7a711b71a4dbaeb42ce`.
 Commands, source patches, locks, failed witnesses and all raw observations are
 retained. Earlier archive paths and manifest rows are unchanged. No push.
+
+## Reassessment under the bounded memory policy
+
+At `29e2bfdf3`, the original rebound-square and weighted mixed-role witnesses
+both failed again. The missing-used-binding control passed. Every candidate in
+the table was measured against that revision and the fixed `c9f1f9ac5`
+baseline. Twelve workloads include the original eight, three rebound cases with
+signed steps, and a dense 8 × 8 polynomial matrix. The older arithmetic
+cannot produce correct results on the independently rebound inputs. Its cost
+control uses the same center, step and expected matrix with synchronized
+model and context coordinates. The wrong old results are recorded separately.
+
+Each workload ran cold and warm in both native feature configurations. Four
+fresh repetitions and two fill patterns measured byte-resolution callee stack
+on a guarded 2 MiB worker. The callback inspected and destroyed its matrix.
+Heap measurements separately captured allocation events, peak requested bytes,
+the live result and its destruction. Original inputs and caller frames were
+outside the callee boundary. All candidate matrices matched the independent
+expectations. The trace-enabled observations matched the preceding revision's
+full snapshots on equivalent completed work.
+
+| Repair | Groups outside the memory caps, out of 48 | Largest incremental stack charge |
+| --- | ---: | ---: |
+| Original context lookup with cloned operands | 15 | 32 B |
+| Same lookup with borrowed operands | 0 | 0 B |
+| One entry lookup with borrowed operands | 2 | 32 B |
+| Returning an owned shifted context | 2 | 80 B |
+| Direct iteration of the perturbed residuals | 44 | 112 B |
+| Shared dense-row extraction with separate lookups | 22 | 160 B |
+| Shared dense-row extraction with one entry lookup | 2 | 16 B |
+| Separate occupied and vacant entry handling | 2 | 32 B |
+| Mutate an existing binding, insert when missing | 2 | 80 B |
+| Drop the scratch context before extracting rows, separate lookups | 8 | 32 B |
+| Drop the scratch context before extracting rows, mutable binding | 3 | 112 B |
+| Reuse one working binding map across columns | 48 | 240 B |
+
+The native caps were 128 bytes and 1% incrementally, 256 bytes and 2%
+cumulatively, a 16 KiB callee ceiling, and at least 1 MiB free after the guard
+and caller. The original lookup took the warm empty-row call from 1,329 to
+1,361 bytes. The borrowed lookup at `9268e4371` preserved stack usage,
+requested allocation events, peak heap and output-drop measurements in all
+48 groups. Its largest callee measurement was 12,376 bytes and its minimum
+headroom was 2,074,472 bytes. Peak requested heap reached 2,361 bytes on the
+ordinary corpus and 19,444 on the dense fixture. These comparisons cover one
+native worker. There is no allocator-usable or whole-process RSS claim.
+
+The borrowed implementation passed the standalone production-client size caps.
+Its native file grew by 376 bytes and its union of defined function ranges by
+nine bytes. Both the linked WASM file and its code section shrank by 25 bytes.
+The uninstrumented public WASM client checked 1,568 entries per instance in
+forward and reverse order. Independent native checks also distinguished the
+old −5 from the corrected 7. In the separate native measurement executable,
+the complete file shrank by 928 bytes, but allocated RELRO padding grew from
+992 to 1,832 bytes. The 840-byte incremental charge exceeds the section's 1%
+cap. Its fixed baseline was 800 bytes. No growth was charged to the production
+memory or size accounts for this isolated repair.
+
+Runtime also prevents retention. On the weighted fixed/unused/inactive case,
+a ten-pair crossover found the trace-enabled binary slower on all three
+physical cores. A second crossover reversed pair order and collected 24
+more process pairs per core. Median paired slowdowns were 4.22%, 5.15% and
+4.96% on CPUs 3, 5 and 15. All three paired-median bootstrap intervals stayed
+above zero. The default-feature build was faster on this case. The timings
+include proposal construction and output destruction. Trace recording was
+off during timing and the full snapshots were collected separately.
+
+Primary `3cd22cc86` adds 392 supported public matrix cases, comprising 2,352
+bitwise entry checks, and preserves the typed error for an unbound active
+symbol. A fixed coordinate can be rebound independently and still alter the
+derivative of another coordinate. Free and unused columns preserve IEEE signed
+zero for negative steps, and fixed columns retain positive zero. Restoring all
+authored bindings, forcing every zero positive and perturbing a fixed column
+each failed the new tests. Public documentation gives the reproducible
+free-coordinate defect and the model/context update that supplies the intended
+center. [Raw measurements and reproduction material](../evidence-archive.tsv)

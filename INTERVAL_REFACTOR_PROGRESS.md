@@ -11719,3 +11719,36 @@ compression checks passed. This change affects verification and adds no
 production memory charge. The revisions are committed locally. A hosted run
 requires the pinned sibling commits on GitHub. Board timing and physical
 hardware execution remain open. [Reproduction material and artifact hashes](docs/evidence-archive.tsv)
+
+## Phase 7 finite-difference Jacobian memory reassessment
+
+The public Jacobian still returns −5 for a forward difference of `x²` with
+model value 1, context binding 3 and step 1. The expected value is 7.
+Primary `3cd22cc86` documents the defect and how to supply the intended
+center. Its new public corpus checks 392 matrices on supported inputs,
+including independent fixed-variable bindings, and checks the typed
+unbound-symbol error. The 2,352 entries are compared bitwise, including
+positive and negative zero. Three deliberate changes each failed the corpus.
+
+The bounded-memory review ran 8,064 fresh resource processes on the fixed
+baseline, preceding revision and twelve candidate implementations. The
+borrowed-center repair at `9268e4371` corrects the bad derivative with zero
+incremental or cumulative measured stack growth across 48 workload groups.
+Peak requested heap, allocation events and cleanup also matched. The linked
+native and WASM public clients passed their size caps, and the WASM repair
+passed 1,568 matrix entries in each of two fresh instances. Two independent
+gates keep the change on `interval-jacobian-borrowed-context-review`. The
+default measurement executable added 840 bytes of allocated RELRO padding;
+the trace-enabled weighted case was 4.22–5.15% slower across three cores in
+the reversed-order confirmation. No production memory allowance was charged.
+[Per-candidate results and scope](docs/research/solver-jacobian-context-review.md)
+
+Rust 1.95 passed 1,535 all-target/all-feature owner tests, the all-feature
+doctest, and 1,398 minimal tests and doctests. All 13 downstream reachability
+and policy tests passed, as did strict Clippy and rustdoc, formatting,
+inventory tests, strict zizmor, and the new fixture on stable and in release.
+The new release test occupies 3,857,784 bytes. The primary and preceding
+standalone native clients matched in size and machine code. Their WASM clients
+matched in size and code-section bytes; data bytes differed. The refreshed
+inventory has 4,129 scan rows and 257 review records.
+[Qualification artifacts and commands](docs/evidence-archive.tsv)
