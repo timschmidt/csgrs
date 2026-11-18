@@ -11292,3 +11292,55 @@ still require body and consumer review. Macro expansions, reexports, and
 unnamed endpoint tuples need separate discovery. The raw checks and matched
 measurements are indexed under `2026-11-18-interval-inventory-refresh`.
 [Source inventory](interval-inventory.tsv) · [Evidence index](docs/evidence-archive.tsv)
+
+## Phase 3 closed real-ball boundaries, 18 November 2026
+
+Commit `7584d3163` checks the exact center, radius and both exported
+endpoints after reflection, scaling, translation, addition and subtraction.
+An independent grid-residue calculation covers coarse, odd, even and
+128-bit refinement and a return to coarse precision. The second test checks
+cold and warm cancellation, both subtraction orders, typed failure and
+successful retry when the displacement carries the signal.
+
+At `d36d2b5c8`, reflecting and scaling `[-2,0]` by `-1/3` and
+translating by `1/3` constructs the closed interval `[1/3,1]` exactly.
+The public membership filter projects the displacement onto a dyadic grid.
+It returns `Unresolved` for either exact endpoint even at precision -128.
+We evaluated three repairs on ten newly decidable and ten control fixtures
+(including a repeated symbolic control). Each produced the expected results
+in a native client and 80 WASM calls across two module instances. The
+fallback additionally passed 1,485 integer-oracle comparisons across closed
+rational balls. The unchanged primary still has the off-grid membership gap.
+
+| Candidate | Measurements against the primary | Disposition |
+| --- | --- | --- |
+| Retain the displacement and consult its exact rational value on overlap | Control dispatch receipts matched. Native file +208 B, defined functions +150 B, WASM file +84 B and code +58 B. No measured stack growth. Eight newly decidable fixtures used an additional 120–168 B of peak requested heap. | Retained for review at `4f05060aa`. The fresh dyadic upper-endpoint control slowed by a paired median of 0.72% on each of two CPUs, in 17/18 and 16/18 pairs. The fresh negative exclusion control slowed by 0.80% and 0.75%. |
+| Consume certified rational displacement bounds directly | The native file shrank 5,480 B. All ten control trace receipts changed. Three native images exceeded individual section allowances. Warm stack on the reflected lower endpoint rose from 1,760 to 1,848 B. | Exceeded the per-workload 1% stack cap and changed existing dispatch. |
+| Consult both input rationals after ambiguous grid comparisons | Control traces and image caps passed. Four previously completed warm dyadic controls used 16 additional stack bytes each, exceeding their 1% caps. One new endpoint used 88 additional stack bytes. | Exceeded the per-workload memory limits. |
+
+The fixed program reference was `c9f1f9ac5`. The 20 single-worker workloads
+peaked at 1,680 requested heap bytes and 1,848 allocator-usable heap bytes
+on every revision. Every post-drop sample returned to zero. The smallest
+measured thread headroom was 2,083,784 bytes. Individual workload charges
+and verdicts are recorded separately. None of the three candidates was
+admitted, so no production memory or image charge was added.
+
+A separate witness isolates signal loss below the ball operation.
+With an active abort on `sqrt(2)`, its own scalar enclosure returns
+`None`. Both orders of subtraction with zero preserve that outcome.
+With the nonzero shift `7/5`, the derived scalar supplies bounds and the
+ball returns a verdict while the signal is active, cold or warm. The
+original negative witness remains executable on the review branch.
+These runs demonstrate a cancellation defect. They did not demonstrate
+a wrong geometric answer on that fixture.
+
+On the primary, 273 Hyperinterval tests and doctests passed with all
+features. The release real-ball targets passed five tests, the disabled
+feature target compiled, and seven downstream tests and doctests passed
+in Hyperlattice Interval and Hyperdynamics with their default features.
+Workspace formatting, owner all-feature/all-target Clippy and owner rustdoc
+passed. Two additional owner reviews bring the inventory to 241 reviewed
+records. Raw observer sources, paired timings, section measurements, stack
+and allocation traces, all candidate patches, exact witnesses and WASM
+images are indexed under `2026-11-18-interval-real-ball-boundary`.
+[Evidence index](docs/evidence-archive.tsv)
