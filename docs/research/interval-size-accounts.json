@@ -10014,5 +10014,87 @@
     "required_free_bytes": 32768,
     "free_bytes": 95214,
     "memory": "Zero positive measured guest-stack charges over the fixed and preceding controls. The new four-word observation peaks at 368 bytes. No deployment flash or memory exception was charged."
+  },
+  "dynamics_graph_budget_replay": {
+    "fixed": "c9f1f9ac55216b762e9eb97672de1e66f3b8a3fb",
+    "preceding": "a7dd0ccd8",
+    "evidence": "docs/evidence/2026-11-18-interval-dynamics-coverage",
+    "toolchain": "Rust 1.95.0, x86_64-unknown-linux-gnu, release, all features, test executables",
+    "benefit": "Executable graph budget composition, aggregate overflow and provenance admission at the physical consumer boundary.",
+    "caps": {
+      "incremental_bytes": 16384,
+      "incremental_percent": 1,
+      "cumulative_bytes": 32768,
+      "cumulative_percent": 2
+    },
+    "capacity_per_artifact": 67108864,
+    "required_free_per_artifact": 16777216,
+    "artifacts": {
+      "expression_field": {
+        "sha256": {
+          "fixed": "20454055314455a0d919ba8dab77a74a8ef3ff2ac412f8bb6a75b05fadf68f21",
+          "preceding": "8caddf4dac65c8d888c8388288e28fe7c3e294bbacc4ac1773ea02e43789101e",
+          "candidate": "085030513db6404468918bedb0a8024881baa83f5bd9902ff2db30ae31ab416d"
+        },
+        "metrics": {
+          "file": {
+            "fixed": 4742104,
+            "preceding": 4742136,
+            "retained": 4749904,
+            "incremental_charge": 7768,
+            "cumulative_charge": 7800,
+            "remaining_incremental_bytes": 8616,
+            "remaining_cumulative_bytes": 24968,
+            "remaining_incremental_percent": 0.836192,
+            "remaining_cumulative_percent": 1.835516
+          },
+          "text": {
+            "fixed": 2453959,
+            "preceding": 2453959,
+            "retained": 2457815,
+            "incremental_charge": 3856,
+            "cumulative_charge": 3856,
+            "remaining_incremental_bytes": 12528,
+            "remaining_cumulative_bytes": 28912,
+            "remaining_incremental_percent": 0.842866,
+            "remaining_cumulative_percent": 1.842866
+          }
+        },
+        "free_bytes": 62358960
+      },
+      "certified_flow": {
+        "sha256": {
+          "fixed": "1c8eedbd56ed1492cafa91e72033fe089e6d3c81219d4979e809036999e9d40b",
+          "preceding": "b7c11bdb7e2e69a56b86e6f84f55cee37ad3aee70708ec0c2595ee3b9be1e0a6",
+          "candidate": "11d8aad938722ac81ed978b6c419c1d4a3f741b455ade03a69f6288b78b8308f"
+        },
+        "metrics": {
+          "file": {
+            "fixed": 4949616,
+            "preceding": 4949696,
+            "retained": 4965120,
+            "incremental_charge": 15424,
+            "cumulative_charge": 15504,
+            "remaining_incremental_bytes": 960,
+            "remaining_cumulative_bytes": 17264,
+            "remaining_incremental_percent": 0.688385,
+            "remaining_cumulative_percent": 1.686764
+          },
+          "text": {
+            "fixed": 2594727,
+            "preceding": 2594727,
+            "retained": 2603383,
+            "incremental_charge": 8656,
+            "cumulative_charge": 8656,
+            "remaining_incremental_bytes": 7728,
+            "remaining_cumulative_bytes": 24112,
+            "remaining_incremental_percent": 0.6664,
+            "remaining_cumulative_percent": 1.6664
+          }
+        },
+        "free_bytes": 62143744
+      }
+    },
+    "source": "fd4da5bb3ad3d62cf971dcab5514ee6f6f8a9fa7"
   }
 }

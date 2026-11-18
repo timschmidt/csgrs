@@ -12179,3 +12179,56 @@ budget passed locally. Evidence commit `8852dec62` contains the two controls,
 candidate measurements, original lock failure, mutations and comparison
 scripts under `docs/evidence/2026-11-18-interval-foc-endpoints`.
 [Inventory](interval-inventory.tsv) · [Evidence index](docs/evidence-archive.tsv)
+
+## Hyperdynamics native coverage and domain graph-budget replay
+
+Commit `fd4da5bb3` adds Hyperdynamics to the native coverage command for
+§14.5. On the preceding revision, passing `--package hyperdynamics` to
+the scalar collector still ran 273 Hyperinterval tests. The shared command
+now selects the Cargo package and checks its own source inventory. Running
+the original Hyperinterval entry point reproduced every previous per-file
+coverage count on Rust 1.95. [Coverage command](scripts/interval_coverage.py)
+
+The owner suite previously executed zero of the five functions on the
+borrowed graph-budget adapter. The new test checks a precharged counter
+through tree compilation, cancelled validation and exact-budget replay. It
+also checks that a sum of structural entries exceeding `usize::MAX` is
+rejected. The physical consumer uses a seven-binding zero-force graph and
+1,024 distinct source references. At a limit of 1,049 entries construction
+refuses before spending graph or scalar work. At exactly 1,050 it retains
+every ordered reference and reproduces the zero vector field at rest.
+Checking each count independently let the damaged implementation construct
+the over-limit model. Both original test targets passed this mutation and
+both new tests detected it. A separate wrapping-add mutation failed at the
+owner's machine-word limit.
+[Owner witness](crates/hyperdynamics/tests/expression_field.rs) ·
+[Physical consumer](crates/hyperphysics/tests/certified_flow.rs)
+
+| Hyperdynamics production metric | Before | After |
+| --- | ---: | ---: |
+| Rust 1.95 lines | 4,222 / 4,581 | 4,246 / 4,581 |
+| Rust 1.95 regions | 6,086 / 6,893 | 6,110 / 6,893 |
+| Rust 1.95 grouped functions | 466 / 530 | 471 / 530 |
+| Nightly lines | 4,190 / 4,526 | 4,214 / 4,526 |
+| Nightly regions | 3,804 / 4,569 | 3,822 / 4,569 |
+| Nightly grouped functions | 474 / 538 | 479 / 538 |
+| Nightly branches | 224 / 264 | 224 / 264 |
+
+Each compiler measured 19 production files and merged 53 profiles from 20
+test executables. The declaration-only crate root had no mapped code.
+Rust 1.95 supplied no branch counters. All 159 Hyperdynamics tests passed
+in each final run, and the 100% coverage gate still fails on both compilers.
+The two-crate all-feature, all-target run passed 243 tests, and the minimal
+run passed 72. All-target Clippy with warnings denied, documentation,
+workspace formatting and the repository budget passed.
+
+The release test executables grew by 7,768 bytes for Hyperdynamics and
+15,424 bytes for Hyperphysics. The corresponding code-section increases
+were 3,856 and 8,656 bytes. Both fit the predeclared 16 KiB and 1% per-target
+incremental caps and 32 KiB and 2% cumulative caps. Including preceding
+growth, the file charges are 7,800 and 15,504 bytes. Each 64 MiB host slot
+retains over 59 MiB free against a 16 MiB reserve. This qualification
+changed test and tooling code only. Evidence commit `f61f0aad9` contains the
+full per-source reports, annotated gaps, linked-image measurements, mutation
+controls and validation logs. [Size accounts](docs/research/interval-size-accounts.json) ·
+[Evidence index](docs/evidence-archive.tsv)
